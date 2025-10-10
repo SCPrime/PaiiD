@@ -1,0 +1,29 @@
+services:
+- type: web
+  name: ai-trader-backend
+  runtime: python
+  plan: free
+  region: oregon
+  branch: main
+  rootDir: backend
+  buildCommand: pip install -r requirements.txt
+  startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+  envVars:
+    - key: API_TOKEN
+      value: rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl
+    - key: APCA_API_KEY_ID
+      value: PKZOA0NRY3QYX6N04X7E
+    - key: APCA_API_SECRET_KEY
+      value: 2zPcmhcYvT2QtQcNsra8QIVALEvwKPcCk6pwSmEe
+    - key: APCA_API_BASE_URL
+      value: https://paper-api.alpaca.markets
+    - key: ALLOW_ORIGIN
+      value: https://ai-trader-snowy.vercel.app
+    - key: LIVE_TRADING
+      value: "false"
+    - key: TRADING_MODE
+      value: paper
+    - key: ANTHROPIC_API_KEY
+      sync: false
+    - key: REDIS_URL
+      generateValue: true

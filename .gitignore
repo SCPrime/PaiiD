@@ -1,0 +1,174 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+# Python lib directories only (not frontend/lib)
+backend/lib/
+backend/lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables and secrets
+.env
+.env.*
+.environment
+secrets.json
+config.json
+credentials.json
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.nuxt/
+dist/
+.vuepress/dist
+.serverless/
+
+# Package managers
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+yarn.lock
+
+# OS/Editor files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Trading specific
+trade_log.json
+pending_trades.json
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Claude Code
+.claude/
+
+# Old monolith files (cloud deployment uses backend/ and frontend/ only)
+/account_status.py
+/ai_advisor.py
+/ai_trading_chat.py
+/api/
+/app.py
+/auto_trader.py
+/backtesting/
+/complete_api.py
+/config/
+/control_center.py
+/dashboard.py
+/demo_dashboard.py
+/find_deals.py
+/main.py
+/main_controller.py
+/modules/
+/morning_routine.py
+/news_research.py
+/options_visualizer.py
+/portfolio_summary.py
+/requirements.txt
+/run.py
+/run_bot.py
+/run_today.py
+/settings_manager.py
+/setup_complete_bot.py
+/simple_server.py
+/simple_strategy.py
+/src/
+/start_dashboard.py
+/start_streamlit.py
+/strategies/
+/streamlit_ai_interface.py
+/streamlit_dashboard.py
+/templates/
+/trade_queue.py
+/trading_monitor.ipynb
+/vscode_monitor.py
+
+# Redundant deployment docs (keep only core docs)
+/DEPLOYMENT_OPTION_A.md
+/DEPLOY_NOW.md
+/PR_DESCRIPTION.md
+/PR_SUMMARY.md
+NUL
+.vercel
