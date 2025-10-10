@@ -58,9 +58,10 @@ export class ClaudeAI {
       }
     }
     try {
-      console.log('[aiAdapter] Sending chat request to backend proxy');
+      console.log('[aiAdapter] Sending chat request to Claude API');
 
-      const response = await fetch(`/api/proxy/api/claude/chat`, {
+      // Use direct /api/chat endpoint (bypasses proxy complexity)
+      const response = await fetch(`/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -260,13 +261,18 @@ Provide a concise analysis with:
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await fetch(`/api/proxy/api/claude/health`, {
-        method: 'GET',
+      // Test direct chat endpoint with a minimal request
+      const response = await fetch(`/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'test' }],
+          max_tokens: 10,
+        }),
       });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('[aiAdapter] ✅ Health check passed:', data.message);
+        console.log('[aiAdapter] ✅ Health check passed');
         return true;
       }
 
