@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const BACKEND = process.env.BACKEND_API_BASE_URL || 'http://localhost:8001';
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
 const API_TOKEN = process.env.API_TOKEN!;
 
 // Exact endpoints our UI uses (paths without /api prefix - added in URL construction)

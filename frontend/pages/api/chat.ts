@@ -13,8 +13,8 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Get backend URL from environment variable
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'http://127.0.0.1:8001';
+  // Get backend URL from environment variable (production default)
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
 
   try {
     const { messages, max_tokens = 2000, system } = req.body;
