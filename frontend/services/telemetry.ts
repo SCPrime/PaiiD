@@ -149,8 +149,8 @@ class TelemetryService {
     this.buffer = [];
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'http://localhost:8000';
-      const response = await fetch(`${backendUrl}${this.config.endpoint}`, {
+      // Use the Next.js API proxy to avoid CORS and ensure proper routing in production
+      const response = await fetch(`/api/proxy${this.config.endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
