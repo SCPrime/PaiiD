@@ -46,6 +46,7 @@ const ALLOW_POST = new Set<string>([
   "watchlists",
   // Claude AI endpoints
   "claude/chat",
+  "chat", // Simplified chat endpoint alias
   // Telemetry
   "telemetry",
 ]);
