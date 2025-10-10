@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaiiD API Endpoint Tester</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        h1 {
+            color: #45f0c0;
+            text-align: center;
+        }
+        .test-section {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(69, 240, 192, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        button {
+            background: #45f0c0;
+            color: #0f172a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3dd9a8;
+        }
+        button:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .info { color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <h1>🧪 PaiiD API Endpoint Tester</h1>
+    <p style="text-align: center; color: #94a3b8;">Test all API endpoints to verify authentication and connectivity</p>
+
+    <!-- Test 1: General Health -->
+    <div class="test-section">
+        <h2>✅ Test 1: General Health Check</h2>
+        <p>Tests: <code>/api/proxy/health</code></p>
+        <button onclick="testGeneralHealth()">Run Test</button>
+        <div id="result1" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test 2: Claude Health -->
+    <div class="test-section">
+        <h2>🤖 Test 2: Claude Health Check</h2>
+        <p>Tests: <code>/api/proxy/claude/health</code></p>
+        <button onclick="testClaudeHealth()">Run Test</button>
+        <div id="result2" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test 3: Claude Chat (Full Path) -->
+    <div class="test-section">
+        <h2>💬 Test 3: Claude Chat (Full Path)</h2>
+        <p>Tests: <code>/api/proxy/claude/chat</code></p>
+        <button onclick="testClaudeChatFull()">Run Test</button>
+        <div id="result3" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test 4: Claude Chat (Simplified) -->
+    <div class="test-section">
+        <h2>💬 Test 4: Claude Chat (Simplified Path)</h2>
+        <p>Tests: <code>/api/proxy/chat</code></p>
+        <button onclick="testClaudeChatSimple()">Run Test</button>
+        <div id="result4" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test 5: Telemetry -->
+    <div class="test-section">
+        <h2>📊 Test 5: Telemetry</h2>
+        <p>Tests: <code>/api/proxy/telemetry</code></p>
+        <button onclick="testTelemetry()">Run Test</button>
+        <div id="result5" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test 6: Account -->
+    <div class="test-section">
+        <h2>💰 Test 6: Account Data</h2>
+        <p>Tests: <code>/api/proxy/account</code></p>
+        <button onclick="testAccount()">Run Test</button>
+        <div id="result6" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Run All Tests -->
+    <div style="text-align: center; margin: 30px 0;">
+        <button onclick="runAllTests()" style="padding: 15px 40px; font-size: 16px;">🚀 Run All Tests</button>
+    </div>
+
+    <script>
+        function showResult(testNum, content, type = 'info') {
+            const resultDiv = document.getElementById(`result${testNum}`);
+            resultDiv.style.display = 'block';
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = content;
+        }
+
+        async function testGeneralHealth() {
+            showResult(1, '⏳ Testing...', 'info');
+            try {
+                const response = await fetch('/api/proxy/health');
+                const data = await response.json();
+                showResult(1, `✅ Status: ${response.status}\n\n${JSON.stringify(data, null, 2)}`, 'success');
+            } catch (error) {
+                showResult(1, `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testClaudeHealth() {
+            showResult(2, '⏳ Testing...', 'info');
+            try {
+                const response = await fetch('/api/proxy/claude/health');
+                const data = await response.json();
+                const type = response.ok ? 'success' : 'error';
+                showResult(2, `${response.ok ? '✅' : '❌'} Status: ${response.status}\n\n${JSON.stringify(data, null, 2)}`, type);
+            } catch (error) {
+                showResult(2, `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testClaudeChatFull() {
+            showResult(3, '⏳ Testing...', 'info');
+            try {
+                const response = await fetch('/api/proxy/claude/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: [{ role: 'user', content: 'Respond with just "Test successful"' }],
+                        max_tokens: 50
+                    })
+                });
+                const data = await response.json();
+                const type = response.ok ? 'success' : 'error';
+                showResult(3, `${response.ok ? '✅' : '❌'} Status: ${response.status}\n\n${JSON.stringify(data, null, 2)}`, type);
+            } catch (error) {
+                showResult(3, `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testClaudeChatSimple() {
+            showResult(4, '⏳ Testing...', 'info');
+            try {
+                const response = await fetch('/api/proxy/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: [{ role: 'user', content: 'Respond with just "Test successful"' }],
+                        max_tokens: 50
+                    })
+                });
+                const data = await response.json();
+                const type = response.ok ? 'success' : 'error';
+                showResult(4, `${response.ok ? '✅' : '❌'} Status: ${response.status}\n\n${JSON.stringify(data, null, 2)}`, type);
+            } catch (error) {
+                showResult(4, `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testTelemetry() {
+            showResult(5, '⏳ Testing...', 'info');
+            try {
+                const response = await fetch('/api/proxy/telemetry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        events: [{
+                            userId: 'test-user',
+                            sessionId: 'test-session',
+                            component: 'EndpointTester',
+                            action: 'test',
+                            timestamp: new Date().toISOString(),
+                            metadata: { test: true },
+                            userRole: 'user'
+                        }]
+                    })
+                });
+                const data = await response.json();
+                const type = response.ok ? 'success' : 'error';
+                showResult(5, `${response.ok ? '✅' : '❌'} Status: ${response.status}\n\n${JSON.stringify(data, null, 2)}`, type);
+            } catch (error) {
+                showResult(5, `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAccount() {
+            showResult(6, '⏳ Testing...', 'info');
+            try {
+                const response = await fetch('/api/proxy/account');
+                const data = await response.json();
+                const type = response.ok ? 'success' : 'error';
+                showResult(6, `${response.ok ? '✅' : '❌'} Status: ${response.status}\n\n${JSON.stringify(data, null, 2)}`, type);
+            } catch (error) {
+                showResult(6, `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function runAllTests() {
+            await testGeneralHealth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testClaudeHealth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testClaudeChatFull();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testClaudeChatSimple();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testTelemetry();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testAccount();
+        }
+
+        // Show info on page load
+        console.log('🧪 PaiiD API Endpoint Tester loaded');
+        console.log('📍 Current URL:', window.location.href);
+        console.log('🌐 Origin:', window.location.origin);
+    </script>
+</body>
+</html>
