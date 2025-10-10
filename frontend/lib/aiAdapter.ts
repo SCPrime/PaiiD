@@ -262,8 +262,9 @@ Provide a concise analysis with:
    */
   async healthCheck(): Promise<boolean> {
     try {
-      // Test direct chat endpoint with a minimal request
-      const response = await fetch(`/api/chat`, {
+      // Call backend directly - same as chat method
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
+      const response = await fetch(`${backendUrl}/api/claude/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
