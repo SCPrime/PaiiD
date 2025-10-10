@@ -58,10 +58,11 @@ export class ClaudeAI {
       }
     }
     try {
-      console.log('[aiAdapter] Sending chat request to Claude API');
+      console.log('[aiAdapter] Sending chat request to backend');
 
-      // Use direct /api/chat endpoint (bypasses proxy complexity)
-      const response = await fetch(`/api/chat`, {
+      // Call backend directly - we know this works from testing
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
+      const response = await fetch(`${backendUrl}/api/claude/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
