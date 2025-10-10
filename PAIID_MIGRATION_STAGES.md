@@ -1,4 +1,4 @@
-# AI Trader Platform - Complete Staged Implementation Plan
+# PaiiD Platform - Complete Staged Implementation Plan
 ## Self-Contained Copy/Paste Blocks for VSCode Claude
 
 ---
@@ -8,11 +8,11 @@
 
 ```
 PROJECT CONTEXT:
-- Application: AI Trader Platform (Next.js frontend on Vercel + FastAPI backend on Render)
+- Application: PaiiD Platform (Next.js frontend on Vercel + FastAPI backend on Render)
 - Current Problem: Frontend shows only static feature cards, components not rendering
 - Root Cause: Duplicate CSP headers blocking React hydration
-- Backend Status: Fully functional at https://ai-trader-86a1.onrender.com
-- Frontend URL: https://ai-trader-snowy.vercel.app
+- Backend Status: Fully functional at https://paiid-86a1.onrender.com
+- Frontend URL: https://paiid-snowy.vercel.app
 - Goal: Fix CSP headers to allow React/Next.js to properly hydrate
 
 STAGE 1 OF 5: Fix Critical CSP Headers
@@ -22,7 +22,7 @@ TASK 1.1: Update CSP in next.config.js
 2. Locate the headers() async function (should be around lines 4-30)
 3. Find the Content-Security-Policy header value
 4. REPLACE the entire Content-Security-Policy value with this exact string:
-   "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://ai-trader-86a1.onrender.com wss://ai-trader-86a1.onrender.com; img-src 'self' data: blob: https:; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+   "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://paiid-86a1.onrender.com wss://paiid-86a1.onrender.com; img-src 'self' data: blob: https:; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
 5. Save the file
 
 TASK 1.2: Remove Duplicate Headers from vercel.json
@@ -69,7 +69,7 @@ STAGE 1 RESULT:
 
 ```
 PROJECT CONTEXT:
-- Application: AI Trader Platform
+- Application: PaiiD Platform
 - Previous Stage: CSP headers fixed, only one definition in next.config.js
 - Current Problem: StatusBar component stuck in loading state, PositionsTable not displaying data
 - Root Cause: Improper async state management in React components
@@ -224,7 +224,7 @@ STAGE 2 RESULT:
 
 ```
 PROJECT CONTEXT:
-- Application: AI Trader Platform
+- Application: PaiiD Platform
 - Previous Stages: CSP fixed, StatusBar working
 - Current Goal: Add radial menu as navigation layer over existing components
 - Approach: Use radial menu to show/hide existing working components
@@ -370,7 +370,7 @@ export default function Dashboard() {
       default:
         return (
           <div className="p-6 bg-gray-800 rounded-lg">
-            <h3 className="text-xl font-bold mb-4">Welcome to AI Trader</h3>
+            <h3 className="text-xl font-bold mb-4">Welcome to PaiiD</h3>
             <p className="text-gray-400 mb-4">
               Select a workflow from the radial menu to begin trading operations.
             </p>
@@ -400,7 +400,7 @@ export default function Dashboard() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">
-              🎯 AI Trading Platform
+              🎯 PaiiD Trading Platform
             </h1>
             <StatusBar />
           </div>
@@ -464,10 +464,10 @@ STAGE 3 RESULT:
 
 ```
 PROJECT CONTEXT:
-- Application: AI Trader Platform
+- Application: PaiiD Platform
 - Previous Stages: CSP fixed, components working, radial menu integrated
 - Current Goal: Deploy to Vercel and verify production functionality
-- Backend URL: https://ai-trader-86a1.onrender.com
+- Backend URL: https://paiid-86a1.onrender.com
 - Important: Check CORS settings on backend after deploy
 
 STAGE 4 OF 5: Deploy to Production
@@ -489,12 +489,12 @@ TASK 4.1: Commit and Push Changes
 TASK 4.2: Monitor Vercel Deployment
 1. After push, Vercel should auto-deploy
 2. Check Vercel dashboard or wait 3-5 minutes
-3. Visit: https://ai-trader-snowy.vercel.app
+3. Visit: https://paiid-snowy.vercel.app
 4. If page loads, continue to Task 4.3
 5. If error, check Vercel logs for build errors
 
 TASK 4.3: Run Production Diagnostics
-1. Open https://ai-trader-snowy.vercel.app in browser
+1. Open https://paiid-snowy.vercel.app in browser
 2. Open DevTools Console (F12)
 3. PASTE and run this diagnostic script:
 
@@ -552,11 +552,11 @@ TASK 4.4: Fix CORS if Needed (Only if API calls fail)
 If you see CORS errors in console:
 1. Note the exact error message
 2. Go to Render dashboard: https://dashboard.render.com
-3. Find your backend service (ai-trader)
+3. Find your backend service (paiid)
 4. Go to Environment variables
 5. Find: ALLOW_ORIGIN
-6. Current value might be: https://ai-trader-snowy.vercel.app/
-7. Change to: https://ai-trader-snowy.vercel.app (remove trailing slash)
+6. Current value might be: https://paiid-snowy.vercel.app/
+7. Change to: https://paiid-snowy.vercel.app (remove trailing slash)
 8. Also check it's not http:// (must be https://)
 9. Save and redeploy backend
 10. Wait 2-3 minutes for backend to restart
@@ -590,7 +590,7 @@ STAGE 4 RESULT:
 
 ```
 PROJECT CONTEXT:
-- Application: AI Trader Platform
+- Application: PaiiD Platform
 - Previous Stages: All fixes deployed, site is live
 - Current Goal: Verify complete end-to-end functionality
 - Test: Backend → Frontend data flow through radial UI navigation
@@ -598,7 +598,7 @@ PROJECT CONTEXT:
 STAGE 5 OF 5: Final Verification & Testing
 
 TASK 5.1: Test Complete User Flow
-1. Open https://ai-trader-snowy.vercel.app
+1. Open https://paiid-snowy.vercel.app
 2. Perform these actions in order:
 
    a. Check StatusBar:
@@ -768,7 +768,7 @@ Files Checked: [list files you verified]
 ## SUCCESS CRITERIA
 
 The implementation is successful when:
-1. ✅ https://ai-trader-snowy.vercel.app loads without blank page
+1. ✅ https://paiid-snowy.vercel.app loads without blank page
 2. ✅ Radial menu is visible and interactive
 3. ✅ Clicking radial segments loads different components
 4. ✅ StatusBar shows "System operational"

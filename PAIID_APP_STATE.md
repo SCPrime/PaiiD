@@ -51,7 +51,7 @@ D    → Blue gradient (#1a7560 to #0d5a4a)
 ## 📁 PROJECT STRUCTURE
 
 ```
-ai-Trader/
+PaiiD/
 ├── frontend/
 │   ├── components/
 │   │   ├── RadialMenu.tsx        ← Main navigation wheel

@@ -204,15 +204,15 @@ POST: api/trading/execute, api/settings, api/admin/kill
 #### Issue #2: Environment Variables
 **Required for Frontend:**
 ```
-BACKEND_API_BASE_URL=https://ai-trader-86a1.onrender.com  ✅ (server-side)
+BACKEND_API_BASE_URL=https://paiid-86a1.onrender.com  ✅ (server-side)
 API_TOKEN=<secret>                                        ✅ (server-side)
-PUBLIC_SITE_ORIGIN=https://ai-trader-snowy.vercel.app    ⚠️ (may be missing)
+PUBLIC_SITE_ORIGIN=https://paiid-snowy.vercel.app    ⚠️ (may be missing)
 ```
 
 **Required for Backend:**
 ```
 API_TOKEN=<same as frontend>     ✅ (set on Render)
-ALLOW_ORIGIN=https://ai-trader-snowy.vercel.app/  ⚠️ (has trailing slash - may cause CORS issues)
+ALLOW_ORIGIN=https://paiid-snowy.vercel.app/  ⚠️ (has trailing slash - may cause CORS issues)
 LIVE_TRADING=false               ✅ (set on Render)
 REDIS_URL=<optional>             ❓ (not configured - using in-memory fallback)
 ```
@@ -388,7 +388,7 @@ The application was built as:
 **Severity:** LOW
 **Impact:** Potential CORS failures on some requests
 **File:** Backend `ALLOW_ORIGIN` env var
-**Value:** `https://ai-trader-snowy.vercel.app/` (trailing slash)
+**Value:** `https://paiid-snowy.vercel.app/` (trailing slash)
 **Fix:** Remove trailing slash
 
 ---
@@ -483,8 +483,8 @@ Browser → ExecuteTradeForm.handleSubmit()
 **Action:**
 - Render Dashboard → Backend service → Environment
 - Find `ALLOW_ORIGIN` variable
-- Change from `https://ai-trader-snowy.vercel.app/`
-- To: `https://ai-trader-snowy.vercel.app` (no slash)
+- Change from `https://paiid-snowy.vercel.app/`
+- To: `https://paiid-snowy.vercel.app` (no slash)
 - Save and redeploy backend
 
 **Deliverable:** Functional UI with all components rendering correctly

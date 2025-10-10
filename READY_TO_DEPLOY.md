@@ -47,7 +47,7 @@ EOF
 Follow: **DEPLOY_INSTRUCTIONS.md** → "Step 1: Deploy Backend to Render"
 
 **Quick reference**:
-- Repo: `SCPrime/ai-Trader`
+- Repo: `SCPrime/PaiiD`
 - Branch: `feat/option-a-cloud-backend`
 - Root: `backend/`
 - Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
@@ -56,7 +56,7 @@ Follow: **DEPLOY_INSTRUCTIONS.md** → "Step 1: Deploy Backend to Render"
 Follow: **DEPLOY_INSTRUCTIONS.md** → "Step 2: Deploy Frontend to Vercel"
 
 **Quick reference**:
-- Repo: `SCPrime/ai-Trader`
+- Repo: `SCPrime/PaiiD`
 - Branch: `feat/option-a-cloud-backend`
 - Root: `frontend/`
 - Framework: Next.js
@@ -82,9 +82,9 @@ Follow: **GITHUB_PAGES_UPDATE.md**
 
 ## Links
 
-- **GitHub Branch**: https://github.com/SCPrime/ai-Trader/tree/feat/option-a-cloud-backend
-- **Hardening Commit**: https://github.com/SCPrime/ai-Trader/commit/53c90a29b99bd01aed1bcee5f392e33f40c229a4
-- **Compare to Main**: https://github.com/SCPrime/ai-Trader/compare/main...feat/option-a-cloud-backend?expand=1
+- **GitHub Branch**: https://github.com/SCPrime/PaiiD/tree/feat/option-a-cloud-backend
+- **Hardening Commit**: https://github.com/SCPrime/PaiiD/commit/53c90a29b99bd01aed1bcee5f392e33f40c229a4
+- **Compare to Main**: https://github.com/SCPrime/PaiiD/compare/main...feat/option-a-cloud-backend?expand=1
 
 ## Acceptance Criteria (from your specification)
 

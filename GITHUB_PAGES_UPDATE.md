@@ -2,7 +2,7 @@
 
 ## Current Issue
 
-GitHub Pages at https://scprime.github.io/ai-Trader/ currently shows:
+GitHub Pages at https://scprime.github.io/PaiiD/ currently shows:
 
 > **Production Ready ✅**
 > Access the dashboard at: `http://localhost:8000`
@@ -18,8 +18,8 @@ Replace the "Production Ready" section with:
 ```markdown
 ## 🌐 Live Deployment
 
-- **Frontend UI**: https://ai-trader-xxxx.vercel.app
-- **Backend API**: https://ai-trader-backend-xxxx.onrender.com
+- **Frontend UI**: https://paiid-xxxx.vercel.app
+- **Backend API**: https://paiid-backend-xxxx.onrender.com
 
 See [DEPLOY_INSTRUCTIONS.md](./DEPLOY_INSTRUCTIONS.md) for deployment guide.
 
@@ -53,7 +53,7 @@ If you don't want to maintain documentation on GitHub Pages:
 2. Under "Source", select **None**
 3. Save
 
-The site will become unavailable at https://scprime.github.io/ai-Trader/
+The site will become unavailable at https://scprime.github.io/PaiiD/
 
 ## Instructions
 

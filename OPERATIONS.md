@@ -1,4 +1,4 @@
-# AI Trader Operations Card
+# PaiiD Operations Card
 
 **Production Environment** | Last verified: 2025-09-30
 
@@ -8,28 +8,28 @@
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| **Frontend** | https://ai-trader-snowy.vercel.app | Main UI (Next.js) |
-| **Backend** | https://ai-trader-86a1.onrender.com | FastAPI service |
-| **Proxy Health** | https://ai-trader-snowy.vercel.app/api/proxy/api/health | End-to-end check |
+| **Frontend** | https://paiid-snowy.vercel.app | Main UI (Next.js) |
+| **Backend** | https://paiid-86a1.onrender.com | FastAPI service |
+| **Proxy Health** | https://paiid-snowy.vercel.app/api/proxy/api/health | End-to-end check |
 
 ---
 
 ## 🚦 Health Checks (30 seconds)
 
 ### Quick browser checks
-1. **Proxy Health**: https://ai-trader-snowy.vercel.app/api/proxy/api/health
+1. **Proxy Health**: https://paiid-snowy.vercel.app/api/proxy/api/health
    ✅ Expect: `{"status":"ok", "time":"..."}`
 
-2. **Backend Direct**: https://ai-trader-86a1.onrender.com/api/health
+2. **Backend Direct**: https://paiid-86a1.onrender.com/api/health
    ✅ Expect: `{"status":"ok", "time":"...", "redis":{...}}`
 
-3. **Frontend Root**: https://ai-trader-snowy.vercel.app/
-   ✅ Expect: AI Trader Dashboard UI
+3. **Frontend Root**: https://paiid-snowy.vercel.app/
+   ✅ Expect: PaiiD Dashboard UI
 
 ### Automated smoke test (PowerShell)
 ```powershell
-cd C:\Users\SSaint-Cyr\Documents\source\ai-Trader
-.\test-deployment.ps1 -VercelDomain "ai-trader-snowy.vercel.app" -TestDuplicate
+cd C:\Users\SSaint-Cyr\Documents\source\PaiiD
+.\test-deployment.ps1 -VercelDomain "paiid-snowy.vercel.app" -TestDuplicate
 ```
 
 **Expected output**: 4/4 tests passing
@@ -46,19 +46,19 @@ cd C:\Users\SSaint-Cyr\Documents\source\ai-Trader
 
 **Enable kill-switch** (blocks all live orders):
 ```bash
-curl -X POST "https://ai-trader-snowy.vercel.app/api/proxy/api/admin/kill" \
+curl -X POST "https://paiid-snowy.vercel.app/api/proxy/api/admin/kill" \
   -H "content-type: application/json" -d "true"
 ```
 
 **Disable kill-switch** (resume trading):
 ```bash
-curl -X POST "https://ai-trader-snowy.vercel.app/api/proxy/api/admin/kill" \
+curl -X POST "https://paiid-snowy.vercel.app/api/proxy/api/admin/kill" \
   -H "content-type: application/json" -d "false"
 ```
 
 **Verify status**:
 ```bash
-curl "https://ai-trader-snowy.vercel.app/api/proxy/api/settings"
+curl "https://paiid-snowy.vercel.app/api/proxy/api/settings"
 # Look for: "tradingHalted": true/false
 ```
 
@@ -81,7 +81,7 @@ vercel --prod
 ```
 
 **Check deployment**:
-Vercel → Projects → ai-trader → Deployments → latest should be "Ready"
+Vercel → Projects → paiid → Deployments → latest should be "Ready"
 
 ### Backend (Render)
 **Auto-deploy**: Push to `main` → Render builds automatically
@@ -98,7 +98,7 @@ Render → Logs → look for "Application startup complete"
 
 ### Single dry-run order
 ```bash
-curl -X POST "https://ai-trader-snowy.vercel.app/api/proxy/api/trading/execute" \
+curl -X POST "https://paiid-snowy.vercel.app/api/proxy/api/trading/execute" \
   -H "content-type: application/json" \
   -d '{
     "dryRun": true,
@@ -115,12 +115,12 @@ curl -X POST "https://ai-trader-snowy.vercel.app/api/proxy/api/trading/execute" 
 ```bash
 # First request (same ID)
 REQ_ID="dup-test-123"
-curl -X POST "https://ai-trader-snowy.vercel.app/api/proxy/api/trading/execute" \
+curl -X POST "https://paiid-snowy.vercel.app/api/proxy/api/trading/execute" \
   -H "content-type: application/json" \
   -d "{\"dryRun\":true,\"requestId\":\"$REQ_ID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}"
 
 # Second request (same ID) - should be rejected
-curl -X POST "https://ai-trader-snowy.vercel.app/api/proxy/api/trading/execute" \
+curl -X POST "https://paiid-snowy.vercel.app/api/proxy/api/trading/execute" \
   -H "content-type: application/json" \
   -d "{\"dryRun\":true,\"requestId\":\"$REQ_ID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}"
 ```
@@ -143,7 +143,7 @@ curl -X POST "https://ai-trader-snowy.vercel.app/api/proxy/api/trading/execute" 
 
 **Vercel** (Production):
 ```
-BACKEND_API_BASE_URL=https://ai-trader-86a1.onrender.com
+BACKEND_API_BASE_URL=https://paiid-86a1.onrender.com
 API_TOKEN=<secret-token>
 ```
 
@@ -151,7 +151,7 @@ API_TOKEN=<secret-token>
 ```
 API_TOKEN=<same-as-vercel>
 LIVE_TRADING=false
-ALLOW_ORIGIN=https://ai-trader-snowy.vercel.app
+ALLOW_ORIGIN=https://paiid-snowy.vercel.app
 REDIS_URL=<optional-redis-connection-string>
 ```
 
@@ -161,16 +161,16 @@ REDIS_URL=<optional-redis-connection-string>
 
 ### View current settings
 ```bash
-curl "https://ai-trader-snowy.vercel.app/api/proxy/api/settings"
+curl "https://paiid-snowy.vercel.app/api/proxy/api/settings"
 ```
 
 ### View positions
 ```bash
-curl "https://ai-trader-snowy.vercel.app/api/proxy/api/positions"
+curl "https://paiid-snowy.vercel.app/api/proxy/api/positions"
 ```
 
 ### Check build status
-- **Vercel**: https://vercel.com/scprimes-projects/ai-trader/deployments
+- **Vercel**: https://vercel.com/scprimes-projects/paiid/deployments
 - **Render**: https://dashboard.render.com → your service → Events
 
 ### Clear idempotency cache
@@ -182,7 +182,7 @@ curl "https://ai-trader-snowy.vercel.app/api/proxy/api/positions"
 ## 📊 Monitoring Checklist
 
 ### Daily (automated)
-- [ ] Run smoke test: `.\test-deployment.ps1 -VercelDomain "ai-trader-snowy.vercel.app" -TestDuplicate`
+- [ ] Run smoke test: `.\test-deployment.ps1 -VercelDomain "paiid-snowy.vercel.app" -TestDuplicate`
 - [ ] Check Vercel deployment status: all green
 - [ ] Check Render service status: "Live"
 
@@ -274,4 +274,4 @@ vercel --prod
 
 **Last Updated**: 2025-09-30
 **Maintained By**: Spence
-**Repo**: https://github.com/SCPrime/ai-Trader
+**Repo**: https://github.com/SCPrime/PaiiD

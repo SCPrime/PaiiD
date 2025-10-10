@@ -4,7 +4,7 @@ Complete reference for all backend API endpoints, including working endpoints an
 
 ## 🌐 Base URLs
 
-- **Production Backend**: `https://ai-trader-86a1.onrender.com`
+- **Production Backend**: `https://paiid-86a1.onrender.com`
 - **Local Backend**: `http://localhost:8000`
 - **Frontend Proxy**: `/api/proxy/` (all frontend requests use this prefix)
 
@@ -449,7 +449,7 @@ Real-time news updates via WebSocket.
 
 **Connection:**
 ```javascript
-const ws = new WebSocket('wss://ai-trader-86a1.onrender.com/ws/news');
+const ws = new WebSocket('wss://paiid-86a1.onrender.com/ws/news');
 
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);

@@ -1,6 +1,6 @@
-# AI Trader Frontend
+# PaiiD Frontend
 
-Next.js frontend application for the AI Trader platform.
+Next.js frontend application for the PaiiD platform.
 
 ## Features
 

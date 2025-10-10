@@ -252,7 +252,7 @@ Update `backend/render.yaml`:
 ```yaml
 services:
   - type: web
-    name: ai-trader-backend
+    name: paiid-backend
     env: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"

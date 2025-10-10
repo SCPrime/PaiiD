@@ -7,7 +7,7 @@
 ## 🚀 **Access Your Application**
 
 ### **Production URLs:**
-- **Frontend:** https://ai-trader-snowy.vercel.app
+- **Frontend:** https://paiid-snowy.vercel.app
 - **Backend:** Check [Render Dashboard](https://dashboard.render.com/)
 - **API Docs:** `https://your-backend-url.onrender.com/docs`
 
@@ -49,7 +49,7 @@ git push origin main
 ## 📊 **View Telemetry Data**
 
 ### **In the App:**
-1. Go to https://ai-trader-snowy.vercel.app
+1. Go to https://paiid-snowy.vercel.app
 2. Click Settings (⚙️ icon)
 3. Navigate to "Telemetry & Logging" tab
 
@@ -96,7 +96,7 @@ curl https://your-backend-url.onrender.com/api/portfolio/account \
 ```
 
 ### **3. Test Frontend:**
-1. Visit https://ai-trader-snowy.vercel.app
+1. Visit https://paiid-snowy.vercel.app
 2. Should load without errors
 3. All 10 workflows should be functional
 
@@ -117,7 +117,7 @@ curl https://your-backend-url.onrender.com/api/portfolio/account \
 
 To enable live trading:
 1. Go to [Render Dashboard](https://dashboard.render.com/)
-2. Select `ai-trader-backend`
+2. Select `paiid-backend`
 3. Environment → Edit `LIVE_TRADING` → Set to `true`
 4. Redeploy
 
@@ -200,7 +200,7 @@ To enable live trading:
 - [API Documentation](https://your-backend-url.onrender.com/docs)
 
 ### **Source Code:**
-- [GitHub Repository](https://github.com/SCPrime/ai-Trader)
+- [GitHub Repository](https://github.com/SCPrime/PaiiD)
 
 ---
 

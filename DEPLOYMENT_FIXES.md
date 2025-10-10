@@ -78,7 +78,7 @@ Copy this value. You'll use it in both Render and Vercel.
 
 **Option A: Render Key-Value (Easiest)**
 1. Render Dashboard → New → Redis
-2. Name: `ai-trader-redis`
+2. Name: `paiid-redis`
 3. Region: `Virginia (US East)`
 4. Plan: Free (0.1 GB)
 5. Copy the **Internal Redis URL** (starts with `redis://`)
@@ -88,15 +88,15 @@ Copy this value. You'll use it in both Render and Vercel.
 2. Copy the Redis URL
 
 ### Step 3: Configure Render Environment
-In Render dashboard for `ai-trader-backend`:
+In Render dashboard for `paiid-backend`:
 - `API_TOKEN` = (the token from Step 1)
 - `REDIS_URL` = (the Redis URL from Step 2)
-- `ALLOW_ORIGIN` = `https://ai-trader-snowy.vercel.app`
+- `ALLOW_ORIGIN` = `https://paiid-snowy.vercel.app`
 - `LIVE_TRADING` = `false`
 
 ### Step 4: Configure Vercel Environment
 In Vercel dashboard for the project, **Server-side variables only**:
-- `BACKEND_API_BASE_URL` = (your Render URL, e.g., `https://ai-trader-backend-xxxx.onrender.com`)
+- `BACKEND_API_BASE_URL` = (your Render URL, e.g., `https://paiid-backend-xxxx.onrender.com`)
 - `API_TOKEN` = (the **same** token from Step 1)
 
 ### Step 5: Deploy
@@ -114,7 +114,7 @@ After deployment, test:
 
 ```bash
 # Health check (should return JSON, not 500)
-curl -s https://ai-trader-snowy.vercel.app/api/proxy/api/health | jq .
+curl -s https://paiid-snowy.vercel.app/api/proxy/api/health | jq .
 
 # Should show: {"status":"healthy","redis":"connected",...}
 ```

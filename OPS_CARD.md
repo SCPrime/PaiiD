@@ -1,9 +1,9 @@
-# AI Trader Operations Card
+# PaiiD Operations Card
 
 ## Quick Reference
 
 **Live URLs**:
-- Frontend UI: `https://ai-trader-snowy.vercel.app`
+- Frontend UI: `https://paiid-snowy.vercel.app`
 - Backend API: `https://<your-render-app>.onrender.com`
 
 **Emergency Contact**: (Your team contact info here)
@@ -213,7 +213,7 @@ Check browser DevTools → Network tab to see:
 ### 🌐 Frontend Down
 
 **Symptoms**:
-- Can't load `https://ai-trader-snowy.vercel.app`
+- Can't load `https://paiid-snowy.vercel.app`
 - Buttons don't appear
 
 **Check**:
@@ -391,7 +391,7 @@ openssl rand -hex 32
 
 ### Test Health Endpoint (Terminal)
 ```bash
-curl -s https://ai-trader-snowy.vercel.app/api/proxy/api/health | jq .
+curl -s https://paiid-snowy.vercel.app/api/proxy/api/health | jq .
 ```
 
 ### Test Idempotency (Terminal)
@@ -399,17 +399,17 @@ curl -s https://ai-trader-snowy.vercel.app/api/proxy/api/health | jq .
 RID="test-$(date +%s)"
 curl -s -X POST -H "content-type: application/json" \
   -d "{\"dryRun\":true,\"requestId\":\"$RID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}" \
-  https://ai-trader-snowy.vercel.app/api/proxy/api/trading/execute | jq .
+  https://paiid-snowy.vercel.app/api/proxy/api/trading/execute | jq .
 
 # Run again - should return duplicate:true
 curl -s -X POST -H "content-type: application/json" \
   -d "{\"dryRun\":true,\"requestId\":\"$RID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}" \
-  https://ai-trader-snowy.vercel.app/api/proxy/api/trading/execute | jq .
+  https://paiid-snowy.vercel.app/api/proxy/api/trading/execute | jq .
 ```
 
 ### Check Rate Limit
 ```bash
-curl -I https://ai-trader-snowy.vercel.app/api/proxy/api/health | grep -i ratelimit
+curl -I https://paiid-snowy.vercel.app/api/proxy/api/health | grep -i ratelimit
 ```
 
 ---

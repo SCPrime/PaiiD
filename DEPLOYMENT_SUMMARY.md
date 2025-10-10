@@ -8,7 +8,7 @@
 ## 📊 **What Was Deployed**
 
 ### **Frontend (Vercel)**
-- **URL:** https://ai-trader-snowy.vercel.app
+- **URL:** https://paiid-snowy.vercel.app
 - **Branch:** `main`
 - **Auto-Deploy:** Enabled (triggers on push to main)
 
@@ -84,7 +84,7 @@ npm run test:coverage # Generate coverage report
 API_TOKEN=AKF6WG4GNJZWOSMX03EE
 ALPACA_API_KEY=PKZOA0NRY3QYX6N04X7E
 ALPACA_SECRET_KEY=2zPcmhcYvT2QtQcNsra8QIVALEvwKPcCk6pwSmEe
-ALLOW_ORIGIN=https://ai-trader-snowy.vercel.app
+ALLOW_ORIGIN=https://paiid-snowy.vercel.app
 LIVE_TRADING=false
 REDIS_URL=(auto-generated)
 ```
@@ -102,13 +102,13 @@ NEXT_PUBLIC_ENABLE_TELEMETRY=true
 ## 🎯 **How to Access**
 
 ### **1. Frontend Application**
-Visit: https://ai-trader-snowy.vercel.app
+Visit: https://paiid-snowy.vercel.app
 
 ### **2. Backend API**
 Check your Render dashboard for the backend URL:
 https://dashboard.render.com/
 
-Look for service: `ai-trader-backend`
+Look for service: `paiid-backend`
 
 ### **3. API Documentation**
 Once backend is deployed, visit:
@@ -164,7 +164,7 @@ Once backend is deployed, visit:
 ⚠️ **WARNING: Only enable this when you're 100% ready!**
 
 1. Go to Render dashboard
-2. Find `ai-trader-backend` service
+2. Find `paiid-backend` service
 3. Update environment variable: `LIVE_TRADING=true`
 4. Redeploy the service
 
@@ -275,7 +275,7 @@ curl https://your-backend-url.onrender.com/api/telemetry/stats
 ## 🎉 **Success Metrics**
 
 Your production deployment is successful if:
-- ✅ Frontend loads at https://ai-trader-snowy.vercel.app
+- ✅ Frontend loads at https://paiid-snowy.vercel.app
 - ✅ Backend responds to health checks
 - ✅ API calls work from frontend
 - ✅ Telemetry data is being collected
@@ -308,9 +308,9 @@ Your production deployment is successful if:
 
 ## 🔗 **Useful Links**
 
-- **Frontend:** https://ai-trader-snowy.vercel.app
+- **Frontend:** https://paiid-snowy.vercel.app
 - **Backend:** (Check Render dashboard)
-- **GitHub:** https://github.com/SCPrime/ai-Trader
+- **GitHub:** https://github.com/SCPrime/PaiiD
 - **Render Dashboard:** https://dashboard.render.com/
 - **Vercel Dashboard:** https://vercel.com/dashboard
 - **Alpaca Dashboard:** https://app.alpaca.markets/paper/dashboard/overview

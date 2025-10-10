@@ -1,6 +1,6 @@
-# AI Trader Backend
+# PaiiD Backend
 
-FastAPI backend service for the AI Trader application.
+FastAPI backend service for the PaiiD application.
 
 ## Features
 

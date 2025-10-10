@@ -1,4 +1,4 @@
-# VS Code Integration Guide - AI Trader Platform
+# VS Code Integration Guide - PaiiD Platform
 
 **Project**: PaiD Trading Platform
 **Date Created**: 2025-10-06
@@ -10,7 +10,7 @@
 
 ### Open Project in VS Code
 ```bash
-cd C:\Users\SSaint-Cyr\Documents\source\ai-Trader
+cd C:\Users\SSaint-Cyr\Documents\source\PaiiD
 code .
 ```
 
@@ -28,14 +28,14 @@ npm run dev
 ### Access Application
 - **Local Frontend**: http://localhost:3000
 - **Local Backend**: http://localhost:8000
-- **Production**: https://ai-trader-snowy.vercel.app
+- **Production**: https://paiid-snowy.vercel.app
 
 ---
 
 ## 📁 Project Structure
 
 ```
-ai-Trader/
+PaiiD/
 ├── frontend/                    # Next.js 14.2.33 React app
 │   ├── components/
 │   │   ├── ui/                 # Reusable UI components
@@ -528,10 +528,10 @@ git push origin main
 **5. Verify Production**
 ```bash
 # Test production frontend
-curl https://ai-trader-snowy.vercel.app/api/proxy/health
+curl https://paiid-snowy.vercel.app/api/proxy/health
 
 # Or open in browser
-start https://ai-trader-snowy.vercel.app
+start https://paiid-snowy.vercel.app
 ```
 
 ---
@@ -655,7 +655,7 @@ lsof -ti:3000 | xargs kill -9
 ### Git Repository
 ```bash
 # Clone repository
-git clone https://github.com/SCPrime/ai-Trader.git
+git clone https://github.com/SCPrime/PaiiD.git
 
 # View commit history
 git log --oneline -10
@@ -725,9 +725,9 @@ git add . && git commit -m "your message" && git push origin main
 ---
 
 **Last Updated**: 2025-10-06
-**Maintained By**: AI Trader Development Team
+**Maintained By**: PaiiD Development Team
 **Project Status**: Production Ready ✅
 
 ---
 
-*This guide is designed to help you efficiently work with the AI Trader platform in VS Code. Keep it updated as the project evolves!*
+*This guide is designed to help you efficiently work with the PaiiD platform in VS Code. Keep it updated as the project evolves!*

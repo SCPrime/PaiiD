@@ -1,4 +1,4 @@
-# 🚀 AI Trader - Complete Deployment Guide
+# 🚀 PaiiD - Complete Deployment Guide
 
 ## Status: ✅ Ready to Deploy
 
@@ -8,7 +8,7 @@ All code is committed and pushed to GitHub main branch.
 
 ## 📋 Prerequisites
 
-- GitHub account with `SCPrime/ai-Trader` repository
+- GitHub account with `SCPrime/PaiiD` repository
 - Render.com account (free tier)
 - Vercel account (already configured)
 
@@ -24,12 +24,12 @@ All code is committed and pushed to GitHub main branch.
 
 2. **Create New Web Service**
    - Click **"New +"** → **"Web Service"**
-   - Select repository: **`SCPrime/ai-Trader`**
+   - Select repository: **`SCPrime/PaiiD`**
    - Click **"Connect"**
 
 3. **Configure Service Settings**
    ```
-   Name:              ai-trader-backend
+   Name:              paiid-backend
    Region:            Oregon (US West)
    Branch:            main
    Root Directory:    backend
@@ -44,7 +44,7 @@ All code is committed and pushed to GitHub main branch.
    API_TOKEN              = AKF6WG4GNJZWOSMX03EE
    ALPACA_API_KEY         = PKZOA0NRY3QYX6N04X7E
    ALPACA_SECRET_KEY      = 2zPcmhcYvT2QtQcNsra8QIVALEvwKPcCk6pwSmEe
-   ALLOW_ORIGIN           = https://ai-trader-snowy.vercel.app
+   ALLOW_ORIGIN           = https://paiid-snowy.vercel.app
    LIVE_TRADING           = false
    ```
 
@@ -54,7 +54,7 @@ All code is committed and pushed to GitHub main branch.
    - Look for "Live" status with a green checkmark
 
 6. **Copy Your Backend URL**
-   - At the top of the page, you'll see: `https://ai-trader-backend.onrender.com`
+   - At the top of the page, you'll see: `https://paiid-backend.onrender.com`
    - **Copy this URL** - you'll need it for Step 2
 
 ---
@@ -73,7 +73,7 @@ echo "YOUR_RENDER_URL" | npx vercel env add BACKEND_API_BASE_URL production
 ```bash
 cd frontend
 npx vercel env rm BACKEND_API_BASE_URL production
-echo "https://ai-trader-backend.onrender.com" | npx vercel env add BACKEND_API_BASE_URL production
+echo "https://paiid-backend.onrender.com" | npx vercel env add BACKEND_API_BASE_URL production
 ```
 
 ---
@@ -86,7 +86,7 @@ npx vercel --prod
 
 Wait for deployment to complete. You'll see a URL like:
 ```
-https://ai-trader-snowy.vercel.app
+https://paiid-snowy.vercel.app
 ```
 
 ---
@@ -97,7 +97,7 @@ https://ai-trader-snowy.vercel.app
 
 ```bash
 # Replace with your actual Render URL
-curl https://ai-trader-backend.onrender.com/api/health
+curl https://paiid-backend.onrender.com/api/health
 ```
 
 Expected response:
@@ -112,7 +112,7 @@ Expected response:
 ### Test AI Recommendations Endpoint
 
 ```bash
-curl https://ai-trader-backend.onrender.com/api/ai/recommendations \
+curl https://paiid-backend.onrender.com/api/ai/recommendations \
   -H "Authorization: Bearer AKF6WG4GNJZWOSMX03EE"
 ```
 
@@ -121,7 +121,7 @@ Should return mock stock recommendations.
 ### Test Account Endpoint
 
 ```bash
-curl https://ai-trader-backend.onrender.com/api/account \
+curl https://paiid-backend.onrender.com/api/account \
   -H "Authorization: Bearer AKF6WG4GNJZWOSMX03EE"
 ```
 
@@ -129,7 +129,7 @@ Should return Alpaca account mock data.
 
 ### Test Frontend
 
-1. Open: https://ai-trader-snowy.vercel.app
+1. Open: https://paiid-snowy.vercel.app
 2. Click on **"AI RECS"** wedge
 3. Click **"Generate Recommendations"**
 4. Should see real data from backend (no more 404 errors!)

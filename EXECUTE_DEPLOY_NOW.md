@@ -3,7 +3,7 @@
 ## Status Check ✅
 
 **Code**: Ready on `feat/option-a-cloud-backend` branch
-**Proof**: https://github.com/SCPrime/ai-Trader/tree/feat/option-a-cloud-backend
+**Proof**: https://github.com/SCPrime/PaiiD/tree/feat/option-a-cloud-backend
 
 **Current Problem**:
 - Vercel is building the wrong target (static page, not the Next.js app)
@@ -33,7 +33,7 @@ Example output: `a1b2c3d4e5f6...` (64 characters)
 1. Go to https://dashboard.render.com/
 2. Click **New +** → **Redis**
 3. Configure:
-   - **Name**: `ai-trader-redis`
+   - **Name**: `paiid-redis`
    - **Region**: `Virginia (US East)`
    - **Plan**: `Free` (0.1 GB)
 4. Click **Create Redis**
@@ -60,13 +60,13 @@ Example output: `a1b2c3d4e5f6...` (64 characters)
 1. Go to https://dashboard.render.com/
 2. Click **New +** → **Web Service**
 3. **Connect Repository**:
-   - If not connected: Click **Connect GitHub** → Authorize → Select `SCPrime/ai-Trader`
-   - If already connected: Select `SCPrime/ai-Trader` from list
+   - If not connected: Click **Connect GitHub** → Authorize → Select `SCPrime/PaiiD`
+   - If already connected: Select `SCPrime/PaiiD` from list
 
 ### B. Configure Service
 
 **Basic Settings**:
-- **Name**: `ai-trader-backend`
+- **Name**: `paiid-backend`
 - **Region**: `Virginia (US East)`
 - **Branch**: `feat/option-a-cloud-backend` ⚠️ **CRITICAL: Not main!**
 - **Root Directory**: `backend/` ⚠️ **CRITICAL: Include trailing slash!**
@@ -87,7 +87,7 @@ Click **Advanced** → **Add Environment Variable** (add these 4):
 |-----|-------|-------|
 | `API_TOKEN` | `<paste token from Step 1>` | Must match Vercel |
 | `LIVE_TRADING` | `false` | Keeps trading disabled |
-| `ALLOW_ORIGIN` | `https://ai-trader-snowy.vercel.app` | Your Vercel URL |
+| `ALLOW_ORIGIN` | `https://paiid-snowy.vercel.app` | Your Vercel URL |
 | `REDIS_URL` | `<paste Redis URL from Step 2>` | From Render KV or Upstash |
 
 ### D. Deploy
@@ -95,13 +95,13 @@ Click **Advanced** → **Add Environment Variable** (add these 4):
 1. Click **Create Web Service**
 2. Wait for build to complete (5-10 minutes)
 3. **Copy your Render URL** from the top of the page:
-   - Format: `https://ai-trader-backend-xxxx.onrender.com`
+   - Format: `https://paiid-backend-xxxx.onrender.com`
    - You'll need this for Vercel config
 
 ### E. Verify Backend
 
 ```bash
-curl -s https://ai-trader-backend-xxxx.onrender.com/api/health | jq .
+curl -s https://paiid-backend-xxxx.onrender.com/api/health | jq .
 ```
 
 **Expected response**:
@@ -125,7 +125,7 @@ If `redis: "disconnected"`, check your `REDIS_URL` env var.
 ### A. Go to Your Project
 
 1. Go to https://vercel.com/dashboard
-2. Find your `ai-trader-snowy` project (or whatever it's named)
+2. Find your `paiid-snowy` project (or whatever it's named)
 3. Click on the project name
 
 ### B. Update Git Configuration
@@ -146,7 +146,7 @@ If `redis: "disconnected"`, check your `REDIS_URL` env var.
 
 | Key | Value | Environments |
 |-----|-------|--------------|
-| `BACKEND_API_BASE_URL` | `https://ai-trader-backend-xxxx.onrender.com` | All (or just Production) |
+| `BACKEND_API_BASE_URL` | `https://paiid-backend-xxxx.onrender.com` | All (or just Production) |
 | `API_TOKEN` | `<same token from Step 1>` | All (or just Production) |
 
 **Important**: Use the same `API_TOKEN` value from Step 1 (must match Render).
@@ -164,10 +164,10 @@ If `redis: "disconnected"`, check your `REDIS_URL` env var.
 
 ### E. Verify Frontend
 
-Once deployed, your Vercel URL: `https://ai-trader-snowy.vercel.app`
+Once deployed, your Vercel URL: `https://paiid-snowy.vercel.app`
 
 **Test in browser**:
-1. Open `https://ai-trader-snowy.vercel.app`
+1. Open `https://paiid-snowy.vercel.app`
 2. You should see **4 buttons**: Health, Settings, Positions, Execute (Dry Run)
 3. Click **Health** → JSON response should appear below
 
@@ -181,10 +181,10 @@ Once deployed, your Vercel URL: `https://ai-trader-snowy.vercel.app`
 
 Now that both services are deployed, verify CORS:
 
-1. Go back to **Render Dashboard** → `ai-trader-backend`
+1. Go back to **Render Dashboard** → `paiid-backend`
 2. Click **Environment** (left sidebar)
 3. Verify `ALLOW_ORIGIN` matches your Vercel URL **exactly**:
-   - Should be: `https://ai-trader-snowy.vercel.app`
+   - Should be: `https://paiid-snowy.vercel.app`
    - No trailing slash, no www, HTTPS only
 
 If you had to change it:
@@ -197,7 +197,7 @@ If you had to change it:
 
 ### Browser Testing
 
-1. Open https://ai-trader-snowy.vercel.app
+1. Open https://paiid-snowy.vercel.app
 2. Open DevTools (F12) → **Network** tab
 3. Click each button and verify:
 
@@ -221,7 +221,7 @@ If you had to change it:
 
 ```bash
 # Test health (should return JSON)
-curl -s https://ai-trader-snowy.vercel.app/api/proxy/api/health | jq .
+curl -s https://paiid-snowy.vercel.app/api/proxy/api/health | jq .
 
 # Test idempotency
 RID="test-$(date +%s)"
@@ -230,20 +230,20 @@ RID="test-$(date +%s)"
 curl -s -X POST \
   -H "content-type: application/json" \
   -d "{\"dryRun\":true,\"requestId\":\"$RID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}" \
-  https://ai-trader-snowy.vercel.app/api/proxy/api/trading/execute | jq .
+  https://paiid-snowy.vercel.app/api/proxy/api/trading/execute | jq .
 
 # Second request (same RID) - should return duplicate:true
 curl -s -X POST \
   -H "content-type: application/json" \
   -d "{\"dryRun\":true,\"requestId\":\"$RID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}" \
-  https://ai-trader-snowy.vercel.app/api/proxy/api/trading/execute | jq .
+  https://paiid-snowy.vercel.app/api/proxy/api/trading/execute | jq .
 ```
 
 ### Automated Test Script
 
 ```bash
 # From your repo root
-./test-deployment.sh https://ai-trader-snowy.vercel.app
+./test-deployment.sh https://paiid-snowy.vercel.app
 ```
 
 **Expected output**: All tests pass ✅
@@ -260,8 +260,8 @@ curl -s -X POST \
 ```markdown
 ## 🌐 Live Deployment
 
-- **Frontend**: https://ai-trader-snowy.vercel.app
-- **Backend**: https://ai-trader-backend-xxxx.onrender.com
+- **Frontend**: https://paiid-snowy.vercel.app
+- **Backend**: https://paiid-backend-xxxx.onrender.com
 
 See [DEPLOY_INSTRUCTIONS.md](./DEPLOY_INSTRUCTIONS.md) for deployment guide.
 ```
@@ -271,7 +271,7 @@ See [DEPLOY_INSTRUCTIONS.md](./DEPLOY_INSTRUCTIONS.md) for deployment guide.
 
 ### Option B: Disable GitHub Pages
 
-1. Go to https://github.com/SCPrime/ai-Trader/settings/pages
+1. Go to https://github.com/SCPrime/PaiiD/settings/pages
 2. Under **Source**, select **None**
 3. Click **Save**
 
@@ -338,7 +338,7 @@ Mark these as you complete them:
 
 ### "CORS errors"
 1. Verify `ALLOW_ORIGIN` in Render exactly matches your Vercel URL
-2. No trailing slash: `https://ai-trader-snowy.vercel.app` ✅
+2. No trailing slash: `https://paiid-snowy.vercel.app` ✅
 3. HTTPS required (not HTTP)
 4. Restart Render service after changing `ALLOW_ORIGIN`
 
@@ -361,7 +361,7 @@ Once all checkboxes are checked:
 
 2. **Optional: Add preview deployments**:
    - Update `ALLOW_ORIGIN` in Render to include preview URLs
-   - Format: `https://ai-trader-snowy.vercel.app,https://ai-trader-*-scprime.vercel.app`
+   - Format: `https://paiid-snowy.vercel.app,https://paiid-*-scprime.vercel.app`
 
 3. **Create Pull Request**:
    ```bash
@@ -398,11 +398,11 @@ Once all checkboxes are checked:
 
 ## Links
 
-- **Feature Branch**: https://github.com/SCPrime/ai-Trader/tree/feat/option-a-cloud-backend
-- **Deployment Fixes Commit**: https://github.com/SCPrime/ai-Trader/commit/45f7c2b
+- **Feature Branch**: https://github.com/SCPrime/PaiiD/tree/feat/option-a-cloud-backend
+- **Deployment Fixes Commit**: https://github.com/SCPrime/PaiiD/commit/45f7c2b
 - **Render Dashboard**: https://dashboard.render.com/
 - **Vercel Dashboard**: https://vercel.com/dashboard
-- **Your Vercel Site**: https://ai-trader-snowy.vercel.app
+- **Your Vercel Site**: https://paiid-snowy.vercel.app
 
 ---
 

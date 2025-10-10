@@ -1,6 +1,6 @@
 # Component Architecture Guide
 
-This document explains the technical architecture of the AI Trading Platform, how components interact, and how to extend the system with new workflows.
+This document explains the technical architecture of the PaiiD Trading Platform, how components interact, and how to extend the system with new workflows.
 
 ## 🏗️ System Architecture Overview
 
@@ -262,7 +262,7 @@ export default function Dashboard() {
 ```
 ┌───────────────────────────────────┐
 │           Header                  │ ← Fixed top
-│   🎯 AI Trading Platform          │
+│   🎯 PaiiD Trading Platform          │
 ├───────────────────────────────────┤
 │                                   │
 │      ┌─────────────┐              │
@@ -324,7 +324,7 @@ const theme = {
 
 ### Why Use a Proxy?
 
-Direct browser requests to `https://ai-trader-86a1.onrender.com` would cause CORS errors. The proxy routes all requests through Next.js API routes.
+Direct browser requests to `https://paiid-86a1.onrender.com` would cause CORS errors. The proxy routes all requests through Next.js API routes.
 
 ### How It Works
 
@@ -339,7 +339,7 @@ export default async function handler(req, res) {
   const { path } = req.query;
   const pathString = Array.isArray(path) ? path.join('/') : path;
 
-  const backendUrl = `https://ai-trader-86a1.onrender.com/${pathString}`;
+  const backendUrl = `https://paiid-86a1.onrender.com/${pathString}`;
 
   const response = await fetch(backendUrl, {
     method: req.method,
@@ -357,7 +357,7 @@ export default async function handler(req, res) {
 
 **Backend Receives:**
 ```
-https://ai-trader-86a1.onrender.com/api/portfolio/positions
+https://paiid-86a1.onrender.com/api/portfolio/positions
 ```
 
 ### Usage in Components

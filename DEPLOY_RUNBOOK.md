@@ -17,7 +17,7 @@ openssl rand -hex 32
 
 | Field | Value |
 |-------|-------|
-| Repo | `SCPrime/ai-Trader` |
+| Repo | `SCPrime/PaiiD` |
 | Branch | `feat/option-a-cloud-backend` |
 | Root | `backend/` |
 | Build | `pip install -r requirements.txt` |
@@ -28,7 +28,7 @@ openssl rand -hex 32
 ```
 API_TOKEN=<paste token from above>
 LIVE_TRADING=false
-ALLOW_ORIGIN=https://ai-trader-snowy.vercel.app
+ALLOW_ORIGIN=https://paiid-snowy.vercel.app
 REDIS_URL=<paste Redis internal URL>
 ```
 
@@ -42,7 +42,7 @@ curl https://<your-render-app>.onrender.com/api/health | jq .
 
 ## Vercel Frontend (5 min)
 
-**Dashboard**: https://vercel.com/dashboard → ai-trader-snowy project
+**Dashboard**: https://vercel.com/dashboard → paiid-snowy project
 
 ### Settings → Git
 - Production Branch: `feat/option-a-cloud-backend`
@@ -60,7 +60,7 @@ API_TOKEN=<same token from above>
 
 **Verify**:
 ```bash
-curl https://ai-trader-snowy.vercel.app/api/proxy/api/health | jq .
+curl https://paiid-snowy.vercel.app/api/proxy/api/health | jq .
 # Expect: {"status":"healthy","redis":"connected",...}
 ```
 
@@ -69,7 +69,7 @@ curl https://ai-trader-snowy.vercel.app/api/proxy/api/health | jq .
 ## Acceptance (5 min)
 
 ### Browser
-1. Open: https://ai-trader-snowy.vercel.app
+1. Open: https://paiid-snowy.vercel.app
 2. Should see **4 buttons** (not static page)
 3. DevTools → Network tab
 4. Click each button:
@@ -84,12 +84,12 @@ curl https://ai-trader-snowy.vercel.app/api/proxy/api/health | jq .
 RID="test-$(date +%s)"
 curl -s -X POST -H "content-type: application/json" \
   -d "{\"dryRun\":true,\"requestId\":\"$RID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}" \
-  https://ai-trader-snowy.vercel.app/api/proxy/api/trading/execute | jq .
+  https://paiid-snowy.vercel.app/api/proxy/api/trading/execute | jq .
 
 # Second request - expect duplicate:true
 curl -s -X POST -H "content-type: application/json" \
   -d "{\"dryRun\":true,\"requestId\":\"$RID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}" \
-  https://ai-trader-snowy.vercel.app/api/proxy/api/trading/execute | jq .
+  https://paiid-snowy.vercel.app/api/proxy/api/trading/execute | jq .
 ```
 
 ---

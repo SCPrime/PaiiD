@@ -17,7 +17,7 @@ const nextConfig = {
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
       style-src 'self' 'unsafe-inline';
-      connect-src 'self' http://localhost:8000 http://localhost:8001 http://127.0.0.1:8001 https://api.anthropic.com https://ai-trader-86a1.onrender.com wss://ai-trader-86a1.onrender.com;
+      connect-src 'self' http://localhost:8000 http://localhost:8001 http://127.0.0.1:8001 https://api.anthropic.com https://paiid-86a1.onrender.com wss://paiid-86a1.onrender.com;
       img-src 'self' data: blob: https:;
       font-src 'self' data:;
       object-src 'self' data:;

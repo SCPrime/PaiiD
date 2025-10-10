@@ -1,4 +1,4 @@
-# AI Trading Platform - Development Roadmap
+# PaiiD Trading Platform - Development Roadmap
 
 This roadmap details the implementation specifications for the 5 remaining workflow components. Each workflow is a standalone React component that integrates with the existing D3.js radial menu navigation.
 

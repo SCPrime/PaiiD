@@ -1,7 +1,7 @@
 # Cloud Deployment Instructions
 
 ## Prerequisites
-- GitHub repo: `SCPrime/ai-Trader`
+- GitHub repo: `SCPrime/PaiiD`
 - Branch: `feat/option-a-cloud-backend`
 - Render account with access to the repo
 - Vercel account with access to the repo
@@ -10,9 +10,9 @@
 
 1. Go to [Render Dashboard](https://dashboard.render.com/)
 2. Click **New +** → **Web Service**
-3. Connect repository: `SCPrime/ai-Trader`
+3. Connect repository: `SCPrime/PaiiD`
 4. Configure:
-   - **Name**: `ai-trader-backend` (or your preferred name)
+   - **Name**: `paiid-backend` (or your preferred name)
    - **Region**: Choose closest to you
    - **Branch**: `feat/option-a-cloud-backend`
    - **Root Directory**: `backend/`
@@ -36,12 +36,12 @@
 
 6. Click **Create Web Service**
 7. Wait for deployment (5-10 minutes)
-8. **Copy your Render URL**: `https://ai-trader-backend-xxxx.onrender.com`
+8. **Copy your Render URL**: `https://paiid-backend-xxxx.onrender.com`
 
 ### Verify Backend
 
 ```bash
-curl -s https://ai-trader-backend-xxxx.onrender.com/api/health | jq .
+curl -s https://paiid-backend-xxxx.onrender.com/api/health | jq .
 ```
 
 Expected response:
@@ -58,7 +58,7 @@ Expected response:
 
 1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
 2. Click **Add New** → **Project**
-3. Import repository: `SCPrime/ai-Trader`
+3. Import repository: `SCPrime/PaiiD`
 4. Configure:
    - **Framework Preset**: `Next.js`
    - **Root Directory**: `frontend/`
@@ -67,7 +67,7 @@ Expected response:
 
 5. **Environment Variables** (Server-side only):
    ```
-   BACKEND_API_BASE_URL=https://ai-trader-backend-xxxx.onrender.com
+   BACKEND_API_BASE_URL=https://paiid-backend-xxxx.onrender.com
    API_TOKEN=<same-token-as-render>
    ```
 
@@ -77,16 +77,16 @@ Expected response:
 
 7. Click **Deploy**
 8. Wait for deployment (2-5 minutes)
-9. **Copy your Vercel URL**: `https://ai-trader-xxxx.vercel.app`
+9. **Copy your Vercel URL**: `https://paiid-xxxx.vercel.app`
 
 ## Step 3: Update CORS on Render
 
 1. Go back to Render dashboard
-2. Select your `ai-trader-backend` service
+2. Select your `paiid-backend` service
 3. Go to **Environment** tab
 4. Update `ALLOW_ORIGIN`:
    ```
-   ALLOW_ORIGIN=https://ai-trader-xxxx.vercel.app
+   ALLOW_ORIGIN=https://paiid-xxxx.vercel.app
    ```
 5. Save (this will trigger a redeploy)
 
@@ -94,7 +94,7 @@ Expected response:
 
 ### Browser Testing (DevTools → Network)
 
-1. Open: `https://ai-trader-xxxx.vercel.app`
+1. Open: `https://paiid-xxxx.vercel.app`
 2. Open DevTools → Network tab
 3. Click each button:
    - **Health** → JSON response appears
