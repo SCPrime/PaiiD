@@ -44,9 +44,10 @@ const ALLOW_POST = new Set<string>([
   // Alpaca endpoints
   "orders",
   "watchlists",
-  // Claude AI endpoints
+  // Claude AI endpoints (both full and simplified paths)
   "claude/chat",
-  "chat", // Simplified chat endpoint alias
+  "claude/health",
+  "chat",
   // Telemetry
   "telemetry",
 ]);
