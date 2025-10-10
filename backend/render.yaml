@@ -24,6 +24,6 @@ services:
     - key: TRADING_MODE
       value: paper
     - key: ANTHROPIC_API_KEY
-      sync: false
+      value: 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
     - key: REDIS_URL
       generateValue: true
