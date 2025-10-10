@@ -1,0 +1,36 @@
+========================================
+   MANUAL DEPLOYMENT REQUIRED
+========================================
+
+Stage 15 requires manual Render dashboard access.
+
+WHAT TO DO NOW:
+
+1. Open this guide:
+   → RENDER_DEPLOYMENT_GUIDE.md
+
+2. Follow the step-by-step instructions to:
+   - Create new Render Web Service
+   - Configure environment variables
+   - Deploy backend
+
+3. After deployment completes:
+   - Note the backend URL Render assigns
+   - Report back here with:
+     * Backend URL (e.g., https://paiid-backend.onrender.com)
+     * Deployment status (success/failed)
+     * Any errors encountered
+
+FILES CREATED FOR YOUR REFERENCE:
+
+- RENDER_DEPLOYMENT_GUIDE.md     (Step-by-step instructions)
+- RENDER_DEPLOYMENT_CHECKLIST.md (Checklist to follow)
+- backend/RENDER_ENV_TEMPLATE.txt (Environment variable template)
+
+ESTIMATED TIME: 10-15 minutes
+
+After you complete the Render deployment manually,
+report back with the backend URL and I'll proceed with
+Stage 16 (configuration updates and testing).
+
+========================================

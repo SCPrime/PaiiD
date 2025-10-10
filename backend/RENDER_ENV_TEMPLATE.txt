@@ -1,0 +1,37 @@
+# PaiiD Backend - Render Environment Variables
+# Copy these to Render Dashboard → Environment section
+
+API_TOKEN=<from-backend-dot-env>
+TRADIER_API_KEY=<from-backend-dot-env>
+TRADIER_ACCOUNT_ID=<from-backend-dot-env>
+TRADIER_USE_SANDBOX=false
+TRADIER_API_BASE_URL=https://api.tradier.com/v1
+ANTHROPIC_API_KEY=<from-backend-dot-env>
+ALLOW_ORIGIN=https://frontend-scprimes-projects.vercel.app
+TRADING_MODE=live
+SUPERVISOR_MODE=suggest
+
+# Optional (can use defaults):
+AI_MODEL=claude-3-sonnet-20240229
+USE_AI_ANALYSIS=true
+MAX_POSITIONS=5
+POSITION_SIZE=0.02
+STOP_LOSS_PCT=0.02
+TAKE_PROFIT_PCT=0.04
+MAX_DAILY_TRADES=20
+MAX_POSITION_SIZE=100
+MAX_DAILY_LOSS=25
+MAX_TRADES_PER_DAY=10
+MAX_PORTFOLIO_RISK=0.10
+REQUIRE_CONFIRMATION=true
+
+# News API Keys (Optional):
+ALPHA_VANTAGE_API_KEY=<from-backend-dot-env>
+POLYGON_API_KEY=<from-backend-dot-env>
+FINNHUB_API_KEY=<from-backend-dot-env>
+
+# Instructions:
+# 1. Open backend/.env file
+# 2. Copy each value after the = sign
+# 3. Paste into Render dashboard
+# 4. Ensure ALLOW_ORIGIN matches your actual Vercel URL
