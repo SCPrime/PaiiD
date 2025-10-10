@@ -18,7 +18,7 @@ services:
     - key: APCA_API_BASE_URL
       value: https://paper-api.alpaca.markets
     - key: ALLOW_ORIGIN
-      value: https://paiid-snowy.vercel.app
+      value: https://frontend-scprimes-projects.vercel.app
     - key: LIVE_TRADING
       value: "false"
     - key: TRADING_MODE
