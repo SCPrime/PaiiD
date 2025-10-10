@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const BACKEND = process.env.BACKEND_API_BASE_URL || 'http://localhost:8000';
+const BACKEND = process.env.BACKEND_API_BASE_URL || 'http://localhost:8001';
 const API_TOKEN = process.env.API_TOKEN!;
 
 // Exact endpoints our UI uses (paths without /api prefix - added in URL construction)
@@ -32,6 +32,9 @@ const ALLOW_GET = new Set<string>([
   "clock",
   "calendar",
   "watchlists",
+  // Claude AI endpoints
+  "claude/chat",
+  "claude/health",
 ]);
 
 const ALLOW_POST = new Set<string>([
@@ -41,6 +44,10 @@ const ALLOW_POST = new Set<string>([
   // Alpaca endpoints
   "orders",
   "watchlists",
+  // Claude AI endpoints
+  "claude/chat",
+  // Telemetry
+  "telemetry",
 ]);
 
 const ALLOW_DELETE = new Set<string>([

@@ -14,7 +14,7 @@ export default async function handler(
     return res.status(400).json({ error: 'Symbol is required' });
   }
 
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  const BACKEND_URL = process.env.BACKEND_API_BASE_URL || 'http://localhost:8001';
 
   try {
     const response = await fetch(

@@ -44,9 +44,8 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
     const fetchMarketData = async () => {
       try {
         const apiToken = process.env.NEXT_PUBLIC_API_TOKEN || 'rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl';
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'http://127.0.0.1:8001';
 
-        const response = await fetch(`${backendUrl}/api/market/indices`, {
+        const response = await fetch(`/api/proxy/api/market/indices`, {
           headers: {
             'Authorization': `Bearer ${apiToken}`
           }

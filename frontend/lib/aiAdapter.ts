@@ -11,8 +11,8 @@ export class ClaudeAI {
   private conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
 
   constructor() {
-    // Use backend proxy (port 8001)
-    this.baseUrl = 'http://127.0.0.1:8001';
+    // Use Next.js API proxy to route to backend (works in both dev and production)
+    this.baseUrl = '';
   }
 
   /**
@@ -60,7 +60,7 @@ export class ClaudeAI {
     try {
       console.log('[aiAdapter] Sending chat request to backend proxy');
 
-      const response = await fetch(`${this.baseUrl}/api/claude/chat`, {
+      const response = await fetch(`/api/proxy/api/claude/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -260,7 +260,7 @@ Provide a concise analysis with:
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/claude/health`, {
+      const response = await fetch(`/api/proxy/api/claude/health`, {
         method: 'GET',
       });
 
