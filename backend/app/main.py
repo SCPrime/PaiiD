@@ -59,6 +59,10 @@ app.add_middleware(
         "https://paiid-snowy.vercel.app",
         "https://paiid-scprimes-projects.vercel.app",
         "https://paiid-git-main-scprimes-projects.vercel.app",
+        "https://frontend-scprimes-projects.vercel.app",
+        "https://frontend-three-rho-84.vercel.app",
+        "https://frontend-scprime-scprimes-projects.vercel.app",
+        "https://frontend-mftcsnbqx-scprimes-projects.vercel.app",
         settings.ALLOW_ORIGIN
     ] if settings.ALLOW_ORIGIN else ["*"],
     allow_credentials=True,

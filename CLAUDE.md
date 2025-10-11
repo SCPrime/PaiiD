@@ -7,8 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **PaiiD (Personal Artificial Intelligence Investment Dashboard)** - A full-stack AI-powered trading application with real-time market data, intelligent trade execution, and a 10-stage radial workflow interface. Integrates with Alpaca Paper Trading API for real-time portfolio management and Claude AI for conversational onboarding and strategy building.
 
 **Live Deployments:**
-- Frontend: https://paiid-snowy.vercel.app (Vercel)
-- Backend: https://paiid-86a1.onrender.com (Render)
+- Frontend: https://frontend-scprimes-projects.vercel.app (Vercel)
+- Backend: https://ai-trader-86a1.onrender.com (Render)
 
 ## Architecture
 
