@@ -1,7 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
-const API_TOKEN = process.env.API_TOKEN!;
+const API_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || '';
+
+if (!API_TOKEN) {
+  console.error('[PROXY] API_TOKEN not configured in environment variables');
+}
 
 // Exact endpoints our UI uses (paths without /api prefix - added in URL construction)
 const ALLOW_GET = new Set<string>([

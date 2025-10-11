@@ -4,8 +4,8 @@
 
 ## 🚀 Live Deployment
 
-- **Frontend**: https://paiid-snowy.vercel.app
-- **Backend API**: https://paiid-86a1.onrender.com
+- **Frontend**: https://frontend-scprimes-projects.vercel.app
+- **Backend API**: https://ai-trader-86a1.onrender.com
 
 ## 📊 Current Project State (Commit 5855bb5)
 
@@ -159,7 +159,7 @@ PaiiD/
    - **Output Directory**: `.next`
 3. Deploy automatically on every push to `main`
 
-**Deployment URL**: https://paiid-snowy.vercel.app
+**Deployment URL**: https://frontend-scprimes-projects.vercel.app
 
 ### Backend (Render)
 
@@ -171,7 +171,7 @@ PaiiD/
    - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 4. Add environment variables (Alpaca API keys)
 
-**API URL**: https://paiid-86a1.onrender.com
+**API URL**: https://ai-trader-86a1.onrender.com
 
 ## 🐛 Troubleshooting
 

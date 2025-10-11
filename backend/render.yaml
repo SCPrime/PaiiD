@@ -10,11 +10,11 @@ services:
   startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
   envVars:
     - key: API_TOKEN
-      value: rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl
+      sync: false  # Set via Render dashboard for security
     - key: APCA_API_KEY_ID
-      value: PKZOA0NRY3QYX6N04X7E
+      sync: false  # Set via Render dashboard
     - key: APCA_API_SECRET_KEY
-      value: 2zPcmhcYvT2QtQcNsra8QIVALEvwKPcCk6pwSmEe
+      sync: false  # Set via Render dashboard
     - key: APCA_API_BASE_URL
       value: https://paper-api.alpaca.markets
     - key: ALLOW_ORIGIN
@@ -24,6 +24,6 @@ services:
     - key: TRADING_MODE
       value: paper
     - key: ANTHROPIC_API_KEY
-      value: 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
+      sync: false  # Set via Render dashboard for security - NEVER commit API keys!
     - key: REDIS_URL
       generateValue: true

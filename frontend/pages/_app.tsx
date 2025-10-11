@@ -1,12 +1,19 @@
-// @ts-nocheck
 import type { AppProps } from 'next/app';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { TelemetryProvider } from '../components/TelemetryProvider';
 import { ChatProvider, useChat } from '../components/ChatContext';
 import AIChatBot from '../components/AIChatBot';
 import '../styles/globals.css';
 
-function AppContent({ Component, pageProps, userId, userRole, telemetryEnabled }: AppProps & { userId: string; userRole: 'owner' | 'beta' | 'alpha' | 'user'; telemetryEnabled: boolean }) {
+interface AppPropsExtended {
+  Component: AppProps['Component'];
+  pageProps: AppProps['pageProps'];
+  userId: string;
+  userRole: 'owner' | 'beta' | 'alpha' | 'user';
+  telemetryEnabled: boolean;
+}
+
+function AppContent({ Component, pageProps, userId, userRole, telemetryEnabled }: AppPropsExtended) {
   const { isChatOpen, closeChat } = useChat();
 
   return (
@@ -22,10 +29,23 @@ function AppContent({ Component, pageProps, userId, userRole, telemetryEnabled }
 }
 
 export default function App({ Component, pageProps }: AppProps) {
-  // Get user info (from your auth system or mock for now)
-  const [user] = useState({
-    id: 'owner-001', // Replace with real user ID from your auth system
-    role: 'owner' as const, // or 'beta', 'alpha', 'user'
+  // Get user info from localStorage (or generate unique ID)
+  const [user] = useState(() => {
+    if (typeof window === 'undefined') {
+      return { id: 'anonymous', role: 'user' as const };
+    }
+
+    const storedUserId = localStorage.getItem('user-id');
+    const userId = storedUserId || `user-${Date.now()}`;
+
+    if (!storedUserId) {
+      localStorage.setItem('user-id', userId);
+    }
+
+    const storedRole = localStorage.getItem('user-role') as 'owner' | 'beta' | 'alpha' | 'user' | null;
+    const userRole = storedRole || 'user';
+
+    return { id: userId, role: userRole };
   });
 
   // Check if telemetry is enabled from environment variable

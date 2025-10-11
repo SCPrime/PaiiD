@@ -33,14 +33,11 @@ export default function Dashboard() {
 
   // Check if user is set up on mount
   useEffect(() => {
-    // FOR TESTING: Always clear and show onboarding
-    if (typeof window !== 'undefined') {
-      localStorage.clear();
-    }
+    const setupComplete = typeof window !== 'undefined'
+      ? localStorage.getItem('user-setup-complete') === 'true'
+      : false;
 
-    const userExists = false; // Force onboarding for testing
-    setIsUserSetup(userExists);
-
+    setIsUserSetup(setupComplete);
     setIsLoading(false);
   }, []);
 
