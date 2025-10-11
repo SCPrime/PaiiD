@@ -11,13 +11,13 @@
   "build": {
     "env": {
       "NODE_ENV": "production",
-      "NEXT_PUBLIC_BACKEND_API_BASE_URL": "https://ai-trader-86a1.onrender.com",
+      "NEXT_PUBLIC_BACKEND_API_BASE_URL": "https://paiid-86a1.onrender.com",
       "NEXT_PUBLIC_API_TOKEN": "rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl"
     }
   },
   "env": {
     "NEXT_PUBLIC_APP_NAME": "PaiiD",
-    "NEXT_PUBLIC_BACKEND_API_BASE_URL": "https://ai-trader-86a1.onrender.com",
+    "NEXT_PUBLIC_BACKEND_API_BASE_URL": "https://paiid-86a1.onrender.com",
     "NEXT_PUBLIC_API_TOKEN": "rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl"
   }
 }

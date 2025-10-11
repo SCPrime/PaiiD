@@ -14,7 +14,7 @@ export default async function handler(
     return res.status(400).json({ error: 'Symbol is required' });
   }
 
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://paiid-86a1.onrender.com';
 
   try {
     const response = await fetch(

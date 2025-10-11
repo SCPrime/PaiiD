@@ -14,7 +14,7 @@ export default async function handler(
   }
 
   // Get backend URL from environment variable (production default)
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://paiid-86a1.onrender.com';
 
   try {
     const { messages, max_tokens = 2000, system } = req.body;
