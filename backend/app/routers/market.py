@@ -1,5 +1,9 @@
 """
 Market conditions and analysis endpoints
+
+🚨 TRADIER INTEGRATION ACTIVE 🚨
+This module uses Tradier API for ALL market data.
+Alpaca is ONLY used for paper trading execution.
 """
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Literal
@@ -7,6 +11,15 @@ from pydantic import BaseModel
 from ..core.auth import require_bearer
 from ..core.config import settings
 import requests
+
+# LOUD LOGGING TO VERIFY NEW CODE IS DEPLOYED
+print("=" * 80)
+print("🚨 TRADIER INTEGRATION CODE LOADED - market.py")
+print("=" * 80)
+print(f"TRADIER_API_KEY present: {bool(settings.TRADIER_API_KEY)}")
+print(f"TRADIER_API_BASE_URL: {settings.TRADIER_API_BASE_URL}")
+print(f"ANTHROPIC_API_KEY present: {bool(settings.ANTHROPIC_API_KEY)}")
+print("=" * 80, flush=True)
 
 router = APIRouter(tags=["market"])
 

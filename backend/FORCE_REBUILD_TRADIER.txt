@@ -1,0 +1,16 @@
+FORCE RENDER REBUILD - TRADIER INTEGRATION
+==========================================
+
+This file forces Render to bypass build cache and rebuild from source.
+
+Timestamp: 2025-10-12T17:45:00Z
+Commit: 6aa4038 (Tradier integration)
+Purpose: Deploy Tradier API integration for market data
+
+Expected behavior after this deploy:
+- Tradier API used for market indices (DOW, NASDAQ)
+- Claude AI fallback if Tradier unavailable
+- NO Alpaca API calls for market data
+- Alpaca ONLY for paper trading execution
+
+If you see this file, the new code is deployed! ✅
