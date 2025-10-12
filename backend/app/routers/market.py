@@ -118,8 +118,8 @@ async def get_major_indices() -> dict:
             "Accept": "application/json"
         }
 
-        # Tradier symbols: $DJI for Dow Jones Industrial, $COMPX for NASDAQ Composite
-        symbols = "$DJI,$COMPX"
+        # Tradier symbols: $DJI for Dow Jones Industrial, COMP:GIDS for NASDAQ Composite
+        symbols = "$DJI,COMP:GIDS"
         resp = requests.get(
             f"{settings.TRADIER_API_BASE_URL}/markets/quotes",
             headers=headers,
@@ -149,7 +149,7 @@ async def get_major_indices() -> dict:
                         "change": round(change, 2),
                         "changePercent": round(change_percent, 2)
                     }
-                elif symbol == "$COMPX":
+                elif symbol == "COMP:GIDS":
                     nasdaq_data = {
                         "last": round(last, 2),
                         "change": round(change, 2),
