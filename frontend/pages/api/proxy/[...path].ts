@@ -66,22 +66,43 @@ const ALLOW_DELETE = new Set<string>([
 function isAllowedOrigin(req: NextApiRequest) {
   const origin = (req.headers.origin || "").toLowerCase();
 
+  // DEBUG: Log origin for troubleshooting
+  console.log(`[PROXY] ====== ORIGIN CHECK ======`);
+  console.log(`[PROXY] Origin header: "${origin}"`);
+  console.log(`[PROXY] Referer: "${req.headers.referer || 'none'}"`);
+  console.log(`[PROXY] Host: "${req.headers.host || 'none'}"`);
+  console.log(`[PROXY] URL: "${req.url}"`);
+
   // Allow same-origin requests (no origin header)
-  if (!origin) return true;
+  if (!origin) {
+    console.log(`[PROXY] ✅ ALLOWED: No origin header (same-origin request)`);
+    return true;
+  }
 
   // Allow localhost for development
   const isLocalhost = origin.includes("localhost") || origin.includes("127.0.0.1");
-  if (isLocalhost) return true;
+  if (isLocalhost) {
+    console.log(`[PROXY] ✅ ALLOWED: Localhost (${origin})`);
+    return true;
+  }
 
   // Allow all Vercel deployments (production + preview)
-  if (origin.includes("vercel.app")) return true;
+  if (origin.includes("vercel.app")) {
+    console.log(`[PROXY] ✅ ALLOWED: Vercel deployment (${origin})`);
+    return true;
+  }
 
   // Allow configured production origin (if set)
   const prod = process.env.PUBLIC_SITE_ORIGIN?.toLowerCase();
-  if (prod && origin === prod) return true;
+  if (prod && origin === prod) {
+    console.log(`[PROXY] ✅ ALLOWED: Configured origin (${origin})`);
+    return true;
+  }
 
   // Default deny for security
-  console.warn(`[PROXY] Blocked origin: ${origin}`);
+  console.error(`[PROXY] ❌ BLOCKED origin: "${origin}"`);
+  console.error(`[PROXY] ❌ Reason: Does not match any allowed pattern`);
+  console.error(`[PROXY] ❌ Allowed patterns: localhost, vercel.app, ${prod || 'none configured'}`);
   return false;
 }
 
