@@ -6,6 +6,16 @@ export interface AIMessage {
   content: string;
 }
 
+export interface UserPreferences {
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
+  tradingStyle?: 'day' | 'swing' | 'long-term';
+  preferredAssets?: string[];
+  goals?: string[];
+  investmentAmount?: { mode: 'range' | 'unlimited' | 'custom'; value?: number; range?: string };
+  instruments?: string[];
+  watchlist?: string[];
+}
+
 export class ClaudeAI {
   private baseUrl: string;
   private conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
@@ -58,11 +68,10 @@ export class ClaudeAI {
       }
     }
     try {
-      console.log('[aiAdapter] Sending chat request to backend');
+      console.log('[aiAdapter] Sending chat request to backend via proxy');
 
-      // Call backend directly - we know this works from testing
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
-      const response = await fetch(`${backendUrl}/api/claude/chat`, {
+      // Use proxy to avoid CORS and add auth automatically
+      const response = await fetch('/api/proxy/claude/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -262,9 +271,8 @@ Provide a concise analysis with:
    */
   async healthCheck(): Promise<boolean> {
     try {
-      // Call backend directly - same as chat method
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
-      const response = await fetch(`${backendUrl}/api/claude/chat`, {
+      // Use proxy for health check
+      const response = await fetch('/api/proxy/claude/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -15,9 +15,17 @@ class Settings(BaseModel):
     LIVE_TRADING: bool = os.getenv("LIVE_TRADING", "false").lower() == "true"
     IDMP_TTL_SECONDS: int = int(os.getenv("IDMP_TTL_SECONDS", "600"))
 
-    # Alpaca API credentials
+    # Alpaca API credentials (PAPER TRADING EXECUTION ONLY)
     ALPACA_API_KEY: str = os.getenv("ALPACA_PAPER_API_KEY", "")
     ALPACA_SECRET_KEY: str = os.getenv("ALPACA_PAPER_SECRET_KEY", "")
     ALPACA_BASE_URL: str = "https://paper-api.alpaca.markets"
+
+    # Tradier API credentials (MARKET DATA, NEWS, QUOTES)
+    TRADIER_API_KEY: str = os.getenv("TRADIER_API_KEY", "")
+    TRADIER_ACCOUNT_ID: str = os.getenv("TRADIER_ACCOUNT_ID", "")
+    TRADIER_API_BASE_URL: str = os.getenv("TRADIER_API_BASE_URL", "https://api.tradier.com/v1")
+
+    # Anthropic API (AI FALLBACK for market data)
+    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 
 settings = Settings()

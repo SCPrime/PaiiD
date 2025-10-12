@@ -86,89 +86,121 @@ async def get_market_conditions() -> dict:
 @router.get("/market/indices", dependencies=[Depends(require_bearer)])
 async def get_major_indices() -> dict:
     """
-    Get current prices for Dow Jones Industrial and NASDAQ Composite using live Alpaca snapshot data
+    Get current prices for Dow Jones Industrial and NASDAQ Composite
+
+    Data Source Priority:
+    1. Tradier API (live market data)
+    2. Claude AI (intelligent fallback)
+    3. Error 503 (service unavailable)
+
     Returns data in format: { dow: {...}, nasdaq: {...} }
     """
+    # Try Tradier first
     try:
-        # Fetch snapshots from Alpaca - using $DJI and $COMP indices
-        # Note: Alpaca uses $ prefix for indices
-        symbols = ["$DJI.IX", "$COMP.IX"]  # Dow Jones Industrial, NASDAQ Composite
+        if not settings.TRADIER_API_KEY:
+            raise ValueError("Tradier API key not configured")
+
         headers = {
-            "APCA-API-KEY-ID": settings.ALPACA_API_KEY,
-            "APCA-API-SECRET-KEY": settings.ALPACA_SECRET_KEY
+            "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
+            "Accept": "application/json"
         }
 
-        # Fetch latest quotes for each symbol
-        all_bars = {}
-        for symbol in symbols:
-            try:
-                resp = requests.get(
-                    f"{settings.ALPACA_BASE_URL}/v2/stocks/{symbol}/bars/latest",
-                    headers=headers,
-                    params={"feed": "iex"}  # Use IEX feed for paper trading
-                )
-                if resp.status_code == 200:
-                    symbol_data = resp.json()
-                    if "bar" in symbol_data:
-                        all_bars[symbol] = symbol_data["bar"]
-            except Exception as e:
-                print(f"Error fetching {symbol}: {e}")
-                continue
+        # Tradier symbols: $DJI for Dow Jones Industrial, $COMPX for NASDAQ Composite
+        symbols = "$DJI,$COMPX"
+        resp = requests.get(
+            f"{settings.TRADIER_API_BASE_URL}/markets/quotes",
+            headers=headers,
+            params={"symbols": symbols, "greeks": "false"}
+        )
 
-        # Process results
-        dow_data = {}
-        nasdaq_data = {}
+        if resp.status_code == 200:
+            data = resp.json()
+            quotes = data.get("quotes", {}).get("quote", [])
 
-        if "$DJI.IX" in all_bars:
-            bar = all_bars["$DJI.IX"]
-            price = bar.get("c", 0)
-            open_price = bar.get("o", price)
-            change = price - open_price
-            changePercent = (change / open_price * 100) if open_price else 0
+            # Handle both single quote (dict) and multiple quotes (list)
+            if isinstance(quotes, dict):
+                quotes = [quotes]
 
-            dow_data = {
-                "last": round(price, 2),
-                "change": round(change, 2),
-                "changePercent": round(changePercent, 2)
-            }
+            dow_data = {}
+            nasdaq_data = {}
 
-        if "$COMP.IX" in all_bars:
-            bar = all_bars["$COMP.IX"]
-            price = bar.get("c", 0)
-            open_price = bar.get("o", price)
-            change = price - open_price
-            changePercent = (change / open_price * 100) if open_price else 0
+            for quote in quotes:
+                symbol = quote.get("symbol", "")
+                last = float(quote.get("last", 0))
+                change = float(quote.get("change", 0))
+                change_percent = float(quote.get("change_percentage", 0))
 
-            nasdaq_data = {
-                "last": round(price, 2),
-                "change": round(change, 2),
-                "changePercent": round(changePercent, 2)
-            }
+                if symbol == "$DJI":
+                    dow_data = {
+                        "last": round(last, 2),
+                        "change": round(change, 2),
+                        "changePercent": round(change_percent, 2)
+                    }
+                elif symbol == "$COMPX":
+                    nasdaq_data = {
+                        "last": round(last, 2),
+                        "change": round(change, 2),
+                        "changePercent": round(change_percent, 2)
+                    }
 
-        if dow_data or nasdaq_data:
-            print(f"[Market] Fetched live data for Dow/NASDAQ")
-            return {
-                "dow": dow_data,
-                "nasdaq": nasdaq_data
-            }
-        else:
-            raise ValueError("No snapshot data returned")
+            if dow_data or nasdaq_data:
+                print("[Market] ✅ Fetched live data from Tradier for Dow/NASDAQ")
+                return {
+                    "dow": dow_data or {"last": 0, "change": 0, "changePercent": 0},
+                    "nasdaq": nasdaq_data or {"last": 0, "change": 0, "changePercent": 0},
+                    "source": "tradier"
+                }
+            else:
+                raise ValueError("No Tradier quote data returned")
 
     except Exception as e:
-        print(f"Error fetching live market data: {e}")
-        # Fallback to mock data if API fails
-        return {
-            "dow": {
-                "last": 42500.00,
-                "change": 125.50,
-                "changePercent": 0.30
-            },
-            "nasdaq": {
-                "last": 18350.00,
-                "change": 98.75,
-                "changePercent": 0.54
+        print(f"[Market] ⚠️ Tradier failed: {e}, trying Claude AI fallback...")
+
+        # Fallback to Claude AI
+        try:
+            if not settings.ANTHROPIC_API_KEY:
+                raise ValueError("Anthropic API key not configured")
+
+            from anthropic import Anthropic
+            client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+            message = client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=1024,
+                messages=[{
+                    "role": "user",
+                    "content": """Provide current market index values for Dow Jones Industrial Average ($DJI) and NASDAQ Composite ($COMPX).
+                    Return ONLY valid JSON in this exact format with realistic current values:
+                    {
+                      "dow": {"last": 42500.00, "change": 125.50, "changePercent": 0.30},
+                      "nasdaq": {"last": 18350.00, "change": 98.75, "changePercent": 0.54}
+                    }"""
+                }]
+            )
+
+            # Parse Claude's response
+            import json
+            ai_text = message.content[0].text.strip()
+            # Remove markdown code blocks if present
+            if "```json" in ai_text:
+                ai_text = ai_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in ai_text:
+                ai_text = ai_text.split("```")[1].split("```")[0].strip()
+
+            ai_data = json.loads(ai_text)
+
+            print("[Market] ✅ Using Claude AI fallback for Dow/NASDAQ")
+            return {
+                **ai_data,
+                "source": "claude_ai"
             }
-        }
+
+        except Exception as ai_error:
+            print(f"[Market] ❌ Claude AI fallback also failed: {ai_error}")
+            raise HTTPException(
+                status_code=503,
+                detail="Market data temporarily unavailable (Tradier and Claude AI both failed)"
+            )
 
 
 @router.get("/market/sectors", dependencies=[Depends(require_bearer)])

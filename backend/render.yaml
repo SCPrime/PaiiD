@@ -11,19 +11,28 @@ services:
   envVars:
     - key: API_TOKEN
       sync: false  # Set via Render dashboard for security
-    - key: APCA_API_KEY_ID
+    # Alpaca API - PAPER TRADING EXECUTION ONLY (not for market data)
+    - key: ALPACA_PAPER_API_KEY
       sync: false  # Set via Render dashboard
-    - key: APCA_API_SECRET_KEY
+    - key: ALPACA_PAPER_SECRET_KEY
       sync: false  # Set via Render dashboard
     - key: APCA_API_BASE_URL
       value: https://paper-api.alpaca.markets
+    # Tradier API - MARKET DATA, NEWS, QUOTES (primary data source)
+    - key: TRADIER_API_KEY
+      sync: false  # Set via Render dashboard
+    - key: TRADIER_ACCOUNT_ID
+      sync: false  # Set via Render dashboard
+    - key: TRADIER_API_BASE_URL
+      value: https://api.tradier.com/v1
+    # Anthropic API - AI FALLBACK for market data when Tradier unavailable
+    - key: ANTHROPIC_API_KEY
+      sync: false  # Set via Render dashboard for security - NEVER commit API keys!
     - key: ALLOW_ORIGIN
       value: https://frontend-scprimes-projects.vercel.app
     - key: LIVE_TRADING
       value: "false"
     - key: TRADING_MODE
       value: paper
-    - key: ANTHROPIC_API_KEY
-      sync: false  # Set via Render dashboard for security - NEVER commit API keys!
     - key: REDIS_URL
       generateValue: true

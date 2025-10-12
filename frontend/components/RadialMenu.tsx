@@ -611,7 +611,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
             }}>D</span>
           </div>
 
-          {/* Line 1: Personal Artificial Intelligence Dashboard */}
+          {/* Line 1: Personal Artificial Intelligence Investment Dashboard */}
           <div style={{
             fontSize: '22px',
             fontWeight: '600',
@@ -620,7 +620,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
             marginBottom: '12px',
             textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)'
           }}>
-            Personal Artificial Intelligence Dashboard
+            Personal Artificial Intelligence Investment Dashboard
           </div>
 
           {/* Line 2: 10 Stage Workflow */}

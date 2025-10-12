@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * AI-Guided User Setup
  * Conversational onboarding with Claude AI
@@ -109,7 +108,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
 
     // Create user with ONLY AI-extracted preferences (NO personal info)
     const user = createUser(
-      undefined, // No name collection
+      'PaiiD User', // Anonymous display name
       undefined, // No email collection
       undefined, // No test group
       {
@@ -119,7 +118,6 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
         preferredStrategy: extractedPrefs.tradingStyle,
         investmentAmount: extractedPrefs.investmentAmount,
         investmentTypes: extractedPrefs.instruments,
-        watchlist: extractedPrefs.watchlist,
         completedAt: new Date().toISOString(),
       }
     );
@@ -133,16 +131,17 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
     return (
       <div
         style={{
-          minHeight: '100vh',
+          height: '100vh',
           width: '100vw',
           background: theme.background.primary,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: theme.spacing.lg,
+          padding: '16px',
+          overflow: 'hidden',
         }}
       >
-        <div style={{ maxWidth: '800px', width: '100%', position: 'relative' }}>
+        <div style={{ maxWidth: '800px', width: '100%', position: 'relative', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto' }}>
           {/* Particle Background for "aii" area */}
           <div
             style={{
@@ -175,22 +174,22 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             ))}
           </div>
 
-          {/* Centered Enhanced Logo Header - 96px */}
+          {/* Centered Enhanced Logo Header - 72px */}
           <div
             style={{
               textAlign: 'center',
-              marginBottom: theme.spacing.xl,
+              marginBottom: theme.spacing.lg,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '20px',
+              gap: '12px',
               position: 'relative',
             }}
           >
-            {/* Line 1: Large PaiiD Logo (96px) */}
+            {/* Line 1: Large PaiiD Logo (72px) */}
             <h1
               style={{
-                fontSize: '96px',
+                fontSize: '72px',
                 fontWeight: 'bold',
                 margin: 0,
                 letterSpacing: '4px',
@@ -246,10 +245,10 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               </span>
             </h1>
 
-            {/* Line 2: Primary Subtitle (22px) */}
+            {/* Line 2: Primary Subtitle (18px) */}
             <p
               style={{
-                fontSize: '22px',
+                fontSize: '18px',
                 color: '#cbd5e1',
                 margin: 0,
                 letterSpacing: '1px',
@@ -269,10 +268,10 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               /investment Dashboard
             </p>
 
-            {/* Line 3: Secondary Subtitle (16px) */}
+            {/* Line 3: Secondary Subtitle (14px) */}
             <p
               style={{
-                fontSize: '16px',
+                fontSize: '14px',
                 color: '#94a3b8',
                 margin: 0,
                 letterSpacing: '0.5px',
@@ -322,8 +321,8 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             >
               <Brain
                 style={{
-                  width: '64px',
-                  height: '64px',
+                  width: '48px',
+                  height: '48px',
                   color: theme.workflow.strategyBuilder,
                   margin: `0 auto ${theme.spacing.md}`,
                 }}
@@ -371,7 +370,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               }}
             >
               <Target
-                style={{ width: '64px', height: '64px', color: theme.colors.primary, margin: `0 auto ${theme.spacing.md}` }}
+                style={{ width: '48px', height: '48px', color: theme.colors.primary, margin: `0 auto ${theme.spacing.md}` }}
               />
               <h3 style={{ color: theme.colors.text, marginBottom: theme.spacing.sm, fontSize: '24px' }}>
                 Manual Setup
