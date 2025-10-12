@@ -345,11 +345,11 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
         return `translate(${x}, ${y})`;
       })
       .attr('text-anchor', 'middle')
-      .attr('font-size', '24px')
+      .attr('font-size', '22px')
       .attr('font-weight', '900')
       .attr('font-style', 'italic')
       .attr('fill', 'white')
-      .attr('letter-spacing', '2px')
+      .attr('letter-spacing', '1px')
       .style('text-shadow', '0 4px 12px rgba(0, 0, 0, 0.9), 0 2px 4px rgba(0, 0, 0, 0.8)')
       .style('pointer-events', 'none')
       .style('filter', 'url(#sparkles)')
@@ -360,7 +360,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
         lines.forEach((line, i) => {
           text.append('tspan')
             .attr('x', 0)
-            .attr('dy', i === 0 ? '-0.5em' : '1.4em')
+            .attr('dy', i === 0 ? '-0.5em' : '1.3em')
             .text(line);
         });
       });
@@ -499,6 +499,55 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
 
   }, []); // Empty array - only run once on mount to prevent infinite re-renders
 
+  // Separate effect for market data updates - only update text when data changes
+  useEffect(() => {
+    if (!svgRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+
+    // Update DOW value
+    svg.selectAll('text')
+      .filter(function(this: SVGTextElement) {
+        return d3.select(this).text().includes('.') && d3.select(this).attr('dy') === '20';
+      })
+      .each(function(this: SVGTextElement) {
+        const text = d3.select(this);
+        const parentNode = this.parentNode as SVGGElement;
+        const transform = d3.select(parentNode).attr('transform');
+        if (transform && transform.includes('-15')) {
+          // This is the DOW value text
+          text.text(marketData.dow.value.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        } else if (transform && transform.includes('45')) {
+          // This is the NASDAQ value text
+          text.text(marketData.nasdaq.value.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        }
+      });
+
+    // Update change percentages
+    svg.selectAll('text')
+      .filter(function(this: SVGTextElement) {
+        return d3.select(this).attr('dy') === '38';
+      })
+      .each(function(this: SVGTextElement) {
+        const text = d3.select(this);
+        const parentNode = this.parentNode as SVGGElement;
+        const transform = d3.select(parentNode).attr('transform');
+        if (transform && transform.includes('-15')) {
+          // DOW change
+          text
+            .attr('fill', marketData.dow.change >= 0 ? '#10b981' : '#ef4444')
+            .style('text-shadow', '0 0 10px ' + (marketData.dow.change >= 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
+            .text(`${marketData.dow.change >= 0 ? '▲' : '▼'} ${Math.abs(marketData.dow.change).toFixed(2)}%`);
+        } else if (transform && transform.includes('45')) {
+          // NASDAQ change
+          text
+            .attr('fill', marketData.nasdaq.change >= 0 ? '#10b981' : '#ef4444')
+            .style('text-shadow', '0 0 10px ' + (marketData.nasdaq.change >= 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
+            .text(`${marketData.nasdaq.change >= 0 ? '▲' : '▼'} ${Math.abs(marketData.nasdaq.change).toFixed(2)}%`);
+        }
+      });
+  }, [marketData]);
+
   // Separate effect for selectedWorkflow updates - only update selected wedge styling
   useEffect(() => {
     if (!svgRef.current || !selectedWorkflow) return;
@@ -599,10 +648,10 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
           left: '50%',
           transform: 'translate(-50%, -50%)',
           pointerEvents: 'auto',
-          marginTop: '-70px' // Adjust to position above market data
+          marginTop: '-110px' // Position above market data, within circle boundary
         }}>
           <div style={{
-            fontSize: '42px',
+            fontSize: '32px',
             fontWeight: '900',
             lineHeight: '1',
             whiteSpace: 'nowrap'
