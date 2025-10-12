@@ -1,112 +1,136 @@
+"""
+Market data endpoints using Tradier API
+
+🚨 TRADIER INTEGRATION ACTIVE 🚨
+This module uses Tradier API for ALL market data.
+Alpaca is ONLY used for paper trading execution (see orders.py).
+"""
 from fastapi import APIRouter, Depends, HTTPException
 from app.core.auth import require_bearer
-from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.data.requests import StockLatestQuoteRequest, StockBarsRequest
-from alpaca.data.timeframe import TimeFrame
-import os
+from ..services.tradier_client import get_tradier_client
 from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
+
+# LOUD LOGGING TO VERIFY NEW CODE IS DEPLOYED
+print("=" * 80)
+print("🚨 TRADIER INTEGRATION CODE LOADED - market_data.py")
+print("=" * 80, flush=True)
 
 router = APIRouter()
 
-# Initialize Alpaca data client (lazy to avoid CI failures)
-data_client = None
-
-def get_data_client():
-    """Lazy initialization of Alpaca client"""
-    global data_client
-    if data_client is None:
-        api_key = os.getenv("APCA_API_KEY_ID") or os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("APCA_API_SECRET_KEY") or os.getenv("ALPACA_SECRET_KEY")
-        if not api_key or not secret_key:
-            raise HTTPException(status_code=500, detail="Alpaca API credentials not configured")
-        data_client = StockHistoricalDataClient(api_key=api_key, secret_key=secret_key)
-    return data_client
 
 @router.get("/market/quote/{symbol}")
-async def get_quote(symbol: str):
-    """Get real-time quote for a symbol"""
+async def get_quote(symbol: str, _=Depends(require_bearer)):
+    """Get real-time quote for a symbol using Tradier"""
     try:
-        client = get_data_client()
-        request = StockLatestQuoteRequest(symbol_or_symbols=symbol)
-        quotes = client.get_stock_latest_quote(request)
+        client = get_tradier_client()
+        quotes_data = client.get_quotes([symbol])
 
-        quote = quotes[symbol]
+        if not quotes_data or symbol.upper() not in quotes_data:
+            raise HTTPException(status_code=404, detail=f"No quote found for {symbol}")
+
+        quote = quotes_data[symbol.upper()]
+
         return {
-            "symbol": symbol,
-            "bid": float(quote.bid_price),
-            "ask": float(quote.ask_price),
-            "last": float(quote.bid_price),  # Use bid as approximation
-            "volume": int(quote.bid_size + quote.ask_size),
-            "timestamp": quote.timestamp.isoformat()
+            "symbol": symbol.upper(),
+            "bid": float(quote.get("bid", 0)),
+            "ask": float(quote.get("ask", 0)),
+            "last": float(quote.get("last", 0)),
+            "volume": int(quote.get("volume", 0)),
+            "timestamp": quote.get("trade_date", datetime.now().isoformat())
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Tradier quote request failed for {symbol}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch quote: {str(e)}")
+
 
 @router.get("/market/quotes")
-async def get_quotes(symbols: str):
-    """Get quotes for multiple symbols (comma-separated)"""
+async def get_quotes(symbols: str, _=Depends(require_bearer)):
+    """Get quotes for multiple symbols (comma-separated) using Tradier"""
     try:
-        client = get_data_client()
-        symbol_list = symbols.upper().split(',')
-        request = StockLatestQuoteRequest(symbol_or_symbols=symbol_list)
-        quotes = client.get_stock_latest_quote(request)
+        client = get_tradier_client()
+        symbol_list = [s.strip().upper() for s in symbols.split(',')]
+        quotes_data = client.get_quotes(symbol_list)
 
         result = {}
         for symbol in symbol_list:
-            if symbol in quotes:
-                q = quotes[symbol]
+            if symbol in quotes_data:
+                q = quotes_data[symbol]
                 result[symbol] = {
-                    "bid": float(q.bid_price),
-                    "ask": float(q.ask_price),
-                    "last": float(q.bid_price),
-                    "timestamp": q.timestamp.isoformat()
+                    "bid": float(q.get("bid", 0)),
+                    "ask": float(q.get("ask", 0)),
+                    "last": float(q.get("last", 0)),
+                    "timestamp": q.get("trade_date", datetime.now().isoformat())
                 }
 
+        logger.info(f"✅ Retrieved {len(result)} quotes from Tradier")
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Tradier quotes request failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch quotes: {str(e)}")
+
 
 @router.get("/market/bars/{symbol}")
-async def get_bars(symbol: str, timeframe: str = "1Day", limit: int = 100):
-    """Get historical price bars"""
+async def get_bars(symbol: str, timeframe: str = "daily", limit: int = 100, _=Depends(require_bearer)):
+    """Get historical price bars using Tradier"""
     try:
-        # Map timeframe string to Alpaca TimeFrame
-        tf_map = {
-            "1Min": TimeFrame.Minute,
-            "5Min": TimeFrame(5, "Min"),
-            "1Hour": TimeFrame.Hour,
-            "1Day": TimeFrame.Day
+        client = get_tradier_client()
+
+        # Map timeframe to Tradier intervals
+        interval_map = {
+            "1Min": "1min",
+            "5Min": "5min",
+            "15Min": "15min",
+            "1Hour": "1hour",
+            "1Day": "daily",
+            "daily": "daily",
+            "weekly": "weekly",
+            "monthly": "monthly"
         }
 
-        tf = tf_map.get(timeframe, TimeFrame.Day)
+        interval = interval_map.get(timeframe, "daily")
 
-        client = get_data_client()
-        request = StockBarsRequest(
-            symbol_or_symbols=symbol,
-            timeframe=tf,
-            limit=limit
+        # Calculate date range based on limit
+        end_date = datetime.now()
+        if interval in ["1min", "5min", "15min"]:
+            start_date = end_date - timedelta(days=min(limit // 78, 30))  # Market hours limit
+        elif interval == "1hour":
+            start_date = end_date - timedelta(days=min(limit // 6, 90))
+        else:  # daily, weekly, monthly
+            start_date = end_date - timedelta(days=limit * 2)  # Approximate
+
+        bars_data = client.get_historical_quotes(
+            symbol=symbol,
+            interval=interval,
+            start_date=start_date.strftime("%Y-%m-%d"),
+            end_date=end_date.strftime("%Y-%m-%d")
         )
 
-        bars = client.get_stock_bars(request)
-
         result = []
-        for bar in bars[symbol]:
+        for bar in bars_data[:limit]:
             result.append({
-                "timestamp": bar.timestamp.isoformat(),
-                "open": float(bar.open),
-                "high": float(bar.high),
-                "low": float(bar.low),
-                "close": float(bar.close),
-                "volume": int(bar.volume)
+                "timestamp": bar.get("date", bar.get("time", "")),
+                "open": float(bar.get("open", 0)),
+                "high": float(bar.get("high", 0)),
+                "low": float(bar.get("low", 0)),
+                "close": float(bar.get("close", 0)),
+                "volume": int(bar.get("volume", 0))
             })
 
-        return {"symbol": symbol, "bars": result}
+        logger.info(f"✅ Retrieved {len(result)} bars for {symbol} from Tradier")
+        return {"symbol": symbol.upper(), "bars": result}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Tradier bars request failed for {symbol}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch bars: {str(e)}")
+
 
 @router.get("/market/scanner/under4")
-async def scan_under_4():
-    """Scan for stocks under $4 with volume"""
+async def scan_under_4(_=Depends(require_bearer)):
+    """Scan for stocks under $4 with volume using Tradier"""
     try:
         # Pre-defined list of liquid stocks that trade near/under $4
         candidates = [
@@ -114,65 +138,32 @@ async def scan_under_4():
             "BTG", "GOLD", "SIRI", "TLRY", "SNAP", "BBD"
         ]
 
-        client = get_data_client()
-        request = StockLatestQuoteRequest(symbol_or_symbols=candidates)
-        quotes = client.get_stock_latest_quote(request)
+        client = get_tradier_client()
+        quotes_data = client.get_quotes(candidates)
 
         results = []
         for symbol in candidates:
-            if symbol in quotes:
-                q = quotes[symbol]
-                price = float(q.ask_price)
+            if symbol in quotes_data:
+                q = quotes_data[symbol]
+                ask_price = float(q.get("ask", 0))
+                last_price = float(q.get("last", 0))
+                price = last_price if last_price > 0 else ask_price
 
-                if price < 4.00 and price > 0.50:  # Filter under $4, above $0.50
+                if 0.50 < price < 4.00:  # Filter under $4, above $0.50
                     results.append({
                         "symbol": symbol,
                         "price": price,
-                        "bid": float(q.bid_price),
-                        "ask": float(q.ask_price),
-                        "timestamp": q.timestamp.isoformat()
+                        "bid": float(q.get("bid", 0)),
+                        "ask": ask_price,
+                        "volume": int(q.get("volume", 0)),
+                        "timestamp": q.get("trade_date", datetime.now().isoformat())
                     })
 
         # Sort by price ascending
         results.sort(key=lambda x: x["price"])
 
+        logger.info(f"✅ Scanner found {len(results)} stocks under $4 from Tradier")
         return {"candidates": results, "count": len(results)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/market/indices")
-async def get_indices():
-    """Get major market indices (SPY, QQQ, DIA, IWM)"""
-    try:
-        client = get_data_client()
-        symbols = ["SPY", "QQQ", "DIA", "IWM"]
-        request = StockLatestQuoteRequest(symbol_or_symbols=symbols)
-        quotes = client.get_stock_latest_quote(request)
-
-        result = {}
-        for symbol in symbols:
-            if symbol in quotes:
-                q = quotes[symbol]
-                price = float(q.ask_price)
-
-                # Get previous close for % change calculation
-                bars_request = StockBarsRequest(
-                    symbol_or_symbols=symbol,
-                    timeframe=TimeFrame.Day,
-                    limit=2
-                )
-                bars = client.get_stock_bars(bars_request)
-
-                prev_close = float(bars[symbol][0].close) if len(bars[symbol]) > 0 else price
-                pct_change = ((price - prev_close) / prev_close) * 100
-
-                result[symbol] = {
-                    "price": price,
-                    "prev_close": prev_close,
-                    "change": price - prev_close,
-                    "change_pct": round(pct_change, 2)
-                }
-
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Tradier scanner request failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to scan stocks: {str(e)}")
