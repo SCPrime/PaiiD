@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import Split from 'react-split';
 import RadialMenu, { workflows, Workflow } from '../components/RadialMenu';
 import PositionsTable from '../components/PositionsTable';
-import MorningRoutine from '../components/MorningRoutine';
 import MorningRoutineAI from '../components/MorningRoutineAI';
 import ExecuteTradeForm from '../components/ExecuteTradeForm';
 import ResearchDashboardSimple from '../components/ResearchDashboardSimple';
@@ -13,7 +12,6 @@ import UserSetup from '../components/UserSetup';
 import UserSetupAI from '../components/UserSetupAI';
 import NewsReview from '../components/NewsReview';
 import ActivePositions from '../components/ActivePositions';
-import StrategyBuilder from '../components/StrategyBuilder';
 import StrategyBuilderAI from '../components/StrategyBuilderAI';
 import Backtesting from '../components/Backtesting';
 import Analytics from '../components/Analytics';
@@ -188,10 +186,10 @@ export default function Dashboard() {
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            maxHeight: 'calc(100vh - 100px)',
+            maxHeight: 'calc(100vh - 60px)',
             overflow: 'hidden',
-            paddingTop: '20px',
-            paddingBottom: '20px'
+            paddingTop: '0',
+            paddingBottom: '0'
           }}>
             <div style={{
               transform: 'scale(0.65)',
