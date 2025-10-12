@@ -39,6 +39,9 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedPrefs, setExtractedPrefs] = useState<Partial<UserPreferences> | null>(null);
   const [showReview, setShowReview] = useState(false);
+  const [userName, setUserName] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [conversationStep, setConversationStep] = useState<'name' | 'email' | 'trading' | 'done'>('name');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Generate consistent particle positions (fixes hydration)
@@ -59,44 +62,143 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Owner bypass keyboard combo (Ctrl+Shift+A or Cmd+Shift+A)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Ctrl+Shift+A (Windows/Linux) or Cmd+Shift+A (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        console.log('[UserSetupAI] 🔓 Admin bypass activated during onboarding');
+
+        // Set localStorage flags
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user-setup-complete', 'true');
+          localStorage.setItem('admin-bypass', 'true');
+          localStorage.setItem('bypass-timestamp', new Date().toISOString());
+        }
+
+        // Skip onboarding
+        alert('🔓 Admin bypass activated! Skipping to dashboard...');
+        onComplete();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onComplete]);
+
   // Initialize AI setup
   const startAISetup = () => {
     setSetupMethod('ai');
+    setConversationStep('name');
     setMessages([
       {
         role: 'assistant',
-        content: `Hi! I'm your AI trading assistant. I'll help you set up your account by asking a few questions.\n\nTo get started, tell me about your trading goals. For example:\n\n• "I want to day-trade tech stocks with $25K, focusing on momentum"\n• "I'm interested in swing trading with $5K, moderate risk"\n• "I want to learn options trading with $1000"\n\nWhat are your goals?`,
+        content: `Hi! I'm your AI trading assistant. I'll help you set up your PaiiD account.\n\nFirst, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
       },
     ]);
   };
 
   // Handle AI conversation
   const handleSendMessage = async () => {
-    if (!input.trim() || isProcessing) return;
+    if (isProcessing) return;
 
     const userMessage = input.trim();
     setInput('');
+
+    // Handle empty input for skipping
+    if (!userMessage) {
+      if (conversationStep === 'name') {
+        // User pressed Enter without typing - remain anonymous
+        setMessages((prev) => [...prev, { role: 'user', content: '(skip)' }]);
+        setUserName('PaiiD User');
+        setConversationStep('email');
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `No problem! I'll call you "PaiiD User".\n\nWould you like to provide an email address for account recovery and notifications? (Optional - type "skip" or press Enter to continue without email)`,
+          },
+        ]);
+        return;
+      } else if (conversationStep === 'email') {
+        // User pressed Enter without email - skip
+        setMessages((prev) => [...prev, { role: 'user', content: '(skip)' }]);
+        setUserEmail('');
+        setConversationStep('trading');
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `Got it! Now let's set up your trading preferences.\n\nTell me about your trading goals. For example:\n\n• "I want to day-trade tech stocks with $25K, focusing on momentum"\n• "I'm interested in swing trading with $5K, moderate risk"\n• "I want to learn options trading with $1000"\n\nWhat are your goals?`,
+          },
+        ]);
+        return;
+      }
+    }
+
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setIsProcessing(true);
 
     try {
-      // Extract preferences from user's message
-      const prefs = await claudeAI.extractSetupPreferences(userMessage);
-      setExtractedPrefs(prefs);
+      if (conversationStep === 'name') {
+        // Handle name input
+        const isSkip = userMessage.toLowerCase() === 'skip' || userMessage.toLowerCase() === 'anonymous';
+        const name = isSkip ? 'PaiiD User' : userMessage;
+        setUserName(name);
+        setConversationStep('email');
 
-      // Generate confirmation message listing all extracted preferences
-      const responseMessage = `Perfect! I've extracted your trading preferences. Let me show you what I understood so you can verify everything is correct.`;
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `Nice to meet you, ${name}!\n\nWould you like to provide an email address for account recovery and notifications? (Optional - type "skip" or press Enter to continue without email)`,
+          },
+        ]);
+      } else if (conversationStep === 'email') {
+        // Handle email input
+        const isSkip = userMessage.toLowerCase() === 'skip';
+        const email = isSkip ? '' : userMessage;
+        setUserEmail(email);
+        setConversationStep('trading');
 
-      setMessages((prev) => [...prev, { role: 'assistant', content: responseMessage }]);
-      setShowReview(true);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `${email ? 'Great! ' : ''}Now let's set up your trading preferences.\n\nTell me about your trading goals. For example:\n\n• "I want to day-trade tech stocks with $25K, focusing on momentum"\n• "I'm interested in swing trading with $5K, moderate risk"\n• "I want to learn options trading with $1000"\n\nWhat are your goals?`,
+          },
+        ]);
+      } else if (conversationStep === 'trading') {
+        // Extract trading preferences from user's message
+        const prefs = await claudeAI.extractSetupPreferences(userMessage);
+        setExtractedPrefs(prefs);
+
+        // Generate confirmation message
+        const responseMessage = `Perfect! I've extracted your trading preferences. Let me show you what I understood so you can verify everything is correct.`;
+
+        setMessages((prev) => [...prev, { role: 'assistant', content: responseMessage }]);
+        setConversationStep('done');
+        setShowReview(true);
+      }
     } catch (error: any) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: `I'm having trouble understanding. Could you try rephrasing your trading goals? For example: "I want to trade stocks with $10K, moderate risk, swing trading style."`,
-        },
-      ]);
+      if (conversationStep === 'trading') {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `I'm having trouble understanding. Could you try rephrasing your trading goals? For example: "I want to trade stocks with $10K, moderate risk, swing trading style."`,
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `Sorry, I encountered an error. Please try again.`,
+          },
+        ]);
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -106,10 +208,10 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
   const handleComplete = () => {
     if (!extractedPrefs) return;
 
-    // Create user with ONLY AI-extracted preferences (NO personal info)
+    // Create user with collected name, email (if provided), and trading preferences
     const user = createUser(
-      'PaiiD User', // Anonymous display name
-      undefined, // No email collection
+      userName || 'PaiiD User', // Use collected name or default
+      userEmail || undefined, // Use collected email or undefined
       undefined, // No test group
       {
         setupMethod: 'ai-guided',
@@ -122,7 +224,11 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
       }
     );
 
-    console.log('[UserSetupAI] User created with preferences only:', user);
+    console.log('[UserSetupAI] User created:', {
+      name: userName || 'PaiiD User',
+      email: userEmail || 'not provided',
+      preferences: extractedPrefs,
+    });
     onComplete();
   };
 
@@ -291,6 +397,28 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               }}
             >
               💡 Click <span style={{ color: '#45f0c0', fontWeight: 'bold' }}>aii</span> anytime to chat with AI assistant
+            </div>
+
+            {/* Owner bypass hint */}
+            <div
+              style={{
+                fontSize: '12px',
+                color: '#475569',
+                marginTop: '16px',
+                padding: '8px 12px',
+                background: 'rgba(26, 117, 96, 0.1)',
+                borderRadius: '6px',
+                border: '1px solid rgba(26, 117, 96, 0.2)',
+              }}
+            >
+              <kbd style={{
+                background: 'rgba(26, 117, 96, 0.2)',
+                padding: '2px 6px',
+                borderRadius: '3px',
+                fontFamily: 'monospace',
+                color: '#45f0c0',
+                fontSize: '11px',
+              }}>Ctrl+Shift+A</kbd> admin bypass
             </div>
           </div>
 
@@ -491,7 +619,13 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Describe your trading goals..."
+              placeholder={
+                conversationStep === 'name'
+                  ? 'Enter your name...'
+                  : conversationStep === 'email'
+                  ? 'Enter your email...'
+                  : 'Describe your trading goals...'
+              }
               disabled={isProcessing}
               style={{
                 flex: 1,
@@ -563,7 +697,9 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             <h2 style={{ color: theme.colors.text, margin: `0 0 ${theme.spacing.sm} 0`, fontSize: '32px' }}>
               Review Your Setup
             </h2>
-            <p style={{ color: theme.colors.textMuted }}>Here's what we configured for you</p>
+            <p style={{ color: theme.colors.textMuted }}>
+              Here's what we configured for {userName || 'you'}
+            </p>
           </div>
 
           {/* Preferences Card */}
@@ -578,6 +714,32 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             }}
           >
             <div style={{ display: 'grid', gap: theme.spacing.lg }}>
+              {/* User Name */}
+              {userName && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, marginBottom: theme.spacing.sm }}>
+                    <MessageCircle style={{ width: '20px', height: '20px', color: theme.workflow.strategyBuilder }} />
+                    <h4 style={{ color: theme.colors.text, margin: 0 }}>Name</h4>
+                  </div>
+                  <p style={{ color: theme.colors.textMuted, margin: 0, paddingLeft: '28px' }}>
+                    {userName}
+                  </p>
+                </div>
+              )}
+
+              {/* User Email */}
+              {userEmail && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, marginBottom: theme.spacing.sm }}>
+                    <MessageCircle style={{ width: '20px', height: '20px', color: theme.colors.info }} />
+                    <h4 style={{ color: theme.colors.text, margin: 0 }}>Email</h4>
+                  </div>
+                  <p style={{ color: theme.colors.textMuted, margin: 0, paddingLeft: '28px' }}>
+                    {userEmail}
+                  </p>
+                </div>
+              )}
+
               {/* Investment Amount */}
               {extractedPrefs.investmentAmount && (
                 <div>
@@ -652,11 +814,12 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             <button
               onClick={() => {
                 setShowReview(false);
+                setConversationStep('trading');
                 setMessages((prev) => [
                   ...prev,
                   {
                     role: 'assistant',
-                    content: "No problem! What would you like to change? Just describe your updated preferences.",
+                    content: "No problem! What would you like to change? Just describe your updated trading preferences.",
                   },
                 ]);
               }}

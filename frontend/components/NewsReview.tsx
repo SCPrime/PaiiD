@@ -142,18 +142,43 @@ const NewsReview: React.FC = () => {
       height: '100%',
       overflowY: 'auto',
     }}>
-      {/* Header */}
+      {/* Header with PaiiD Logo */}
       <div style={{ marginBottom: '24px' }}>
-        <h2 style={{
-          fontSize: '28px',
-          fontWeight: '700',
-          margin: '0 0 8px 0',
-          background: 'linear-gradient(135deg, #3B82F6, #A855F7)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-        }}>
-          News Review
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
+          {/* PaiiD Logo */}
+          <div style={{ fontSize: '42px', fontWeight: '900', lineHeight: '1' }}>
+            <span style={{
+              background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))'
+            }}>P</span>
+            <span style={{
+              background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: '0 0 18px rgba(69, 240, 192, 0.8), 0 0 36px rgba(69, 240, 192, 0.4)',
+              animation: 'glow-ai 3s ease-in-out infinite'
+            }}>aii</span>
+            <span style={{
+              background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))'
+            }}>D</span>
+          </div>
+
+          <h2 style={{
+            fontSize: '28px',
+            fontWeight: '700',
+            margin: 0,
+            background: 'linear-gradient(135deg, #3B82F6, #A855F7)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}>
+            News Review
+          </h2>
+        </div>
         <div style={{ fontSize: '14px', color: '#94a3b8', display: 'flex', gap: '16px' }}>
           <span>{filteredNews.length} articles</span>
           <span>•</span>

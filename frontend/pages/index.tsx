@@ -39,6 +39,34 @@ export default function Dashboard() {
     setIsLoading(false);
   }, []);
 
+  // Owner bypass keyboard combo (Ctrl+Shift+A or Cmd+Shift+A)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Ctrl+Shift+A (Windows/Linux) or Cmd+Shift+A (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        console.log('[PaiiD] 🔓 Admin bypass activated');
+
+        // Set localStorage flags
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user-setup-complete', 'true');
+          localStorage.setItem('admin-bypass', 'true');
+          localStorage.setItem('bypass-timestamp', new Date().toISOString());
+        }
+
+        // Skip onboarding
+        setIsUserSetup(true);
+        initializeSession();
+
+        // Show notification (you can replace with a toast library)
+        alert('🔓 Admin bypass activated! Welcome to PaiiD.');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Handle user setup completion
   const handleUserSetupComplete = () => {
     setIsUserSetup(true);
@@ -262,6 +290,18 @@ export default function Dashboard() {
                 }}>← →</kbd>
                 rotate
               </span>
+              <span>
+                <kbd style={{
+                  background: 'rgba(26, 117, 96, 0.2)',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontFamily: 'monospace',
+                  color: '#45f0c0',
+                  marginRight: '4px',
+                  boxShadow: '0 0 8px rgba(69, 240, 192, 0.3)'
+                }}>Ctrl+Shift+A</kbd>
+                admin
+              </span>
             </div>
 
             {/* Hover Description */}
@@ -311,12 +351,26 @@ export default function Dashboard() {
                 WebkitTextFillColor: 'transparent',
                 filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.4))'
               }}>P</span>
-              <span style={{
+              <span
+                onClick={() => setAiChatOpen(true)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.15) translateY(-2px)';
+                  e.currentTarget.style.textShadow = '0 0 30px rgba(69, 240, 192, 1), 0 0 60px rgba(69, 240, 192, 0.8), 0 0 90px rgba(69, 240, 192, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                  e.currentTarget.style.textShadow = '0 0 20px rgba(16, 185, 129, 0.6), 0 0 40px rgba(16, 185, 129, 0.4)';
+                }}
+                style={{
                 background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 textShadow: '0 0 20px rgba(16, 185, 129, 0.6), 0 0 40px rgba(16, 185, 129, 0.4)',
-                animation: 'glow-ai 3s ease-in-out infinite'
+                animation: 'glow-ai 3s ease-in-out infinite',
+                cursor: 'pointer',
+                display: 'inline-block',
+                transition: 'all 0.3s ease',
+                position: 'relative'
               }}>aii</span>
               <span style={{
                 background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',

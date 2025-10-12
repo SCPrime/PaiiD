@@ -112,8 +112,31 @@ export default function Backtesting() {
 
   return (
     <div style={{ padding: theme.spacing.lg }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, marginBottom: theme.spacing.lg }}>
+      {/* Header with PaiiD Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md, marginBottom: theme.spacing.lg }}>
+        {/* PaiiD Logo */}
+        <div style={{ fontSize: '42px', fontWeight: '900', lineHeight: '1' }}>
+          <span style={{
+            background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))'
+          }}>P</span>
+          <span style={{
+            background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            textShadow: '0 0 18px rgba(69, 240, 192, 0.8), 0 0 36px rgba(69, 240, 192, 0.4)',
+            animation: 'glow-ai 3s ease-in-out infinite'
+          }}>aii</span>
+          <span style={{
+            background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))'
+          }}>D</span>
+        </div>
+
         <BarChart3 size={32} color={theme.colors.info} />
         <h1 style={{
           margin: 0,
