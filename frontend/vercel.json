@@ -17,7 +17,9 @@
   },
   "env": {
     "NEXT_PUBLIC_APP_NAME": "PaiiD",
+    "BACKEND_API_BASE_URL": "https://paiid-backend.onrender.com",
     "NEXT_PUBLIC_BACKEND_API_BASE_URL": "https://paiid-backend.onrender.com",
+    "API_TOKEN": "tuGlKvrYEoiJcv7r7oIy7zXM9pqVnaxN_74obFz6lVo",
     "NEXT_PUBLIC_API_TOKEN": "tuGlKvrYEoiJcv7r7oIy7zXM9pqVnaxN_74obFz6lVo"
   }
 }
