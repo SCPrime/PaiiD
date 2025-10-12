@@ -10,7 +10,8 @@ print(f"\n===== BACKEND STARTUP =====")
 print(f".env path: {env_path}")
 print(f".env exists: {env_path.exists()}")
 print(f"API_TOKEN from env: {os.getenv('API_TOKEN', 'NOT_SET')}")
-print(f"Deployed from: main branch (auto-deploy test)")
+print(f"TRADIER_API_KEY configured: {'YES' if os.getenv('TRADIER_API_KEY') else 'NO'}")
+print(f"Deployed from: main branch - Tradier integration active")
 print(f"===========================\n", flush=True)
 
 from fastapi import FastAPI
