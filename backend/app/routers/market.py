@@ -14,7 +14,7 @@ import requests
 
 # LOUD LOGGING TO VERIFY NEW CODE IS DEPLOYED
 print("=" * 80)
-print("🚨 TRADIER INTEGRATION CODE LOADED - market.py")
+print("[TRADIER] TRADIER INTEGRATION CODE LOADED - market.py")
 print("=" * 80)
 print(f"TRADIER_API_KEY present: {bool(settings.TRADIER_API_KEY)}")
 print(f"TRADIER_API_BASE_URL: {settings.TRADIER_API_BASE_URL}")

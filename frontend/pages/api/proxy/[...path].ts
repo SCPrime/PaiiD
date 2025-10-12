@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 // NOTE: API routes run server-side and use NON-PREFIXED env vars
 // NEXT_PUBLIC_* is for client-side code only!
-const BACKEND = process.env.BACKEND_API_BASE_URL || process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
+const BACKEND = process.env.BACKEND_API_BASE_URL || process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://paiid-backend.onrender.com';
 const API_TOKEN = process.env.API_TOKEN || process.env.NEXT_PUBLIC_API_TOKEN || '';
 
 if (!API_TOKEN) {
