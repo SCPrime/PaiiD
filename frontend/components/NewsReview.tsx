@@ -33,11 +33,7 @@ const NewsReview: React.FC = () => {
 
   const fetchProviders = async () => {
     try {
-      const response = await fetch('/api/proxy/news/providers', {
-        headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
-        },
-      });
+      const response = await fetch('/api/proxy/news/providers');
       if (!response.ok) throw new Error('Failed to fetch providers');
       const data = await response.json();
       setProviders(data.providers.map((p: any) => p.name));
@@ -55,11 +51,7 @@ const NewsReview: React.FC = () => {
         ? `/api/proxy/news/company/${symbol}?days_back=7`
         : `/api/proxy/news/market?category=general&limit=50`;
 
-      const response = await fetch(endpoint, {
-        headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
-        },
-      });
+      const response = await fetch(endpoint);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch news: ${response.status}`);

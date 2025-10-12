@@ -187,11 +187,7 @@ export default function MorningRoutineAI() {
     const loadPortfolioData = async () => {
       try {
         // Try to get real account data from API first
-        const response = await fetch('/api/proxy/api/account', {
-          headers: {
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN || 'rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl'}`,
-          },
-        });
+        const response = await fetch('/api/proxy/api/account');
 
         if (response.ok) {
           const accountData = await response.json();
