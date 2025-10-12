@@ -86,8 +86,8 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
   useEffect(() => {
     if (!svgRef.current) return;
 
-    const width = 900;
-    const height = 900;
+    const width = 700;
+    const height = 700;
     const radius = Math.min(width, height) / 2;
     const innerRadius = radius * 0.30;
     const outerRadius = radius * 0.90;
@@ -522,20 +522,20 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
       ref={containerRef}
       style={{
         width: '100%',
-        minHeight: '100vh',
+        height: '100%',
         background: 'linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '40px 20px',
+        padding: '0',
       }}
     >
       {/* Title Header - only show in full screen mode */}
       {!compact && (
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '10px' }}>
           {/* Main Logo */}
-          <div style={{ fontSize: '145px', fontWeight: '900', lineHeight: '1', marginBottom: '16px' }}>
+          <div style={{ fontSize: '96px', fontWeight: '900', lineHeight: '1', marginBottom: '12px' }}>
             <span style={{
               background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
               WebkitBackgroundClip: 'text',

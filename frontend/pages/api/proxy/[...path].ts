@@ -65,14 +65,24 @@ const ALLOW_DELETE = new Set<string>([
 
 function isAllowedOrigin(req: NextApiRequest) {
   const origin = (req.headers.origin || "").toLowerCase();
-  const prod = (process.env.PUBLIC_SITE_ORIGIN || "").toLowerCase();
-  const preview = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}`.toLowerCase() : "";
+
+  // Allow same-origin requests (no origin header)
+  if (!origin) return true;
 
   // Allow localhost for development
   const isLocalhost = origin.includes("localhost") || origin.includes("127.0.0.1");
+  if (isLocalhost) return true;
 
-  // Permit prod + current preview + localhost; if Origin missing (same-origin fetch), allow.
-  return !origin || origin === prod || (!!preview && origin === preview) || isLocalhost;
+  // Allow all Vercel deployments (production + preview)
+  if (origin.includes("vercel.app")) return true;
+
+  // Allow configured production origin (if set)
+  const prod = process.env.PUBLIC_SITE_ORIGIN?.toLowerCase();
+  if (prod && origin === prod) return true;
+
+  // Default deny for security
+  console.warn(`[PROXY] Blocked origin: ${origin}`);
+  return false;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
