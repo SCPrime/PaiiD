@@ -1,10 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
-const API_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || '';
+// NOTE: API routes run server-side and use NON-PREFIXED env vars
+// NEXT_PUBLIC_* is for client-side code only!
+const BACKEND = process.env.BACKEND_API_BASE_URL || process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://ai-trader-86a1.onrender.com';
+const API_TOKEN = process.env.API_TOKEN || process.env.NEXT_PUBLIC_API_TOKEN || '';
 
 if (!API_TOKEN) {
-  console.error('[PROXY] API_TOKEN not configured in environment variables');
+  console.error('[PROXY] ⚠️ API_TOKEN not configured in environment variables');
+  console.error('[PROXY] ⚠️ Checked: process.env.API_TOKEN and process.env.NEXT_PUBLIC_API_TOKEN');
+} else {
+  console.log(`[PROXY] ✅ API_TOKEN loaded: ${API_TOKEN.substring(0, 10)}...`);
 }
 
 // Exact endpoints our UI uses (paths without /api prefix - added in URL construction)
