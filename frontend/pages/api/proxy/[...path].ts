@@ -107,8 +107,15 @@ function isAllowedOrigin(req: NextApiRequest) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Log EVERY request for debugging
+  console.log(`\n[PROXY] ====== NEW REQUEST ======`);
+  console.log(`[PROXY] Method: ${req.method}`);
+  console.log(`[PROXY] URL: ${req.url}`);
+  console.log(`[PROXY] Origin: ${req.headers.origin || 'NONE'}`);
+
   // CORS preflight
   if (req.method === "OPTIONS") {
+    console.log(`[PROXY] Handling OPTIONS preflight`);
     res.setHeader("access-control-allow-origin", req.headers.origin ?? "");
     res.setHeader("access-control-allow-methods", "GET,POST,DELETE,OPTIONS");
     res.setHeader("access-control-allow-headers", "content-type,x-request-id");
@@ -116,10 +123,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  if (!isAllowedOrigin(req)) {
-    res.status(403).json({ error: "Forbidden (origin)" });
+  const originAllowed = isAllowedOrigin(req);
+  console.log(`[PROXY] Origin check result: ${originAllowed ? 'ALLOWED' : 'BLOCKED'}`);
+
+  if (!originAllowed) {
+    console.error(`[PROXY] ⛔ REJECTING REQUEST WITH 403`);
+    res.status(403).json({ error: "Forbidden (origin)", origin: req.headers.origin || 'none', url: req.url });
     return;
   }
+
+  console.log(`[PROXY] ✅ Origin check passed, proceeding with request`);
+
 
   const parts = (req.query.path as string[]) || [];
   let path = parts.join("/");
