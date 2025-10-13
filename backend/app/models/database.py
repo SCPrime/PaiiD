@@ -173,7 +173,7 @@ class EquitySnapshot(Base):
 
     # Additional context (stored as JSON for flexibility)
     # Example: {"largest_position": "AAPL", "sector_breakdown": {...}}
-    metadata = Column(JSON, default=dict, nullable=False)
+    extra_data = Column(JSON, default=dict, nullable=False)
 
     def __repr__(self):
         return f"<EquitySnapshot(id={self.id}, timestamp={self.timestamp}, equity=${self.equity:.2f})>"
