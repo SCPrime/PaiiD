@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
+import { useMarketStream } from "../hooks/useMarketStream";
 
 interface Position {
   symbol: string;
@@ -69,16 +70,40 @@ export default function PositionsTable() {
     }
   }
 
+  // Load initial positions on mount
   useEffect(() => {
     load();
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
   }, []);
 
-  const totalMarketValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
-  const totalUnrealizedPnL = positions.reduce((sum, p) => sum + p.unrealizedPnL, 0);
-  const totalCostBasis = positions.reduce((sum, p) => sum + (p.avgPrice * p.qty), 0);
+  // Extract symbols from positions for live price streaming
+  const symbols = useMemo(() => positions.map(p => p.symbol), [positions]);
+
+  // Subscribe to live price stream for all position symbols
+  const { prices: livePrices, connected: streamConnected } = useMarketStream(symbols, { debug: false });
+
+  // Update positions with live prices
+  const livePositions = useMemo(() => {
+    return positions.map(pos => {
+      const livePrice = livePrices[pos.symbol]?.price;
+      const currentPrice = livePrice ?? pos.currentPrice;  // Use live price or fallback to cached
+      const marketValue = currentPrice * pos.qty;
+      const costBasis = pos.avgPrice * pos.qty;
+      const unrealizedPnL = marketValue - costBasis;
+      const unrealizedPnLPercent = costBasis > 0 ? (unrealizedPnL / costBasis) * 100 : 0;
+
+      return {
+        ...pos,
+        currentPrice,
+        marketValue,
+        unrealizedPnL,
+        unrealizedPnLPercent
+      };
+    });
+  }, [positions, livePrices]);
+
+  const totalMarketValue = livePositions.reduce((sum, p) => sum + p.marketValue, 0);
+  const totalUnrealizedPnL = livePositions.reduce((sum, p) => sum + p.unrealizedPnL, 0);
+  const totalCostBasis = livePositions.reduce((sum, p) => sum + (p.avgPrice * p.qty), 0);
   const totalPnLPercent = totalCostBasis > 0 ? (totalUnrealizedPnL / totalCostBasis) * 100 : 0;
 
   return (
@@ -110,7 +135,32 @@ export default function PositionsTable() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: theme.spacing.md, alignItems: 'center' }}>
-          {lastRefreshed && (
+          {/* Stream Status Indicator */}
+          {symbols.length > 0 && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '12px',
+              background: streamConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+              border: `1px solid ${streamConnected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+              fontSize: '12px',
+              fontWeight: '600'
+            }}>
+              <div style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: streamConnected ? '#10b981' : '#f59e0b',
+                animation: streamConnected ? 'pulse 2s infinite' : 'none'
+              }} />
+              <span style={{ color: streamConnected ? '#10b981' : '#f59e0b' }}>
+                {streamConnected ? 'LIVE' : 'Connecting...'}
+              </span>
+            </div>
+          )}
+          {lastRefreshed && !streamConnected && (
             <span style={{ color: theme.colors.textMuted, fontSize: '13px' }}>
               Refreshed {lastRefreshed}
             </span>
@@ -329,7 +379,7 @@ export default function PositionsTable() {
                 </tr>
               </thead>
               <tbody>
-                {positions.map((pos, i) => {
+                {livePositions.map((pos, i) => {
                   const isProfit = pos.unrealizedPnL >= 0;
                   const pnlColor = isProfit ? theme.colors.primary : theme.colors.danger;
 

@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useMarketStream } from '../hooks/useMarketStream';
 
 export default function StatusBar() {
   const [status, setStatus] = useState<'checking' | 'healthy' | 'error'>('checking');
   const [message, setMessage] = useState('Initializing system check...');
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
+
+  // Monitor market data stream connection (no symbols = just track connection)
+  const { connected: marketStreamConnected } = useMarketStream([], { debug: false });
 
   const fetchHealth = useCallback(async () => {
     try {
@@ -27,7 +31,9 @@ export default function StatusBar() {
       console.log('Health check response:', data);
 
       setStatus('healthy');
-      setMessage(`✓ System operational • Backend: Online • Redis: ${data.redis?.status || 'not configured'}`);
+      const redisStatus = data.redis?.status || 'not configured';
+      const streamStatus = marketStreamConnected ? 'Live' : 'Offline';
+      setMessage(`✓ System operational • Backend: Online • Redis: ${redisStatus} • Market Data: ${streamStatus}`);
       setLastCheck(new Date());
 
     } catch (error: any) {
