@@ -18,6 +18,7 @@ const ALLOW_GET = new Set<string>([
   "settings",
   "portfolio/positions",
   "ai/recommendations",
+  "ai/signals",
   "market/historical",
   "screening/opportunities",
   "screening/strategies",

@@ -1,0 +1,344 @@
+"""
+Technical Indicators Service
+
+Calculates common technical indicators for trading signals:
+- RSI (Relative Strength Index)
+- MACD (Moving Average Convergence Divergence)
+- Bollinger Bands
+- Moving Averages (SMA, EMA)
+- Volume indicators
+"""
+
+import logging
+from typing import List, Dict, Any, Tuple
+from datetime import datetime, timedelta
+import requests
+
+logger = logging.getLogger(__name__)
+
+
+class TechnicalIndicators:
+    """Calculate technical indicators from price data"""
+
+    @staticmethod
+    def calculate_rsi(prices: List[float], period: int = 14) -> float:
+        """
+        Calculate Relative Strength Index
+
+        Args:
+            prices: List of closing prices (most recent last)
+            period: RSI period (default 14)
+
+        Returns:
+            RSI value (0-100)
+        """
+        if len(prices) < period + 1:
+            return 50.0  # Neutral default
+
+        # Calculate price changes
+        changes = [prices[i] - prices[i - 1] for i in range(1, len(prices))]
+
+        # Separate gains and losses
+        gains = [max(change, 0) for change in changes]
+        losses = [abs(min(change, 0)) for change in changes]
+
+        # Calculate average gain and loss
+        avg_gain = sum(gains[-period:]) / period
+        avg_loss = sum(losses[-period:]) / period
+
+        if avg_loss == 0:
+            return 100.0
+
+        rs = avg_gain / avg_loss
+        rsi = 100 - (100 / (1 + rs))
+
+        return round(rsi, 2)
+
+    @staticmethod
+    def calculate_macd(prices: List[float],
+                      fast_period: int = 12,
+                      slow_period: int = 26,
+                      signal_period: int = 9) -> Dict[str, float]:
+        """
+        Calculate MACD (Moving Average Convergence Divergence)
+
+        Returns:
+            dict with macd, signal, histogram values
+        """
+        if len(prices) < slow_period:
+            return {"macd": 0.0, "signal": 0.0, "histogram": 0.0}
+
+        # Calculate EMAs
+        fast_ema = TechnicalIndicators._calculate_ema(prices, fast_period)
+        slow_ema = TechnicalIndicators._calculate_ema(prices, slow_period)
+
+        macd_line = fast_ema - slow_ema
+
+        # Calculate signal line (EMA of MACD)
+        # Simplified: using last value for demo
+        signal_line = macd_line * 0.9  # Simplified approximation
+
+        histogram = macd_line - signal_line
+
+        return {
+            "macd": round(macd_line, 4),
+            "signal": round(signal_line, 4),
+            "histogram": round(histogram, 4)
+        }
+
+    @staticmethod
+    def calculate_bollinger_bands(prices: List[float],
+                                  period: int = 20,
+                                  std_dev: float = 2.0) -> Dict[str, float]:
+        """
+        Calculate Bollinger Bands
+
+        Returns:
+            dict with upper, middle, lower bands
+        """
+        if len(prices) < period:
+            current = prices[-1] if prices else 100.0
+            return {
+                "upper": current * 1.02,
+                "middle": current,
+                "lower": current * 0.98
+            }
+
+        recent_prices = prices[-period:]
+
+        # Calculate SMA (middle band)
+        sma = sum(recent_prices) / period
+
+        # Calculate standard deviation
+        variance = sum((p - sma) ** 2 for p in recent_prices) / period
+        std = variance ** 0.5
+
+        upper = sma + (std_dev * std)
+        lower = sma - (std_dev * std)
+
+        return {
+            "upper": round(upper, 2),
+            "middle": round(sma, 2),
+            "lower": round(lower, 2)
+        }
+
+    @staticmethod
+    def calculate_moving_averages(prices: List[float]) -> Dict[str, float]:
+        """
+        Calculate key moving averages
+
+        Returns:
+            dict with SMA20, SMA50, SMA200, EMA12
+        """
+        result = {}
+
+        if len(prices) >= 20:
+            result["sma_20"] = round(sum(prices[-20:]) / 20, 2)
+
+        if len(prices) >= 50:
+            result["sma_50"] = round(sum(prices[-50:]) / 50, 2)
+
+        if len(prices) >= 200:
+            result["sma_200"] = round(sum(prices[-200:]) / 200, 2)
+
+        if len(prices) >= 12:
+            result["ema_12"] = round(TechnicalIndicators._calculate_ema(prices, 12), 2)
+
+        return result
+
+    @staticmethod
+    def _calculate_ema(prices: List[float], period: int) -> float:
+        """Calculate Exponential Moving Average"""
+        if len(prices) < period:
+            return sum(prices) / len(prices) if prices else 0.0
+
+        # Use SMA as initial EMA
+        sma = sum(prices[:period]) / period
+        multiplier = 2 / (period + 1)
+
+        ema = sma
+        for price in prices[period:]:
+            ema = (price * multiplier) + (ema * (1 - multiplier))
+
+        return ema
+
+    @staticmethod
+    def analyze_trend(prices: List[float]) -> Dict[str, Any]:
+        """
+        Analyze price trend
+
+        Returns:
+            dict with trend direction, strength, support/resistance
+        """
+        if len(prices) < 20:
+            return {
+                "direction": "neutral",
+                "strength": 0.5,
+                "support": prices[-1] * 0.95 if prices else 0,
+                "resistance": prices[-1] * 1.05 if prices else 0
+            }
+
+        recent = prices[-20:]
+        current_price = prices[-1]
+
+        # Calculate trend slope
+        x_values = list(range(len(recent)))
+        n = len(recent)
+
+        # Simple linear regression
+        sum_x = sum(x_values)
+        sum_y = sum(recent)
+        sum_xy = sum(x * y for x, y in zip(x_values, recent))
+        sum_x2 = sum(x ** 2 for x in x_values)
+
+        slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x ** 2)
+
+        # Determine trend direction and strength
+        if slope > 0.1:
+            direction = "bullish"
+            strength = min(abs(slope) / current_price * 1000, 1.0)
+        elif slope < -0.1:
+            direction = "bearish"
+            strength = min(abs(slope) / current_price * 1000, 1.0)
+        else:
+            direction = "neutral"
+            strength = 0.5
+
+        # Calculate support and resistance (simplified)
+        support = min(recent[-10:])
+        resistance = max(recent[-10:])
+
+        return {
+            "direction": direction,
+            "strength": round(strength, 2),
+            "support": round(support, 2),
+            "resistance": round(resistance, 2)
+        }
+
+    @staticmethod
+    def generate_signal(symbol: str, prices: List[float], volumes: List[float] = None) -> Dict[str, Any]:
+        """
+        Generate trading signal based on multiple indicators
+
+        Returns:
+            Comprehensive signal with action, confidence, reasons
+        """
+        if len(prices) < 20:
+            return {
+                "action": "HOLD",
+                "confidence": 50.0,
+                "reasons": ["Insufficient data for analysis"],
+                "indicators": {}
+            }
+
+        current_price = prices[-1]
+
+        # Calculate all indicators
+        rsi = TechnicalIndicators.calculate_rsi(prices)
+        macd = TechnicalIndicators.calculate_macd(prices)
+        bb = TechnicalIndicators.calculate_bollinger_bands(prices)
+        ma = TechnicalIndicators.calculate_moving_averages(prices)
+        trend = TechnicalIndicators.analyze_trend(prices)
+
+        # Scoring system
+        bullish_score = 0
+        bearish_score = 0
+        reasons = []
+
+        # RSI Analysis
+        if rsi < 30:
+            bullish_score += 2
+            reasons.append(f"RSI oversold at {rsi:.1f}")
+        elif rsi > 70:
+            bearish_score += 2
+            reasons.append(f"RSI overbought at {rsi:.1f}")
+        elif 40 <= rsi <= 60:
+            reasons.append(f"RSI neutral at {rsi:.1f}")
+
+        # MACD Analysis
+        if macd["histogram"] > 0:
+            bullish_score += 1
+            reasons.append("MACD bullish crossover")
+        elif macd["histogram"] < 0:
+            bearish_score += 1
+            reasons.append("MACD bearish crossover")
+
+        # Bollinger Bands Analysis
+        if current_price < bb["lower"]:
+            bullish_score += 1
+            reasons.append("Price below lower Bollinger Band")
+        elif current_price > bb["upper"]:
+            bearish_score += 1
+            reasons.append("Price above upper Bollinger Band")
+
+        # Moving Average Analysis
+        if "sma_50" in ma and "sma_200" in ma:
+            if ma["sma_50"] > ma["sma_200"]:
+                bullish_score += 1
+                reasons.append("Golden cross: 50-day above 200-day MA")
+            else:
+                bearish_score += 1
+                reasons.append("Death cross: 50-day below 200-day MA")
+
+        if "sma_20" in ma:
+            if current_price > ma["sma_20"]:
+                bullish_score += 1
+                reasons.append("Price above 20-day MA")
+            else:
+                bearish_score += 1
+                reasons.append("Price below 20-day MA")
+
+        # Trend Analysis
+        if trend["direction"] == "bullish":
+            bullish_score += trend["strength"] * 2
+            reasons.append(f"Bullish trend with strength {trend['strength']:.1f}")
+        elif trend["direction"] == "bearish":
+            bearish_score += trend["strength"] * 2
+            reasons.append(f"Bearish trend with strength {trend['strength']:.1f}")
+
+        # Determine action and confidence
+        total_score = bullish_score + bearish_score
+        if total_score == 0:
+            action = "HOLD"
+            confidence = 50.0
+        elif bullish_score > bearish_score:
+            action = "BUY"
+            confidence = min(50 + (bullish_score / total_score * 50), 95)
+        else:
+            action = "SELL"
+            confidence = min(50 + (bearish_score / total_score * 50), 95)
+
+        # Calculate entry/exit prices
+        if action == "BUY":
+            entry_price = current_price * 0.998  # Slight discount
+            stop_loss = max(bb["lower"], trend["support"])
+            take_profit = min(bb["upper"], trend["resistance"])
+        elif action == "SELL":
+            entry_price = current_price * 1.002  # Slight premium
+            stop_loss = min(bb["upper"], trend["resistance"])
+            take_profit = max(bb["lower"], trend["support"])
+        else:  # HOLD
+            entry_price = current_price
+            stop_loss = current_price * 0.95
+            take_profit = current_price * 1.05
+
+        return {
+            "symbol": symbol,
+            "action": action,
+            "confidence": round(confidence, 1),
+            "current_price": round(current_price, 2),
+            "entry_price": round(entry_price, 2),
+            "stop_loss": round(stop_loss, 2),
+            "take_profit": round(take_profit, 2),
+            "reasons": reasons[:5],  # Top 5 reasons
+            "indicators": {
+                "rsi": rsi,
+                "macd": macd,
+                "bollinger_bands": bb,
+                "moving_averages": ma,
+                "trend": trend
+            },
+            "risk_reward_ratio": round(abs(take_profit - entry_price) / abs(entry_price - stop_loss), 2) if abs(entry_price - stop_loss) > 0 else 0,
+            "bullish_score": round(bullish_score, 2),
+            "bearish_score": round(bearish_score, 2)
+        }
