@@ -42,22 +42,21 @@ async def get_company_news(
         raise HTTPException(status_code=503, detail="News service unavailable")
 
     try:
-        # Check cache first
+        # Check cache first (cache key includes filters)
         if use_cache and news_cache:
-            cached_articles = news_cache.get(
+            cached_filtered = news_cache.get(
                 'company',
                 symbol=symbol,
                 days_back=days_back,
                 sentiment=sentiment,
                 provider=provider
             )
-            if cached_articles is not None:
-                # Apply filters to cached data
-                filtered = _apply_filters(cached_articles, sentiment, provider)
+            if cached_filtered is not None:
+                # Cached results are already filtered - no need to re-filter
                 return {
                     "symbol": symbol,
-                    "articles": filtered,
-                    "count": len(filtered),
+                    "articles": cached_filtered,
+                    "count": len(cached_filtered),
                     "sources": [p.get_provider_name() for p in news_aggregator.providers],
                     "cached": True
                 }
@@ -65,12 +64,12 @@ async def get_company_news(
         # Fetch fresh data
         articles = news_aggregator.get_company_news(symbol, days_back)
 
-        # Cache the results
-        if news_cache:
-            news_cache.set('company', articles, symbol=symbol, days_back=days_back)
-
-        # Apply filters
+        # Apply filters to fresh data
         filtered = _apply_filters(articles, sentiment, provider)
+
+        # Cache the filtered results (cache key includes filters for uniqueness)
+        if news_cache:
+            news_cache.set('company', filtered, symbol=symbol, days_back=days_back, sentiment=sentiment, provider=provider)
 
         return {
             "symbol": symbol,
@@ -105,35 +104,34 @@ async def get_market_news(
         raise HTTPException(status_code=503, detail="News service unavailable")
 
     try:
-        # Check cache first
+        # Check cache first (cache key includes filters)
         if use_cache and news_cache:
-            cached_articles = news_cache.get(
+            cached_filtered = news_cache.get(
                 'market',
                 category=category,
                 limit=limit,
                 sentiment=sentiment,
                 provider=provider
             )
-            if cached_articles is not None:
-                # Apply filters to cached data
-                filtered = _apply_filters(cached_articles, sentiment, provider)
+            if cached_filtered is not None:
+                # Cached results are already filtered - no need to re-filter
                 return {
                     "category": category,
-                    "articles": filtered[:limit],
-                    "count": len(filtered[:limit]),
+                    "articles": cached_filtered[:limit],
+                    "count": len(cached_filtered[:limit]),
                     "sources": [p.get_provider_name() for p in news_aggregator.providers],
                     "cached": True
                 }
 
-        # Fetch fresh data
-        articles = news_aggregator.get_market_news(category, limit * 2)  # Fetch more for filtering
+        # Fetch fresh data (fetch more to allow for filtering)
+        articles = news_aggregator.get_market_news(category, limit * 2)
 
-        # Cache the results
-        if news_cache:
-            news_cache.set('market', articles, category=category, limit=limit)
-
-        # Apply filters
+        # Apply filters to fresh data
         filtered = _apply_filters(articles, sentiment, provider)
+
+        # Cache the filtered results (cache key includes filters for uniqueness)
+        if news_cache:
+            news_cache.set('market', filtered, category=category, limit=limit, sentiment=sentiment, provider=provider)
 
         return {
             "category": category,

@@ -26,8 +26,62 @@ COMPANY_NEWS_TTL = 900  # 15 minutes
 class NewsCache:
     """File-based caching for news articles"""
 
-    def __init__(self):
+    def __init__(self, max_cache_entries: int = 500, max_cache_size_mb: int = 50):
+        """
+        Initialize news cache with size limits
+
+        Args:
+            max_cache_entries: Maximum number of cache files (default 500)
+            max_cache_size_mb: Maximum total cache size in MB (default 50)
+        """
         self.cache_dir = CACHE_DIR
+        self.max_cache_entries = max_cache_entries
+        self.max_cache_size_mb = max_cache_size_mb
+
+    def _enforce_cache_limits(self):
+        """
+        Enforce cache size limits using LRU eviction
+
+        Evicts oldest cache files if:
+        - Total entries exceed max_cache_entries
+        - Total size exceeds max_cache_size_mb
+        """
+        try:
+            cache_files = list(self.cache_dir.glob("*.json"))
+
+            if not cache_files:
+                return
+
+            # Sort by modification time (oldest first) for LRU eviction
+            cache_files.sort(key=lambda f: f.stat().st_mtime)
+
+            # Check entry count limit
+            if len(cache_files) > self.max_cache_entries:
+                files_to_remove = len(cache_files) - self.max_cache_entries
+                for i in range(files_to_remove):
+                    cache_files[i].unlink()
+                    logger.info(f"🗑️ LRU evicted: {cache_files[i].name} (entry limit)")
+
+                # Update list after removals
+                cache_files = cache_files[files_to_remove:]
+
+            # Check total size limit
+            total_size_bytes = sum(f.stat().st_size for f in cache_files)
+            max_size_bytes = self.max_cache_size_mb * 1024 * 1024
+
+            if total_size_bytes > max_size_bytes:
+                # Evict oldest files until under limit
+                for cache_file in cache_files:
+                    if total_size_bytes <= max_size_bytes:
+                        break
+
+                    file_size = cache_file.stat().st_size
+                    cache_file.unlink()
+                    total_size_bytes -= file_size
+                    logger.info(f"🗑️ LRU evicted: {cache_file.name} (size limit)")
+
+        except Exception as e:
+            logger.error(f"❌ Cache limit enforcement error: {str(e)}")
 
     def _get_cache_key(self, cache_type: str, **params) -> str:
         """Generate cache key from request parameters"""
@@ -105,6 +159,9 @@ class NewsCache:
                 json.dump(cache_data, f)
 
             logger.info(f"✅ Cached {len(articles)} articles: {cache_key}")
+
+            # Enforce cache size limits after writing
+            self._enforce_cache_limits()
 
         except Exception as e:
             logger.error(f"❌ Cache write error: {str(e)}")

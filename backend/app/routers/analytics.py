@@ -332,15 +332,70 @@ async def get_performance_metrics(
         total_return = total_pl
         total_return_percent = (total_return / total_cost * 100) if total_cost > 0 else 0
 
-        # Sharpe ratio (simplified - assumes 0% risk-free rate)
-        # Using current volatility estimate
-        avg_return = total_return_percent / 252  # Daily return
-        volatility = 1.5  # Estimated daily volatility (%)
+        # Sharpe ratio - calculate actual volatility from equity history
+        from ..services.equity_tracker import get_equity_tracker
+        tracker = get_equity_tracker()
+        now = datetime.now()
+        equity_history = tracker.get_history(start_date=now - timedelta(days=365))
+
+        if len(equity_history) > 1:
+            # Calculate daily returns from actual equity data
+            daily_returns = []
+            for i in range(1, len(equity_history)):
+                prev_equity = equity_history[i-1]["equity"]
+                curr_equity = equity_history[i]["equity"]
+                if prev_equity > 0:
+                    daily_return = (curr_equity - prev_equity) / prev_equity
+                    daily_returns.append(daily_return)
+
+            if len(daily_returns) > 1:
+                # Calculate actual volatility (standard deviation of returns)
+                mean_return = sum(daily_returns) / len(daily_returns)
+                variance = sum((r - mean_return) ** 2 for r in daily_returns) / len(daily_returns)
+                volatility = (variance ** 0.5) * 100  # Convert to percentage
+
+                # Use actual average return
+                avg_return = mean_return * 100  # Convert to percentage
+            else:
+                # Fallback if only 1 return
+                volatility = 1.5
+                avg_return = total_return_percent / 252
+        else:
+            # Fallback if insufficient data
+            volatility = 1.5
+            avg_return = total_return_percent / 252
+
         sharpe_ratio = (avg_return / volatility * math.sqrt(252)) if volatility > 0 else 0
 
-        # Max drawdown (simulated from equity curve)
-        max_drawdown = current_equity * 0.08  # Assume 8% max drawdown
-        max_drawdown_percent = 8.0
+        # Max drawdown - calculate from actual equity history
+        if len(equity_history) > 1:
+            # Calculate actual max drawdown
+            peak_equity = equity_history[0]["equity"]
+            max_dd_amount = 0
+            max_dd_percent = 0
+
+            for point in equity_history:
+                equity = point["equity"]
+
+                # Update peak
+                if equity > peak_equity:
+                    peak_equity = equity
+
+                # Calculate drawdown from peak
+                dd_amount = peak_equity - equity
+                dd_percent = (dd_amount / peak_equity * 100) if peak_equity > 0 else 0
+
+                # Track maximum
+                if dd_amount > max_dd_amount:
+                    max_dd_amount = dd_amount
+                    max_dd_percent = dd_percent
+
+            max_drawdown = max_dd_amount
+            max_drawdown_percent = max_dd_percent
+        else:
+            # Fallback to simulated if insufficient data
+            max_drawdown = current_equity * 0.08
+            max_drawdown_percent = 8.0
 
         # Current streak
         # Check if last position was win or loss
