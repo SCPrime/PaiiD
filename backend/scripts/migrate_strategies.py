@@ -14,8 +14,14 @@ Prerequisites:
 
 import json
 import sys
+import os
 from pathlib import Path
 from datetime import datetime
+
+# Fix Windows console encoding for emoji support
+if sys.platform == 'win32':
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    sys.stdout.reconfigure(encoding='utf-8')
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
