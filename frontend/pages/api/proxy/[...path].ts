@@ -51,6 +51,10 @@ const ALLOW_GET = new Set<string>([
   "portfolio/summary",
   "portfolio/history",
   "analytics/performance",
+  // Backtesting endpoints
+  "backtesting/run",
+  "backtesting/quick-test",
+  "backtesting/strategy-templates",
 ]);
 
 const ALLOW_POST = new Set<string>([
@@ -68,6 +72,8 @@ const ALLOW_POST = new Set<string>([
   "telemetry",
   // News cache management
   "news/cache/clear",
+  // Backtesting endpoints
+  "backtesting/run",
 ]);
 
 const ALLOW_DELETE = new Set<string>([

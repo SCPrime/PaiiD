@@ -17,7 +17,7 @@ print(f"===========================\n", flush=True)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
-from .routers import health, settings as settings_router, portfolio, orders, stream, screening, market, ai, telemetry, strategies, scheduler, claude, market_data, news, analytics
+from .routers import health, settings as settings_router, portfolio, orders, stream, screening, market, ai, telemetry, strategies, scheduler, claude, market_data, news, analytics, backtesting
 from .scheduler import init_scheduler
 import atexit
 
@@ -85,4 +85,5 @@ app.include_router(claude.router, prefix="/api")
 app.include_router(strategies.router, prefix="/api")
 app.include_router(scheduler.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
+app.include_router(backtesting.router, prefix="/api")
 app.include_router(telemetry.router)
