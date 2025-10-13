@@ -30,6 +30,11 @@ const NewsReview: React.FC = () => {
   const [searchSymbol, setSearchSymbol] = useState('');
   const [providers, setProviders] = useState<string[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [selectedProvider, setSelectedProvider] = useState<string>('all');
+  const [marketSentiment, setMarketSentiment] = useState<any>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const ARTICLES_PER_PAGE = 20;
 
   const fetchProviders = async () => {
     try {
@@ -42,14 +47,43 @@ const NewsReview: React.FC = () => {
     }
   };
 
-  const fetchNews = async (symbol?: string) => {
-    setLoading(true);
-    setError(null);
+  const fetchMarketSentiment = async () => {
+    try {
+      const response = await fetch('/api/proxy/news/sentiment/market?category=general');
+      if (response.ok) {
+        const data = await response.json();
+        setMarketSentiment(data);
+      }
+    } catch (err) {
+      console.error('[NEWS] Sentiment fetch error:', err);
+    }
+  };
+
+  const fetchNews = async (symbol?: string, loadMore: boolean = false) => {
+    if (!loadMore) {
+      setLoading(true);
+      setError(null);
+      setPage(1);
+    }
 
     try {
+      // Build query parameters
+      const params = new URLSearchParams();
+
+      if (symbol) {
+        params.append('days_back', '14');
+        if (filter !== 'all') params.append('sentiment', filter);
+        if (selectedProvider !== 'all') params.append('provider', selectedProvider);
+      } else {
+        params.append('category', 'general');
+        params.append('limit', String((loadMore ? page + 1 : 1) * ARTICLES_PER_PAGE));
+        if (filter !== 'all') params.append('sentiment', filter);
+        if (selectedProvider !== 'all') params.append('provider', selectedProvider);
+      }
+
       const endpoint = symbol
-        ? `/api/proxy/news/company/${symbol}?days_back=7`
-        : `/api/proxy/news/market?category=general&limit=50`;
+        ? `/api/proxy/news/company/${symbol}?${params.toString()}`
+        : `/api/proxy/news/market?${params.toString()}`;
 
       const response = await fetch(endpoint);
 
@@ -58,7 +92,15 @@ const NewsReview: React.FC = () => {
       }
 
       const data: NewsResponse = await response.json();
-      setNews(data.articles);
+
+      if (loadMore) {
+        setNews(prev => [...prev, ...data.articles]);
+        setPage(prev => prev + 1);
+      } else {
+        setNews(data.articles);
+      }
+
+      setHasMore(data.articles.length === (loadMore ? page + 1 : 1) * ARTICLES_PER_PAGE);
       setLastUpdate(new Date());
     } catch (err: any) {
       setError(err.message || 'Failed to load news');
@@ -71,14 +113,23 @@ const NewsReview: React.FC = () => {
   useEffect(() => {
     fetchProviders();
     fetchNews();
+    fetchMarketSentiment();
 
     // Auto-refresh every 5 minutes
     const interval = setInterval(() => {
       fetchNews(searchSymbol || undefined);
+      fetchMarketSentiment();
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
+
+  // Refetch when filters change
+  useEffect(() => {
+    if (providers.length > 0) {  // Only fetch after providers are loaded
+      fetchNews(searchSymbol || undefined);
+    }
+  }, [filter, selectedProvider]);
 
   const handleSearch = () => {
     if (searchSymbol.trim()) {
@@ -88,10 +139,8 @@ const NewsReview: React.FC = () => {
     }
   };
 
-  const filteredNews = news.filter(article => {
-    if (filter === 'all') return true;
-    return article.sentiment === filter;
-  });
+  // Filtering now happens on the backend, so we don't need client-side filtering
+  const filteredNews = news;
 
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
@@ -179,7 +228,7 @@ const NewsReview: React.FC = () => {
             News Review
           </h2>
         </div>
-        <div style={{ fontSize: '14px', color: '#94a3b8', display: 'flex', gap: '16px' }}>
+        <div style={{ fontSize: '14px', color: '#94a3b8', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
           <span>{filteredNews.length} articles</span>
           <span>•</span>
           <span>{providers.length} providers: {providers.join(', ')}</span>
@@ -187,6 +236,52 @@ const NewsReview: React.FC = () => {
           <span>Updated {formatDate(lastUpdate.toISOString())}</span>
         </div>
       </div>
+
+      {/* Market Sentiment Widget */}
+      {marketSentiment && (
+        <div style={{
+          marginBottom: '24px',
+          padding: '16px',
+          borderRadius: '12px',
+          background: `linear-gradient(135deg, ${getSentimentColor(marketSentiment.overall_sentiment)}15, transparent)`,
+          border: `1px solid ${getSentimentColor(marketSentiment.overall_sentiment)}40`,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '16px',
+        }}>
+          <div>
+            <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>Market Sentiment</div>
+            <div style={{ fontSize: '24px', fontWeight: '700', color: getSentimentColor(marketSentiment.overall_sentiment) }}>
+              {marketSentiment.overall_sentiment.toUpperCase()}
+            </div>
+            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+              Based on {marketSentiment.total_articles} articles
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '24px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '20px', fontWeight: '600', color: '#10b981' }}>
+                {marketSentiment.sentiment_distribution.bullish_percent}%
+              </div>
+              <div style={{ fontSize: '12px', color: '#94a3b8' }}>Bullish</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '20px', fontWeight: '600', color: '#6b7280' }}>
+                {marketSentiment.sentiment_distribution.neutral_percent}%
+              </div>
+              <div style={{ fontSize: '12px', color: '#94a3b8' }}>Neutral</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '20px', fontWeight: '600', color: '#ef4444' }}>
+                {marketSentiment.sentiment_distribution.bearish_percent}%
+              </div>
+              <div style={{ fontSize: '12px', color: '#94a3b8' }}>Bearish</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Controls */}
       <div style={{
@@ -274,6 +369,33 @@ const NewsReview: React.FC = () => {
             </button>
           ))}
         </div>
+
+        {/* Provider Filter */}
+        {providers.length > 0 && (
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', color: '#94a3b8' }}>Source:</span>
+            <select
+              value={selectedProvider}
+              onChange={(e) => setSelectedProvider(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid #334155',
+                backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                color: '#e2e8f0',
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="all">All Sources</option>
+              {providers.map((provider) => (
+                <option key={provider} value={provider}>
+                  {provider.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Refresh */}
         <button
@@ -437,6 +559,34 @@ const NewsReview: React.FC = () => {
                 </div>
               </div>
             ))
+          )}
+
+          {/* Load More Button */}
+          {!loading && !error && filteredNews.length > 0 && hasMore && (
+            <div style={{ textAlign: 'center', marginTop: '24px' }}>
+              <button
+                onClick={() => fetchNews(searchSymbol || undefined, true)}
+                style={{
+                  padding: '12px 32px',
+                  borderRadius: '8px',
+                  border: '1px solid #3B82F6',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  color: '#3B82F6',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                }}
+              >
+                Load More Articles
+              </button>
+            </div>
           )}
         </div>
       )}

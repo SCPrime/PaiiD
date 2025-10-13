@@ -33,6 +33,8 @@ const ALLOW_GET = new Set<string>([
   "news/providers",
   "news/company",
   "news/market",
+  "news/sentiment/market",
+  "news/cache/stats",
   // Alpaca endpoints
   "account",
   "positions",
@@ -63,6 +65,8 @@ const ALLOW_POST = new Set<string>([
   "chat",
   // Telemetry
   "telemetry",
+  // News cache management
+  "news/cache/clear",
 ]);
 
 const ALLOW_DELETE = new Set<string>([
