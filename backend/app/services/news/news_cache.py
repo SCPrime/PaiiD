@@ -163,8 +163,10 @@ class NewsCache:
                     age = (datetime.utcnow() - cached_at).total_seconds()
                     if age > ttl:
                         expired += 1
-                except:
+                except (IOError, json.JSONDecodeError, KeyError, ValueError) as e:
+                    # Corrupted or malformed cache file
                     expired += 1
+                    logger.debug(f"Cache stats: corrupted file {cache_file.name}: {e}")
 
             return {
                 'total_entries': len(cache_files),

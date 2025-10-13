@@ -109,14 +109,14 @@ class HistoricalDataService:
             # Daily return = trend + random noise
             daily_return = (current_trend * trend_strength) + random.gauss(0, daily_volatility)
 
-            # Calculate OHLC
+            # Calculate OHLC with validation to prevent negative prices
             open_price = current_price
-            close_price = open_price * (1 + daily_return)
+            close_price = max(0.01, open_price * (1 + daily_return))  # Ensure positive
 
             # Intraday high/low with realistic ranges
             intraday_range = abs(close_price - open_price) + (random.random() * 0.01 * close_price)
-            high_price = max(open_price, close_price) + (random.random() * intraday_range * 0.5)
-            low_price = min(open_price, close_price) - (random.random() * intraday_range * 0.5)
+            high_price = max(0.01, max(open_price, close_price) + (random.random() * intraday_range * 0.5))
+            low_price = max(0.01, min(open_price, close_price) - (random.random() * intraday_range * 0.5))
 
             # Volume (random but realistic)
             avg_volume = 50_000_000 if symbol.upper() in ["SPY", "QQQ", "AAPL"] else 10_000_000

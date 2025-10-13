@@ -35,6 +35,7 @@ class StrategyRules:
     exit_rules: List[Dict[str, Any]]  # e.g., [{"type": "take_profit", "value": 5}, {"type": "stop_loss", "value": 2}]
     position_size_percent: float = 10.0  # % of portfolio per trade
     max_positions: int = 1  # Max concurrent positions
+    rsi_period: int = 14  # Configurable RSI period (default 14)
 
 
 @dataclass
@@ -111,7 +112,8 @@ class BacktestingEngine:
         self,
         rules: List[Dict[str, Any]],
         prices: List[float],
-        current_price: float
+        current_price: float,
+        rsi_period: int = 14
     ) -> bool:
         """
         Check if entry conditions are met
@@ -127,9 +129,9 @@ class BacktestingEngine:
             value = rule.get("value", 0)
 
             if indicator == "RSI":
-                if len(prices) < 15:
+                if len(prices) < rsi_period + 1:
                     return False
-                rsi = self.calculate_rsi(prices)
+                rsi = self.calculate_rsi(prices, period=rsi_period)
 
                 if operator == "<" and not (rsi < value):
                     return False
@@ -259,7 +261,8 @@ class BacktestingEngine:
                 should_enter = self.check_entry_signal(
                     strategy.entry_rules,
                     price_history,
-                    close_price
+                    close_price,
+                    rsi_period=strategy.rsi_period
                 )
 
                 if should_enter:
@@ -361,7 +364,14 @@ class BacktestingEngine:
 
         total_wins = sum(t.pnl for t in winning_trades)
         total_losses = abs(sum(t.pnl for t in losing_trades))
-        profit_factor = (total_wins / total_losses) if total_losses > 0 else (total_wins if total_wins > 0 else 0)
+        # Profit factor: total_wins / total_losses
+        # If no losses, factor is infinity (perfect strategy) or 0 (no trades)
+        if total_losses > 0:
+            profit_factor = total_wins / total_losses
+        elif total_wins > 0:
+            profit_factor = 999.99  # Display as "∞" equivalent (backend uses float, not actual inf)
+        else:
+            profit_factor = 0  # No wins, no losses = neutral
 
         # Max drawdown
         max_drawdown = max((point["drawdown"] for point in self.equity_curve), default=0)

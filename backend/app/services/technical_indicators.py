@@ -196,7 +196,18 @@ class TechnicalIndicators:
         sum_xy = sum(x * y for x, y in zip(x_values, recent))
         sum_x2 = sum(x ** 2 for x in x_values)
 
-        slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x ** 2)
+        # Guard against division by zero (shouldn't happen with sequential x_values, but defensive)
+        denominator = (n * sum_x2 - sum_x ** 2)
+        if denominator == 0:
+            # All x values identical - return neutral trend
+            return {
+                "direction": "neutral",
+                "strength": 0.5,
+                "support": min(recent[-10:]),
+                "resistance": max(recent[-10:])
+            }
+
+        slope = (n * sum_xy - sum_x * sum_y) / denominator
 
         # Determine trend direction and strength
         if slope > 0.1:
@@ -343,7 +354,9 @@ class TechnicalIndicators:
                 "moving_averages": ma,
                 "trend": trend
             },
-            "risk_reward_ratio": round(abs(take_profit - entry_price) / abs(entry_price - stop_loss), 2) if abs(entry_price - stop_loss) > 0 else 0,
+            # Calculate risk/reward ratio with proper guard
+            # Risk = distance from entry to stop, Reward = distance from entry to target
+            "risk_reward_ratio": round(abs(take_profit - entry_price) / abs(entry_price - stop_loss), 2) if abs(entry_price - stop_loss) > 0.01 else 0,  # 0 if entry == stop (invalid signal)
             "bullish_score": round(bullish_score, 2),
             "bearish_score": round(bearish_score, 2)
         }
