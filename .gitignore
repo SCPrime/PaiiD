@@ -172,3 +172,9 @@ tmp/
 /PR_SUMMARY.md
 NUL
 .vercel
+
+# Docker files
+docker-compose.override.yml
+.dockerignore
+*.dockerfile
+docker-compose*.yml.backup
