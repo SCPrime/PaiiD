@@ -20,6 +20,7 @@ import RiskDashboard from '../components/RiskDashboard';
 import MarketScanner from '../components/MarketScanner';
 import { isUserLoggedIn, initializeSession } from '../lib/userManagement';
 import AIChat from '../components/AIChat';
+import KeyboardShortcuts from '../components/KeyboardShortcuts';
 
 export default function Dashboard() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>('');
@@ -562,6 +563,14 @@ export default function Dashboard() {
         isOpen={aiChatOpen}
         onClose={() => setAiChatOpen(false)}
         initialMessage="Hi! I'm your PaiiD AI assistant. I can help you with trading strategies, build custom workflows, analyze market data, or adjust your preferences. What would you like to know?"
+      />
+
+      {/* Keyboard Shortcuts */}
+      <KeyboardShortcuts
+        onOpenTrade={() => setSelectedWorkflow('execute')}
+        onQuickBuy={() => setSelectedWorkflow('execute')}
+        onQuickSell={() => setSelectedWorkflow('execute')}
+        onCloseModal={() => setSelectedWorkflow('')}
       />
     </>
   );

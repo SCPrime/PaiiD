@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { TrendingUp, Check, AlertCircle, Loader2, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { TrendingUp, Check, AlertCircle, Loader2, ChevronDown, Save, BookmarkPlus, Trash2 } from "lucide-react";
 import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
 import ConfirmDialog from "./ConfirmDialog";
@@ -22,6 +22,20 @@ interface ExecuteResponse {
   orders?: Order[];
 }
 
+interface OrderTemplate {
+  id: number;
+  name: string;
+  description?: string;
+  symbol: string;
+  side: "buy" | "sell";
+  quantity: number;
+  order_type: "market" | "limit";
+  limit_price?: number;
+  created_at: string;
+  updated_at: string;
+  last_used_at?: string;
+}
+
 export default function ExecuteTradeForm() {
   const [symbol, setSymbol] = useState("SPY");
   const [side, setSide] = useState<"buy" | "sell">("buy");
@@ -35,6 +49,104 @@ export default function ExecuteTradeForm() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
   const [showRawJson, setShowRawJson] = useState(false);
+
+  // Template-related state
+  const [templates, setTemplates] = useState<OrderTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
+
+  // Load templates on mount
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const loadTemplates = async () => {
+    try {
+      const res = await fetch("/api/proxy/api/order-templates");
+      if (res.ok) {
+        const data = await res.json();
+        setTemplates(data);
+      }
+    } catch (err) {
+      console.error("Failed to load templates:", err);
+    }
+  };
+
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (templateId === "") return;
+
+    const template = templates.find(t => t.id === parseInt(templateId));
+    if (template) {
+      setSymbol(template.symbol);
+      setSide(template.side);
+      setQty(template.quantity);
+      setOrderType(template.order_type);
+      setLimitPrice(template.limit_price ? template.limit_price.toString() : "");
+      showSuccess(`✅ Template "${template.name}" loaded`);
+
+      // Mark template as used
+      fetch(`/api/proxy/api/order-templates/${template.id}/use`, {
+        method: "POST",
+      }).catch(err => console.error("Failed to mark template as used:", err));
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim()) {
+      showError("❌ Template name is required");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/proxy/api/order-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: templateName,
+          description: templateDescription || null,
+          symbol: symbol.trim().toUpperCase(),
+          side,
+          quantity: qty,
+          order_type: orderType,
+          limit_price: orderType === "limit" ? parseFloat(limitPrice) : null,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+
+      const newTemplate = await res.json();
+      setTemplates([...templates, newTemplate]);
+      setShowSaveTemplate(false);
+      setTemplateName("");
+      setTemplateDescription("");
+      showSuccess(`✅ Template "${newTemplate.name}" saved`);
+    } catch (err: any) {
+      showError(`❌ Failed to save template: ${err.message}`);
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId: number) => {
+    if (!confirm("Are you sure you want to delete this template?")) return;
+
+    try {
+      const res = await fetch(`/api/proxy/api/order-templates/${templateId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+
+      setTemplates(templates.filter(t => t.id !== templateId));
+      if (selectedTemplateId === templateId.toString()) {
+        setSelectedTemplateId("");
+      }
+      showSuccess("✅ Template deleted");
+    } catch (err: any) {
+      showError(`❌ Failed to delete template: ${err.message}`);
+    }
+  };
 
   const generateRequestId = () =>
     `req-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
@@ -259,6 +371,132 @@ export default function ExecuteTradeForm() {
                 Place orders with dry-run mode enabled
               </p>
             </div>
+          </div>
+
+          {/* Template Selection and Management */}
+          <div style={{
+            marginBottom: theme.spacing.xl,
+            padding: theme.spacing.lg,
+            background: theme.background.input,
+            border: `1px solid ${theme.colors.border}`,
+            borderRadius: theme.borderRadius.lg
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: theme.spacing.md
+            }}>
+              <label style={{
+                fontSize: '14px',
+                fontWeight: '600',
+                color: theme.colors.textMuted
+              }}>
+                <BookmarkPlus size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
+                Order Templates
+              </label>
+              <Button
+                variant="secondary"
+                onClick={() => setShowSaveTemplate(!showSaveTemplate)}
+                style={{ fontSize: '12px', padding: '6px 12px' }}
+              >
+                <Save size={14} style={{ marginRight: '4px' }} />
+                Save Current as Template
+              </Button>
+            </div>
+
+            {/* Template Selector */}
+            <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => handleTemplateSelect(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  background: theme.background.card,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: theme.borderRadius.md,
+                  color: theme.colors.text,
+                  fontSize: '14px'
+                }}
+              >
+                <option value="">-- Select a template --</option>
+                {templates.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.symbol} - {t.side.toUpperCase()})
+                  </option>
+                ))}
+              </select>
+              {selectedTemplateId && (
+                <Button
+                  variant="danger"
+                  onClick={() => handleDeleteTemplate(parseInt(selectedTemplateId))}
+                  style={{ padding: '10px' }}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              )}
+            </div>
+
+            {/* Save Template Modal */}
+            {showSaveTemplate && (
+              <div style={{
+                marginTop: theme.spacing.md,
+                padding: theme.spacing.md,
+                background: theme.background.card,
+                border: `1px solid ${theme.colors.primary}`,
+                borderRadius: theme.borderRadius.md
+              }}>
+                <h4 style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: theme.colors.text,
+                  marginBottom: theme.spacing.sm
+                }}>
+                  Save as Template
+                </h4>
+                <input
+                  type="text"
+                  placeholder="Template name (e.g., SPY Quick Buy)"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    marginBottom: theme.spacing.sm,
+                    background: theme.background.input,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.borderRadius.sm,
+                    color: theme.colors.text,
+                    fontSize: '13px'
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Description (optional)"
+                  value={templateDescription}
+                  onChange={(e) => setTemplateDescription(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    marginBottom: theme.spacing.sm,
+                    background: theme.background.input,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.borderRadius.sm,
+                    color: theme.colors.text,
+                    fontSize: '13px'
+                  }}
+                />
+                <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+                  <Button variant="primary" onClick={handleSaveTemplate} style={{ flex: 1 }}>
+                    Save
+                  </Button>
+                  <Button variant="secondary" onClick={() => setShowSaveTemplate(false)} style={{ flex: 1 }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Form */}

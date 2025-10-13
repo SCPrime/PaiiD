@@ -177,3 +177,30 @@ class EquitySnapshot(Base):
 
     def __repr__(self):
         return f"<EquitySnapshot(id={self.id}, timestamp={self.timestamp}, equity=${self.equity:.2f})>"
+
+
+class OrderTemplate(Base):
+    """Saved order templates for quick execution"""
+    __tablename__ = "order_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+
+    # Template metadata
+    name = Column(String(255), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+
+    # Order configuration
+    symbol = Column(String(20), nullable=False)
+    side = Column(String(10), nullable=False)  # buy, sell
+    quantity = Column(Float, nullable=False)
+    order_type = Column(String(20), nullable=False)  # market, limit
+    limit_price = Column(Float, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    last_used_at = Column(DateTime, nullable=True)
+
+    def __repr__(self):
+        return f"<OrderTemplate(id={self.id}, name='{self.name}', symbol='{self.symbol}', side='{self.side}')>"

@@ -4,6 +4,7 @@ import { BarChart3, TrendingUp, TrendingDown, DollarSign, Percent, Calendar, Tar
 import { Card, Button } from './ui';
 import { theme } from '../styles/theme';
 import { alpaca } from '../lib/alpaca';
+import TradingViewChart from './TradingViewChart';
 
 interface PerformanceMetrics {
   totalReturn: number;
@@ -548,6 +549,11 @@ export default function Analytics() {
               ))}
             </div>
           </Card>
+
+          {/* TradingView Chart */}
+          <div style={{ marginBottom: theme.spacing.lg }}>
+            <TradingViewChart symbol="SPY" height={600} />
+          </div>
 
           {/* Trade Statistics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: theme.spacing.md }}>

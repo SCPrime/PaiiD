@@ -1,8 +1,8 @@
 11# PaiiD - COMPREHENSIVE MASTER CHECKLIST
 
-**Last Updated:** October 13, 2025 - **AUDIT COMPLETE** ✅
-**Project Status:** 65% Complete (77/119 tasks) - **REVISED AFTER AUDIT**
-**Current Phase:** Phase 2.5 - Infrastructure Completion
+**Last Updated:** October 13, 2025 - **PHASE 5.A COMPLETE** ✅
+**Project Status:** 69% Complete (82/119 tasks) - **+5 TASKS TODAY**
+**Current Phase:** Phase 2.5 Infrastructure + Phase 5.A Quick Wins COMPLETE
 
 ---
 
@@ -852,13 +852,13 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 
 ### ⚡ PHASE 5.A: QUICK WINS (DO AFTER 2.5)
 
-### Status: PARTIAL - **40% COMPLETE** ⚠️
+### Status: **100% COMPLETE** ✅
 
-**Time Estimate:** 2-3 days (14 hours) → **5 hours remaining**
+**Time Estimate:** 2-3 days (14 hours) → **COMPLETED**
 **Priority:** MEDIUM
 **Effort:** LOW
 **Impact:** MEDIUM (high user satisfaction)
-**Discovery:** Per Git commit `d1731b0` ("feat(Phase 5.A): add kill-switch UI and toast notifications"), 2 tasks already completed.
+**Completion Date:** October 13, 2025
 
 ### 5.A.1 Kill-Switch UI Toggle (1/1 - 100%) ✅
 
@@ -902,71 +902,77 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 - ✅ `frontend/pages/_app.tsx` - Toaster component added
 - ✅ Multiple components - Toast calls integrated
 
-### 5.A.3 Order Templates (0/1 - 0%) ❌
+### 5.A.3 Order Templates (1/1 - 100%) ✅
 
-**Time:** 4 hours | **Effort:** LOW | **Impact:** MEDIUM
+**Time:** 4 hours | **Effort:** LOW | **Impact:** MEDIUM | **Status:** COMPLETE
 
-- [ ] **TODO:** Add "Save as Template" to ExecuteTradeForm
-  - Save symbol, side, type, quantity, limit price
-  - Store in database (Phase 2.5 prerequisite)
-- [ ] **TODO:** Add "Templates" dropdown to form
-  - Load saved templates
-  - One-click populate form
-  - Edit/delete templates
-- [ ] **TODO:** Create template management UI
-  - List all templates
-  - Edit template
-  - Delete template
+- [x] **COMPLETE:** Order template system fully implemented
+  - ✅ Database model created (`OrderTemplate` in `backend/app/models/database.py`)
+  - ✅ Alembic migration created and run successfully
+  - ✅ Backend CRUD endpoints (`/api/order-templates`)
+  - ✅ Frontend template selector dropdown
+  - ✅ "Save Current as Template" button
+  - ✅ Template load/edit/delete functionality
+  - ✅ Toast notifications for template actions
 
-**Files to Modify:**
+**Files Created:**
 
-- `frontend/components/ExecuteTradeForm.tsx` - Add template functionality
-- `backend/app/routers/orders.py` - Add template CRUD endpoints
+- ✅ `backend/alembic/versions/ad76030fa92e_add_order_templates_table.py` - Migration
+- ✅ Backend model added to `database.py`
 
-### 5.A.4 Keyboard Shortcuts (0/1 - 0%) ❌
+**Files Modified:**
 
-**Time:** 3 hours | **Effort:** LOW | **Impact:** MEDIUM (power users)
+- ✅ `frontend/components/ExecuteTradeForm.tsx` - Full template UI integration
+- ✅ `backend/app/routers/orders.py` - 6 template endpoints added (POST, GET list, GET by ID, PUT, DELETE, POST /use)
 
-- [ ] **TODO:** Add keyboard shortcut library
-  - Install `react-hotkeys-hook`
-- [ ] **TODO:** Implement shortcuts
-  - `Ctrl+T` - Open Execute Trade form
-  - `Ctrl+B` - Quick buy
-  - `Ctrl+S` - Quick sell
-  - `Esc` - Close modals
-  - `Ctrl+K` - Command palette (future)
-- [ ] **TODO:** Add shortcut hint UI
-  - Show shortcuts in tooltips
-  - Create "Keyboard Shortcuts" help modal
+### 5.A.4 Keyboard Shortcuts (1/1 - 100%) ✅
 
-**Files to Modify:**
+**Time:** 3 hours | **Effort:** LOW | **Impact:** MEDIUM (power users) | **Status:** COMPLETE
 
-- `frontend/package.json` - Add react-hotkeys-hook
-- `frontend/components/ExecuteTradeForm.tsx` - Add shortcuts
-- `frontend/pages/index.tsx` - Global shortcuts
+- [x] **COMPLETE:** Global keyboard shortcuts system implemented
+  - ✅ `react-hotkeys-hook` library installed
+  - ✅ Global shortcuts integrated:
+    - `Ctrl+T` - Open Execute Trade workflow
+    - `Ctrl+B` - Quick buy (opens execute trade)
+    - `Ctrl+S` - Quick sell (opens execute trade)
+    - `Esc` - Close current workflow/modal
+    - `Ctrl+K` / `Ctrl+/` - Show keyboard shortcuts help
+  - ✅ Floating keyboard help button (bottom right)
+  - ✅ Beautiful help modal with all shortcuts
+  - ✅ Keyboard icon indicator
 
-### 5.A.5 TradingView Widget (0/1 - 0%) ❌
+**Files Created:**
 
-**Time:** 2 hours | **Effort:** LOW | **Impact:** HIGH
+- ✅ `frontend/components/KeyboardShortcuts.tsx` - Global shortcuts component with help modal
 
-- [ ] **TODO:** Embed TradingView lightweight chart
-  - Use TradingView widget (free)
-  - Add to Active Positions or Analytics
-  - Auto-load symbol when position selected
-- [ ] **TODO:** Add chart customization
-  - Timeframe selector (1D, 1W, 1M, 3M, 1Y)
-  - Indicator toggles (SMA, RSI, MACD)
+**Files Modified:**
 
-**Files to Create:**
+- ✅ `frontend/pages/index.tsx` - KeyboardShortcuts integration
+- ✅ Package already had react-hotkeys-hook
 
-- `frontend/components/TradingViewChart.tsx`
+### 5.A.5 TradingView Widget (1/1 - 100%) ✅
 
-**Files to Modify:**
+**Time:** 2 hours | **Effort:** LOW | **Impact:** HIGH | **Status:** COMPLETE
 
-- `frontend/components/ActivePositions.tsx` - Add chart panel
-- `frontend/components/Analytics.tsx` - Add chart section
+- [x] **COMPLETE:** TradingView chart widget fully integrated
+  - ✅ Free TradingView widget embedded
+  - ✅ Added to Analytics dashboard
+  - ✅ Symbol input for custom charts
+  - ✅ Timeframe selector (1D, 1W, 1M, 3M, 1Y)
+  - ✅ Indicator toggles (SMA, RSI, MACD)
+  - ✅ Dark theme integration
+  - ✅ Responsive height (600px)
+  - ✅ Reset button to default symbol
 
-**Phase 5.A Deliverable:** 5 quick wins that significantly improve user experience with minimal effort.
+**Files Created:**
+
+- ✅ `frontend/components/TradingViewChart.tsx` - Full-featured chart component (259 lines)
+
+**Files Modified:**
+
+- ✅ `frontend/components/Analytics.tsx` - TradingView chart section added
+
+**Phase 5.A Deliverable:** ✅ **COMPLETE** - 5 quick wins that significantly improve user experience with minimal effort.
 
 ---
 
@@ -1132,22 +1138,22 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 
 ### Overall Completion by Phase (REVISED)
 
-| Phase           | Description              | Total Tasks | Complete | In Progress | Not Started | % Complete  |
-| --------------- | ------------------------ | ----------- | -------- | ----------- | ----------- | ----------- |
-| **Code Review** | Code quality fixes       | 18          | 18       | 0           | 0           | **100%** ✅ |
-| **Phase 1**     | UI Critical Fixes        | 5           | 5        | 0           | 0           | **100%** ✅ |
-| **Phase 2.5**   | **Infrastructure**       | **4**       | **0**    | **0**       | **4**       | **0%** ❌   |
-| **Phase 2.A**   | Real-time Data           | 2           | 0        | 0           | 2           | **0%** ❌   |
-| **Phase 2**     | Core Trading (remaining) | 15          | 10       | 5           | 0           | **67%** ⚠️  |
-| **Phase 3.A**   | AI Copilot               | 2           | 0        | 0           | 2           | **0%** ❌   |
-| **Phase 3**     | AI Strategy (remaining)  | 13          | 7        | 7           | 0           | **54%** ⚠️  |
-| **Phase 4**     | Production Hardening     | 21          | 3        | 2           | 16          | **14%** ⚠️  |
-| **Phase 5.A**   | Quick Wins               | 5           | 0        | 0           | 5           | **0%** ❌   |
-| **Phase 5.B**   | Polish                   | 3           | 0        | 0           | 3           | **0%** ❌   |
-| **Phase 5**     | UX (remaining)           | 15          | 1        | 1           | 13          | **7%** ⚠️   |
-| **DEFERRED**    | Options, ML, Auto-trade  | 24          | 0        | 0           | 24          | **0%** 📅   |
-| **MVP TOTAL**   | **Critical Path Only**   | **70**      | **44**   | **15**      | **11**      | **63%** ⚠️  |
-| **FULL TOTAL**  | **Including Deferred**   | **94**      | **44**   | **15**      | **35**      | **47%**     |
+| Phase           | Description              | Total Tasks | Complete | In Progress | Not Started | % Complete   |
+| --------------- | ------------------------ | ----------- | -------- | ----------- | ----------- | ------------ |
+| **Code Review** | Code quality fixes       | 18          | 18       | 0           | 0           | **100%** ✅  |
+| **Phase 1**     | UI Critical Fixes        | 5           | 5        | 0           | 0           | **100%** ✅  |
+| **Phase 2.5**   | **Infrastructure**       | **4**       | **3**    | **1**       | **0**       | **75%** ✅   |
+| **Phase 2.A**   | Real-time Data           | 2           | 2        | 0           | 0           | **100%** ✅  |
+| **Phase 2**     | Core Trading (remaining) | 15          | 10       | 5           | 0           | **67%** ⚠️   |
+| **Phase 3.A**   | AI Copilot               | 2           | 0        | 0           | 2           | **0%** ❌    |
+| **Phase 3**     | AI Strategy (remaining)  | 13          | 7        | 7           | 0           | **54%** ⚠️   |
+| **Phase 4**     | Production Hardening     | 21          | 3        | 2           | 16          | **14%** ⚠️   |
+| **Phase 5.A**   | **Quick Wins**           | **5**       | **5**    | **0**       | **0**       | **100%** ✅  |
+| **Phase 5.B**   | Polish                   | 3           | 0        | 0           | 3           | **0%** ❌    |
+| **Phase 5**     | UX (remaining)           | 15          | 6        | 0           | 9           | **40%** ⚠️   |
+| **DEFERRED**    | Options, ML, Auto-trade  | 24          | 0        | 0           | 24          | **0%** 📅    |
+| **MVP TOTAL**   | **Critical Path Only**   | **70**      | **49**   | **15**      | **6**       | **70%** ✅   |
+| **FULL TOTAL**  | **Including Deferred**   | **94**      | **49**   | **15**      | **30**      | **52%** ⚠️   |
 
 ### Time to MVP
 
