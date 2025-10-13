@@ -53,7 +53,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Initialize scheduler and cache on startup
+# Initialize scheduler, cache, and streaming on startup
 @app.on_event("startup")
 async def startup_event():
     # Initialize cache service
@@ -70,9 +70,18 @@ async def startup_event():
     except Exception as e:
         print(f"[ERROR] Failed to initialize scheduler: {str(e)}", flush=True)
 
-# Shutdown scheduler gracefully
+    # Initialize Alpaca streaming service (Phase 2.A)
+    try:
+        from .services.alpaca_stream import start_alpaca_stream
+        await start_alpaca_stream()
+        print("[OK] Alpaca WebSocket stream initialized", flush=True)
+    except Exception as e:
+        print(f"[ERROR] Failed to initialize Alpaca stream: {str(e)}", flush=True)
+
+# Shutdown scheduler and streaming gracefully
 @app.on_event("shutdown")
 async def shutdown_event():
+    # Shutdown scheduler
     try:
         from .scheduler import get_scheduler
         scheduler_instance = get_scheduler()
@@ -80,6 +89,14 @@ async def shutdown_event():
         print("[OK] Scheduler shut down gracefully", flush=True)
     except Exception as e:
         print(f"[ERROR] Scheduler shutdown error: {str(e)}", flush=True)
+
+    # Shutdown Alpaca stream
+    try:
+        from .services.alpaca_stream import stop_alpaca_stream
+        await stop_alpaca_stream()
+        print("[OK] Alpaca stream shut down gracefully", flush=True)
+    except Exception as e:
+        print(f"[ERROR] Alpaca stream shutdown error: {str(e)}", flush=True)
 
 # Add Sentry context middleware if Sentry is enabled
 if settings.SENTRY_DSN:
