@@ -5,6 +5,7 @@ import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
 import ConfirmDialog from "./ConfirmDialog";
 import { addOrderToHistory } from "./OrderHistory";
+import { showSuccess, showError, showWarning } from "../lib/toast";
 
 interface Order {
   symbol: string;
@@ -102,6 +103,13 @@ export default function ExecuteTradeForm() {
       const data: ExecuteResponse = await res.json();
       setResponse(data);
 
+      // Show appropriate toast
+      if (data.duplicate) {
+        showWarning(`⚠️ Duplicate request detected - Order not resubmitted`);
+      } else if (data.accepted) {
+        showSuccess(`✅ ${pendingOrder.side.toUpperCase()} order accepted (Dry-Run): ${pendingOrder.qty} shares of ${pendingOrder.symbol}`);
+      }
+
       // Add to order history
       addOrderToHistory({
         symbol: pendingOrder.symbol,
@@ -114,6 +122,7 @@ export default function ExecuteTradeForm() {
       });
     } catch (err: any) {
       setError(err.message);
+      showError(`❌ Order failed: ${err.message}`);
     } finally {
       setLoading(false);
       setPendingOrder(null);

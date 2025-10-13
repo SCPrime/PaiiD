@@ -6,6 +6,7 @@ import TradingJournal from './TradingJournal';
 import RiskDashboard from './RiskDashboard';
 import SchedulerSettings from './SchedulerSettings';
 import ApprovalQueue from './ApprovalQueue';
+import KillSwitchToggle from './KillSwitchToggle';
 import { getCurrentUser, getUserAnalytics, clearUserData } from '../lib/userManagement';
 
 interface User {
@@ -891,22 +892,33 @@ function TelemetryTab({ enabled, data, users, onToggle, onExport }: any) {
 
 function TradingControlTab({ users, isOwner, currentUserId, onToggleTradingMode }: any) {
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-        <Activity size={20} />
-        Trading Mode Control
-      </h3>
+    <div className="space-y-6">
+      {/* Kill Switch Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Activity size={20} />
+          Emergency Kill Switch
+        </h3>
+        <KillSwitchToggle />
+      </div>
 
-      {!isOwner && (
-        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded flex items-start gap-2">
-          <AlertTriangle size={16} className="text-red-400 mt-0.5" />
-          <p className="text-sm text-red-400">
-            Only the system owner can toggle between Paper and Live trading modes.
-          </p>
-        </div>
-      )}
+      {/* Trading Mode Control Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Activity size={20} />
+          Trading Mode Control (Paper vs Live)
+        </h3>
 
-      {users.map((user: User) => (
+        {!isOwner && (
+          <div className="p-3 bg-red-500/10 border border-red-500/30 rounded flex items-start gap-2 mb-4">
+            <AlertTriangle size={16} className="text-red-400 mt-0.5" />
+            <p className="text-sm text-red-400">
+              Only the system owner can toggle between Paper and Live trading modes.
+            </p>
+          </div>
+        )}
+
+        {users.map((user: User) => (
         <div key={user.id} className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
           <div className="flex justify-between items-center">
             <div>
@@ -949,7 +961,8 @@ function TradingControlTab({ users, isOwner, currentUserId, onToggleTradingMode 
             </div>
           )}
         </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
