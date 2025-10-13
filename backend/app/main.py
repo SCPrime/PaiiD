@@ -20,6 +20,28 @@ from .core.config import settings
 from .routers import health, settings as settings_router, portfolio, orders, stream, screening, market, ai, telemetry, strategies, scheduler, claude, market_data, news, analytics, backtesting
 from .scheduler import init_scheduler
 import atexit
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
+
+# Initialize Sentry if DSN is configured
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        integrations=[
+            StarletteIntegration(transaction_style="endpoint"),
+            FastApiIntegration(transaction_style="endpoint"),
+        ],
+        traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
+        profiles_sample_rate=0.1,  # 10% profiling
+        environment="production" if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "") else "development",
+        release=f"paiid-backend@1.0.0",
+        send_default_pii=False,  # Don't send personally identifiable info
+        before_send=lambda event, hint: event if not event.get("request", {}).get("headers", {}).get("Authorization") else {**event, "request": {**event.get("request", {}), "headers": {**event.get("request", {}).get("headers", {}), "Authorization": "[REDACTED]"}}}
+    )
+    print("[OK] Sentry error tracking initialized", flush=True)
+else:
+    print("[WARNING] SENTRY_DSN not configured - error tracking disabled", flush=True)
 
 print(f"\n===== SETTINGS LOADED =====")
 print(f"settings.API_TOKEN: {settings.API_TOKEN}")
@@ -58,6 +80,11 @@ async def shutdown_event():
         print("[OK] Scheduler shut down gracefully", flush=True)
     except Exception as e:
         print(f"[ERROR] Scheduler shutdown error: {str(e)}", flush=True)
+
+# Add Sentry context middleware if Sentry is enabled
+if settings.SENTRY_DSN:
+    from .middleware.sentry import SentryContextMiddleware
+    app.add_middleware(SentryContextMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
