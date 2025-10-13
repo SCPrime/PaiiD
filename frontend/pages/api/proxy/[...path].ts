@@ -44,6 +44,10 @@ const ALLOW_GET = new Set<string>([
   // Claude AI endpoints
   "claude/chat",
   "claude/health",
+  // Analytics endpoints
+  "portfolio/summary",
+  "portfolio/history",
+  "analytics/performance",
 ]);
 
 const ALLOW_POST = new Set<string>([

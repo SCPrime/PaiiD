@@ -47,6 +47,8 @@ class TradingScheduler:
             logger.info("Trading scheduler started")
             # Load and restore all enabled schedules
             self._restore_schedules()
+            # Add daily equity tracking job
+            self._add_equity_tracking_job()
 
     def shutdown(self):
         """Gracefully shutdown the scheduler"""
@@ -171,6 +173,44 @@ class TradingScheduler:
         except Exception as e:
             logger.error(f"Failed to get schedule info for {schedule_id}: {str(e)}")
             return None
+
+    def _add_equity_tracking_job(self):
+        """Add daily equity tracking job at market close (4:15 PM ET)"""
+        try:
+            # Track equity at 4:15 PM ET (after market close at 4:00 PM)
+            # Cron: 15 16 * * 1-5 (4:15 PM ET, Mon-Fri)
+            trigger = CronTrigger(
+                hour=16,
+                minute=15,
+                day_of_week='mon-fri',
+                timezone='America/New_York'
+            )
+
+            self.scheduler.add_job(
+                self._track_equity_snapshot,
+                trigger=trigger,
+                id='equity_tracking_daily',
+                name='Daily Equity Tracking',
+                replace_existing=True
+            )
+
+            logger.info("✅ Daily equity tracking job added (4:15 PM ET, Mon-Fri)")
+
+        except Exception as e:
+            logger.error(f"❌ Failed to add equity tracking job: {str(e)}")
+
+    async def _track_equity_snapshot(self):
+        """Record daily equity snapshot"""
+        try:
+            from .services.equity_tracker import get_equity_tracker
+
+            tracker = get_equity_tracker()
+            snapshot = tracker.record_snapshot()
+
+            logger.info(f"✅ Equity snapshot recorded: ${snapshot['equity']:.2f}")
+
+        except Exception as e:
+            logger.error(f"❌ Failed to track equity snapshot: {str(e)}")
 
     def _get_job_function(self, schedule_type: str):
         """Map schedule type to execution function"""

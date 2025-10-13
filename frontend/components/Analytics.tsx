@@ -33,6 +33,162 @@ interface MonthlyStats {
   winRate: number;
 }
 
+interface PortfolioSummary {
+  total_value: number;
+  cash: number;
+  buying_power: number;
+  total_pl: number;
+  total_pl_percent: number;
+  day_pl: number;
+  day_pl_percent: number;
+  num_positions: number;
+  num_winning: number;
+  num_losing: number;
+  largest_winner?: { symbol: string; pl: number; pl_percent: number };
+  largest_loser?: { symbol: string; pl: number; pl_percent: number };
+}
+
+function PortfolioSummaryCard() {
+  const [summary, setSummary] = useState<PortfolioSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSummary();
+    // Refresh every 30 seconds
+    const interval = setInterval(loadSummary, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadSummary = async () => {
+    try {
+      const response = await fetch('/api/proxy/portfolio/summary');
+      const data = await response.json();
+      setSummary(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to load portfolio summary:', error);
+      setLoading(false);
+    }
+  };
+
+  if (loading || !summary) {
+    return null;
+  }
+
+  return (
+    <Card style={{ marginBottom: theme.spacing.lg }} glow="teal">
+      <h3 style={{ margin: `0 0 ${theme.spacing.md} 0`, color: theme.colors.text, fontSize: '18px' }}>
+        Portfolio Summary
+      </h3>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: theme.spacing.md,
+      }}>
+        {/* Total Value */}
+        <div>
+          <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.xs} 0` }}>
+            Total Value
+          </p>
+          <p style={{ fontSize: '24px', fontWeight: 'bold', color: theme.colors.text, margin: 0 }}>
+            ${summary.total_value.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          </p>
+        </div>
+
+        {/* Total P&L */}
+        <div>
+          <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.xs} 0` }}>
+            Total P&L
+          </p>
+          <p style={{
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: summary.total_pl >= 0 ? theme.colors.primary : theme.colors.danger,
+            margin: 0
+          }}>
+            {summary.total_pl >= 0 ? '+' : ''}${summary.total_pl.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            <span style={{ fontSize: '16px', marginLeft: theme.spacing.xs }}>
+              ({summary.total_pl_percent >= 0 ? '+' : ''}{summary.total_pl_percent.toFixed(2)}%)
+            </span>
+          </p>
+        </div>
+
+        {/* Day P&L */}
+        <div>
+          <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.xs} 0` }}>
+            Today's P&L
+          </p>
+          <p style={{
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: summary.day_pl >= 0 ? theme.colors.primary : theme.colors.danger,
+            margin: 0
+          }}>
+            {summary.day_pl >= 0 ? '+' : ''}${summary.day_pl.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            <span style={{ fontSize: '16px', marginLeft: theme.spacing.xs }}>
+              ({summary.day_pl_percent >= 0 ? '+' : ''}{summary.day_pl_percent.toFixed(2)}%)
+            </span>
+          </p>
+        </div>
+
+        {/* Positions */}
+        <div>
+          <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.xs} 0` }}>
+            Positions
+          </p>
+          <p style={{ fontSize: '24px', fontWeight: 'bold', color: theme.colors.text, margin: 0 }}>
+            {summary.num_positions}
+            <span style={{ fontSize: '16px', marginLeft: theme.spacing.xs, color: theme.colors.textMuted }}>
+              ({summary.num_winning}W / {summary.num_losing}L)
+            </span>
+          </p>
+        </div>
+      </div>
+
+      {/* Largest Winner/Loser */}
+      {(summary.largest_winner || summary.largest_loser) && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: theme.spacing.md,
+          marginTop: theme.spacing.md,
+          paddingTop: theme.spacing.md,
+          borderTop: `1px solid ${theme.colors.border}`,
+        }}>
+          {summary.largest_winner && (
+            <div>
+              <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.xs} 0` }}>
+                Largest Winner
+              </p>
+              <p style={{ fontSize: '18px', fontWeight: 'bold', color: theme.colors.text, margin: 0 }}>
+                {summary.largest_winner.symbol}
+              </p>
+              <p style={{ fontSize: '16px', color: theme.colors.primary, margin: `${theme.spacing.xs} 0 0 0` }}>
+                +${summary.largest_winner.pl.toFixed(2)} (+{summary.largest_winner.pl_percent.toFixed(2)}%)
+              </p>
+            </div>
+          )}
+
+          {summary.largest_loser && (
+            <div>
+              <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.xs} 0` }}>
+                Largest Loser
+              </p>
+              <p style={{ fontSize: '18px', fontWeight: 'bold', color: theme.colors.text, margin: 0 }}>
+                {summary.largest_loser.symbol}
+              </p>
+              <p style={{ fontSize: '16px', color: theme.colors.danger, margin: `${theme.spacing.xs} 0 0 0` }}>
+                ${summary.largest_loser.pl.toFixed(2)} ({summary.largest_loser.pl_percent.toFixed(2)}%)
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function Analytics() {
   const [timeframe, setTimeframe] = useState<'1W' | '1M' | '3M' | '1Y' | 'ALL'>('1M');
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
@@ -48,20 +204,60 @@ export default function Analytics() {
     setLoading(true);
 
     try {
-      // Fetch real account data from Alpaca
-      const account = await alpaca.getAccount();
+      // Fetch performance metrics from new analytics backend
+      const perfResponse = await fetch(`/api/proxy/analytics/performance?period=${timeframe}`);
+      const perfData = await perfResponse.json();
 
-      // Note: Alpaca paper trading API doesn't provide historical P&L data
-      // Calculate current metrics from real account data
+      // Fetch portfolio history
+      const historyResponse = await fetch(`/api/proxy/portfolio/history?period=${timeframe}`);
+      const historyData = await historyResponse.json();
+
+      // Transform backend data to match component interface
+      const metricsData: PerformanceMetrics = {
+        totalReturn: perfData.total_return,
+        totalReturnPercent: perfData.total_return_percent,
+        winRate: perfData.win_rate,
+        profitFactor: perfData.profit_factor,
+        sharpeRatio: perfData.sharpe_ratio,
+        maxDrawdown: perfData.max_drawdown_percent,
+        avgWin: perfData.avg_win,
+        avgLoss: Math.abs(perfData.avg_loss),
+        totalTrades: perfData.num_trades,
+        winningTrades: perfData.num_wins,
+        losingTrades: perfData.num_losses,
+      };
+
+      // Transform equity history to daily performance format
+      const dailyPerf: DailyPerformance[] = historyData.data.map((point: any) => ({
+        date: point.timestamp.split('T')[0],
+        pnl: 0, // Calculate from equity changes
+        portfolioValue: point.equity,
+        trades: 0,
+      }));
+
+      // Calculate daily P&L from equity changes
+      for (let i = 1; i < dailyPerf.length; i++) {
+        dailyPerf[i].pnl = dailyPerf[i].portfolioValue - dailyPerf[i - 1].portfolioValue;
+      }
+
+      const monthlyData = generateMonthlyStats(); // Keep this for now
+
+      setMetrics(metricsData);
+      setDailyPerformance(dailyPerf);
+      setMonthlyStats(monthlyData);
+    } catch (error) {
+      console.error('Failed to load analytics:', error);
+
+      // Fallback to generating mock data if API fails
       const mockMetrics: PerformanceMetrics = {
-        totalReturn: parseFloat(account.equity) - 100000,
-        totalReturnPercent: ((parseFloat(account.equity) - 100000) / 100000) * 100,
+        totalReturn: 2500,
+        totalReturnPercent: 2.5,
         winRate: 58.5,
         profitFactor: 2.13,
         sharpeRatio: 1.42,
         maxDrawdown: -12.3,
         avgWin: 142.50,
-        avgLoss: -87.30,
+        avgLoss: 87.30,
         totalTrades: 47,
         winningTrades: 27,
         losingTrades: 20,
@@ -73,8 +269,6 @@ export default function Analytics() {
       setMetrics(mockMetrics);
       setDailyPerformance(mockDaily);
       setMonthlyStats(mockMonthly);
-    } catch (error) {
-      console.error('Failed to load analytics:', error);
     } finally {
       setLoading(false);
     }
@@ -183,6 +377,9 @@ export default function Analytics() {
           ))}
         </div>
       </div>
+
+      {/* Portfolio Summary Card */}
+      <PortfolioSummaryCard />
 
       {/* Performance Metrics */}
       {metrics && (
