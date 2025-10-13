@@ -31,9 +31,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Initialize scheduler on startup
+# Initialize scheduler and cache on startup
 @app.on_event("startup")
 async def startup_event():
+    # Initialize cache service
+    try:
+        from .services.cache import init_cache
+        init_cache()
+    except Exception as e:
+        print(f"[ERROR] Failed to initialize cache: {str(e)}", flush=True)
+
+    # Initialize scheduler
     try:
         scheduler_instance = init_scheduler()
         print("[OK] Scheduler initialized and started", flush=True)

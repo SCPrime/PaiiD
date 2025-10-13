@@ -4,6 +4,7 @@ from typing import Optional, Literal
 from ..core.auth import require_bearer
 from ..core.config import settings
 from ..services.tradier_client import get_tradier_client
+from ..services.cache import CacheService, get_cache
 import logging
 
 logger = logging.getLogger(__name__)
@@ -59,12 +60,22 @@ def get_account(_=Depends(require_bearer)):
         )
 
 @router.get("/positions")
-def get_positions(_=Depends(require_bearer)):
-    """Get Tradier positions"""
+def get_positions(_=Depends(require_bearer), cache: CacheService = Depends(get_cache)):
+    """Get Tradier positions (cached for 30s)"""
+    # Check cache first
+    cache_key = "portfolio:positions"
+    cached_positions = cache.get(cache_key)
+    if cached_positions:
+        logger.info("✅ Cache HIT for positions")
+        return cached_positions
+
     try:
         client = get_tradier_client()
         positions = client.get_positions()
         logger.info(f"✅ Retrieved {len(positions)} positions from Tradier")
+
+        # Cache for 30 seconds
+        cache.set(cache_key, positions, ttl=30)
         return positions
 
     except Exception as e:

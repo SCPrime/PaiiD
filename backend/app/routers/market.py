@@ -10,6 +10,7 @@ from typing import List, Literal
 from pydantic import BaseModel
 from ..core.auth import require_bearer
 from ..core.config import settings
+from ..services.cache import CacheService, get_cache
 import requests
 
 # LOUD LOGGING TO VERIFY NEW CODE IS DEPLOYED
@@ -97,17 +98,25 @@ async def get_market_conditions() -> dict:
 
 
 @router.get("/market/indices", dependencies=[Depends(require_bearer)])
-async def get_major_indices() -> dict:
+async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
     """
     Get current prices for Dow Jones Industrial and NASDAQ Composite
 
     Data Source Priority:
-    1. Tradier API (live market data)
-    2. Claude AI (intelligent fallback)
-    3. Error 503 (service unavailable)
+    1. Redis Cache (60s TTL)
+    2. Tradier API (live market data)
+    3. Claude AI (intelligent fallback)
+    4. Error 503 (service unavailable)
 
     Returns data in format: { dow: {...}, nasdaq: {...} }
     """
+    # Check cache first
+    cache_key = "market:indices"
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        print("[Market] ✅ Cache HIT for indices")
+        return {**cached_data, "cached": True}
+
     # Try Tradier first
     try:
         if not settings.TRADIER_API_KEY:
@@ -158,11 +167,14 @@ async def get_major_indices() -> dict:
 
             if dow_data or nasdaq_data:
                 print("[Market] ✅ Fetched live data from Tradier for Dow/NASDAQ")
-                return {
+                result = {
                     "dow": dow_data or {"last": 0, "change": 0, "changePercent": 0},
                     "nasdaq": nasdaq_data or {"last": 0, "change": 0, "changePercent": 0},
                     "source": "tradier"
                 }
+                # Cache for 60 seconds
+                cache.set(cache_key, result, ttl=60)
+                return result
             else:
                 raise ValueError("No Tradier quote data returned")
 
@@ -203,10 +215,13 @@ async def get_major_indices() -> dict:
             ai_data = json.loads(ai_text)
 
             print("[Market] ✅ Using Claude AI fallback for Dow/NASDAQ")
-            return {
+            result = {
                 **ai_data,
                 "source": "claude_ai"
             }
+            # Cache AI fallback for 60 seconds too
+            cache.set(cache_key, result, ttl=60)
+            return result
 
         except Exception as ai_error:
             print(f"[Market] ❌ Claude AI fallback also failed: {ai_error}")

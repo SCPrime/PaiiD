@@ -8,6 +8,7 @@ Alpaca is ONLY used for paper trading execution (see orders.py).
 from fastapi import APIRouter, Depends, HTTPException
 from app.core.auth import require_bearer
 from ..services.tradier_client import get_tradier_client
+from ..services.cache import CacheService, get_cache
 from datetime import datetime, timedelta
 import logging
 
@@ -22,8 +23,15 @@ router = APIRouter()
 
 
 @router.get("/market/quote/{symbol}")
-async def get_quote(symbol: str, _=Depends(require_bearer)):
-    """Get real-time quote for a symbol using Tradier"""
+async def get_quote(symbol: str, _=Depends(require_bearer), cache: CacheService = Depends(get_cache)):
+    """Get real-time quote for a symbol using Tradier (cached for 15s)"""
+    # Check cache first
+    cache_key = f"quote:{symbol.upper()}"
+    cached_quote = cache.get(cache_key)
+    if cached_quote:
+        logger.info(f"✅ Cache HIT for quote {symbol}")
+        return cached_quote
+
     try:
         client = get_tradier_client()
         quotes_data = client.get_quotes([symbol])
@@ -33,7 +41,7 @@ async def get_quote(symbol: str, _=Depends(require_bearer)):
 
         quote = quotes_data[symbol.upper()]
 
-        return {
+        result = {
             "symbol": symbol.upper(),
             "bid": float(quote.get("bid", 0)),
             "ask": float(quote.get("ask", 0)),
@@ -41,6 +49,10 @@ async def get_quote(symbol: str, _=Depends(require_bearer)):
             "volume": int(quote.get("volume", 0)),
             "timestamp": quote.get("trade_date", datetime.now().isoformat())
         }
+
+        # Cache for 15 seconds
+        cache.set(cache_key, result, ttl=15)
+        return result
     except HTTPException:
         raise
     except Exception as e:
