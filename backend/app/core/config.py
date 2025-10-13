@@ -28,4 +28,13 @@ class Settings(BaseModel):
     # Anthropic API (AI FALLBACK for market data)
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 
+    # Database (Phase 2.5)
+    DATABASE_URL: Optional[str] = os.getenv("DATABASE_URL")
+
+    # Redis (Phase 2.5)
+    REDIS_URL: Optional[str] = os.getenv("REDIS_URL")
+
+    # Sentry Error Tracking (Phase 2.5)
+    SENTRY_DSN: Optional[str] = os.getenv("SENTRY_DSN")
+
 settings = Settings()
