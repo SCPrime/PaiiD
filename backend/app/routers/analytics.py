@@ -133,7 +133,10 @@ async def get_portfolio_summary() -> PortfolioSummary:
 
         # Calculate percentages
         positions_value = sum(float(p.get("market_value", 0)) for p in positions)
-        total_pl_percent = (total_pl / (positions_value - total_pl) * 100) if (positions_value - total_pl) != 0 else 0
+        # Calculate P&L percentage: total_pl / cost_basis = total_pl / (positions_value - total_pl)
+        # Guard against division by zero when positions_value == total_pl (break-even after gains)
+        cost_basis = positions_value - total_pl
+        total_pl_percent = (total_pl / cost_basis * 100) if cost_basis != 0 and positions_value != 0 else 0
         day_pl_percent = (day_pl / positions_value * 100) if positions_value != 0 else 0
 
         logger.info(f"✅ Portfolio summary: ${total_value:.2f}, P&L: ${total_pl:.2f}")

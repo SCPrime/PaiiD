@@ -244,7 +244,8 @@ class BacktestingEngine:
                     position.pnl_percent = ((close_price - position.entry_price) / position.entry_price) * 100
                     position.status = "closed"
 
-                    # Return capital
+                    # Return capital: original cost basis + profit/loss
+                    # This equals: entry_price * quantity + (exit_price - entry_price) * quantity = exit_price * quantity
                     self.capital += position.entry_price * position.quantity + position.pnl
 
                     # Move to closed trades
@@ -266,7 +267,10 @@ class BacktestingEngine:
                     position_capital = self.capital * (strategy.position_size_percent / 100)
                     quantity = int(position_capital / close_price)
 
-                    if quantity > 0 and (quantity * close_price) <= self.capital:
+                    # Calculate exact cost before checking capital
+                    exact_cost = quantity * close_price
+
+                    if quantity > 0 and exact_cost <= self.capital:
                         # Open new position
                         trade = Trade(
                             entry_date=date,
@@ -284,9 +288,11 @@ class BacktestingEngine:
                         logger.debug(f"Opened position: {symbol} at {close_price}, Qty: {quantity}")
 
             # Calculate current equity (capital + open positions value)
+            # Formula: current_value = close_price * quantity = unrealized_pnl + cost_basis
             open_positions_value = sum(
                 (close_price - p.entry_price) * p.quantity + (p.entry_price * p.quantity)
                 for p in self.positions
+                if p.entry_price > 0  # Guard against zero entry prices
             )
             current_equity = self.capital + open_positions_value
 

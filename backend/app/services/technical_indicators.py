@@ -65,19 +65,24 @@ class TechnicalIndicators:
         Returns:
             dict with macd, signal, histogram values
         """
-        if len(prices) < slow_period:
+        if len(prices) < slow_period + signal_period:
             return {"macd": 0.0, "signal": 0.0, "histogram": 0.0}
 
-        # Calculate EMAs
-        fast_ema = TechnicalIndicators._calculate_ema(prices, fast_period)
-        slow_ema = TechnicalIndicators._calculate_ema(prices, slow_period)
+        # Calculate MACD line for each bar (need historical values for signal line EMA)
+        macd_values = []
+        for i in range(slow_period, len(prices)):
+            fast_ema = TechnicalIndicators._calculate_ema(prices[:i+1], fast_period)
+            slow_ema = TechnicalIndicators._calculate_ema(prices[:i+1], slow_period)
+            macd_values.append(fast_ema - slow_ema)
 
-        macd_line = fast_ema - slow_ema
+        # Calculate signal line as EMA of MACD line
+        if len(macd_values) >= signal_period:
+            signal_line = TechnicalIndicators._calculate_ema(macd_values, signal_period)
+        else:
+            # Fallback if insufficient data
+            signal_line = sum(macd_values) / len(macd_values) if macd_values else 0.0
 
-        # Calculate signal line (EMA of MACD)
-        # Simplified: using last value for demo
-        signal_line = macd_line * 0.9  # Simplified approximation
-
+        macd_line = macd_values[-1] if macd_values else 0.0
         histogram = macd_line - signal_line
 
         return {
