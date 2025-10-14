@@ -20,11 +20,15 @@ import {
   Brain,
   Loader2,
   Search,
+  Copy,
+  Award,
+  BarChart3,
 } from 'lucide-react';
 import { GlassCard, GlassButton, GlassInput, GlassBadge } from './GlassmorphicComponents';
 import { theme } from '../styles/theme';
 import { claudeAI } from '../lib/aiAdapter';
 import StockLookup from './StockLookup';
+import toast from 'react-hot-toast';
 interface Strategy {
   id?: string;  name: string;  entry: string[];  exit: string[];  riskManagement: string[];  code?: string;}
 
@@ -37,6 +41,20 @@ interface SavedStrategy extends Strategy {
   };
 }
 
+interface Template {
+  id: string;
+  name: string;
+  description: string;
+  strategy_type: string;
+  risk_level: string;
+  compatibility_score: number;
+  expected_win_rate: number;
+  avg_return_percent: number;
+  max_drawdown_percent: number;
+  recommended_for: string[];
+  config: any;
+}
+
 export default function StrategyBuilderAI() {
   const [view, setView] = useState<'create' | 'library'>('library');
   const [nlInput, setNlInput] = useState('');
@@ -44,6 +62,12 @@ export default function StrategyBuilderAI() {
   const [currentStrategy, setCurrentStrategy] = useState<Strategy | null>(null);
   const [savedStrategies, setSavedStrategies] = useState<SavedStrategy[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Template gallery state
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
+  const [userRiskTolerance, setUserRiskTolerance] = useState<number>(50);
 
   // Stock research state
   const [researchSymbol, setResearchSymbol] = useState('');
@@ -67,6 +91,76 @@ export default function StrategyBuilderAI() {
       localStorage.setItem('ai_trader_strategies', JSON.stringify(savedStrategies));
     }
   }, [savedStrategies]);
+
+  // Fetch templates when library view is opened
+  useEffect(() => {
+    if (view === 'library') {
+      fetchTemplates();
+    }
+  }, [view]);
+
+  const fetchTemplates = async () => {
+    setIsLoadingTemplates(true);
+    setTemplatesError(null);
+
+    const apiToken = process.env.NEXT_PUBLIC_API_TOKEN || '';
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://paiid-backend.onrender.com';
+
+    try {
+      const response = await fetch(`${baseUrl}/api/strategies/templates`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch templates: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setTemplates(data.templates || []);
+      setUserRiskTolerance(data.user_risk_tolerance || 50);
+    } catch (err: any) {
+      console.error('Template fetch error:', err);
+      setTemplatesError(err.message || 'Failed to load strategy templates');
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  };
+
+  const handleCloneTemplate = async (template: Template) => {
+    const apiToken = process.env.NEXT_PUBLIC_API_TOKEN || '';
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://paiid-backend.onrender.com';
+
+    try {
+      const response = await fetch(`${baseUrl}/api/strategies/templates/${template.id}/clone`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          custom_name: `${template.name} (My Copy)`,
+          customize_config: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to clone template: ${response.status}`);
+      }
+
+      const data = await response.json();
+      toast.success(`Template "${template.name}" cloned successfully!`);
+
+      // Refresh saved strategies or add to local state
+      // For now, just show success message
+    } catch (err: any) {
+      console.error('Clone template error:', err);
+      toast.error(err.message || 'Failed to clone template');
+    }
+  };
 
   const handleGenerateStrategy = async () => {
     if (!nlInput.trim()) return;
@@ -477,21 +571,193 @@ export default function StrategyBuilderAI() {
         {/* Library View */}
         {view === 'library' && (
           <>
-            {savedStrategies.length === 0 ? (
-              <GlassCard>
-                <div style={{ textAlign: 'center', padding: theme.spacing.xl }}>
-                  <Brain style={{ width: '64px', height: '64px', color: theme.colors.textMuted, margin: '0 auto 16px' }} />
-                  <h3 style={{ color: theme.colors.text, margin: `0 0 ${theme.spacing.sm} 0` }}>No Strategies Yet</h3>
-                  <p style={{ color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.md} 0` }}>
-                    Create your first AI-powered trading strategy
-                  </p>
-                  <GlassButton onClick={() => setView('create')}>
-                    <Sparkles style={{ width: '18px', height: '18px' }} />
-                    Create Strategy
-                  </GlassButton>
+            {/* Template Gallery Section */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.md }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
+                  <Award style={{ width: '24px', height: '24px', color: accentColor }} />
+                  <h2 style={{ fontSize: '24px', fontWeight: '600', color: theme.colors.text, margin: 0 }}>
+                    Strategy Templates
+                  </h2>
                 </div>
-              </GlassCard>
-            ) : (
+                <div style={{ fontSize: '13px', color: theme.colors.textMuted }}>
+                  Your Risk Tolerance: <span style={{ color: accentColor, fontWeight: '600' }}>{userRiskTolerance}%</span>
+                </div>
+              </div>
+
+              {/* Loading State */}
+              {isLoadingTemplates && (
+                <GlassCard>
+                  <div style={{ textAlign: 'center', padding: theme.spacing.xl }}>
+                    <Loader2 className="animate-spin" style={{ width: '48px', height: '48px', color: accentColor, margin: '0 auto 16px' }} />
+                    <p style={{ color: theme.colors.textMuted, margin: 0 }}>Loading strategy templates...</p>
+                  </div>
+                </GlassCard>
+              )}
+
+              {/* Error State */}
+              {templatesError && !isLoadingTemplates && (
+                <GlassCard style={{ background: `${theme.colors.warning}10`, border: `1px solid ${theme.colors.warning}40` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
+                    <AlertCircle style={{ width: '20px', height: '20px', color: theme.colors.warning }} />
+                    <p style={{ margin: 0, color: theme.colors.warning }}>{templatesError}</p>
+                  </div>
+                </GlassCard>
+              )}
+
+              {/* Template Grid */}
+              {!isLoadingTemplates && !templatesError && templates.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: theme.spacing.md, marginBottom: theme.spacing.xl }}>
+                  {templates.map((template) => {
+                    const getRiskColor = (risk: string) => {
+                      if (risk === 'Conservative') return theme.colors.success;
+                      if (risk === 'Moderate') return theme.colors.warning;
+                      return theme.colors.danger;
+                    };
+
+                    const getCompatibilityColor = (score: number) => {
+                      if (score >= 80) return theme.colors.success;
+                      if (score >= 60) return theme.colors.warning;
+                      return theme.colors.textMuted;
+                    };
+
+                    return (
+                      <GlassCard key={template.id} style={{ position: 'relative' }}>
+                        {/* Compatibility Badge */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: theme.spacing.md,
+                            right: theme.spacing.md,
+                            padding: '6px 12px',
+                            background: `${getCompatibilityColor(template.compatibility_score)}20`,
+                            border: `1px solid ${getCompatibilityColor(template.compatibility_score)}`,
+                            borderRadius: theme.borderRadius.md,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          <BarChart3 style={{ width: '14px', height: '14px', color: getCompatibilityColor(template.compatibility_score) }} />
+                          <span style={{ fontSize: '13px', fontWeight: '600', color: getCompatibilityColor(template.compatibility_score) }}>
+                            {Math.round(template.compatibility_score)}% Match
+                          </span>
+                        </div>
+
+                        {/* Template Header */}
+                        <div style={{ marginBottom: theme.spacing.md, paddingRight: '100px' }}>
+                          <h3 style={{ fontSize: '18px', fontWeight: '600', color: theme.colors.text, margin: `0 0 ${theme.spacing.xs} 0` }}>
+                            {template.name}
+                          </h3>
+                          <GlassBadge variant="custom" customColor={getRiskColor(template.risk_level)}>
+                            {template.risk_level}
+                          </GlassBadge>
+                        </div>
+
+                        {/* Description */}
+                        <p style={{ fontSize: '13px', color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.md} 0`, lineHeight: '1.5' }}>
+                          {template.description}
+                        </p>
+
+                        {/* Performance Metrics */}
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr 1fr',
+                            gap: theme.spacing.sm,
+                            marginBottom: theme.spacing.md,
+                            padding: theme.spacing.sm,
+                            background: `${accentColor}10`,
+                            borderRadius: theme.borderRadius.sm,
+                          }}
+                        >
+                          <div>
+                            <p style={{ fontSize: '11px', color: theme.colors.textMuted, margin: 0 }}>Win Rate</p>
+                            <p style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.primary, margin: 0 }}>
+                              {template.expected_win_rate}%
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ fontSize: '11px', color: theme.colors.textMuted, margin: 0 }}>Avg Return</p>
+                            <p style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.success, margin: 0 }}>
+                              {template.avg_return_percent > 0 ? '+' : ''}{template.avg_return_percent}%
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ fontSize: '11px', color: theme.colors.textMuted, margin: 0 }}>Max DD</p>
+                            <p style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.danger, margin: 0 }}>
+                              -{template.max_drawdown_percent}%
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Recommended For */}
+                        {template.recommended_for && template.recommended_for.length > 0 && (
+                          <div style={{ marginBottom: theme.spacing.md }}>
+                            <p style={{ fontSize: '11px', color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.xs} 0`, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              Best For
+                            </p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: theme.spacing.xs }}>
+                              {template.recommended_for.map((rec, idx) => (
+                                <span
+                                  key={idx}
+                                  style={{
+                                    fontSize: '12px',
+                                    padding: '4px 8px',
+                                    background: `${theme.colors.info}20`,
+                                    border: `1px solid ${theme.colors.info}40`,
+                                    borderRadius: theme.borderRadius.sm,
+                                    color: theme.colors.info,
+                                  }}
+                                >
+                                  {rec}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Clone Button */}
+                        <GlassButton
+                          onClick={() => handleCloneTemplate(template)}
+                          variant="workflow"
+                          workflowColor="primary"
+                          style={{ width: '100%' }}
+                        >
+                          <Copy style={{ width: '16px', height: '16px' }} />
+                          Clone Strategy
+                        </GlassButton>
+                      </GlassCard>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* My Strategies Section */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, marginBottom: theme.spacing.md }}>
+                <Code2 style={{ width: '24px', height: '24px', color: accentColor }} />
+                <h2 style={{ fontSize: '24px', fontWeight: '600', color: theme.colors.text, margin: 0 }}>
+                  My Strategies
+                </h2>
+              </div>
+
+              {savedStrategies.length === 0 ? (
+                <GlassCard>
+                  <div style={{ textAlign: 'center', padding: theme.spacing.xl }}>
+                    <Brain style={{ width: '64px', height: '64px', color: theme.colors.textMuted, margin: '0 auto 16px' }} />
+                    <h3 style={{ color: theme.colors.text, margin: `0 0 ${theme.spacing.sm} 0` }}>No Custom Strategies Yet</h3>
+                    <p style={{ color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.md} 0` }}>
+                      Clone a template above or create your own from scratch
+                    </p>
+                    <GlassButton onClick={() => setView('create')}>
+                      <Sparkles style={{ width: '18px', height: '18px' }} />
+                      Create Strategy
+                    </GlassButton>
+                  </div>
+                </GlassCard>
+              ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: theme.spacing.md }}>
                 {savedStrategies.map((strategy) => (
                   <GlassCard key={strategy.id}>
@@ -602,7 +868,8 @@ export default function StrategyBuilderAI() {
                   </GlassCard>
                 ))}
               </div>
-            )}
+              )}
+            </div>
           </>
         )}
       </div>
