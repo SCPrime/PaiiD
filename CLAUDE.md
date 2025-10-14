@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Live Deployments:**
 - Frontend: https://frontend-scprimes-projects.vercel.app (Vercel)
-- Backend: https://ai-trader-86a1.onrender.com (Render)
+- Backend: https://paiid-backend.onrender.com (Render)
 
 ## Architecture
 
