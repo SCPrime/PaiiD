@@ -17,10 +17,21 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
+class TradeData(BaseModel):
+    """Pre-filled trade execution data for 1-click trading"""
+    symbol: str
+    side: Literal["buy", "sell"]
+    quantity: int
+    orderType: Literal["market", "limit"] = "limit"
+    entryPrice: Optional[float] = None
+    stopLoss: Optional[float] = None
+    takeProfit: Optional[float] = None
+
 class Recommendation(BaseModel):
     symbol: str
     action: Literal["BUY", "SELL", "HOLD"]
     confidence: float  # 0-100
+    score: float  # 1-10 AI recommendation score
     reason: str
     targetPrice: float
     currentPrice: float
@@ -31,9 +42,21 @@ class Recommendation(BaseModel):
     takeProfit: Optional[float] = None
     riskRewardRatio: Optional[float] = None
     indicators: Optional[dict] = None
+    tradeData: Optional[TradeData] = None  # 1-click execution data
+    portfolioFit: Optional[str] = None  # How this fits user's portfolio
+
+class PortfolioAnalysis(BaseModel):
+    """Portfolio-level risk and diversification analysis"""
+    totalPositions: int
+    totalValue: float
+    topSectors: List[dict]
+    riskScore: float  # 1-10 (10 = highest risk)
+    diversificationScore: float  # 1-10 (10 = best diversified)
+    recommendations: List[str]  # Portfolio-level suggestions
 
 class RecommendationsResponse(BaseModel):
     recommendations: List[Recommendation]
+    portfolioAnalysis: Optional[PortfolioAnalysis] = None
     generated_at: str
     model_version: str = "v1.0.0"
 
@@ -45,16 +68,21 @@ async def get_recommendations():
     Uses:
     1. Real-time quotes from Tradier API
     2. Technical indicators analysis
-    3. Risk/reward calculations
+    3. Portfolio integration (Alpaca positions)
+    4. Risk/reward calculations
+    5. 1-click trade execution data
 
-    Returns top recommendations based on technical signals
+    Returns top recommendations based on technical signals + portfolio fit
     """
     try:
+        # Fetch user's current portfolio from Alpaca
+        portfolio_data = await _fetch_portfolio_data()
+
         # TODO: Get user's watchlist from database (Phase 2.5 prerequisite)
         # For now, use configurable default watchlist from environment
         import os
-        default_watchlist = os.getenv("DEFAULT_WATCHLIST", "$DJI.IX,$COMP.IX,AAPL,MSFT,GOOGL,META,NVDA,AMZN,TSLA,JPM")
-        stock_symbols = [s.strip().upper() for s in default_watchlist.split(",")][:10]
+        default_watchlist = os.getenv("DEFAULT_WATCHLIST", "AAPL,MSFT,GOOGL,META,NVDA,AMZN,TSLA,JPM,V,JNJ")
+        stock_symbols = [s.strip().upper() for s in default_watchlist.split(",") if s.strip() and not s.startswith("$")][:10]
 
         # Randomly select 5 stocks for recommendations
         selected_symbols = random.sample(stock_symbols, min(5, len(stock_symbols)))
@@ -84,12 +112,17 @@ async def get_recommendations():
                 current_price = float(quote["last"])
                 change_percent = float(quote.get("change_percentage", 0))
 
+                # Calculate entry price (slightly below current for limit orders)
+                entry_price = round(current_price * 0.995, 2)  # 0.5% below current
+                stop_loss = round(current_price * 0.95, 2)  # 5% stop loss
+                take_profit = round(current_price * 1.10, 2)  # 10% target
+
                 # Generate action based on real price movement
                 if change_percent > 2.0:
                     action = "BUY"
                     reason = f"Strong upward momentum with +{change_percent:.2f}% daily gain. Price shows bullish strength."
                     confidence = min(85.0, 70.0 + abs(change_percent) * 3)
-                    target_price = round(current_price * 1.08, 2)
+                    target_price = take_profit
                     risk = "Medium"
                 elif change_percent < -2.0:
                     action = "SELL"
@@ -97,6 +130,9 @@ async def get_recommendations():
                     confidence = min(80.0, 65.0 + abs(change_percent) * 2)
                     target_price = round(current_price * 0.95, 2)
                     risk = "Medium"
+                    # Reverse for short positions
+                    stop_loss = round(current_price * 1.05, 2)
+                    take_profit = round(current_price * 0.90, 2)
                 elif abs(change_percent) < 0.5:
                     action = "HOLD"
                     reason = f"Consolidating with minimal movement ({change_percent:+.2f}%). Wait for clearer direction."
@@ -111,22 +147,58 @@ async def get_recommendations():
                     target_price = round(current_price * 1.05, 2) if change_percent > 0 else current_price
                     risk = "Medium"
 
+                # Calculate AI score (1-10) based on confidence and risk
+                score = _calculate_recommendation_score(confidence, risk, change_percent)
+
+                # Analyze portfolio fit
+                portfolio_fit = _analyze_portfolio_fit(symbol, action, portfolio_data)
+
+                # Calculate suggested position size (% of portfolio)
+                suggested_qty = _calculate_position_size(current_price, portfolio_data, risk)
+
+                # Create trade data for 1-click execution
+                trade_data = None
+                if action in ["BUY", "SELL"]:
+                    trade_data = TradeData(
+                        symbol=symbol,
+                        side="buy" if action == "BUY" else "sell",
+                        quantity=suggested_qty,
+                        orderType="limit",
+                        entryPrice=entry_price,
+                        stopLoss=stop_loss,
+                        takeProfit=take_profit
+                    )
+
                 recommendations.append(Recommendation(
                     symbol=symbol,
                     action=action,
                     confidence=round(confidence, 1),
+                    score=score,
                     reason=reason,
                     targetPrice=target_price,
                     currentPrice=current_price,
                     timeframe="1-2 weeks" if action != "HOLD" else "Wait",
-                    risk=risk
+                    risk=risk,
+                    entryPrice=entry_price if action != "HOLD" else None,
+                    stopLoss=stop_loss if action != "HOLD" else None,
+                    takeProfit=take_profit if action != "HOLD" else None,
+                    tradeData=trade_data,
+                    portfolioFit=portfolio_fit
                 ))
 
-        logger.info(f"✅ Generated {len(recommendations)} recommendations using real Tradier prices")
+        # Sort by score (highest first)
+        recommendations.sort(key=lambda x: x.score, reverse=True)
+
+        # Generate portfolio analysis
+        portfolio_analysis = _generate_portfolio_analysis(portfolio_data, recommendations)
+
+        logger.info(f"✅ Generated {len(recommendations)} portfolio-aware recommendations")
 
         return RecommendationsResponse(
             recommendations=recommendations,
-            generated_at=datetime.utcnow().isoformat() + "Z"
+            portfolioAnalysis=portfolio_analysis,
+            generated_at=datetime.utcnow().isoformat() + "Z",
+            model_version="v2.0.0-portfolio-aware"
         )
 
     except Exception as e:
@@ -498,3 +570,196 @@ async def analyze_symbol(symbol: str):
     except Exception as e:
         logger.error(f"❌ Failed to analyze {symbol}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+# ====== PORTFOLIO-AWARE HELPER FUNCTIONS ======
+
+async def _fetch_portfolio_data() -> dict:
+    """Fetch user's current portfolio from Alpaca"""
+    try:
+        from ..services.alpaca_client import get_alpaca_client
+        alpaca = get_alpaca_client()
+
+        # Get account info
+        account = alpaca.get_account()
+
+        # Get positions
+        positions = alpaca.list_positions()
+
+        # Calculate portfolio metrics
+        total_value = float(account.portfolio_value)
+        position_list = []
+
+        for pos in positions:
+            position_list.append({
+                "symbol": pos.symbol,
+                "qty": float(pos.qty),
+                "market_value": float(pos.market_value),
+                "pct_of_portfolio": (float(pos.market_value) / total_value * 100) if total_value > 0 else 0,
+                "unrealized_pl": float(pos.unrealized_pl),
+                "unrealized_plpc": float(pos.unrealized_plpc) * 100
+            })
+
+        return {
+            "total_value": total_value,
+            "cash": float(account.cash),
+            "positions": position_list,
+            "num_positions": len(position_list)
+        }
+
+    except Exception as e:
+        logger.warning(f"⚠️ Could not fetch portfolio data: {e}")
+        # Return empty portfolio on error
+        return {
+            "total_value": 100000.0,  # Default $100k portfolio
+            "cash": 100000.0,
+            "positions": [],
+            "num_positions": 0
+        }
+
+
+def _calculate_recommendation_score(confidence: float, risk: str, change_percent: float) -> float:
+    """
+    Calculate 1-10 recommendation score
+
+    Factors:
+    - Confidence (0-100) -> base score
+    - Risk level -> penalty
+    - Momentum strength -> bonus
+    """
+    # Base score from confidence (0-100 -> 1-10)
+    base_score = (confidence / 100) * 10
+
+    # Risk penalty
+    risk_penalty = {"Low": 0, "Medium": 0.5, "High": 1.5}
+    base_score -= risk_penalty.get(risk, 0)
+
+    # Momentum bonus (strong moves get bonus)
+    if abs(change_percent) > 3.0:
+        base_score += 0.5
+    elif abs(change_percent) > 5.0:
+        base_score += 1.0
+
+    # Clamp to 1-10
+    return round(max(1.0, min(10.0, base_score)), 1)
+
+
+def _analyze_portfolio_fit(symbol: str, action: str, portfolio_data: dict) -> str:
+    """Analyze how this recommendation fits the user's portfolio"""
+    positions = portfolio_data.get("positions", [])
+    total_value = portfolio_data.get("total_value", 100000)
+
+    # Check if symbol already in portfolio
+    existing_position = next((p for p in positions if p["symbol"] == symbol), None)
+
+    if existing_position:
+        pct = existing_position["pct_of_portfolio"]
+        if action == "BUY":
+            if pct > 15:
+                return f"⚠️ Already {pct:.1f}% of portfolio - High concentration risk"
+            elif pct > 10:
+                return f"⚠️ Already {pct:.1f}% of portfolio - Consider diversification"
+            else:
+                return f"✅ Currently {pct:.1f}% of portfolio - Room to add"
+        elif action == "SELL":
+            return f"📊 Reduce position (currently {pct:.1f}% of portfolio)"
+    else:
+        if action == "BUY":
+            return "✅ New position - Adds diversification"
+        elif action == "SELL":
+            return "N/A - Not currently held"
+
+    return "✅ Good fit"
+
+
+def _calculate_position_size(current_price: float, portfolio_data: dict, risk: str) -> int:
+    """
+    Calculate suggested position size based on portfolio and risk
+
+    Rules:
+    - Low risk: 5% of portfolio
+    - Medium risk: 3% of portfolio
+    - High risk: 2% of portfolio
+    """
+    total_value = portfolio_data.get("total_value", 100000)
+
+    # Position size as % of portfolio
+    risk_allocation = {"Low": 0.05, "Medium": 0.03, "High": 0.02}
+    allocation_pct = risk_allocation.get(risk, 0.03)
+
+    # Calculate dollar amount
+    position_value = total_value * allocation_pct
+
+    # Calculate quantity (minimum 1 share)
+    quantity = max(1, int(position_value / current_price))
+
+    return quantity
+
+
+def _generate_portfolio_analysis(portfolio_data: dict, recommendations: List[Recommendation]) -> PortfolioAnalysis:
+    """Generate portfolio-level analysis"""
+    positions = portfolio_data.get("positions", [])
+    total_value = portfolio_data.get("total_value", 100000)
+    num_positions = len(positions)
+
+    # Calculate concentration (Herfindahl index)
+    if num_positions > 0:
+        concentration = sum((p["pct_of_portfolio"] / 100) ** 2 for p in positions)
+        diversification_score = round((1 - concentration) * 10, 1)
+    else:
+        diversification_score = 10.0  # Empty portfolio = fully diversified
+
+    # Calculate portfolio risk score (based on concentration and volatility)
+    if num_positions == 0:
+        risk_score = 5.0  # Neutral for empty portfolio
+    elif num_positions < 5:
+        risk_score = 7.5  # High risk - under-diversified
+    elif num_positions > 15:
+        risk_score = 6.0  # Moderate risk - over-diversified
+    else:
+        # Check for concentration
+        max_position_pct = max((p["pct_of_portfolio"] for p in positions), default=0)
+        if max_position_pct > 20:
+            risk_score = 8.0
+        elif max_position_pct > 15:
+            risk_score = 6.5
+        else:
+            risk_score = 4.5  # Well balanced
+
+    # Top sectors (mock for now - would need sector data)
+    top_sectors = [
+        {"name": "Technology", "percentage": 35.0},
+        {"name": "Financials", "percentage": 25.0},
+        {"name": "Healthcare", "percentage": 20.0}
+    ]
+
+    # Generate recommendations
+    portfolio_recommendations = []
+
+    if num_positions == 0:
+        portfolio_recommendations.append("💡 Start with 3-5 positions to build a diversified portfolio")
+    elif num_positions < 5:
+        portfolio_recommendations.append(f"💡 Consider adding {5 - num_positions} more positions for better diversification")
+    elif num_positions > 15:
+        portfolio_recommendations.append("💡 Consider consolidating positions - you may be over-diversified")
+
+    if num_positions > 0:
+        max_position = max(positions, key=lambda p: p["pct_of_portfolio"])
+        if max_position["pct_of_portfolio"] > 20:
+            portfolio_recommendations.append(f"⚠️ {max_position['symbol']} is {max_position['pct_of_portfolio']:.1f}% of portfolio - High concentration risk")
+
+    # Check if any recommendations would improve diversification
+    buy_recs = [r for r in recommendations if r.action == "BUY"]
+    if buy_recs and num_positions > 0:
+        new_symbols = [r.symbol for r in buy_recs if r.symbol not in [p["symbol"] for p in positions]]
+        if new_symbols:
+            portfolio_recommendations.append(f"✅ {len(new_symbols)} recommendations add new diversification")
+
+    return PortfolioAnalysis(
+        totalPositions=num_positions,
+        totalValue=total_value,
+        topSectors=top_sectors,
+        riskScore=round(risk_score, 1),
+        diversificationScore=diversification_score,
+        recommendations=portfolio_recommendations[:5]  # Top 5 suggestions
+    )

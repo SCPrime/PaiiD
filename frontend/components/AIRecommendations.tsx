@@ -4,11 +4,25 @@ import { useState } from "react";
 import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
 import StockLookup from "./StockLookup";
+import { useWorkflow } from "../contexts/WorkflowContext";
+import { showSuccess } from "../lib/toast";
+import { TrendingUp, Shield, Target, AlertTriangle } from "lucide-react";
+
+interface TradeData {
+  symbol: string;
+  side: "buy" | "sell";
+  quantity: number;
+  orderType: "market" | "limit";
+  entryPrice?: number;
+  stopLoss?: number;
+  takeProfit?: number;
+}
 
 interface Recommendation {
   symbol: string;
   action: "BUY" | "SELL" | "HOLD";
   confidence: number;
+  score: number;  // 1-10 AI score
   reason: string;
   targetPrice: number;
   currentPrice: number;
@@ -18,6 +32,8 @@ interface Recommendation {
   stopLoss?: number;
   takeProfit?: number;
   riskRewardRatio?: number;
+  tradeData?: TradeData;
+  portfolioFit?: string;
   indicators?: {
     rsi?: number;
     macd?: { macd: number; signal: number; histogram: number };
@@ -27,28 +43,36 @@ interface Recommendation {
   };
 }
 
+interface PortfolioAnalysis {
+  totalPositions: number;
+  totalValue: number;
+  topSectors: Array<{ name: string; percentage: number }>;
+  riskScore: number;  // 1-10
+  diversificationScore: number;  // 1-10
+  recommendations: string[];
+}
+
 export default function AIRecommendations() {
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [portfolioAnalysis, setPortfolioAnalysis] = useState<PortfolioAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedRec, setSelectedRec] = useState<Recommendation | null>(null);
-  const [useTechnical, setUseTechnical] = useState(true);
 
   // Stock research state
   const [researchSymbol, setResearchSymbol] = useState<string>('');
   const [showStockLookup, setShowStockLookup] = useState(false);
+
+  // Workflow context for 1-click execution
+  const { navigateToWorkflow } = useWorkflow();
 
   const fetchRecommendations = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // Use new /ai/signals endpoint with technical analysis
-      const endpoint = useTechnical
-        ? "/api/proxy/ai/signals?use_technical=true&min_confidence=60"
-        : "/api/proxy/ai/recommendations";
-
-      const res = await fetch(endpoint);
+      // Use enhanced portfolio-aware recommendations endpoint
+      const res = await fetch("/api/proxy/api/ai/recommendations");
 
       if (!res.ok) {
         throw new Error(`Failed to fetch recommendations: ${res.status}`);
@@ -56,13 +80,26 @@ export default function AIRecommendations() {
 
       const data = await res.json();
       setRecommendations(data.recommendations || []);
+      setPortfolioAnalysis(data.portfolioAnalysis || null);
     } catch (err: any) {
       console.error('Error fetching recommendations:', err);
       setError(err.message || 'Failed to load AI recommendations. Please ensure backend is running.');
       setRecommendations([]);
+      setPortfolioAnalysis(null);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleExecuteTrade = (rec: Recommendation) => {
+    if (!rec.tradeData) {
+      alert('No trade data available for this recommendation');
+      return;
+    }
+
+    // Navigate to Execute Trade workflow with pre-filled data
+    navigateToWorkflow('execute', rec.tradeData);
+    showSuccess(`✅ Pre-filled trade for ${rec.symbol}`);
   };
 
   const getActionColor = (action: string) => {
@@ -74,12 +111,6 @@ export default function AIRecommendations() {
     }
   };
 
-  const getConfidenceLabel = (confidence: number) => {
-    if (confidence >= 80) return "High";
-    if (confidence >= 60) return "Medium";
-    return "Low";
-  };
-
   const getRiskColor = (risk?: string) => {
     switch (risk) {
       case "Low": return theme.colors.primary;
@@ -87,6 +118,21 @@ export default function AIRecommendations() {
       case "High": return theme.colors.danger;
       default: return theme.colors.textMuted;
     }
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 8) return theme.colors.primary;
+    if (score >= 6) return theme.colors.warning;
+    return theme.colors.danger;
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 9) return "Excellent";
+    if (score >= 8) return "Very Good";
+    if (score >= 7) return "Good";
+    if (score >= 6) return "Fair";
+    if (score >= 5) return "Moderate";
+    return "Weak";
   };
 
   return (
@@ -113,31 +159,13 @@ export default function AIRecommendations() {
             fontSize: '14px',
             color: theme.colors.textMuted
           }}>
-            AI-powered trading suggestions based on {useTechnical ? 'technical indicators' : 'market analysis'}
+            Portfolio-aware trading suggestions with 1-click execution
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: theme.spacing.md, alignItems: 'center' }}>
-          <label style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: theme.spacing.sm,
-            fontSize: '14px',
-            color: theme.colors.text,
-            cursor: 'pointer'
-          }}>
-            <input
-              type="checkbox"
-              checked={useTechnical}
-              onChange={(e) => setUseTechnical(e.target.checked)}
-              style={{ cursor: 'pointer' }}
-            />
-            Use Technical Analysis
-          </label>
-          <Button onClick={fetchRecommendations} loading={loading} variant="primary">
-            Generate Recommendations
-          </Button>
-        </div>
+        <Button onClick={fetchRecommendations} loading={loading} variant="primary">
+          Generate Recommendations
+        </Button>
       </div>
 
       {error && (
@@ -152,6 +180,154 @@ export default function AIRecommendations() {
         }}>
           ❌ {error}
         </div>
+      )}
+
+      {/* Portfolio Analysis Panel */}
+      {portfolioAnalysis && (
+        <Card glow="green" style={{ marginBottom: theme.spacing.xl }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: theme.spacing.md,
+            marginBottom: theme.spacing.lg
+          }}>
+            <Shield size={32} color={theme.colors.primary} />
+            <div>
+              <h3 style={{
+                margin: 0,
+                fontSize: '20px',
+                fontWeight: '700',
+                color: theme.colors.text
+              }}>
+                Portfolio Analysis
+              </h3>
+              <p style={{
+                margin: 0,
+                marginTop: '4px',
+                fontSize: '13px',
+                color: theme.colors.textMuted
+              }}>
+                ${portfolioAnalysis.totalValue.toLocaleString()} • {portfolioAnalysis.totalPositions} positions
+              </p>
+            </div>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: theme.spacing.xl,
+            marginBottom: theme.spacing.lg
+          }}>
+            {/* Risk Score */}
+            <div>
+              <div style={{
+                fontSize: '11px',
+                color: theme.colors.textMuted,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                marginBottom: theme.spacing.xs
+              }}>
+                Risk Score
+              </div>
+              <div style={{
+                fontSize: '32px',
+                fontWeight: '700',
+                color: portfolioAnalysis.riskScore > 7 ? theme.colors.danger : portfolioAnalysis.riskScore > 5 ? theme.colors.warning : theme.colors.primary
+              }}>
+                {portfolioAnalysis.riskScore.toFixed(1)}/10
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: theme.colors.textMuted
+              }}>
+                {portfolioAnalysis.riskScore > 7 ? 'High Risk' : portfolioAnalysis.riskScore > 5 ? 'Moderate Risk' : 'Low Risk'}
+              </div>
+            </div>
+
+            {/* Diversification Score */}
+            <div>
+              <div style={{
+                fontSize: '11px',
+                color: theme.colors.textMuted,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                marginBottom: theme.spacing.xs
+              }}>
+                Diversification
+              </div>
+              <div style={{
+                fontSize: '32px',
+                fontWeight: '700',
+                color: portfolioAnalysis.diversificationScore >= 7 ? theme.colors.primary : portfolioAnalysis.diversificationScore >= 5 ? theme.colors.warning : theme.colors.danger
+              }}>
+                {portfolioAnalysis.diversificationScore.toFixed(1)}/10
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: theme.colors.textMuted
+              }}>
+                {portfolioAnalysis.diversificationScore >= 7 ? 'Well Diversified' : portfolioAnalysis.diversificationScore >= 5 ? 'Moderate' : 'Under-diversified'}
+              </div>
+            </div>
+
+            {/* Top Sector */}
+            <div>
+              <div style={{
+                fontSize: '11px',
+                color: theme.colors.textMuted,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                marginBottom: theme.spacing.xs
+              }}>
+                Top Sector
+              </div>
+              <div style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: theme.colors.text
+              }}>
+                {portfolioAnalysis.topSectors[0]?.name || 'N/A'}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: theme.colors.textMuted
+              }}>
+                {portfolioAnalysis.topSectors[0]?.percentage.toFixed(1)}% exposure
+              </div>
+            </div>
+          </div>
+
+          {/* Portfolio Recommendations */}
+          {portfolioAnalysis.recommendations.length > 0 && (
+            <div style={{
+              padding: theme.spacing.md,
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: `1px solid ${theme.colors.primary}`,
+              borderRadius: theme.borderRadius.md
+            }}>
+              <div style={{
+                fontSize: '12px',
+                fontWeight: '600',
+                color: theme.colors.primary,
+                marginBottom: theme.spacing.sm,
+                textTransform: 'uppercase',
+                letterSpacing: '1px'
+              }}>
+                💡 Portfolio Insights
+              </div>
+              {portfolioAnalysis.recommendations.map((rec, idx) => (
+                <div key={idx} style={{
+                  fontSize: '13px',
+                  color: theme.colors.text,
+                  marginBottom: theme.spacing.xs,
+                  paddingLeft: theme.spacing.sm
+                }}>
+                  {rec}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       )}
 
       {recommendations.length === 0 && !loading && !error && (
@@ -182,7 +358,7 @@ export default function AIRecommendations() {
               paddingBottom: theme.spacing.lg,
               borderBottom: `1px solid ${theme.colors.border}`
             }}>
-              {/* Symbol & Price */}
+              {/* Symbol & Score */}
               <div>
                 <div style={{
                   fontSize: '28px',
@@ -199,27 +375,71 @@ export default function AIRecommendations() {
                 }}>
                   ${rec.currentPrice.toFixed(2)}
                 </div>
+
+                {/* AI Score Badge */}
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '4px 12px',
+                  background: `${getScoreColor(rec.score)}15`,
+                  border: `2px solid ${getScoreColor(rec.score)}`,
+                  borderRadius: theme.borderRadius.full,
+                  marginTop: theme.spacing.sm
+                }}>
+                  <Target size={14} color={getScoreColor(rec.score)} />
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    color: getScoreColor(rec.score)
+                  }}>
+                    {rec.score.toFixed(1)} • {getScoreLabel(rec.score)}
+                  </span>
+                </div>
+
                 {rec.risk && (
                   <div style={{
                     fontSize: '12px',
                     color: getRiskColor(rec.risk),
                     marginTop: theme.spacing.xs,
-                    fontWeight: '600'
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
                   }}>
+                    <AlertTriangle size={12} />
                     {rec.risk} Risk
                   </div>
                 )}
               </div>
 
-              {/* Reason */}
+              {/* Reason & Portfolio Fit */}
               <div>
                 <div style={{
                   fontSize: '14px',
                   color: theme.colors.text,
-                  lineHeight: '1.6'
+                  lineHeight: '1.6',
+                  marginBottom: theme.spacing.sm
                 }}>
                   {rec.reason}
                 </div>
+
+                {/* Portfolio Fit Indicator */}
+                {rec.portfolioFit && (
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '6px 12px',
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    border: `1px solid ${theme.colors.primary}`,
+                    borderRadius: theme.borderRadius.md,
+                    fontSize: '12px',
+                    color: theme.colors.text,
+                    marginTop: theme.spacing.xs
+                  }}>
+                    {rec.portfolioFit}
+                  </div>
+                )}
+
                 {rec.timeframe && (
                   <div style={{
                     fontSize: '12px',
@@ -257,16 +477,21 @@ export default function AIRecommendations() {
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    // TODO: Navigate to Execute Trade with pre-filled data
-                    alert(`Execute ${rec.action} order for ${rec.symbol}\nEntry: $${rec.entryPrice?.toFixed(2)}\nStop Loss: $${rec.stopLoss?.toFixed(2)}\nTake Profit: $${rec.takeProfit?.toFixed(2)}`);
-                  }}
-                >
-                  Execute Signal
-                </Button>
+                {rec.tradeData && rec.action !== "HOLD" && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleExecuteTrade(rec)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <TrendingUp size={16} />
+                    Execute Trade
+                  </Button>
+                )}
                 <Button
                   variant="secondary"
                   size="sm"
@@ -357,14 +582,14 @@ export default function AIRecommendations() {
                     letterSpacing: '0.5px',
                     marginBottom: theme.spacing.xs
                   }}>
-                    Risk/Reward
+                    Position Size
                   </div>
                   <div style={{
                     fontSize: '18px',
                     fontWeight: '600',
                     color: theme.colors.secondary
                   }}>
-                    {rec.riskRewardRatio?.toFixed(2)}
+                    {rec.tradeData?.quantity || 'N/A'} shares
                   </div>
                 </div>
               </div>
