@@ -28,6 +28,7 @@ import { GlassCard, GlassButton, GlassInput, GlassBadge } from './GlassmorphicCo
 import { theme } from '../styles/theme';
 import { claudeAI } from '../lib/aiAdapter';
 import StockLookup from './StockLookup';
+import TemplateCustomizationModal from './TemplateCustomizationModal';
 import toast from 'react-hot-toast';
 interface Strategy {
   id?: string;  name: string;  entry: string[];  exit: string[];  riskManagement: string[];  code?: string;}
@@ -68,6 +69,8 @@ export default function StrategyBuilderAI() {
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [userRiskTolerance, setUserRiskTolerance] = useState<number>(50);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [showCustomizationModal, setShowCustomizationModal] = useState(false);
 
   // Stock research state
   const [researchSymbol, setResearchSymbol] = useState('');
@@ -717,16 +720,29 @@ export default function StrategyBuilderAI() {
                           </div>
                         )}
 
-                        {/* Clone Button */}
-                        <GlassButton
-                          onClick={() => handleCloneTemplate(template)}
-                          variant="workflow"
-                          workflowColor="primary"
-                          style={{ width: '100%' }}
-                        >
-                          <Copy style={{ width: '16px', height: '16px' }} />
-                          Clone Strategy
-                        </GlassButton>
+                        {/* Clone Buttons */}
+                        <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+                          <GlassButton
+                            onClick={() => handleCloneTemplate(template)}
+                            variant="secondary"
+                            style={{ flex: 1 }}
+                          >
+                            <Copy style={{ width: '16px', height: '16px' }} />
+                            Quick Clone
+                          </GlassButton>
+                          <GlassButton
+                            onClick={() => {
+                              setSelectedTemplate(template);
+                              setShowCustomizationModal(true);
+                            }}
+                            variant="workflow"
+                            workflowColor="primary"
+                            style={{ flex: 1 }}
+                          >
+                            <Edit3 style={{ width: '16px', height: '16px' }} />
+                            Customize
+                          </GlassButton>
+                        </div>
                       </GlassCard>
                     );
                   })}
@@ -873,6 +889,20 @@ export default function StrategyBuilderAI() {
           </>
         )}
       </div>
+
+      {/* Template Customization Modal */}
+      {showCustomizationModal && (
+        <TemplateCustomizationModal
+          template={selectedTemplate}
+          onClose={() => {
+            setShowCustomizationModal(false);
+            setSelectedTemplate(null);
+          }}
+          onCloneSuccess={() => {
+            fetchTemplates(); // Refresh templates after cloning
+          }}
+        />
+      )}
     </div>
   );
 }
