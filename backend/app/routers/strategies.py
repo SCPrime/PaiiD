@@ -4,13 +4,23 @@ Endpoints for managing trading strategies
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
-from typing import Dict, Optional, List
+from pydantic import BaseModel, Field
+from typing import Dict, Optional, List, Any
+from sqlalchemy.orm import Session
 import json
 import os
 from pathlib import Path
 
 from ..core.auth import require_bearer
+from ..db.session import get_db
+from ..models.database import User, Strategy
+from ..services.strategy_templates import (
+    get_all_templates,
+    get_template_by_id,
+    filter_templates_by_risk,
+    customize_template_for_risk,
+    get_template_compatibility_score
+)
 import sys
 from pathlib import Path
 
@@ -270,3 +280,224 @@ async def delete_strategy(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========================================
+# STRATEGY TEMPLATES ENDPOINTS
+# ========================================
+
+@router.get("/strategies/templates")
+async def get_strategy_templates(
+    filter_by_risk: Optional[bool] = True,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all available strategy templates
+
+    Query params:
+    - filter_by_risk: If true, filter templates by user's risk tolerance (default: true)
+
+    Returns list of templates with metadata and compatibility scores.
+    """
+    try:
+        # Get user preferences
+        user = db.query(User).filter(User.id == 1).first()
+        preferences = user.preferences if user else {}
+        risk_tolerance = preferences.get("risk_tolerance", 50)
+
+        # Get templates
+        if filter_by_risk:
+            templates = filter_templates_by_risk(risk_tolerance)
+        else:
+            templates = get_all_templates()
+
+        # Format response with compatibility scores
+        # For market volatility, we'd normally fetch from market data API
+        # For now, use a default value
+        market_volatility = "Medium"  # TODO: Get from market data service
+        portfolio_value = 100000  # TODO: Get from account API
+
+        response = []
+        for template in templates:
+            compatibility_score = get_template_compatibility_score(
+                template,
+                risk_tolerance,
+                market_volatility,
+                portfolio_value
+            )
+
+            response.append({
+                "id": template.id,
+                "name": template.name,
+                "description": template.description,
+                "strategy_type": template.strategy_type,
+                "risk_level": template.risk_level,
+                "expected_win_rate": template.expected_win_rate,
+                "avg_return_percent": template.avg_return_percent,
+                "max_drawdown_percent": template.max_drawdown_percent,
+                "recommended_for": template.recommended_for,
+                "compatibility_score": round(compatibility_score, 1),
+                "config": template.config
+            })
+
+        # Sort by compatibility score (highest first)
+        response.sort(key=lambda x: x["compatibility_score"], reverse=True)
+
+        return {
+            "templates": response,
+            "user_risk_tolerance": risk_tolerance,
+            "market_volatility": market_volatility
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch strategy templates: {str(e)}"
+        )
+
+
+@router.get("/strategies/templates/{template_id}")
+async def get_strategy_template(
+    template_id: str,
+    customize: Optional[bool] = True,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a specific strategy template by ID
+
+    Query params:
+    - customize: If true, customize config parameters based on user's risk tolerance
+
+    Returns template with full configuration.
+    """
+    try:
+        # Get template
+        template = get_template_by_id(template_id)
+
+        # Get user preferences for customization
+        config = template.config
+        if customize:
+            user = db.query(User).filter(User.id == 1).first()
+            preferences = user.preferences if user else {}
+            risk_tolerance = preferences.get("risk_tolerance", 50)
+            config = customize_template_for_risk(template, risk_tolerance)
+
+        return {
+            "id": template.id,
+            "name": template.name,
+            "description": template.description,
+            "strategy_type": template.strategy_type,
+            "risk_level": template.risk_level,
+            "expected_win_rate": template.expected_win_rate,
+            "avg_return_percent": template.avg_return_percent,
+            "max_drawdown_percent": template.max_drawdown_percent,
+            "recommended_for": template.recommended_for,
+            "config": config,
+            "customized": customize
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch template: {str(e)}"
+        )
+
+
+class CloneTemplateRequest(BaseModel):
+    """Request model for cloning a template"""
+    custom_name: Optional[str] = Field(None, description="Custom name for the cloned strategy")
+    customize_config: Optional[bool] = Field(True, description="Customize based on risk tolerance")
+    config_overrides: Optional[Dict[str, Any]] = Field(None, description="Manual config overrides")
+
+
+@router.post("/strategies/templates/{template_id}/clone")
+async def clone_strategy_template(
+    template_id: str,
+    request: CloneTemplateRequest,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db)
+):
+    """
+    Clone a strategy template to user's strategies
+
+    Creates a new Strategy database entry from the template.
+
+    POST /api/strategies/templates/trend-following-macd/clone
+    Body: {
+        "custom_name": "My Trend Strategy",
+        "customize_config": true,
+        "config_overrides": {"position_size_percent": 8.0}
+    }
+    """
+    try:
+        # Get template
+        template = get_template_by_id(template_id)
+
+        # Get or create user
+        user = db.query(User).filter(User.id == 1).first()
+        if not user:
+            user = User(
+                id=1,
+                email="default@paiid.com",
+                preferences={"risk_tolerance": 50}
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+        # Prepare config
+        config = template.config.copy()
+
+        # Customize based on risk tolerance
+        if request.customize_config:
+            preferences = user.preferences or {}
+            risk_tolerance = preferences.get("risk_tolerance", 50)
+            config = customize_template_for_risk(template, risk_tolerance)
+
+        # Apply manual overrides
+        if request.config_overrides:
+            config.update(request.config_overrides)
+
+        # Generate name
+        strategy_name = request.custom_name or f"{template.name} (Cloned)"
+
+        # Create Strategy database entry
+        new_strategy = Strategy(
+            user_id=user.id,
+            name=strategy_name,
+            description=template.description,
+            strategy_type=template.strategy_type,
+            config=config,
+            is_active=False,  # User must activate manually
+            is_autopilot=False
+        )
+
+        db.add(new_strategy)
+        db.commit()
+        db.refresh(new_strategy)
+
+        return {
+            "success": True,
+            "message": f"Template '{template.name}' cloned successfully",
+            "strategy": {
+                "id": new_strategy.id,
+                "name": new_strategy.name,
+                "description": new_strategy.description,
+                "strategy_type": new_strategy.strategy_type,
+                "config": new_strategy.config,
+                "is_active": new_strategy.is_active,
+                "created_at": new_strategy.created_at.isoformat()
+            }
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to clone template: {str(e)}"
+        )

@@ -24,7 +24,12 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Preferences (stored as JSON for flexibility)
-    # Example: {"risk_tolerance": "moderate", "default_position_size": 1000}
+    # Example: {
+    #   "risk_tolerance": 50,  # 0-100 (0=ultra-conservative, 100=ultra-aggressive)
+    #   "default_position_size": 1000,
+    #   "watchlist": ["AAPL", "MSFT"],
+    #   "notifications_enabled": true
+    # }
     preferences = Column(JSON, default=dict, nullable=False)
 
     # Relationships
@@ -68,6 +73,7 @@ class Strategy(Base):
 
     # Relationships
     user = relationship("User", back_populates="strategies")
+    trades = relationship("Trade", back_populates="strategy")
 
     def __repr__(self):
         return f"<Strategy(id={self.id}, name='{self.name}', type='{self.strategy_type}')>"
@@ -113,6 +119,7 @@ class Trade(Base):
 
     # Relationships
     user = relationship("User", back_populates="trades")
+    strategy = relationship("Strategy")
 
     def __repr__(self):
         return f"<Trade(id={self.id}, symbol='{self.symbol}', side='{self.side}', qty={self.quantity}, status='{self.status}')>"

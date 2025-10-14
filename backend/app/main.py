@@ -17,7 +17,7 @@ print(f"===========================\n", flush=True)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
-from .routers import health, settings as settings_router, portfolio, orders, stream, screening, market, ai, telemetry, strategies, scheduler, claude, market_data, news, analytics, backtesting, stock
+from .routers import health, settings as settings_router, portfolio, orders, stream, screening, market, ai, telemetry, strategies, scheduler, claude, market_data, news, analytics, backtesting, stock, users
 from .scheduler import init_scheduler
 import atexit
 import sentry_sdk
@@ -140,6 +140,7 @@ app.include_router(news.router, prefix="/api", tags=["news"])
 app.include_router(ai.router, prefix="/api")
 app.include_router(claude.router, prefix="/api")
 app.include_router(stock.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
 app.include_router(strategies.router, prefix="/api")
 app.include_router(scheduler.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
