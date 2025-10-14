@@ -21,6 +21,7 @@ import MarketScanner from '../components/MarketScanner';
 import { isUserLoggedIn, initializeSession } from '../lib/userManagement';
 import AIChat from '../components/AIChat';
 import KeyboardShortcuts from '../components/KeyboardShortcuts';
+import { useBreakpoint, useIsMobile } from '../hooks/useBreakpoint';
 
 export default function Dashboard() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>('');
@@ -29,6 +30,10 @@ export default function Dashboard() {
   const [isUserSetup, setIsUserSetup] = useState(false); // Start with onboarding
   const [isLoading, setIsLoading] = useState(true);
   const [aiChatOpen, setAiChatOpen] = useState(false);
+
+  // Detect mobile viewport
+  const isMobile = useIsMobile();
+  const breakpoint = useBreakpoint();
 
   // Check if user is set up on mount
   useEffect(() => {
@@ -241,17 +246,19 @@ export default function Dashboard() {
             background: 'rgba(15, 24, 40, 0.95)',
             backdropFilter: 'blur(10px)',
             borderTop: '1px solid rgba(16, 185, 129, 0.2)',
-            padding: '16px 24px',
+            padding: isMobile ? '12px 16px' : '16px 24px',
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: isMobile ? 'center' : 'space-between',
             alignItems: 'center',
-            zIndex: 10
+            zIndex: 10,
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? '8px' : '0'
           }}>
-            {/* Empty left space for symmetry */}
-            <div></div>
+            {/* Empty left space for symmetry - hide on mobile */}
+            {!isMobile && <div></div>}
 
-            {/* Keyboard Hints */}
-            <div style={{
+            {/* Keyboard Hints - hide on mobile (touch devices don't use keyboard) */}
+            {!isMobile && (<div style={{
               fontSize: '0.875rem',
               color: '#94a3b8',
               display: 'flex',
@@ -303,22 +310,87 @@ export default function Dashboard() {
                 }}>Ctrl+Shift+A</kbd>
                 admin
               </span>
-            </div>
+            </div>)}
 
             {/* Hover Description */}
             <div style={{
               color: '#cbd5e1',
-              fontSize: '14px',
+              fontSize: isMobile ? '12px' : '14px',
               fontStyle: 'italic',
-              maxWidth: '300px',
-              textAlign: 'right'
+              maxWidth: isMobile ? '100%' : '300px',
+              textAlign: isMobile ? 'center' : 'right',
+              padding: isMobile ? '0 8px' : '0'
             }}>
-              {hoveredWorkflow ? hoveredWorkflow.description : 'Hover over segments for details'}
+              {hoveredWorkflow ? hoveredWorkflow.description : (isMobile ? 'Tap a segment' : 'Hover over segments for details')}
             </div>
           </div>
         </div>
+      ) : isMobile ? (
+        // Mobile: Stacked layout (no split view)
+        <div style={{
+          width: '100%',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)',
+          overflow: 'hidden'
+        }}>
+          {/* Mobile Header with Back Button */}
+          <div style={{
+            padding: '12px 16px',
+            background: 'rgba(15, 24, 40, 0.95)',
+            borderBottom: '1px solid rgba(16, 185, 129, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            minHeight: '56px'
+          }}>
+            {/* Back Button */}
+            <button
+              onClick={() => setSelectedWorkflow('')}
+              style={{
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                color: '#10b981',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              ← Menu
+            </button>
+
+            {/* Current Workflow Title */}
+            {displayWorkflow && (
+              <div style={{
+                flex: 1,
+                fontSize: '16px',
+                fontWeight: '700',
+                color: displayWorkflow.color
+              }}>
+                {displayWorkflow.icon} {displayWorkflow.name.replace('\n', ' ')}
+              </div>
+            )}
+          </div>
+
+          {/* Workflow Content - Full Width */}
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            padding: '16px',
+            color: '#e2e8f0'
+          }}>
+            {renderWorkflowContent()}
+          </div>
+        </div>
       ) : (
-        // Split view when workflow selected
+        // Desktop/Tablet: Split view when workflow selected
         <Split
         sizes={[40, 60]}
         minSize={[350, 400]}
