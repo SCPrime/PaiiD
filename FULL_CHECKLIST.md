@@ -1,9 +1,9 @@
 11# PaiiD - COMPREHENSIVE MASTER CHECKLIST
 
-**Last Updated:** October 13, 2025 - **PHASE 5.A COMPLETE** ✅
-**Project Status:** 75% Complete (87/116 tasks) - **+5 TASKS TODAY**
-**Current Phase:** Phase 2.5 Infrastructure (75%) + Phase 5.A Quick Wins (100%)
-**Latest Commit:** `18441a6` - Phase 5.A completion (all 5 quick wins)
+**Last Updated:** October 14, 2025 - **PHASE 6 STOCK LOOKUP COMPLETE** ✅
+**Project Status:** 75% Complete (89/119 tasks) - **+7 TASKS TODAY**
+**Current Phase:** Phase 2.5 Infrastructure + Phase 5.A Quick Wins + Phase 6 Stock Lookup COMPLETE
+**Architecture:** Tradier = ALL market data | Alpaca = ONLY paper trading
 
 ---
 
@@ -177,6 +177,8 @@ This checklist combines:
 
 ### 2.1 Broker Integration (7/7 - 100%) ✅
 
+**⚠️ ARCHITECTURE NOTE:** Alpaca is ONLY used for paper trade execution (orders, positions, account). ALL market data comes from Tradier.
+
 - [x] Add Alpaca API client (`backend/app/services/alpaca_client.py`)
 - [x] Authentication (Alpaca Paper Trading API)
 - [x] Account info fetch (`/api/account` endpoint)
@@ -185,18 +187,22 @@ This checklist combines:
 - [x] Order status checking (`/api/orders` GET endpoint)
 - [x] Error handling (Try/catch with HTTPException)
 
+**Future:** When ready for live trading, will migrate to Tradier API for order execution (post-MVP).
+
 ### 2.2 Real Market Data (1/6 - 17%) ⚠️
 
-- [x] Live price feeds (`/api/market/indices` for SPY/QQQ)
-- [ ] **TODO:** Alpaca WebSocket implementation for real-time streaming
+- [x] Live price feeds (`/api/market/indices` for DJI/COMP via Tradier)
+- [ ] **TODO:** Tradier streaming for real-time quotes (WebSocket or SSE)
 - [ ] **TODO:** Market data subscriptions (multiple symbols)
-- [ ] **TODO:** Level 2 order book display
-- [ ] **TODO:** Historical data fetching (real API, not simulated)
-- [ ] **TODO:** Intraday bars (1min, 5min, 15min)
+- [ ] **TODO:** Level 2 order book display (if Tradier supports)
+- [ ] **TODO:** Historical data fetching (Tradier API, not simulated)
+- [ ] **TODO:** Intraday bars (1min, 5min, 15min from Tradier)
 
 ### 2.3 Options Chain & Multi-Leg Orders (0/7 - 0%) ❌
 
-- [ ] **TODO:** Fetch options chain from Tradier or Alpaca
+**⚠️ ARCHITECTURE NOTE:** Options data comes from Tradier (NOT Alpaca). Alpaca has limited options support.
+
+- [ ] **TODO:** Fetch options chain from Tradier API
 - [ ] **TODO:** Create Pydantic models for options data
 - [ ] **TODO:** Multi-leg order builder backend
   - Iron Condor
@@ -425,12 +431,11 @@ This checklist combines:
 
 ## 🚀 NEW PHASE 2.5: INFRASTRUCTURE ESSENTIALS (CRITICAL)
 
-### Status: **100% COMPLETE** ✅
+### Status: IN PROGRESS - **75% COMPLETE** ⚠️
 
-**Time Estimate:** 1 week (16 hours) → **COMPLETED**
+**Time Estimate:** 1 week (16 hours)
 **Priority:** CRITICAL (Unblocks everything else)
 **Impact:** Enables Phase 3, makes Phase 2 production-ready
-**Completion Date:** October 14, 2025
 
 ### 2.5.1 PostgreSQL Database Setup (4/4 - 100%) ✅
 
@@ -594,6 +599,147 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 
 ---
 
+## 📈 PHASE 6: STOCK LOOKUP & WATCHLIST SYSTEM (7/7 - 100%) ✅
+
+### Status: **COMPLETE** ✅
+
+**Time Estimate:** 1 week (24 hours) → **COMPLETED October 14, 2025**
+**Priority:** HIGH
+**User Value:** HIGH (research before trading, organize watchlists)
+**Discovery:** Completed ahead of schedule with full integration across 5 workflows
+
+### 6.1 Stock Lookup Backend (3/3 - 100%) ✅
+
+**Time:** 6 hours | **Impact:** HIGH | **Status:** COMPLETE
+
+- [x] **COMPLETE:** Stock info endpoint (`GET /api/stock/{symbol}/info`)
+  - Returns company info, current price, change, metrics
+  - Uses Tradier API for real-time data
+  - Pydantic model: `CompanyInfo`
+- [x] **COMPLETE:** Historical bars endpoint (`GET /api/stock/{symbol}/history`)
+  - Fetches OHLCV bars from Tradier
+  - Supports daily, weekly, monthly intervals
+  - Returns 200 bars by default
+- [x] **COMPLETE:** AI analysis endpoint (`GET /api/ai/analyze-symbol/{symbol}`)
+  - Comprehensive technical analysis (RSI, MACD, Bollinger Bands, SMA)
+  - Support/resistance levels
+  - Entry/exit suggestions with confidence scoring
+  - Risk assessment
+
+**Files Created:**
+
+- ✅ `backend/app/routers/stock.py` - Stock lookup endpoints (199 lines)
+- ✅ Enhanced `backend/app/services/tradier_client.py` - Added `get_historical_bars()`
+- ✅ Enhanced `backend/app/routers/ai.py` - Added `analyze-symbol` endpoint (170 lines)
+
+### 6.2 Stock Lookup Frontend Components (4/4 - 100%) ✅
+
+**Time:** 10 hours | **Impact:** HIGH | **Status:** COMPLETE
+
+- [x] **COMPLETE:** StockLookup component
+  - Symbol search with real-time data
+  - Company header with price, change, metrics
+  - Chart placeholder (TradingView integration ready)
+  - Technical indicators display
+  - News feed (optional)
+  - AI Analysis button → opens modal
+- [x] **COMPLETE:** AIAnalysisModal component
+  - Full AI analysis display
+  - Summary, metrics grid, trend/momentum cards
+  - Risk assessment, entry/exit suggestions
+  - Execute Trade button with pre-fill
+  - Watchlist selector dropdown
+- [x] **COMPLETE:** Workflow integrations (5/5 workflows)
+  - ✅ MarketScanner: "Research" button on scan results
+  - ✅ NewsReview: Clickable symbol badges
+  - ✅ ExecuteTradeForm: Research button next to symbol input
+  - ✅ StrategyBuilderAI: Dedicated research section
+  - ✅ AIRecommendations: Research button on recommendations
+- [x] **COMPLETE:** Supporting components
+  - CompanyHeader.tsx (reusable stock header)
+  - IndicatorPanel.tsx (technical indicators)
+  - NewsArticleList.tsx (news feed)
+
+**Files Created:**
+
+- ✅ `frontend/components/StockLookup.tsx` (504 lines)
+- ✅ `frontend/components/AIAnalysisModal.tsx` (880 lines)
+- ✅ `frontend/components/CompanyHeader.tsx` (172 lines)
+- ✅ `frontend/components/IndicatorPanel.tsx` (269 lines)
+- ✅ `frontend/components/NewsArticleList.tsx` (245 lines)
+
+**Files Modified:**
+
+- ✅ `frontend/components/MarketScanner.tsx` - Research integration
+- ✅ `frontend/components/NewsReview.tsx` - Symbol badges
+- ✅ `frontend/components/ExecuteTradeForm.tsx` - Research button
+- ✅ `frontend/components/StrategyBuilderAI.tsx` - Research section
+- ✅ `frontend/components/AIRecommendations.tsx` - Research button
+
+### 6.3 Watchlist System (3/3 - 100%) ✅
+
+**Time:** 8 hours | **Impact:** HIGH | **Status:** COMPLETE
+
+- [x] **COMPLETE:** WatchlistManager component
+  - Full CRUD: Create, read, update, delete watchlists
+  - Add/remove symbols from watchlists
+  - Real-time price tracking from Tradier
+  - Multiple watchlist support with tabs
+  - Toast notifications
+- [x] **COMPLETE:** WatchlistPanel component
+  - Live price display with auto-refresh (configurable interval)
+  - Color-coded gains/losses
+  - Volume display
+  - Collapsible panel
+  - Click symbol to open research
+- [x] **COMPLETE:** Watchlist integration in AIAnalysisModal
+  - Dropdown selector (replaces simple "Add to Watchlist")
+  - Lists all existing watchlists
+  - Inline "Create New Watchlist" form
+  - Duplicate detection
+
+**Files Created:**
+
+- ✅ `frontend/components/WatchlistManager.tsx` (633 lines)
+- ✅ `frontend/components/WatchlistPanel.tsx` (543 lines)
+
+**Files Modified:**
+
+- ✅ `frontend/components/AIAnalysisModal.tsx` - Watchlist dropdown
+- ✅ `frontend/types/profile.ts` - Watchlist types already existed
+
+### 6.4 Workflow Navigation System (3/3 - 100%) ✅
+
+**Time:** 4 hours | **Impact:** MEDIUM | **Status:** COMPLETE
+
+- [x] **COMPLETE:** WorkflowContext
+  - React Context for workflow navigation
+  - `navigateToWorkflow(workflow, data)` - Generic navigation
+  - `navigateToTrade(tradeData)` - Trade execution navigation
+  - Custom events for component listening
+- [x] **COMPLETE:** AI Analysis → Execute Trade flow
+  - Pre-fills symbol, side, entry price, stop loss, take profit
+  - Uses AI analysis data automatically
+  - Toast notification confirms navigation
+- [x] **COMPLETE:** Execute Trade form pre-fill logic
+  - Consumes pendingNavigation from context
+  - Automatically populates form fields
+  - Smart order type detection (limit if price provided)
+
+**Files Created:**
+
+- ✅ `frontend/contexts/WorkflowContext.tsx` (125 lines)
+
+**Files Modified:**
+
+- ✅ `frontend/pages/_app.tsx` - WorkflowProvider integration
+- ✅ `frontend/components/AIAnalysisModal.tsx` - Execute Trade navigation
+- ✅ `frontend/components/ExecuteTradeForm.tsx` - Pre-fill logic
+
+**Phase 6 Deliverable:** ✅ **COMPLETE** - Full stock research system with AI analysis, watchlists, and seamless workflow navigation across all 5 workflows.
+
+---
+
 ## 📊 PHASE 2.5 AUDIT SUMMARY (October 13, 2025)
 
 ### Key Findings from Comprehensive Audit:
@@ -620,7 +766,7 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 - **ACTION NEEDED:** Add 6 more test files to reach 50% coverage
 
 **🎯 Additional Discoveries:**
-- ✅ Phase 2.A (Real-time streaming) code already implemented in `alpaca_stream.py`
+- ❌ Phase 2.A (Tradier streaming) NOT implemented - `alpaca_stream.py` was deprecated and deleted (2025-10-14)
 - ✅ Phase 5.A (Kill-switch UI, toast notifications) already completed per Git commit `d1731b0`
 - ✅ Docker environment fully functional (3 healthy containers)
 - ✅ Frontend build passing with zero TypeScript errors
@@ -637,23 +783,26 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 
 ### 🔵 PHASE 2.A: REAL-TIME DATA (DO AFTER 2.5)
 
-### Status: CODE COMPLETE - **NEEDS ACTIVATION** ⚠️
+### Status: **NEEDS TRADIER STREAMING IMPLEMENTATION** ⚠️
 
-**Time Estimate:** 3-4 days (12 hours) → **ALREADY IMPLEMENTED**
+**Time Estimate:** 3-4 days (12 hours)
 **Priority:** HIGH
 **User Value:** IMMEDIATE (live prices without manual refresh)
-**Discovery:** Per Git commit `edd0e5c` ("feat(Phase 2.A): integrate real-time streaming in frontend"), streaming code exists and needs activation.
+**Architecture:** Tradier provides ALL market data (NOT Alpaca)
 
-### 2.A.1 Alpaca WebSocket Implementation (0/5 - 0%) ❌
+### 2.A.1 Tradier Streaming Implementation (0/5 - 0%) ❌
 
 **Time:** 8 hours | **Impact:** HIGH | **User Value:** CRITICAL
 
-- [ ] **TODO:** Install Alpaca WebSocket library
-  - Add `alpaca-trade-api` to requirements (if not already)
-  - Or use native WebSocket with `websockets` library
-- [ ] **TODO:** Create WebSocket service
-  - `backend/app/services/alpaca_websocket.py`
-  - Connect to Alpaca streaming API
+**⚠️ ARCHITECTURE NOTE:** Tradier provides real-time market data. Alpaca is ONLY used for paper trade execution.
+
+- [ ] **TODO:** Research Tradier streaming options
+  - Check if Tradier has WebSocket support
+  - Evaluate Tradier Streaming API (if available)
+  - Alternative: Implement polling with smart caching
+- [ ] **TODO:** Create Tradier streaming service
+  - `backend/app/services/tradier_stream.py`
+  - Connect to Tradier streaming endpoint (or implement polling)
   - Handle reconnection logic
   - Subscribe to user's watchlist symbols
 - [ ] **TODO:** Implement subscription management
@@ -662,8 +811,8 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
   - Allow manual watchlist subscription
 - [ ] **TODO:** Update PositionsTable with live prices
   - Modify `frontend/components/PositionsTable.tsx`
-  - Connect to WebSocket stream
-  - Update prices every 5 seconds
+  - Connect to backend stream (SSE or WebSocket)
+  - Update prices in real-time
   - Add real-time P&L calculation
 - [ ] **TODO:** Add connection status indicator
   - Show "Connected" / "Disconnected" badge
@@ -672,9 +821,9 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 
 **Files to Create:**
 
-- `backend/app/services/alpaca_websocket.py` - WebSocket service
-- `backend/app/routers/websocket.py` - WebSocket endpoint
-- `frontend/hooks/useWebSocket.ts` - WebSocket React hook
+- `backend/app/services/tradier_stream.py` - Tradier streaming service
+- `backend/app/routers/stream.py` - Streaming endpoint
+- `frontend/hooks/useMarketStream.ts` - Market stream React hook
 
 **Files to Modify:**
 
@@ -688,7 +837,7 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 - [ ] **TODO:** Create centralized market data service
   - `backend/app/services/market_data.py`
   - Cache live prices in Redis (5s TTL)
-  - Aggregate data from Alpaca WebSocket
+  - Aggregate data from Tradier streaming
 - [ ] **TODO:** Create Server-Sent Events (SSE) endpoint
   - `GET /api/market/stream` - SSE endpoint
   - Stream price updates to frontend
@@ -701,7 +850,7 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 
 **Files to Create:**
 
-- `backend/app/services/market_data.py` - Market data service
+- `backend/app/services/market_data.py` - Market data service (uses Tradier)
 - `backend/app/routers/stream.py` - SSE streaming endpoint
 - `frontend/hooks/useMarketData.ts` - React hook
 
@@ -1018,16 +1167,16 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 
 **Time:** 8 hours | **Effort:** MEDIUM | **Impact:** HIGH
 
-**Prerequisite:** Phase 2.A (Alpaca WebSocket) must be complete
+**Prerequisite:** Phase 2.A (Tradier Streaming) must be complete
 
 - [ ] **TODO:** Already covered in Phase 2.A.2
   - SSE endpoint for market data
   - useMarketData hook
 - [ ] **TODO:** Add SSE for order updates
-  - Stream order status changes
+  - Stream order status changes from Alpaca (trade execution updates ONLY)
   - Update UI instantly when order fills
 - [ ] **TODO:** Add SSE for position updates
-  - Stream position changes from Alpaca
+  - Stream position changes from Alpaca (positions ONLY, NOT market price quotes)
   - Update PositionsTable instantly
 
 **Files to Create:**
@@ -1102,19 +1251,22 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 
 **Deliverable:** Database, monitoring, and testing infrastructure
 
-### 🔵 WEEK 2 (Days 8-14) - REAL-TIME + QUICK WINS
+### 🔵 WEEK 2 (Days 8-14) - REAL-TIME DATA
 
-**Focus:** Phase 2.A (Real-time Data) + Phase 5.A (Quick Wins)
-**Tasks:** 2 + 5 major items (26 hours)
-**Goal:** Live trading experience + user delight
+**Focus:** Phase 2.A (Real-time Data via Tradier)
+**Tasks:** 2 major items (12 hours)
+**Goal:** Live trading experience with real-time quotes
 
-- [ ] Day 8-10: Alpaca WebSocket implementation (8 hours)
-- [ ] Day 11: Market data service + SSE (4 hours)
-- [ ] Day 12: Kill-switch UI + Toast notifications (5 hours)
-- [ ] Day 13: Order templates + Keyboard shortcuts (7 hours)
-- [ ] Day 14: TradingView widget (2 hours)
+- [ ] Day 8-10: Tradier streaming implementation (8 hours)
+  - Research Tradier streaming capabilities
+  - Implement WebSocket or polling with smart caching
+  - Subscribe to watchlist symbols
+- [ ] Day 11-12: Market data service + SSE (4 hours)
+  - Centralized market data service (Redis caching)
+  - SSE endpoint for frontend updates
+  - Real-time P&L calculation
 
-**Deliverable:** Real-time prices, notifications, shortcuts, charts
+**Deliverable:** Real-time prices from Tradier across all workflows
 
 ### 🔵 WEEK 3 (Days 15-21) - AI COPILOT + POLISH
 
@@ -1145,17 +1297,18 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 | **Code Review** | Code quality fixes       | 18          | 18       | 0           | 0           | **100%** ✅  |
 | **Phase 1**     | UI Critical Fixes        | 5           | 5        | 0           | 0           | **100%** ✅  |
 | **Phase 2.5**   | **Infrastructure**       | **4**       | **3**    | **1**       | **0**       | **75%** ✅   |
-| **Phase 2.A**   | Real-time Data           | 2           | 2        | 0           | 0           | **100%** ✅  |
+| **Phase 2.A**   | Real-time Data (Tradier) | 2           | 0        | 0           | 2           | **0%** ⚠️    |
 | **Phase 2**     | Core Trading (remaining) | 15          | 10       | 5           | 0           | **67%** ⚠️   |
 | **Phase 3.A**   | AI Copilot               | 2           | 0        | 0           | 2           | **0%** ❌    |
 | **Phase 3**     | AI Strategy (remaining)  | 13          | 7        | 7           | 0           | **54%** ⚠️   |
 | **Phase 4**     | Production Hardening     | 21          | 3        | 2           | 16          | **14%** ⚠️   |
 | **Phase 5.A**   | **Quick Wins**           | **5**       | **5**    | **0**       | **0**       | **100%** ✅  |
-| **Phase 5.B**   | Polish                   | 3           | 0        | 0           | 3           | **0%** ❌    |
+| **Phase 5.B**   | Polish                   | 3           | 1        | 0           | 2           | **33%** ⚠️   |
 | **Phase 5**     | UX (remaining)           | 15          | 6        | 0           | 9           | **40%** ⚠️   |
+| **Phase 6**     | **Stock Lookup System**  | **7**       | **7**    | **0**       | **0**       | **100%** ✅  |
 | **DEFERRED**    | Options, ML, Auto-trade  | 24          | 0        | 0           | 24          | **0%** 📅    |
-| **MVP TOTAL**   | **Critical Path Only**   | **70**      | **49**   | **15**      | **6**       | **70%** ✅   |
-| **FULL TOTAL**  | **Including Deferred**   | **94**      | **49**   | **15**      | **30**      | **52%** ⚠️   |
+| **MVP TOTAL**   | **Critical Path Only**   | **77**      | **56**   | **15**      | **6**       | **73%** ✅   |
+| **FULL TOTAL**  | **Including Deferred**   | **101**     | **56**   | **15**      | **30**      | **55%** ⚠️   |
 
 ### Time to MVP
 
@@ -1183,9 +1336,9 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
    - Add error tracking to catch production issues
    - Critical for visibility
 
-3. **THIS WEEK:** Implement Alpaca WebSocket (8 hours)
+3. **THIS WEEK:** Implement Tradier Streaming (8 hours)
 
-   - Enables real-time price updates
+   - Enables real-time price updates from Tradier
    - Highest user value per hour invested
 
 4. **THIS WEEK:** Write 10 critical tests (8 hours)
@@ -1205,9 +1358,9 @@ Would you like me to:
 
 5. **Real-time Market Data (HIGH PRIORITY)**
 
-   - Implement Alpaca WebSocket for streaming quotes
-   - Add market data subscriptions for user watchlist
-   - Update PositionsTable with live prices
+   - Implement Tradier Streaming for real-time quotes (NOT Alpaca)
+   - Add market data subscriptions for user watchlist via Tradier
+   - Update PositionsTable with live prices from Tradier
    - Add real-time P&L updates
 
 6. **Options Support (HIGH VALUE)**
@@ -1284,10 +1437,11 @@ Would you like me to:
 
 ### API Integrations Needed:
 
-1. ⚠️ **Alpaca WebSocket** - For real-time market data
-2. ⚠️ **Tradier API** - For options chains (Alpaca options support is limited)
-3. ❌ **SMS Provider** (Twilio) - For alerts and notifications
-4. ❌ **Email Provider** (SendGrid) - For reports and alerts
+1. ⚠️ **Tradier Streaming** - For real-time market data (quotes, bars, options)
+2. ⚠️ **Tradier API** - For options chains and historical data
+3. ✅ **Alpaca API** - ONLY for paper trade execution (orders, positions, account)
+4. ❌ **SMS Provider** (Twilio) - For alerts and notifications
+5. ❌ **Email Provider** (SendGrid) - For reports and alerts
 
 ### External Services Required:
 
@@ -1323,19 +1477,19 @@ Would you like me to:
 
 ### ⚠️ What's Partial (Needs Work)
 
-- Real-time market data (only SPY/QQQ indices, no streaming)
+- Real-time market data (static indices only, no streaming from Tradier)
 - Risk management (basic stop/take profit, no advanced features)
 - Strategy configuration (localStorage only, no database)
 - Entry/exit logic (rules-based, not ML-driven)
-- Historical data (simulated, not real API)
+- Historical data (simulated, needs real Tradier API)
 - Charts (equity curve only, no TradingView)
 - Testing (framework setup, no tests written)
 - Rate limiting (proxy only, not all endpoints)
 
 ### ❌ What's Missing (Not Started)
 
-- Alpaca WebSocket for real-time streaming
-- Options chains and multi-leg orders
+- Tradier streaming for real-time market data
+- Options chains and multi-leg orders (via Tradier)
 - Greeks calculation and IV analysis
 - ML prediction engine (NO machine learning yet)
 - Auto-trading automation
@@ -1343,13 +1497,14 @@ Would you like me to:
 - Redis production setup
 - Sentry error tracking
 - Backend test suite
-- Mobile responsive UI
+- Mobile responsive UI (partially complete)
 - Real-time SSE updates
-- Kill-switch UI toggle
+- Kill-switch UI toggle (complete)
 - Advanced order entry (brackets, OCO)
 - Strategy versioning system
 - Performance history tracking
 - SMS/email notifications
+- **FUTURE:** Tradier live trading (currently paper trading via Alpaca)
 
 ---
 
@@ -1413,20 +1568,33 @@ chore: maintenance tasks
 
 ## 🔄 CHANGELOG
 
-### 2025-10-13 (PM) - Phase 5.A Completion
+### 2025-10-14 (Part 2)
 
-- ✅ **Completed Phase 5.A (5/5 quick wins - 100%)**
-- ✅ Order Templates: Full CRUD backend + frontend integration
-- ✅ Keyboard Shortcuts: Global shortcuts with help modal (Ctrl+K, Ctrl+T, Esc)
-- ✅ TradingView Chart: Symbol input + indicators + timeframes in Analytics
-- ✅ Toast Notifications: react-hot-toast integrated app-wide
-- ✅ Kill-Switch UI: Already implemented from previous commit
-- ✅ Backend: 117 tests (79 passing, 67.5% pass rate)
-- ✅ Database: Order templates migration created and tested
-- 📝 Commit: `18441a6` - "feat(Phase 5.A): complete all 5 quick wins"
-- 📊 **Project completion: 69% → 75%**
+- ✅ **Alpaca Streaming Cleanup Complete** - Removed all incorrect Alpaca references for market data
+  - **DELETED:** `backend/app/services/alpaca_stream.py` (294 lines - deprecated, implemented Alpaca for market quotes)
+  - **DELETED:** `backend/STREAMING_SETUP.md` (454 lines - complete guide to Alpaca streaming setup)
+  - **UPDATED:** `backend/app/main.py` - Cleaned up commented-out alpaca_stream imports, clarified architecture
+  - **UPDATED:** `backend/app/routers/stream.py` - Removed alpaca_stream usage, added deprecation notices and TODOs for Tradier
+  - **UPDATED:** `FULL_CHECKLIST.md` - Corrected 6 references that incorrectly suggested Alpaca for market data
+  - Architecture now crystal clear: **Tradier = ALL market data | Alpaca = ONLY paper trade execution**
+  - Phase 2.A (Real-time streaming) now correctly documents need for Tradier streaming implementation
 
-### 2025-10-13 (AM) - Infrastructure Audit
+### 2025-10-14 (Part 1)
+
+- ✅ **Mock Data Cleanup Complete** - Removed all hardcoded mock data remnants
+  - Replaced SPY/QQQ with $DJI.IX (Dow Jones) and $COMP.IX (NASDAQ Composite)
+  - Removed hardcoded stock universe in AI recommendations - now uses environment variable DEFAULT_WATCHLIST
+  - Implemented real market conditions from Tradier API (VIX, market indices)
+  - Implemented real sector performance from Tradier API (11 sector ETFs)
+  - Added DEMO MODE indicator banner in Analytics component when using fallback data
+  - All market data now sources from Tradier with proper caching (60s TTL)
+- 📝 **Architecture Documentation Updated**
+  - Deprecated: SPY/QQQ as default market indices (replaced 2025-10-14)
+  - New Standard: $DJI.IX and $COMP.IX for market trend analysis
+  - All AI recommendations now use real price movement data (change_percentage)
+  - Mock data only used as fallback with clear visual indicator
+
+### 2024-10-13
 
 - ✅ Completed all 18 code review issues (Priority 1, 2, 3)
 - ✅ Added LRU cache eviction with size limits

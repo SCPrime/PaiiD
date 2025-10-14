@@ -33,68 +33,211 @@ class MarketCondition(BaseModel):
 
 
 @router.get("/market/conditions", dependencies=[Depends(require_bearer)])
-async def get_market_conditions() -> dict:
+async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dict:
     """
-    Get current market conditions for trading analysis
+    Get current market conditions for trading analysis using real Tradier data
 
-    TODO: Implement real market data fetching:
-    - VIX from CBOE or market data provider
-    - SPY trend analysis (moving averages, price action)
-    - Market breadth (advance/decline ratio, new highs/lows)
-    - Volume analysis compared to averages
-    - Sector rotation analysis
+    Provides:
+    - VIX volatility index (real-time from Tradier)
+    - Market trend analysis for Dow Jones and NASDAQ (real-time)
+    - Market breadth indicators (placeholder - requires additional data)
+    - Overall sentiment and recommended actions
     """
+    from datetime import datetime
 
-    # Mock market conditions - replace with real data
-    conditions: List[MarketCondition] = [
-        MarketCondition(
-            name="VIX (Volatility)",
-            value="14.2",
-            status="favorable",
-            details="Below 20 indicates calm market, good for directional trades"
-        ),
-        MarketCondition(
-            name="SPY Trend",
-            value="Uptrend",
-            status="favorable",
-            details="Price above 50-day and 200-day moving averages"
-        ),
-        MarketCondition(
-            name="Market Breadth",
-            value="68% bullish",
-            status="favorable",
-            details="Advance/decline ratio: 2.1, showing broad participation"
-        ),
-        MarketCondition(
-            name="Volume",
-            value="Above average",
-            status="neutral",
-            details="110% of 20-day average volume"
-        ),
-        MarketCondition(
-            name="Sector Rotation",
-            value="Tech leading",
-            status="favorable",
-            details="Technology and Communication Services outperforming"
-        ),
-        MarketCondition(
-            name="Put/Call Ratio",
-            value="0.82",
-            status="neutral",
-            details="Moderate sentiment, not overly bullish or bearish"
+    # Check cache first (60s TTL)
+    cache_key = "market:conditions"
+    cached = cache.get(cache_key)
+    if cached:
+        print("[Market Conditions] ✅ Cache HIT")
+        return {**cached, "cached": True}
+
+    try:
+        # Fetch real market data from Tradier
+        symbols = "$VIX.X,$DJI.IX,COMP:GIDS"
+        resp = requests.get(
+            f"{settings.TRADIER_API_BASE_URL}/markets/quotes",
+            headers={
+                "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
+                "Accept": "application/json"
+            },
+            params={"symbols": symbols, "greeks": "false"}
         )
-    ]
 
-    return {
-        "conditions": [cond.model_dump() for cond in conditions],
-        "timestamp": "2025-10-06T00:00:00Z",
-        "overallSentiment": "bullish",  # calculated from conditions
-        "recommendedActions": [
-            "Consider directional bullish strategies",
-            "Monitor tech sector for momentum plays",
-            "Watch for volume confirmation on breakouts"
+        conditions: List[MarketCondition] = []
+        overall_sentiment = "neutral"
+        positive_signals = 0
+        total_signals = 0
+
+        if resp.status_code == 200:
+            data = resp.json()
+            quotes = data.get("quotes", {}).get("quote", [])
+            if isinstance(quotes, dict):
+                quotes = [quotes]
+
+            quote_map = {q.get("symbol"): q for q in quotes}
+
+            # 1. VIX Volatility Index
+            vix_quote = quote_map.get("$VIX.X")
+            if vix_quote and "last" in vix_quote:
+                vix_value = float(vix_quote["last"])
+                if vix_value < 15:
+                    vix_status = "favorable"
+                    vix_details = f"Very low volatility ({vix_value:.2f}) - calm market, good for directional trades"
+                    positive_signals += 1
+                elif vix_value < 20:
+                    vix_status = "favorable"
+                    vix_details = f"Low volatility ({vix_value:.2f}) - stable market conditions"
+                    positive_signals += 1
+                elif vix_value < 30:
+                    vix_status = "neutral"
+                    vix_details = f"Moderate volatility ({vix_value:.2f}) - some uncertainty, trade with caution"
+                else:
+                    vix_status = "unfavorable"
+                    vix_details = f"High volatility ({vix_value:.2f}) - turbulent market, high risk"
+
+                conditions.append(MarketCondition(
+                    name="VIX (Volatility)",
+                    value=f"{vix_value:.2f}",
+                    status=vix_status,
+                    details=vix_details
+                ))
+                total_signals += 1
+
+            # 2. Dow Jones Industrial Trend
+            dji_quote = quote_map.get("$DJI.IX") or quote_map.get("$DJI")
+            if dji_quote and "last" in dji_quote:
+                dji_price = float(dji_quote["last"])
+                dji_change_pct = float(dji_quote.get("change_percentage", 0))
+
+                if dji_change_pct > 1.0:
+                    dji_status = "favorable"
+                    dji_value = "Strong Uptrend"
+                    dji_details = f"Up {dji_change_pct:+.2f}% - strong bullish momentum"
+                    positive_signals += 1
+                elif dji_change_pct > 0:
+                    dji_status = "favorable"
+                    dji_value = "Uptrend"
+                    dji_details = f"Up {dji_change_pct:+.2f}% - positive momentum"
+                    positive_signals += 1
+                elif dji_change_pct > -1.0:
+                    dji_status = "neutral"
+                    dji_value = "Sideways"
+                    dji_details = f"Change {dji_change_pct:+.2f}% - consolidating"
+                else:
+                    dji_status = "unfavorable"
+                    dji_value = "Downtrend"
+                    dji_details = f"Down {dji_change_pct:.2f}% - bearish pressure"
+
+                conditions.append(MarketCondition(
+                    name="Dow Jones Trend",
+                    value=dji_value,
+                    status=dji_status,
+                    details=dji_details
+                ))
+                total_signals += 1
+
+            # 3. NASDAQ Composite Trend
+            comp_quote = quote_map.get("COMP:GIDS") or quote_map.get("$COMP.IX")
+            if comp_quote and "last" in comp_quote:
+                comp_price = float(comp_quote["last"])
+                comp_change_pct = float(comp_quote.get("change_percentage", 0))
+
+                if comp_change_pct > 1.0:
+                    comp_status = "favorable"
+                    comp_value = "Strong Uptrend"
+                    comp_details = f"Tech sector strong: up {comp_change_pct:+.2f}%"
+                    positive_signals += 1
+                elif comp_change_pct > 0:
+                    comp_status = "favorable"
+                    comp_value = "Uptrend"
+                    comp_details = f"Tech sector positive: up {comp_change_pct:+.2f}%"
+                    positive_signals += 1
+                elif comp_change_pct > -1.0:
+                    comp_status = "neutral"
+                    comp_value = "Sideways"
+                    comp_details = f"Tech sector mixed: {comp_change_pct:+.2f}%"
+                else:
+                    comp_status = "unfavorable"
+                    comp_value = "Downtrend"
+                    comp_details = f"Tech sector weak: down {comp_change_pct:.2f}%"
+
+                conditions.append(MarketCondition(
+                    name="NASDAQ Trend",
+                    value=comp_value,
+                    status=comp_status,
+                    details=comp_details
+                ))
+                total_signals += 1
+
+        # Calculate overall sentiment
+        if total_signals > 0:
+            bullish_pct = (positive_signals / total_signals) * 100
+            if bullish_pct >= 67:
+                overall_sentiment = "bullish"
+            elif bullish_pct >= 33:
+                overall_sentiment = "neutral"
+            else:
+                overall_sentiment = "bearish"
+
+        # Generate recommended actions based on sentiment
+        if overall_sentiment == "bullish":
+            recommended_actions = [
+                "Consider directional bullish strategies",
+                "Look for momentum plays in strong sectors",
+                "Monitor for breakout opportunities"
+            ]
+        elif overall_sentiment == "bearish":
+            recommended_actions = [
+                "Consider defensive positions or cash",
+                "Look for short opportunities or hedges",
+                "Wait for clearer bullish signals before entering"
+            ]
+        else:
+            recommended_actions = [
+                "Trade cautiously with tight stops",
+                "Focus on high-conviction setups only",
+                "Wait for directional confirmation"
+            ]
+
+        # TODO: Additional market conditions (requires more data sources):
+        # - Market Breadth (advance/decline ratio) - not available from Tradier basic API
+        # - Volume analysis - requires historical comparison
+        # - Put/Call ratio - requires options data subscription
+
+        result = {
+            "conditions": [cond.model_dump() for cond in conditions],
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "overallSentiment": overall_sentiment,
+            "recommendedActions": recommended_actions,
+            "source": "tradier"
+        }
+
+        # Cache for 60 seconds
+        cache.set(cache_key, result, ttl=60)
+
+        print(f"[Market Conditions] ✅ Fetched {len(conditions)} real conditions from Tradier")
+        return result
+
+    except Exception as e:
+        print(f"[Market Conditions] ❌ Error fetching from Tradier: {e}")
+        # Return basic fallback conditions
+        fallback_conditions = [
+            MarketCondition(
+                name="Market Data",
+                value="Unavailable",
+                status="neutral",
+                details="Unable to fetch current market conditions. Please try again later."
+            )
         ]
-    }
+        return {
+            "conditions": [cond.model_dump() for cond in fallback_conditions],
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "overallSentiment": "neutral",
+            "recommendedActions": ["Wait for market data to become available"],
+            "source": "fallback",
+            "error": str(e)
+        }
 
 
 @router.get("/market/indices", dependencies=[Depends(require_bearer)])
@@ -232,29 +375,110 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
 
 
 @router.get("/market/sectors", dependencies=[Depends(require_bearer)])
-async def get_sector_performance() -> dict:
+async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> dict:
     """
-    Get performance of major market sectors
+    Get performance of major market sectors using real Tradier data
 
-    TODO: Fetch real sector ETF data
+    Fetches real-time quotes for sector ETFs and ranks by performance
     """
-    sectors = [
-        {"name": "Technology", "symbol": "XLK", "changePercent": 1.8, "rank": 1},
-        {"name": "Communication", "symbol": "XLC", "changePercent": 1.5, "rank": 2},
-        {"name": "Consumer Discretionary", "symbol": "XLY", "changePercent": 0.9, "rank": 3},
-        {"name": "Financials", "symbol": "XLF", "changePercent": 0.6, "rank": 4},
-        {"name": "Healthcare", "symbol": "XLV", "changePercent": 0.4, "rank": 5},
-        {"name": "Industrials", "symbol": "XLI", "changePercent": 0.2, "rank": 6},
-        {"name": "Materials", "symbol": "XLB", "changePercent": -0.1, "rank": 7},
-        {"name": "Real Estate", "symbol": "XLRE", "changePercent": -0.3, "rank": 8},
-        {"name": "Utilities", "symbol": "XLU", "changePercent": -0.5, "rank": 9},
-        {"name": "Energy", "symbol": "XLE", "changePercent": -1.2, "rank": 10},
-        {"name": "Consumer Staples", "symbol": "XLP", "changePercent": -0.8, "rank": 11}
-    ]
+    from datetime import datetime
 
-    return {
-        "sectors": sectors,
-        "timestamp": "2025-10-06T00:00:00Z",
-        "leader": "Technology",
-        "laggard": "Energy"
-    }
+    # Check cache first (60s TTL)
+    cache_key = "market:sectors"
+    cached = cache.get(cache_key)
+    if cached:
+        print("[Sector Performance] ✅ Cache HIT")
+        return {**cached, "cached": True}
+
+    try:
+        # Define sector ETFs
+        sector_etfs = [
+            {"name": "Technology", "symbol": "XLK"},
+            {"name": "Communication", "symbol": "XLC"},
+            {"name": "Consumer Discretionary", "symbol": "XLY"},
+            {"name": "Financials", "symbol": "XLF"},
+            {"name": "Healthcare", "symbol": "XLV"},
+            {"name": "Industrials", "symbol": "XLI"},
+            {"name": "Materials", "symbol": "XLB"},
+            {"name": "Real Estate", "symbol": "XLRE"},
+            {"name": "Utilities", "symbol": "XLU"},
+            {"name": "Energy", "symbol": "XLE"},
+            {"name": "Consumer Staples", "symbol": "XLP"}
+        ]
+
+        # Fetch real quotes from Tradier
+        symbols = ",".join([s["symbol"] for s in sector_etfs])
+        resp = requests.get(
+            f"{settings.TRADIER_API_BASE_URL}/markets/quotes",
+            headers={
+                "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
+                "Accept": "application/json"
+            },
+            params={"symbols": symbols, "greeks": "false"}
+        )
+
+        sectors = []
+
+        if resp.status_code == 200:
+            data = resp.json()
+            quotes = data.get("quotes", {}).get("quote", [])
+            if isinstance(quotes, dict):
+                quotes = [quotes]
+
+            # Create quote lookup
+            quote_map = {q.get("symbol"): q for q in quotes if q.get("symbol")}
+
+            # Build sector list with real data
+            for sector in sector_etfs:
+                quote = quote_map.get(sector["symbol"])
+                if quote and "change_percentage" in quote:
+                    change_percent = float(quote.get("change_percentage", 0))
+                    sectors.append({
+                        "name": sector["name"],
+                        "symbol": sector["symbol"],
+                        "changePercent": round(change_percent, 2),
+                        "last": float(quote.get("last", 0))
+                    })
+
+            # Sort by performance (descending)
+            sectors.sort(key=lambda x: x["changePercent"], reverse=True)
+
+            # Add ranks
+            for idx, sector in enumerate(sectors):
+                sector["rank"] = idx + 1
+
+            # Identify leader and laggard
+            leader = sectors[0]["name"] if sectors else "Unknown"
+            laggard = sectors[-1]["name"] if sectors else "Unknown"
+
+            result = {
+                "sectors": sectors,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "leader": leader,
+                "laggard": laggard,
+                "source": "tradier"
+            }
+
+            # Cache for 60 seconds
+            cache.set(cache_key, result, ttl=60)
+
+            print(f"[Sector Performance] ✅ Fetched {len(sectors)} real sector ETFs from Tradier")
+            return result
+
+        else:
+            raise Exception(f"Tradier API returned status {resp.status_code}")
+
+    except Exception as e:
+        print(f"[Sector Performance] ❌ Error fetching from Tradier: {e}")
+        # Return fallback with neutral data
+        fallback_sectors = [
+            {"name": "Market Data", "symbol": "N/A", "changePercent": 0.0, "rank": 1}
+        ]
+        return {
+            "sectors": fallback_sectors,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "leader": "Unavailable",
+            "laggard": "Unavailable",
+            "source": "fallback",
+            "error": str(e)
+        }

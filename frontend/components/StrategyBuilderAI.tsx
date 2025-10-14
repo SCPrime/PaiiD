@@ -19,10 +19,12 @@ import {
   Target,
   Brain,
   Loader2,
+  Search,
 } from 'lucide-react';
 import { GlassCard, GlassButton, GlassInput, GlassBadge } from './GlassmorphicComponents';
 import { theme } from '../styles/theme';
 import { claudeAI } from '../lib/aiAdapter';
+import StockLookup from './StockLookup';
 interface Strategy {
   id?: string;  name: string;  entry: string[];  exit: string[];  riskManagement: string[];  code?: string;}
 
@@ -42,6 +44,10 @@ export default function StrategyBuilderAI() {
   const [currentStrategy, setCurrentStrategy] = useState<Strategy | null>(null);
   const [savedStrategies, setSavedStrategies] = useState<SavedStrategy[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Stock research state
+  const [researchSymbol, setResearchSymbol] = useState('');
+  const [showStockLookup, setShowStockLookup] = useState(false);
 
   // Load saved strategies from localStorage
   useEffect(() => {
@@ -272,6 +278,86 @@ export default function StrategyBuilderAI() {
                   )}
                 </div>
               </div>
+            </GlassCard>
+
+            {/* Stock Research Section */}
+            <GlassCard>
+              <h3
+                style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: theme.colors.text,
+                  margin: `0 0 ${theme.spacing.md} 0`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: theme.spacing.sm,
+                }}
+              >
+                <Search style={{ width: '20px', height: '20px', color: theme.colors.info }} />
+                Research Symbol
+              </h3>
+
+              <p style={{ color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.md} 0`, fontSize: '14px' }}>
+                Look up stock data and technical indicators before building your strategy
+              </p>
+
+              <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: showStockLookup ? theme.spacing.lg : 0 }}>
+                <input
+                  type="text"
+                  value={researchSymbol}
+                  onChange={(e) => setResearchSymbol(e.target.value.toUpperCase())}
+                  placeholder="Enter symbol (e.g., AAPL, TSLA)"
+                  style={{
+                    flex: 1,
+                    padding: theme.spacing.md,
+                    background: theme.background.input,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.borderRadius.md,
+                    color: theme.colors.text,
+                    fontSize: '14px',
+                    outline: 'none',
+                  }}
+                />
+                <GlassButton
+                  onClick={() => {
+                    if (researchSymbol.trim()) {
+                      setShowStockLookup(true);
+                    }
+                  }}
+                  disabled={!researchSymbol.trim()}
+                >
+                  <Search style={{ width: '18px', height: '18px' }} />
+                  Research
+                </GlassButton>
+                {showStockLookup && (
+                  <GlassButton
+                    variant="secondary"
+                    onClick={() => setShowStockLookup(false)}
+                  >
+                    Close
+                  </GlassButton>
+                )}
+              </div>
+
+              {showStockLookup && researchSymbol.trim() && (
+                <div style={{
+                  marginTop: theme.spacing.md,
+                  padding: theme.spacing.lg,
+                  background: theme.background.input,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: theme.borderRadius.lg
+                }}>
+                  <StockLookup
+                    initialSymbol={researchSymbol.trim()}
+                    showChart={true}
+                    showIndicators={true}
+                    showCompanyInfo={true}
+                    showNews={false}
+                    enableAIAnalysis={true}
+                    onSymbolSelect={(sym) => setResearchSymbol(sym)}
+                  />
+                </div>
+              )}
             </GlassCard>
 
             {/* Generated Strategy Preview */}

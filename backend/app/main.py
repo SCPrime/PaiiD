@@ -17,7 +17,7 @@ print(f"===========================\n", flush=True)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
-from .routers import health, settings as settings_router, portfolio, orders, stream, screening, market, ai, telemetry, strategies, scheduler, claude, market_data, news, analytics, backtesting
+from .routers import health, settings as settings_router, portfolio, orders, stream, screening, market, ai, telemetry, strategies, scheduler, claude, market_data, news, analytics, backtesting, stock
 from .scheduler import init_scheduler
 import atexit
 import sentry_sdk
@@ -70,13 +70,10 @@ async def startup_event():
     except Exception as e:
         print(f"[ERROR] Failed to initialize scheduler: {str(e)}", flush=True)
 
-    # Initialize Alpaca streaming service (Phase 2.A)
-    try:
-        from .services.alpaca_stream import start_alpaca_stream
-        await start_alpaca_stream()
-        print("[OK] Alpaca WebSocket stream initialized", flush=True)
-    except Exception as e:
-        print(f"[ERROR] Failed to initialize Alpaca stream: {str(e)}", flush=True)
+    # ⚠️ ARCHITECTURE NOTE: Tradier provides ALL market data (quotes, streaming, analysis)
+    # Alpaca is used ONLY for paper trade execution (orders, positions, account)
+    # Future: Tradier will also handle live trading post-MVP
+    print("[INFO] Market data: Tradier API | Trade execution: Alpaca Paper Trading", flush=True)
 
 # Shutdown scheduler and streaming gracefully
 @app.on_event("shutdown")
@@ -90,13 +87,8 @@ async def shutdown_event():
     except Exception as e:
         print(f"[ERROR] Scheduler shutdown error: {str(e)}", flush=True)
 
-    # Shutdown Alpaca stream
-    try:
-        from .services.alpaca_stream import stop_alpaca_stream
-        await stop_alpaca_stream()
-        print("[OK] Alpaca stream shut down gracefully", flush=True)
-    except Exception as e:
-        print(f"[ERROR] Alpaca stream shutdown error: {str(e)}", flush=True)
+    # Cleanup complete (no streaming services to shut down)
+    pass
 
 # Add Sentry context middleware if Sentry is enabled
 if settings.SENTRY_DSN:
@@ -134,6 +126,7 @@ app.include_router(market_data.router, prefix="/api", tags=["market-data"])
 app.include_router(news.router, prefix="/api", tags=["news"])
 app.include_router(ai.router, prefix="/api")
 app.include_router(claude.router, prefix="/api")
+app.include_router(stock.router, prefix="/api")
 app.include_router(strategies.router, prefix="/api")
 app.include_router(scheduler.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")

@@ -192,6 +192,81 @@ class TradierClient:
             return clock["clock"].get("state") == "open"
         return False
 
+    def get_historical_bars(
+        self,
+        symbol: str,
+        interval: str = "daily",
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
+    ) -> List[Dict]:
+        """
+        Get historical OHLCV data from Tradier
+
+        Args:
+            symbol: Stock symbol (e.g., "AAPL")
+            interval: "daily", "weekly", or "monthly"
+            start_date: Start date in YYYY-MM-DD format (optional)
+            end_date: End date in YYYY-MM-DD format (optional)
+
+        Returns:
+            List of bars with date, open, high, low, close, volume
+
+        Example:
+            [
+                {
+                    "date": "2024-01-15",
+                    "open": 185.50,
+                    "high": 187.20,
+                    "low": 184.30,
+                    "close": 186.75,
+                    "volume": 45623100
+                },
+                ...
+            ]
+        """
+        params = {
+            "symbol": symbol,
+            "interval": interval
+        }
+
+        if start_date:
+            params["start"] = start_date
+        if end_date:
+            params["end"] = end_date
+
+        logger.info(f"Fetching historical bars for {symbol} ({interval})")
+        response = self._request("GET", "/markets/history", params=params)
+
+        # Parse Tradier response
+        if "history" in response and response["history"] != "null":
+            bars = response["history"].get("day", [])
+
+            # Tradier returns single bar as dict, multiple as list
+            if isinstance(bars, dict):
+                bars = [bars]
+
+            # Convert to standard format
+            normalized_bars = []
+            for bar in bars:
+                try:
+                    normalized_bars.append({
+                        "date": bar["date"],
+                        "open": float(bar["open"]),
+                        "high": float(bar["high"]),
+                        "low": float(bar["low"]),
+                        "close": float(bar["close"]),
+                        "volume": int(bar["volume"])
+                    })
+                except (KeyError, ValueError) as e:
+                    logger.warning(f"Skipping malformed bar: {bar} - {e}")
+                    continue
+
+            logger.info(f"Retrieved {len(normalized_bars)} bars for {symbol}")
+            return normalized_bars
+
+        logger.warning(f"No historical data available for {symbol}")
+        return []
+
     # ==================== OPTIONS ====================
 
     def get_option_chains(self, symbol: str, expiration: Optional[str] = None) -> Dict:

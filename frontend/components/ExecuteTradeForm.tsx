@@ -1,12 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
-import { TrendingUp, Check, AlertCircle, Loader2, ChevronDown, Save, BookmarkPlus, Trash2 } from "lucide-react";
+import { TrendingUp, Check, AlertCircle, Loader2, ChevronDown, Save, BookmarkPlus, Trash2, Search } from "lucide-react";
 import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
 import ConfirmDialog from "./ConfirmDialog";
 import { addOrderToHistory } from "./OrderHistory";
 import { showSuccess, showError, showWarning } from "../lib/toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { useWorkflow } from "../contexts/WorkflowContext";
+import StockLookup from "./StockLookup";
 
 interface Order {
   symbol: string;
@@ -41,6 +43,9 @@ export default function ExecuteTradeForm() {
   // Mobile detection
   const isMobile = useIsMobile();
 
+  // Workflow context
+  const { pendingNavigation, clearPendingNavigation } = useWorkflow();
+
   // Responsive sizing
   const responsiveSizes = {
     headerLogo: isMobile ? '32px' : '42px',
@@ -70,10 +75,44 @@ export default function ExecuteTradeForm() {
   const [templateName, setTemplateName] = useState("");
   const [templateDescription, setTemplateDescription] = useState("");
 
+  // Stock research state
+  const [showStockLookup, setShowStockLookup] = useState(false);
+
   // Load templates on mount
   useEffect(() => {
     loadTemplates();
   }, []);
+
+  // Consume pre-filled data from workflow navigation
+  useEffect(() => {
+    if (pendingNavigation && pendingNavigation.workflow === 'execute-trade' && pendingNavigation.tradeData) {
+      const { tradeData } = pendingNavigation;
+
+      console.log('[ExecuteTradeForm] Pre-filling form with trade data:', tradeData);
+
+      // Pre-fill form fields
+      if (tradeData.symbol) setSymbol(tradeData.symbol);
+      if (tradeData.side) setSide(tradeData.side);
+      if (tradeData.quantity && tradeData.quantity > 0) setQty(tradeData.quantity);
+
+      // Set order type and price based on available data
+      if (tradeData.entryPrice && tradeData.entryPrice > 0) {
+        setOrderType('limit');
+        setLimitPrice(tradeData.entryPrice.toString());
+      } else if (tradeData.orderType) {
+        setOrderType(tradeData.orderType);
+        if (tradeData.orderType === 'limit' && tradeData.entryPrice) {
+          setLimitPrice(tradeData.entryPrice.toString());
+        }
+      }
+
+      // Show success toast
+      showSuccess(`✅ Pre-filled trade data for ${tradeData.symbol}${tradeData.entryPrice ? ` at $${tradeData.entryPrice.toFixed(2)}` : ''}`);
+
+      // Clear the pending navigation
+      clearPendingNavigation();
+    }
+  }, [pendingNavigation, clearPendingNavigation]);
 
   const loadTemplates = async () => {
     try {
@@ -532,25 +571,48 @@ export default function ExecuteTradeForm() {
                   }}>
                     Symbol
                   </label>
-                  <input
-                    type="text"
-                    value={symbol}
-                    onChange={(e) => setSymbol(e.target.value)}
-                    placeholder="SPY, AAPL, QQQ..."
-                    disabled={loading}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: responsiveSizes.inputPadding,
-                      background: theme.background.input,
-                      border: `1px solid ${theme.colors.border}`,
-                      borderRadius: theme.borderRadius.md,
-                      color: theme.colors.text,
-                      fontSize: responsiveSizes.inputFontSize,
-                      transition: theme.transitions.normal,
-                      opacity: loading ? 0.5 : 1
-                    }}
-                  />
+                  <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+                    <input
+                      type="text"
+                      value={symbol}
+                      onChange={(e) => setSymbol(e.target.value)}
+                      placeholder="SPY, AAPL, QQQ..."
+                      disabled={loading}
+                      required
+                      style={{
+                        flex: 1,
+                        padding: responsiveSizes.inputPadding,
+                        background: theme.background.input,
+                        border: `1px solid ${theme.colors.border}`,
+                        borderRadius: theme.borderRadius.md,
+                        color: theme.colors.text,
+                        fontSize: responsiveSizes.inputFontSize,
+                        transition: theme.transitions.normal,
+                        opacity: loading ? 0.5 : 1
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        if (symbol.trim()) {
+                          setShowStockLookup(!showStockLookup);
+                        } else {
+                          showWarning("⚠️ Enter a symbol first");
+                        }
+                      }}
+                      disabled={loading}
+                      style={{
+                        padding: isMobile ? '12px' : '12px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Search size={18} />
+                      {!isMobile && <span>Research</span>}
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Side */}
@@ -850,6 +912,51 @@ export default function ExecuteTradeForm() {
                     </p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Stock Research Section */}
+            {showStockLookup && symbol.trim() && (
+              <div style={{
+                marginTop: theme.spacing.xl,
+                padding: theme.spacing.lg,
+                background: theme.background.input,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: theme.borderRadius.lg
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: theme.spacing.lg,
+                  paddingBottom: theme.spacing.md,
+                  borderBottom: `1px solid ${theme.colors.border}`
+                }}>
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: '20px',
+                    fontWeight: '700',
+                    color: theme.colors.text
+                  }}>
+                    Research: {symbol.toUpperCase()}
+                  </h3>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowStockLookup(false)}
+                    style={{ fontSize: '14px', padding: '8px 16px' }}
+                  >
+                    Close
+                  </Button>
+                </div>
+                <StockLookup
+                  initialSymbol={symbol.trim().toUpperCase()}
+                  showChart={true}
+                  showIndicators={true}
+                  showCompanyInfo={true}
+                  showNews={false}
+                  enableAIAnalysis={true}
+                  onSymbolSelect={(sym) => setSymbol(sym)}
+                />
               </div>
             )}
         </Card>

@@ -213,7 +213,7 @@ async def get_portfolio_history(
         # Try to load historical data
         history = tracker.get_history(start_date=start_date)
 
-        # If we have sufficient historical data, use it
+        # Use real historical data only - NO simulated fallbacks
         if len(history) >= 5:  # At least 5 data points
             equity_points = [
                 EquityPoint(
@@ -228,33 +228,17 @@ async def get_portfolio_history(
             logger.info(f"✅ Loaded {len(equity_points)} equity points from history for period {period}")
 
         else:
-            # Fall back to simulated data
-            equity_points = []
-            time_delta = (now - start_date) / num_points
+            # Insufficient historical data - return current point only with warning
+            equity_points = [
+                EquityPoint(
+                    timestamp=now.isoformat(),
+                    equity=round(current_equity, 2),
+                    cash=round(float(account.get("cash", 0)), 2),
+                    positions_value=round(current_equity - float(account.get("cash", 0)), 2)
+                ).model_dump()
+            ]
 
-            # Simulate slight upward trend with volatility
-            starting_equity = current_equity * 0.92  # Assume 8% gain over period
-
-            for i in range(num_points):
-                timestamp = start_date + (time_delta * i)
-
-                # Linear growth + random walk
-                progress = i / num_points
-                trend_equity = starting_equity + (current_equity - starting_equity) * progress
-
-                # Add some realistic volatility (±2% random walk)
-                import random
-                volatility = trend_equity * 0.02 * (random.random() - 0.5) * 2
-                equity = trend_equity + volatility
-
-                equity_points.append(EquityPoint(
-                    timestamp=timestamp.isoformat(),
-                    equity=round(equity, 2),
-                    cash=round(current_equity * 0.2, 2),  # Assume 20% cash
-                    positions_value=round(equity - (current_equity * 0.2), 2)
-                ).model_dump())
-
-            logger.info(f"✅ Generated {len(equity_points)} simulated equity points for period {period}")
+            logger.warning(f"⚠️ Insufficient historical data for period {period}. Showing current snapshot only. Data will accumulate over time.")
 
         return {
             "period": period,
@@ -393,17 +377,34 @@ async def get_performance_metrics(
             max_drawdown = max_dd_amount
             max_drawdown_percent = max_dd_percent
         else:
-            # Fallback to simulated if insufficient data
-            max_drawdown = current_equity * 0.08
-            max_drawdown_percent = 8.0
+            # Insufficient historical data - set to 0
+            max_drawdown = 0.0
+            max_drawdown_percent = 0.0
+            logger.warning("⚠️ Insufficient historical data to calculate max drawdown. Returning 0.")
 
         # Current streak
         # Check if last position was win or loss
         current_streak = 1 if num_wins > num_losses else -1
 
-        # Best/worst day (simulated)
-        best_day = current_equity * 0.03  # 3% best day
-        worst_day = -current_equity * 0.025  # -2.5% worst day
+        # Best/worst day - calculate from actual equity history
+        if len(equity_history) > 1:
+            # Calculate daily changes from actual equity data
+            daily_changes = []
+            for i in range(1, len(equity_history)):
+                prev_equity = equity_history[i-1]["equity"]
+                curr_equity = equity_history[i]["equity"]
+                change = curr_equity - prev_equity
+                daily_changes.append(change)
+
+            best_day = max(daily_changes) if daily_changes else 0.0
+            worst_day = min(daily_changes) if daily_changes else 0.0
+
+            logger.info(f"Calculated best day: ${best_day:.2f}, worst day: ${worst_day:.2f} from {len(daily_changes)} days of history")
+        else:
+            # Insufficient historical data - set to 0
+            best_day = 0.0
+            worst_day = 0.0
+            logger.warning("⚠️ Insufficient historical data to calculate best/worst day. Returning 0.")
 
         logger.info(f"✅ Performance metrics: Return {total_return_percent:.2f}%, Sharpe {sharpe_ratio:.2f}")
 

@@ -196,6 +196,7 @@ export default function Analytics() {
   const [dailyPerformance, setDailyPerformance] = useState<DailyPerformance[]>([]);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
     loadAnalytics();
@@ -249,7 +250,9 @@ export default function Analytics() {
     } catch (error) {
       console.error('Failed to load analytics:', error);
 
-      // Fallback to generating mock data if API fails
+      // Fallback to generating DEMO data if API fails
+      setIsDemoMode(true);
+
       const mockMetrics: PerformanceMetrics = {
         totalReturn: 2500,
         totalReturnPercent: 2.5,
@@ -326,6 +329,48 @@ export default function Analytics() {
 
   return (
     <div style={{ padding: theme.spacing.lg }}>
+      {/* DEMO MODE Banner */}
+      {isDemoMode && (
+        <div style={{
+          background: 'rgba(251, 191, 36, 0.1)',
+          border: '2px solid rgba(251, 191, 36, 0.5)',
+          borderRadius: theme.borderRadius.lg,
+          padding: theme.spacing.md,
+          marginBottom: theme.spacing.lg,
+          display: 'flex',
+          alignItems: 'center',
+          gap: theme.spacing.md,
+        }}>
+          <div style={{
+            background: 'rgba(251, 191, 36, 0.2)',
+            borderRadius: '50%',
+            padding: theme.spacing.sm,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <span style={{ fontSize: '24px' }}>⚠️</span>
+          </div>
+          <div>
+            <h3 style={{
+              margin: 0,
+              color: '#fbbf24',
+              fontSize: '16px',
+              fontWeight: '700',
+            }}>
+              DEMO MODE
+            </h3>
+            <p style={{
+              margin: `${theme.spacing.xs} 0 0 0`,
+              color: theme.colors.textMuted,
+              fontSize: '14px',
+            }}>
+              Using sample data - API unavailable. This is demonstration data only.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header with PaiiD Logo */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.lg }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
@@ -552,7 +597,7 @@ export default function Analytics() {
 
           {/* TradingView Chart */}
           <div style={{ marginBottom: theme.spacing.lg }}>
-            <TradingViewChart symbol="SPY" height={600} />
+            <TradingViewChart symbol="$DJI.IX" height={600} />
           </div>
 
           {/* Trade Statistics */}

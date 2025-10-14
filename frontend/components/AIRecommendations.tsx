@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
+import StockLookup from "./StockLookup";
 
 interface Recommendation {
   symbol: string;
@@ -32,6 +33,10 @@ export default function AIRecommendations() {
   const [error, setError] = useState<string | null>(null);
   const [selectedRec, setSelectedRec] = useState<Recommendation | null>(null);
   const [useTechnical, setUseTechnical] = useState(true);
+
+  // Stock research state
+  const [researchSymbol, setResearchSymbol] = useState<string>('');
+  const [showStockLookup, setShowStockLookup] = useState(false);
 
   const fetchRecommendations = async () => {
     setLoading(true);
@@ -250,8 +255,8 @@ export default function AIRecommendations() {
                 </div>
               </div>
 
-              {/* Execute Button */}
-              <div>
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
                 <Button
                   variant="primary"
                   size="sm"
@@ -265,8 +270,17 @@ export default function AIRecommendations() {
                 <Button
                   variant="secondary"
                   size="sm"
+                  onClick={() => {
+                    setResearchSymbol(rec.symbol);
+                    setShowStockLookup(true);
+                  }}
+                >
+                  Research Symbol
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setSelectedRec(selectedRec?.symbol === rec.symbol ? null : rec)}
-                  style={{ marginTop: theme.spacing.sm }}
                 >
                   {selectedRec?.symbol === rec.symbol ? 'Hide Details' : 'View Details'}
                 </Button>
@@ -490,6 +504,55 @@ export default function AIRecommendations() {
           </Card>
         ))}
       </div>
+
+      {/* Stock Research Section */}
+      {showStockLookup && researchSymbol && (
+        <div style={{
+          marginTop: theme.spacing.xl,
+          padding: theme.spacing.lg,
+          background: 'rgba(15, 23, 42, 0.8)',
+          border: `1px solid ${theme.colors.border}`,
+          borderRadius: theme.borderRadius.lg,
+          backdropFilter: 'blur(10px)'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: theme.spacing.lg,
+            paddingBottom: theme.spacing.md,
+            borderBottom: `1px solid ${theme.colors.border}`
+          }}>
+            <h3 style={{
+              margin: 0,
+              fontSize: '22px',
+              fontWeight: '700',
+              color: theme.colors.text
+            }}>
+              Stock Research: {researchSymbol}
+            </h3>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowStockLookup(false);
+                setResearchSymbol('');
+              }}
+              style={{ fontSize: '14px', padding: '8px 20px' }}
+            >
+              Close
+            </Button>
+          </div>
+          <StockLookup
+            initialSymbol={researchSymbol}
+            showChart={true}
+            showIndicators={true}
+            showCompanyInfo={true}
+            showNews={false}
+            enableAIAnalysis={true}
+            onSymbolSelect={(sym) => setResearchSymbol(sym)}
+          />
+        </div>
+      )}
     </div>
   );
 }

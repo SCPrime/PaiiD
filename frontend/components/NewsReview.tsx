@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import StockLookup from './StockLookup';
 
 interface NewsArticle {
   id: string;
@@ -34,6 +35,8 @@ const NewsReview: React.FC = () => {
   const [marketSentiment, setMarketSentiment] = useState<any>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [selectedSymbol, setSelectedSymbol] = useState<string>('');
+  const [showStockLookup, setShowStockLookup] = useState(false);
   const ARTICLES_PER_PAGE = 20;
 
   const fetchProviders = async () => {
@@ -516,7 +519,37 @@ const NewsReview: React.FC = () => {
                       {article.symbols.length > 0 && (
                         <>
                           <span>•</span>
-                          <span>{article.symbols.join(', ')}</span>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            {article.symbols.map((sym, idx) => (
+                              <button
+                                key={idx}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedSymbol(sym);
+                                  setShowStockLookup(true);
+                                }}
+                                style={{
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  border: '1px solid #3B82F6',
+                                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                  color: '#3B82F6',
+                                  fontSize: '11px',
+                                  fontWeight: '600',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                                }}
+                              >
+                                ${sym}
+                              </button>
+                            ))}
+                          </div>
                         </>
                       )}
                     </div>
@@ -588,6 +621,70 @@ const NewsReview: React.FC = () => {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Stock Research Section */}
+      {showStockLookup && selectedSymbol && (
+        <div style={{
+          marginTop: '32px',
+          padding: '24px',
+          borderRadius: '12px',
+          backgroundColor: 'rgba(15, 23, 42, 0.8)',
+          border: '1px solid #334155',
+          backdropFilter: 'blur(10px)',
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '24px',
+            paddingBottom: '16px',
+            borderBottom: '1px solid #334155',
+          }}>
+            <h2 style={{
+              margin: 0,
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#e2e8f0',
+              background: 'linear-gradient(135deg, #3B82F6, #A855F7)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>
+              Stock Research: {selectedSymbol}
+            </h2>
+            <button
+              onClick={() => setShowStockLookup(false)}
+              style={{
+                padding: '8px 20px',
+                borderRadius: '8px',
+                border: '1px solid #6b7280',
+                backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                color: '#94a3b8',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(107, 114, 128, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(107, 114, 128, 0.1)';
+              }}
+            >
+              Close
+            </button>
+          </div>
+          <StockLookup
+            initialSymbol={selectedSymbol}
+            showChart={true}
+            showIndicators={true}
+            showCompanyInfo={true}
+            showNews={true}
+            enableAIAnalysis={true}
+            onSymbolSelect={(sym) => setSelectedSymbol(sym)}
+          />
         </div>
       )}
     </div>

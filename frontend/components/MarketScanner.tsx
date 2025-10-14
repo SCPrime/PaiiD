@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Search, TrendingUp, TrendingDown, Zap, RefreshCw, Filter, Star } from 'lucide-react';
 import { Card, Button, Input, Select } from './ui';
 import { theme } from '../styles/theme';
+import StockLookup from './StockLookup';
 
 interface ScanResult {
   symbol: string;
@@ -40,6 +41,8 @@ export default function MarketScanner() {
     signalType: 'all',
   });
   const [scanType, setScanType] = useState<'momentum' | 'breakout' | 'reversal' | 'custom'>('momentum');
+  const [selectedSymbol, setSelectedSymbol] = useState<string>('');
+  const [showResearch, setShowResearch] = useState(false);
 
   useEffect(() => {
     runScan();
@@ -305,12 +308,20 @@ export default function MarketScanner() {
                     ${result.price.toFixed(2)} · {result.change >= 0 ? '+' : ''}{result.change.toFixed(2)} ({result.changePercent >= 0 ? '+' : ''}{result.changePercent.toFixed(2)}%)
                   </p>
                 </div>
-                <Button variant="primary" size="sm" onClick={() => {
-                  // Navigate to execute trade with this symbol
-                  alert(`Execute trade for ${result.symbol}`);
-                }}>
-                  Trade
-                </Button>
+                <div style={{ display: 'flex', gap: theme.spacing.xs }}>
+                  <Button variant="secondary" size="sm" onClick={() => {
+                    setSelectedSymbol(result.symbol);
+                    setShowResearch(true);
+                  }}>
+                    Research
+                  </Button>
+                  <Button variant="primary" size="sm" onClick={() => {
+                    // Navigate to execute trade with this symbol
+                    alert(`Execute trade for ${result.symbol}`);
+                  }}>
+                    Trade
+                  </Button>
+                </div>
               </div>
 
               {/* Indicators */}
@@ -342,6 +353,43 @@ export default function MarketScanner() {
               </div>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Stock Research Section */}
+      {showResearch && (
+        <div style={{ marginTop: theme.spacing.lg }}>
+          <Card>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: theme.spacing.md,
+              paddingBottom: theme.spacing.md,
+              borderBottom: `1px solid ${theme.background.input}`
+            }}>
+              <h2 style={{
+                margin: 0,
+                fontSize: '24px',
+                fontWeight: '700',
+                color: theme.colors.text
+              }}>
+                Detailed Research
+              </h2>
+              <Button variant="secondary" size="sm" onClick={() => setShowResearch(false)}>
+                Close
+              </Button>
+            </div>
+            <StockLookup
+              initialSymbol={selectedSymbol}
+              showChart={true}
+              showIndicators={true}
+              showCompanyInfo={true}
+              showNews={false}
+              enableAIAnalysis={true}
+              onSymbolSelect={(sym) => setSelectedSymbol(sym)}
+            />
+          </Card>
         </div>
       )}
 

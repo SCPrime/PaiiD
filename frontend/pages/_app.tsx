@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { TelemetryProvider } from '../components/TelemetryProvider';
 import { ChatProvider, useChat } from '../components/ChatContext';
+import { WorkflowProvider } from '../contexts/WorkflowContext';
 import AIChatBot from '../components/AIChatBot';
 import '../styles/globals.css';
 
@@ -92,13 +93,15 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <ChatProvider>
-      <AppContent
-        Component={Component}
-        pageProps={pageProps}
-        userId={user.id}
-        userRole={user.role}
-        telemetryEnabled={telemetryEnabled}
-      />
+      <WorkflowProvider>
+        <AppContent
+          Component={Component}
+          pageProps={pageProps}
+          userId={user.id}
+          userRole={user.role}
+          telemetryEnabled={telemetryEnabled}
+        />
+      </WorkflowProvider>
     </ChatProvider>
   );
 }

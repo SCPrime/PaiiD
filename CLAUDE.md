@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**PaiiD (Personal Artificial Intelligence Investment Dashboard)** - A full-stack AI-powered trading application with real-time market data, intelligent trade execution, and a 10-stage radial workflow interface. Integrates with Alpaca Paper Trading API for real-time portfolio management and Claude AI for conversational onboarding and strategy building.
+**PaiiD (Personal Artificial Intelligence Investment Dashboard)** - A full-stack AI-powered trading application with real-time market data, intelligent trade execution, and a 10-stage radial workflow interface. Integrates with Tradier API for live market data, Alpaca Paper Trading API for order execution, and Claude AI for conversational onboarding and strategy building.
 
 **Live Deployments:**
 - Frontend: https://frontend-scprimes-projects.vercel.app (Vercel)
@@ -14,8 +14,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Monorepo Structure
 - `frontend/` - Next.js 14 (Pages Router) + TypeScript + D3.js
-- `backend/` - FastAPI (Python) + Alpaca Trading API
+- `backend/` - FastAPI (Python) + Tradier API (market data) + Alpaca API (paper trades)
 - Proxy pattern: Frontend routes backend requests through `/api/proxy/[...path]` to avoid CORS
+
+### Data Source Architecture (CRITICAL)
+
+**Tradier API (Live/Production Account):**
+- ✅ Real-time market quotes (NO delay)
+- ✅ Historical OHLCV bars
+- ✅ Options chains and Greeks
+- ✅ Market data and news
+- ✅ Technical analysis data
+- 🔜 Future: Live trade execution (after bulletproofing)
+
+**Alpaca API (Paper Trading Account):**
+- ✅ Paper trade execution ONLY (orders, fills)
+- ✅ Paper account positions
+- ✅ Paper account balance
+- ❌ NOT used for market data/quotes/analysis
+
+**Rule:** Tradier provides ALL market intelligence. Alpaca ONLY executes paper trades.
 
 ### Key Technologies
 **Frontend:**
@@ -27,7 +45,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Backend:**
 - FastAPI with uvicorn
-- Alpaca Trading API (alpaca-py>=0.21.0)
+- Tradier API (tradier-py) for market data - LIVE account
+- Alpaca Trading API (alpaca-py>=0.21.0) for paper trades only
 - Anthropic API for AI recommendations
 - APScheduler for automated tasks
 - Redis for caching (optional)
@@ -65,8 +84,11 @@ NEXT_PUBLIC_ANTHROPIC_API_KEY=<your-key>
 **Backend `.env`:**
 ```env
 API_TOKEN=rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl
-ALPACA_PAPER_API_KEY=<your-key>
-ALPACA_PAPER_SECRET_KEY=<your-secret>
+TRADIER_API_KEY=<your-tradier-key>
+TRADIER_ACCOUNT_ID=<your-tradier-account>
+TRADIER_API_BASE_URL=https://api.tradier.com/v1
+ALPACA_PAPER_API_KEY=<your-alpaca-key>
+ALPACA_PAPER_SECRET_KEY=<your-alpaca-secret>
 ALLOW_ORIGIN=http://localhost:3000
 ```
 
@@ -121,14 +143,16 @@ ALLOW_ORIGIN=http://localhost:3000
 
 ### Data Flow
 1. **Live Data Sources**:
-   - Account/Positions: Alpaca Paper Trading API
-   - Market Data: Alpaca quotes API (`/api/market/indices`)
-   - AI Recommendations: Backend `/api/ai/recommendations`
+   - Market Data: Tradier API (quotes, bars, options) - REAL-TIME, NO delay
+   - Account/Positions: Alpaca Paper Trading API (paper account only)
+   - Orders: Alpaca Paper Trading API (paper execution only)
+   - AI Recommendations: Backend `/api/ai/recommendations` (uses Tradier data)
 
 2. **NO Mock Data**:
-   - All data is real or user-generated
+   - All market data is real-time from Tradier (NOT simulated)
+   - All trade execution is paper trading via Alpaca
    - Components show errors if backend unavailable
-   - Historical P&L in Analytics is calculated (Alpaca doesn't provide history)
+   - Historical P&L in Analytics is calculated from real data
 
 3. **User Preferences**:
    - Stored in localStorage only

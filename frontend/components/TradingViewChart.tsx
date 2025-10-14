@@ -15,7 +15,7 @@ declare global {
 }
 
 export default function TradingViewChart({
-  symbol = 'SPY',
+  symbol = '$DJI.IX',
   autoHeight = false,
   height = 500
 }: TradingViewChartProps) {
@@ -145,7 +145,7 @@ export default function TradingViewChart({
             value={currentSymbol}
             onChange={(e) => handleSymbolChange(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSymbolChange(currentSymbol)}
-            placeholder="Symbol (e.g., SPY)"
+            placeholder="Symbol (e.g., $DJI.IX, AAPL)"
             style={{
               padding: '8px 12px',
               background: theme.background.input,
