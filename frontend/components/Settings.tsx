@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Users, Palette, Shield, Database, Activity, Save, AlertTriangle, CheckCircle2, ToggleLeft, ToggleRight, FileText, Bell, TrendingUp, Lock, BookOpen, Clock } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Settings as SettingsIcon, Users, Palette, Shield, Database, Activity, Save, AlertTriangle, CheckCircle2, ToggleLeft, ToggleRight, FileText, Bell, TrendingUp, Lock, BookOpen, Clock, Target } from 'lucide-react';
 import TradingJournal from './TradingJournal';
 import RiskDashboard from './RiskDashboard';
 import SchedulerSettings from './SchedulerSettings';
 import ApprovalQueue from './ApprovalQueue';
 import KillSwitchToggle from './KillSwitchToggle';
 import { getCurrentUser, getUserAnalytics, clearUserData } from '../lib/userManagement';
+import toast from 'react-hot-toast';
 
 interface User {
   id: string;
@@ -99,6 +100,16 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
+  // Risk Tolerance State
+  const [riskTolerance, setRiskTolerance] = useState<number>(50);
+  const [riskLimits, setRiskLimits] = useState<{
+    risk_category: string;
+    max_position_size_percent: number;
+    max_positions: number;
+    description: string;
+  } | null>(null);
+  const [isLoadingRisk, setIsLoadingRisk] = useState(false);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -110,6 +121,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         console.error('Failed to load settings:', error);
       }
     }
+
+    // Fetch risk tolerance from backend
+    fetchRiskTolerance();
 
     if (isAdmin) {
       loadMockUsers();
@@ -167,6 +181,90 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     ];
     setTelemetryData(mockData);
   };
+
+  // Fetch Risk Tolerance from Backend
+  const fetchRiskTolerance = async () => {
+    try {
+      const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || '/api/proxy/api';
+
+      const response = await fetch(`${baseUrl}/users/preferences`, {
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRiskTolerance(data.risk_tolerance || 50);
+
+        // Fetch risk limits
+        const limitsResponse = await fetch(`${baseUrl}/users/risk-limits`, {
+          headers: {
+            'Authorization': `Bearer ${apiToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (limitsResponse.ok) {
+          const limitsData = await limitsResponse.json();
+          setRiskLimits(limitsData);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch risk tolerance:', error);
+    }
+  };
+
+  // Update Risk Tolerance with Debounce
+  const updateRiskTolerance = useCallback(
+    async (newValue: number) => {
+      setIsLoadingRisk(true);
+
+      try {
+        const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || '/api/proxy/api';
+
+        const response = await fetch(`${baseUrl}/users/preferences`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${apiToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ risk_tolerance: newValue }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setRiskTolerance(data.risk_tolerance);
+
+          // Refresh risk limits
+          const limitsResponse = await fetch(`${baseUrl}/users/risk-limits`, {
+            headers: {
+              'Authorization': `Bearer ${apiToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (limitsResponse.ok) {
+            const limitsData = await limitsResponse.json();
+            setRiskLimits(limitsData);
+          }
+
+          toast.success(`Risk tolerance updated to ${newValue}% (${limitsData.risk_category})`);
+        } else {
+          toast.error('Failed to update risk tolerance');
+        }
+      } catch (error) {
+        console.error('Failed to update risk tolerance:', error);
+        toast.error('Failed to update risk tolerance');
+      } finally {
+        setIsLoadingRisk(false);
+      }
+    },
+    []
+  );
 
   const updateSetting = <K extends keyof SettingsData>(key: K, value: SettingsData[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -542,6 +640,120 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       onChange={e => updateSetting('defaultMaxReprices', Number(e.target.value))}
                       className="w-full px-4 py-3 bg-slate-900/60 border border-slate-700/50 rounded-lg text-white outline-none focus:ring-2 focus:ring-cyan-500/50"
                     />
+                  </div>
+                </div>
+              </div>
+
+              {/* Risk Tolerance Slider Section */}
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <Target size={20} className="text-cyan-400" />
+                  Risk Tolerance Profile
+                </h3>
+
+                <div className="space-y-4">
+                  {/* Current Risk Level Display */}
+                  <div className="p-4 bg-slate-900/40 border border-slate-700/30 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-medium text-slate-300">
+                        Current Risk Level
+                      </div>
+                      <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        riskTolerance <= 33 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                        riskTolerance <= 66 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                        'bg-red-500/20 text-red-400 border border-red-500/30'
+                      }`}>
+                        {riskLimits?.risk_category || (
+                          riskTolerance <= 33 ? 'Conservative' :
+                          riskTolerance <= 66 ? 'Moderate' :
+                          'Aggressive'
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-2xl font-bold text-white">{riskTolerance}%</div>
+                    <div className="text-xs text-slate-400 mt-1">
+                      {riskLimits?.description || 'Loading limits...'}
+                    </div>
+                  </div>
+
+                  {/* Risk Tolerance Slider */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium text-slate-300">
+                        Adjust Risk Tolerance (0-100%)
+                      </label>
+                      {isLoadingRisk && (
+                        <div className="text-xs text-cyan-400 animate-pulse">
+                          Updating...
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Color-coded slider background */}
+                    <div className="relative h-3 rounded-full bg-gradient-to-r from-green-500/30 via-yellow-500/30 to-red-500/30 mb-2">
+                      {/* Slider track markers */}
+                      <div className="absolute top-0 left-1/3 w-px h-full bg-slate-600"></div>
+                      <div className="absolute top-0 left-2/3 w-px h-full bg-slate-600"></div>
+                    </div>
+
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={riskTolerance}
+                      onChange={(e) => {
+                        const newValue = Number(e.target.value);
+                        setRiskTolerance(newValue);
+                      }}
+                      onMouseUp={(e) => {
+                        const newValue = Number((e.target as HTMLInputElement).value);
+                        updateRiskTolerance(newValue);
+                      }}
+                      onTouchEnd={(e) => {
+                        const newValue = Number((e.target as HTMLInputElement).value);
+                        updateRiskTolerance(newValue);
+                      }}
+                      className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                      style={{
+                        background: `linear-gradient(to right,
+                          ${riskTolerance <= 33 ? '#10b981' :
+                            riskTolerance <= 66 ? '#f59e0b' : '#ef4444'} ${riskTolerance}%,
+                          rgba(100, 116, 139, 0.3) ${riskTolerance}%)`
+                      }}
+                    />
+
+                    <div className="flex justify-between text-xs text-slate-400 mt-2">
+                      <span className="text-green-400">Conservative (0-33%)</span>
+                      <span className="text-yellow-400">Moderate (34-66%)</span>
+                      <span className="text-red-400">Aggressive (67-100%)</span>
+                    </div>
+                  </div>
+
+                  {/* Position Sizing Limits Display */}
+                  {riskLimits && (
+                    <div className="grid grid-cols-2 gap-3 mt-4">
+                      <div className="p-3 bg-slate-900/40 border border-slate-700/30 rounded-lg">
+                        <div className="text-xs text-slate-400 mb-1">Max Position Size</div>
+                        <div className="text-lg font-semibold text-cyan-400">
+                          {riskLimits.max_position_size_percent}%
+                        </div>
+                      </div>
+                      <div className="p-3 bg-slate-900/40 border border-slate-700/30 rounded-lg">
+                        <div className="text-xs text-slate-400 mb-1">Max Concurrent Positions</div>
+                        <div className="text-lg font-semibold text-purple-400">
+                          {riskLimits.max_positions}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Info Banner */}
+                  <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded flex items-start gap-2 mt-4">
+                    <Shield size={16} className="text-cyan-400 mt-0.5" />
+                    <p className="text-xs text-cyan-400">
+                      <strong>Backend Safeguards:</strong> Position sizing limits are enforced server-side to prevent excessive risk exposure. Strategy templates automatically adjust to your risk profile.
+                    </p>
                   </div>
                 </div>
               </div>
