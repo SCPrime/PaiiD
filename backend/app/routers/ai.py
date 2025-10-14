@@ -8,7 +8,9 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel
 import random
 from datetime import datetime
+from sqlalchemy.orm import Session
 from ..core.auth import require_bearer
+from ..db.session import get_db
 from ..services.tradier_client import get_tradier_client
 from ..services.technical_indicators import TechnicalIndicators
 import logging
