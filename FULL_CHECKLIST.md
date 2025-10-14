@@ -1,8 +1,8 @@
 11# PaiiD - COMPREHENSIVE MASTER CHECKLIST
 
-**Last Updated:** October 14, 2025 - **PHASE 3.A.2 BACKEND COMPLETE** ✅
-**Project Status:** 83% Complete (72/87 MVP tasks) - **+9 TASKS TODAY (Part 4: Risk Tolerance + Strategy Templates)**
-**Current Phase:** Phase 3.A.2 Backend (Risk + Templates) COMPLETE ✅ | Frontend remaining (Settings slider, Template gallery, Customization modal)
+**Last Updated:** October 14, 2025 - **PHASE 3.A.2 COMPLETE** ✅
+**Project Status:** 85% Complete (74/87 MVP tasks) - **+11 TASKS TODAY (Part 5: Risk Tolerance + Strategy Templates + Customization)**
+**Current Phase:** Phase 3.A.2 COMPLETE ✅ | Phase 3.A.3 pending | Ready for Phase 5.B (Mobile) or Phase 4 (Production)
 **Architecture:** Tradier = ALL market data | Alpaca = ONLY paper trading
 
 ---
@@ -947,9 +947,9 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 - ✅ `backend/app/routers/ai.py` - Enhanced recommendations with volatility and sector data
 - ✅ `frontend/components/AIRecommendations.tsx` - Added volatility/sector badges and market context banner
 
-### 3.A.2 Strategy Templates + Risk Tolerance System (7/10 - 70%) ⚠️
+### 3.A.2 Strategy Templates + Risk Tolerance System (10/10 - 100%) ✅
 
-**Time:** 18 hours (backend complete, frontend remaining) | **Impact:** HIGH | **Enables:** Risk-based strategy creation
+**Time:** 18 hours (all complete) | **Impact:** HIGH | **Enables:** Risk-based strategy creation | **Status:** COMPLETE
 
 **Backend (100% Complete) ✅**
 - [x] **COMPLETE:** User risk tolerance system (0-100 scale)
@@ -980,39 +980,53 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
   - ✅ Detailed rationale generation for each template
   - ✅ Enhanced `backend/app/routers/ai.py` (+147 lines)
 
-**Frontend (3 tasks remaining) ❌**
-- [ ] **TODO:** Add risk tolerance slider to Settings.tsx (2 hours)
-  - Fetch from `/api/users/preferences` on mount
-  - Slider UI (0-100) with 3 zones (Conservative/Moderate/Aggressive)
-  - Display real-time position sizing limits from `/api/users/risk-limits`
-  - PATCH updates on change with debounce
+**Frontend (100% Complete) ✅**
+- [x] **COMPLETE:** Risk tolerance slider in Settings.tsx
+  - ✅ Fetches from `/api/users/preferences` on mount
+  - ✅ Slider UI (0-100) with 3 color-coded zones (Conservative/Moderate/Aggressive)
+  - ✅ Displays real-time position sizing limits from `/api/users/risk-limits`
+  - ✅ PATCH updates on change with debounce
+  - ✅ Visual feedback with zone markers and risk warnings
+  - ✅ Commit: Earlier session
 
-- [ ] **TODO:** Add template gallery to StrategyBuilderAI.tsx (3 hours)
-  - Fetch templates from `/api/strategies/templates`
-  - Display template cards in grid (2 columns)
-  - Show compatibility scores, risk level, performance metrics
-  - "Clone Strategy" button calls `/api/strategies/templates/{id}/clone`
+- [x] **COMPLETE:** Template gallery in StrategyBuilderAI.tsx (Commit 2881b7b)
+  - ✅ Fetches templates from `/api/strategies/templates`
+  - ✅ Displays template cards in responsive grid
+  - ✅ Shows compatibility scores with color coding (80%+ green, 60%+ yellow)
+  - ✅ Shows risk level badges, performance metrics (win rate, avg return, max DD)
+  - ✅ "Best For" tags from recommended_for array
+  - ✅ User's risk tolerance displayed in header
+  - ✅ Quick Clone button for default parameters
+  - ✅ Customize button opens customization modal
 
-- [ ] **TODO:** Add template customization modal (2 hours)
-  - Create `TemplateCustomizationModal.tsx` component
-  - Edit custom name, position size %, stop loss %, take profit %, RSI period
-  - Preview adjusted parameters
-  - "Clone with Customizations" button
+- [x] **COMPLETE:** Template customization modal (Commit 965d4ab)
+  - ✅ Created `TemplateCustomizationModal.tsx` component (530 lines)
+  - ✅ Editable fields: custom name, position size %, stop loss %, take profit %, max positions, RSI period
+  - ✅ Preview section showing changes vs. template defaults
+  - ✅ Visual comparison with "Original: X%" labels
+  - ✅ Changes indicator when parameters modified
+  - ✅ "Clone Strategy" button with config_overrides parameter
+  - ✅ Toast notifications for success/error
+  - ✅ Glassmorphism modal design with smooth animations
 
 **Files Created:**
 - ✅ `backend/app/routers/users.py` (238 lines) - Risk tolerance system
 - ✅ `backend/app/services/strategy_templates.py` (344 lines) - 4 strategy templates
-- ⏳ `frontend/components/TemplateCustomizationModal.tsx` - TODO
+- ✅ `frontend/components/TemplateCustomizationModal.tsx` (530 lines) - Template customization UI
 
 **Files Modified:**
 - ✅ `backend/app/routers/strategies.py` (+219 lines) - Template endpoints
 - ✅ `backend/app/routers/ai.py` (+147 lines) - AI template matching
 - ✅ `backend/app/models/database.py` - User preferences docs
 - ✅ `backend/app/main.py` - Users router registration
-- ⏳ `frontend/components/Settings.tsx` - TODO: Risk slider
-- ⏳ `frontend/components/StrategyBuilderAI.tsx` - TODO: Template gallery
+- ✅ `frontend/components/Settings.tsx` - Risk tolerance slider with visual zones
+- ✅ `frontend/components/StrategyBuilderAI.tsx` (+170 lines) - Template gallery + modal integration
 
-**Commit:** `e02e566` (October 14, 2025)
+**Commits:**
+- `e02e566` - Backend implementation (October 14, 2025)
+- `2881b7b` - Template gallery frontend (October 14, 2025)
+- `723712c` - API token sync fix (October 14, 2025)
+- `965d4ab` - Template customization modal (October 14, 2025)
 
 **Phase 3.A Deliverable:** AI-powered recommendations that help users make better trading decisions WITHOUT automated execution risk.
 
@@ -1353,7 +1367,7 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 | **Phase 2.5**   | **Infrastructure**       | **4**       | **4**    | **0**       | **0**       | **100%** ✅  |
 | **Phase 2.A**   | Real-time Data (Tradier) | 2           | 2        | 0           | 0           | **100%** ✅  |
 | **Phase 2**     | Core Trading (remaining) | 15          | 10       | 5           | 0           | **67%** ⚠️   |
-| **Phase 3.A**   | AI Copilot               | 12          | 9        | 0           | 3           | **75%** ⚠️   |
+| **Phase 3.A**   | AI Copilot               | 12          | 11       | 0           | 1           | **92%** ✅   |
 | **Phase 3**     | AI Strategy (remaining)  | 13          | 7        | 7           | 0           | **54%** ⚠️   |
 | **Phase 4**     | Production Hardening     | 21          | 3        | 2           | 16          | **14%** ⚠️   |
 | **Phase 5.A**   | **Quick Wins**           | **5**       | **5**    | **0**       | **0**       | **100%** ✅  |
@@ -1361,7 +1375,7 @@ docker exec paiid-postgres psql -U paiid_user -d paiid_trading -c "\dt"
 | **Phase 5**     | UX (remaining)           | 15          | 6        | 0           | 9           | **40%** ⚠️   |
 | **Phase 6**     | **Stock Lookup System**  | **7**       | **7**    | **0**       | **0**       | **100%** ✅  |
 | **DEFERRED**    | Options, ML, Auto-trade  | 24          | 0        | 0           | 24          | **0%** 📅    |
-| **MVP TOTAL**   | **Critical Path Only**   | **87**      | **72**   | **8**       | **7**       | **83%** ✅   |
+| **MVP TOTAL**   | **Critical Path Only**   | **87**      | **74**   | **6**       | **7**       | **85%** ✅   |
 | **FULL TOTAL**  | **Including Deferred**   | **101**     | **63**   | **8**       | **30**      | **62%** ⚠️   |
 
 ### Time to MVP
