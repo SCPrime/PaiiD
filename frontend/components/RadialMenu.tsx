@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { useWindowDimensions, useIsMobile } from '../hooks/useBreakpoint';
 
 export interface Workflow {
   id: string;
@@ -38,6 +39,51 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
     dow: { value: 0, change: 0, symbol: 'DJI' },
     nasdaq: { value: 0, change: 0, symbol: 'COMP' }
   });
+
+  // Responsive sizing
+  const { width: viewportWidth } = useWindowDimensions();
+  const isMobile = useIsMobile();
+
+  // Calculate responsive menu size
+  const getMenuSize = () => {
+    if (isMobile) {
+      // Mobile: 90% of viewport width, max 500px
+      return Math.min(viewportWidth * 0.9, 500);
+    }
+    // Desktop: Standard 700px
+    return 700;
+  };
+
+  const menuSize = getMenuSize();
+
+  // Responsive font sizes
+  const getFontSizes = () => {
+    if (isMobile) {
+      return {
+        headerLogo: '48px',
+        headerSubtitle1: '16px',
+        headerSubtitle2: '14px',
+        segmentText: '16px',
+        centerLogo: '20px',
+        marketLabel: '9px',
+        marketValue: '16px',
+        marketChange: '11px'
+      };
+    }
+    // Desktop sizes
+    return {
+      headerLogo: '96px',
+      headerSubtitle1: '22px',
+      headerSubtitle2: '18px',
+      segmentText: '22px',
+      centerLogo: '32px',
+      marketLabel: '11px',
+      marketValue: '22px',
+      marketChange: '13px'
+    };
+  };
+
+  const fontSizes = getFontSizes();
 
   // Fetch live market data from backend
   useEffect(() => {
@@ -80,8 +126,8 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
   useEffect(() => {
     if (!svgRef.current) return;
 
-    const width = 700;
-    const height = 700;
+    const width = menuSize;
+    const height = menuSize;
     const radius = Math.min(width, height) / 2;
     const innerRadius = radius * 0.30;
     const outerRadius = radius * 0.90;
@@ -345,7 +391,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
         return `translate(${x}, ${y})`;
       })
       .attr('text-anchor', 'middle')
-      .attr('font-size', '22px')
+      .attr('font-size', fontSizes.segmentText)
       .attr('font-weight', '900')
       .attr('font-style', 'italic')
       .attr('fill', 'white')
@@ -399,7 +445,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
 
     dow.append('text')
       .attr('text-anchor', 'middle')
-      .attr('font-size', '11px')
+      .attr('font-size', fontSizes.marketLabel)
       .attr('font-weight', '800')
       .attr('fill', '#cbd5e1')
       .attr('letter-spacing', '2px')
@@ -409,7 +455,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
     dow.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '20')
-      .attr('font-size', '22px')
+      .attr('font-size', fontSizes.marketValue)
       .attr('font-weight', '900')
       .attr('fill', '#f1f5f9')
       .style('text-shadow', '0 2px 6px rgba(0, 0, 0, 0.6)')
@@ -419,7 +465,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
     const dowChange = dow.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '38')
-      .attr('font-size', '13px')
+      .attr('font-size', fontSizes.marketChange)
       .attr('font-weight', '800')
       .attr('fill', marketData.dow.change >= 0 ? '#10b981' : '#ef4444')
       .style('text-shadow', '0 0 10px ' + (marketData.dow.change >= 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
@@ -450,7 +496,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
 
     nasdaqGroup.append('text')
       .attr('text-anchor', 'middle')
-      .attr('font-size', '11px')
+      .attr('font-size', fontSizes.marketLabel)
       .attr('font-weight', '800')
       .attr('fill', '#cbd5e1')
       .attr('letter-spacing', '2px')
@@ -460,7 +506,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
     nasdaqGroup.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '20')
-      .attr('font-size', '22px')
+      .attr('font-size', fontSizes.marketValue)
       .attr('font-weight', '900')
       .attr('fill', '#f1f5f9')
       .style('text-shadow', '0 2px 6px rgba(0, 0, 0, 0.6)')
@@ -470,7 +516,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
     const nasdaqChange = nasdaqGroup.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '38')
-      .attr('font-size', '13px')
+      .attr('font-size', fontSizes.marketChange)
       .attr('font-weight', '800')
       .attr('fill', marketData.nasdaq.change >= 0 ? '#10b981' : '#ef4444')
       .style('text-shadow', '0 0 10px ' + (marketData.nasdaq.change >= 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
@@ -497,7 +543,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
           .on('end', repeat);
       });
 
-  }, []); // Empty array - only run once on mount to prevent infinite re-renders
+  }, [menuSize]); // Re-render when menu size changes (responsive to viewport)
 
   // Separate effect for market data updates - only update text when data changes
   useEffect(() => {
@@ -578,7 +624,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
       {!compact && (
         <div style={{ textAlign: 'center', marginBottom: '10px' }}>
           {/* Main Logo */}
-          <div style={{ fontSize: '96px', fontWeight: '900', lineHeight: '1', marginBottom: '12px' }}>
+          <div style={{ fontSize: fontSizes.headerLogo, fontWeight: '900', lineHeight: '1', marginBottom: '12px' }}>
             <span style={{
               background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
               WebkitBackgroundClip: 'text',
@@ -613,7 +659,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
 
           {/* Line 1: Personal Artificial Intelligence Investment Dashboard */}
           <div style={{
-            fontSize: '22px',
+            fontSize: fontSizes.headerSubtitle1,
             fontWeight: '600',
             color: '#cbd5e1',
             letterSpacing: '3px',
@@ -625,7 +671,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
 
           {/* Line 2: 10 Stage Workflow */}
           <div style={{
-            fontSize: '18px',
+            fontSize: fontSizes.headerSubtitle2,
             fontWeight: '500',
             color: '#94a3b8',
             letterSpacing: '2px',
@@ -651,7 +697,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
           marginTop: '-110px' // Position above market data, within circle boundary
         }}>
           <div style={{
-            fontSize: '32px',
+            fontSize: fontSizes.centerLogo,
             fontWeight: '900',
             lineHeight: '1',
             whiteSpace: 'nowrap'
