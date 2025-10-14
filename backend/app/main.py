@@ -75,6 +75,14 @@ async def startup_event():
     # Future: Tradier will also handle live trading post-MVP
     print("[INFO] Market data: Tradier API | Trade execution: Alpaca Paper Trading", flush=True)
 
+    # Start Tradier streaming service
+    try:
+        from .services.tradier_stream import start_tradier_stream
+        await start_tradier_stream()
+        print("[OK] Tradier streaming initialized", flush=True)
+    except Exception as e:
+        print(f"[ERROR] Failed to start Tradier stream: {e}", flush=True)
+
 # Shutdown scheduler and streaming gracefully
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -87,8 +95,13 @@ async def shutdown_event():
     except Exception as e:
         print(f"[ERROR] Scheduler shutdown error: {str(e)}", flush=True)
 
-    # Cleanup complete (no streaming services to shut down)
-    pass
+    # Stop Tradier streaming
+    try:
+        from .services.tradier_stream import stop_tradier_stream
+        await stop_tradier_stream()
+        print("[OK] Tradier stream stopped", flush=True)
+    except Exception as e:
+        print(f"[ERROR] Tradier shutdown error: {e}", flush=True)
 
 # Add Sentry context middleware if Sentry is enabled
 if settings.SENTRY_DSN:

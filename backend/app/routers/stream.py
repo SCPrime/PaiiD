@@ -1,16 +1,13 @@
 """
 Server-Sent Events (SSE) Streaming Endpoints
 
-⚠️ DEPRECATED - Alpaca streaming has been removed ⚠️
-
 This module provides Server-Sent Events for real-time data streaming.
-Currently DEPRECATED pending Tradier streaming implementation.
 
 ARCHITECTURE:
-- Tradier API: ALL market data (quotes, streaming, analysis) - TO BE IMPLEMENTED
+- Tradier API: ALL market data (quotes, streaming, analysis)
 - Alpaca API: ONLY paper trade execution (orders, positions, account)
 
-Phase 2.A - Real-Time Data Implementation (TODO: Implement Tradier streaming)
+Phase 2.A - Real-Time Data Implementation (Tradier WebSocket streaming)
 """
 
 import asyncio
@@ -21,8 +18,7 @@ from fastapi import APIRouter, Depends, Query
 from sse_starlette.sse import EventSourceResponse
 from app.core.auth import require_bearer
 from app.services.cache import get_cache, CacheService
-# TODO: Replace with Tradier streaming service
-# from app.services.tradier_stream import get_tradier_stream
+from app.services.tradier_stream import get_tradier_stream
 
 logger = logging.getLogger(__name__)
 
@@ -36,18 +32,9 @@ async def stream_prices(
     cache: CacheService = Depends(get_cache)
 ):
     """
-    ⚠️ DEPRECATED - Alpaca streaming removed, pending Tradier implementation ⚠️
-
     Stream real-time price updates for specified symbols via Server-Sent Events
 
-    This endpoint will be re-implemented using Tradier streaming API.
-
-    TODO Phase 2.A:
-    1. Implement Tradier WebSocket or streaming service
-    2. Subscribe to Tradier streaming for requested symbols
-    3. Cache prices in Redis (5s TTL)
-    4. Send price updates to client via SSE
-    5. Handle reconnection logic
+    Uses Tradier WebSocket for live market data streaming.
 
     Query Parameters:
         symbols: Comma-separated stock symbols (e.g., "AAPL,MSFT,TSLA")
@@ -70,11 +57,11 @@ async def stream_prices(
         logger.warning("No symbols provided for streaming")
         return {"error": "No symbols specified"}
 
-    logger.warning(f"⚠️ Price streaming DEPRECATED - Tradier streaming not yet implemented for: {symbol_list}")
+    logger.info(f"📡 Client subscribed to price stream for: {symbol_list}")
 
-    # TODO: Replace with Tradier streaming service
-    # tradier_stream = get_tradier_stream()
-    # await tradier_stream.subscribe_quotes(symbol_list)
+    # Subscribe to Tradier streaming
+    tradier_stream = get_tradier_stream()
+    await tradier_stream.subscribe_quotes(symbol_list)
 
     async def price_generator() -> AsyncGenerator:
         """Generate price updates from Redis cache"""
@@ -196,8 +183,6 @@ async def stream_status(_=Depends(require_bearer)):
     """
     Get streaming service status
 
-    ⚠️ DEPRECATED - Alpaca streaming removed, pending Tradier implementation ⚠️
-
     Returns:
         {
             "streaming_available": bool,
@@ -206,19 +191,12 @@ async def stream_status(_=Depends(require_bearer)):
             "stream_count": int
         }
     """
-    # TODO: Replace with Tradier streaming service
-    # tradier_stream = get_tradier_stream()
-    # return {
-    #     "streaming_available": tradier_stream.is_running(),
-    #     "provider": "Tradier",
-    #     "active_symbols": list(tradier_stream.get_active_symbols()),
-    #     "stream_count": len(tradier_stream.get_active_symbols())
-    # }
+    tradier_stream = get_tradier_stream()
+    active_symbols = list(tradier_stream.get_active_symbols())
 
     return {
-        "streaming_available": False,
-        "provider": "Tradier (not yet implemented)",
-        "active_symbols": [],
-        "stream_count": 0,
-        "message": "Streaming service pending Tradier implementation (Phase 2.A)"
+        "streaming_available": tradier_stream.is_running(),
+        "provider": "Tradier WebSocket",
+        "active_symbols": active_symbols,
+        "stream_count": len(active_symbols)
     }

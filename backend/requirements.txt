@@ -25,3 +25,4 @@ sentry-sdk[fastapi]>=1.40.0
 
 # Real-time streaming (Phase 2.A)
 sse-starlette>=1.8.0
+websockets>=12.0
