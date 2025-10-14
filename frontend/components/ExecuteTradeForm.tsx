@@ -6,6 +6,7 @@ import { theme } from "../styles/theme";
 import ConfirmDialog from "./ConfirmDialog";
 import { addOrderToHistory } from "./OrderHistory";
 import { showSuccess, showError, showWarning } from "../lib/toast";
+import { useIsMobile } from "../hooks/useBreakpoint";
 
 interface Order {
   symbol: string;
@@ -37,6 +38,18 @@ interface OrderTemplate {
 }
 
 export default function ExecuteTradeForm() {
+  // Mobile detection
+  const isMobile = useIsMobile();
+
+  // Responsive sizing
+  const responsiveSizes = {
+    headerLogo: isMobile ? '32px' : '42px',
+    iconSize: isMobile ? 24 : 32,
+    titleSize: isMobile ? '20px' : '28px',
+    inputPadding: isMobile ? '14px 16px' : '12px 16px',
+    inputFontSize: '16px' // Always 16px to prevent iOS zoom
+  };
+
   const [symbol, setSymbol] = useState("SPY");
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [qty, setQty] = useState(1);
@@ -320,10 +333,11 @@ export default function ExecuteTradeForm() {
             display: 'flex',
             alignItems: 'center',
             gap: theme.spacing.md,
-            marginBottom: theme.spacing.xl
+            marginBottom: theme.spacing.xl,
+            flexWrap: isMobile ? 'wrap' : 'nowrap'
           }}>
             {/* PaiiD Logo */}
-            <div style={{ fontSize: '42px', fontWeight: '900', lineHeight: '1' }}>
+            <div style={{ fontSize: responsiveSizes.headerLogo, fontWeight: '900', lineHeight: '1' }}>
               <span style={{
                 background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
                 WebkitBackgroundClip: 'text',
@@ -351,12 +365,12 @@ export default function ExecuteTradeForm() {
               borderRadius: theme.borderRadius.lg,
               border: '1px solid rgba(16, 185, 129, 0.2)'
             }}>
-              <TrendingUp style={{ width: 32, height: 32, color: theme.colors.primary }} />
+              <TrendingUp style={{ width: responsiveSizes.iconSize, height: responsiveSizes.iconSize, color: theme.colors.primary }} />
             </div>
             <div>
               <h1 style={{
                 margin: 0,
-                fontSize: '28px',
+                fontSize: responsiveSizes.titleSize,
                 fontWeight: '700',
                 color: theme.colors.text
               }}>
@@ -500,9 +514,13 @@ export default function ExecuteTradeForm() {
           </div>
 
           {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.xl }}>
               {/* Form Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                gap: theme.spacing.xl
+              }}>
                 {/* Symbol */}
                 <div>
                   <label style={{
@@ -523,12 +541,12 @@ export default function ExecuteTradeForm() {
                     required
                     style={{
                       width: '100%',
-                      padding: '12px 16px',
+                      padding: responsiveSizes.inputPadding,
                       background: theme.background.input,
                       border: `1px solid ${theme.colors.border}`,
                       borderRadius: theme.borderRadius.md,
                       color: theme.colors.text,
-                      fontSize: '14px',
+                      fontSize: responsiveSizes.inputFontSize,
                       transition: theme.transitions.normal,
                       opacity: loading ? 0.5 : 1
                     }}
@@ -552,12 +570,12 @@ export default function ExecuteTradeForm() {
                     disabled={loading}
                     style={{
                       width: '100%',
-                      padding: '12px 16px',
+                      padding: responsiveSizes.inputPadding,
                       background: theme.background.input,
                       border: `1px solid ${theme.colors.border}`,
                       borderRadius: theme.borderRadius.md,
                       color: theme.colors.text,
-                      fontSize: '14px',
+                      fontSize: responsiveSizes.inputFontSize,
                       transition: theme.transitions.normal,
                       opacity: loading ? 0.5 : 1
                     }}
@@ -588,12 +606,12 @@ export default function ExecuteTradeForm() {
                     required
                     style={{
                       width: '100%',
-                      padding: '12px 16px',
+                      padding: responsiveSizes.inputPadding,
                       background: theme.background.input,
                       border: `1px solid ${theme.colors.border}`,
                       borderRadius: theme.borderRadius.md,
                       color: theme.colors.text,
-                      fontSize: '14px',
+                      fontSize: responsiveSizes.inputFontSize,
                       transition: theme.transitions.normal,
                       opacity: loading ? 0.5 : 1
                     }}
@@ -617,12 +635,12 @@ export default function ExecuteTradeForm() {
                     disabled={loading}
                     style={{
                       width: '100%',
-                      padding: '12px 16px',
+                      padding: responsiveSizes.inputPadding,
                       background: theme.background.input,
                       border: `1px solid ${theme.colors.border}`,
                       borderRadius: theme.borderRadius.md,
                       color: theme.colors.text,
-                      fontSize: '14px',
+                      fontSize: responsiveSizes.inputFontSize,
                       transition: theme.transitions.normal,
                       opacity: loading ? 0.5 : 1
                     }}
@@ -634,7 +652,7 @@ export default function ExecuteTradeForm() {
 
                 {/* Limit Price (conditional) */}
                 {orderType === "limit" && (
-                  <div className="md:col-span-2">
+                  <div style={{ gridColumn: isMobile ? 'auto' : 'span 2' }}>
                     <label style={{
                       display: 'block',
                       fontSize: '14px',
@@ -655,12 +673,12 @@ export default function ExecuteTradeForm() {
                       required
                       style={{
                         width: '100%',
-                        padding: '12px 16px',
+                        padding: responsiveSizes.inputPadding,
                         background: theme.background.input,
                         border: `1px solid ${theme.colors.border}`,
                         borderRadius: theme.borderRadius.md,
                         color: theme.colors.text,
-                        fontSize: '14px',
+                        fontSize: responsiveSizes.inputFontSize,
                         transition: theme.transitions.normal,
                         opacity: loading ? 0.5 : 1
                       }}
