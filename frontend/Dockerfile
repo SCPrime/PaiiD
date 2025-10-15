@@ -27,21 +27,14 @@ WORKDIR /app
 # Set NODE_ENV to production
 ENV NODE_ENV=production
 
-# Copy package files
-COPY package*.json ./
-
-# Install only production dependencies
-RUN npm ci --only=production
-
-# Copy built application from builder stage
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.js ./next.config.js
-
 # Create a non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001 && \
-    chown -R nextjs:nodejs /app
+    adduser -S nextjs -u 1001
+
+# Copy standalone server from builder
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Switch to non-root user
 USER nextjs
@@ -49,9 +42,13 @@ USER nextjs
 # Expose port
 EXPOSE 3000
 
+# Set port environment variable
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
 # Health check - check root path
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Run in production mode
-CMD ["npm", "start"]
+# Run the standalone server
+CMD ["node", "server.js"]

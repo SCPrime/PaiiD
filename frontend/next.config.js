@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
 
+  // Output standalone for Docker deployments
+  output: 'standalone',
+
   // Image optimization configuration (Phase 2: Performance)
   images: {
     domains: [
