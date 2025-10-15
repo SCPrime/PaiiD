@@ -7,6 +7,7 @@ services:
   branch: main
   rootDir: frontend
   dockerfilePath: ./Dockerfile
+  dockerCommand: node server.js
   envVars:
     # Backend API configuration
     - key: NEXT_PUBLIC_API_TOKEN
