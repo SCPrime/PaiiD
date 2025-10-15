@@ -95,6 +95,7 @@ const ALLOWED_ORIGINS = new Set<string>([
   "https://frontend-three-rho-84.vercel.app",
   "https://frontend-scprime-scprimes-projects.vercel.app",
   "https://frontend-mftcsnbqx-scprimes-projects.vercel.app",
+  "https://paiid-frontend.onrender.com",
 ]);
 
 function isAllowedOrigin(req: NextApiRequest): boolean {
