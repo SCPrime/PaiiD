@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Percent, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Percent, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { Card, Button } from './ui';
 import { theme } from '../styles/theme';
 import { alpaca, formatPosition } from '../lib/alpaca';
 import { useIsMobile } from '../hooks/useBreakpoint';
+import { usePositionUpdates } from '../hooks/usePositionUpdates';
 
 interface Position {
   symbol: string;
@@ -36,30 +37,41 @@ export default function ActivePositions() {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'symbol' | 'pl' | 'plPercent' | 'value'>('symbol');
 
+  // Real-time position updates via SSE
+  const { positions: streamedPositions, connected, connecting, error: streamError, reconnect } = usePositionUpdates({
+    autoReconnect: true,
+    maxReconnectAttempts: 5,
+    debug: false,
+  });
+
+  // Use streamed positions when available
+  useEffect(() => {
+    if (streamedPositions.length > 0) {
+      setPositions(streamedPositions);
+      calculateMetrics(streamedPositions);
+    }
+  }, [streamedPositions]);
+
+  // Initial load and fallback polling (only if SSE not connected)
   useEffect(() => {
     loadPositions();
-    const interval = setInterval(loadPositions, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    // Only poll if SSE is not connected
+    if (!connected && !connecting) {
+      const interval = setInterval(loadPositions, 10000); // Slower polling as fallback
+      return () => clearInterval(interval);
+    }
+  }, [connected, connecting]);
 
-  const loadPositions = async () => {
-    setLoading(true);
-
+  // Calculate portfolio metrics from positions
+  const calculateMetrics = async (positionsList: Position[]) => {
     try {
-      // Fetch positions and account data from Alpaca
-      const [alpacaPositions, account] = await Promise.all([
-        alpaca.getPositions(),
-        alpaca.getAccount(),
-      ]);
+      // Fetch account data for buying power
+      const account = await alpaca.getAccount();
 
-      // Format positions for UI
-      const formattedPositions: Position[] = alpacaPositions.map(formatPosition);
-
-      // Calculate metrics
-      const totalValue = formattedPositions.reduce((sum, p) => sum + p.marketValue, 0);
-      const totalPL = formattedPositions.reduce((sum, p) => sum + p.unrealizedPL, 0);
-      const totalCost = formattedPositions.reduce((sum, p) => sum + (p.avgEntryPrice * p.qty), 0);
-      const dayPL = formattedPositions.reduce((sum, p) => sum + (p.dayChange * p.qty), 0);
+      const totalValue = positionsList.reduce((sum, p) => sum + p.marketValue, 0);
+      const totalPL = positionsList.reduce((sum, p) => sum + p.unrealizedPL, 0);
+      const totalCost = positionsList.reduce((sum, p) => sum + (p.avgEntryPrice * p.qty), 0);
+      const dayPL = positionsList.reduce((sum, p) => sum + (p.dayChange * p.qty), 0);
 
       const calculatedMetrics: PortfolioMetrics = {
         totalValue,
@@ -68,11 +80,27 @@ export default function ActivePositions() {
         totalPLPercent: totalCost > 0 ? (totalPL / totalCost) * 100 : 0,
         dayPL,
         dayPLPercent: (totalValue - dayPL) > 0 ? (dayPL / (totalValue - dayPL)) * 100 : 0,
-        positionCount: formattedPositions.length,
+        positionCount: positionsList.length,
       };
 
-      setPositions(formattedPositions);
       setMetrics(calculatedMetrics);
+    } catch (error) {
+      console.error('Failed to calculate metrics:', error);
+    }
+  };
+
+  const loadPositions = async () => {
+    setLoading(true);
+
+    try {
+      // Fetch positions from Alpaca
+      const alpacaPositions = await alpaca.getPositions();
+
+      // Format positions for UI
+      const formattedPositions: Position[] = alpacaPositions.map(formatPosition);
+
+      setPositions(formattedPositions);
+      await calculateMetrics(formattedPositions);
     } catch (error) {
       console.error('Failed to load positions:', error);
       // Keep existing data if refresh fails
@@ -144,12 +172,34 @@ export default function ActivePositions() {
             Active Positions
           </h1>
         </div>
-        <Button variant="secondary" size="sm" onClick={loadPositions} style={{ width: isMobile ? '100%' : 'auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-            <RefreshCw size={16} />
-            Refresh
+        <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, width: isMobile ? '100%' : 'auto' }}>
+          {/* Connection Status Indicator */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: theme.spacing.xs,
+            padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+            background: connected ? 'rgba(16, 185, 129, 0.1)' : connecting ? 'rgba(251, 191, 36, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            border: `1px solid ${connected ? 'rgba(16, 185, 129, 0.3)' : connecting ? 'rgba(251, 191, 36, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+            borderRadius: theme.borderRadius.sm,
+          }}>
+            {connected ? (
+              <Wifi size={14} color={theme.colors.primary} />
+            ) : (
+              <WifiOff size={14} color={theme.colors.danger} />
+            )}
+            <span style={{ fontSize: '12px', color: theme.colors.textMuted }}>
+              {connecting ? 'Connecting...' : connected ? 'Live' : 'Offline'}
+            </span>
           </div>
-        </Button>
+
+          <Button variant="secondary" size="sm" onClick={loadPositions} style={{ flex: isMobile ? '1' : 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
+              <RefreshCw size={16} />
+              {!isMobile && 'Refresh'}
+            </div>
+          </Button>
+        </div>
       </div>
 
       {loading ? (
