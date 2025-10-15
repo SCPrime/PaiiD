@@ -8,11 +8,13 @@ ARCHITECTURE:
 - Alpaca API: ONLY paper trade execution (orders, positions, account)
 
 Phase 2.A - Real-Time Data Implementation (Tradier WebSocket streaming)
+Phase 5.C - Heartbeat mechanism for connection monitoring
 """
 
 import asyncio
 import json
 import logging
+import time
 from typing import AsyncGenerator
 from fastapi import APIRouter, Depends, Query
 from sse_starlette.sse import EventSourceResponse
@@ -23,6 +25,10 @@ from app.services.tradier_stream import get_tradier_stream
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["streaming"])
+
+# Configuration
+HEARTBEAT_INTERVAL = 15  # Send heartbeat every 15 seconds
+DATA_CHECK_INTERVAL = 1   # Check for new data every 1 second
 
 
 @router.get("/stream/prices")
@@ -64,9 +70,18 @@ async def stream_prices(
     await tradier_stream.subscribe_quotes(symbol_list)
 
     async def price_generator() -> AsyncGenerator:
-        """Generate price updates from Redis cache"""
+        """
+        Generate price updates from Redis cache with periodic heartbeats.
+
+        Sends:
+        - price_update: When price data changes (every 1s)
+        - heartbeat: Every 15s to keep connection alive and detect timeouts
+        """
+        last_heartbeat_time = time.time()
+
         try:
             while True:
+                current_time = time.time()
                 prices = {}
 
                 # Read latest prices from Redis cache
@@ -92,25 +107,32 @@ async def stream_prices(
                                 "type": "quote"
                             }
 
-                # Send update if we have any prices
+                # Send price update if we have data
                 if prices:
                     yield {
                         "event": "price_update",
                         "data": json.dumps(prices)
                     }
-                else:
-                    # Send heartbeat to keep connection alive
+
+                # Send periodic heartbeat (every HEARTBEAT_INTERVAL seconds)
+                if current_time - last_heartbeat_time >= HEARTBEAT_INTERVAL:
                     yield {
                         "event": "heartbeat",
-                        "data": json.dumps({"timestamp": asyncio.get_event_loop().time()})
+                        "data": json.dumps({
+                            "timestamp": current_time,
+                            "symbols": symbol_list,
+                            "stream_type": "prices"
+                        })
                     }
+                    last_heartbeat_time = current_time
+                    logger.debug(f"💓 Heartbeat sent (prices stream)")
 
-                # Wait 1 second before next update
-                await asyncio.sleep(1)
+                # Wait before next data check
+                await asyncio.sleep(DATA_CHECK_INTERVAL)
 
         except asyncio.CancelledError:
             logger.info(f"📡 Client disconnected from price stream: {symbol_list}")
-            # Cleanup not needed - Alpaca stream continues for other clients
+            # Cleanup not needed - Tradier stream continues for other clients
             raise
         except Exception as e:
             logger.error(f"❌ Error in price stream: {e}")
@@ -142,11 +164,20 @@ async def stream_positions(
     logger.info("📡 Client subscribed to position stream")
 
     async def position_generator() -> AsyncGenerator:
-        """Generate position updates from Redis cache"""
+        """
+        Generate position updates from Redis cache with periodic heartbeats.
+
+        Sends:
+        - position_update: When positions change (checked every 2s)
+        - heartbeat: Every 15s to keep connection alive and detect timeouts
+        """
         last_positions_hash = None
+        last_heartbeat_time = time.time()
 
         try:
             while True:
+                current_time = time.time()
+
                 # Read positions from cache
                 positions_data = cache.get("portfolio:positions")
 
@@ -161,6 +192,19 @@ async def stream_positions(
                             "data": json.dumps(positions_data)
                         }
                         last_positions_hash = current_hash
+
+                # Send periodic heartbeat (every HEARTBEAT_INTERVAL seconds)
+                if current_time - last_heartbeat_time >= HEARTBEAT_INTERVAL:
+                    yield {
+                        "event": "heartbeat",
+                        "data": json.dumps({
+                            "timestamp": current_time,
+                            "stream_type": "positions",
+                            "position_count": len(positions_data) if positions_data else 0
+                        })
+                    }
+                    last_heartbeat_time = current_time
+                    logger.debug(f"💓 Heartbeat sent (positions stream)")
 
                 # Wait 2 seconds before checking again
                 await asyncio.sleep(2)

@@ -33,6 +33,7 @@ export interface PositionStreamState {
   connecting: boolean;
   error: string | null;
   lastUpdate: Date | null;
+  lastHeartbeat: Date | null;
 }
 
 export interface UsePositionUpdatesOptions {
@@ -40,6 +41,8 @@ export interface UsePositionUpdatesOptions {
   autoReconnect?: boolean;
   /** Max reconnect attempts (default: 5) */
   maxReconnectAttempts?: number;
+  /** Heartbeat timeout in seconds (default: 45) - reconnect if no heartbeat received */
+  heartbeatTimeout?: number;
   /** Enable debug logging (default: false) */
   debug?: boolean;
 }
@@ -63,6 +66,7 @@ export function usePositionUpdates(
   const {
     autoReconnect = true,
     maxReconnectAttempts = 5,
+    heartbeatTimeout = 45,  // 45 seconds default (3x heartbeat interval)
     debug = false
   } = options;
 
@@ -71,12 +75,14 @@ export function usePositionUpdates(
     connected: false,
     connecting: false,
     error: null,
-    lastUpdate: null
+    lastUpdate: null,
+    lastHeartbeat: null
   });
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const log = useCallback((...args: any[]) => {
     if (debug) {
@@ -97,6 +103,12 @@ export function usePositionUpdates(
       reconnectTimeoutRef.current = null;
     }
 
+    // Clear heartbeat check interval
+    if (heartbeatCheckIntervalRef.current) {
+      clearInterval(heartbeatCheckIntervalRef.current);
+      heartbeatCheckIntervalRef.current = null;
+    }
+
     setState(prev => ({ ...prev, connecting: true, error: null }));
     log('Connecting to position stream');
 
@@ -111,13 +123,50 @@ export function usePositionUpdates(
       // Handle connection open
       eventSource.onopen = () => {
         log('✅ Connected to position stream');
+        const now = new Date();
         setState(prev => ({
           ...prev,
           connected: true,
           connecting: false,
-          error: null
+          error: null,
+          lastHeartbeat: now  // Initialize heartbeat timestamp on connect
         }));
         reconnectAttemptsRef.current = 0;  // Reset reconnect counter on success
+
+        // Start heartbeat timeout checker
+        heartbeatCheckIntervalRef.current = setInterval(() => {
+          setState(currentState => {
+            if (!currentState.lastHeartbeat || !currentState.connected) {
+              return currentState;
+            }
+
+            const timeSinceHeartbeat = (Date.now() - currentState.lastHeartbeat.getTime()) / 1000;
+
+            if (timeSinceHeartbeat > heartbeatTimeout) {
+              log(`⚠️ Heartbeat timeout (${timeSinceHeartbeat.toFixed(0)}s since last heartbeat)`);
+
+              // Trigger reconnect
+              if (eventSourceRef.current) {
+                eventSourceRef.current.close();
+                eventSourceRef.current = null;
+              }
+
+              if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
+                reconnectAttemptsRef.current++;
+                log(`🔄 Reconnecting due to heartbeat timeout (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
+                connect();
+              }
+
+              return {
+                ...currentState,
+                connected: false,
+                error: 'Heartbeat timeout - reconnecting...'
+              };
+            }
+
+            return currentState;
+          });
+        }, 10000);  // Check every 10 seconds
       };
 
       // Handle position updates
@@ -136,9 +185,14 @@ export function usePositionUpdates(
         }
       });
 
-      // Handle heartbeat (keep-alive)
+      // Handle heartbeat (keep-alive and timeout detection)
       eventSource.addEventListener('heartbeat', (event) => {
+        const now = new Date();
         log('💓 Heartbeat received');
+        setState(prev => ({
+          ...prev,
+          lastHeartbeat: now
+        }));
       });
 
       // Handle errors
@@ -222,6 +276,10 @@ export function usePositionUpdates(
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
+      }
+      if (heartbeatCheckIntervalRef.current) {
+        clearInterval(heartbeatCheckIntervalRef.current);
+        heartbeatCheckIntervalRef.current = null;
       }
     };
   }, [connect, log]);

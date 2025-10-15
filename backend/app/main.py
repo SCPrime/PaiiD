@@ -17,6 +17,7 @@ print(f"===========================\n", flush=True)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
+from slowapi.errors import RateLimitExceeded
 from .routers import health, settings as settings_router, portfolio, orders, stream, screening, market, ai, telemetry, strategies, scheduler, claude, market_data, news, analytics, backtesting, stock, users
 from .scheduler import init_scheduler
 import atexit
@@ -52,6 +53,11 @@ app = FastAPI(
     description="Personal Artificial Intelligence Investment Dashboard",
     version="1.0.0"
 )
+
+# Configure rate limiting (Phase 3: Bulletproof Reliability)
+from .middleware.rate_limit import limiter, custom_rate_limit_exceeded_handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
 
 # Initialize scheduler, cache, and streaming on startup
 @app.on_event("startup")
@@ -107,6 +113,10 @@ async def shutdown_event():
 if settings.SENTRY_DSN:
     from .middleware.sentry import SentryContextMiddleware
     app.add_middleware(SentryContextMiddleware)
+
+# Add Cache-Control headers for SWR support (Phase 2: Performance)
+from .middleware.cache_control import CacheControlMiddleware
+app.add_middleware(CacheControlMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

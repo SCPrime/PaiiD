@@ -1,10 +1,12 @@
 import type { AppProps } from 'next/app';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { TelemetryProvider } from '../components/TelemetryProvider';
 import { ChatProvider, useChat } from '../components/ChatContext';
 import { WorkflowProvider } from '../contexts/WorkflowContext';
 import AIChatBot from '../components/AIChatBot';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { initSentry, setUser } from '../lib/sentry';
 import '../styles/globals.css';
 
 interface AppPropsExtended {
@@ -69,6 +71,13 @@ function AppContent({ Component, pageProps, userId, userRole, telemetryEnabled }
 }
 
 export default function App({ Component, pageProps }: AppProps) {
+  // Initialize Sentry on app startup (client-side only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      initSentry();
+    }
+  }, []);
+
   // Get user info from localStorage (or generate unique ID)
   const [user] = useState(() => {
     if (typeof window === 'undefined') {
@@ -88,20 +97,29 @@ export default function App({ Component, pageProps }: AppProps) {
     return { id: userId, role: userRole };
   });
 
+  // Set Sentry user context when user changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user) {
+      setUser(user.id, user.role);
+    }
+  }, [user]);
+
   // Check if telemetry is enabled from environment variable
   const telemetryEnabled = process.env.NEXT_PUBLIC_TELEMETRY_ENABLED !== 'false';
 
   return (
-    <ChatProvider>
-      <WorkflowProvider>
-        <AppContent
-          Component={Component}
-          pageProps={pageProps}
-          userId={user.id}
-          userRole={user.role}
-          telemetryEnabled={telemetryEnabled}
-        />
-      </WorkflowProvider>
-    </ChatProvider>
+    <ErrorBoundary>
+      <ChatProvider>
+        <WorkflowProvider>
+          <AppContent
+            Component={Component}
+            pageProps={pageProps}
+            userId={user.id}
+            userRole={user.role}
+            telemetryEnabled={telemetryEnabled}
+          />
+        </WorkflowProvider>
+      </ChatProvider>
+    </ErrorBoundary>
   );
 }

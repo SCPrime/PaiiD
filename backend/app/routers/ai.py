@@ -1451,3 +1451,176 @@ async def get_recommended_templates(
             status_code=500,
             detail=f"Failed to generate template recommendations: {str(e)}"
         )
+
+
+# ====== RECOMMENDATION HISTORY TRACKING (Phase: Final 6% MVP) ======
+
+class SaveRecommendationRequest(BaseModel):
+    """Request to save an AI recommendation to history"""
+    symbol: str
+    recommendation_type: Literal["buy", "sell", "hold"]
+    confidence_score: float
+    analysis_data: dict = {}
+    suggested_entry_price: Optional[float] = None
+    suggested_stop_loss: Optional[float] = None
+    suggested_take_profit: Optional[float] = None
+    suggested_position_size: Optional[float] = None
+    reasoning: Optional[str] = None
+    market_context: Optional[str] = None
+
+
+class RecommendationHistoryResponse(BaseModel):
+    """Single recommendation history entry"""
+    id: int
+    symbol: str
+    recommendation_type: str
+    confidence_score: float
+    analysis_data: dict
+    suggested_entry_price: Optional[float]
+    suggested_stop_loss: Optional[float]
+    suggested_take_profit: Optional[float]
+    reasoning: Optional[str]
+    market_context: Optional[str]
+    status: str
+    created_at: str
+    expires_at: Optional[str]
+    # Performance tracking (if executed)
+    executed_at: Optional[str]
+    execution_price: Optional[float]
+    actual_pnl: Optional[float]
+    actual_pnl_percent: Optional[float]
+
+    class Config:
+        from_attributes = True
+
+
+@router.post("/recommendations/save", dependencies=[Depends(require_bearer)])
+async def save_recommendation(
+    request: SaveRecommendationRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Save an AI recommendation to history for tracking and analysis
+
+    This endpoint stores recommendations for:
+    - Performance tracking (how accurate were our predictions?)
+    - Strategy refinement (which signals work best?)
+    - User analysis (review past recommendations and outcomes)
+
+    Phase: Final 6% MVP completion
+    """
+    try:
+        from ..models.database import AIRecommendation
+        from datetime import timedelta
+
+        # Calculate expiry (recommendations expire after 7 days)
+        expires_at = datetime.utcnow() + timedelta(days=7)
+
+        # Create recommendation record
+        recommendation = AIRecommendation(
+            user_id=1,  # TODO: Get from auth once multi-user support added
+            symbol=request.symbol.upper(),
+            recommendation_type=request.recommendation_type.lower(),
+            confidence_score=request.confidence_score,
+            analysis_data=request.analysis_data or {},
+            suggested_entry_price=request.suggested_entry_price,
+            suggested_stop_loss=request.suggested_stop_loss,
+            suggested_take_profit=request.suggested_take_profit,
+            suggested_position_size=request.suggested_position_size,
+            reasoning=request.reasoning,
+            market_context=request.market_context,
+            status="pending",
+            expires_at=expires_at
+        )
+
+        db.add(recommendation)
+        db.commit()
+        db.refresh(recommendation)
+
+        logger.info(f"✅ Saved recommendation: {request.symbol} {request.recommendation_type.upper()} ({request.confidence_score:.1f}% confidence)")
+
+        return {
+            "success": True,
+            "recommendation_id": recommendation.id,
+            "message": f"Saved {request.recommendation_type.upper()} recommendation for {request.symbol}"
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Failed to save recommendation: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save recommendation: {str(e)}"
+        )
+
+
+@router.get("/recommendations/history", response_model=List[RecommendationHistoryResponse], dependencies=[Depends(require_bearer)])
+async def get_recommendation_history(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    status: Optional[str] = Query(None, description="Filter by status (pending, executed, ignored, expired)"),
+    limit: int = Query(50, ge=1, le=200, description="Maximum number of recommendations to return"),
+    offset: int = Query(0, ge=0, description="Number of recommendations to skip"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get recommendation history with optional filters
+
+    Allows users to:
+    - Review past AI recommendations
+    - Track which recommendations were executed
+    - Analyze accuracy and performance over time
+    - Filter by symbol, status, or date range
+
+    Phase: Final 6% MVP completion
+    """
+    try:
+        from ..models.database import AIRecommendation
+
+        # Build query
+        query = db.query(AIRecommendation).filter(AIRecommendation.user_id == 1)  # TODO: Multi-user support
+
+        # Apply filters
+        if symbol:
+            query = query.filter(AIRecommendation.symbol == symbol.upper())
+
+        if status:
+            query = query.filter(AIRecommendation.status == status.lower())
+
+        # Order by creation date (newest first)
+        query = query.order_by(AIRecommendation.created_at.desc())
+
+        # Apply pagination
+        recommendations = query.offset(offset).limit(limit).all()
+
+        # Convert to response format
+        result = []
+        for rec in recommendations:
+            result.append(RecommendationHistoryResponse(
+                id=rec.id,
+                symbol=rec.symbol,
+                recommendation_type=rec.recommendation_type,
+                confidence_score=rec.confidence_score,
+                analysis_data=rec.analysis_data or {},
+                suggested_entry_price=rec.suggested_entry_price,
+                suggested_stop_loss=rec.suggested_stop_loss,
+                suggested_take_profit=rec.suggested_take_profit,
+                reasoning=rec.reasoning,
+                market_context=rec.market_context,
+                status=rec.status,
+                created_at=rec.created_at.isoformat() + "Z" if rec.created_at else None,
+                expires_at=rec.expires_at.isoformat() + "Z" if rec.expires_at else None,
+                executed_at=rec.executed_at.isoformat() + "Z" if rec.executed_at else None,
+                execution_price=rec.execution_price,
+                actual_pnl=rec.actual_pnl,
+                actual_pnl_percent=rec.actual_pnl_percent
+            ))
+
+        logger.info(f"✅ Retrieved {len(result)} recommendations from history (filters: symbol={symbol}, status={status})")
+
+        return result
+
+    except Exception as e:
+        logger.error(f"❌ Failed to retrieve recommendation history: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve recommendation history: {str(e)}"
+        )

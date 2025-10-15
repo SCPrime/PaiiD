@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",
+    "@sentry/nextjs": "^7.118.0",
     "@types/d3": "^7.4.3",
     "@types/node": "^20.19.18",
     "@types/react": "^18.3.25",
@@ -25,6 +26,7 @@
     "react-hot-toast": "^2.6.0",
     "react-hotkeys-hook": "^5.2.0",
     "react-split": "^2.0.14",
+    "swr": "^2.2.4",
     "typescript": "^5.9.2"
   },
   "devDependencies": {

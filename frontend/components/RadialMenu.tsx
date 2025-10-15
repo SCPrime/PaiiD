@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback, memo } from 'react';
 import * as d3 from 'd3';
 import { useWindowDimensions, useIsMobile } from '../hooks/useBreakpoint';
 
@@ -30,7 +30,7 @@ export const workflows: Workflow[] = [
   { id: 'settings', name: 'SETTINGS', color: '#64748b', icon: '⚙️', description: 'Trading journal, risk control, and system configuration.' }
 ];
 
-export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selectedWorkflow, compact }: RadialMenuProps) {
+function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkflow, compact }: RadialMenuProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredWorkflow, setHoveredWorkflow] = useState<Workflow | null>(null);
@@ -44,20 +44,18 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
   const { width: viewportWidth } = useWindowDimensions();
   const isMobile = useIsMobile();
 
-  // Calculate responsive menu size
-  const getMenuSize = () => {
+  // Memoize responsive menu size - only recalculate when dependencies change
+  const menuSize = useMemo(() => {
     if (isMobile) {
       // Mobile: 90% of viewport width, max 500px
       return Math.min(viewportWidth * 0.9, 500);
     }
     // Desktop: Standard 700px
     return 700;
-  };
+  }, [isMobile, viewportWidth]);
 
-  const menuSize = getMenuSize();
-
-  // Responsive font sizes
-  const getFontSizes = () => {
+  // Memoize responsive font sizes - only recalculate when isMobile changes
+  const fontSizes = useMemo(() => {
     if (isMobile) {
       return {
         headerLogo: '48px',
@@ -81,9 +79,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
       marketValue: '22px',
       marketChange: '13px'
     };
-  };
-
-  const fontSizes = getFontSizes();
+  }, [isMobile]);
 
   // Fetch live market data from backend
   useEffect(() => {
@@ -543,7 +539,7 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
           .on('end', repeat);
       });
 
-  }, [menuSize]); // Re-render when menu size changes (responsive to viewport)
+  }, [menuSize, fontSizes, onWorkflowSelect, onWorkflowHover]); // Re-render when menu size changes (responsive to viewport)
 
   // Separate effect for market data updates - only update text when data changes
   useEffect(() => {
@@ -750,3 +746,14 @@ export default function RadialMenu({ onWorkflowSelect, onWorkflowHover, selected
     </div>
   );
 }
+
+// Export memoized component - prevents unnecessary re-renders when props haven't changed
+export default memo(RadialMenuComponent, (prevProps, nextProps) => {
+  // Custom comparison: only re-render if these props actually changed
+  return (
+    prevProps.selectedWorkflow === nextProps.selectedWorkflow &&
+    prevProps.compact === nextProps.compact &&
+    prevProps.onWorkflowSelect === nextProps.onWorkflowSelect &&
+    prevProps.onWorkflowHover === nextProps.onWorkflowHover
+  );
+});

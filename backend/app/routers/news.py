@@ -158,6 +158,32 @@ async def get_news_providers(_: str = Depends(require_bearer)):
     }
 
 
+@router.get("/news/health")
+async def get_news_health(_: str = Depends(require_bearer)):
+    """
+    Get health status of all news providers including circuit breaker states.
+
+    This endpoint provides observability into:
+    - Provider availability (healthy/degraded/down)
+    - Circuit breaker states (CLOSED/HALF_OPEN/OPEN)
+    - Failure counts and timestamps
+    - Overall system health percentage
+
+    Use this for monitoring and alerting on news service degradation.
+    """
+    if not news_aggregator:
+        return {
+            "status": "unavailable",
+            "message": "News aggregator not initialized"
+        }
+
+    try:
+        health = news_aggregator.get_provider_health()
+        return health
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get health status: {str(e)}")
+
+
 @router.get("/news/sentiment/market")
 async def get_market_sentiment(
     category: str = Query(default='general'),

@@ -4,7 +4,7 @@ Endpoints for managing trading strategies
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Dict, Optional, List, Any
 from sqlalchemy.orm import Session
 import json
@@ -41,15 +41,47 @@ STRATEGIES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class StrategyConfigRequest(BaseModel):
-    """Request model for saving strategy configuration"""
-    strategy_type: str
-    config: Dict
+    """Request model for saving strategy configuration with validation"""
+    strategy_type: str = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        pattern=r'^[a-z0-9\-]+$',
+        description="Strategy type identifier (lowercase, alphanumeric + hyphens)",
+        examples=["under4-multileg", "trend-following", "custom"]
+    )
+    config: Dict = Field(..., description="Strategy configuration parameters")
+
+    @validator('strategy_type')
+    def validate_strategy_type(cls, v):
+        """Validate strategy type"""
+        allowed_types = ["under4-multileg", "trend-following", "mean-reversion", "momentum", "custom"]
+        if v not in allowed_types:
+            raise ValueError(f"Invalid strategy type. Allowed: {', '.join(allowed_types)}")
+        return v
 
 
 class StrategyRunRequest(BaseModel):
-    """Request model for running a strategy"""
-    strategy_type: str
-    dry_run: bool = True
+    """Request model for running a strategy with validation"""
+    strategy_type: str = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        pattern=r'^[a-z0-9\-]+$',
+        description="Strategy type identifier"
+    )
+    dry_run: bool = Field(
+        default=True,
+        description="Dry run mode (no actual execution, default: true)"
+    )
+
+    @validator('strategy_type')
+    def validate_strategy_type(cls, v):
+        """Validate strategy type"""
+        allowed_types = ["under4-multileg", "trend-following", "mean-reversion", "momentum", "custom"]
+        if v not in allowed_types:
+            raise ValueError(f"Invalid strategy type. Allowed: {', '.join(allowed_types)}")
+        return v
 
 
 @router.post("/strategies/save")
@@ -408,10 +440,32 @@ async def get_strategy_template(
 
 
 class CloneTemplateRequest(BaseModel):
-    """Request model for cloning a template"""
-    custom_name: Optional[str] = Field(None, description="Custom name for the cloned strategy")
-    customize_config: Optional[bool] = Field(True, description="Customize based on risk tolerance")
-    config_overrides: Optional[Dict[str, Any]] = Field(None, description="Manual config overrides")
+    """Request model for cloning a template with validation"""
+    custom_name: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=100,
+        description="Custom name for the cloned strategy (1-100 characters)"
+    )
+    customize_config: Optional[bool] = Field(
+        True,
+        description="Customize based on risk tolerance (default: true)"
+    )
+    config_overrides: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Manual config overrides (key-value pairs)"
+    )
+
+    @validator('custom_name')
+    def validate_custom_name(cls, v):
+        """Validate custom name"""
+        if v is not None:
+            v = v.strip()
+            if not v:
+                raise ValueError("Custom name cannot be empty or whitespace")
+            if len(v) > 100:
+                raise ValueError("Custom name cannot exceed 100 characters")
+        return v
 
 
 @router.post("/strategies/templates/{template_id}/clone")

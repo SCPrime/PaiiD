@@ -83,20 +83,53 @@ const ALLOW_DELETE = new Set<string>([
   "watchlists",
 ]);
 
-function isAllowedOrigin(req: NextApiRequest) {
-  // EMERGENCY FIX: Allow ALL requests during debugging
-  // This is TEMPORARY to identify the exact issue
+// Allowed origins for CORS (production domains only)
+const ALLOWED_ORIGINS = new Set<string>([
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:3002",
+  "https://paiid-snowy.vercel.app",
+  "https://paiid-scprimes-projects.vercel.app",
+  "https://paiid-git-main-scprimes-projects.vercel.app",
+  "https://frontend-scprimes-projects.vercel.app",
+  "https://frontend-three-rho-84.vercel.app",
+  "https://frontend-scprime-scprimes-projects.vercel.app",
+  "https://frontend-mftcsnbqx-scprimes-projects.vercel.app",
+]);
+
+function isAllowedOrigin(req: NextApiRequest): boolean {
   const origin = (req.headers.origin || "").toLowerCase();
+  const referer = (req.headers.referer || "").toLowerCase();
+  const host = (req.headers.host || "").toLowerCase();
 
-  console.log(`[PROXY] ====== ORIGIN CHECK ======`);
-  console.log(`[PROXY] Origin header: "${origin}"`);
-  console.log(`[PROXY] Referer: "${req.headers.referer || 'none'}"`);
-  console.log(`[PROXY] Host: "${req.headers.host || 'none'}"`);
-  console.log(`[PROXY] URL: "${req.url}"`);
+  // Check if origin is in allowed list
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    console.log(`[PROXY] ✅ Origin allowed: ${origin}`);
+    return true;
+  }
 
-  // TEMPORARY: Just allow everything and log it
-  console.log(`[PROXY] ✅ ALLOWING ALL ORIGINS (emergency debug mode)`);
-  return true;
+  // Fallback: Check referer for same-origin requests
+  if (!origin && referer) {
+    try {
+      const refererUrl = new URL(referer);
+      const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`;
+      if (ALLOWED_ORIGINS.has(refererOrigin)) {
+        console.log(`[PROXY] ✅ Referer allowed: ${refererOrigin}`);
+        return true;
+      }
+    } catch (e) {
+      // Invalid referer URL
+    }
+  }
+
+  // Development: Allow Vercel deployment domains (*.vercel.app)
+  if (origin && origin.match(/^https:\/\/[\w-]+-[\w-]+-projects\.vercel\.app$/)) {
+    console.log(`[PROXY] ✅ Vercel deployment allowed: ${origin}`);
+    return true;
+  }
+
+  console.warn(`[PROXY] ⚠️ Origin blocked: ${origin || 'none'} (referer: ${referer || 'none'}, host: ${host})`);
+  return false;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -106,16 +139,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log(`[PROXY] URL: ${req.url}`);
   console.log(`[PROXY] Origin: ${req.headers.origin || 'NONE'}`);
 
-  // CORS preflight - SET HEADERS FIRST (before origin check)
+  // CORS preflight - Validate origin first
   if (req.method === "OPTIONS") {
     console.log(`[PROXY] Handling OPTIONS preflight`);
-    const origin = req.headers.origin || "*";
-    res.setHeader("access-control-allow-origin", origin);
-    res.setHeader("access-control-allow-methods", "GET,POST,DELETE,OPTIONS");
-    res.setHeader("access-control-allow-headers", "content-type,x-request-id,authorization");
-    res.setHeader("access-control-allow-credentials", "true");
-    res.status(204).end();
-    return;
+    const origin = req.headers.origin;
+
+    // Only allow preflight from authorized origins
+    if (origin && isAllowedOrigin(req)) {
+      res.setHeader("access-control-allow-origin", origin);
+      res.setHeader("access-control-allow-methods", "GET,POST,DELETE,OPTIONS");
+      res.setHeader("access-control-allow-headers", "content-type,x-request-id,authorization");
+      res.setHeader("access-control-allow-credentials", "true");
+      res.status(204).end();
+      return;
+    } else {
+      // Block unauthorized preflight requests
+      console.warn(`[PROXY] ⚠️ Blocked OPTIONS from: ${origin || 'unknown'}`);
+      res.status(403).json({ error: "Forbidden origin" });
+      return;
+    }
   }
 
   const originAllowed = isAllowedOrigin(req);
@@ -127,10 +169,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  // Set CORS headers for all successful responses
-  const origin = req.headers.origin || "*";
-  res.setHeader("access-control-allow-origin", origin);
-  res.setHeader("access-control-allow-credentials", "true");
+  // Set CORS headers for all successful responses (only for allowed origins)
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader("access-control-allow-origin", origin);
+    res.setHeader("access-control-allow-credentials", "true");
+  }
 
   console.log(`[PROXY] ✅ Origin check passed, proceeding with request`);
 

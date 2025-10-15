@@ -211,3 +211,52 @@ class OrderTemplate(Base):
 
     def __repr__(self):
         return f"<OrderTemplate(id={self.id}, name='{self.name}', symbol='{self.symbol}', side='{self.side}')>"
+
+
+class AIRecommendation(Base):
+    """AI-generated trading recommendations history"""
+    __tablename__ = "ai_recommendations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+
+    # Recommendation metadata
+    symbol = Column(String(20), nullable=False, index=True)
+    recommendation_type = Column(String(20), nullable=False, index=True)  # buy, sell, hold
+    confidence_score = Column(Float, nullable=False)  # 0-100
+
+    # Market analysis (stored as JSON)
+    # Example: {
+    #   "technical": {"rsi": 45, "macd": "bullish", "sma_20": 175.5},
+    #   "fundamental": {"pe_ratio": 28.5, "market_cap": "2.5T"},
+    #   "sentiment": {"score": 0.75, "source": "news"},
+    #   "volatility": {"daily": 0.02, "weekly": 0.05}
+    # }
+    analysis_data = Column(JSON, default=dict, nullable=False)
+
+    # Entry/Exit recommendations
+    suggested_entry_price = Column(Float, nullable=True)
+    suggested_stop_loss = Column(Float, nullable=True)
+    suggested_take_profit = Column(Float, nullable=True)
+    suggested_position_size = Column(Float, nullable=True)
+
+    # Reasoning and context
+    reasoning = Column(Text, nullable=True)  # AI explanation
+    market_context = Column(Text, nullable=True)  # Overall market conditions
+
+    # Status tracking
+    status = Column(String(20), default="pending", nullable=False, index=True)  # pending, executed, ignored, expired
+    executed_at = Column(DateTime, nullable=True)
+    execution_price = Column(Float, nullable=True)
+
+    # Performance tracking (if recommendation was executed)
+    actual_pnl = Column(Float, nullable=True)
+    actual_pnl_percent = Column(Float, nullable=True)
+    accuracy_score = Column(Float, nullable=True)  # 0-100, based on outcome vs prediction
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=True)  # Recommendation expiry
+
+    def __repr__(self):
+        return f"<AIRecommendation(id={self.id}, symbol='{self.symbol}', type='{self.recommendation_type}', confidence={self.confidence_score:.1f}%, status='{self.status}')>"
