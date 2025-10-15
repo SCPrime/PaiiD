@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app)
-HEAD = {"Authorization": "Bearer change-me"}
+HEAD = {"Authorization": "Bearer test-token-12345"}
 
 def test_duplicate_idempotency():
     body = {"dryRun": True, "requestId": "abc", "orders":[{"symbol":"AAPL","side":"buy","qty":1}]}

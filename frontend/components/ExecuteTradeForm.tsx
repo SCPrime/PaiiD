@@ -99,7 +99,8 @@ export default function ExecuteTradeForm() {
       if (tradeData.entryPrice && tradeData.entryPrice > 0) {
         setOrderType('limit');
         setLimitPrice(tradeData.entryPrice.toString());
-      } else if (tradeData.orderType) {
+      } else if (tradeData.orderType && (tradeData.orderType === 'market' || tradeData.orderType === 'limit')) {
+        // Only use orderType if it's supported (market or limit)
         setOrderType(tradeData.orderType);
         if (tradeData.orderType === 'limit' && tradeData.entryPrice) {
           setLimitPrice(tradeData.entryPrice.toString());

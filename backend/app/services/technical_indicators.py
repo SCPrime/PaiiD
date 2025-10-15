@@ -128,6 +128,71 @@ class TechnicalIndicators:
         }
 
     @staticmethod
+    def calculate_bb_width(prices: List[float], period: int = 20, std_dev: float = 2.0) -> float:
+        """
+        Calculate Bollinger Band Width as percentage of price
+
+        Measures volatility - wider bands = higher volatility
+
+        Returns:
+            Band width as percentage (e.g., 4.5 = 4.5% width)
+        """
+        bb = TechnicalIndicators.calculate_bollinger_bands(prices, period, std_dev)
+
+        if bb["middle"] == 0:
+            return 0.0
+
+        # Width = (upper - lower) / middle * 100
+        width_pct = ((bb["upper"] - bb["lower"]) / bb["middle"]) * 100
+
+        return round(width_pct, 2)
+
+    @staticmethod
+    def calculate_atr(highs: List[float], lows: List[float], closes: List[float], period: int = 14) -> float:
+        """
+        Calculate Average True Range (ATR) - volatility indicator
+
+        ATR measures market volatility by decomposing the entire range of an asset
+
+        Args:
+            highs: List of high prices
+            lows: List of low prices
+            closes: List of closing prices
+            period: ATR period (default 14)
+
+        Returns:
+            ATR value (absolute price movement)
+        """
+        if len(highs) < period + 1 or len(lows) < period + 1 or len(closes) < period + 1:
+            # Not enough data - return simple range
+            if highs and lows:
+                return round(highs[-1] - lows[-1], 2)
+            return 0.0
+
+        # Calculate True Range for each bar
+        true_ranges = []
+        for i in range(1, len(closes)):
+            high = highs[i]
+            low = lows[i]
+            prev_close = closes[i - 1]
+
+            # True Range = max(high-low, abs(high-prev_close), abs(low-prev_close))
+            tr = max(
+                high - low,
+                abs(high - prev_close),
+                abs(low - prev_close)
+            )
+            true_ranges.append(tr)
+
+        # ATR is simple moving average of True Range
+        if len(true_ranges) >= period:
+            atr = sum(true_ranges[-period:]) / period
+        else:
+            atr = sum(true_ranges) / len(true_ranges) if true_ranges else 0.0
+
+        return round(atr, 2)
+
+    @staticmethod
     def calculate_moving_averages(prices: List[float]) -> Dict[str, float]:
         """
         Calculate key moving averages

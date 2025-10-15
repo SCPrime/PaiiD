@@ -34,6 +34,34 @@ interface Recommendation {
   riskRewardRatio?: number;
   tradeData?: TradeData;
   portfolioFit?: string;
+  momentum?: {
+    sma_20: number;
+    sma_50: number;
+    sma_200: number;
+    price_vs_sma_20: number;
+    price_vs_sma_50: number;
+    price_vs_sma_200: number;
+    avg_volume_20d: number;
+    volume_strength: string;  // "High", "Normal", "Low"
+    volume_ratio: number;
+    trend_alignment: string;  // "Bullish", "Bearish", "Mixed"
+  };
+  volatility?: {
+    atr: number;
+    atr_percent: number;
+    bb_width: number;
+    volatility_class: string;  // "Low", "Medium", "High"
+    volatility_score: number;  // 0-10
+  };
+  sector?: string;  // "Technology", "Healthcare", etc.
+  sectorPerformance?: {
+    name: string;
+    changePercent: number;
+    rank: number;
+    isLeader: boolean;
+    isLaggard: boolean;
+  };
+  explanation?: string;  // Detailed "Why?" explanation
   indicators?: {
     rsi?: number;
     macd?: { macd: number; signal: number; histogram: number };
@@ -98,7 +126,7 @@ export default function AIRecommendations() {
     }
 
     // Navigate to Execute Trade workflow with pre-filled data
-    navigateToWorkflow('execute', rec.tradeData);
+    navigateToWorkflow('execute-trade', rec.tradeData);
     showSuccess(`✅ Pre-filled trade for ${rec.symbol}`);
   };
 
@@ -133,6 +161,46 @@ export default function AIRecommendations() {
     if (score >= 6) return "Fair";
     if (score >= 5) return "Moderate";
     return "Weak";
+  };
+
+  const getTrendColor = (trend?: string) => {
+    if (!trend) return theme.colors.textMuted;
+    if (trend.includes("Bullish")) return theme.colors.primary;
+    if (trend.includes("Bearish")) return theme.colors.danger;
+    return theme.colors.warning;
+  };
+
+  const getVolumeColor = (strength?: string) => {
+    switch (strength) {
+      case "High": return theme.colors.primary;
+      case "Low": return theme.colors.danger;
+      case "Normal": return theme.colors.warning;
+      default: return theme.colors.textMuted;
+    }
+  };
+
+  const getMomentumBadgeColor = (priceVsSma: number) => {
+    if (priceVsSma > 2) return theme.colors.primary;  // Green - above SMA
+    if (priceVsSma > 0) return theme.colors.secondary;  // Cyan - slightly above
+    if (priceVsSma > -2) return theme.colors.warning;  // Yellow - slightly below
+    return theme.colors.danger;  // Red - below SMA
+  };
+
+  const getVolatilityColor = (volatilityClass?: string) => {
+    switch (volatilityClass) {
+      case "Low": return theme.colors.primary;  // Green - low volatility
+      case "High": return theme.colors.danger;  // Red - high volatility
+      case "Medium": return theme.colors.warning;  // Yellow - medium volatility
+      default: return theme.colors.textMuted;
+    }
+  };
+
+  const getSectorColor = (sectorPerf?: { isLeader: boolean; isLaggard: boolean; changePercent: number }) => {
+    if (!sectorPerf) return theme.colors.textMuted;
+    if (sectorPerf.isLeader) return theme.colors.primary;  // Green - leading sector
+    if (sectorPerf.isLaggard) return theme.colors.danger;  // Red - lagging sector
+    if (sectorPerf.changePercent > 0) return theme.colors.secondary;  // Cyan - positive
+    return theme.colors.warning;  // Yellow - negative
   };
 
   return (
@@ -330,6 +398,59 @@ export default function AIRecommendations() {
         </Card>
       )}
 
+      {/* Market Context Banner */}
+      {recommendations.length > 0 && (
+        <Card glow="cyan" style={{ marginBottom: theme.spacing.lg }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: theme.spacing.lg,
+            padding: theme.spacing.sm
+          }}>
+            <div style={{ fontSize: '28px' }}>📊</div>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: '700',
+                color: theme.colors.text,
+                marginBottom: '4px'
+              }}>
+                Market Context
+              </div>
+              <div style={{
+                fontSize: '12px',
+                color: theme.colors.textMuted,
+                display: 'flex',
+                gap: theme.spacing.md,
+                flexWrap: 'wrap'
+              }}>
+                {(() => {
+                  const highVolCount = recommendations.filter(r => r.volatility?.volatility_class === "High").length;
+                  const leadingSectors = Array.from(new Set(recommendations.filter(r => r.sectorPerformance?.isLeader).map(r => r.sector)));
+                  const avgVolatility = recommendations.reduce((sum, r) => sum + (r.volatility?.volatility_score || 0), 0) / recommendations.length;
+
+                  return (
+                    <>
+                      <span>
+                        {highVolCount > 2 ? "🔴 High" : avgVolatility > 6 ? "🟡 Elevated" : "🔵 Normal"} Market Volatility
+                      </span>
+                      {leadingSectors.length > 0 && (
+                        <span>
+                          👑 Leading: {leadingSectors.join(', ')}
+                        </span>
+                      )}
+                      <span>
+                        {highVolCount} high-volatility opportunities
+                      </span>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {recommendations.length === 0 && !loading && !error && (
         <Card>
           <div style={{
@@ -384,7 +505,7 @@ export default function AIRecommendations() {
                   padding: '4px 12px',
                   background: `${getScoreColor(rec.score)}15`,
                   border: `2px solid ${getScoreColor(rec.score)}`,
-                  borderRadius: theme.borderRadius.full,
+                  borderRadius: '9999px',
                   marginTop: theme.spacing.sm
                 }}>
                   <Target size={14} color={getScoreColor(rec.score)} />
@@ -409,6 +530,171 @@ export default function AIRecommendations() {
                   }}>
                     <AlertTriangle size={12} />
                     {rec.risk} Risk
+                  </div>
+                )}
+
+                {/* Momentum & Volume Indicators */}
+                <div style={{
+                  display: 'flex',
+                  gap: '6px',
+                  marginTop: theme.spacing.sm,
+                  flexWrap: 'wrap'
+                }}>
+                  {/* Trend Badge */}
+                  {rec.momentum?.trend_alignment && (
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '3px 8px',
+                      background: `${getTrendColor(rec.momentum.trend_alignment)}15`,
+                      border: `1px solid ${getTrendColor(rec.momentum.trend_alignment)}`,
+                      borderRadius: '9999px',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      color: getTrendColor(rec.momentum.trend_alignment)
+                    }}>
+                      📈 {rec.momentum.trend_alignment}
+                    </div>
+                  )}
+
+                  {/* Volume Badge */}
+                  {rec.momentum?.volume_strength && (
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '3px 8px',
+                      background: `${getVolumeColor(rec.momentum.volume_strength)}15`,
+                      border: `1px solid ${getVolumeColor(rec.momentum.volume_strength)}`,
+                      borderRadius: '9999px',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      color: getVolumeColor(rec.momentum.volume_strength)
+                    }}>
+                      🔊 {rec.momentum.volume_strength} Vol ({rec.momentum.volume_ratio.toFixed(1)}x)
+                    </div>
+                  )}
+                </div>
+
+                {/* SMA Alignment Badges */}
+                {rec.momentum && (
+                  <div style={{
+                    display: 'flex',
+                    gap: '4px',
+                    marginTop: theme.spacing.xs
+                  }}>
+                    <div style={{
+                      padding: '2px 6px',
+                      background: `${getMomentumBadgeColor(rec.momentum.price_vs_sma_20)}15`,
+                      border: `1px solid ${getMomentumBadgeColor(rec.momentum.price_vs_sma_20)}`,
+                      borderRadius: theme.borderRadius.sm,
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      color: getMomentumBadgeColor(rec.momentum.price_vs_sma_20)
+                    }}>
+                      SMA-20: {rec.momentum.price_vs_sma_20 > 0 ? '+' : ''}{rec.momentum.price_vs_sma_20.toFixed(1)}%
+                    </div>
+                    <div style={{
+                      padding: '2px 6px',
+                      background: `${getMomentumBadgeColor(rec.momentum.price_vs_sma_50)}15`,
+                      border: `1px solid ${getMomentumBadgeColor(rec.momentum.price_vs_sma_50)}`,
+                      borderRadius: theme.borderRadius.sm,
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      color: getMomentumBadgeColor(rec.momentum.price_vs_sma_50)
+                    }}>
+                      SMA-50: {rec.momentum.price_vs_sma_50 > 0 ? '+' : ''}{rec.momentum.price_vs_sma_50.toFixed(1)}%
+                    </div>
+                    <div style={{
+                      padding: '2px 6px',
+                      background: `${getMomentumBadgeColor(rec.momentum.price_vs_sma_200)}15`,
+                      border: `1px solid ${getMomentumBadgeColor(rec.momentum.price_vs_sma_200)}`,
+                      borderRadius: theme.borderRadius.sm,
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      color: getMomentumBadgeColor(rec.momentum.price_vs_sma_200)
+                    }}>
+                      SMA-200: {rec.momentum.price_vs_sma_200 > 0 ? '+' : ''}{rec.momentum.price_vs_sma_200.toFixed(1)}%
+                    </div>
+                  </div>
+                )}
+
+                {/* Volatility Badges */}
+                {rec.volatility && (
+                  <div style={{
+                    display: 'flex',
+                    gap: '6px',
+                    marginTop: theme.spacing.sm,
+                    flexWrap: 'wrap'
+                  }}>
+                    {/* Volatility Class Badge */}
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '3px 8px',
+                      background: `${getVolatilityColor(rec.volatility.volatility_class)}15`,
+                      border: `1px solid ${getVolatilityColor(rec.volatility.volatility_class)}`,
+                      borderRadius: '9999px',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      color: getVolatilityColor(rec.volatility.volatility_class)
+                    }}>
+                      {rec.volatility.volatility_class === "Low" ? "🔵" : rec.volatility.volatility_class === "High" ? "🔴" : "🟡"} {rec.volatility.volatility_class} Volatility
+                    </div>
+
+                    {/* ATR Badge */}
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '3px 8px',
+                      background: `${theme.colors.secondary}15`,
+                      border: `1px solid ${theme.colors.secondary}`,
+                      borderRadius: '9999px',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      color: theme.colors.secondary
+                    }}>
+                      ATR: {rec.volatility.atr_percent.toFixed(1)}%
+                    </div>
+
+                    {/* BB Width Badge */}
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '3px 8px',
+                      background: `${theme.colors.secondary}15`,
+                      border: `1px solid ${theme.colors.secondary}`,
+                      borderRadius: '9999px',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      color: theme.colors.secondary
+                    }}>
+                      BB Width: {rec.volatility.bb_width.toFixed(1)}%
+                    </div>
+                  </div>
+                )}
+
+                {/* Sector Badge */}
+                {rec.sector && (
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '4px 10px',
+                    background: `${getSectorColor(rec.sectorPerformance)}15`,
+                    border: `1px solid ${getSectorColor(rec.sectorPerformance)}`,
+                    borderRadius: theme.borderRadius.md,
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: getSectorColor(rec.sectorPerformance),
+                    marginTop: theme.spacing.sm
+                  }}>
+                    🏢 {rec.sector}
+                    {rec.sectorPerformance && (
+                      <span style={{ marginLeft: '6px' }}>
+                        ({rec.sectorPerformance.changePercent > 0 ? '+' : ''}{rec.sectorPerformance.changePercent.toFixed(2)}%)
+                        {rec.sectorPerformance.isLeader && ' 👑'}
+                        {rec.sectorPerformance.isLaggard && ' 📉'}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -595,23 +881,59 @@ export default function AIRecommendations() {
               </div>
             )}
 
-            {/* Technical Indicators (Expandable) */}
-            {selectedRec?.symbol === rec.symbol && rec.indicators && (
-              <div style={{
-                marginTop: theme.spacing.lg,
-                paddingTop: theme.spacing.lg,
-                borderTop: `1px solid ${theme.colors.border}`
-              }}>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: theme.colors.text,
-                  marginBottom: theme.spacing.md,
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px'
-                }}>
-                  📊 Technical Indicators
-                </div>
+            {/* Expandable Details */}
+            {selectedRec?.symbol === rec.symbol && (
+              <div>
+                {/* Why This Recommendation? Explanation */}
+                {rec.explanation && (
+                  <div style={{
+                    marginTop: theme.spacing.lg,
+                    paddingTop: theme.spacing.lg,
+                    borderTop: `1px solid ${theme.colors.border}`
+                  }}>
+                    <div style={{
+                      fontSize: '16px',
+                      fontWeight: '700',
+                      color: theme.colors.text,
+                      marginBottom: theme.spacing.md,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: theme.spacing.sm
+                    }}>
+                      💡 Why This Recommendation?
+                    </div>
+                    <div style={{
+                      fontSize: '14px',
+                      color: theme.colors.text,
+                      lineHeight: '1.8',
+                      whiteSpace: 'pre-line',
+                      padding: theme.spacing.md,
+                      background: 'rgba(15, 23, 42, 0.5)',
+                      border: `1px solid ${theme.colors.border}`,
+                      borderRadius: theme.borderRadius.md
+                    }}>
+                      {rec.explanation}
+                    </div>
+                  </div>
+                )}
+
+                {/* Technical Indicators */}
+                {rec.indicators && (
+                  <div style={{
+                    marginTop: theme.spacing.lg,
+                    paddingTop: theme.spacing.lg,
+                    borderTop: `1px solid ${theme.colors.border}`
+                  }}>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: theme.colors.text,
+                      marginBottom: theme.spacing.md,
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px'
+                    }}>
+                      📊 Technical Indicators
+                    </div>
 
                 <div style={{
                   display: 'grid',
@@ -724,6 +1046,8 @@ export default function AIRecommendations() {
                     </div>
                   )}
                 </div>
+              </div>
+                )}
               </div>
             )}
           </Card>

@@ -39,7 +39,7 @@ def require_bearer(authorization: str = Header(None)):
     if token != settings.API_TOKEN:
         logger.error("❌ Token mismatch!")
         print(f"❌ ERROR: Token mismatch", flush=True)
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     logger.debug("✅ Authentication successful")
     print(f"✅ Authentication successful", flush=True)

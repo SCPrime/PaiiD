@@ -7,8 +7,8 @@ from app.main import app
 
 client = TestClient(app)
 
-# Valid token from config (default: "change-me")
-VALID_TOKEN = "change-me"
+# Valid token from config (matches conftest.py line 18)
+VALID_TOKEN = "test-token-12345"
 INVALID_TOKEN = "wrong-token-123"
 
 
@@ -54,9 +54,9 @@ def test_auth_on_protected_endpoints():
     protected_endpoints = [
         "/api/account",
         "/api/positions",
-        "/api/orders",
-        "/api/analytics/portfolio/summary",
-        "/api/strategies",
+        "/api/order-templates",
+        "/api/portfolio/summary",
+        "/api/strategies/list",
     ]
 
     for endpoint in protected_endpoints:

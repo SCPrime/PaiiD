@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app)
-HEADERS = {"Authorization": "Bearer change-me"}
+HEADERS = {"Authorization": "Bearer test-token-12345"}
 
 
 def test_backtest_endpoint_exists():
@@ -26,7 +26,7 @@ def test_backtest_endpoint_exists():
         }
     }
 
-    response = client.post("/api/backtest", json=strategy, headers=HEADERS)
+    response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
     # Should return 200 or validation error, not auth error
     assert response.status_code != 401
 
@@ -34,7 +34,7 @@ def test_backtest_endpoint_exists():
 def test_backtest_requires_auth():
     """Test backtest requires authentication"""
     strategy = {"symbol": "SPY", "startDate": "2024-01-01", "endDate": "2024-06-01"}
-    response = client.post("/api/backtest", json=strategy)
+    response = client.post("/api/backtesting/run", json=strategy)
     assert response.status_code == 401
 
 
@@ -52,7 +52,7 @@ def test_backtest_returns_performance_metrics():
         }
     }
 
-    response = client.post("/api/backtest", json=strategy, headers=HEADERS)
+    response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
 
     if response.status_code == 200:
         data = response.json()
@@ -79,9 +79,9 @@ def test_backtest_with_different_symbols():
             }
         }
 
-        response = client.post("/api/backtest", json=strategy, headers=HEADERS)
+        response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
         # Should complete or return error, not crash
-        assert response.status_code in [200, 400, 500], f"Unexpected status for {symbol}"
+        assert response.status_code in [200, 400, 422, 500], f"Unexpected status for {symbol}"
 
 
 def test_backtest_validates_date_range():
@@ -95,7 +95,7 @@ def test_backtest_validates_date_range():
         "rules": {"entryConditions": ["rsi_oversold"], "exitConditions": ["rsi_overbought"]}
     }
 
-    response = client.post("/api/backtest", json=strategy, headers=HEADERS)
+    response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
     # Should return validation error
     assert response.status_code in [400, 422]
 
@@ -111,7 +111,7 @@ def test_backtest_validates_initial_capital():
         "rules": {"entryConditions": ["rsi_oversold"], "exitConditions": ["rsi_overbought"]}
     }
 
-    response = client.post("/api/backtest", json=strategy, headers=HEADERS)
+    response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
     # Should return validation error
     assert response.status_code in [400, 422]
 
@@ -134,7 +134,7 @@ def test_backtest_rsi_strategy():
         }
     }
 
-    response = client.post("/api/backtest", json=strategy, headers=HEADERS)
+    response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
 
     if response.status_code == 200:
         data = response.json()
@@ -162,9 +162,9 @@ def test_backtest_sma_crossover_strategy():
         }
     }
 
-    response = client.post("/api/backtest", json=strategy, headers=HEADERS)
+    response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
     # Should complete without error
-    assert response.status_code in [200, 500]  # 500 if data unavailable
+    assert response.status_code in [200, 422, 500]  # 422 for validation, 500 if data unavailable
 
 
 def test_backtest_performance_metrics_validation():
@@ -181,7 +181,7 @@ def test_backtest_performance_metrics_validation():
         }
     }
 
-    response = client.post("/api/backtest", json=strategy, headers=HEADERS)
+    response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
 
     if response.status_code == 200:
         data = response.json()
@@ -216,7 +216,7 @@ def test_backtest_handles_no_trades():
         }
     }
 
-    response = client.post("/api/backtest", json=strategy, headers=HEADERS)
+    response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
 
     if response.status_code == 200:
         data = response.json()

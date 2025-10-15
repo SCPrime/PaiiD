@@ -7,12 +7,12 @@ from app.main import app
 from unittest.mock import patch, MagicMock
 
 client = TestClient(app)
-HEADERS = {"Authorization": "Bearer change-me"}
+HEADERS = {"Authorization": "Bearer test-token-12345"}
 
 
 def test_portfolio_summary_endpoint():
     """Test portfolio summary endpoint returns correct structure"""
-    response = client.get("/api/analytics/portfolio/summary", headers=HEADERS)
+    response = client.get("/api/portfolio/summary", headers=HEADERS)
 
     # Should return 200 or Alpaca error, not auth error
     if response.status_code == 200:
@@ -26,13 +26,13 @@ def test_portfolio_summary_endpoint():
 
 def test_portfolio_summary_requires_auth():
     """Test portfolio summary requires authentication"""
-    response = client.get("/api/analytics/portfolio/summary")
+    response = client.get("/api/portfolio/summary")
     assert response.status_code == 401
 
 
 def test_portfolio_history_endpoint():
     """Test portfolio history endpoint"""
-    response = client.get("/api/analytics/portfolio/history?days=30", headers=HEADERS)
+    response = client.get("/api/portfolio/history?days=30", headers=HEADERS)
 
     if response.status_code == 200:
         data = response.json()
@@ -47,14 +47,14 @@ def test_portfolio_history_different_periods():
     periods = [7, 30, 90, 365]
 
     for days in periods:
-        response = client.get(f"/api/analytics/portfolio/history?days={days}", headers=HEADERS)
+        response = client.get(f"/api/portfolio/history?days={days}", headers=HEADERS)
         # Should succeed or return Alpaca error
         assert response.status_code in [200, 500], f"Failed for {days} days"
 
 
 def test_performance_metrics_endpoint():
     """Test performance metrics calculation"""
-    response = client.get("/api/analytics/analytics/performance", headers=HEADERS)
+    response = client.get("/api/analytics/performance", headers=HEADERS)
 
     if response.status_code == 200:
         data = response.json()
@@ -64,7 +64,7 @@ def test_performance_metrics_endpoint():
             assert key in data, f"Missing {key} in performance metrics"
 
 
-@patch("app.routers.analytics.alpaca_client")
+@patch("app.services.tradier_client.get_tradier_client")
 def test_pl_calculation_with_mock_data(mock_client):
     """Test P&L calculation logic with mocked Alpaca data"""
     # Mock account data
@@ -87,7 +87,7 @@ def test_pl_calculation_with_mock_data(mock_client):
     mock_client.get_account.return_value = mock_account
     mock_client.get_all_positions.return_value = [mock_position]
 
-    response = client.get("/api/analytics/portfolio/summary", headers=HEADERS)
+    response = client.get("/api/portfolio/summary", headers=HEADERS)
 
     if response.status_code == 200:
         data = response.json()
@@ -98,7 +98,7 @@ def test_pl_calculation_with_mock_data(mock_client):
 
 def test_zero_positions_portfolio():
     """Test portfolio summary with no positions"""
-    with patch("app.routers.analytics.alpaca_client") as mock_client:
+    with patch("app.services.tradier_client.get_tradier_client") as mock_client:
         mock_account = MagicMock()
         mock_account.equity = "100000.00"
         mock_account.last_equity = "100000.00"
@@ -108,7 +108,7 @@ def test_zero_positions_portfolio():
         mock_client.get_account.return_value = mock_account
         mock_client.get_all_positions.return_value = []
 
-        response = client.get("/api/analytics/portfolio/summary", headers=HEADERS)
+        response = client.get("/api/portfolio/summary", headers=HEADERS)
 
         if response.status_code == 200:
             data = response.json()
@@ -118,7 +118,7 @@ def test_zero_positions_portfolio():
 
 def test_negative_pl_calculation():
     """Test that negative P&L is calculated correctly"""
-    with patch("app.routers.analytics.alpaca_client") as mock_client:
+    with patch("app.services.tradier_client.get_tradier_client") as mock_client:
         mock_account = MagicMock()
         mock_account.equity = "95000.00"  # Lost $5000
         mock_account.last_equity = "100000.00"
@@ -134,7 +134,7 @@ def test_negative_pl_calculation():
         mock_client.get_account.return_value = mock_account
         mock_client.get_all_positions.return_value = [mock_position]
 
-        response = client.get("/api/analytics/portfolio/summary", headers=HEADERS)
+        response = client.get("/api/portfolio/summary", headers=HEADERS)
 
         if response.status_code == 200:
             data = response.json()
@@ -143,7 +143,7 @@ def test_negative_pl_calculation():
 
 def test_performance_metrics_risk_calculations():
     """Test risk metric calculations (Sharpe, max drawdown)"""
-    response = client.get("/api/analytics/analytics/performance", headers=HEADERS)
+    response = client.get("/api/analytics/performance", headers=HEADERS)
 
     if response.status_code == 200:
         data = response.json()
