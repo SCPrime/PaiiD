@@ -7,6 +7,7 @@ import StockLookup from "./StockLookup";
 import { useWorkflow } from "../contexts/WorkflowContext";
 import { showSuccess } from "../lib/toast";
 import { TrendingUp, Shield, Target, AlertTriangle } from "lucide-react";
+import { useIsMobile } from "../hooks/useBreakpoint";
 
 interface TradeData {
   symbol: string;
@@ -81,6 +82,7 @@ interface PortfolioAnalysis {
 }
 
 export default function AIRecommendations() {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [portfolioAnalysis, setPortfolioAnalysis] = useState<PortfolioAnalysis | null>(null);
@@ -204,17 +206,19 @@ export default function AIRecommendations() {
   };
 
   return (
-    <div style={{ padding: theme.spacing.lg }}>
+    <div style={{ padding: isMobile ? theme.spacing.md : theme.spacing.lg }}>
       <div style={{
         display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: isMobile ? 'stretch' : 'flex-start',
+        gap: isMobile ? theme.spacing.sm : 0,
         marginBottom: theme.spacing.lg
       }}>
         <div>
           <h2 style={{
             margin: 0,
-            fontSize: '28px',
+            fontSize: isMobile ? '22px' : '28px',
             fontWeight: '700',
             color: theme.colors.text,
             textShadow: theme.glow.purple,
@@ -282,8 +286,8 @@ export default function AIRecommendations() {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: theme.spacing.xl,
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+            gap: isMobile ? theme.spacing.md : theme.spacing.xl,
             marginBottom: theme.spacing.lg
           }}>
             {/* Risk Score */}
@@ -471,10 +475,11 @@ export default function AIRecommendations() {
           <Card key={idx} glow="purple">
             {/* Main Recommendation Header */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'auto 1fr auto auto',
+              display: isMobile ? 'flex' : 'grid',
+              flexDirection: isMobile ? 'column' : undefined,
+              gridTemplateColumns: isMobile ? undefined : 'auto 1fr auto auto',
               gap: theme.spacing.lg,
-              alignItems: 'center',
+              alignItems: isMobile ? 'stretch' : 'center',
               marginBottom: theme.spacing.lg,
               paddingBottom: theme.spacing.lg,
               borderBottom: `1px solid ${theme.colors.border}`
@@ -802,7 +807,7 @@ export default function AIRecommendations() {
             {rec.entryPrice && (
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
                 gap: theme.spacing.md,
                 marginBottom: theme.spacing.lg
               }}>
@@ -937,7 +942,7 @@ export default function AIRecommendations() {
 
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
                   gap: theme.spacing.lg
                 }}>
                   {/* RSI */}
@@ -1058,7 +1063,7 @@ export default function AIRecommendations() {
       {showStockLookup && researchSymbol && (
         <div style={{
           marginTop: theme.spacing.xl,
-          padding: theme.spacing.lg,
+          padding: isMobile ? theme.spacing.md : theme.spacing.lg,
           background: 'rgba(15, 23, 42, 0.8)',
           border: `1px solid ${theme.colors.border}`,
           borderRadius: theme.borderRadius.lg,
@@ -1066,15 +1071,17 @@ export default function AIRecommendations() {
         }}>
           <div style={{
             display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: isMobile ? 'stretch' : 'center',
+            gap: isMobile ? theme.spacing.sm : 0,
             marginBottom: theme.spacing.lg,
             paddingBottom: theme.spacing.md,
             borderBottom: `1px solid ${theme.colors.border}`
           }}>
             <h3 style={{
               margin: 0,
-              fontSize: '22px',
+              fontSize: isMobile ? '18px' : '22px',
               fontWeight: '700',
               color: theme.colors.text
             }}>

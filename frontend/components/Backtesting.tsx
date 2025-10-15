@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { BarChart3, TrendingUp, TrendingDown, Activity, DollarSign, Percent, Play } from 'lucide-react';
 import { Card, Button, Input, Select } from './ui';
 import { theme } from '../styles/theme';
+import { useIsMobile } from '../hooks/useBreakpoint';
 
 interface BacktestConfig {
   symbol: string;
@@ -36,6 +37,7 @@ interface BacktestResults {
 }
 
 export default function Backtesting() {
+  const isMobile = useIsMobile();
   const [config, setConfig] = useState<BacktestConfig>({
     symbol: 'SPY',
     startDate: '2024-01-01',
@@ -111,11 +113,17 @@ export default function Backtesting() {
   };
 
   return (
-    <div style={{ padding: theme.spacing.lg }}>
+    <div style={{ padding: isMobile ? theme.spacing.md : theme.spacing.lg }}>
       {/* Header with PaiiD Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md, marginBottom: theme.spacing.lg }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: isMobile ? theme.spacing.sm : theme.spacing.md,
+        marginBottom: theme.spacing.lg,
+        flexWrap: 'wrap'
+      }}>
         {/* PaiiD Logo */}
-        <div style={{ fontSize: '42px', fontWeight: '900', lineHeight: '1' }}>
+        <div style={{ fontSize: isMobile ? '28px' : '42px', fontWeight: '900', lineHeight: '1' }}>
           <span style={{
             background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
             WebkitBackgroundClip: 'text',
@@ -137,10 +145,10 @@ export default function Backtesting() {
           }}>D</span>
         </div>
 
-        <BarChart3 size={32} color={theme.colors.info} />
+        <BarChart3 size={isMobile ? 24 : 32} color={theme.colors.info} />
         <h1 style={{
           margin: 0,
-          fontSize: '32px',
+          fontSize: isMobile ? '24px' : '32px',
           fontWeight: '700',
           color: theme.colors.text,
           textShadow: `0 0 20px ${theme.colors.info}40`,
@@ -154,7 +162,12 @@ export default function Backtesting() {
         <h3 style={{ margin: `0 0 ${theme.spacing.md} 0`, color: theme.colors.text, fontSize: '18px' }}>
           Configuration
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: theme.spacing.md, marginBottom: theme.spacing.md }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: theme.spacing.md,
+          marginBottom: theme.spacing.md
+        }}>
           <Select
             label="Strategy"
             options={[
@@ -195,7 +208,11 @@ export default function Backtesting() {
           size="md"
           loading={isRunning}
           onClick={runBacktest}
-          style={{ margin: '0 auto', display: 'block' }}
+          style={{
+            margin: isMobile ? 0 : '0 auto',
+            display: 'block',
+            width: isMobile ? '100%' : 'auto'
+          }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
             <Play size={20} />
@@ -210,7 +227,7 @@ export default function Backtesting() {
           {/* Metrics Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: theme.spacing.md,
             marginBottom: theme.spacing.lg,
           }}>
@@ -257,7 +274,7 @@ export default function Backtesting() {
               Equity Curve
             </h3>
             <div style={{
-              height: '300px',
+              height: isMobile ? '200px' : '300px',
               display: 'flex',
               alignItems: 'flex-end',
               gap: '2px',
@@ -289,7 +306,11 @@ export default function Backtesting() {
             <h3 style={{ margin: `0 0 ${theme.spacing.md} 0`, color: theme.colors.text, fontSize: '18px' }}>
               Trade Statistics
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: theme.spacing.md }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(150px, 1fr))',
+              gap: theme.spacing.md
+            }}>
               <StatItem label="Total Trades" value={results.totalTrades.toString()} />
               <StatItem label="Winning" value={results.winningTrades.toString()} color={theme.colors.primary} />
               <StatItem label="Losing" value={results.losingTrades.toString()} color={theme.colors.danger} />

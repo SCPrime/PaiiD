@@ -8,6 +8,7 @@ import { X, Copy, BarChart3, TrendingUp, Shield, Target } from 'lucide-react';
 import { GlassCard, GlassButton, GlassInput } from './GlassmorphicComponents';
 import { theme } from '../styles/theme';
 import toast from 'react-hot-toast';
+import { useIsMobile } from '../hooks/useBreakpoint';
 
 interface Template {
   id: string;
@@ -34,6 +35,7 @@ export default function TemplateCustomizationModal({
   onClose,
   onCloneSuccess,
 }: TemplateCustomizationModalProps) {
+  const isMobile = useIsMobile();
   const [customName, setCustomName] = useState('');
   const [positionSize, setPositionSize] = useState(0);
   const [stopLoss, setStopLoss] = useState(0);
@@ -120,7 +122,7 @@ export default function TemplateCustomizationModal({
   };
 
   const getRiskColor = (risk: string) => {
-    if (risk === 'Conservative') return theme.colors.success;
+    if (risk === 'Conservative') return theme.colors.primary; // Green/Teal for conservative
     if (risk === 'Moderate') return theme.colors.warning;
     return theme.colors.danger;
   };
@@ -159,23 +161,23 @@ export default function TemplateCustomizationModal({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: '700px',
+          maxWidth: isMobile ? '95vw' : '700px',
           width: '100%',
           maxHeight: '90vh',
           overflowY: 'auto',
           background: theme.background.primary,
           border: `1px solid ${theme.colors.border}`,
           borderRadius: theme.borderRadius.lg,
-          padding: theme.spacing.xl,
+          padding: isMobile ? theme.spacing.md : theme.spacing.xl,
         }}
       >
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: theme.spacing.lg }}>
           <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: '24px', fontWeight: '600', color: theme.colors.text, margin: `0 0 ${theme.spacing.xs} 0` }}>
+            <h2 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: '600', color: theme.colors.text, margin: `0 0 ${theme.spacing.xs} 0` }}>
               Customize Template
             </h2>
-            <p style={{ fontSize: '14px', color: theme.colors.textMuted, margin: 0 }}>
+            <p style={{ fontSize: isMobile ? '12px' : '14px', color: theme.colors.textMuted, margin: 0 }}>
               {template.name}
             </p>
           </div>
@@ -213,7 +215,11 @@ export default function TemplateCustomizationModal({
             marginBottom: theme.spacing.lg,
           }}
         >
-          <div style={{ display: 'flex', gap: theme.spacing.md, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+            gap: theme.spacing.md,
+          }}>
             <div>
               <span style={{ fontSize: '11px', color: theme.colors.textMuted, textTransform: 'uppercase' }}>Risk</span>
               <p style={{ fontSize: '14px', fontWeight: '600', color: getRiskColor(template.risk_level), margin: 0 }}>
@@ -228,7 +234,7 @@ export default function TemplateCustomizationModal({
             </div>
             <div>
               <span style={{ fontSize: '11px', color: theme.colors.textMuted, textTransform: 'uppercase' }}>Avg Return</span>
-              <p style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.success, margin: 0 }}>
+              <p style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.primary, margin: 0 }}>
                 +{template.avg_return_percent}%
               </p>
             </div>
@@ -294,7 +300,7 @@ export default function TemplateCustomizationModal({
           </div>
 
           {/* Stop Loss & Take Profit */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing.md }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: theme.spacing.md }}>
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: theme.colors.text, marginBottom: theme.spacing.xs }}>
                 <Shield style={{ width: '14px', height: '14px', display: 'inline', marginRight: '6px' }} />
@@ -399,21 +405,26 @@ export default function TemplateCustomizationModal({
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: theme.spacing.sm, marginTop: theme.spacing.xl }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: theme.spacing.sm,
+          marginTop: theme.spacing.xl
+        }}>
           <GlassButton
             variant="secondary"
             onClick={onClose}
             disabled={isCloning}
-            style={{ flex: 1 }}
+            style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}
           >
             Cancel
           </GlassButton>
           <GlassButton
             variant="workflow"
-            workflowColor="primary"
+            workflowColor="strategyBuilder"
             onClick={handleClone}
             disabled={isCloning || !customName.trim()}
-            style={{ flex: 1 }}
+            style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}
           >
             {isCloning ? (
               <>

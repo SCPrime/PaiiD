@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown, DollarSign, Percent, RefreshCw } from 'lucide
 import { Card, Button } from './ui';
 import { theme } from '../styles/theme';
 import { alpaca, formatPosition } from '../lib/alpaca';
+import { useIsMobile } from '../hooks/useBreakpoint';
 
 interface Position {
   symbol: string;
@@ -29,6 +30,7 @@ interface PortfolioMetrics {
 }
 
 export default function ActivePositions() {
+  const isMobile = useIsMobile();
   const [positions, setPositions] = useState<Position[]>([]);
   const [metrics, setMetrics] = useState<PortfolioMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,17 +99,19 @@ export default function ActivePositions() {
   };
 
   return (
-    <div style={{ padding: theme.spacing.lg }}>
+    <div style={{ padding: isMobile ? theme.spacing.md : theme.spacing.lg }}>
       {/* Header with PaiiD Logo */}
       <div style={{
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'flex-start' : 'center',
         justifyContent: 'space-between',
+        gap: isMobile ? theme.spacing.sm : 0,
         marginBottom: theme.spacing.lg
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? theme.spacing.sm : theme.spacing.md }}>
           {/* PaiiD Logo */}
-          <div style={{ fontSize: '42px', fontWeight: '900', lineHeight: '1' }}>
+          <div style={{ fontSize: isMobile ? '28px' : '42px', fontWeight: '900', lineHeight: '1' }}>
             <span style={{
               background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
               WebkitBackgroundClip: 'text',
@@ -129,10 +133,10 @@ export default function ActivePositions() {
             }}>D</span>
           </div>
 
-          <TrendingUp size={32} color={theme.colors.primary} />
+          <TrendingUp size={isMobile ? 24 : 32} color={theme.colors.primary} />
           <h1 style={{
             margin: 0,
-            fontSize: '32px',
+            fontSize: isMobile ? '24px' : '32px',
             fontWeight: '700',
             color: theme.colors.text,
             textShadow: theme.glow.green,
@@ -140,7 +144,7 @@ export default function ActivePositions() {
             Active Positions
           </h1>
         </div>
-        <Button variant="secondary" size="sm" onClick={loadPositions}>
+        <Button variant="secondary" size="sm" onClick={loadPositions} style={{ width: isMobile ? '100%' : 'auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
             <RefreshCw size={16} />
             Refresh
@@ -160,7 +164,7 @@ export default function ActivePositions() {
           {metrics && (
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: theme.spacing.md,
               marginBottom: theme.spacing.lg,
             }}>
@@ -193,27 +197,34 @@ export default function ActivePositions() {
 
           {/* Sort Controls */}
           <Card style={{ marginBottom: theme.spacing.md, padding: theme.spacing.md }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              alignItems: isMobile ? 'flex-start' : 'center',
+              gap: theme.spacing.sm
+            }}>
               <span style={{ color: theme.colors.textMuted, fontSize: '14px' }}>Sort by:</span>
-              {(['symbol', 'pl', 'plPercent', 'value'] as const).map((sort) => (
-                <button
-                  key={sort}
-                  onClick={() => setSortBy(sort)}
-                  style={{
-                    padding: `${theme.spacing.xs} ${theme.spacing.md}`,
-                    background: sortBy === sort ? theme.colors.primary : theme.background.input,
-                    color: sortBy === sort ? '#fff' : theme.colors.text,
-                    borderRadius: theme.borderRadius.sm,
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: sortBy === sort ? '600' : '400',
-                    transition: theme.transitions.fast,
-                  }}
-                >
-                  {sort === 'pl' ? 'P&L' : sort === 'plPercent' ? 'P&L %' : sort.charAt(0).toUpperCase() + sort.slice(1)}
-                </button>
-              ))}
+              <div style={{ display: 'flex', gap: theme.spacing.sm, flexWrap: 'wrap' }}>
+                {(['symbol', 'pl', 'plPercent', 'value'] as const).map((sort) => (
+                  <button
+                    key={sort}
+                    onClick={() => setSortBy(sort)}
+                    style={{
+                      padding: `${theme.spacing.xs} ${theme.spacing.md}`,
+                      background: sortBy === sort ? theme.colors.primary : theme.background.input,
+                      color: sortBy === sort ? '#fff' : theme.colors.text,
+                      borderRadius: theme.borderRadius.sm,
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: sortBy === sort ? '600' : '400',
+                      transition: theme.transitions.fast,
+                    }}
+                  >
+                    {sort === 'pl' ? 'P&L' : sort === 'plPercent' ? 'P&L %' : sort.charAt(0).toUpperCase() + sort.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
           </Card>
 
@@ -228,11 +239,17 @@ export default function ActivePositions() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.md }}>
               {sortPositions(positions).map((position) => (
                 <Card key={position.symbol} glow={position.unrealizedPL >= 0 ? 'green' : undefined}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: theme.spacing.md }}>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: isMobile ? 'column' : 'row',
+                    justifyContent: 'space-between',
+                    gap: isMobile ? theme.spacing.sm : 0,
+                    marginBottom: theme.spacing.md
+                  }}>
                     <div>
                       <h3 style={{
                         margin: 0,
-                        fontSize: '24px',
+                        fontSize: isMobile ? '20px' : '24px',
                         fontWeight: '700',
                         color: theme.colors.text
                       }}>
@@ -242,8 +259,8 @@ export default function ActivePositions() {
                         {position.qty} shares @ ${position.avgEntryPrice.toFixed(2)}
                       </p>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: theme.colors.text }}>
+                    <div style={{ textAlign: isMobile ? 'left' : 'right' }}>
+                      <p style={{ margin: 0, fontSize: isMobile ? '20px' : '24px', fontWeight: '700', color: theme.colors.text }}>
                         ${position.currentPrice.toFixed(2)}
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs, justifyContent: 'flex-end' }}>
@@ -265,7 +282,7 @@ export default function ActivePositions() {
 
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
                     gap: theme.spacing.md,
                     paddingTop: theme.spacing.md,
                     borderTop: `1px solid ${theme.colors.border}`,

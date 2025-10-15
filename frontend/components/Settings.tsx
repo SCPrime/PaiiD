@@ -9,6 +9,7 @@ import ApprovalQueue from './ApprovalQueue';
 import KillSwitchToggle from './KillSwitchToggle';
 import { getCurrentUser, getUserAnalytics, clearUserData } from '../lib/userManagement';
 import toast from 'react-hot-toast';
+import { useIsMobile, useBreakpoint } from '../hooks/useBreakpoint';
 
 interface User {
   id: string;
@@ -62,6 +63,8 @@ interface SettingsProps {
 }
 
 export default function Settings({ isOpen, onClose }: SettingsProps) {
+  const isMobile = useIsMobile();
+  const breakpoint = useBreakpoint();
   const currentUserData = getCurrentUser();
   const [currentUser] = useState({
     id: currentUserData?.userId || 'owner-001',
@@ -247,12 +250,14 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             },
           });
 
+          let limitsData = null;
           if (limitsResponse.ok) {
-            const limitsData = await limitsResponse.json();
+            limitsData = await limitsResponse.json();
             setRiskLimits(limitsData);
           }
 
-          toast.success(`Risk tolerance updated to ${newValue}% (${limitsData.risk_category})`);
+          const riskCategory = limitsData?.risk_category || (newValue <= 33 ? 'Conservative' : newValue <= 66 ? 'Moderate' : 'Aggressive');
+          toast.success(`Risk tolerance updated to ${newValue}% (${riskCategory})`);
         } else {
           toast.error('Failed to update risk tolerance');
         }
@@ -384,13 +389,13 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         border: '1px solid rgba(16, 185, 129, 0.3)',
         borderRadius: '20px',
         boxShadow: '0 0 40px rgba(16, 185, 129, 0.15)',
-        maxWidth: '1200px',
+        maxWidth: isMobile ? '95vw' : '1200px',
         width: '100%',
         maxHeight: '90vh',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        margin: '32px 0',
+        margin: isMobile ? '16px 0' : '32px 0',
       }}>
         {/* Header */}
         <div style={{
@@ -504,7 +509,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                     )}
 
                     {analytics && (
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid gap-3" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
                         <div className="p-3 bg-slate-900/40 border border-slate-700/30 rounded-lg">
                           <div className="text-xs text-slate-400 mb-1">Account Age</div>
                           <div className="text-sm font-semibold text-cyan-400">{analytics.accountAge}</div>
@@ -732,7 +737,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
                   {/* Position Sizing Limits Display */}
                   {riskLimits && (
-                    <div className="grid grid-cols-2 gap-3 mt-4">
+                    <div className="grid gap-3 mt-4" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
                       <div className="p-3 bg-slate-900/40 border border-slate-700/30 rounded-lg">
                         <div className="text-xs text-slate-400 mb-1">Max Position Size</div>
                         <div className="text-lg font-semibold text-cyan-400">
@@ -888,6 +893,8 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 }
 
 function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: any) {
+  const isMobile = useIsMobile();
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -932,7 +939,7 @@ function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: an
             )}
           </div>
 
-          <div className="grid grid-cols-3 gap-2 text-sm">
+          <div className="grid gap-2 text-sm" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' }}>
             <div>
               <div className="text-xs text-slate-500">Created</div>
               <div className="text-white">{user.createdAt}</div>
@@ -955,6 +962,8 @@ function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: an
 }
 
 function ThemeCustomizationTab({ themeCustom, onUpdate }: any) {
+  const isMobile = useIsMobile();
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -962,7 +971,7 @@ function ThemeCustomizationTab({ themeCustom, onUpdate }: any) {
         Theme Customization
       </h3>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid gap-4" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
         {Object.entries(themeCustom).map(([key, value]) => (
           <div key={key}>
             <label className="block text-sm font-medium text-slate-300 mb-2 capitalize">
@@ -997,6 +1006,8 @@ function ThemeCustomizationTab({ themeCustom, onUpdate }: any) {
 }
 
 function PermissionsTab({ users, isOwner, onUpdatePermission }: any) {
+  const isMobile = useIsMobile();
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -1008,7 +1019,7 @@ function PermissionsTab({ users, isOwner, onUpdatePermission }: any) {
         <div key={user.id} className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
           <h4 className="text-white font-semibold mb-3">{user.name} ({user.role})</h4>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
             {Object.entries(user.permissions).map(([permission, enabled]) => (
               <label
                 key={permission}

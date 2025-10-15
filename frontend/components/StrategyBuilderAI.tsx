@@ -30,6 +30,7 @@ import { claudeAI } from '../lib/aiAdapter';
 import StockLookup from './StockLookup';
 import TemplateCustomizationModal from './TemplateCustomizationModal';
 import toast from 'react-hot-toast';
+import { useIsMobile } from '../hooks/useBreakpoint';
 interface Strategy {
   id?: string;  name: string;  entry: string[];  exit: string[];  riskManagement: string[];  code?: string;}
 
@@ -57,6 +58,7 @@ interface Template {
 }
 
 export default function StrategyBuilderAI() {
+  const isMobile = useIsMobile();
   const [view, setView] = useState<'create' | 'library'>('library');
   const [nlInput, setNlInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -232,14 +234,20 @@ export default function StrategyBuilderAI() {
       style={{
         height: '100%',
         background: theme.background.primary,
-        padding: theme.spacing.lg,
+        padding: isMobile ? theme.spacing.md : theme.spacing.lg,
         overflowY: 'auto',
       }}
     >
       <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: theme.spacing.lg }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'center',
+          justifyContent: 'space-between',
+          gap: isMobile ? theme.spacing.sm : 0
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? theme.spacing.sm : theme.spacing.md }}>
             <div
               style={{
                 padding: theme.spacing.md,
@@ -253,7 +261,7 @@ export default function StrategyBuilderAI() {
             <div>
               <h1
                 style={{
-                  fontSize: '32px',
+                  fontSize: isMobile ? '24px' : '32px',
                   fontWeight: 'bold',
                   color: theme.colors.text,
                   margin: 0,
@@ -469,7 +477,7 @@ export default function StrategyBuilderAI() {
                   </GlassBadge>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing.lg }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: theme.spacing.lg }}>
                   {/* Entry Rules */}
                   <div>
                     <h4
@@ -610,7 +618,12 @@ export default function StrategyBuilderAI() {
 
               {/* Template Grid */}
               {!isLoadingTemplates && !templatesError && templates.length > 0 && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: theme.spacing.md, marginBottom: theme.spacing.xl }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(400px, 1fr))',
+                  gap: theme.spacing.md,
+                  marginBottom: theme.spacing.xl
+                }}>
                   {templates.map((template) => {
                     const getRiskColor = (risk: string) => {
                       if (risk === 'Conservative') return theme.colors.success;
@@ -666,7 +679,7 @@ export default function StrategyBuilderAI() {
                         <div
                           style={{
                             display: 'grid',
-                            gridTemplateColumns: '1fr 1fr 1fr',
+                            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
                             gap: theme.spacing.sm,
                             marginBottom: theme.spacing.md,
                             padding: theme.spacing.sm,
@@ -774,7 +787,11 @@ export default function StrategyBuilderAI() {
                   </div>
                 </GlassCard>
               ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: theme.spacing.md }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(350px, 1fr))',
+                gap: theme.spacing.md
+              }}>
                 {savedStrategies.map((strategy) => (
                   <GlassCard key={strategy.id}>
                     <div style={{ marginBottom: theme.spacing.md }}>
@@ -822,7 +839,7 @@ export default function StrategyBuilderAI() {
                     <div
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
+                        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
                         gap: theme.spacing.sm,
                         marginBottom: theme.spacing.md,
                         padding: theme.spacing.sm,

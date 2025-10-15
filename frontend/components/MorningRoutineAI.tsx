@@ -27,6 +27,7 @@ import {
 import { GlassCard, GlassButton, GlassBadge } from './GlassmorphicComponents';
 import { theme } from '../styles/theme';
 import { claudeAI } from '../lib/aiAdapter';
+import { useIsMobile } from '../hooks/useBreakpoint';
 import { getCurrentUser, updateUser } from '../lib/userManagement';
 import { fetchUnder4Scanner } from '../lib/marketData';
 
@@ -120,6 +121,7 @@ ${data.candidates.map((stock: any, idx: number) => `
 }
 
 export default function MorningRoutineAI() {
+  const isMobile = useIsMobile();
   const [view, setView] = useState<'dashboard' | 'scheduler'>('dashboard');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(false);
@@ -458,13 +460,19 @@ Provide:
         style={{
           height: '100%',
           background: theme.background.primary,
-          padding: theme.spacing.lg,
+          padding: isMobile ? theme.spacing.md : theme.spacing.lg,
           overflowY: 'auto',
         }}
       >
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: theme.spacing.lg }}>
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'stretch' : 'center',
+            justifyContent: 'space-between',
+            gap: isMobile ? theme.spacing.md : 0
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
               <div
                 style={{
@@ -474,12 +482,12 @@ Provide:
                   boxShadow: theme.glow.teal,
                 }}
               >
-                <Sun style={{ width: '32px', height: '32px', color: accentColor }} />
+                <Sun style={{ width: isMobile ? '24px' : '32px', height: isMobile ? '24px' : '32px', color: accentColor }} />
               </div>
               <div>
                 <h1
                   style={{
-                    fontSize: '32px',
+                    fontSize: isMobile ? '24px' : '32px',
                     fontWeight: 'bold',
                     color: theme.colors.text,
                     margin: 0,
@@ -499,7 +507,12 @@ Provide:
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: theme.spacing.sm,
+              width: isMobile ? '100%' : 'auto'
+            }}>
               {/* Run Now Button - Prominent with gradient */}
               <GlassButton
                 onClick={handleRunNow}
@@ -511,6 +524,7 @@ Provide:
                   boxShadow: isRunning ? 'none' : `${theme.glow.teal}, ${theme.glow.purple}`,
                   border: 'none',
                   fontWeight: '600',
+                  width: isMobile ? '100%' : 'auto',
                 }}
               >
                 {isRunning ? (
@@ -526,7 +540,7 @@ Provide:
                 )}
               </GlassButton>
 
-              <GlassButton onClick={() => setView('scheduler')} variant="workflow" workflowColor="morningRoutine">
+              <GlassButton onClick={() => setView('scheduler')} variant="workflow" workflowColor="morningRoutine" style={{ width: isMobile ? '100%' : 'auto' }}>
                 <Calendar style={{ width: '18px', height: '18px' }} />
                 Schedule
               </GlassButton>
@@ -581,7 +595,11 @@ Provide:
             <h3 style={{ fontSize: '18px', fontWeight: '600', color: theme.colors.text, marginBottom: theme.spacing.md }}>
               Portfolio Snapshot
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: theme.spacing.md }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+              gap: theme.spacing.md
+            }}>
               <div>
                 <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: 0 }}>Total Value</p>
                 <p style={{ fontSize: '24px', fontWeight: '600', color: theme.colors.text, margin: 0 }}>
@@ -712,13 +730,19 @@ Provide:
       style={{
         height: '100%',
         background: theme.background.primary,
-        padding: theme.spacing.lg,
+        padding: isMobile ? theme.spacing.md : theme.spacing.lg,
         overflowY: 'auto',
       }}
     >
       <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: theme.spacing.lg }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'center',
+          justifyContent: 'space-between',
+          gap: isMobile ? theme.spacing.md : 0
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
             <div
               style={{
@@ -728,12 +752,12 @@ Provide:
                 boxShadow: theme.glow.teal,
               }}
             >
-              <Calendar style={{ width: '32px', height: '32px', color: accentColor }} />
+              <Calendar style={{ width: isMobile ? '24px' : '32px', height: isMobile ? '24px' : '32px', color: accentColor }} />
             </div>
             <div>
               <h1
                 style={{
-                  fontSize: '32px',
+                  fontSize: isMobile ? '24px' : '32px',
                   fontWeight: 'bold',
                   color: theme.colors.text,
                   margin: 0,
@@ -753,7 +777,7 @@ Provide:
             </div>
           </div>
 
-          <GlassButton onClick={() => setView('dashboard')} variant="secondary">
+          <GlassButton onClick={() => setView('dashboard')} variant="secondary" style={{ width: isMobile ? '100%' : 'auto' }}>
             Back to Dashboard
           </GlassButton>
         </div>
@@ -829,7 +853,11 @@ Provide:
               <h3 style={{ fontSize: '18px', fontWeight: '600', color: theme.colors.text, marginBottom: theme.spacing.md }}>
                 Frequency
               </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: theme.spacing.sm }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+                gap: theme.spacing.sm
+              }}>
                 {(['daily', 'weekdays', 'custom'] as const).map((freq) => (
                   <button
                     key={freq}
@@ -906,7 +934,11 @@ Provide:
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: theme.spacing.sm }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                gap: theme.spacing.sm
+              }}>
                 {availableSteps.map((step) => (
                   <button
                     key={step.id}

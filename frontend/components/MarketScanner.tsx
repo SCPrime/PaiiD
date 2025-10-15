@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Search, TrendingUp, TrendingDown, Zap, RefreshCw, Filter, Star } from 'lucide-react';
 import { Card, Button, Input, Select } from './ui';
 import { theme } from '../styles/theme';
+import { useIsMobile } from '../hooks/useBreakpoint';
 import StockLookup from './StockLookup';
 
 interface ScanResult {
@@ -32,6 +33,7 @@ interface ScanFilter {
 }
 
 export default function MarketScanner() {
+  const isMobile = useIsMobile();
   const [results, setResults] = useState<ScanResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<ScanFilter>({
@@ -169,14 +171,21 @@ export default function MarketScanner() {
   };
 
   return (
-    <div style={{ padding: theme.spacing.lg }}>
+    <div style={{ padding: isMobile ? theme.spacing.md : theme.spacing.lg }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.lg }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'stretch' : 'center',
+        justifyContent: 'space-between',
+        gap: isMobile ? theme.spacing.sm : 0,
+        marginBottom: theme.spacing.lg
+      }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
-          <Search size={32} color={theme.colors.info} />
+          <Search size={isMobile ? 24 : 32} color={theme.colors.info} />
           <h1 style={{
             margin: 0,
-            fontSize: '32px',
+            fontSize: isMobile ? '24px' : '32px',
             fontWeight: '700',
             color: theme.colors.text,
             textShadow: `0 0 20px ${theme.colors.info}40`,
@@ -189,6 +198,7 @@ export default function MarketScanner() {
           size="md"
           onClick={runScan}
           loading={loading}
+          style={{ width: isMobile ? '100%' : 'auto' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
             <RefreshCw size={20} />
@@ -218,7 +228,11 @@ export default function MarketScanner() {
         </div>
 
         {/* Filters */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: theme.spacing.md }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: theme.spacing.md
+        }}>
           <div>
             <Input
               label="Min Price"
@@ -276,10 +290,16 @@ export default function MarketScanner() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.md }}>
           {results.map((result) => (
             <Card key={result.symbol} glow={result.signal.includes('buy') ? 'green' : result.signal.includes('sell') ? 'red' : undefined}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: theme.spacing.md }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                justifyContent: 'space-between',
+                gap: isMobile ? theme.spacing.sm : 0,
+                marginBottom: theme.spacing.md
+              }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, marginBottom: theme.spacing.xs }}>
-                    <h3 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: theme.colors.text }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, marginBottom: theme.spacing.xs, flexWrap: 'wrap' }}>
+                    <h3 style={{ margin: 0, fontSize: isMobile ? '20px' : '24px', fontWeight: '700', color: theme.colors.text }}>
                       {result.symbol}
                     </h3>
                     <span style={{
@@ -308,17 +328,22 @@ export default function MarketScanner() {
                     ${result.price.toFixed(2)} · {result.change >= 0 ? '+' : ''}{result.change.toFixed(2)} ({result.changePercent >= 0 ? '+' : ''}{result.changePercent.toFixed(2)}%)
                   </p>
                 </div>
-                <div style={{ display: 'flex', gap: theme.spacing.xs }}>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: theme.spacing.xs,
+                  width: isMobile ? '100%' : 'auto'
+                }}>
                   <Button variant="secondary" size="sm" onClick={() => {
                     setSelectedSymbol(result.symbol);
                     setShowResearch(true);
-                  }}>
+                  }} style={{ width: isMobile ? '100%' : 'auto' }}>
                     Research
                   </Button>
                   <Button variant="primary" size="sm" onClick={() => {
                     // Navigate to execute trade with this symbol
                     alert(`Execute trade for ${result.symbol}`);
-                  }}>
+                  }} style={{ width: isMobile ? '100%' : 'auto' }}>
                     Trade
                   </Button>
                 </div>
@@ -327,7 +352,7 @@ export default function MarketScanner() {
               {/* Indicators */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(150px, 1fr))',
                 gap: theme.spacing.md,
                 marginBottom: theme.spacing.md,
                 padding: theme.spacing.md,
@@ -362,21 +387,23 @@ export default function MarketScanner() {
           <Card>
             <div style={{
               display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
               justifyContent: 'space-between',
-              alignItems: 'center',
+              alignItems: isMobile ? 'flex-start' : 'center',
+              gap: isMobile ? theme.spacing.sm : 0,
               marginBottom: theme.spacing.md,
               paddingBottom: theme.spacing.md,
               borderBottom: `1px solid ${theme.background.input}`
             }}>
               <h2 style={{
                 margin: 0,
-                fontSize: '24px',
+                fontSize: isMobile ? '20px' : '24px',
                 fontWeight: '700',
                 color: theme.colors.text
               }}>
                 Detailed Research
               </h2>
-              <Button variant="secondary" size="sm" onClick={() => setShowResearch(false)}>
+              <Button variant="secondary" size="sm" onClick={() => setShowResearch(false)} style={{ width: isMobile ? '100%' : 'auto' }}>
                 Close
               </Button>
             </div>

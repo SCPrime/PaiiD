@@ -5,6 +5,7 @@ import { Card, Button } from './ui';
 import { theme } from '../styles/theme';
 import { alpaca } from '../lib/alpaca';
 import TradingViewChart from './TradingViewChart';
+import { useIsMobile, useBreakpoint } from '../hooks/useBreakpoint';
 
 interface PerformanceMetrics {
   totalReturn: number;
@@ -50,6 +51,7 @@ interface PortfolioSummary {
 }
 
 function PortfolioSummaryCard() {
+  const isMobile = useIsMobile();
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -151,7 +153,7 @@ function PortfolioSummaryCard() {
       {(summary.largest_winner || summary.largest_loser) && (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
           gap: theme.spacing.md,
           marginTop: theme.spacing.md,
           paddingTop: theme.spacing.md,
@@ -197,6 +199,10 @@ export default function Analytics() {
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
+
+  // Mobile responsiveness
+  const isMobile = useIsMobile();
+  const breakpoint = useBreakpoint();
 
   useEffect(() => {
     loadAnalytics();
@@ -328,7 +334,7 @@ export default function Analytics() {
   }
 
   return (
-    <div style={{ padding: theme.spacing.lg }}>
+    <div style={{ padding: isMobile ? theme.spacing.md : theme.spacing.lg }}>
       {/* DEMO MODE Banner */}
       {isDemoMode && (
         <div style={{
@@ -372,10 +378,17 @@ export default function Analytics() {
       )}
 
       {/* Header with PaiiD Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.lg }}>
+      <div style={{
+        display: 'flex',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        justifyContent: 'space-between',
+        marginBottom: theme.spacing.lg,
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? theme.spacing.md : '0'
+      }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
           {/* PaiiD Logo */}
-          <div style={{ fontSize: '42px', fontWeight: '900', lineHeight: '1' }}>
+          <div style={{ fontSize: isMobile ? '28px' : '42px', fontWeight: '900', lineHeight: '1' }}>
             <span style={{
               background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
               WebkitBackgroundClip: 'text',
@@ -397,10 +410,10 @@ export default function Analytics() {
             }}>D</span>
           </div>
 
-          <BarChart3 size={32} color={theme.colors.info} />
+          <BarChart3 size={isMobile ? 24 : 32} color={theme.colors.info} />
           <h1 style={{
             margin: 0,
-            fontSize: '32px',
+            fontSize: isMobile ? '24px' : '32px',
             fontWeight: '700',
             color: theme.colors.text,
             textShadow: `0 0 20px ${theme.colors.info}40`,
@@ -410,13 +423,19 @@ export default function Analytics() {
         </div>
 
         {/* Timeframe Selector */}
-        <div style={{ display: 'flex', gap: theme.spacing.xs }}>
+        <div style={{
+          display: 'flex',
+          gap: theme.spacing.xs,
+          flexWrap: 'wrap',
+          width: isMobile ? '100%' : 'auto'
+        }}>
           {(['1W', '1M', '3M', '1Y', 'ALL'] as const).map((tf) => (
             <Button
               key={tf}
               variant={timeframe === tf ? 'primary' : 'secondary'}
               size="sm"
               onClick={() => setTimeframe(tf)}
+              style={{ flex: isMobile ? '1' : 'none', minWidth: isMobile ? '0' : 'auto' }}
             >
               {tf}
             </Button>
@@ -480,7 +499,7 @@ export default function Analytics() {
               Portfolio Value Over Time
             </h3>
             <div style={{
-              height: '300px',
+              height: isMobile ? '200px' : '300px',
               display: 'flex',
               alignItems: 'flex-end',
               gap: '2px',
@@ -521,7 +540,7 @@ export default function Analytics() {
               Daily P&L
             </h3>
             <div style={{
-              height: '200px',
+              height: isMobile ? '150px' : '200px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -597,7 +616,7 @@ export default function Analytics() {
 
           {/* TradingView Chart */}
           <div style={{ marginBottom: theme.spacing.lg }}>
-            <TradingViewChart symbol="$DJI.IX" height={600} />
+            <TradingViewChart symbol="$DJI.IX" height={isMobile ? 400 : 600} />
           </div>
 
           {/* Trade Statistics */}

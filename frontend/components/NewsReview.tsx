@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import StockLookup from './StockLookup';
+import { useIsMobile } from '../hooks/useBreakpoint';
 
 interface NewsArticle {
   id: string;
@@ -24,6 +25,7 @@ interface NewsResponse {
 }
 
 const NewsReview: React.FC = () => {
+  const isMobile = useIsMobile();
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -189,16 +191,16 @@ const NewsReview: React.FC = () => {
 
   return (
     <div style={{
-      padding: '24px',
+      padding: isMobile ? '16px' : '24px',
       color: '#e2e8f0',
       height: '100%',
       overflowY: 'auto',
     }}>
       {/* Header with PaiiD Logo */}
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '16px', marginBottom: '8px' }}>
           {/* PaiiD Logo */}
-          <div style={{ fontSize: '42px', fontWeight: '900', lineHeight: '1' }}>
+          <div style={{ fontSize: isMobile ? '28px' : '42px', fontWeight: '900', lineHeight: '1' }}>
             <span style={{
               background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
               WebkitBackgroundClip: 'text',
@@ -221,7 +223,7 @@ const NewsReview: React.FC = () => {
           </div>
 
           <h2 style={{
-            fontSize: '28px',
+            fontSize: isMobile ? '22px' : '28px',
             fontWeight: '700',
             margin: 0,
             background: 'linear-gradient(135deg, #3B82F6, #A855F7)',
@@ -249,9 +251,9 @@ const NewsReview: React.FC = () => {
           background: `linear-gradient(135deg, ${getSentimentColor(marketSentiment.overall_sentiment)}15, transparent)`,
           border: `1px solid ${getSentimentColor(marketSentiment.overall_sentiment)}40`,
           display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
+          alignItems: isMobile ? 'flex-start' : 'center',
           gap: '16px',
         }}>
           <div>
@@ -479,7 +481,7 @@ const NewsReview: React.FC = () => {
               >
                 {/* Article Header */}
                 <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
-                  {article.image_url && (
+                  {article.image_url && !isMobile && (
                     <img
                       src={article.image_url}
                       alt={article.title}
@@ -628,7 +630,7 @@ const NewsReview: React.FC = () => {
       {showStockLookup && selectedSymbol && (
         <div style={{
           marginTop: '32px',
-          padding: '24px',
+          padding: isMobile ? '16px' : '24px',
           borderRadius: '12px',
           backgroundColor: 'rgba(15, 23, 42, 0.8)',
           border: '1px solid #334155',
@@ -636,15 +638,17 @@ const NewsReview: React.FC = () => {
         }}>
           <div style={{
             display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: isMobile ? 'stretch' : 'center',
+            gap: isMobile ? '12px' : 0,
             marginBottom: '24px',
             paddingBottom: '16px',
             borderBottom: '1px solid #334155',
           }}>
             <h2 style={{
               margin: 0,
-              fontSize: '24px',
+              fontSize: isMobile ? '18px' : '24px',
               fontWeight: '700',
               color: '#e2e8f0',
               background: 'linear-gradient(135deg, #3B82F6, #A855F7)',
