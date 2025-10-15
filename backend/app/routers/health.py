@@ -31,15 +31,15 @@ def ready():
 @router.get("/sentry-test")
 def sentry_test():
     """
-    Test endpoint to verify Sentry error tracking is working
+    Test endpoint to verify Sentry error tracking is working.
 
-    This endpoint intentionally raises an error to test Sentry integration.
-    Only use in development/staging environments.
+    This endpoint intentionally raises a Python exception to test Sentry integration.
+    Visit: https://paiid-backend.onrender.com/api/sentry-test
+
+    Expected: Error appears in Sentry dashboard within 30 seconds.
     """
-    sentry_sdk.capture_message("Sentry test message", level="info")
+    # First, send a test message to Sentry
+    sentry_sdk.capture_message("🧪 SENTRY TEST: Test message sent from /api/sentry-test", level="info")
 
-    # Raise a test exception
-    raise HTTPException(
-        status_code=500,
-        detail="This is a test error to verify Sentry integration is working"
-    )
+    # Then, raise an unhandled exception (guaranteed to be captured)
+    raise Exception("🧪 SENTRY TEST: This is an intentional error to verify error tracking is working! If you see this in Sentry, error tracking is operational.")
