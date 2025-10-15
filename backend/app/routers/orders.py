@@ -109,6 +109,45 @@ class AlpacaCircuitBreaker:
 alpaca_circuit_breaker = AlpacaCircuitBreaker(failure_threshold=3, cooldown_seconds=60)
 
 
+# Order Model (must be defined before use in function signatures)
+class Order(BaseModel):
+    """Order model with comprehensive validation"""
+    symbol: str = Field(..., min_length=1, max_length=5, pattern=r'^[A-Z]{1,5}$',
+                        description="Stock symbol (1-5 uppercase letters)", examples=["AAPL", "SPY"])
+    side: str = Field(..., pattern=r'^(buy|sell)$', description="Order side: 'buy' or 'sell'")
+    qty: float = Field(..., gt=0, le=10000, description="Order quantity (0.01 to 10,000 shares)")
+    type: str = Field(default="market", pattern=r'^(market|limit|stop|stop_limit)$',
+                      description="Order type")
+    limit_price: Optional[float] = Field(default=None, gt=0, le=1000000,
+                                         description="Limit price (required for limit/stop_limit orders)")
+
+    @validator('symbol')
+    def validate_symbol_format(cls, v):
+        """Validate and normalize symbol"""
+        return validate_symbol(v)
+
+    @validator('side')
+    def validate_side_value(cls, v):
+        """Validate order side"""
+        return validate_side(v)
+
+    @validator('qty')
+    def validate_quantity_value(cls, v):
+        """Validate order quantity"""
+        return validate_quantity(v)
+
+    @validator('type')
+    def validate_order_type_value(cls, v):
+        """Validate order type"""
+        return validate_order_type(v)
+
+    @validator('limit_price', always=True)
+    def validate_limit_price_value(cls, v, values):
+        """Validate limit price based on order type"""
+        order_type = values.get('type', 'market')
+        return validate_limit_price(v, order_type)
+
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=1, max=10),
@@ -175,43 +214,6 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
             status_code=500,
             detail=f"Failed to execute order for {order.symbol}: {str(e)}"
         )
-
-class Order(BaseModel):
-    """Order model with comprehensive validation"""
-    symbol: str = Field(..., min_length=1, max_length=5, pattern=r'^[A-Z]{1,5}$',
-                        description="Stock symbol (1-5 uppercase letters)", examples=["AAPL", "SPY"])
-    side: str = Field(..., pattern=r'^(buy|sell)$', description="Order side: 'buy' or 'sell'")
-    qty: float = Field(..., gt=0, le=10000, description="Order quantity (0.01 to 10,000 shares)")
-    type: str = Field(default="market", pattern=r'^(market|limit|stop|stop_limit)$',
-                      description="Order type")
-    limit_price: Optional[float] = Field(default=None, gt=0, le=1000000,
-                                         description="Limit price (required for limit/stop_limit orders)")
-
-    @validator('symbol')
-    def validate_symbol_format(cls, v):
-        """Validate and normalize symbol"""
-        return validate_symbol(v)
-
-    @validator('side')
-    def validate_side_value(cls, v):
-        """Validate order side"""
-        return validate_side(v)
-
-    @validator('qty')
-    def validate_quantity_value(cls, v):
-        """Validate order quantity"""
-        return validate_quantity(v)
-
-    @validator('type')
-    def validate_order_type_value(cls, v):
-        """Validate order type"""
-        return validate_order_type(v)
-
-    @validator('limit_price', always=True)
-    def validate_limit_price_value(cls, v, values):
-        """Validate limit price based on order type"""
-        order_type = values.get('type', 'market')
-        return validate_limit_price(v, order_type)
 
 
 class ExecRequest(BaseModel):
