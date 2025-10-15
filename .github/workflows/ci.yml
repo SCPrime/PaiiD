@@ -12,6 +12,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Shallow clones disabled for better analysis
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -22,11 +24,12 @@ jobs:
       run: |
         cd backend
         pip install -r requirements.txt
+        pip install pytest-cov
 
-    - name: Run backend tests
+    - name: Run backend tests with coverage
       run: |
         cd backend
-        python -m pytest tests/ -v
+        python -m pytest tests/ -v --cov=app --cov-report=xml --cov-report=term
 
     - name: Lint backend code
       continue-on-error: true
@@ -35,11 +38,19 @@ jobs:
         pip install flake8
         flake8 app/ --max-line-length=100
 
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-coverage
+        path: backend/coverage.xml
+
   test-frontend:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Shallow clones disabled for better analysis
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -51,6 +62,11 @@ jobs:
         cd frontend
         npm ci
 
+    - name: Run frontend tests with coverage
+      run: |
+        cd frontend
+        npm run test:ci
+
     - name: Build frontend
       run: |
         cd frontend
@@ -58,3 +74,57 @@ jobs:
       env:
         NEXT_PUBLIC_BACKEND_API_BASE_URL: https://paiid-backend.onrender.com
         NEXT_PUBLIC_API_TOKEN: ${{ secrets.API_TOKEN }}
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-coverage
+        path: frontend/coverage/lcov.info
+
+  sonar-backend:
+    runs-on: ubuntu-latest
+    needs: test-backend
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for blame information
+
+    - name: Download coverage artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-coverage
+        path: backend/
+
+    - name: SonarCloud Scan - Backend
+      uses: SonarSource/sonarqube-scan-action@v6
+      with:
+        projectBaseDir: backend
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: https://sonarcloud.io
+
+  sonar-frontend:
+    runs-on: ubuntu-latest
+    needs: test-frontend
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for blame information
+
+    - name: Download coverage artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-coverage
+        path: frontend/coverage/
+
+    - name: SonarCloud Scan - Frontend
+      uses: SonarSource/sonarqube-scan-action@v6
+      with:
+        projectBaseDir: frontend
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: https://sonarcloud.io
