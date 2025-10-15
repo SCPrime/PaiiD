@@ -83,18 +83,11 @@ const ALLOW_DELETE = new Set<string>([
   "watchlists",
 ]);
 
-// Allowed origins for CORS (production domains only)
+// Allowed origins for CORS (production and development only)
 const ALLOWED_ORIGINS = new Set<string>([
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:3002",
-  "https://paiid-snowy.vercel.app",
-  "https://paiid-scprimes-projects.vercel.app",
-  "https://paiid-git-main-scprimes-projects.vercel.app",
-  "https://frontend-scprimes-projects.vercel.app",
-  "https://frontend-three-rho-84.vercel.app",
-  "https://frontend-scprime-scprimes-projects.vercel.app",
-  "https://frontend-mftcsnbqx-scprimes-projects.vercel.app",
   "https://paiid-frontend.onrender.com",
 ]);
 
@@ -121,12 +114,6 @@ function isAllowedOrigin(req: NextApiRequest): boolean {
     } catch (e) {
       // Invalid referer URL
     }
-  }
-
-  // Development: Allow Vercel deployment domains (*.vercel.app)
-  if (origin && origin.match(/^https:\/\/[\w-]+-[\w-]+-projects\.vercel\.app$/)) {
-    console.log(`[PROXY] ✅ Vercel deployment allowed: ${origin}`);
-    return true;
   }
 
   console.warn(`[PROXY] ⚠️ Origin blocked: ${origin || 'none'} (referer: ${referer || 'none'}, host: ${host})`);

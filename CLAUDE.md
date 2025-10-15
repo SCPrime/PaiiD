@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **PaiiD (Personal Artificial Intelligence Investment Dashboard)** - A full-stack AI-powered trading application with real-time market data, intelligent trade execution, and a 10-stage radial workflow interface. Integrates with Tradier API for live market data, Alpaca Paper Trading API for order execution, and Claude AI for conversational onboarding and strategy building.
 
 **Live Deployments:**
-- Frontend: https://frontend-scprimes-projects.vercel.app (Vercel)
+- Frontend: https://paiid-frontend.onrender.com (Render)
 - Backend: https://paiid-backend.onrender.com (Render)
 
 ## Architecture
@@ -225,12 +225,13 @@ npm run test:ci      # CI mode with coverage
 
 ## Deployment
 
-### Frontend (Vercel)
-- Auto-deploys from `main` branch
+### Frontend (Render)
+- Auto-deploys from `main` branch via Docker
 - Root Directory: `frontend`
-- Build Command: `npm run build`
-- Output Directory: `.next`
-- No environment variables needed (API proxy handles routing)
+- Runtime: Docker (uses `Dockerfile` with Next.js standalone build)
+- Docker Command: `node server.js` (from standalone output)
+- Environment Variables: Set in Render dashboard (NEXT_PUBLIC_API_TOKEN, NEXT_PUBLIC_ANTHROPIC_API_KEY)
+- URL: https://paiid-frontend.onrender.com
 
 ### Backend (Render)
 - Auto-deploys from `main` branch
@@ -279,10 +280,11 @@ npm run test:ci      # CI mode with coverage
 - Check network tab for 404 errors on `/api/proxy/api/positions`
 - Confirm API token matches in both frontend and backend
 
-### Build failures on Vercel
-- Run `npm run build` locally first
-- Check for TypeScript errors
-- Ensure no duplicate CSS properties in inline styles
+### Build failures on Render
+- Run `npm run build` locally first to test
+- Check Docker build logs for specific errors
+- Verify package-lock.json is committed and up to date
+- Ensure Dockerfile CMD uses `node server.js` (not npm start)
 
 ### Radial menu not rendering
 - Clear Next.js cache: `rm -rf frontend/.next`

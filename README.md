@@ -4,8 +4,8 @@
 
 ## 🚀 Live Deployment
 
-- **Frontend**: https://frontend-scprimes-projects.vercel.app
-- **Backend API**: https://ai-trader-86a1.onrender.com
+- **Frontend**: https://paiid-frontend.onrender.com
+- **Backend API**: https://paiid-backend.onrender.com
 
 ## 📊 Current Project State (Commit 5855bb5)
 
@@ -62,7 +62,7 @@
 - **Visualization**: D3.js 7.9.0
 - **UI**: React 18.3.1
 - **Styling**: Inline styles with CSS-in-JS, dark theme (#0f172a, #1f2937)
-- **Deployment**: Vercel
+- **Deployment**: Render (Docker)
 
 ### Backend Stack
 - **Framework**: FastAPI (Python)
@@ -149,17 +149,18 @@ PaiiD/
 
 ## 🚀 Deployment
 
-### Frontend (Vercel)
+### Frontend (Render)
 
-1. Connect GitHub repository to Vercel
-2. Configure project settings:
+1. Create new Web Service on Render
+2. Connect GitHub repository
+3. Configure:
    - **Root Directory**: `frontend`
-   - **Framework Preset**: Next.js
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `.next`
-3. Deploy automatically on every push to `main`
+   - **Runtime**: Docker
+   - **Dockerfile Path**: `./Dockerfile`
+   - **Environment Variables**: Set NEXT_PUBLIC_API_TOKEN, NEXT_PUBLIC_ANTHROPIC_API_KEY in dashboard
+4. Deploy automatically on every push to `main`
 
-**Deployment URL**: https://frontend-scprimes-projects.vercel.app
+**Deployment URL**: https://paiid-frontend.onrender.com
 
 ### Backend (Render)
 
@@ -191,10 +192,10 @@ PaiiD/
    - Ensure `d3` and `@types/d3` are installed: `npm install`
    - Clear `.next` cache: `rm -rf frontend/.next`
 
-4. **Build Errors on Vercel**
+4. **Build Errors on Render**
    - Check for TypeScript errors locally: `npm run build`
-   - Verify no duplicate CSS properties (previous issue)
-   - Review Vercel deployment logs
+   - Verify package-lock.json is up to date
+   - Review Render deployment logs for Docker build errors
 
 5. **Positions Table Showing -100% P&L**
    - Fixed in current version (commit 5855bb5)

@@ -29,7 +29,7 @@ services:
     - key: ANTHROPIC_API_KEY
       sync: false  # Set via Render dashboard for security - NEVER commit API keys!
     - key: ALLOW_ORIGIN
-      value: https://frontend-scprimes-projects.vercel.app
+      value: https://paiid-frontend.onrender.com
     - key: LIVE_TRADING
       value: "false"
     - key: TRADING_MODE
