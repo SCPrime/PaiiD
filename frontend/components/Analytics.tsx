@@ -1,11 +1,12 @@
 "use client";
-import { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, TrendingDown, DollarSign, Percent, Calendar, Target, Award } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { BarChart3, TrendingUp, TrendingDown, DollarSign, Percent, Calendar, Target, Award, Download } from 'lucide-react';
 import { Card, Button } from './ui';
 import { theme } from '../styles/theme';
 import { alpaca } from '../lib/alpaca';
 import TradingViewChart from './TradingViewChart';
 import { useIsMobile, useBreakpoint } from '../hooks/useBreakpoint';
+import html2canvas from 'html2canvas';
 
 interface PerformanceMetrics {
   totalReturn: number;
@@ -203,6 +204,29 @@ export default function Analytics() {
   // Mobile responsiveness
   const isMobile = useIsMobile();
   const breakpoint = useBreakpoint();
+
+  // Chart refs for export functionality
+  const equityChartRef = useRef<HTMLDivElement>(null);
+  const pnlChartRef = useRef<HTMLDivElement>(null);
+
+  // Export chart as PNG
+  const exportChartAsPNG = async (chartRef: React.RefObject<HTMLDivElement>, chartName: string) => {
+    if (!chartRef.current) return;
+
+    try {
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: theme.background.card,
+        scale: 2, // Higher quality
+      });
+
+      const link = document.createElement('a');
+      link.download = `PaiiD_${chartName}_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Failed to export chart:', error);
+    }
+  };
 
   useEffect(() => {
     loadAnalytics();
@@ -495,18 +519,32 @@ export default function Analytics() {
 
           {/* Equity Curve */}
           <Card style={{ marginBottom: theme.spacing.lg }} glow="teal">
-            <h3 style={{ margin: `0 0 ${theme.spacing.md} 0`, color: theme.colors.text, fontSize: '18px' }}>
-              Portfolio Value Over Time
-            </h3>
-            <div style={{
-              height: isMobile ? '200px' : '300px',
-              display: 'flex',
-              alignItems: 'flex-end',
-              gap: '2px',
-              padding: theme.spacing.md,
-              background: theme.background.input,
-              borderRadius: theme.borderRadius.sm,
-            }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.md }}>
+              <h3 style={{ margin: 0, color: theme.colors.text, fontSize: '18px' }}>
+                Portfolio Value Over Time
+              </h3>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => exportChartAsPNG(equityChartRef, 'Equity_Curve')}
+                style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}
+              >
+                <Download size={16} />
+                {!isMobile && 'Export'}
+              </Button>
+            </div>
+            <div
+              ref={equityChartRef}
+              style={{
+                height: isMobile ? '200px' : '300px',
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: '2px',
+                padding: theme.spacing.md,
+                background: theme.background.input,
+                borderRadius: theme.borderRadius.sm,
+              }}
+            >
               {dailyPerformance.filter((_, i) => {
                 // Sample data based on timeframe
                 const sampleRate = timeframe === '1W' ? 1 : timeframe === '1M' ? 1 : timeframe === '3M' ? 3 : 7;
@@ -536,19 +574,33 @@ export default function Analytics() {
 
           {/* Daily P&L Chart */}
           <Card style={{ marginBottom: theme.spacing.lg }}>
-            <h3 style={{ margin: `0 0 ${theme.spacing.md} 0`, color: theme.colors.text, fontSize: '18px' }}>
-              Daily P&L
-            </h3>
-            <div style={{
-              height: isMobile ? '150px' : '200px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '2px',
-              padding: theme.spacing.md,
-              background: theme.background.input,
-              borderRadius: theme.borderRadius.sm,
-            }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.md }}>
+              <h3 style={{ margin: 0, color: theme.colors.text, fontSize: '18px' }}>
+                Daily P&L
+              </h3>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => exportChartAsPNG(pnlChartRef, 'Daily_PnL')}
+                style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}
+              >
+                <Download size={16} />
+                {!isMobile && 'Export'}
+              </Button>
+            </div>
+            <div
+              ref={pnlChartRef}
+              style={{
+                height: isMobile ? '150px' : '200px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '2px',
+                padding: theme.spacing.md,
+                background: theme.background.input,
+                borderRadius: theme.borderRadius.sm,
+              }}
+            >
               {dailyPerformance.filter((_, i) => {
                 const sampleRate = timeframe === '1W' ? 1 : timeframe === '1M' ? 1 : timeframe === '3M' ? 3 : 7;
                 return i % sampleRate === 0;
