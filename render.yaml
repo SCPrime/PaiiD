@@ -1,0 +1,64 @@
+services:
+# Backend - FastAPI Python service
+- type: web
+  name: paiid-backend
+  runtime: python
+  plan: free
+  region: oregon
+  branch: main
+  rootDir: backend
+  buildCommand: pip install -r requirements.txt
+  startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+  envVars:
+    - key: API_TOKEN
+      sync: false  # Set via Render dashboard for security
+    # Alpaca API - PAPER TRADING EXECUTION ONLY (not for market data)
+    - key: ALPACA_PAPER_API_KEY
+      sync: false  # Set via Render dashboard
+    - key: ALPACA_PAPER_SECRET_KEY
+      sync: false  # Set via Render dashboard
+    - key: APCA_API_BASE_URL
+      value: https://paper-api.alpaca.markets
+    # Tradier API - MARKET DATA, NEWS, QUOTES (primary data source)
+    - key: TRADIER_API_KEY
+      sync: false  # Set via Render dashboard
+    - key: TRADIER_ACCOUNT_ID
+      sync: false  # Set via Render dashboard
+    - key: TRADIER_API_BASE_URL
+      value: https://api.tradier.com/v1
+    # Anthropic API - AI FALLBACK for market data when Tradier unavailable
+    - key: ANTHROPIC_API_KEY
+      sync: false  # Set via Render dashboard for security - NEVER commit API keys!
+    - key: ALLOW_ORIGIN
+      value: https://paiid-frontend.onrender.com
+    - key: LIVE_TRADING
+      value: "false"
+    - key: TRADING_MODE
+      value: paper
+    - key: REDIS_URL
+      generateValue: true
+
+# Frontend - Next.js Docker service
+- type: web
+  name: paiid-frontend
+  runtime: docker
+  plan: free
+  region: oregon
+  branch: main
+  rootDir: frontend
+  dockerfilePath: ./Dockerfile
+  dockerCommand: node server.js
+  envVars:
+    # Backend API configuration
+    - key: NEXT_PUBLIC_API_TOKEN
+      sync: false  # Set via Render dashboard
+    - key: NEXT_PUBLIC_BACKEND_API_BASE_URL
+      value: https://paiid-backend.onrender.com
+    - key: NEXT_PUBLIC_ANTHROPIC_API_KEY
+      sync: false  # Set via Render dashboard
+    # Next.js configuration
+    - key: NODE_ENV
+      value: production
+    - key: PORT
+      value: "3000"
+  healthCheckPath: /
