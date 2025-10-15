@@ -26,6 +26,42 @@ jobs:
         pip install -r requirements.txt
         pip install pytest-cov
 
+    - name: Verify Python package structure
+      run: |
+        echo "🔍 Checking Python package structure..."
+
+        # Check for missing __init__.py files
+        missing_init=()
+        for dir in backend/app/*/; do
+          if [ -d "$dir" ] && [ ! -f "$dir/__init__.py" ]; then
+            # Skip __pycache__ directories
+            if [[ $(basename "$dir") != __* ]]; then
+              # Check if directory contains .py files
+              py_count=$(find "$dir" -maxdepth 1 -name "*.py" 2>/dev/null | wc -l)
+              if [ "$py_count" -gt 0 ]; then
+                missing_init+=("$dir")
+              fi
+            fi
+          fi
+        done
+
+        if [ ${#missing_init[@]} -gt 0 ]; then
+          echo "❌ ERROR: Missing __init__.py files in:"
+          printf '  %s\n' "${missing_init[@]}"
+          echo ""
+          echo "Python requires __init__.py files to treat directories as packages."
+          exit 1
+        fi
+
+        echo "✅ All Python packages have __init__.py files"
+
+    - name: Run import verification tests
+      run: |
+        cd backend
+        echo "🧪 Running import verification tests..."
+        python -m pytest tests/test_imports.py -v --tb=short
+        echo "✅ All critical imports verified"
+
     - name: Run backend tests with coverage
       run: |
         cd backend
