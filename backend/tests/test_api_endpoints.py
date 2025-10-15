@@ -27,11 +27,14 @@ class TestHealthEndpoints:
         assert data["ready"] is True
 
     def test_sentry_test_endpoint(self, client):
-        """Test /api/sentry-test raises error"""
-        response = client.get("/api/sentry-test")
-        assert response.status_code == 500
-        data = response.json()
-        assert "test error" in data["detail"].lower()
+        """Test /api/sentry-test raises error (for Sentry capture)"""
+        # This endpoint intentionally raises an exception for Sentry testing
+        # The TestClient will propagate the exception instead of returning 500
+        with pytest.raises(Exception) as excinfo:
+            response = client.get("/api/sentry-test")
+
+        # Verify it's the intentional test exception
+        assert "SENTRY TEST" in str(excinfo.value)
 
 
 class TestAuthenticationProtection:
