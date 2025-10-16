@@ -89,6 +89,23 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
   // Fetch live market data from backend (with market hours detection)
   useEffect(() => {
+    // Load cached market data on mount
+    const loadCachedData = () => {
+      try {
+        const cached = localStorage.getItem('paiid-market-data');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          // Only use cache if it's less than 24 hours old
+          if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+            console.log('[RadialMenu] Loading cached market data from localStorage');
+            setMarketData(parsed.data);
+          }
+        }
+      } catch (error) {
+        console.error('[RadialMenu] Failed to load cached market data:', error);
+      }
+    };
+
     const fetchMarketStatus = async () => {
       try {
         const response = await fetch(`/api/proxy/api/market/status`);
@@ -116,7 +133,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
         // Only fetch indices if market is open
         if (!isOpen) {
-          console.log('[RadialMenu] Market closed, skipping data fetch');
+          console.log('[RadialMenu] Market closed, displaying cached values');
           return;
         }
 
@@ -125,7 +142,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
         if (response.ok) {
           const data = await response.json();
 
-          setMarketData({
+          const newData = {
             dow: {
               value: data.dow?.last || 0,
               change: data.dow?.changePercent || 0,
@@ -136,13 +153,30 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
               change: data.nasdaq?.changePercent || 0,
               symbol: 'COMP'
             }
-          });
+          };
+
+          setMarketData(newData);
+
+          // Cache the data in localStorage
+          try {
+            localStorage.setItem('paiid-market-data', JSON.stringify({
+              data: newData,
+              timestamp: Date.now()
+            }));
+            console.log('[RadialMenu] Cached market data to localStorage');
+          } catch (error) {
+            console.error('[RadialMenu] Failed to cache market data:', error);
+          }
         }
       } catch (error) {
         console.error('[RadialMenu] Failed to fetch market data:', error);
       }
     };
 
+    // Load cached data immediately
+    loadCachedData();
+
+    // Fetch fresh data
     fetchMarketData();
     const interval = setInterval(fetchMarketData, 60000); // Refresh every minute
 

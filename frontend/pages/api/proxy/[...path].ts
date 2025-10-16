@@ -25,6 +25,7 @@ const ALLOW_GET = new Set<string>([
   "market/conditions",
   "market/indices",
   "market/sectors",
+  "market/status",  // Market hours detection
   // Live market data endpoints
   "market/quote",
   "market/quotes",
@@ -55,6 +56,8 @@ const ALLOW_GET = new Set<string>([
   "backtesting/run",
   "backtesting/quick-test",
   "backtesting/strategy-templates",
+  // Strategy endpoints
+  "strategies/templates",
 ]);
 
 const ALLOW_POST = new Set<string>([
