@@ -18,7 +18,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
 from slowapi.errors import RateLimitExceeded
-from .routers import health, settings as settings_router, portfolio, orders, stream, screening, market, ai, telemetry, strategies, scheduler, claude, market_data, news, analytics, backtesting, stock, users
+from .routers import health, settings as settings_router, portfolio, orders, stream, screening, market, ai, telemetry, strategies, scheduler, claude, market_data, news, analytics, backtesting, stock, users, auth
 from .scheduler import init_scheduler
 import atexit
 import sentry_sdk
@@ -132,6 +132,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")  # Authentication endpoints
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(portfolio.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
