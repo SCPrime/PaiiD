@@ -37,4 +37,10 @@ class Settings(BaseModel):
     # Sentry Error Tracking (Phase 2.5)
     SENTRY_DSN: Optional[str] = os.getenv("SENTRY_DSN")
 
+    # JWT Authentication (Week 2-4: Multi-User System)
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production-NEVER-COMMIT-THIS")
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # 15 minutes
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days
+
 settings = Settings()
