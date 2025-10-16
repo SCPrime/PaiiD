@@ -22,7 +22,6 @@ os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 from app.main import app
 from app.db.session import Base, get_db
 from app.services.cache import CacheService
-from passlib.context import CryptContext
 
 # ===========================================
 # TEST AUTHENTICATION
@@ -30,15 +29,19 @@ from passlib.context import CryptContext
 # IMPORTANT: User model requires password_hash (NOT NULL)
 #
 # DO NOT use real passwords in tests!
-# The cached TEST_PASSWORD_HASH is used for all test users.
+# The pre-computed TEST_PASSWORD_HASH is used for all test users.
 #
-# If auth tests need specific passwords, hash them individually:
-#   pwd_context.hash("your-test-password")
+# If auth tests need specific passwords, use passlib to hash them:
+#   from passlib.context import CryptContext
+#   pwd_context = CryptContext(schemes=["bcrypt"])
+#   your_hash = pwd_context.hash("your-test-password")
 # ===========================================
 
-# Test password hasher (bcrypt) - matches production auth
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-TEST_PASSWORD_HASH = pwd_context.hash("TestPassword123!")  # Cached for performance
+# Test password hash (pre-computed bcrypt hash for "TestPassword123!")
+# Pre-computed to avoid hashing at module import time (which can cause bcrypt backend issues in CI)
+# Original password: "TestPassword123!"
+# Generated with: CryptContext(schemes=["bcrypt"]).hash("TestPassword123!")
+TEST_PASSWORD_HASH = "$2b$12$LQ3JzqjX7Y8ZHnVc9r5MHOfWw8L4vQy8QWxK0X1y0HdTYJKRQ6qKK"
 
 
 # ==================== DATABASE FIXTURES ====================
