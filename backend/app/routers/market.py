@@ -53,15 +53,17 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
         return {**cached, "cached": True}
 
     try:
-        # Fetch real market data from Tradier
+        # Fetch real market data from Tradier (with compression for faster response)
         symbols = "$VIX.X,$DJI.IX,COMP:GIDS"
         resp = requests.get(
             f"{settings.TRADIER_API_BASE_URL}/markets/quotes",
             headers={
                 "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip, deflate"  # Enable compression
             },
-            params={"symbols": symbols, "greeks": "false"}
+            params={"symbols": symbols, "greeks": "false"},
+            timeout=5  # Add timeout for reliability
         )
 
         conditions: List[MarketCondition] = []
@@ -267,7 +269,8 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
 
         headers = {
             "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
-            "Accept": "application/json"
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate"  # Enable compression
         }
 
         # Tradier symbols: $DJI for Dow Jones Industrial, COMP:GIDS for NASDAQ Composite
@@ -275,7 +278,8 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
         resp = requests.get(
             f"{settings.TRADIER_API_BASE_URL}/markets/quotes",
             headers=headers,
-            params={"symbols": symbols, "greeks": "false"}
+            params={"symbols": symbols, "greeks": "false"},
+            timeout=5  # Add timeout for reliability
         )
 
         if resp.status_code == 200:
@@ -406,15 +410,17 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
             {"name": "Consumer Staples", "symbol": "XLP"}
         ]
 
-        # Fetch real quotes from Tradier
+        # Fetch real quotes from Tradier (with compression for 11 sector ETFs)
         symbols = ",".join([s["symbol"] for s in sector_etfs])
         resp = requests.get(
             f"{settings.TRADIER_API_BASE_URL}/markets/quotes",
             headers={
                 "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip, deflate"  # Enable compression
             },
-            params={"symbols": symbols, "greeks": "false"}
+            params={"symbols": symbols, "greeks": "false"},
+            timeout=5  # Add timeout for reliability
         )
 
         sectors = []
@@ -508,13 +514,15 @@ async def get_market_status(cache: CacheService = Depends(get_cache)) -> dict:
         return {**cached, "cached": True}
 
     try:
-        # Fetch market clock from Tradier
+        # Fetch market clock from Tradier (with compression)
         resp = requests.get(
             f"{settings.TRADIER_API_BASE_URL}/markets/clock",
             headers={
                 "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
-                "Accept": "application/json"
-            }
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip, deflate"  # Enable compression
+            },
+            timeout=5  # Add timeout for reliability
         )
 
         if resp.status_code == 200:

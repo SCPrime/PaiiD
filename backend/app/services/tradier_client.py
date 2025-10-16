@@ -22,7 +22,8 @@ class TradierClient:
 
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Accept": "application/json"
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate"  # Enable compression for faster responses
         }
 
         if not self.api_key or not self.account_id:
@@ -31,15 +32,18 @@ class TradierClient:
         logger.info(f"Tradier client initialized for account {self.account_id}")
 
     def _request(self, method: str, endpoint: str, **kwargs) -> Dict:
-        """Make authenticated request to Tradier API"""
+        """Make authenticated request to Tradier API with compression and timeouts"""
         url = f"{self.base_url}{endpoint}"
+
+        # Set default timeout if not provided
+        if 'timeout' not in kwargs:
+            kwargs['timeout'] = 5  # Reduced from 10s to 5s for faster failures
 
         try:
             response = requests.request(
                 method=method,
                 url=url,
                 headers=self.headers,
-                timeout=10,
                 **kwargs
             )
             response.raise_for_status()
