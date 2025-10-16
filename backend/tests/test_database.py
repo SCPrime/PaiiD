@@ -7,7 +7,10 @@ Tests for SQLAlchemy models: User, Strategy, Trade, Performance, EquitySnapshot
 import pytest
 from datetime import datetime
 from app.models.database import User, Strategy, Trade, Performance, EquitySnapshot
-from conftest import TEST_PASSWORD_HASH  # Import test password hash
+
+# Test password hash (matches TEST_PASSWORD_HASH from conftest.py)
+# Pre-computed bcrypt hash for "TestPassword123!"
+TEST_PASSWORD_HASH = "$2b$12$LQ3JzqjX7Y8ZHnVc9r5MHOfWw8L4vQy8QWxK0X1y0HdTYJKRQ6qKK"
 
 
 class TestUserModel:
