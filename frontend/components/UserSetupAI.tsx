@@ -212,7 +212,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
     if (!extractedPrefs) return;
 
     // Create user with collected name, email (if provided), and trading preferences
-    const _user = createUser(
+    createUser(
       userName || 'PaiiD User', // Use collected name or default
       userEmail || undefined, // Use collected email or undefined
       undefined, // No test group

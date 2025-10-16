@@ -1227,7 +1227,7 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
                   ) : field.type === 'input' ? (
                     <GlassInput
                       value={String(value)}
-                      onChange={(val) => updateUserData(field.name, val)}
+                      onChange={(val: string) => updateUserData(field.name, val)}
                       placeholder={field.name === 'email' ? 'your.email@example.com' : 'Enter your ' + field.label.toLowerCase()}
                       type={field.name === 'email' ? 'email' : 'text'}
                     />

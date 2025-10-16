@@ -422,15 +422,15 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
     segments.append('path')
       .attr('d', arc)
-      .attr('fill', (d, i) => `url(#wedgeGradient${i})`)
+      .attr('fill', (_d, i) => `url(#wedgeGradient${i})`)
       .attr('stroke', '#000000')
       .attr('stroke-width', 2)
       .style('filter', 'url(#normalShadow)')
-      .on('mouseenter', function(event, d) {
+      .on('mouseenter', function(_event, d) {
         d3.select(this)
           .transition()
           .duration(150)
-          .attr('d', hoverArc)
+          .attr('d', hoverArc as any)
           .style('filter', 'url(#hoverGlow)');
         setHoveredWorkflow(d.data);
         if (onWorkflowHover) onWorkflowHover(d.data);
@@ -439,7 +439,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
         d3.select(this)
           .transition()
           .duration(150)
-          .attr('d', arc)
+          .attr('d', arc as any)
           .style('filter', 'url(#normalShadow)');
         setHoveredWorkflow(null);
         if (onWorkflowHover) onWorkflowHover(null);
@@ -452,7 +452,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
         d3.select(this)
           .style('filter', 'url(#hoverGlow)');
       })
-      .on('click', (event, d) => {
+      .on('click', (_event, d) => {
         console.info('RadialMenu: Workflow clicked:', d.data.id);
         onWorkflowSelect(d.data.id);
       });
@@ -625,12 +625,13 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
     // Update DOW value
     svg.selectAll('text')
-      .filter(function(this: SVGTextElement) {
-        return d3.select(this).text().includes('.') && d3.select(this).attr('dy') === '20';
+      .filter(function() {
+        return d3.select(this as SVGTextElement).text().includes('.') && d3.select(this as SVGTextElement).attr('dy') === '20';
       })
-      .each(function(this: SVGTextElement) {
-        const text = d3.select(this);
-        const parentNode = this.parentNode as SVGGElement;
+      .each(function() {
+        const element = this as SVGTextElement;
+        const text = d3.select(element);
+        const parentNode = element.parentNode as SVGGElement;
         const transform = d3.select(parentNode).attr('transform');
         if (transform && transform.includes('-15')) {
           // This is the DOW value text
@@ -643,12 +644,13 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
     // Update change percentages
     svg.selectAll('text')
-      .filter(function(this: SVGTextElement) {
-        return d3.select(this).attr('dy') === '38';
+      .filter(function() {
+        return d3.select(this as SVGTextElement).attr('dy') === '38';
       })
-      .each(function(this: SVGTextElement) {
-        const text = d3.select(this);
-        const parentNode = this.parentNode as SVGGElement;
+      .each(function() {
+        const element = this as SVGTextElement;
+        const text = d3.select(element);
+        const parentNode = element.parentNode as SVGGElement;
         const transform = d3.select(parentNode).attr('transform');
         if (transform && transform.includes('-15')) {
           // DOW change

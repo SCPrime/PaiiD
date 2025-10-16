@@ -4,7 +4,7 @@ import { BarChart3, TrendingDown, DollarSign, Percent, Target, Award, Download }
 import { Card, Button } from './ui';
 import { theme } from '../styles/theme';
 import TradingViewChart from './TradingViewChart';
-import { useIsMobile, useBreakpoint } from '../hooks/useBreakpoint';
+import { useIsMobile } from '../hooks/useBreakpoint';
 import html2canvas from 'html2canvas';
 
 interface PerformanceMetrics {
@@ -202,7 +202,6 @@ export default function Analytics() {
 
   // Mobile responsiveness
   const isMobile = useIsMobile();
-  const _breakpoint = useBreakpoint();
 
   // Chart refs for export functionality
   const equityChartRef = useRef<HTMLDivElement>(null);

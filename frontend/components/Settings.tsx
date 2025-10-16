@@ -784,7 +784,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
           {activeTab === 'theme' && isAdmin && (
             <ThemeCustomizationTab
               themeCustom={themeCustom}
-              onUpdate={(key, value) => {
+              onUpdate={(key: keyof ThemeCustomization, value: string) => {
                 setThemeCustom({ ...themeCustom, [key]: value });
                 setHasUnsavedChanges(true);
               }}

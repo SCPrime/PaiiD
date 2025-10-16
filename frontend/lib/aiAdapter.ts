@@ -17,12 +17,10 @@ export interface UserPreferences {
 }
 
 export class ClaudeAI {
-  private baseUrl: string;
   private conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
 
   constructor() {
     // Use Next.js API proxy to route to backend (works in both dev and production)
-    this.baseUrl = '';
   }
 
   /**

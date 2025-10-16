@@ -164,7 +164,7 @@ function scoreStrategy(
   const reasons: string[] = [];
   let score = 0;
 
-  const { _symbol, currentPrice, technicals, optionsChain, earningsDate } = context;
+  const { currentPrice, technicals, optionsChain, earningsDate } = context;
 
   // Check price range filter
   if (strategy.universe?.filters?.price_between) {

@@ -109,7 +109,7 @@ export default function TemplateCustomizationModal({
         throw new Error(`Failed to clone template: ${response.status}`);
       }
 
-      const _data = await response.json();
+      await response.json();
       toast.success(`Strategy "${customName}" created successfully!`);
       onClose();
       if (onCloneSuccess) onCloneSuccess();

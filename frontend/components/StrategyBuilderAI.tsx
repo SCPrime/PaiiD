@@ -32,10 +32,30 @@ import TemplateCustomizationModal from './TemplateCustomizationModal';
 import toast from 'react-hot-toast';
 import { useIsMobile } from '../hooks/useBreakpoint';
 interface Strategy {
-  id?: string;  name: string;  entry: string[];  exit: string[];  riskManagement: string[];  code?: string;}
+  id?: string;
+  name: string;
+  entry: string[];
+  exit: string[];
+  riskManagement?: string[] | { maxDrawdown?: number; [key: string]: any };
+  code?: string;
+  status?: string;
+  entryRules?: any[];
+  exitRules?: any[];
+  positionSizing?: any;
+  aiPrompt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
-interface SavedStrategy extends Strategy {
+interface SavedStrategy extends Omit<Strategy, 'id'> {
   id: string;
+  aiPrompt?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  entryRules?: any[];
+  exitRules?: any[];
+  positionSizing?: any;
   backtestResults?: {
     winRate: number;
     totalTrades: number;
@@ -124,7 +144,7 @@ export default function StrategyBuilderAI() {
         throw new Error(`Failed to fetch templates: ${response.status}`);
       }
 
-      const _data = await response.json();
+      const data = await response.json();
       setTemplates(data.templates || []);
       setUserRiskTolerance(data.user_risk_tolerance || 50);
     } catch (err: any) {
@@ -156,7 +176,7 @@ export default function StrategyBuilderAI() {
         throw new Error(`Failed to clone template: ${response.status}`);
       }
 
-      const _data = await response.json();
+      await response.json(); // Clone response
       toast.success(`Template "${template.name}" cloned successfully!`);
 
       // Refresh saved strategies or add to local state
@@ -188,18 +208,24 @@ export default function StrategyBuilderAI() {
   const handleSaveStrategy = () => {
     if (!currentStrategy) return;
 
-    const existingIndex = savedStrategies.findIndex((s) => s.id === currentStrategy.id);
+    // Ensure strategy has an ID
+    const strategyToSave: SavedStrategy = {
+      ...currentStrategy,
+      id: currentStrategy.id || `strategy-${Date.now()}`,
+    };
+
+    const existingIndex = savedStrategies.findIndex((s) => s.id === strategyToSave.id);
 
     if (existingIndex >= 0) {
       // Update existing
       setSavedStrategies(
         savedStrategies.map((s) =>
-          s.id === currentStrategy.id ? { ...currentStrategy, updatedAt: new Date().toISOString() } : s
+          s.id === strategyToSave.id ? { ...strategyToSave, updatedAt: new Date().toISOString() } : s
         )
       );
     } else {
       // Add new
-      setSavedStrategies([...savedStrategies, currentStrategy]);
+      setSavedStrategies([...savedStrategies, strategyToSave]);
     }
 
     setView('library');
@@ -376,7 +402,7 @@ export default function StrategyBuilderAI() {
                   </GlassButton>
 
                   {currentStrategy && (
-                    <GlassButton onClick={handleSaveStrategy} variant="workflow" workflowColor="primary">
+                    <GlassButton onClick={handleSaveStrategy} variant="workflow" workflowColor="strategyBuilder">
                       <Save style={{ width: '18px', height: '18px' }} />
                       Save Strategy
                     </GlassButton>
@@ -494,7 +520,7 @@ export default function StrategyBuilderAI() {
                       Entry Rules
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.xs }}>
-                      {currentStrategy.entryRules.map((rule, idx) => (
+                      {currentStrategy.entryRules?.map((rule, idx) => (
                         <div
                           key={idx}
                           style={{
@@ -528,7 +554,7 @@ export default function StrategyBuilderAI() {
                       Exit Rules
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.xs }}>
-                      {currentStrategy.exitRules.map((rule, idx) => (
+                      {currentStrategy.exitRules?.map((rule, idx) => (
                         <div
                           key={idx}
                           style={{
@@ -561,7 +587,7 @@ export default function StrategyBuilderAI() {
                     <div>
                       <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: 0 }}>Position Size</p>
                       <p style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.text, margin: 0 }}>
-                        {currentStrategy.positionSizing.value}% of Portfolio
+                        {currentStrategy.positionSizing?.value || 0}% of Portfolio
                       </p>
                     </div>
                     <div>
@@ -569,7 +595,7 @@ export default function StrategyBuilderAI() {
                         Max Drawdown
                       </p>
                       <p style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.text, margin: 0, textAlign: 'right' }}>
-                        {(currentStrategy.riskManagement.maxDrawdown * 100).toFixed(0)}%
+                        {(typeof currentStrategy.riskManagement === 'object' && !Array.isArray(currentStrategy.riskManagement) && currentStrategy.riskManagement?.maxDrawdown ? (currentStrategy.riskManagement.maxDrawdown * 100).toFixed(0) : '0')}%
                       </p>
                     </div>
                   </div>
@@ -626,13 +652,13 @@ export default function StrategyBuilderAI() {
                 }}>
                   {templates.map((template) => {
                     const getRiskColor = (risk: string) => {
-                      if (risk === 'Conservative') return theme.colors.success;
+                      if (risk === 'Conservative') return theme.workflow.activePositions;
                       if (risk === 'Moderate') return theme.colors.warning;
                       return theme.colors.danger;
                     };
 
                     const getCompatibilityColor = (score: number) => {
-                      if (score >= 80) return theme.colors.success;
+                      if (score >= 80) return theme.workflow.activePositions;
                       if (score >= 60) return theme.colors.warning;
                       return theme.colors.textMuted;
                     };
@@ -695,7 +721,7 @@ export default function StrategyBuilderAI() {
                           </div>
                           <div>
                             <p style={{ fontSize: '11px', color: theme.colors.textMuted, margin: 0 }}>Avg Return</p>
-                            <p style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.success, margin: 0 }}>
+                            <p style={{ fontSize: '16px', fontWeight: '600', color: theme.workflow.activePositions, margin: 0 }}>
                               {template.avg_return_percent > 0 ? '+' : ''}{template.avg_return_percent}%
                             </p>
                           </div>
@@ -749,7 +775,7 @@ export default function StrategyBuilderAI() {
                               setShowCustomizationModal(true);
                             }}
                             variant="workflow"
-                            workflowColor="primary"
+                            workflowColor="strategyBuilder"
                             style={{ flex: 1 }}
                           >
                             <Edit3 style={{ width: '16px', height: '16px' }} />
@@ -814,7 +840,7 @@ export default function StrategyBuilderAI() {
                       </div>
 
                       <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: 0 }}>
-                        Created {new Date(strategy.createdAt).toLocaleDateString()}
+                        Created {strategy.createdAt ? new Date(strategy.createdAt).toLocaleDateString() : 'Unknown'}
                       </p>
                     </div>
 
@@ -850,13 +876,13 @@ export default function StrategyBuilderAI() {
                       <div>
                         <p style={{ fontSize: '11px', color: theme.colors.textMuted, margin: 0 }}>Entry Rules</p>
                         <p style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.primary, margin: 0 }}>
-                          {strategy.entryRules.length}
+                          {strategy.entryRules?.length || 0}
                         </p>
                       </div>
                       <div>
                         <p style={{ fontSize: '11px', color: theme.colors.textMuted, margin: 0 }}>Exit Rules</p>
                         <p style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.danger, margin: 0 }}>
-                          {strategy.exitRules.length}
+                          {strategy.exitRules?.length || 0}
                         </p>
                       </div>
                     </div>
@@ -888,7 +914,7 @@ export default function StrategyBuilderAI() {
                       <GlassButton
                         onClick={() => handleActivateStrategy(strategy.id)}
                         variant="workflow"
-                        workflowColor={strategy.status === 'active' ? 'warning' : 'primary'}
+                        workflowColor={strategy.status === 'active' ? 'settings' : 'execute'}
                         style={{ flex: 1 }}
                       >
                         <Play style={{ width: '16px', height: '16px' }} />

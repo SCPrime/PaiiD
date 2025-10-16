@@ -157,7 +157,7 @@ export default function StrategyBuilder() {
               </label>
               <GlassInput
                 value={strategyName}
-                onChange={(e) => setStrategyName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setStrategyName(e.target.value)}
                 placeholder="e.g., RSI Momentum Strategy"
               />
             </div>
@@ -173,7 +173,7 @@ export default function StrategyBuilder() {
               </label>
               <GlassInput
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDescription(e.target.value)}
                 placeholder="Describe your strategy..."
                 multiline
                 rows={3}

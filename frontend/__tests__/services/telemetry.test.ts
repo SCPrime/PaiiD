@@ -62,6 +62,7 @@ describe('TelemetryService', () => {
       userRole: 'beta',
       component: 'TestComponent',
       action: 'test_action',
+      metadata: {},
     })
 
     expect(telemetry.exportEvents()).toHaveLength(1)

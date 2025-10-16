@@ -58,14 +58,14 @@ const IndicatorPanel: React.FC<IndicatorPanelProps> = ({
     return { color: theme.warning, signal: 'Neutral' };
   };
 
-  const getMACDSignal = (macd: typeof indicators.macd): { color: string; signal: string } => {
+  const getMACDSignal = (macd: TechnicalIndicators['macd']): { color: string; signal: string } => {
     if (!macd) return { color: theme.textMuted, signal: 'N/A' };
     if (macd.histogram > 0) return { color: theme.primary, signal: 'Bullish' };
     if (macd.histogram < 0) return { color: theme.danger, signal: 'Bearish' };
     return { color: theme.warning, signal: 'Neutral' };
   };
 
-  const getBBSignal = (bb: typeof indicators.bollingerBands): { color: string; signal: string } => {
+  const getBBSignal = (bb: TechnicalIndicators['bollingerBands']): { color: string; signal: string } => {
     if (!bb) return { color: theme.textMuted, signal: 'N/A' };
     const { currentPrice, upper, lower, middle: _middle } = bb;
     if (currentPrice >= upper) return { color: theme.danger, signal: 'Overbought' };
@@ -73,7 +73,7 @@ const IndicatorPanel: React.FC<IndicatorPanelProps> = ({
     return { color: theme.warning, signal: 'Neutral' };
   };
 
-  const getSMASignal = (sma: typeof indicators.sma): { color: string; signal: string } => {
+  const getSMASignal = (sma: TechnicalIndicators['sma']): { color: string; signal: string } => {
     if (!sma) return { color: theme.textMuted, signal: 'N/A' };
     const { currentPrice, sma20, sma50, sma200 } = sma;
     if (currentPrice > sma20 && currentPrice > sma50 && currentPrice > sma200) {

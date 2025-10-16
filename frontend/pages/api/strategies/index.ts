@@ -67,7 +67,7 @@ async function handleCreate(req: NextApiRequest, res: NextApiResponse) {
  * GET /api/strategies
  * List all strategies for the user
  */
-async function handleList(req: NextApiRequest, res: NextApiResponse) {
+async function handleList(_req: NextApiRequest, res: NextApiResponse) {
   try {
     // In production, fetch from database filtered by user_id
     const strategies = await listStrategies();
