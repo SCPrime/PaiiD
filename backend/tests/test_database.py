@@ -4,9 +4,11 @@ Database Model Tests
 Tests for SQLAlchemy models: User, Strategy, Trade, Performance, EquitySnapshot
 """
 
-import pytest
 from datetime import datetime
-from app.models.database import User, Strategy, Trade, Performance, EquitySnapshot
+
+import pytest
+
+from app.models.database import EquitySnapshot, Performance, Strategy, Trade, User
 
 # Test password hash (matches TEST_PASSWORD_HASH from conftest.py)
 # Pre-computed bcrypt hash for "TestPassword123!"
@@ -22,7 +24,7 @@ class TestUserModel:
             email="user@example.com",
             password_hash=TEST_PASSWORD_HASH,
             alpaca_account_id="ACCOUNT123",
-            preferences={"risk_tolerance": "moderate", "position_size": 0.02}
+            preferences={"risk_tolerance": "moderate", "position_size": 0.02},
         )
         test_db.add(user)
         test_db.commit()
@@ -37,11 +39,7 @@ class TestUserModel:
 
     def test_user_without_email(self, test_db):
         """Test creating user with minimal required fields"""
-        user = User(
-            email="minimal@example.com",
-            password_hash=TEST_PASSWORD_HASH,
-            preferences={}
-        )
+        user = User(email="minimal@example.com", password_hash=TEST_PASSWORD_HASH, preferences={})
         test_db.add(user)
         test_db.commit()
         test_db.refresh(user)
@@ -51,19 +49,11 @@ class TestUserModel:
 
     def test_user_unique_email(self, test_db):
         """Test email uniqueness constraint"""
-        user1 = User(
-            email="same@example.com",
-            password_hash=TEST_PASSWORD_HASH,
-            preferences={}
-        )
+        user1 = User(email="same@example.com", password_hash=TEST_PASSWORD_HASH, preferences={})
         test_db.add(user1)
         test_db.commit()
 
-        user2 = User(
-            email="same@example.com",
-            password_hash=TEST_PASSWORD_HASH,
-            preferences={}
-        )
+        user2 = User(email="same@example.com", password_hash=TEST_PASSWORD_HASH, preferences={})
         test_db.add(user2)
 
         with pytest.raises(Exception):  # IntegrityError
@@ -76,7 +66,7 @@ class TestUserModel:
             name="Test Strategy",
             description="Test",
             strategy_type="momentum",
-            config={}
+            config={},
         )
         test_db.add(strategy)
         test_db.commit()
@@ -109,13 +99,9 @@ class TestStrategyModel:
             name="Mean Reversion",
             description="Buy oversold stocks",
             strategy_type="mean_reversion",
-            config={
-                "entry_rules": ["RSI < 30"],
-                "exit_rules": ["RSI > 70"],
-                "lookback_period": 14
-            },
+            config={"entry_rules": ["RSI < 30"], "exit_rules": ["RSI > 70"], "lookback_period": 14},
             is_active=True,
-            is_autopilot=False
+            is_autopilot=False,
         )
         test_db.add(strategy)
         test_db.commit()
@@ -134,7 +120,7 @@ class TestStrategyModel:
             name="System Strategy",
             description="Built-in strategy",
             strategy_type="trend_following",
-            config={}
+            config={},
         )
         test_db.add(strategy)
         test_db.commit()
@@ -181,7 +167,7 @@ class TestTradeModel:
             price=245.30,
             order_type="limit",
             limit_price=245.00,
-            status="pending"
+            status="pending",
         )
         test_db.add(trade)
         test_db.commit()
@@ -229,7 +215,7 @@ class TestTradeModel:
             price=150,
             order_type="market",
             broker_order_id="ORDER123",
-            status="filled"
+            status="filled",
         )
         test_db.add(trade1)
         test_db.commit()
@@ -242,7 +228,7 @@ class TestTradeModel:
             price=380,
             order_type="market",
             broker_order_id="ORDER123",  # Duplicate
-            status="filled"
+            status="filled",
         )
         test_db.add(trade2)
 
@@ -272,7 +258,7 @@ class TestPerformanceModel:
             total_trades=50,
             winning_trades=35,
             losing_trades=15,
-            win_rate=0.70
+            win_rate=0.70,
         )
         test_db.add(perf)
         test_db.commit()
@@ -302,7 +288,7 @@ class TestPerformanceModel:
             max_drawdown_percent=-5.00,
             total_trades=0,
             winning_trades=0,
-            losing_trades=0
+            losing_trades=0,
         )
         test_db.add(perf)
         test_db.commit()
@@ -328,12 +314,8 @@ class TestEquitySnapshotModel:
             extra_data={
                 "largest_position": "AAPL",
                 "largest_position_value": 30000.00,
-                "sector_breakdown": {
-                    "Technology": 0.60,
-                    "Healthcare": 0.25,
-                    "Finance": 0.15
-                }
-            }
+                "sector_breakdown": {"Technology": 0.60, "Healthcare": 0.25, "Finance": 0.15},
+            },
         )
         test_db.add(snapshot)
         test_db.commit()
@@ -356,7 +338,7 @@ class TestEquitySnapshotModel:
                 cash=50000.00,
                 positions_value=50000.00 + (i * 100),
                 num_positions=3,
-                extra_data={}
+                extra_data={},
             )
             test_db.add(snapshot)
 
@@ -403,19 +385,11 @@ class TestModelConstraints:
 
     def test_user_email_unique_constraint(self, test_db):
         """Test unique constraint on email"""
-        user1 = User(
-            email="unique@example.com",
-            password_hash=TEST_PASSWORD_HASH,
-            preferences={}
-        )
+        user1 = User(email="unique@example.com", password_hash=TEST_PASSWORD_HASH, preferences={})
         test_db.add(user1)
         test_db.commit()
 
-        user2 = User(
-            email="unique@example.com",
-            password_hash=TEST_PASSWORD_HASH,
-            preferences={}
-        )
+        user2 = User(email="unique@example.com", password_hash=TEST_PASSWORD_HASH, preferences={})
         test_db.add(user2)
 
         with pytest.raises(Exception):
@@ -423,11 +397,7 @@ class TestModelConstraints:
 
     def test_strategy_name_not_null(self, test_db):
         """Test strategy name is required"""
-        strategy = Strategy(
-            name=None,  # NULL not allowed
-            strategy_type="custom",
-            config={}
-        )
+        strategy = Strategy(name=None, strategy_type="custom", config={})  # NULL not allowed
         test_db.add(strategy)
 
         with pytest.raises(Exception):
@@ -442,7 +412,7 @@ class TestModelConstraints:
             quantity=1,
             price=100,
             order_type="market",
-            status="pending"
+            status="pending",
         )
         test_db.add(trade)
 

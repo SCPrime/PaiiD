@@ -5,9 +5,11 @@ Provides Redis caching with graceful fallback when Redis is unavailable.
 Implements common cache operations with TTL support.
 """
 
-import redis
-from typing import Optional, Any
 import json
+from typing import Any, Optional
+
+import redis
+
 from ..core.config import settings
 
 
@@ -30,7 +32,7 @@ class CacheService:
                 settings.REDIS_URL,
                 decode_responses=True,
                 socket_connect_timeout=5,
-                socket_timeout=5
+                socket_timeout=5,
             )
             # Test connection
             self.client.ping()

@@ -1,6 +1,7 @@
-from dotenv import load_dotenv
-from pathlib import Path
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Load .env file before importing settings
 env_path = Path(__file__).parent.parent / ".env"
@@ -14,16 +15,40 @@ print(f"TRADIER_API_KEY configured: {'YES' if os.getenv('TRADIER_API_KEY') else 
 print(f"Deployed from: main branch - Tradier integration active")
 print(f"===========================\n", flush=True)
 
+import atexit
+
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .core.config import settings
-from slowapi.errors import RateLimitExceeded
-from .routers import health, settings as settings_router, portfolio, orders, stream, screening, market, ai, telemetry, strategies, scheduler, claude, market_data, news, analytics, backtesting, stock, users, auth
-from .scheduler import init_scheduler
-import atexit
-import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
+from slowapi.errors import RateLimitExceeded
+
+from .core.config import settings
+from .routers import (
+    ai,
+    analytics,
+    auth,
+    backtesting,
+    claude,
+    health,
+    market,
+    market_data,
+    news,
+    orders,
+    portfolio,
+    scheduler,
+    screening,
+)
+from .routers import settings as settings_router
+from .routers import (
+    stock,
+    strategies,
+    stream,
+    telemetry,
+    users,
+)
+from .scheduler import init_scheduler
 
 # Initialize Sentry if DSN is configured
 if settings.SENTRY_DSN:
@@ -35,10 +60,25 @@ if settings.SENTRY_DSN:
         ],
         traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
         profiles_sample_rate=0.1,  # 10% profiling
-        environment="production" if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "") else "development",
+        environment=(
+            "production" if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "") else "development"
+        ),
         release=f"paiid-backend@1.0.0",
         send_default_pii=False,  # Don't send personally identifiable info
-        before_send=lambda event, hint: event if not event.get("request", {}).get("headers", {}).get("Authorization") else {**event, "request": {**event.get("request", {}), "headers": {**event.get("request", {}).get("headers", {}), "Authorization": "[REDACTED]"}}}
+        before_send=lambda event, hint: (
+            event
+            if not event.get("request", {}).get("headers", {}).get("Authorization")
+            else {
+                **event,
+                "request": {
+                    **event.get("request", {}),
+                    "headers": {
+                        **event.get("request", {}).get("headers", {}),
+                        "Authorization": "[REDACTED]",
+                    },
+                },
+            }
+        ),
     )
     print("[OK] Sentry error tracking initialized", flush=True)
 else:
@@ -51,18 +91,20 @@ print(f"===========================\n", flush=True)
 app = FastAPI(
     title="PaiiD Trading API",
     description="Personal Artificial Intelligence Investment Dashboard",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Configure rate limiting (Phase 3: Bulletproof Reliability)
 # Skip rate limiting in test environment to avoid middleware conflicts with TestClient
 if not settings.TESTING:
-    from .middleware.rate_limit import limiter, custom_rate_limit_exceeded_handler
+    from .middleware.rate_limit import custom_rate_limit_exceeded_handler, limiter
+
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
     print("[OK] Rate limiting enabled", flush=True)
 else:
     print("[TEST MODE] Rate limiting disabled for tests", flush=True)
+
 
 # Initialize scheduler, cache, and streaming on startup
 @app.on_event("startup")
@@ -70,6 +112,7 @@ async def startup_event():
     # Initialize cache service
     try:
         from .services.cache import init_cache
+
         init_cache()
     except Exception as e:
         print(f"[ERROR] Failed to initialize cache: {str(e)}", flush=True)
@@ -89,10 +132,12 @@ async def startup_event():
     # Start Tradier streaming service
     try:
         from .services.tradier_stream import start_tradier_stream
+
         await start_tradier_stream()
         print("[OK] Tradier streaming initialized", flush=True)
     except Exception as e:
         print(f"[ERROR] Failed to start Tradier stream: {e}", flush=True)
+
 
 # Shutdown scheduler and streaming gracefully
 @app.on_event("shutdown")
@@ -100,6 +145,7 @@ async def shutdown_event():
     # Shutdown scheduler
     try:
         from .scheduler import get_scheduler
+
         scheduler_instance = get_scheduler()
         scheduler_instance.shutdown()
         print("[OK] Scheduler shut down gracefully", flush=True)
@@ -109,18 +155,22 @@ async def shutdown_event():
     # Stop Tradier streaming
     try:
         from .services.tradier_stream import stop_tradier_stream
+
         await stop_tradier_stream()
         print("[OK] Tradier stream stopped", flush=True)
     except Exception as e:
         print(f"[ERROR] Tradier shutdown error: {e}", flush=True)
 
+
 # Add Sentry context middleware if Sentry is enabled
 if settings.SENTRY_DSN:
     from .middleware.sentry import SentryContextMiddleware
+
     app.add_middleware(SentryContextMiddleware)
 
 # Add Cache-Control headers for SWR support (Phase 2: Performance)
 from .middleware.cache_control import CacheControlMiddleware
+
 app.add_middleware(CacheControlMiddleware)
 
 app.add_middleware(

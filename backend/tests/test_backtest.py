@@ -2,7 +2,9 @@
 Test strategy backtesting engine
 Tests backtest execution, performance metrics, trade simulation
 """
+
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)
@@ -22,8 +24,8 @@ def test_backtest_endpoint_exists():
             "exitConditions": ["rsi_overbought"],
             "rsiPeriod": 14,
             "rsiOversold": 30,
-            "rsiOverbought": 70
-        }
+            "rsiOverbought": 70,
+        },
     }
 
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
@@ -48,8 +50,8 @@ def test_backtest_returns_performance_metrics():
         "rules": {
             "entryConditions": ["sma_crossover"],
             "exitConditions": ["sma_crossunder"],
-            "smaPeriod": 20
-        }
+            "smaPeriod": 20,
+        },
     }
 
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
@@ -75,8 +77,8 @@ def test_backtest_with_different_symbols():
             "rules": {
                 "entryConditions": ["price_above_sma"],
                 "exitConditions": ["price_below_sma"],
-                "smaPeriod": 50
-            }
+                "smaPeriod": 50,
+            },
         }
 
         response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
@@ -92,7 +94,7 @@ def test_backtest_validates_date_range():
         "startDate": "2024-06-01",
         "endDate": "2024-01-01",  # Before start date
         "initialCapital": 10000,
-        "rules": {"entryConditions": ["rsi_oversold"], "exitConditions": ["rsi_overbought"]}
+        "rules": {"entryConditions": ["rsi_oversold"], "exitConditions": ["rsi_overbought"]},
     }
 
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
@@ -108,7 +110,7 @@ def test_backtest_validates_initial_capital():
         "startDate": "2024-01-01",
         "endDate": "2024-02-01",
         "initialCapital": -1000,  # Negative
-        "rules": {"entryConditions": ["rsi_oversold"], "exitConditions": ["rsi_overbought"]}
+        "rules": {"entryConditions": ["rsi_oversold"], "exitConditions": ["rsi_overbought"]},
     }
 
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
@@ -130,8 +132,8 @@ def test_backtest_rsi_strategy():
             "rsiOversold": 30,
             "rsiOverbought": 70,
             "stopLoss": 0.02,  # 2% stop loss
-            "takeProfit": 0.05  # 5% take profit
-        }
+            "takeProfit": 0.05,  # 5% take profit
+        },
     }
 
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
@@ -158,8 +160,8 @@ def test_backtest_sma_crossover_strategy():
             "entryConditions": ["sma_crossover"],
             "exitConditions": ["sma_crossunder"],
             "smaPeriod": 20,
-            "smaSlowPeriod": 50
-        }
+            "smaSlowPeriod": 50,
+        },
     }
 
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
@@ -177,8 +179,8 @@ def test_backtest_performance_metrics_validation():
         "rules": {
             "entryConditions": ["rsi_oversold"],
             "exitConditions": ["rsi_overbought"],
-            "rsiPeriod": 14
-        }
+            "rsiPeriod": 14,
+        },
     }
 
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
@@ -212,8 +214,8 @@ def test_backtest_handles_no_trades():
             "exitConditions": ["rsi_overbought"],
             "rsiPeriod": 14,
             "rsiOversold": 10,  # Extremely oversold (unlikely)
-            "rsiOverbought": 90  # Extremely overbought (unlikely)
-        }
+            "rsiOverbought": 90,  # Extremely overbought (unlikely)
+        },
     }
 
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)

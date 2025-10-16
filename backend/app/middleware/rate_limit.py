@@ -6,12 +6,13 @@ Protects API from abuse and DoS attacks using SlowAPI.
 Phase 3: Bulletproof Reliability
 """
 
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from fastapi import Request
-from typing import Callable
 import os
+from typing import Callable
+
+from fastapi import Request
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 # Check if running in test mode
 TESTING = os.getenv("TESTING", "false").lower() == "true"
@@ -25,7 +26,7 @@ if TESTING:
         storage_uri="memory://",
         strategy="fixed-window",
         headers_enabled=False,  # Disable headers in test mode
-        enabled=False  # Disable rate limiting entirely in tests
+        enabled=False,  # Disable rate limiting entirely in tests
     )
 else:
     limiter = Limiter(
@@ -35,6 +36,7 @@ else:
         strategy="fixed-window",  # Fixed window strategy
         headers_enabled=True,  # Enable rate limit headers (X-RateLimit-*)
     )
+
 
 # Custom rate limit exceeded handler
 async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
@@ -47,7 +49,9 @@ async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExc
     from fastapi.responses import JSONResponse
 
     # Extract retry-after from exception
-    retry_after = exc.detail.split("Retry after ")[1] if "Retry after" in exc.detail else "60 seconds"
+    retry_after = (
+        exc.detail.split("Retry after ")[1] if "Retry after" in exc.detail else "60 seconds"
+    )
 
     return JSONResponse(
         status_code=429,
@@ -55,17 +59,18 @@ async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExc
             "error": "Rate limit exceeded",
             "message": f"Too many requests. Please try again later.",
             "retry_after": retry_after,
-            "limit": str(exc.detail)
+            "limit": str(exc.detail),
         },
         headers={
             "Retry-After": "60",  # Tell client to wait 60 seconds
             "X-RateLimit-Limit": str(limiter.limit),
             "X-RateLimit-Remaining": "0",
-        }
+        },
     )
 
 
 # Decorators for different endpoint types
+
 
 def rate_limit_standard(func):
     """Standard rate limit: 60 req/min"""
@@ -89,10 +94,10 @@ def rate_limit_very_strict(func):
 
 # Export limiter and handlers
 __all__ = [
-    'limiter',
-    'custom_rate_limit_exceeded_handler',
-    'rate_limit_standard',
-    'rate_limit_strict',
-    'rate_limit_relaxed',
-    'rate_limit_very_strict'
+    "limiter",
+    "custom_rate_limit_exceeded_handler",
+    "rate_limit_standard",
+    "rate_limit_strict",
+    "rate_limit_relaxed",
+    "rate_limit_very_strict",
 ]

@@ -4,6 +4,7 @@ Scans for stocks <= $4.00 and executes Buy Call + Sell Put legs
 """
 
 from typing import Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -109,7 +110,7 @@ class Under4MultilegStrategy:
             "account": account,
             "candidates": candidates,
             "proposals": proposals,
-            "approved_trades": approved_trades[:self.config.max_new_positions_per_day]
+            "approved_trades": approved_trades[: self.config.max_new_positions_per_day],
         }
 
     async def _sync_account(self, client) -> Dict:
@@ -121,7 +122,7 @@ class Under4MultilegStrategy:
             "equity": equity,
             "cash": float(account.cash),
             "buying_power": float(account.buying_power),
-            "daily_risk_budget": equity * (self.config.risk.max_daily_loss_pct / 100)
+            "daily_risk_budget": equity * (self.config.risk.max_daily_loss_pct / 100),
         }
 
     async def _build_universe(self, client) -> List[str]:
@@ -190,11 +191,7 @@ class Under4MultilegStrategy:
             contracts = min(contracts, self.config.sizing.max_contracts_per_leg)
 
             if contracts >= 1:
-                return {
-                    **proposal,
-                    "qty": contracts,
-                    "cost": contracts * proposal["price"] * 100
-                }
+                return {**proposal, "qty": contracts, "cost": contracts * proposal["price"] * 100}
 
         elif proposal["type"] == "SELL_PUT":
             # Calculate collateral available
@@ -207,7 +204,7 @@ class Under4MultilegStrategy:
                 return {
                     **proposal,
                     "qty": contracts,
-                    "collateral": contracts * proposal["strike"] * 100
+                    "collateral": contracts * proposal["strike"] * 100,
                 }
 
         return None
@@ -226,18 +223,10 @@ class Under4MultilegStrategy:
             try:
                 # Submit entry order
                 entry_order = await self._submit_entry_order(trade, client)
-                results.append({
-                    "trade": trade,
-                    "entry_order": entry_order,
-                    "status": "submitted"
-                })
+                results.append({"trade": trade, "entry_order": entry_order, "status": "submitted"})
 
             except Exception as e:
-                results.append({
-                    "trade": trade,
-                    "error": str(e),
-                    "status": "failed"
-                })
+                results.append({"trade": trade, "error": str(e), "status": "failed"})
 
         return results
 

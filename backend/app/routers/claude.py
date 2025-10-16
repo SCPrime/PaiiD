@@ -3,17 +3,18 @@ Claude API Proxy Router
 Proxies Anthropic API calls from frontend to avoid exposing API key in browser
 """
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import List, Optional
 import os
 import sys
+from typing import List, Optional
+
 from anthropic import Anthropic
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 # Set UTF-8 encoding for console output on Windows
-if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 router = APIRouter(prefix="/claude", tags=["claude"])
 
@@ -55,7 +56,7 @@ async def claude_chat(request: ChatRequest):
     if not anthropic_client:
         raise HTTPException(
             status_code=503,
-            detail="Claude API not configured. Set ANTHROPIC_API_KEY in backend .env"
+            detail="Claude API not configured. Set ANTHROPIC_API_KEY in backend .env",
         )
 
     try:
@@ -64,11 +65,7 @@ async def claude_chat(request: ChatRequest):
 
         # Call Anthropic API
         # Build kwargs to avoid passing None for system
-        kwargs = {
-            "model": request.model,
-            "max_tokens": request.max_tokens,
-            "messages": messages
-        }
+        kwargs = {"model": request.model, "max_tokens": request.max_tokens, "messages": messages}
         # System prompt should be a list of content blocks in newer API versions
         if request.system:
             if isinstance(request.system, str):
@@ -84,37 +81,23 @@ async def claude_chat(request: ChatRequest):
             if response.content[0].type == "text":
                 content = response.content[0].text
 
-        return ChatResponse(
-            content=content,
-            model=response.model,
-            role="assistant"
-        )
+        return ChatResponse(content=content, model=response.model, role="assistant")
 
     except Exception as e:
         # Safe error logging for Windows console
         try:
             print(f"[Claude API Error]: {str(e)}")
         except UnicodeEncodeError:
-            error_msg = str(e).encode('ascii', 'ignore').decode('ascii')
+            error_msg = str(e).encode("ascii", "ignore").decode("ascii")
             print(f"[Claude API Error]: {error_msg}")
 
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/health")
 async def claude_health():
     """Check if Claude API is configured and accessible"""
     if not anthropic_client:
-        return {
-            "status": "unavailable",
-            "message": "ANTHROPIC_API_KEY not configured"
-        }
+        return {"status": "unavailable", "message": "ANTHROPIC_API_KEY not configured"}
 
-    return {
-        "status": "ok",
-        "message": "Claude API ready",
-        "model": "claude-sonnet-4-5-20250929"
-    }
+    return {"status": "ok", "message": "Claude API ready", "model": "claude-sonnet-4-5-20250929"}

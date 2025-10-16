@@ -2,7 +2,9 @@
 Test strategy CRUD operations
 Tests strategy creation, retrieval, update, deletion
 """
+
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)
@@ -38,13 +40,9 @@ def test_create_strategy():
             "exitConditions": ["rsi_overbought"],
             "rsiPeriod": 14,
             "rsiOversold": 30,
-            "rsiOverbought": 70
+            "rsiOverbought": 70,
         },
-        "riskParams": {
-            "stopLoss": 0.02,
-            "takeProfit": 0.05,
-            "positionSize": 0.10
-        }
+        "riskParams": {"stopLoss": 0.02, "takeProfit": 0.05, "positionSize": 0.10},
     }
 
     response = client.post("/api/strategies/save", json=strategy, headers=HEADERS)
@@ -64,7 +62,7 @@ def test_get_strategy_by_id():
     strategy = {
         "name": "Test Strategy for GET",
         "symbol": "AAPL",
-        "rules": {"entryConditions": ["price_above_sma"], "smaPeriod": 20}
+        "rules": {"entryConditions": ["price_above_sma"], "smaPeriod": 20},
     }
 
     create_response = client.post("/api/strategies/save", json=strategy, headers=HEADERS)
@@ -87,7 +85,7 @@ def test_update_strategy():
     strategy = {
         "name": "Original Strategy",
         "symbol": "MSFT",
-        "rules": {"entryConditions": ["rsi_oversold"], "rsiPeriod": 14}
+        "rules": {"entryConditions": ["rsi_oversold"], "rsiPeriod": 14},
     }
 
     create_response = client.post("/api/strategies/save", json=strategy, headers=HEADERS)
@@ -99,13 +97,11 @@ def test_update_strategy():
         updated_strategy = {
             "name": "Updated Strategy Name",
             "symbol": "MSFT",
-            "rules": {"entryConditions": ["rsi_oversold"], "rsiPeriod": 21}  # Changed period
+            "rules": {"entryConditions": ["rsi_oversold"], "rsiPeriod": 21},  # Changed period
         }
 
         update_response = client.put(
-            f"/api/strategies/{strategy_id}",
-            json=updated_strategy,
-            headers=HEADERS
+            f"/api/strategies/{strategy_id}", json=updated_strategy, headers=HEADERS
         )
 
         if update_response.status_code == 200:
@@ -120,7 +116,7 @@ def test_delete_strategy():
     strategy = {
         "name": "Strategy to Delete",
         "symbol": "GOOGL",
-        "rules": {"entryConditions": ["price_above_sma"]}
+        "rules": {"entryConditions": ["price_above_sma"]},
     }
 
     create_response = client.post("/api/strategies/save", json=strategy, headers=HEADERS)
@@ -160,8 +156,8 @@ def test_strategy_with_multiple_entry_conditions():
             "exitConditions": ["rsi_overbought", "price_below_sma"],
             "rsiPeriod": 14,
             "smaPeriod": 50,
-            "volumeMultiplier": 1.5
-        }
+            "volumeMultiplier": 1.5,
+        },
     }
 
     response = client.post("/api/strategies/save", json=strategy, headers=HEADERS)
@@ -177,17 +173,14 @@ def test_strategy_with_risk_parameters():
     strategy = {
         "name": "Risk Managed Strategy",
         "symbol": "AAPL",
-        "rules": {
-            "entryConditions": ["rsi_oversold"],
-            "exitConditions": ["rsi_overbought"]
-        },
+        "rules": {"entryConditions": ["rsi_oversold"], "exitConditions": ["rsi_overbought"]},
         "riskParams": {
             "stopLoss": 0.03,  # 3% stop loss
             "takeProfit": 0.06,  # 6% take profit
             "positionSize": 0.15,  # 15% of capital per trade
             "maxOpenPositions": 5,
-            "maxDailyLoss": 0.05  # 5% max daily loss
-        }
+            "maxDailyLoss": 0.05,  # 5% max daily loss
+        },
     }
 
     response = client.post("/api/strategies/save", json=strategy, headers=HEADERS)
@@ -215,7 +208,7 @@ def test_strategy_duplicate_name_handling():
     strategy1 = {
         "name": "Duplicate Name Test",
         "symbol": "SPY",
-        "rules": {"entryConditions": ["rsi_oversold"]}
+        "rules": {"entryConditions": ["rsi_oversold"]},
     }
 
     response1 = client.post("/api/strategies/save", json=strategy1, headers=HEADERS)
@@ -225,7 +218,7 @@ def test_strategy_duplicate_name_handling():
         strategy2 = {
             "name": "Duplicate Name Test",  # Same name
             "symbol": "AAPL",  # Different symbol
-            "rules": {"entryConditions": ["price_above_sma"]}
+            "rules": {"entryConditions": ["price_above_sma"]},
         }
 
         response2 = client.post("/api/strategies/save", json=strategy2, headers=HEADERS)
@@ -241,7 +234,7 @@ def test_update_nonexistent_strategy():
     updated_strategy = {
         "name": "Updated Name",
         "symbol": "SPY",
-        "rules": {"entryConditions": ["rsi_oversold"]}
+        "rules": {"entryConditions": ["rsi_oversold"]},
     }
 
     response = client.put(f"/api/strategies/{fake_id}", json=updated_strategy, headers=HEADERS)

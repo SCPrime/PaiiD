@@ -6,10 +6,10 @@ Calculates key metrics: Sharpe ratio, max drawdown, win rate, profit factor.
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Trade:
     """Represents a single trade"""
+
     entry_date: str
     exit_date: Optional[str]
     entry_price: float
@@ -31,8 +32,11 @@ class Trade:
 @dataclass
 class StrategyRules:
     """Defines strategy entry/exit rules"""
+
     entry_rules: List[Dict[str, Any]]  # e.g., [{"indicator": "RSI", "operator": "<", "value": 30}]
-    exit_rules: List[Dict[str, Any]]  # e.g., [{"type": "take_profit", "value": 5}, {"type": "stop_loss", "value": 2}]
+    exit_rules: List[
+        Dict[str, Any]
+    ]  # e.g., [{"type": "take_profit", "value": 5}, {"type": "stop_loss", "value": 2}]
     position_size_percent: float = 10.0  # % of portfolio per trade
     max_positions: int = 1  # Max concurrent positions
     rsi_period: int = 14  # Configurable RSI period (default 14)
@@ -41,6 +45,7 @@ class StrategyRules:
 @dataclass
 class BacktestResult:
     """Comprehensive backtest results"""
+
     # Performance metrics
     total_return: float
     total_return_percent: float
@@ -113,7 +118,7 @@ class BacktestingEngine:
         rules: List[Dict[str, Any]],
         prices: List[float],
         current_price: float,
-        rsi_period: int = 14
+        rsi_period: int = 14,
     ) -> bool:
         """
         Check if entry conditions are met
@@ -160,10 +165,7 @@ class BacktestingEngine:
         return True
 
     def check_exit_signal(
-        self,
-        trade: Trade,
-        current_price: float,
-        exit_rules: List[Dict[str, Any]]
+        self, trade: Trade, current_price: float, exit_rules: List[Dict[str, Any]]
     ) -> Tuple[bool, str]:
         """
         Check if exit conditions are met
@@ -198,7 +200,7 @@ class BacktestingEngine:
         self,
         symbol: str,
         prices: List[Dict[str, Any]],  # [{date, open, high, low, close, volume}]
-        strategy: StrategyRules
+        strategy: StrategyRules,
     ) -> BacktestResult:
         """
         Execute backtest on historical data
@@ -233,9 +235,7 @@ class BacktestingEngine:
             # Check exits for open positions first
             for position in self.positions[:]:  # Iterate over copy
                 should_exit, reason = self.check_exit_signal(
-                    position,
-                    close_price,
-                    strategy.exit_rules
+                    position, close_price, strategy.exit_rules
                 )
 
                 if should_exit:
@@ -243,7 +243,9 @@ class BacktestingEngine:
                     position.exit_date = date
                     position.exit_price = close_price
                     position.pnl = (close_price - position.entry_price) * position.quantity
-                    position.pnl_percent = ((close_price - position.entry_price) / position.entry_price) * 100
+                    position.pnl_percent = (
+                        (close_price - position.entry_price) / position.entry_price
+                    ) * 100
                     position.status = "closed"
 
                     # Return capital: original cost basis + profit/loss
@@ -254,15 +256,14 @@ class BacktestingEngine:
                     self.closed_trades.append(position)
                     self.positions.remove(position)
 
-                    logger.debug(f"Closed position: {symbol} at {close_price}, PnL: {position.pnl:.2f}, Reason: {reason}")
+                    logger.debug(
+                        f"Closed position: {symbol} at {close_price}, PnL: {position.pnl:.2f}, Reason: {reason}"
+                    )
 
             # Check entry signals if we have capacity
             if len(self.positions) < strategy.max_positions:
                 should_enter = self.check_entry_signal(
-                    strategy.entry_rules,
-                    price_history,
-                    close_price,
-                    rsi_period=strategy.rsi_period
+                    strategy.entry_rules, price_history, close_price, rsi_period=strategy.rsi_period
                 )
 
                 if should_enter:
@@ -282,7 +283,7 @@ class BacktestingEngine:
                             exit_price=None,
                             quantity=quantity,
                             side="long",
-                            status="open"
+                            status="open",
                         )
 
                         self.positions.append(trade)
@@ -308,12 +309,14 @@ class BacktestingEngine:
             drawdown_percent = (drawdown / self.peak_capital) * 100 if self.peak_capital > 0 else 0
 
             # Record equity curve point
-            self.equity_curve.append({
-                "date": date,
-                "value": round(current_equity, 2),
-                "drawdown": round(drawdown, 2),
-                "drawdown_percent": round(drawdown_percent, 2)
-            })
+            self.equity_curve.append(
+                {
+                    "date": date,
+                    "value": round(current_equity, 2),
+                    "drawdown": round(drawdown, 2),
+                    "drawdown_percent": round(drawdown_percent, 2),
+                }
+            )
 
         # Close any remaining open positions at final price
         final_price = prices[-1]["close"]
@@ -322,7 +325,9 @@ class BacktestingEngine:
             position.exit_date = final_date
             position.exit_price = final_price
             position.pnl = (final_price - position.entry_price) * position.quantity
-            position.pnl_percent = ((final_price - position.entry_price) / position.entry_price) * 100
+            position.pnl_percent = (
+                (final_price - position.entry_price) / position.entry_price
+            ) * 100
             position.status = "closed"
             self.closed_trades.append(position)
 
@@ -331,12 +336,7 @@ class BacktestingEngine:
         # Calculate final metrics
         return self._calculate_metrics(symbol, prices[0]["date"], prices[-1]["date"])
 
-    def _calculate_metrics(
-        self,
-        symbol: str,
-        start_date: str,
-        end_date: str
-    ) -> BacktestResult:
+    def _calculate_metrics(self, symbol: str, start_date: str, end_date: str) -> BacktestResult:
         """Calculate all performance metrics from closed trades"""
 
         if not self.equity_curve:
@@ -351,7 +351,9 @@ class BacktestingEngine:
         end_dt = datetime.fromisoformat(end_date)
         days = (end_dt - start_dt).days
         years = days / 365.0 if days > 0 else 1.0
-        annualized_return = ((final_capital / self.initial_capital) ** (1 / years) - 1) * 100 if years > 0 else 0
+        annualized_return = (
+            ((final_capital / self.initial_capital) ** (1 / years) - 1) * 100 if years > 0 else 0
+        )
 
         # Trade statistics
         winning_trades = [t for t in self.closed_trades if t.pnl and t.pnl > 0]
@@ -375,17 +377,26 @@ class BacktestingEngine:
 
         # Max drawdown
         max_drawdown = max((point["drawdown"] for point in self.equity_curve), default=0)
-        max_drawdown_percent = max((point["drawdown_percent"] for point in self.equity_curve), default=0)
+        max_drawdown_percent = max(
+            (point["drawdown_percent"] for point in self.equity_curve), default=0
+        )
 
         # Sharpe ratio (simplified - assumes daily returns)
         if len(self.equity_curve) > 1:
             returns = [
-                (self.equity_curve[i]["value"] - self.equity_curve[i-1]["value"]) / self.equity_curve[i-1]["value"]
+                (self.equity_curve[i]["value"] - self.equity_curve[i - 1]["value"])
+                / self.equity_curve[i - 1]["value"]
                 for i in range(1, len(self.equity_curve))
             ]
             avg_return = sum(returns) / len(returns) if returns else 0
-            std_return = math.sqrt(sum((r - avg_return) ** 2 for r in returns) / len(returns)) if returns else 1
-            sharpe_ratio = (avg_return / std_return * math.sqrt(252)) if std_return > 0 else 0  # Annualized
+            std_return = (
+                math.sqrt(sum((r - avg_return) ** 2 for r in returns) / len(returns))
+                if returns
+                else 1
+            )
+            sharpe_ratio = (
+                (avg_return / std_return * math.sqrt(252)) if std_return > 0 else 0
+            )  # Annualized
         else:
             sharpe_ratio = 0
 
@@ -400,7 +411,7 @@ class BacktestingEngine:
                 "side": t.side,
                 "pnl": round(t.pnl, 2) if t.pnl else 0,
                 "pnl_percent": round(t.pnl_percent, 2) if t.pnl_percent else 0,
-                "status": t.status
+                "status": t.status,
             }
             for t in self.closed_trades
         ]
@@ -425,5 +436,5 @@ class BacktestingEngine:
             final_capital=round(final_capital, 2),
             start_date=start_date,
             end_date=end_date,
-            symbol=symbol
+            symbol=symbol,
         )

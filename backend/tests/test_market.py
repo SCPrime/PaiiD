@@ -2,7 +2,9 @@
 Test market data endpoints
 Tests quotes, indices, real-time data, and market data API integration
 """
+
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)
@@ -131,8 +133,7 @@ def test_market_hours_status():
 def test_historical_bars_endpoint():
     """Test historical bars/candles endpoint"""
     response = client.get(
-        "/api/market/bars?symbol=AAPL&timeframe=1D&start=2024-01-01&end=2024-01-31",
-        headers=HEADERS
+        "/api/market/bars?symbol=AAPL&timeframe=1D&start=2024-01-01&end=2024-01-31", headers=HEADERS
     )
 
     if response.status_code == 200:
@@ -154,8 +155,7 @@ def test_intraday_bars():
 
     for timeframe in timeframes:
         response = client.get(
-            f"/api/market/bars?symbol=SPY&timeframe={timeframe}&start=2024-01-01",
-            headers=HEADERS
+            f"/api/market/bars?symbol=SPY&timeframe={timeframe}&start=2024-01-01", headers=HEADERS
         )
 
         # Should return data or error, not crash
@@ -231,8 +231,7 @@ def test_bid_ask_spread():
 def test_ohlc_data_validation():
     """Test OHLC data integrity"""
     response = client.get(
-        "/api/market/bars?symbol=SPY&timeframe=1D&start=2024-01-01&end=2024-01-31",
-        headers=HEADERS
+        "/api/market/bars?symbol=SPY&timeframe=1D&start=2024-01-01&end=2024-01-31", headers=HEADERS
     )
 
     if response.status_code == 200:
@@ -254,10 +253,7 @@ def test_ohlc_data_validation():
 
 def test_extended_hours_data():
     """Test pre-market and after-hours data availability"""
-    response = client.get(
-        "/api/market/quote/AAPL?includeExtendedHours=true",
-        headers=HEADERS
-    )
+    response = client.get("/api/market/quote/AAPL?includeExtendedHours=true", headers=HEADERS)
 
     if response.status_code == 200:
         data = response.json()

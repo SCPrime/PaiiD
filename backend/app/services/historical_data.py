@@ -6,8 +6,8 @@ NO mock data - all data comes from real market sources.
 """
 
 import logging
-from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +27,7 @@ class HistoricalDataService:
         self.tradier_client = tradier_client
 
     async def get_historical_bars(
-        self,
-        symbol: str,
-        start_date: str,
-        end_date: str,
-        interval: str = "daily"
+        self, symbol: str, start_date: str, end_date: str, interval: str = "daily"
     ) -> List[Dict[str, Any]]:
         """
         Get historical OHLCV bars from Tradier API
@@ -57,14 +53,13 @@ class HistoricalDataService:
 
         # Call Tradier API (synchronous method, not async)
         bars = self.tradier_client.get_historical_bars(
-            symbol=symbol,
-            interval=interval,
-            start_date=start_date,
-            end_date=end_date
+            symbol=symbol, interval=interval, start_date=start_date, end_date=end_date
         )
 
         if not bars:
-            logger.warning(f"No historical data available for {symbol} in date range {start_date} to {end_date}")
+            logger.warning(
+                f"No historical data available for {symbol} in date range {start_date} to {end_date}"
+            )
             return []
 
         logger.info(f"Retrieved {len(bars)} real market bars for {symbol}")

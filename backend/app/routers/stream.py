@@ -16,10 +16,12 @@ import json
 import logging
 import time
 from typing import AsyncGenerator
+
 from fastapi import APIRouter, Depends, Query
 from sse_starlette.sse import EventSourceResponse
+
 from app.core.auth import require_bearer
-from app.services.cache import get_cache, CacheService
+from app.services.cache import CacheService, get_cache
 from app.services.tradier_stream import get_tradier_stream
 
 logger = logging.getLogger(__name__)
@@ -28,14 +30,14 @@ router = APIRouter(tags=["streaming"])
 
 # Configuration
 HEARTBEAT_INTERVAL = 15  # Send heartbeat every 15 seconds
-DATA_CHECK_INTERVAL = 1   # Check for new data every 1 second
+DATA_CHECK_INTERVAL = 1  # Check for new data every 1 second
 
 
 @router.get("/stream/prices")
 async def stream_prices(
     symbols: str = Query(..., description="Comma-separated list of symbols (e.g., AAPL,MSFT,TSLA)"),
     _=Depends(require_bearer),
-    cache: CacheService = Depends(get_cache)
+    cache: CacheService = Depends(get_cache),
 ):
     """
     Stream real-time price updates for specified symbols via Server-Sent Events
@@ -57,7 +59,7 @@ async def stream_prices(
         });
     """
     # Parse symbols
-    symbol_list = [s.strip().upper() for s in symbols.split(',') if s.strip()]
+    symbol_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
 
     if not symbol_list:
         logger.warning("No symbols provided for streaming")
@@ -93,7 +95,7 @@ async def stream_prices(
                             "price": trade_data.get("price", 0),
                             "timestamp": trade_data.get("timestamp"),
                             "type": "trade",
-                            "size": trade_data.get("size", 0)
+                            "size": trade_data.get("size", 0),
                         }
                     else:
                         # Fall back to quote data (bid/ask)
@@ -104,25 +106,24 @@ async def stream_prices(
                                 "bid": quote_data.get("bid", 0),
                                 "ask": quote_data.get("ask", 0),
                                 "timestamp": quote_data.get("timestamp"),
-                                "type": "quote"
+                                "type": "quote",
                             }
 
                 # Send price update if we have data
                 if prices:
-                    yield {
-                        "event": "price_update",
-                        "data": json.dumps(prices)
-                    }
+                    yield {"event": "price_update", "data": json.dumps(prices)}
 
                 # Send periodic heartbeat (every HEARTBEAT_INTERVAL seconds)
                 if current_time - last_heartbeat_time >= HEARTBEAT_INTERVAL:
                     yield {
                         "event": "heartbeat",
-                        "data": json.dumps({
-                            "timestamp": current_time,
-                            "symbols": symbol_list,
-                            "stream_type": "prices"
-                        })
+                        "data": json.dumps(
+                            {
+                                "timestamp": current_time,
+                                "symbols": symbol_list,
+                                "stream_type": "prices",
+                            }
+                        ),
                     }
                     last_heartbeat_time = current_time
                     logger.debug(f"💓 Heartbeat sent (prices stream)")
@@ -136,19 +137,13 @@ async def stream_prices(
             raise
         except Exception as e:
             logger.error(f"❌ Error in price stream: {e}")
-            yield {
-                "event": "error",
-                "data": json.dumps({"error": str(e)})
-            }
+            yield {"event": "error", "data": json.dumps({"error": str(e)})}
 
     return EventSourceResponse(price_generator())
 
 
 @router.get("/stream/positions")
-async def stream_positions(
-    _=Depends(require_bearer),
-    cache: CacheService = Depends(get_cache)
-):
+async def stream_positions(_=Depends(require_bearer), cache: CacheService = Depends(get_cache)):
     """
     Stream position updates via Server-Sent Events
 
@@ -187,21 +182,20 @@ async def stream_positions(
 
                     # Only send update if positions changed
                     if current_hash != last_positions_hash:
-                        yield {
-                            "event": "position_update",
-                            "data": json.dumps(positions_data)
-                        }
+                        yield {"event": "position_update", "data": json.dumps(positions_data)}
                         last_positions_hash = current_hash
 
                 # Send periodic heartbeat (every HEARTBEAT_INTERVAL seconds)
                 if current_time - last_heartbeat_time >= HEARTBEAT_INTERVAL:
                     yield {
                         "event": "heartbeat",
-                        "data": json.dumps({
-                            "timestamp": current_time,
-                            "stream_type": "positions",
-                            "position_count": len(positions_data) if positions_data else 0
-                        })
+                        "data": json.dumps(
+                            {
+                                "timestamp": current_time,
+                                "stream_type": "positions",
+                                "position_count": len(positions_data) if positions_data else 0,
+                            }
+                        ),
                     }
                     last_heartbeat_time = current_time
                     logger.debug(f"💓 Heartbeat sent (positions stream)")
@@ -214,10 +208,7 @@ async def stream_positions(
             raise
         except Exception as e:
             logger.error(f"❌ Error in position stream: {e}")
-            yield {
-                "event": "error",
-                "data": json.dumps({"error": str(e)})
-            }
+            yield {"event": "error", "data": json.dumps({"error": str(e)})}
 
     return EventSourceResponse(position_generator())
 
@@ -242,5 +233,5 @@ async def stream_status(_=Depends(require_bearer)):
         "streaming_available": tradier_stream.is_running(),
         "provider": "Tradier WebSocket",
         "active_symbols": active_symbols,
-        "stream_count": len(active_symbols)
+        "stream_count": len(active_symbols),
     }

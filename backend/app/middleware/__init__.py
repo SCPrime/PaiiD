@@ -1,7 +1,7 @@
 # Middleware package
 
-from .rate_limit import limiter, custom_rate_limit_exceeded_handler
 from .cache_control import CacheControlMiddleware
+from .rate_limit import custom_rate_limit_exceeded_handler, limiter
 from .sentry import SentryContextMiddleware
 from .validation import *
 

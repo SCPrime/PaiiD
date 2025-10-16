@@ -10,8 +10,9 @@ Calculates common technical indicators for trading signals:
 """
 
 import logging
-from typing import List, Dict, Any, Tuple
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Tuple
+
 import requests
 
 logger = logging.getLogger(__name__)
@@ -55,10 +56,9 @@ class TechnicalIndicators:
         return round(rsi, 2)
 
     @staticmethod
-    def calculate_macd(prices: List[float],
-                      fast_period: int = 12,
-                      slow_period: int = 26,
-                      signal_period: int = 9) -> Dict[str, float]:
+    def calculate_macd(
+        prices: List[float], fast_period: int = 12, slow_period: int = 26, signal_period: int = 9
+    ) -> Dict[str, float]:
         """
         Calculate MACD (Moving Average Convergence Divergence)
 
@@ -71,8 +71,8 @@ class TechnicalIndicators:
         # Calculate MACD line for each bar (need historical values for signal line EMA)
         macd_values = []
         for i in range(slow_period, len(prices)):
-            fast_ema = TechnicalIndicators._calculate_ema(prices[:i+1], fast_period)
-            slow_ema = TechnicalIndicators._calculate_ema(prices[:i+1], slow_period)
+            fast_ema = TechnicalIndicators._calculate_ema(prices[: i + 1], fast_period)
+            slow_ema = TechnicalIndicators._calculate_ema(prices[: i + 1], slow_period)
             macd_values.append(fast_ema - slow_ema)
 
         # Calculate signal line as EMA of MACD line
@@ -88,13 +88,13 @@ class TechnicalIndicators:
         return {
             "macd": round(macd_line, 4),
             "signal": round(signal_line, 4),
-            "histogram": round(histogram, 4)
+            "histogram": round(histogram, 4),
         }
 
     @staticmethod
-    def calculate_bollinger_bands(prices: List[float],
-                                  period: int = 20,
-                                  std_dev: float = 2.0) -> Dict[str, float]:
+    def calculate_bollinger_bands(
+        prices: List[float], period: int = 20, std_dev: float = 2.0
+    ) -> Dict[str, float]:
         """
         Calculate Bollinger Bands
 
@@ -103,11 +103,7 @@ class TechnicalIndicators:
         """
         if len(prices) < period:
             current = prices[-1] if prices else 100.0
-            return {
-                "upper": current * 1.02,
-                "middle": current,
-                "lower": current * 0.98
-            }
+            return {"upper": current * 1.02, "middle": current, "lower": current * 0.98}
 
         recent_prices = prices[-period:]
 
@@ -116,16 +112,12 @@ class TechnicalIndicators:
 
         # Calculate standard deviation
         variance = sum((p - sma) ** 2 for p in recent_prices) / period
-        std = variance ** 0.5
+        std = variance**0.5
 
         upper = sma + (std_dev * std)
         lower = sma - (std_dev * std)
 
-        return {
-            "upper": round(upper, 2),
-            "middle": round(sma, 2),
-            "lower": round(lower, 2)
-        }
+        return {"upper": round(upper, 2), "middle": round(sma, 2), "lower": round(lower, 2)}
 
     @staticmethod
     def calculate_bb_width(prices: List[float], period: int = 20, std_dev: float = 2.0) -> float:
@@ -148,7 +140,9 @@ class TechnicalIndicators:
         return round(width_pct, 2)
 
     @staticmethod
-    def calculate_atr(highs: List[float], lows: List[float], closes: List[float], period: int = 14) -> float:
+    def calculate_atr(
+        highs: List[float], lows: List[float], closes: List[float], period: int = 14
+    ) -> float:
         """
         Calculate Average True Range (ATR) - volatility indicator
 
@@ -177,11 +171,7 @@ class TechnicalIndicators:
             prev_close = closes[i - 1]
 
             # True Range = max(high-low, abs(high-prev_close), abs(low-prev_close))
-            tr = max(
-                high - low,
-                abs(high - prev_close),
-                abs(low - prev_close)
-            )
+            tr = max(high - low, abs(high - prev_close), abs(low - prev_close))
             true_ranges.append(tr)
 
         # ATR is simple moving average of True Range
@@ -245,7 +235,7 @@ class TechnicalIndicators:
                 "direction": "neutral",
                 "strength": 0.5,
                 "support": prices[-1] * 0.95 if prices else 0,
-                "resistance": prices[-1] * 1.05 if prices else 0
+                "resistance": prices[-1] * 1.05 if prices else 0,
             }
 
         recent = prices[-20:]
@@ -259,17 +249,17 @@ class TechnicalIndicators:
         sum_x = sum(x_values)
         sum_y = sum(recent)
         sum_xy = sum(x * y for x, y in zip(x_values, recent))
-        sum_x2 = sum(x ** 2 for x in x_values)
+        sum_x2 = sum(x**2 for x in x_values)
 
         # Guard against division by zero (shouldn't happen with sequential x_values, but defensive)
-        denominator = (n * sum_x2 - sum_x ** 2)
+        denominator = n * sum_x2 - sum_x**2
         if denominator == 0:
             # All x values identical - return neutral trend
             return {
                 "direction": "neutral",
                 "strength": 0.5,
                 "support": min(recent[-10:]),
-                "resistance": max(recent[-10:])
+                "resistance": max(recent[-10:]),
             }
 
         slope = (n * sum_xy - sum_x * sum_y) / denominator
@@ -293,11 +283,13 @@ class TechnicalIndicators:
             "direction": direction,
             "strength": round(strength, 2),
             "support": round(support, 2),
-            "resistance": round(resistance, 2)
+            "resistance": round(resistance, 2),
         }
 
     @staticmethod
-    def generate_signal(symbol: str, prices: List[float], volumes: List[float] = None) -> Dict[str, Any]:
+    def generate_signal(
+        symbol: str, prices: List[float], volumes: List[float] = None
+    ) -> Dict[str, Any]:
         """
         Generate trading signal based on multiple indicators
 
@@ -309,7 +301,7 @@ class TechnicalIndicators:
                 "action": "HOLD",
                 "confidence": 50.0,
                 "reasons": ["Insufficient data for analysis"],
-                "indicators": {}
+                "indicators": {},
             }
 
         current_price = prices[-1]
@@ -417,11 +409,15 @@ class TechnicalIndicators:
                 "macd": macd,
                 "bollinger_bands": bb,
                 "moving_averages": ma,
-                "trend": trend
+                "trend": trend,
             },
             # Calculate risk/reward ratio with proper guard
             # Risk = distance from entry to stop, Reward = distance from entry to target
-            "risk_reward_ratio": round(abs(take_profit - entry_price) / abs(entry_price - stop_loss), 2) if abs(entry_price - stop_loss) > 0.01 else 0,  # 0 if entry == stop (invalid signal)
+            "risk_reward_ratio": (
+                round(abs(take_profit - entry_price) / abs(entry_price - stop_loss), 2)
+                if abs(entry_price - stop_loss) > 0.01
+                else 0
+            ),  # 0 if entry == stop (invalid signal)
             "bullish_score": round(bullish_score, 2),
-            "bearish_score": round(bearish_score, 2)
+            "bearish_score": round(bearish_score, 2),
         }

@@ -5,42 +5,41 @@ Handles user registration, login, logout, token refresh, and profile management.
 Supports owner and beta tester registration with invite codes.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Request, status
+import logging
+from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field, validator
 from sqlalchemy.orm import Session
-from typing import Optional
-import logging
 
 from ..core.jwt import (
-    hash_password,
-    verify_password,
     create_token_pair,
     decode_token,
-    get_current_user
+    get_current_user,
+    hash_password,
+    verify_password,
 )
 from ..db.session import get_db
-from ..models.database import User, UserSession, ActivityLog
-from datetime import datetime
+from ..models.database import ActivityLog, User, UserSession
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["auth"])
 
 # Invite codes for beta testing (store these securely in production, e.g., environment variables or database)
-BETA_INVITE_CODES = {
-    "PAIID_BETA_2025",  # Example invite code
-    "TRADING_BETA_ACCESS"
-}
+BETA_INVITE_CODES = {"PAIID_BETA_2025", "TRADING_BETA_ACCESS"}  # Example invite code
 
 
 class UserRegister(BaseModel):
     """User registration request"""
+
     email: EmailStr
     password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
     full_name: Optional[str] = None
     invite_code: Optional[str] = Field(None, description="Required for beta tester registration")
 
-    @validator('password')
+    @validator("password")
     def validate_password_strength(cls, v):
         """Ensure password has minimum security requirements"""
         if len(v) < 8:
@@ -54,12 +53,14 @@ class UserRegister(BaseModel):
 
 class UserLogin(BaseModel):
     """User login request"""
+
     email: EmailStr
     password: str
 
 
 class TokenResponse(BaseModel):
     """Token response for login/refresh"""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -67,11 +68,13 @@ class TokenResponse(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     """Refresh token request"""
+
     refresh_token: str
 
 
 class UserProfile(BaseModel):
     """User profile response"""
+
     id: int
     email: str
     full_name: Optional[str]
@@ -86,11 +89,7 @@ class UserProfile(BaseModel):
 
 
 @router.post("/auth/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def register(
-    user_data: UserRegister,
-    request: Request,
-    db: Session = Depends(get_db)
-):
+async def register(user_data: UserRegister, request: Request, db: Session = Depends(get_db)):
     """
     Register a new user
 
@@ -106,16 +105,14 @@ async def register(
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
 
     # Validate invite code for beta testers
     if user_data.invite_code:
         if user_data.invite_code not in BETA_INVITE_CODES:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid invite code"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid invite code"
             )
         role = "beta_tester"
     else:
@@ -132,7 +129,7 @@ async def register(
         full_name=user_data.full_name or user_data.email,
         role=role,
         is_active=True,
-        preferences={"risk_tolerance": 50}  # Default moderate risk
+        preferences={"risk_tolerance": 50},  # Default moderate risk
     )
 
     db.add(new_user)
@@ -149,7 +146,7 @@ async def register(
         resource_id=new_user.id,
         details={"email": new_user.email, "role": role},
         ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent")
+        user_agent=request.headers.get("user-agent"),
     )
     db.add(activity)
     db.commit()
@@ -159,18 +156,14 @@ async def register(
         new_user,
         db,
         ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent")
+        user_agent=request.headers.get("user-agent"),
     )
 
     return tokens
 
 
 @router.post("/auth/login", response_model=TokenResponse)
-async def login(
-    credentials: UserLogin,
-    request: Request,
-    db: Session = Depends(get_db)
-):
+async def login(credentials: UserLogin, request: Request, db: Session = Depends(get_db)):
     """
     Authenticate user and return JWT tokens
 
@@ -189,16 +182,12 @@ async def login(
         # Log failed attempt
         logger.warning(f"⚠️ Failed login attempt for: {credentials.email}")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password"
         )
 
     # Check if user is active
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is disabled"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")
 
     logger.info(f"✅ User logged in: {user.email} (role: {user.role})")
 
@@ -210,7 +199,7 @@ async def login(
         resource_id=user.id,
         details={"email": user.email},
         ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent")
+        user_agent=request.headers.get("user-agent"),
     )
     db.add(activity)
     db.commit()
@@ -220,17 +209,14 @@ async def login(
         user,
         db,
         ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent")
+        user_agent=request.headers.get("user-agent"),
     )
 
     return tokens
 
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
+async def logout(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Logout user and invalidate all sessions
 
@@ -247,7 +233,7 @@ async def logout(
         resource_type="session",
         resource_id=current_user.id,
         details={"email": current_user.email},
-        timestamp=datetime.utcnow()
+        timestamp=datetime.utcnow(),
     )
     db.add(activity)
     db.commit()
@@ -259,9 +245,7 @@ async def logout(
 
 @router.post("/auth/refresh", response_model=TokenResponse)
 async def refresh_token(
-    refresh_request: RefreshTokenRequest,
-    request: Request,
-    db: Session = Depends(get_db)
+    refresh_request: RefreshTokenRequest, request: Request, db: Session = Depends(get_db)
 ):
     """
     Exchange refresh token for new access + refresh token pair
@@ -282,15 +266,14 @@ async def refresh_token(
         payload = decode_token(refresh_request.refresh_token)
     except HTTPException:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
         )
 
     # Verify token type
     if payload.get("type") != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token type (expected refresh token)"
+            detail="Invalid token type (expected refresh token)",
         )
 
     # Get user
@@ -298,29 +281,26 @@ async def refresh_token(
     user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is disabled"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")
 
     # Verify session exists
     refresh_jti = payload.get("jti")
-    session = db.query(UserSession).filter(
-        UserSession.user_id == user_id,
-        UserSession.refresh_token_jti == refresh_jti,
-        UserSession.expires_at > datetime.utcnow()
-    ).first()
+    session = (
+        db.query(UserSession)
+        .filter(
+            UserSession.user_id == user_id,
+            UserSession.refresh_token_jti == refresh_jti,
+            UserSession.expires_at > datetime.utcnow(),
+        )
+        .first()
+    )
 
     if not session:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Session expired or invalid"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired or invalid"
         )
 
     # Delete old session
@@ -334,16 +314,14 @@ async def refresh_token(
         user,
         db,
         ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent")
+        user_agent=request.headers.get("user-agent"),
     )
 
     return tokens
 
 
 @router.get("/auth/me", response_model=UserProfile)
-async def get_current_user_profile(
-    current_user: User = Depends(get_current_user)
-):
+async def get_current_user_profile(current_user: User = Depends(get_current_user)):
     """
     Get current authenticated user's profile
 

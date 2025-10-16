@@ -5,12 +5,16 @@ Market data endpoints using Tradier API
 This module uses Tradier API for ALL market data.
 Alpaca is ONLY used for paper trading execution (see orders.py).
 """
-from fastapi import APIRouter, Depends, HTTPException
-from app.core.auth import require_bearer
-from ..services.tradier_client import get_tradier_client
-from ..services.cache import CacheService, get_cache
-from datetime import datetime, timedelta
+
 import logging
+from datetime import datetime, timedelta
+
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.core.auth import require_bearer
+
+from ..services.cache import CacheService, get_cache
+from ..services.tradier_client import get_tradier_client
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +27,9 @@ router = APIRouter()
 
 
 @router.get("/market/quote/{symbol}")
-async def get_quote(symbol: str, _=Depends(require_bearer), cache: CacheService = Depends(get_cache)):
+async def get_quote(
+    symbol: str, _=Depends(require_bearer), cache: CacheService = Depends(get_cache)
+):
     """Get real-time quote for a symbol using Tradier (cached for 15s)"""
     # Check cache first
     cache_key = f"quote:{symbol.upper()}"
@@ -47,7 +53,7 @@ async def get_quote(symbol: str, _=Depends(require_bearer), cache: CacheService 
             "ask": float(quote.get("ask", 0)),
             "last": float(quote.get("last", 0)),
             "volume": int(quote.get("volume", 0)),
-            "timestamp": quote.get("trade_date", datetime.now().isoformat())
+            "timestamp": quote.get("trade_date", datetime.now().isoformat()),
         }
 
         # Cache for 15 seconds
@@ -65,7 +71,7 @@ async def get_quotes(symbols: str, _=Depends(require_bearer)):
     """Get quotes for multiple symbols (comma-separated) using Tradier"""
     try:
         client = get_tradier_client()
-        symbol_list = [s.strip().upper() for s in symbols.split(',')]
+        symbol_list = [s.strip().upper() for s in symbols.split(",")]
         quotes_data = client.get_quotes(symbol_list)
 
         result = {}
@@ -76,7 +82,7 @@ async def get_quotes(symbols: str, _=Depends(require_bearer)):
                     "bid": float(q.get("bid", 0)),
                     "ask": float(q.get("ask", 0)),
                     "last": float(q.get("last", 0)),
-                    "timestamp": q.get("trade_date", datetime.now().isoformat())
+                    "timestamp": q.get("trade_date", datetime.now().isoformat()),
                 }
 
         logger.info(f"✅ Retrieved {len(result)} quotes from Tradier")
@@ -87,7 +93,9 @@ async def get_quotes(symbols: str, _=Depends(require_bearer)):
 
 
 @router.get("/market/bars/{symbol}")
-async def get_bars(symbol: str, timeframe: str = "daily", limit: int = 100, _=Depends(require_bearer)):
+async def get_bars(
+    symbol: str, timeframe: str = "daily", limit: int = 100, _=Depends(require_bearer)
+):
     """Get historical price bars using Tradier"""
     try:
         client = get_tradier_client()
@@ -101,7 +109,7 @@ async def get_bars(symbol: str, timeframe: str = "daily", limit: int = 100, _=De
             "1Day": "daily",
             "daily": "daily",
             "weekly": "weekly",
-            "monthly": "monthly"
+            "monthly": "monthly",
         }
 
         interval = interval_map.get(timeframe, "daily")
@@ -119,19 +127,21 @@ async def get_bars(symbol: str, timeframe: str = "daily", limit: int = 100, _=De
             symbol=symbol,
             interval=interval,
             start_date=start_date.strftime("%Y-%m-%d"),
-            end_date=end_date.strftime("%Y-%m-%d")
+            end_date=end_date.strftime("%Y-%m-%d"),
         )
 
         result = []
         for bar in bars_data[:limit]:
-            result.append({
-                "timestamp": bar.get("date", bar.get("time", "")),
-                "open": float(bar.get("open", 0)),
-                "high": float(bar.get("high", 0)),
-                "low": float(bar.get("low", 0)),
-                "close": float(bar.get("close", 0)),
-                "volume": int(bar.get("volume", 0))
-            })
+            result.append(
+                {
+                    "timestamp": bar.get("date", bar.get("time", "")),
+                    "open": float(bar.get("open", 0)),
+                    "high": float(bar.get("high", 0)),
+                    "low": float(bar.get("low", 0)),
+                    "close": float(bar.get("close", 0)),
+                    "volume": int(bar.get("volume", 0)),
+                }
+            )
 
         logger.info(f"✅ Retrieved {len(result)} bars for {symbol} from Tradier")
         return {"symbol": symbol.upper(), "bars": result}
@@ -146,8 +156,18 @@ async def scan_under_4(_=Depends(require_bearer)):
     try:
         # Pre-defined list of liquid stocks that trade near/under $4
         candidates = [
-            "SOFI", "PLUG", "RIOT", "NIO", "F", "VALE",
-            "BTG", "GOLD", "SIRI", "TLRY", "SNAP", "BBD"
+            "SOFI",
+            "PLUG",
+            "RIOT",
+            "NIO",
+            "F",
+            "VALE",
+            "BTG",
+            "GOLD",
+            "SIRI",
+            "TLRY",
+            "SNAP",
+            "BBD",
         ]
 
         client = get_tradier_client()
@@ -162,14 +182,16 @@ async def scan_under_4(_=Depends(require_bearer)):
                 price = last_price if last_price > 0 else ask_price
 
                 if 0.50 < price < 4.00:  # Filter under $4, above $0.50
-                    results.append({
-                        "symbol": symbol,
-                        "price": price,
-                        "bid": float(q.get("bid", 0)),
-                        "ask": ask_price,
-                        "volume": int(q.get("volume", 0)),
-                        "timestamp": q.get("trade_date", datetime.now().isoformat())
-                    })
+                    results.append(
+                        {
+                            "symbol": symbol,
+                            "price": price,
+                            "bid": float(q.get("bid", 0)),
+                            "ask": ask_price,
+                            "volume": int(q.get("volume", 0)),
+                            "timestamp": q.get("trade_date", datetime.now().isoformat()),
+                        }
+                    )
 
         # Sort by price ascending
         results.sort(key=lambda x: x["price"])

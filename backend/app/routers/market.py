@@ -5,13 +5,16 @@ Market conditions and analysis endpoints
 This module uses Tradier API for ALL market data.
 Alpaca is ONLY used for paper trading execution.
 """
-from fastapi import APIRouter, Depends, HTTPException
+
 from typing import List, Literal
+
+import requests
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+
 from ..core.auth import require_bearer
 from ..core.config import settings
 from ..services.cache import CacheService, get_cache
-import requests
 
 # LOUD LOGGING TO VERIFY NEW CODE IS DEPLOYED
 print("=" * 80)
@@ -60,10 +63,10 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
             headers={
                 "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
                 "Accept": "application/json",
-                "Accept-Encoding": "gzip, deflate"  # Enable compression
+                "Accept-Encoding": "gzip, deflate",  # Enable compression
             },
             params={"symbols": symbols, "greeks": "false"},
-            timeout=5  # Add timeout for reliability
+            timeout=5,  # Add timeout for reliability
         )
 
         conditions: List[MarketCondition] = []
@@ -98,12 +101,14 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
                     vix_status = "unfavorable"
                     vix_details = f"High volatility ({vix_value:.2f}) - turbulent market, high risk"
 
-                conditions.append(MarketCondition(
-                    name="VIX (Volatility)",
-                    value=f"{vix_value:.2f}",
-                    status=vix_status,
-                    details=vix_details
-                ))
+                conditions.append(
+                    MarketCondition(
+                        name="VIX (Volatility)",
+                        value=f"{vix_value:.2f}",
+                        status=vix_status,
+                        details=vix_details,
+                    )
+                )
                 total_signals += 1
 
             # 2. Dow Jones Industrial Trend
@@ -131,12 +136,14 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
                     dji_value = "Downtrend"
                     dji_details = f"Down {dji_change_pct:.2f}% - bearish pressure"
 
-                conditions.append(MarketCondition(
-                    name="Dow Jones Trend",
-                    value=dji_value,
-                    status=dji_status,
-                    details=dji_details
-                ))
+                conditions.append(
+                    MarketCondition(
+                        name="Dow Jones Trend",
+                        value=dji_value,
+                        status=dji_status,
+                        details=dji_details,
+                    )
+                )
                 total_signals += 1
 
             # 3. NASDAQ Composite Trend
@@ -164,12 +171,14 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
                     comp_value = "Downtrend"
                     comp_details = f"Tech sector weak: down {comp_change_pct:.2f}%"
 
-                conditions.append(MarketCondition(
-                    name="NASDAQ Trend",
-                    value=comp_value,
-                    status=comp_status,
-                    details=comp_details
-                ))
+                conditions.append(
+                    MarketCondition(
+                        name="NASDAQ Trend",
+                        value=comp_value,
+                        status=comp_status,
+                        details=comp_details,
+                    )
+                )
                 total_signals += 1
 
         # Calculate overall sentiment
@@ -187,19 +196,19 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
             recommended_actions = [
                 "Consider directional bullish strategies",
                 "Look for momentum plays in strong sectors",
-                "Monitor for breakout opportunities"
+                "Monitor for breakout opportunities",
             ]
         elif overall_sentiment == "bearish":
             recommended_actions = [
                 "Consider defensive positions or cash",
                 "Look for short opportunities or hedges",
-                "Wait for clearer bullish signals before entering"
+                "Wait for clearer bullish signals before entering",
             ]
         else:
             recommended_actions = [
                 "Trade cautiously with tight stops",
                 "Focus on high-conviction setups only",
-                "Wait for directional confirmation"
+                "Wait for directional confirmation",
             ]
 
         # TODO: Additional market conditions (requires more data sources):
@@ -212,7 +221,7 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "overallSentiment": overall_sentiment,
             "recommendedActions": recommended_actions,
-            "source": "tradier"
+            "source": "tradier",
         }
 
         # Cache for 60 seconds
@@ -229,7 +238,7 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
                 name="Market Data",
                 value="Unavailable",
                 status="neutral",
-                details="Unable to fetch current market conditions. Please try again later."
+                details="Unable to fetch current market conditions. Please try again later.",
             )
         ]
         return {
@@ -238,7 +247,7 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
             "overallSentiment": "neutral",
             "recommendedActions": ["Wait for market data to become available"],
             "source": "fallback",
-            "error": str(e)
+            "error": str(e),
         }
 
 
@@ -270,7 +279,7 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
         headers = {
             "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
             "Accept": "application/json",
-            "Accept-Encoding": "gzip, deflate"  # Enable compression
+            "Accept-Encoding": "gzip, deflate",  # Enable compression
         }
 
         # Tradier symbols: $DJI for Dow Jones Industrial, COMP:GIDS for NASDAQ Composite
@@ -279,7 +288,7 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
             f"{settings.TRADIER_API_BASE_URL}/markets/quotes",
             headers=headers,
             params={"symbols": symbols, "greeks": "false"},
-            timeout=5  # Add timeout for reliability
+            timeout=5,  # Add timeout for reliability
         )
 
         if resp.status_code == 200:
@@ -303,13 +312,13 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
                     dow_data = {
                         "last": round(last, 2),
                         "change": round(change, 2),
-                        "changePercent": round(change_percent, 2)
+                        "changePercent": round(change_percent, 2),
                     }
                 elif symbol == "COMP:GIDS":
                     nasdaq_data = {
                         "last": round(last, 2),
                         "change": round(change, 2),
-                        "changePercent": round(change_percent, 2)
+                        "changePercent": round(change_percent, 2),
                     }
 
             if dow_data or nasdaq_data:
@@ -317,7 +326,7 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
                 result = {
                     "dow": dow_data or {"last": 0, "change": 0, "changePercent": 0},
                     "nasdaq": nasdaq_data or {"last": 0, "change": 0, "changePercent": 0},
-                    "source": "tradier"
+                    "source": "tradier",
                 }
                 # Cache for 60 seconds
                 cache.set(cache_key, result, ttl=60)
@@ -334,24 +343,28 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
                 raise ValueError("Anthropic API key not configured")
 
             from anthropic import Anthropic
+
             client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 
             message = client.messages.create(
                 model="claude-3-5-sonnet-20241022",
                 max_tokens=1024,
-                messages=[{
-                    "role": "user",
-                    "content": """Provide current market index values for Dow Jones Industrial Average ($DJI) and NASDAQ Composite ($COMPX).
+                messages=[
+                    {
+                        "role": "user",
+                        "content": """Provide current market index values for Dow Jones Industrial Average ($DJI) and NASDAQ Composite ($COMPX).
                     Return ONLY valid JSON in this exact format with realistic current values:
                     {
                       "dow": {"last": 42500.00, "change": 125.50, "changePercent": 0.30},
                       "nasdaq": {"last": 18350.00, "change": 98.75, "changePercent": 0.54}
-                    }"""
-                }]
+                    }""",
+                    }
+                ],
             )
 
             # Parse Claude's response
             import json
+
             ai_text = message.content[0].text.strip()
             # Remove markdown code blocks if present
             if "```json" in ai_text:
@@ -362,10 +375,7 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
             ai_data = json.loads(ai_text)
 
             print("[Market] ✅ Using Claude AI fallback for Dow/NASDAQ")
-            result = {
-                **ai_data,
-                "source": "claude_ai"
-            }
+            result = {**ai_data, "source": "claude_ai"}
             # Cache AI fallback for 60 seconds too
             cache.set(cache_key, result, ttl=60)
             return result
@@ -374,7 +384,7 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
             print(f"[Market] ❌ Claude AI fallback also failed: {ai_error}")
             raise HTTPException(
                 status_code=503,
-                detail="Market data temporarily unavailable (Tradier and Claude AI both failed)"
+                detail="Market data temporarily unavailable (Tradier and Claude AI both failed)",
             )
 
 
@@ -407,7 +417,7 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
             {"name": "Real Estate", "symbol": "XLRE"},
             {"name": "Utilities", "symbol": "XLU"},
             {"name": "Energy", "symbol": "XLE"},
-            {"name": "Consumer Staples", "symbol": "XLP"}
+            {"name": "Consumer Staples", "symbol": "XLP"},
         ]
 
         # Fetch real quotes from Tradier (with compression for 11 sector ETFs)
@@ -417,10 +427,10 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
             headers={
                 "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
                 "Accept": "application/json",
-                "Accept-Encoding": "gzip, deflate"  # Enable compression
+                "Accept-Encoding": "gzip, deflate",  # Enable compression
             },
             params={"symbols": symbols, "greeks": "false"},
-            timeout=5  # Add timeout for reliability
+            timeout=5,  # Add timeout for reliability
         )
 
         sectors = []
@@ -439,12 +449,14 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
                 quote = quote_map.get(sector["symbol"])
                 if quote and "change_percentage" in quote:
                     change_percent = float(quote.get("change_percentage", 0))
-                    sectors.append({
-                        "name": sector["name"],
-                        "symbol": sector["symbol"],
-                        "changePercent": round(change_percent, 2),
-                        "last": float(quote.get("last", 0))
-                    })
+                    sectors.append(
+                        {
+                            "name": sector["name"],
+                            "symbol": sector["symbol"],
+                            "changePercent": round(change_percent, 2),
+                            "last": float(quote.get("last", 0)),
+                        }
+                    )
 
             # Sort by performance (descending)
             sectors.sort(key=lambda x: x["changePercent"], reverse=True)
@@ -462,7 +474,7 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
                 "timestamp": datetime.utcnow().isoformat() + "Z",
                 "leader": leader,
                 "laggard": laggard,
-                "source": "tradier"
+                "source": "tradier",
             }
 
             # Cache for 60 seconds
@@ -486,7 +498,7 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
             "leader": "Unavailable",
             "laggard": "Unavailable",
             "source": "fallback",
-            "error": str(e)
+            "error": str(e),
         }
 
 
@@ -520,9 +532,9 @@ async def get_market_status(cache: CacheService = Depends(get_cache)) -> dict:
             headers={
                 "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
                 "Accept": "application/json",
-                "Accept-Encoding": "gzip, deflate"  # Enable compression
+                "Accept-Encoding": "gzip, deflate",  # Enable compression
             },
-            timeout=5  # Add timeout for reliability
+            timeout=5,  # Add timeout for reliability
         )
 
         if resp.status_code == 200:
@@ -540,7 +552,7 @@ async def get_market_status(cache: CacheService = Depends(get_cache)) -> dict:
                 "next_change": next_change,
                 "description": description,
                 "timestamp": datetime.utcnow().isoformat() + "Z",
-                "source": "tradier"
+                "source": "tradier",
             }
 
             # Cache for 60 seconds
@@ -561,5 +573,5 @@ async def get_market_status(cache: CacheService = Depends(get_cache)) -> dict:
             "description": "Market status unavailable",
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "source": "fallback",
-            "error": str(e)
+            "error": str(e),
         }

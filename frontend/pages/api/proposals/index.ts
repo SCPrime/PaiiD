@@ -35,7 +35,7 @@ interface Proposal {
 }
 
 // Mock database (in production, use PostgreSQL)
-let mockProposals: Proposal[] = [
+const mockProposals: Proposal[] = [
   {
     id: 'prop_1',
     ticker: 'SPY',

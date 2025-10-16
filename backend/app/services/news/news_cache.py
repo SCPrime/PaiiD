@@ -5,12 +5,12 @@ Provides caching layer for news articles to reduce API calls
 and improve response times. Uses file-based storage with TTL.
 """
 
-import json
 import hashlib
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+import json
 import logging
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -114,12 +114,12 @@ class NewsCache:
                 return None
 
             # Load cache file
-            with open(cache_path, 'r') as f:
+            with open(cache_path, "r") as f:
                 cache_data = json.load(f)
 
             # Check TTL
-            cached_at = datetime.fromisoformat(cache_data['cached_at'])
-            ttl = MARKET_NEWS_TTL if cache_type == 'market' else COMPANY_NEWS_TTL
+            cached_at = datetime.fromisoformat(cache_data["cached_at"])
+            ttl = MARKET_NEWS_TTL if cache_type == "market" else COMPANY_NEWS_TTL
             age_seconds = (datetime.utcnow() - cached_at).total_seconds()
 
             if age_seconds > ttl:
@@ -129,7 +129,7 @@ class NewsCache:
                 return None
 
             logger.info(f"✅ Cache hit: {cache_key} (age: {age_seconds:.0f}s)")
-            return cache_data['articles']
+            return cache_data["articles"]
 
         except Exception as e:
             logger.error(f"❌ Cache read error: {str(e)}")
@@ -149,13 +149,13 @@ class NewsCache:
             cache_path = self._get_cache_path(cache_key)
 
             cache_data = {
-                'cached_at': datetime.utcnow().isoformat(),
-                'params': params,
-                'count': len(articles),
-                'articles': articles
+                "cached_at": datetime.utcnow().isoformat(),
+                "params": params,
+                "count": len(articles),
+                "articles": articles,
             }
 
-            with open(cache_path, 'w') as f:
+            with open(cache_path, "w") as f:
                 json.dump(cache_data, f)
 
             logger.info(f"✅ Cached {len(articles)} articles: {cache_key}")
@@ -205,18 +205,18 @@ class NewsCache:
             total_size = sum(f.stat().st_size for f in cache_files)
 
             # Count by type
-            market_count = len([f for f in cache_files if f.name.startswith('market_')])
-            company_count = len([f for f in cache_files if f.name.startswith('company_')])
+            market_count = len([f for f in cache_files if f.name.startswith("market_")])
+            company_count = len([f for f in cache_files if f.name.startswith("company_")])
 
             # Check expired
             expired = 0
             for cache_file in cache_files:
                 try:
-                    with open(cache_file, 'r') as f:
+                    with open(cache_file, "r") as f:
                         cache_data = json.load(f)
-                    cached_at = datetime.fromisoformat(cache_data['cached_at'])
-                    cache_type = 'market' if cache_file.name.startswith('market_') else 'company'
-                    ttl = MARKET_NEWS_TTL if cache_type == 'market' else COMPANY_NEWS_TTL
+                    cached_at = datetime.fromisoformat(cache_data["cached_at"])
+                    cache_type = "market" if cache_file.name.startswith("market_") else "company"
+                    ttl = MARKET_NEWS_TTL if cache_type == "market" else COMPANY_NEWS_TTL
                     age = (datetime.utcnow() - cached_at).total_seconds()
                     if age > ttl:
                         expired += 1
@@ -226,12 +226,12 @@ class NewsCache:
                     logger.debug(f"Cache stats: corrupted file {cache_file.name}: {e}")
 
             return {
-                'total_entries': len(cache_files),
-                'market_cache': market_count,
-                'company_cache': company_count,
-                'expired_entries': expired,
-                'total_size_bytes': total_size,
-                'cache_dir': str(self.cache_dir)
+                "total_entries": len(cache_files),
+                "market_cache": market_count,
+                "company_cache": company_count,
+                "expired_entries": expired,
+                "total_size_bytes": total_size,
+                "cache_dir": str(self.cache_dir),
             }
 
         except Exception as e:

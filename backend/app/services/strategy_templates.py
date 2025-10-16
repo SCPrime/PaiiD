@@ -3,13 +3,14 @@ Strategy Templates Service
 Pre-built trading strategy templates with risk classifications
 """
 
-from typing import Dict, Any, List
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
 
 @dataclass
 class StrategyTemplate:
     """Template for a trading strategy"""
+
     id: str
     name: str
     description: str
@@ -35,44 +36,35 @@ STRATEGY_TEMPLATES = [
                 {
                     "indicator": "MACD",
                     "condition": "histogram_positive",
-                    "description": "MACD histogram turns positive (bullish crossover)"
+                    "description": "MACD histogram turns positive (bullish crossover)",
                 },
                 {
                     "indicator": "PRICE",
                     "condition": "above_sma_50",
-                    "description": "Price above 50-day moving average"
-                }
+                    "description": "Price above 50-day moving average",
+                },
             ],
             "exit_rules": [
-                {
-                    "type": "take_profit",
-                    "value": 8.0,
-                    "description": "Take profit at +8%"
-                },
-                {
-                    "type": "stop_loss",
-                    "value": 3.0,
-                    "description": "Stop loss at -3%"
-                },
+                {"type": "take_profit", "value": 8.0, "description": "Take profit at +8%"},
+                {"type": "stop_loss", "value": 3.0, "description": "Stop loss at -3%"},
                 {
                     "type": "trailing_stop",
                     "value": 2.0,
-                    "description": "Trailing stop at -2% from peak"
-                }
+                    "description": "Trailing stop at -2% from peak",
+                },
             ],
             "position_size_percent": 10.0,  # 10% of portfolio per trade
             "max_positions": 5,
             "rsi_period": 14,
             "macd_fast": 12,
             "macd_slow": 26,
-            "macd_signal": 9
+            "macd_signal": 9,
         },
         expected_win_rate=55.0,
         avg_return_percent=5.2,
         max_drawdown_percent=12.0,
-        recommended_for=["Trending markets", "Tech stocks", "Growth stocks"]
+        recommended_for=["Trending markets", "Tech stocks", "Growth stocks"],
     ),
-
     StrategyTemplate(
         id="mean-reversion-bb-rsi",
         name="Mean Reversion (Bollinger Bands + RSI)",
@@ -85,44 +77,35 @@ STRATEGY_TEMPLATES = [
                     "indicator": "RSI",
                     "operator": "<",
                     "value": 30,
-                    "description": "RSI oversold below 30"
+                    "description": "RSI oversold below 30",
                 },
                 {
                     "indicator": "PRICE",
                     "condition": "below_bb_lower",
-                    "description": "Price touches lower Bollinger Band"
-                }
+                    "description": "Price touches lower Bollinger Band",
+                },
             ],
             "exit_rules": [
-                {
-                    "type": "take_profit",
-                    "value": 5.0,
-                    "description": "Take profit at +5%"
-                },
-                {
-                    "type": "stop_loss",
-                    "value": 2.5,
-                    "description": "Stop loss at -2.5%"
-                },
+                {"type": "take_profit", "value": 5.0, "description": "Take profit at +5%"},
+                {"type": "stop_loss", "value": 2.5, "description": "Stop loss at -2.5%"},
                 {
                     "indicator": "RSI",
                     "operator": ">",
                     "value": 70,
-                    "description": "Exit when RSI overbought above 70"
-                }
+                    "description": "Exit when RSI overbought above 70",
+                },
             ],
             "position_size_percent": 8.0,  # 8% of portfolio per trade
             "max_positions": 4,
             "rsi_period": 14,
             "bb_period": 20,
-            "bb_std_dev": 2.0
+            "bb_std_dev": 2.0,
         },
         expected_win_rate=62.0,
         avg_return_percent=3.8,
         max_drawdown_percent=8.5,
-        recommended_for=["Ranging markets", "Blue chip stocks", "Low volatility periods"]
+        recommended_for=["Ranging markets", "Blue chip stocks", "Low volatility periods"],
     ),
-
     StrategyTemplate(
         id="momentum-breakout",
         name="Momentum Breakout (Volume + Price)",
@@ -135,49 +118,40 @@ STRATEGY_TEMPLATES = [
                     "indicator": "VOLUME",
                     "condition": "above_avg_volume",
                     "multiplier": 2.0,
-                    "description": "Volume 2x above 20-day average"
+                    "description": "Volume 2x above 20-day average",
                 },
                 {
                     "indicator": "PRICE",
                     "condition": "breakout_resistance",
                     "lookback_days": 20,
-                    "description": "Price breaks above 20-day high"
+                    "description": "Price breaks above 20-day high",
                 },
                 {
                     "indicator": "RSI",
                     "operator": ">",
                     "value": 60,
-                    "description": "RSI above 60 (strong momentum)"
-                }
+                    "description": "RSI above 60 (strong momentum)",
+                },
             ],
             "exit_rules": [
-                {
-                    "type": "take_profit",
-                    "value": 12.0,
-                    "description": "Take profit at +12%"
-                },
-                {
-                    "type": "stop_loss",
-                    "value": 5.0,
-                    "description": "Stop loss at -5%"
-                },
+                {"type": "take_profit", "value": 12.0, "description": "Take profit at +12%"},
+                {"type": "stop_loss", "value": 5.0, "description": "Stop loss at -5%"},
                 {
                     "indicator": "VOLUME",
                     "condition": "below_avg_volume",
-                    "description": "Exit when volume drops below average"
-                }
+                    "description": "Exit when volume drops below average",
+                },
             ],
             "position_size_percent": 15.0,  # 15% of portfolio per trade
             "max_positions": 6,
             "rsi_period": 14,
-            "volume_period": 20
+            "volume_period": 20,
         },
         expected_win_rate=48.0,
         avg_return_percent=8.5,
         max_drawdown_percent=18.0,
-        recommended_for=["High volatility markets", "Small cap stocks", "Momentum stocks"]
+        recommended_for=["High volatility markets", "Small cap stocks", "Momentum stocks"],
     ),
-
     StrategyTemplate(
         id="volatility-breakout-atr",
         name="Volatility Breakout (ATR Squeeze)",
@@ -190,49 +164,41 @@ STRATEGY_TEMPLATES = [
                     "indicator": "BB_WIDTH",
                     "operator": "<",
                     "value": 3.0,
-                    "description": "Bollinger Band width below 3% (squeeze)"
+                    "description": "Bollinger Band width below 3% (squeeze)",
                 },
                 {
                     "indicator": "PRICE",
                     "condition": "breakout_bb",
-                    "description": "Price breaks above upper Bollinger Band"
+                    "description": "Price breaks above upper Bollinger Band",
                 },
                 {
                     "indicator": "ATR",
                     "condition": "rising",
                     "lookback_days": 5,
-                    "description": "ATR rising over last 5 days"
-                }
+                    "description": "ATR rising over last 5 days",
+                },
             ],
             "exit_rules": [
-                {
-                    "type": "take_profit",
-                    "value": 10.0,
-                    "description": "Take profit at +10%"
-                },
-                {
-                    "type": "stop_loss",
-                    "value": 4.0,
-                    "description": "Stop loss at -4%"
-                },
+                {"type": "take_profit", "value": 10.0, "description": "Take profit at +10%"},
+                {"type": "stop_loss", "value": 4.0, "description": "Stop loss at -4%"},
                 {
                     "indicator": "BB_WIDTH",
                     "operator": ">",
                     "value": 6.0,
-                    "description": "Exit when BB width exceeds 6% (expansion complete)"
-                }
+                    "description": "Exit when BB width exceeds 6% (expansion complete)",
+                },
             ],
             "position_size_percent": 12.0,  # 12% of portfolio per trade
             "max_positions": 5,
             "atr_period": 14,
             "bb_period": 20,
-            "bb_std_dev": 2.0
+            "bb_std_dev": 2.0,
         },
         expected_win_rate=58.0,
         avg_return_percent=6.3,
         max_drawdown_percent=14.0,
-        recommended_for=["Volatility expansion periods", "Post-earnings plays", "Breakout stocks"]
-    )
+        recommended_for=["Volatility expansion periods", "Post-earnings plays", "Breakout stocks"],
+    ),
 ]
 
 
@@ -312,10 +278,7 @@ def customize_template_for_risk(template: StrategyTemplate, risk_tolerance: int)
 
 
 def get_template_compatibility_score(
-    template: StrategyTemplate,
-    risk_tolerance: int,
-    market_volatility: str,
-    portfolio_size: float
+    template: StrategyTemplate, risk_tolerance: int, market_volatility: str, portfolio_size: float
 ) -> float:
     """
     Calculate compatibility score for template recommendation

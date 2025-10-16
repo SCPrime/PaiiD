@@ -3,35 +3,32 @@ Strategy API Routes
 Endpoints for managing trading strategies
 """
 
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, Field, validator
-from typing import Dict, Optional, List, Any
-from sqlalchemy.orm import Session
 import json
 import os
+import sys
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field, validator
+from sqlalchemy.orm import Session
 
 from ..core.auth import require_bearer
 from ..db.session import get_db
-from ..models.database import User, Strategy
+from ..models.database import Strategy, User
 from ..services.strategy_templates import (
+    customize_template_for_risk,
+    filter_templates_by_risk,
     get_all_templates,
     get_template_by_id,
-    filter_templates_by_risk,
-    customize_template_for_risk,
-    get_template_compatibility_score
+    get_template_compatibility_score,
 )
-import sys
-from pathlib import Path
 
 # Add backend root to path for strategies import
 backend_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_root))
 
-from strategies.under4_multileg import (
-    Under4MultilegConfig,
-    create_under4_multileg_strategy
-)
+from strategies.under4_multileg import Under4MultilegConfig, create_under4_multileg_strategy
 
 router = APIRouter()
 
@@ -42,20 +39,27 @@ STRATEGIES_DIR.mkdir(parents=True, exist_ok=True)
 
 class StrategyConfigRequest(BaseModel):
     """Request model for saving strategy configuration with validation"""
+
     strategy_type: str = Field(
         ...,
         min_length=1,
         max_length=50,
-        pattern=r'^[a-z0-9\-]+$',
+        pattern=r"^[a-z0-9\-]+$",
         description="Strategy type identifier (lowercase, alphanumeric + hyphens)",
-        examples=["under4-multileg", "trend-following", "custom"]
+        examples=["under4-multileg", "trend-following", "custom"],
     )
     config: Dict = Field(..., description="Strategy configuration parameters")
 
-    @validator('strategy_type')
+    @validator("strategy_type")
     def validate_strategy_type(cls, v):
         """Validate strategy type"""
-        allowed_types = ["under4-multileg", "trend-following", "mean-reversion", "momentum", "custom"]
+        allowed_types = [
+            "under4-multileg",
+            "trend-following",
+            "mean-reversion",
+            "momentum",
+            "custom",
+        ]
         if v not in allowed_types:
             raise ValueError(f"Invalid strategy type. Allowed: {', '.join(allowed_types)}")
         return v
@@ -63,32 +67,35 @@ class StrategyConfigRequest(BaseModel):
 
 class StrategyRunRequest(BaseModel):
     """Request model for running a strategy with validation"""
+
     strategy_type: str = Field(
         ...,
         min_length=1,
         max_length=50,
-        pattern=r'^[a-z0-9\-]+$',
-        description="Strategy type identifier"
+        pattern=r"^[a-z0-9\-]+$",
+        description="Strategy type identifier",
     )
     dry_run: bool = Field(
-        default=True,
-        description="Dry run mode (no actual execution, default: true)"
+        default=True, description="Dry run mode (no actual execution, default: true)"
     )
 
-    @validator('strategy_type')
+    @validator("strategy_type")
     def validate_strategy_type(cls, v):
         """Validate strategy type"""
-        allowed_types = ["under4-multileg", "trend-following", "mean-reversion", "momentum", "custom"]
+        allowed_types = [
+            "under4-multileg",
+            "trend-following",
+            "mean-reversion",
+            "momentum",
+            "custom",
+        ]
         if v not in allowed_types:
             raise ValueError(f"Invalid strategy type. Allowed: {', '.join(allowed_types)}")
         return v
 
 
 @router.post("/strategies/save")
-async def save_strategy(
-    request: StrategyConfigRequest,
-    _=Depends(require_bearer)
-):
+async def save_strategy(request: StrategyConfigRequest, _=Depends(require_bearer)):
     """
     Save strategy configuration
 
@@ -109,20 +116,18 @@ async def save_strategy(
             validated_config = config.model_dump()
         else:
             raise HTTPException(
-                status_code=400,
-                detail=f"Unknown strategy type: {request.strategy_type}"
+                status_code=400, detail=f"Unknown strategy type: {request.strategy_type}"
             )
 
         # Save to file
-        with open(strategy_file, 'w') as f:
-            json.dump({
-                "strategy_type": request.strategy_type,
-                "config": validated_config
-            }, f, indent=2)
+        with open(strategy_file, "w") as f:
+            json.dump(
+                {"strategy_type": request.strategy_type, "config": validated_config}, f, indent=2
+            )
 
         return {
             "success": True,
-            "message": f"Strategy '{request.strategy_type}' saved successfully"
+            "message": f"Strategy '{request.strategy_type}' saved successfully",
         }
 
     except Exception as e:
@@ -130,10 +135,7 @@ async def save_strategy(
 
 
 @router.get("/strategies/load/{strategy_type}")
-async def load_strategy(
-    strategy_type: str,
-    _=Depends(require_bearer)
-):
+async def load_strategy(strategy_type: str, _=Depends(require_bearer)):
     """
     Load strategy configuration
 
@@ -149,22 +151,16 @@ async def load_strategy(
             return {
                 "strategy_type": strategy_type,
                 "config": default_config.model_dump(),
-                "is_default": True
+                "is_default": True,
             }
         else:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Strategy '{strategy_type}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Strategy '{strategy_type}' not found")
 
     try:
-        with open(strategy_file, 'r') as f:
+        with open(strategy_file, "r") as f:
             data = json.load(f)
 
-        return {
-            **data,
-            "is_default": False
-        }
+        return {**data, "is_default": False}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -184,12 +180,9 @@ async def list_strategies(_=Depends(require_bearer)):
     # Check for saved strategies
     for strategy_file in STRATEGIES_DIR.glob(f"{user_id}_*.json"):
         try:
-            with open(strategy_file, 'r') as f:
+            with open(strategy_file, "r") as f:
                 data = json.load(f)
-            strategies.append({
-                "strategy_type": data["strategy_type"],
-                "has_config": True
-            })
+            strategies.append({"strategy_type": data["strategy_type"], "has_config": True})
         except:
             continue
 
@@ -197,21 +190,13 @@ async def list_strategies(_=Depends(require_bearer)):
     available_strategies = ["under4-multileg", "custom"]
     for strategy_type in available_strategies:
         if not any(s["strategy_type"] == strategy_type for s in strategies):
-            strategies.append({
-                "strategy_type": strategy_type,
-                "has_config": False
-            })
+            strategies.append({"strategy_type": strategy_type, "has_config": False})
 
-    return {
-        "strategies": strategies
-    }
+    return {"strategies": strategies}
 
 
 @router.post("/strategies/run")
-async def run_strategy(
-    request: StrategyRunRequest,
-    _=Depends(require_bearer)
-):
+async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
     """
     Run a strategy (execute morning routine)
 
@@ -228,7 +213,7 @@ async def run_strategy(
         strategy_file = STRATEGIES_DIR / f"{user_id}_{request.strategy_type}.json"
 
         if strategy_file.exists():
-            with open(strategy_file, 'r') as f:
+            with open(strategy_file, "r") as f:
                 data = json.load(f)
                 config_dict = data["config"]
         else:
@@ -239,8 +224,7 @@ async def run_strategy(
             strategy = create_under4_multileg_strategy(config_dict)
         else:
             raise HTTPException(
-                status_code=400,
-                detail=f"Unknown strategy type: {request.strategy_type}"
+                status_code=400, detail=f"Unknown strategy type: {request.strategy_type}"
             )
 
         # TODO: Get Alpaca client from user's credentials
@@ -260,7 +244,7 @@ async def run_strategy(
                             "strike": 3.50,
                             "expiry": "2025-11-15",
                             "delta": 0.60,
-                            "qty": 3
+                            "qty": 3,
                         },
                         {
                             "type": "SELL_PUT",
@@ -268,28 +252,22 @@ async def run_strategy(
                             "strike": 3.00,
                             "expiry": "2025-11-15",
                             "delta": 0.20,
-                            "qty": 2
-                        }
+                            "qty": 2,
+                        },
                     ],
-                    "approved_trades": 2
-                }
+                    "approved_trades": 2,
+                },
             }
         else:
             # TODO: Implement actual execution
-            raise HTTPException(
-                status_code=501,
-                detail="Live execution not yet implemented"
-            )
+            raise HTTPException(status_code=501, detail="Live execution not yet implemented")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/strategies/{strategy_type}")
-async def delete_strategy(
-    strategy_type: str,
-    _=Depends(require_bearer)
-):
+async def delete_strategy(strategy_type: str, _=Depends(require_bearer)):
     """
     Delete a saved strategy configuration
 
@@ -299,17 +277,11 @@ async def delete_strategy(
     strategy_file = STRATEGIES_DIR / f"{user_id}_{strategy_type}.json"
 
     if not strategy_file.exists():
-        raise HTTPException(
-            status_code=404,
-            detail=f"Strategy '{strategy_type}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Strategy '{strategy_type}' not found")
 
     try:
         strategy_file.unlink()
-        return {
-            "success": True,
-            "message": f"Strategy '{strategy_type}' deleted successfully"
-        }
+        return {"success": True, "message": f"Strategy '{strategy_type}' deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -318,11 +290,10 @@ async def delete_strategy(
 # STRATEGY TEMPLATES ENDPOINTS
 # ========================================
 
+
 @router.get("/strategies/templates")
 async def get_strategy_templates(
-    filter_by_risk: Optional[bool] = True,
-    _=Depends(require_bearer),
-    db: Session = Depends(get_db)
+    filter_by_risk: Optional[bool] = True, _=Depends(require_bearer), db: Session = Depends(get_db)
 ):
     """
     Get all available strategy templates
@@ -353,25 +324,24 @@ async def get_strategy_templates(
         response = []
         for template in templates:
             compatibility_score = get_template_compatibility_score(
-                template,
-                risk_tolerance,
-                market_volatility,
-                portfolio_value
+                template, risk_tolerance, market_volatility, portfolio_value
             )
 
-            response.append({
-                "id": template.id,
-                "name": template.name,
-                "description": template.description,
-                "strategy_type": template.strategy_type,
-                "risk_level": template.risk_level,
-                "expected_win_rate": template.expected_win_rate,
-                "avg_return_percent": template.avg_return_percent,
-                "max_drawdown_percent": template.max_drawdown_percent,
-                "recommended_for": template.recommended_for,
-                "compatibility_score": round(compatibility_score, 1),
-                "config": template.config
-            })
+            response.append(
+                {
+                    "id": template.id,
+                    "name": template.name,
+                    "description": template.description,
+                    "strategy_type": template.strategy_type,
+                    "risk_level": template.risk_level,
+                    "expected_win_rate": template.expected_win_rate,
+                    "avg_return_percent": template.avg_return_percent,
+                    "max_drawdown_percent": template.max_drawdown_percent,
+                    "recommended_for": template.recommended_for,
+                    "compatibility_score": round(compatibility_score, 1),
+                    "config": template.config,
+                }
+            )
 
         # Sort by compatibility score (highest first)
         response.sort(key=lambda x: x["compatibility_score"], reverse=True)
@@ -379,14 +349,11 @@ async def get_strategy_templates(
         return {
             "templates": response,
             "user_risk_tolerance": risk_tolerance,
-            "market_volatility": market_volatility
+            "market_volatility": market_volatility,
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch strategy templates: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch strategy templates: {str(e)}")
 
 
 @router.get("/strategies/templates/{template_id}")
@@ -394,7 +361,7 @@ async def get_strategy_template(
     template_id: str,
     customize: Optional[bool] = True,
     _=Depends(require_bearer),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get a specific strategy template by ID
@@ -427,36 +394,32 @@ async def get_strategy_template(
             "max_drawdown_percent": template.max_drawdown_percent,
             "recommended_for": template.recommended_for,
             "config": config,
-            "customized": customize
+            "customized": customize,
         }
 
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch template: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch template: {str(e)}")
 
 
 class CloneTemplateRequest(BaseModel):
     """Request model for cloning a template with validation"""
+
     custom_name: Optional[str] = Field(
         None,
         min_length=1,
         max_length=100,
-        description="Custom name for the cloned strategy (1-100 characters)"
+        description="Custom name for the cloned strategy (1-100 characters)",
     )
     customize_config: Optional[bool] = Field(
-        True,
-        description="Customize based on risk tolerance (default: true)"
+        True, description="Customize based on risk tolerance (default: true)"
     )
     config_overrides: Optional[Dict[str, Any]] = Field(
-        None,
-        description="Manual config overrides (key-value pairs)"
+        None, description="Manual config overrides (key-value pairs)"
     )
 
-    @validator('custom_name')
+    @validator("custom_name")
     def validate_custom_name(cls, v):
         """Validate custom name"""
         if v is not None:
@@ -473,7 +436,7 @@ async def clone_strategy_template(
     template_id: str,
     request: CloneTemplateRequest,
     _=Depends(require_bearer),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Clone a strategy template to user's strategies
@@ -494,11 +457,7 @@ async def clone_strategy_template(
         # Get or create user
         user = db.query(User).filter(User.id == 1).first()
         if not user:
-            user = User(
-                id=1,
-                email="default@paiid.com",
-                preferences={"risk_tolerance": 50}
-            )
+            user = User(id=1, email="default@paiid.com", preferences={"risk_tolerance": 50})
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -527,7 +486,7 @@ async def clone_strategy_template(
             strategy_type=template.strategy_type,
             config=config,
             is_active=False,  # User must activate manually
-            is_autopilot=False
+            is_autopilot=False,
         )
 
         db.add(new_strategy)
@@ -544,14 +503,11 @@ async def clone_strategy_template(
                 "strategy_type": new_strategy.strategy_type,
                 "config": new_strategy.config,
                 "is_active": new_strategy.is_active,
-                "created_at": new_strategy.created_at.isoformat()
-            }
+                "created_at": new_strategy.created_at.isoformat(),
+            },
         }
 
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to clone template: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to clone template: {str(e)}")

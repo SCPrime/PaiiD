@@ -1,10 +1,13 @@
-from fastapi import Header, HTTPException, status
-from .config import settings
 import logging
+
+from fastapi import Header, HTTPException, status
+
+from .config import settings
 
 # Add logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
+
 
 def require_bearer(authorization: str = Header(None)):
     logger.debug("=" * 50)
@@ -16,16 +19,22 @@ def require_bearer(authorization: str = Header(None)):
     if not authorization:
         logger.error("❌ No authorization header provided")
         print(f"❌ ERROR: No authorization header", flush=True)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorization header")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorization header"
+        )
 
     if not authorization.startswith("Bearer "):
         logger.error(f"❌ Invalid authorization format: {authorization[:20]}")
         print(f"❌ ERROR: Invalid auth format: {authorization[:20]}", flush=True)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization format")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization format"
+        )
 
     token = authorization.split(" ", 1)[1]
     logger.debug(f"Received token: {token[:10]}...")
-    logger.debug(f"Expected token: {settings.API_TOKEN[:10] if settings.API_TOKEN else 'NOT_SET'}...")
+    logger.debug(
+        f"Expected token: {settings.API_TOKEN[:10] if settings.API_TOKEN else 'NOT_SET'}..."
+    )
 
     print(f"[AUTH] Received: [{token}]", flush=True)
     print(f"[AUTH] Expected: [{settings.API_TOKEN}]", flush=True)

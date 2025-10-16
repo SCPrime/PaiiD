@@ -1,13 +1,15 @@
 """
 Telemetry Router - Tracks user interactions and system events
 """
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import List, Dict, Any, Literal, Optional
-from datetime import datetime
-from collections import defaultdict
+
 import json
 import os
+from collections import defaultdict
+from datetime import datetime
+from typing import Any, Dict, List, Literal, Optional
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
 
@@ -49,7 +51,7 @@ async def log_telemetry(batch: TelemetryBatch):
         return {
             "success": True,
             "received": len(batch.events),
-            "message": f"Logged {len(batch.events)} telemetry events"
+            "message": f"Logged {len(batch.events)} telemetry events",
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -61,7 +63,7 @@ async def get_telemetry_events(
     user_id: str = None,
     component: str = None,
     action: str = None,
-    user_role: str = None
+    user_role: str = None,
 ):
     """
     Retrieve telemetry events with optional filters
@@ -70,21 +72,18 @@ async def get_telemetry_events(
 
     # Apply filters
     if user_id:
-        filtered_events = [e for e in filtered_events if e.get('userId') == user_id]
+        filtered_events = [e for e in filtered_events if e.get("userId") == user_id]
     if component:
-        filtered_events = [e for e in filtered_events if e.get('component') == component]
+        filtered_events = [e for e in filtered_events if e.get("component") == component]
     if action:
-        filtered_events = [e for e in filtered_events if e.get('action') == action]
+        filtered_events = [e for e in filtered_events if e.get("action") == action]
     if user_role:
-        filtered_events = [e for e in filtered_events if e.get('userRole') == user_role]
+        filtered_events = [e for e in filtered_events if e.get("userRole") == user_role]
 
     # Sort by timestamp (newest first)
-    filtered_events.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+    filtered_events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
 
-    return {
-        "total": len(filtered_events),
-        "events": filtered_events[:limit]
-    }
+    return {"total": len(filtered_events), "events": filtered_events[:limit]}
 
 
 @router.get("/stats")
@@ -99,28 +98,28 @@ async def get_telemetry_stats():
             "unique_sessions": 0,
             "top_components": [],
             "top_actions": [],
-            "users_by_role": {}
+            "users_by_role": {},
         }
 
-    unique_users = set(e.get('userId') for e in telemetry_events)
-    unique_sessions = set(e.get('sessionId') for e in telemetry_events)
+    unique_users = set(e.get("userId") for e in telemetry_events)
+    unique_sessions = set(e.get("sessionId") for e in telemetry_events)
 
     # Count by component
     component_counts = {}
     for event in telemetry_events:
-        comp = event.get('component', 'Unknown')
+        comp = event.get("component", "Unknown")
         component_counts[comp] = component_counts.get(comp, 0) + 1
 
     # Count by action
     action_counts = {}
     for event in telemetry_events:
-        action = event.get('action', 'Unknown')
+        action = event.get("action", "Unknown")
         action_counts[action] = action_counts.get(action, 0) + 1
 
     # Count by role
     role_counts = {}
     for event in telemetry_events:
-        role = event.get('userRole', 'unknown')
+        role = event.get("userRole", "unknown")
         role_counts[role] = role_counts.get(role, 0) + 1
 
     # Sort and get top 10
@@ -133,7 +132,7 @@ async def get_telemetry_stats():
         "unique_sessions": len(unique_sessions),
         "top_components": [{"component": c, "count": n} for c, n in top_components],
         "top_actions": [{"action": a, "count": n} for a, n in top_actions],
-        "users_by_role": role_counts
+        "users_by_role": role_counts,
     }
 
 
@@ -146,10 +145,7 @@ async def clear_telemetry_events():
     count = len(telemetry_events)
     telemetry_events = []
 
-    return {
-        "success": True,
-        "message": f"Cleared {count} telemetry events"
-    }
+    return {"success": True, "message": f"Cleared {count} telemetry events"}
 
 
 @router.get("/export")
@@ -160,5 +156,5 @@ async def export_telemetry():
     return {
         "events": telemetry_events,
         "exported_at": datetime.now().isoformat(),
-        "total": len(telemetry_events)
+        "total": len(telemetry_events),
     }

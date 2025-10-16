@@ -1,12 +1,14 @@
-from pydantic import BaseModel, AnyHttpUrl
-from typing import Optional
 import os
 from pathlib import Path
+from typing import Optional
+
 from dotenv import load_dotenv
+from pydantic import AnyHttpUrl, BaseModel
 
 # Load .env file BEFORE reading env vars (works even when imported directly)
 ENV_PATH = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(ENV_PATH)
+
 
 class Settings(BaseModel):
     # Read directly from environment variables (loaded above)
@@ -39,9 +41,12 @@ class Settings(BaseModel):
     SENTRY_DSN: Optional[str] = os.getenv("SENTRY_DSN")
 
     # JWT Authentication (Week 2-4: Multi-User System)
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production-NEVER-COMMIT-THIS")
+    JWT_SECRET_KEY: str = os.getenv(
+        "JWT_SECRET_KEY", "dev-secret-key-change-in-production-NEVER-COMMIT-THIS"
+    )
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # 15 minutes
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days
+
 
 settings = Settings()

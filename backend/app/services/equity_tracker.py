@@ -7,9 +7,10 @@ Stores equity snapshots in JSON files for P&L Dashboard.
 
 import json
 import logging
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional
+
 from ..services.tradier_client import get_tradier_client
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class EquityTracker:
                 "equity": round(equity, 2),
                 "cash": round(cash, 2),
                 "positions_value": round(positions_value, 2),
-                "num_positions": num_positions
+                "num_positions": num_positions,
             }
 
             # Append to history
@@ -78,7 +79,7 @@ class EquityTracker:
         """Load equity history from file"""
         try:
             if self.data_file.exists():
-                with open(self.data_file, 'r') as f:
+                with open(self.data_file, "r") as f:
                     return json.load(f)
             return []
         except Exception as e:
@@ -88,7 +89,7 @@ class EquityTracker:
     def save_history(self, history: List[Dict]):
         """Save equity history to file"""
         try:
-            with open(self.data_file, 'w') as f:
+            with open(self.data_file, "w") as f:
                 json.dump(history, f, indent=2)
             logger.info(f"✅ Saved equity history ({len(history)} snapshots)")
         except Exception as e:
@@ -96,9 +97,7 @@ class EquityTracker:
             raise
 
     def get_history(
-        self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List[Dict]:
         """
         Get equity history within date range
@@ -153,14 +152,13 @@ class EquityTracker:
                 "max_drawdown": 0,
                 "sharpe_ratio": 0,
                 "win_days": 0,
-                "loss_days": 0
+                "loss_days": 0,
             }
 
         # Get snapshots within period
         cutoff_date = datetime.utcnow().timestamp() - (period_days * 86400)
         recent_snapshots = [
-            s for s in history
-            if datetime.fromisoformat(s["timestamp"]).timestamp() >= cutoff_date
+            s for s in history if datetime.fromisoformat(s["timestamp"]).timestamp() >= cutoff_date
         ]
 
         if len(recent_snapshots) < 2:
@@ -169,7 +167,7 @@ class EquityTracker:
                 "max_drawdown": 0,
                 "sharpe_ratio": 0,
                 "win_days": 0,
-                "loss_days": 0
+                "loss_days": 0,
             }
 
         # Calculate total return
@@ -193,7 +191,7 @@ class EquityTracker:
         win_days = 0
         loss_days = 0
         for i in range(1, len(recent_snapshots)):
-            prev_equity = recent_snapshots[i-1]["equity"]
+            prev_equity = recent_snapshots[i - 1]["equity"]
             curr_equity = recent_snapshots[i]["equity"]
             if curr_equity > prev_equity:
                 win_days += 1
@@ -204,7 +202,7 @@ class EquityTracker:
         # Calculate daily returns
         daily_returns = []
         for i in range(1, len(recent_snapshots)):
-            prev_equity = recent_snapshots[i-1]["equity"]
+            prev_equity = recent_snapshots[i - 1]["equity"]
             curr_equity = recent_snapshots[i]["equity"]
             daily_return = (curr_equity - prev_equity) / prev_equity if prev_equity > 0 else 0
             daily_returns.append(daily_return)
@@ -213,10 +211,10 @@ class EquityTracker:
             avg_return = sum(daily_returns) / len(daily_returns)
             # Standard deviation
             variance = sum((r - avg_return) ** 2 for r in daily_returns) / len(daily_returns)
-            std_dev = variance ** 0.5
+            std_dev = variance**0.5
 
             # Sharpe ratio (assuming 0% risk-free rate)
-            sharpe = (avg_return / std_dev * (252 ** 0.5)) if std_dev > 0 else 0
+            sharpe = (avg_return / std_dev * (252**0.5)) if std_dev > 0 else 0
         else:
             sharpe = 0
 
@@ -227,7 +225,7 @@ class EquityTracker:
             "sharpe_ratio": round(sharpe, 2),
             "win_days": win_days,
             "loss_days": loss_days,
-            "num_snapshots": len(recent_snapshots)
+            "num_snapshots": len(recent_snapshots),
         }
 
 

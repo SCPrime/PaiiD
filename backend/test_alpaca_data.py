@@ -1,19 +1,17 @@
-import requests
 import os
 from datetime import datetime
-from dotenv import load_dotenv
 from pathlib import Path
 
+import requests
+from dotenv import load_dotenv
+
 # Load environment variables
-load_dotenv(Path('.env'))
+load_dotenv(Path(".env"))
 
 APCA_API_KEY_ID = os.getenv("APCA_API_KEY_ID")
 APCA_API_SECRET_KEY = os.getenv("APCA_API_SECRET_KEY")
 
-headers = {
-    "APCA-API-KEY-ID": APCA_API_KEY_ID,
-    "APCA-API-SECRET-KEY": APCA_API_SECRET_KEY
-}
+headers = {"APCA-API-KEY-ID": APCA_API_KEY_ID, "APCA-API-SECRET-KEY": APCA_API_SECRET_KEY}
 
 print("=" * 60)
 print("ALPACA DATA FRESHNESS & SUBSCRIPTION TEST")
@@ -24,13 +22,13 @@ print("\n[1] Testing Latest Trade Data for AAPL:")
 print("-" * 60)
 try:
     response = requests.get(
-        "https://data.alpaca.markets/v2/stocks/AAPL/trades/latest",
-        headers=headers
+        "https://data.alpaca.markets/v2/stocks/AAPL/trades/latest", headers=headers
     )
     if response.status_code == 200:
         data = response.json()
-        trade_time = datetime.fromisoformat(data['trade']['t'].replace('Z', '+00:00'))
+        trade_time = datetime.fromisoformat(data["trade"]["t"].replace("Z", "+00:00"))
         from datetime import timezone
+
         current_time = datetime.now(timezone.utc)
         delay_minutes = (current_time - trade_time).total_seconds() / 60
 
@@ -56,10 +54,7 @@ except Exception as e:
 print("\n[2] Testing Account Subscription Level:")
 print("-" * 60)
 try:
-    response = requests.get(
-        "https://paper-api.alpaca.markets/v2/account",
-        headers=headers
-    )
+    response = requests.get("https://paper-api.alpaca.markets/v2/account", headers=headers)
     if response.status_code == 200:
         account = response.json()
         print(f"[OK] Account Number: {account.get('account_number')}")
@@ -82,18 +77,18 @@ symbols = ["TLRY", "PLUG", "BBD"]
 for symbol in symbols:
     try:
         response = requests.get(
-            f"https://data.alpaca.markets/v2/stocks/{symbol}/quotes/latest",
-            headers=headers
+            f"https://data.alpaca.markets/v2/stocks/{symbol}/quotes/latest", headers=headers
         )
         if response.status_code == 200:
             data = response.json()
-            quote_time = datetime.fromisoformat(data['quote']['t'].replace('Z', '+00:00'))
+            quote_time = datetime.fromisoformat(data["quote"]["t"].replace("Z", "+00:00"))
             from datetime import timezone
+
             current_time = datetime.now(timezone.utc)
             delay_minutes = (current_time - quote_time).total_seconds() / 60
 
-            bid = data['quote']['bp']
-            ask = data['quote']['ap']
+            bid = data["quote"]["bp"]
+            ask = data["quote"]["ap"]
             spread = ask - bid
             spread_pct = (spread / ask) * 100 if ask > 0 else 0
 

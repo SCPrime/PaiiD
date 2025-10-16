@@ -1,10 +1,13 @@
-from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone
 from time import perf_counter
-from ..core.idempotency import get_redis
+
 import sentry_sdk
+from fastapi import APIRouter, HTTPException
+
+from ..core.idempotency import get_redis
 
 router = APIRouter()
+
 
 @router.get("/health")
 def health():
@@ -23,6 +26,7 @@ def health():
 
     return info
 
+
 @router.get("/ready")
 def ready():
     return {"ready": True}
@@ -39,7 +43,11 @@ def sentry_test():
     Expected: Error appears in Sentry dashboard within 30 seconds.
     """
     # First, send a test message to Sentry
-    sentry_sdk.capture_message("🧪 SENTRY TEST: Test message sent from /api/sentry-test", level="info")
+    sentry_sdk.capture_message(
+        "🧪 SENTRY TEST: Test message sent from /api/sentry-test", level="info"
+    )
 
     # Then, raise an unhandled exception (guaranteed to be captured)
-    raise Exception("🧪 SENTRY TEST: This is an intentional error to verify error tracking is working! If you see this in Sentry, error tracking is operational.")
+    raise Exception(
+        "🧪 SENTRY TEST: This is an intentional error to verify error tracking is working! If you see this in Sentry, error tracking is operational."
+    )

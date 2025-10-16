@@ -2,7 +2,9 @@
 Test news aggregation and caching
 Tests news fetching, filtering, caching, and multiple providers
 """
+
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)
@@ -69,8 +71,7 @@ def test_news_with_limit_parameter():
 def test_news_with_date_range():
     """Test filtering news by date range"""
     response = client.get(
-        "/api/news/market?startDate=2024-01-01&endDate=2024-12-31",
-        headers=HEADERS
+        "/api/news/market?startDate=2024-01-01&endDate=2024-12-31", headers=HEADERS
     )
 
     if response.status_code == 200:
@@ -229,8 +230,7 @@ def test_news_empty_result_handling():
     """Test handling when no news is available"""
     # Use very restrictive filters to potentially get no results
     response = client.get(
-        "/api/news/market?symbol=AAPL&startDate=2020-01-01&endDate=2020-01-02",
-        headers=HEADERS
+        "/api/news/market?symbol=AAPL&startDate=2020-01-01&endDate=2020-01-02", headers=HEADERS
     )
 
     if response.status_code == 200:
@@ -249,7 +249,7 @@ def test_news_concurrent_requests():
             "?symbol=AAPL&limit=5",
             "?symbol=MSFT&limit=10",
             "?symbol=GOOGL&limit=5",
-            "?limit=20"
+            "?limit=20",
         ]
 
         for params in params_list:

@@ -5,19 +5,19 @@ Provides secure JWT token creation, validation, and refresh functionality
 for multi-user authentication system.
 """
 
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
 import uuid
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import HTTPException, status, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-from .config import settings
 from ..db.session import get_db
 from ..models.database import User, UserSession
+from .config import settings
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -73,12 +73,14 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
         expire = datetime.utcnow() + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
 
     # Add standard JWT claims
-    to_encode.update({
-        "exp": expire,
-        "iat": datetime.utcnow(),
-        "jti": str(uuid.uuid4()),  # Unique token ID for tracking
-        "type": "access"
-    })
+    to_encode.update(
+        {
+            "exp": expire,
+            "iat": datetime.utcnow(),
+            "jti": str(uuid.uuid4()),  # Unique token ID for tracking
+            "type": "access",
+        }
+    )
 
     # Encode token
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
@@ -101,12 +103,9 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     expire = datetime.utcnow() + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
 
     # Add standard JWT claims
-    to_encode.update({
-        "exp": expire,
-        "iat": datetime.utcnow(),
-        "jti": str(uuid.uuid4()),
-        "type": "refresh"
-    })
+    to_encode.update(
+        {"exp": expire, "iat": datetime.utcnow(), "jti": str(uuid.uuid4()), "type": "refresh"}
+    )
 
     # Encode token
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
@@ -138,8 +137,7 @@ def decode_token(token: str) -> Dict[str, Any]:
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
+    credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)
 ) -> User:
     """
     FastAPI dependency to get current authenticated user from JWT token
@@ -163,45 +161,43 @@ def get_current_user(
     if payload.get("type") != "access":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token type (expected access token)"
+            detail="Invalid token type (expected access token)",
         )
 
     # Get user_id from payload
     user_id: int = payload.get("sub")
     if user_id is None:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token missing user identifier"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token missing user identifier"
         )
 
     # Fetch user from database
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     # Check if user is active
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is disabled"
+            status_code=status.HTTP_403_FORBIDDEN, detail="User account is disabled"
         )
 
     # Verify session still exists (optional: check token JTI in user_sessions)
     jti = payload.get("jti")
     if jti:
-        session = db.query(UserSession).filter(
-            UserSession.user_id == user_id,
-            UserSession.access_token_jti == jti,
-            UserSession.expires_at > datetime.utcnow()
-        ).first()
+        session = (
+            db.query(UserSession)
+            .filter(
+                UserSession.user_id == user_id,
+                UserSession.access_token_jti == jti,
+                UserSession.expires_at > datetime.utcnow(),
+            )
+            .first()
+        )
 
         if not session:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Session expired or invalid"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired or invalid"
             )
 
         # Update last activity
@@ -225,14 +221,13 @@ def require_owner(current_user: User = Depends(get_current_user)) -> User:
         HTTPException: If user is not owner
     """
     if current_user.role != "owner":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Owner access required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Owner access required")
     return current_user
 
 
-def create_token_pair(user: User, db: Session, ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> Dict[str, str]:
+def create_token_pair(
+    user: User, db: Session, ip_address: Optional[str] = None, user_agent: Optional[str] = None
+) -> Dict[str, str]:
     """
     Create access + refresh token pair and store session
 
@@ -265,7 +260,7 @@ def create_token_pair(user: User, db: Session, ip_address: Optional[str] = None,
         expires_at=datetime.fromtimestamp(refresh_decoded["exp"]),
         last_activity_at=datetime.utcnow(),
         ip_address=ip_address,
-        user_agent=user_agent
+        user_agent=user_agent,
     )
     db.add(session)
 
@@ -274,8 +269,4 @@ def create_token_pair(user: User, db: Session, ip_address: Optional[str] = None,
 
     db.commit()
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer"
-    }
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}

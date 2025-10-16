@@ -4,12 +4,13 @@ Pytest Configuration and Fixtures
 Provides test fixtures for database, API client, and mocked services.
 """
 
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-import os
 
 # Set test environment variables
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
@@ -20,8 +21,8 @@ os.environ["API_TOKEN"] = "test-token-12345"
 os.environ["TRADIER_API_KEY"] = "test-tradier-key"
 os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
-from app.main import app
 from app.db.session import Base, get_db
+from app.main import app
 from app.services.cache import CacheService
 
 # ===========================================
@@ -46,6 +47,7 @@ TEST_PASSWORD_HASH = "$2b$12$LQ3JzqjX7Y8ZHnVc9r5MHOfWw8L4vQy8QWxK0X1y0HdTYJKRQ6q
 
 
 # ==================== DATABASE FIXTURES ====================
+
 
 @pytest.fixture(scope="function")
 def test_db():
@@ -82,6 +84,7 @@ def client(test_db):
             response = client.get("/api/health")
             assert response.status_code == 200
     """
+
     def override_get_db():
         try:
             yield test_db
@@ -110,6 +113,7 @@ def auth_headers():
 
 
 # ==================== MOCK CACHE FIXTURES ====================
+
 
 class MockCacheService:
     """Mock cache service for testing without Redis"""
@@ -151,6 +155,7 @@ def mock_cache():
 
 # ==================== DATABASE MODEL FIXTURES ====================
 
+
 @pytest.fixture
 def sample_user(test_db):
     """Create a sample user for testing"""
@@ -160,7 +165,7 @@ def sample_user(test_db):
         email="test@example.com",
         password_hash=TEST_PASSWORD_HASH,
         alpaca_account_id="TEST123",
-        preferences={"risk_tolerance": "moderate"}
+        preferences={"risk_tolerance": "moderate"},
     )
     test_db.add(user)
     test_db.commit()
@@ -181,10 +186,10 @@ def sample_strategy(test_db, sample_user):
         config={
             "entry_rules": ["RSI > 60", "Price > MA50"],
             "exit_rules": ["RSI < 40", "Stop loss 2%"],
-            "position_size": 0.10
+            "position_size": 0.10,
         },
         is_active=True,
-        is_autopilot=False
+        is_autopilot=False,
     )
     test_db.add(strategy)
     test_db.commit()
@@ -207,7 +212,7 @@ def sample_trade(test_db, sample_user, sample_strategy):
         order_type="market",
         status="filled",
         filled_quantity=10,
-        filled_avg_price=150.55
+        filled_avg_price=150.55,
     )
     test_db.add(trade)
     test_db.commit()
@@ -216,6 +221,7 @@ def sample_trade(test_db, sample_user, sample_strategy):
 
 
 # ==================== MOCK API RESPONSES ====================
+
 
 @pytest.fixture
 def mock_tradier_quotes():
@@ -231,7 +237,7 @@ def mock_tradier_quotes():
                     "volume": 52341234,
                     "change": 2.15,
                     "change_percentage": 1.24,
-                    "trade_date": "2025-10-13T16:00:00Z"
+                    "trade_date": "2025-10-13T16:00:00Z",
                 },
                 {
                     "symbol": "MSFT",
@@ -241,8 +247,8 @@ def mock_tradier_quotes():
                     "volume": 28543210,
                     "change": -1.50,
                     "change_percentage": -0.39,
-                    "trade_date": "2025-10-13T16:00:00Z"
-                }
+                    "trade_date": "2025-10-13T16:00:00Z",
+                },
             ]
         }
     }
@@ -254,20 +260,18 @@ def mock_market_indices():
     return {
         "dow": {"last": 42500.00, "change": 125.50, "changePercent": 0.30},
         "nasdaq": {"last": 18350.00, "change": 98.75, "changePercent": 0.54},
-        "source": "tradier"
+        "source": "tradier",
     }
 
 
 # ==================== HELPER FUNCTIONS ====================
 
+
 def create_test_user(db, email="test@example.com"):
     """Helper to create test user"""
     from app.models.database import User
-    user = User(
-        email=email,
-        password_hash=TEST_PASSWORD_HASH,
-        preferences={}
-    )
+
+    user = User(email=email, password_hash=TEST_PASSWORD_HASH, preferences={})
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -277,13 +281,14 @@ def create_test_user(db, email="test@example.com"):
 def create_test_strategy(db, user_id, name="Test Strategy"):
     """Helper to create test strategy"""
     from app.models.database import Strategy
+
     strategy = Strategy(
         user_id=user_id,
         name=name,
         description="Test strategy",
         strategy_type="custom",
         config={"test": True},
-        is_active=False
+        is_active=False,
     )
     db.add(strategy)
     db.commit()

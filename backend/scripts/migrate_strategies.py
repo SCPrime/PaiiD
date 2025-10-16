@@ -13,15 +13,15 @@ Prerequisites:
 """
 
 import json
-import sys
 import os
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 # Fix Windows console encoding for emoji support
-if sys.platform == 'win32':
-    os.environ['PYTHONIOENCODING'] = 'utf-8'
-    sys.stdout.reconfigure(encoding='utf-8')
+if sys.platform == "win32":
+    os.environ["PYTHONIOENCODING"] = "utf-8"
+    sys.stdout.reconfigure(encoding="utf-8")
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -56,7 +56,7 @@ def migrate_strategies_from_directory():
 
         for strategy_file in strategy_files:
             try:
-                with open(strategy_file, 'r') as f:
+                with open(strategy_file, "r") as f:
                     strategy_data = json.load(f)
 
                 # Extract strategy metadata
@@ -79,7 +79,7 @@ def migrate_strategies_from_directory():
                     is_active=False,
                     is_autopilot=False,
                     created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
 
                 db.add(strategy)
@@ -96,7 +96,9 @@ def migrate_strategies_from_directory():
         # Commit all migrations
         if migrated_count > 0:
             db.commit()
-            print(f"\n✅ Successfully committed {migrated_count} strateg{'y' if migrated_count == 1 else 'ies'} to database")
+            print(
+                f"\n✅ Successfully committed {migrated_count} strateg{'y' if migrated_count == 1 else 'ies'} to database"
+            )
 
     except Exception as e:
         print(f"\n❌ Migration failed: {e}")
@@ -122,7 +124,9 @@ def print_current_strategies():
         for s in strategies:
             active_status = "🟢 Active" if s.is_active else "⚪ Inactive"
             autopilot_status = "🤖 Autopilot" if s.is_autopilot else ""
-            print(f"{s.id:3d} | {active_status} {autopilot_status:12s} | {s.strategy_type:18s} | {s.name}")
+            print(
+                f"{s.id:3d} | {active_status} {autopilot_status:12s} | {s.strategy_type:18s} | {s.name}"
+            )
         print("=" * 80)
     finally:
         db.close()

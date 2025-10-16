@@ -2,9 +2,12 @@
 Test analytics and portfolio calculations
 Tests P&L calculation, risk metrics, portfolio summary
 """
+
+from unittest.mock import MagicMock, patch
+
 from fastapi.testclient import TestClient
+
 from app.main import app
-from unittest.mock import patch, MagicMock
 
 client = TestClient(app)
 HEADERS = {"Authorization": "Bearer test-token-12345"}

@@ -10,6 +10,7 @@ These tests run in CI to catch import issues before deployment.
 """
 
 from pathlib import Path
+
 import pytest
 
 
@@ -18,7 +19,7 @@ class TestPackageStructure:
 
     def test_middleware_package_has_init(self):
         """Verify middleware package has __init__.py"""
-        init_file = Path('app/middleware/__init__.py')
+        init_file = Path("app/middleware/__init__.py")
         assert init_file.exists(), (
             "app/middleware/__init__.py is REQUIRED for Python to treat "
             "the directory as a package. Without it, imports like "
@@ -27,7 +28,7 @@ class TestPackageStructure:
 
     def test_services_package_has_init(self):
         """Verify services package has __init__.py"""
-        init_file = Path('app/services/__init__.py')
+        init_file = Path("app/services/__init__.py")
         assert init_file.exists(), (
             "app/services/__init__.py is REQUIRED. "
             "Missing this file caused 16+ hours of downtime in Oct 2025."
@@ -35,29 +36,25 @@ class TestPackageStructure:
 
     def test_routers_package_has_init(self):
         """Verify routers package has __init__.py"""
-        init_file = Path('app/routers/__init__.py')
-        assert init_file.exists(), (
-            "app/routers/__init__.py is required for router imports"
-        )
+        init_file = Path("app/routers/__init__.py")
+        assert init_file.exists(), "app/routers/__init__.py is required for router imports"
 
     def test_core_package_has_init(self):
         """Verify core package has __init__.py"""
-        init_file = Path('app/core/__init__.py')
-        assert init_file.exists(), (
-            "app/core/__init__.py is required for core imports"
-        )
+        init_file = Path("app/core/__init__.py")
+        assert init_file.exists(), "app/core/__init__.py is required for core imports"
 
     def test_all_app_subdirectories_have_init(self):
         """Verify ALL subdirectories in app/ have __init__.py"""
-        app_dir = Path('app')
+        app_dir = Path("app")
 
         if not app_dir.exists():
             pytest.skip("app directory not found (may be running from different location)")
 
         missing_init = []
         for subdir in app_dir.iterdir():
-            if subdir.is_dir() and not subdir.name.startswith('__'):
-                init_file = subdir / '__init__.py'
+            if subdir.is_dir() and not subdir.name.startswith("__"):
+                init_file = subdir / "__init__.py"
                 if not init_file.exists():
                     missing_init.append(str(subdir))
 
@@ -74,8 +71,8 @@ class TestCriticalImports:
     def test_middleware_imports(self):
         """Verify middleware imports work"""
         try:
-            from app.middleware.rate_limit import limiter, custom_rate_limit_exceeded_handler
             from app.middleware.cache_control import CacheControlMiddleware
+            from app.middleware.rate_limit import custom_rate_limit_exceeded_handler, limiter
             from app.middleware.sentry import SentryContextMiddleware
 
             # Verify objects exist
@@ -102,23 +99,25 @@ class TestCriticalImports:
     def test_routers_imports(self):
         """Verify all routers can be imported"""
         try:
-            from app.routers import health
-            from app.routers import portfolio
-            from app.routers import orders
-            from app.routers import market
-            from app.routers import ai
-            from app.routers import claude
-            from app.routers import strategies
-            from app.routers import scheduler
-            from app.routers import telemetry
-            from app.routers import stream
-            from app.routers import news
+            from app.routers import (
+                ai,
+                claude,
+                health,
+                market,
+                news,
+                orders,
+                portfolio,
+                scheduler,
+                strategies,
+                stream,
+                telemetry,
+            )
 
             # Verify all routers have a router object
-            assert hasattr(health, 'router')
-            assert hasattr(portfolio, 'router')
-            assert hasattr(orders, 'router')
-            assert hasattr(market, 'router')
+            assert hasattr(health, "router")
+            assert hasattr(portfolio, "router")
+            assert hasattr(orders, "router")
+            assert hasattr(market, "router")
         except ImportError as e:
             pytest.fail(f"Failed to import routers: {e}")
 
@@ -128,7 +127,7 @@ class TestCriticalImports:
             from app.main import app
 
             assert app is not None
-            assert hasattr(app, 'routes')
+            assert hasattr(app, "routes")
         except ImportError as e:
             pytest.fail(f"Failed to import main app: {e}")
 
@@ -149,8 +148,8 @@ class TestImportOrdering:
         """Verify middleware imports don't create circular dependencies"""
         try:
             # Import in the order main.py does
-            from app.middleware.rate_limit import limiter
             from app.middleware.cache_control import CacheControlMiddleware
+            from app.middleware.rate_limit import limiter
             from app.middleware.sentry import SentryContextMiddleware
 
             # If we get here, no circular imports
@@ -183,51 +182,35 @@ class TestExportLists:
         from app import middleware
 
         # Check __all__ is defined
-        assert hasattr(middleware, '__all__'), (
-            "middleware/__init__.py should define __all__ list"
-        )
+        assert hasattr(middleware, "__all__"), "middleware/__init__.py should define __all__ list"
 
         # Check expected exports
         expected_exports = [
-            'limiter',
-            'custom_rate_limit_exceeded_handler',
-            'CacheControlMiddleware',
-            'SentryContextMiddleware'
+            "limiter",
+            "custom_rate_limit_exceeded_handler",
+            "CacheControlMiddleware",
+            "SentryContextMiddleware",
         ]
 
         for export in expected_exports:
-            assert export in middleware.__all__, (
-                f"'{export}' should be in middleware.__all__"
-            )
-            assert hasattr(middleware, export), (
-                f"middleware.{export} should be importable"
-            )
+            assert export in middleware.__all__, f"'{export}' should be in middleware.__all__"
+            assert hasattr(middleware, export), f"middleware.{export} should be importable"
 
     def test_services_exports(self):
         """Verify services __init__.py exports correct items"""
         from app import services
 
         # Check __all__ is defined
-        assert hasattr(services, '__all__'), (
-            "services/__init__.py should define __all__ list"
-        )
+        assert hasattr(services, "__all__"), "services/__init__.py should define __all__ list"
 
         # Check expected exports
-        expected_exports = [
-            'init_cache',
-            'start_tradier_stream',
-            'stop_tradier_stream'
-        ]
+        expected_exports = ["init_cache", "start_tradier_stream", "stop_tradier_stream"]
 
         for export in expected_exports:
-            assert export in services.__all__, (
-                f"'{export}' should be in services.__all__"
-            )
-            assert hasattr(services, export), (
-                f"services.{export} should be importable"
-            )
+            assert export in services.__all__, f"'{export}' should be in services.__all__"
+            assert hasattr(services, export), f"services.{export} should be importable"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Run tests with verbose output
-    pytest.main([__file__, '-v', '--tb=short'])
+    pytest.main([__file__, "-v", "--tb=short"])

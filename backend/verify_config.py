@@ -9,6 +9,7 @@ Usage:
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load .env file
@@ -20,18 +21,20 @@ if not env_path.exists():
 
 load_dotenv(env_path)
 
+
 def mask_key(key: str) -> str:
     """Mask API key for safe display"""
     if not key or len(key) < 12:
         return "NOT SET"
     return f"{key[:8]}...{key[-4:]}"
 
+
 def verify_config():
     """Verify all required configuration is set"""
     print("[*] PaiiD Configuration Verification")
-    print("="*60)
+    print("=" * 60)
     print(f"Environment file: {env_path}")
-    print("="*60)
+    print("=" * 60)
     print()
 
     # Required configuration
@@ -90,7 +93,7 @@ def verify_config():
         print(f"  {status} {name:25} = {display_value}")
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     if all_good:
         print("[SUCCESS] All required configuration verified!")
         print("\nReady to start backend:")
@@ -104,6 +107,7 @@ def verify_config():
         print("\nPlease check your .env file and add missing values.")
         print("Use .env.example as a template.")
         return False
+
 
 if __name__ == "__main__":
     success = verify_config()

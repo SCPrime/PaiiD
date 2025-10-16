@@ -3,13 +3,15 @@ Stock Information and News Router
 Provides stock lookup, company info, and news endpoints for the StockLookup feature
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
-from typing import List, Optional
-from pydantic import BaseModel
+import logging
 from datetime import datetime, timedelta
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+
 from ..core.auth import require_bearer
 from ..services.tradier_client import get_tradier_client
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ router = APIRouter(prefix="/stock", tags=["stock"])
 
 class CompanyInfo(BaseModel):
     """Company information model"""
+
     symbol: str
     name: str
     description: Optional[str] = None
@@ -36,6 +39,7 @@ class CompanyInfo(BaseModel):
 
 class NewsArticle(BaseModel):
     """News article model"""
+
     title: str
     summary: Optional[str] = None
     url: str
@@ -46,6 +50,7 @@ class NewsArticle(BaseModel):
 
 class StockInfoResponse(BaseModel):
     """Complete stock information response"""
+
     company: CompanyInfo
     technicals: dict
     news: List[NewsArticle] = []
@@ -93,7 +98,7 @@ async def get_stock_info(symbol: str) -> CompanyInfo:
             avg_volume=int(quote.get("average_volume", 0)) if quote.get("average_volume") else None,
             current_price=current_price,
             change=change,
-            change_percent=change_percent
+            change_percent=change_percent,
         )
 
         logger.info(f"✅ Retrieved stock info for {symbol}: ${current_price:.2f}")
@@ -109,7 +114,7 @@ async def get_stock_info(symbol: str) -> CompanyInfo:
 @router.get("/{symbol}/news", dependencies=[Depends(require_bearer)])
 async def get_stock_news(
     symbol: str,
-    limit: int = Query(default=10, ge=1, le=50, description="Number of news articles to return")
+    limit: int = Query(default=10, ge=1, le=50, description="Number of news articles to return"),
 ) -> List[NewsArticle]:
     """
     Get recent news articles for a specific stock
@@ -193,11 +198,7 @@ async def get_complete_stock_info(symbol: str) -> StockInfoResponse:
 
         logger.info(f"✅ Retrieved complete stock info for {symbol}")
 
-        return StockInfoResponse(
-            company=company,
-            technicals=technicals,
-            news=news
-        )
+        return StockInfoResponse(company=company, technicals=technicals, news=news)
 
     except HTTPException:
         raise

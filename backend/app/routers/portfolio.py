@@ -1,18 +1,22 @@
+import logging
+from typing import Literal, Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional, Literal
+
 from ..core.auth import require_bearer
 from ..core.config import settings
-from ..services.tradier_client import get_tradier_client
 from ..services.cache import CacheService, get_cache
-import logging
+from ..services.tradier_client import get_tradier_client
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
 class AlpacaAccount(BaseModel):
     """Alpaca account information"""
+
     id: str
     account_number: str
     status: Literal["ACTIVE", "INACTIVE"]
@@ -40,6 +44,7 @@ class AlpacaAccount(BaseModel):
     long_market_value_change: Optional[str] = None
     short_market_value_change: Optional[str] = None
 
+
 @router.get("/account")
 def get_account(_=Depends(require_bearer)):
     """Get Tradier account information"""
@@ -54,10 +59,8 @@ def get_account(_=Depends(require_bearer)):
 
     except Exception as e:
         logger.error(f"❌ Tradier account request failed: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch Tradier account: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier account: {str(e)}")
+
 
 @router.get("/positions")
 def get_positions(_=Depends(require_bearer), cache: CacheService = Depends(get_cache)):
@@ -80,10 +83,8 @@ def get_positions(_=Depends(require_bearer), cache: CacheService = Depends(get_c
 
     except Exception as e:
         logger.error(f"❌ Tradier positions request failed: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch Tradier positions: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier positions: {str(e)}")
+
 
 @router.get("/positions/{symbol}")
 def get_position(symbol: str, _=Depends(require_bearer)):
@@ -104,6 +105,5 @@ def get_position(symbol: str, _=Depends(require_bearer)):
     except Exception as e:
         logger.error(f"❌ Failed to fetch position for {symbol}: {str(e)}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch position for {symbol}: {str(e)}"
+            status_code=500, detail=f"Failed to fetch position for {symbol}: {str(e)}"
         )

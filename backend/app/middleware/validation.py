@@ -9,13 +9,13 @@ Phase 3: Bulletproof Reliability
 import re
 from datetime import datetime, time
 from typing import Optional
-from pydantic import validator, Field
-from fastapi import HTTPException
 
+from fastapi import HTTPException
+from pydantic import Field, validator
 
 # Regex Patterns
-SYMBOL_PATTERN = re.compile(r'^[A-Z]{1,5}$')  # 1-5 uppercase letters
-REQUEST_ID_PATTERN = re.compile(r'^[a-zA-Z0-9\-_]{8,64}$')  # Alphanumeric + hyphens/underscores
+SYMBOL_PATTERN = re.compile(r"^[A-Z]{1,5}$")  # 1-5 uppercase letters
+REQUEST_ID_PATTERN = re.compile(r"^[a-zA-Z0-9\-_]{8,64}$")  # Alphanumeric + hyphens/underscores
 
 
 def validate_symbol(symbol: str) -> str:
@@ -75,7 +75,7 @@ def validate_side(side: str) -> str:
     """
     side = side.lower().strip()
 
-    if side not in ['buy', 'sell']:
+    if side not in ["buy", "sell"]:
         raise ValueError(f"Invalid side '{side}'. Must be 'buy' or 'sell'")
 
     return side
@@ -90,7 +90,7 @@ def validate_order_type(order_type: str) -> str:
     """
     order_type = order_type.lower().strip()
 
-    valid_types = ['market', 'limit', 'stop', 'stop_limit']
+    valid_types = ["market", "limit", "stop", "stop_limit"]
 
     if order_type not in valid_types:
         raise ValueError(
@@ -107,7 +107,7 @@ def validate_limit_price(limit_price: Optional[float], order_type: str) -> Optio
     Raises:
         ValueError: If limit price is invalid
     """
-    if order_type in ['limit', 'stop_limit']:
+    if order_type in ["limit", "stop_limit"]:
         if limit_price is None:
             raise ValueError(f"Limit price is required for {order_type} orders")
 
@@ -186,11 +186,12 @@ def validate_market_hours(allow_after_hours: bool = False) -> None:
     if not allow_after_hours and not is_market_open():
         raise HTTPException(
             status_code=400,
-            detail="Market is currently closed. Trading hours: 9:30 AM - 4:00 PM ET, Monday-Friday"
+            detail="Market is currently closed. Trading hours: 9:30 AM - 4:00 PM ET, Monday-Friday",
         )
 
 
 # Pydantic Field Validators (use with Field() in models)
+
 
 def symbol_field(description: str = "Stock symbol") -> Field:
     """Create a validated symbol field for Pydantic models"""
@@ -199,8 +200,8 @@ def symbol_field(description: str = "Stock symbol") -> Field:
         description=description,
         min_length=1,
         max_length=5,
-        pattern=r'^[A-Z]{1,5}$',
-        examples=["AAPL", "SPY", "TSLA"]
+        pattern=r"^[A-Z]{1,5}$",
+        examples=["AAPL", "SPY", "TSLA"],
     )
 
 
@@ -212,31 +213,25 @@ def quantity_field(min_value: float = 0.01, max_value: float = 10000) -> Field:
         gt=0,
         ge=min_value,
         le=max_value,
-        examples=[100, 10.5, 1]
+        examples=[100, 10.5, 1],
     )
 
 
 def price_field(description: str = "Price") -> Field:
     """Create a validated price field for Pydantic models"""
-    return Field(
-        ...,
-        description=description,
-        gt=0,
-        le=1000000,
-        examples=[150.50, 50.00, 1000.00]
-    )
+    return Field(..., description=description, gt=0, le=1000000, examples=[150.50, 50.00, 1000.00])
 
 
 __all__ = [
-    'validate_symbol',
-    'validate_quantity',
-    'validate_side',
-    'validate_order_type',
-    'validate_limit_price',
-    'validate_request_id',
-    'is_market_open',
-    'validate_market_hours',
-    'symbol_field',
-    'quantity_field',
-    'price_field',
+    "validate_symbol",
+    "validate_quantity",
+    "validate_side",
+    "validate_order_type",
+    "validate_limit_price",
+    "validate_request_id",
+    "is_market_open",
+    "validate_market_hours",
+    "symbol_field",
+    "quantity_field",
+    "price_field",
 ]

@@ -4,8 +4,9 @@ API Endpoint Tests
 Tests for critical API endpoints: health, portfolio, orders, market data
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 
 class TestHealthEndpoints:
@@ -58,10 +59,7 @@ class TestAuthenticationProtection:
 
     def test_invalid_bearer_token(self, client):
         """Test invalid Authorization token"""
-        response = client.get(
-            "/api/positions",
-            headers={"Authorization": "Bearer invalid-token"}
-        )
+        response = client.get("/api/positions", headers={"Authorization": "Bearer invalid-token"})
         assert response.status_code == 401
 
 
@@ -77,8 +75,18 @@ class TestMarketEndpoints:
         mock_response.json.return_value = {
             "quotes": {
                 "quote": [
-                    {"symbol": "$DJI", "last": 42500.00, "change": 125.50, "change_percentage": 0.30},
-                    {"symbol": "COMP:GIDS", "last": 18350.00, "change": 98.75, "change_percentage": 0.54}
+                    {
+                        "symbol": "$DJI",
+                        "last": 42500.00,
+                        "change": 125.50,
+                        "change_percentage": 0.30,
+                    },
+                    {
+                        "symbol": "COMP:GIDS",
+                        "last": 18350.00,
+                        "change": 98.75,
+                        "change_percentage": 0.54,
+                    },
                 ]
             }
         }
@@ -94,11 +102,14 @@ class TestMarketEndpoints:
     def test_market_indices_caching(self, client, auth_headers, mock_cache):
         """Test market indices endpoint uses cache"""
         # Pre-populate cache
-        mock_cache.set("market:indices", {
-            "dow": {"last": 42000, "change": 100, "changePercent": 0.24},
-            "nasdaq": {"last": 18000, "change": 50, "changePercent": 0.28},
-            "source": "cache"
-        })
+        mock_cache.set(
+            "market:indices",
+            {
+                "dow": {"last": 42000, "change": 100, "changePercent": 0.24},
+                "nasdaq": {"last": 18000, "change": 50, "changePercent": 0.28},
+                "source": "cache",
+            },
+        )
 
         with patch("app.routers.market.get_cache", return_value=mock_cache):
             try:
@@ -121,12 +132,7 @@ class TestPortfolioEndpoints:
         """Test /api/positions returns position data"""
         mock_instance = MagicMock()
         mock_instance.get_positions.return_value = [
-            {
-                "symbol": "AAPL",
-                "quantity": 10,
-                "cost_basis": 1505.00,
-                "market_value": 1754.30
-            }
+            {"symbol": "AAPL", "quantity": 10, "cost_basis": 1505.00, "market_value": 1754.30}
         ]
         mock_client.return_value = mock_instance
 
@@ -160,7 +166,7 @@ class TestPortfolioEndpoints:
             "account_number": "ABC123",
             "buying_power": "50000.00",
             "cash": "25000.00",
-            "equity": "75000.00"
+            "equity": "75000.00",
         }
         mock_client.return_value = mock_instance
 
@@ -185,7 +191,7 @@ class TestMarketDataEndpoints:
                 "bid": 175.42,
                 "ask": 175.44,
                 "volume": 52341234,
-                "trade_date": "2025-10-13T16:00:00Z"
+                "trade_date": "2025-10-13T16:00:00Z",
             }
         }
         mock_client.return_value = mock_instance
@@ -214,7 +220,7 @@ class TestMarketDataEndpoints:
         mock_instance = MagicMock()
         mock_instance.get_quotes.return_value = {
             "AAPL": {"last": 175.43, "bid": 175.42, "ask": 175.44, "trade_date": "2025-10-13"},
-            "MSFT": {"last": 380.25, "bid": 380.20, "ask": 380.30, "trade_date": "2025-10-13"}
+            "MSFT": {"last": 380.25, "bid": 380.20, "ask": 380.30, "trade_date": "2025-10-13"},
         }
         mock_client.return_value = mock_instance
 
@@ -232,9 +238,7 @@ class TestCacheIntegration:
     def test_positions_cache_hit(self, client, auth_headers, mock_cache):
         """Test positions endpoint cache hit"""
         # Pre-populate cache
-        cached_positions = [
-            {"symbol": "AAPL", "quantity": 10, "market_value": 1754.30}
-        ]
+        cached_positions = [{"symbol": "AAPL", "quantity": 10, "market_value": 1754.30}]
         mock_cache.set("portfolio:positions", cached_positions)
 
         with patch("app.routers.portfolio.get_cache", return_value=mock_cache):
@@ -256,7 +260,7 @@ class TestCacheIntegration:
                         "bid": 245.28,
                         "ask": 245.32,
                         "volume": 95000000,
-                        "trade_date": "2025-10-13"
+                        "trade_date": "2025-10-13",
                     }
                 }
                 mock_client.return_value = mock_instance
@@ -298,7 +302,9 @@ class TestErrorHandling:
             mock_client = MagicMock()
             mock_message = MagicMock()
             mock_message.content = [
-                MagicMock(text='{"dow": {"last": 42500, "change": 125, "changePercent": 0.30}, "nasdaq": {"last": 18350, "change": 98, "changePercent": 0.54}}')
+                MagicMock(
+                    text='{"dow": {"last": 42500, "change": 125, "changePercent": 0.30}, "nasdaq": {"last": 18350, "change": 98, "changePercent": 0.54}}'
+                )
             ]
             mock_client.messages.create.return_value = mock_message
             mock_anthropic.return_value = mock_client

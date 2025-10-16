@@ -2,7 +2,9 @@
 Test authentication and authorization
 Tests Bearer token validation, missing tokens, invalid formats
 """
+
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)

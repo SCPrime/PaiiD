@@ -5,14 +5,17 @@ SQLAlchemy models for PostgreSQL database.
 Defines schema for users, strategies, trades, performance tracking, and equity snapshots.
 """
 
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey, JSON
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
+
 from ..db.session import Base
 
 
 class User(Base):
     """User account and preferences"""
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -21,7 +24,9 @@ class User(Base):
     full_name = Column(String(255), nullable=True)
 
     # Role-based access control
-    role = Column(String(50), default="personal_only", nullable=False, index=True)  # owner, beta_tester, personal_only
+    role = Column(
+        String(50), default="personal_only", nullable=False, index=True
+    )  # owner, beta_tester, personal_only
     is_active = Column(Boolean, default=True, nullable=False, index=True)
 
     # Legacy broker integration
@@ -53,10 +58,13 @@ class User(Base):
 
 class UserSession(Base):
     """User session tracking for JWT tokens"""
+
     __tablename__ = "user_sessions"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
 
     # Token identifiers (JTI - JWT Token ID)
     access_token_jti = Column(String(100), unique=True, nullable=False, index=True)
@@ -82,14 +90,21 @@ class UserSession(Base):
 
 class ActivityLog(Base):
     """Comprehensive activity log for owner dashboard"""
+
     __tablename__ = "activity_log"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
 
     # Activity classification
-    action_type = Column(String(50), nullable=False, index=True)  # login, trade_execute, strategy_create, etc.
-    resource_type = Column(String(50), nullable=True, index=True)  # trade, strategy, portfolio, etc.
+    action_type = Column(
+        String(50), nullable=False, index=True
+    )  # login, trade_execute, strategy_create, etc.
+    resource_type = Column(
+        String(50), nullable=True, index=True
+    )  # trade, strategy, portfolio, etc.
     resource_id = Column(Integer, nullable=True)  # ID of the affected resource
 
     # Details (flexible JSON for action-specific data)
@@ -112,6 +127,7 @@ class ActivityLog(Base):
 
 class Strategy(Base):
     """Trading strategy configuration"""
+
     __tablename__ = "strategies"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -120,7 +136,9 @@ class Strategy(Base):
     # Strategy metadata
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
-    strategy_type = Column(String(50), nullable=False, index=True)  # trend_following, mean_reversion, momentum, custom
+    strategy_type = Column(
+        String(50), nullable=False, index=True
+    )  # trend_following, mean_reversion, momentum, custom
 
     # Strategy configuration (stored as JSON)
     # Example: {"entry_rules": [...], "exit_rules": [...], "rsi_period": 14}
@@ -151,6 +169,7 @@ class Strategy(Base):
 
 class Trade(Base):
     """Trade execution record"""
+
     __tablename__ = "trades"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -170,7 +189,9 @@ class Trade(Base):
 
     # Execution details
     broker_order_id = Column(String(100), unique=True, nullable=True, index=True)
-    status = Column(String(20), default="pending", nullable=False, index=True)  # pending, filled, partially_filled, cancelled, failed
+    status = Column(
+        String(20), default="pending", nullable=False, index=True
+    )  # pending, filled, partially_filled, cancelled, failed
     filled_quantity = Column(Float, default=0, nullable=False)
     filled_avg_price = Column(Float, nullable=True)
 
@@ -197,6 +218,7 @@ class Trade(Base):
 
 class Performance(Base):
     """Daily performance snapshot"""
+
     __tablename__ = "performance"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -236,6 +258,7 @@ class Performance(Base):
 
 class EquitySnapshot(Base):
     """Intraday equity snapshots for charting"""
+
     __tablename__ = "equity_snapshots"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -253,11 +276,14 @@ class EquitySnapshot(Base):
     extra_data = Column(JSON, default=dict, nullable=False)
 
     def __repr__(self):
-        return f"<EquitySnapshot(id={self.id}, timestamp={self.timestamp}, equity=${self.equity:.2f})>"
+        return (
+            f"<EquitySnapshot(id={self.id}, timestamp={self.timestamp}, equity=${self.equity:.2f})>"
+        )
 
 
 class OrderTemplate(Base):
     """Saved order templates for quick execution"""
+
     __tablename__ = "order_templates"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -285,6 +311,7 @@ class OrderTemplate(Base):
 
 class AIRecommendation(Base):
     """AI-generated trading recommendations history"""
+
     __tablename__ = "ai_recommendations"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -315,7 +342,9 @@ class AIRecommendation(Base):
     market_context = Column(Text, nullable=True)  # Overall market conditions
 
     # Status tracking
-    status = Column(String(20), default="pending", nullable=False, index=True)  # pending, executed, ignored, expired
+    status = Column(
+        String(20), default="pending", nullable=False, index=True
+    )  # pending, executed, ignored, expired
     executed_at = Column(DateTime, nullable=True)
     execution_price = Column(Float, nullable=True)
 

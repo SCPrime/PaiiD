@@ -3,11 +3,12 @@ Tradier API Client - Production Integration
 Handles: Account, Positions, Orders, Market Data, Options
 """
 
-import os
-import requests
-from typing import Dict, List, Optional
-from datetime import datetime
 import logging
+import os
+from datetime import datetime
+from typing import Dict, List, Optional
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class TradierClient:
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Accept": "application/json",
-            "Accept-Encoding": "gzip, deflate"  # Enable compression for faster responses
+            "Accept-Encoding": "gzip, deflate",  # Enable compression for faster responses
         }
 
         if not self.api_key or not self.account_id:
@@ -36,16 +37,11 @@ class TradierClient:
         url = f"{self.base_url}{endpoint}"
 
         # Set default timeout if not provided
-        if 'timeout' not in kwargs:
-            kwargs['timeout'] = 5  # Reduced from 10s to 5s for faster failures
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 5  # Reduced from 10s to 5s for faster failures
 
         try:
-            response = requests.request(
-                method=method,
-                url=url,
-                headers=self.headers,
-                **kwargs
-            )
+            response = requests.request(method=method, url=url, headers=self.headers, **kwargs)
             response.raise_for_status()
             return response.json()
 
@@ -76,7 +72,7 @@ class TradierClient:
                 "equity": float(balances.get("total_equity", 0)),
                 "long_market_value": float(balances.get("long_market_value", 0)),
                 "short_market_value": float(balances.get("short_market_value", 0)),
-                "status": "ACTIVE"
+                "status": "ACTIVE",
             }
         return result
 
@@ -111,7 +107,7 @@ class TradierClient:
             "unrealized_plpc": pos.get("unrealized_plpc"),
             "current_price": pos.get("last"),
             "lastday_price": pos.get("prevclose"),
-            "change_today": pos.get("change")
+            "change_today": pos.get("change"),
         }
 
     # ==================== ORDERS ====================
@@ -128,14 +124,16 @@ class TradierClient:
 
         return []
 
-    def place_order(self,
-                   symbol: str,
-                   side: str,
-                   quantity: int,
-                   order_type: str = "market",
-                   duration: str = "day",
-                   price: Optional[float] = None,
-                   stop: Optional[float] = None) -> Dict:
+    def place_order(
+        self,
+        symbol: str,
+        side: str,
+        quantity: int,
+        order_type: str = "market",
+        duration: str = "day",
+        price: Optional[float] = None,
+        stop: Optional[float] = None,
+    ) -> Dict:
         """
         Place an order
 
@@ -154,7 +152,7 @@ class TradierClient:
             "side": side,
             "quantity": quantity,
             "type": order_type,
-            "duration": duration
+            "duration": duration,
         }
 
         if order_type in ["limit", "stop_limit"] and price:
@@ -201,7 +199,7 @@ class TradierClient:
         symbol: str,
         interval: str = "daily",
         start_date: Optional[str] = None,
-        end_date: Optional[str] = None
+        end_date: Optional[str] = None,
     ) -> List[Dict]:
         """
         Get historical OHLCV data from Tradier
@@ -228,10 +226,7 @@ class TradierClient:
                 ...
             ]
         """
-        params = {
-            "symbol": symbol,
-            "interval": interval
-        }
+        params = {"symbol": symbol, "interval": interval}
 
         if start_date:
             params["start"] = start_date
@@ -253,14 +248,16 @@ class TradierClient:
             normalized_bars = []
             for bar in bars:
                 try:
-                    normalized_bars.append({
-                        "date": bar["date"],
-                        "open": float(bar["open"]),
-                        "high": float(bar["high"]),
-                        "low": float(bar["low"]),
-                        "close": float(bar["close"]),
-                        "volume": int(bar["volume"])
-                    })
+                    normalized_bars.append(
+                        {
+                            "date": bar["date"],
+                            "open": float(bar["open"]),
+                            "high": float(bar["high"]),
+                            "low": float(bar["low"]),
+                            "close": float(bar["close"]),
+                            "volume": int(bar["volume"]),
+                        }
+                    )
                 except (KeyError, ValueError) as e:
                     logger.warning(f"Skipping malformed bar: {bar} - {e}")
                     continue
@@ -288,6 +285,7 @@ class TradierClient:
 
 # Singleton instance
 _tradier_client = None
+
 
 def get_tradier_client() -> TradierClient:
     """Get singleton Tradier client"""

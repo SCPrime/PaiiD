@@ -3,15 +3,16 @@ Trading Scheduler Service (Simplified - File-based)
 Handles automated execution of trading routines using APScheduler
 """
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-from datetime import datetime, timedelta
-from typing import Dict, Optional, Any, List
-import logging
 import asyncio
 import json
-from pathlib import Path
+import logging
 import uuid
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +33,9 @@ class TradingScheduler:
     def __init__(self):
         self.scheduler = AsyncIOScheduler(
             job_defaults={
-                'coalesce': True,  # Combine missed runs
-                'max_instances': 1,  # Prevent concurrent runs
-                'misfire_grace_time': 300  # 5 minute grace period
+                "coalesce": True,  # Combine missed runs
+                "max_instances": 1,  # Prevent concurrent runs
+                "misfire_grace_time": 300,  # 5 minute grace period
             }
         )
         self.running = False
@@ -61,16 +62,18 @@ class TradingScheduler:
         """Restore all enabled schedules from storage"""
         try:
             for schedule_file in SCHEDULES_DIR.glob("*.json"):
-                with open(schedule_file, 'r') as f:
+                with open(schedule_file, "r") as f:
                     schedule = json.load(f)
-                    if schedule.get('enabled', False):
-                        asyncio.create_task(self.add_schedule(
-                            schedule_id=schedule['id'],
-                            schedule_type=schedule['type'],
-                            cron_expression=schedule['cron_expression'],
-                            timezone=schedule['timezone'],
-                            requires_approval=schedule['requires_approval']
-                        ))
+                    if schedule.get("enabled", False):
+                        asyncio.create_task(
+                            self.add_schedule(
+                                schedule_id=schedule["id"],
+                                schedule_type=schedule["type"],
+                                cron_expression=schedule["cron_expression"],
+                                timezone=schedule["timezone"],
+                                requires_approval=schedule["requires_approval"],
+                            )
+                        )
             logger.info("Schedules restored from storage")
         except Exception as e:
             logger.error(f"Failed to restore schedules: {str(e)}")
@@ -81,7 +84,7 @@ class TradingScheduler:
         schedule_type: str,
         cron_expression: str,
         timezone: str,
-        requires_approval: bool
+        requires_approval: bool,
     ):
         """Add a new scheduled job"""
         try:
@@ -98,10 +101,12 @@ class TradingScheduler:
                 id=schedule_id,
                 args=[schedule_id, requires_approval],
                 replace_existing=True,
-                name=f"{schedule_type}_{schedule_id}"
+                name=f"{schedule_type}_{schedule_id}",
             )
 
-            logger.info(f"Schedule {schedule_id} added: {schedule_type} with cron {cron_expression}")
+            logger.info(
+                f"Schedule {schedule_id} added: {schedule_type} with cron {cron_expression}"
+            )
             return True
 
         except Exception as e:
@@ -164,10 +169,10 @@ class TradingScheduler:
             job = self.scheduler.get_job(schedule_id)
             if job:
                 return {
-                    'id': job.id,
-                    'name': job.name,
-                    'next_run': job.next_run_time.isoformat() if job.next_run_time else None,
-                    'trigger': str(job.trigger)
+                    "id": job.id,
+                    "name": job.name,
+                    "next_run": job.next_run_time.isoformat() if job.next_run_time else None,
+                    "trigger": str(job.trigger),
                 }
             return None
         except Exception as e:
@@ -180,18 +185,15 @@ class TradingScheduler:
             # Track equity at 4:15 PM ET (after market close at 4:00 PM)
             # Cron: 15 16 * * 1-5 (4:15 PM ET, Mon-Fri)
             trigger = CronTrigger(
-                hour=16,
-                minute=15,
-                day_of_week='mon-fri',
-                timezone='America/New_York'
+                hour=16, minute=15, day_of_week="mon-fri", timezone="America/New_York"
             )
 
             self.scheduler.add_job(
                 self._track_equity_snapshot,
                 trigger=trigger,
-                id='equity_tracking_daily',
-                name='Daily Equity Tracking',
-                replace_existing=True
+                id="equity_tracking_daily",
+                name="Daily Equity Tracking",
+                replace_existing=True,
             )
 
             logger.info("✅ Daily equity tracking job added (4:15 PM ET, Mon-Fri)")
@@ -215,10 +217,10 @@ class TradingScheduler:
     def _get_job_function(self, schedule_type: str):
         """Map schedule type to execution function"""
         job_map = {
-            'morning_routine': self._execute_morning_routine,
-            'news_review': self._execute_news_review,
-            'ai_recs': self._execute_ai_recommendations,
-            'custom': self._execute_custom_action
+            "morning_routine": self._execute_morning_routine,
+            "news_review": self._execute_news_review,
+            "ai_recs": self._execute_ai_recommendations,
+            "custom": self._execute_custom_action,
         }
         return job_map.get(schedule_type, self._execute_custom_action)
 
@@ -228,7 +230,7 @@ class TradingScheduler:
 
     async def _execute_morning_routine(self, schedule_id: str, requires_approval: bool):
         """Execute morning routine workflow"""
-        execution_id = await self._create_execution_record(schedule_id, 'morning_routine')
+        execution_id = await self._create_execution_record(schedule_id, "morning_routine")
 
         try:
             logger.info(f"Executing morning routine for schedule {schedule_id}")
@@ -236,40 +238,38 @@ class TradingScheduler:
             # Generate mock recommendations for testing
             recommendations = [
                 {
-                    'action': 'buy',
-                    'symbol': 'AAPL',
-                    'quantity': 10,
-                    'price': 150.0,
-                    'value': 1500.0,
-                    'reason': 'Strong technical breakout with positive news sentiment',
-                    'risk_score': 3,
-                    'confidence': 0.85,
-                    'supporting_data': {
-                        'technical_signals': ['RSI oversold', 'MACD bullish crossover'],
-                        'news_sentiment': 0.7,
-                        'volatility': 0.2
-                    }
+                    "action": "buy",
+                    "symbol": "AAPL",
+                    "quantity": 10,
+                    "price": 150.0,
+                    "value": 1500.0,
+                    "reason": "Strong technical breakout with positive news sentiment",
+                    "risk_score": 3,
+                    "confidence": 0.85,
+                    "supporting_data": {
+                        "technical_signals": ["RSI oversold", "MACD bullish crossover"],
+                        "news_sentiment": 0.7,
+                        "volatility": 0.2,
+                    },
                 }
             ]
 
             if requires_approval and recommendations:
-                await self._create_approval_requests(
-                    execution_id, recommendations, schedule_id
-                )
+                await self._create_approval_requests(execution_id, recommendations, schedule_id)
                 result = f"Generated {len(recommendations)} recommendations pending approval"
             else:
                 result = f"Executed {len(recommendations)} trades automatically"
 
-            await self._complete_execution(execution_id, 'completed', result)
+            await self._complete_execution(execution_id, "completed", result)
             logger.info(f"Morning routine completed for schedule {schedule_id}")
 
         except Exception as e:
             logger.error(f"Morning routine failed for schedule {schedule_id}: {str(e)}")
-            await self._complete_execution(execution_id, 'failed', None, str(e))
+            await self._complete_execution(execution_id, "failed", None, str(e))
 
     async def _execute_news_review(self, schedule_id: str, requires_approval: bool):
         """Execute news review workflow"""
-        execution_id = await self._create_execution_record(schedule_id, 'news_review')
+        execution_id = await self._create_execution_record(schedule_id, "news_review")
 
         try:
             logger.info(f"Executing news review for schedule {schedule_id}")
@@ -278,22 +278,20 @@ class TradingScheduler:
             signals = []
 
             if requires_approval and signals:
-                await self._create_approval_requests(
-                    execution_id, signals, schedule_id
-                )
+                await self._create_approval_requests(execution_id, signals, schedule_id)
                 result = f"Generated {len(signals)} signals pending approval"
             else:
                 result = f"No actionable news signals found"
 
-            await self._complete_execution(execution_id, 'completed', result)
+            await self._complete_execution(execution_id, "completed", result)
 
         except Exception as e:
             logger.error(f"News review failed for schedule {schedule_id}: {str(e)}")
-            await self._complete_execution(execution_id, 'failed', None, str(e))
+            await self._complete_execution(execution_id, "failed", None, str(e))
 
     async def _execute_ai_recommendations(self, schedule_id: str, requires_approval: bool):
         """Execute AI recommendations check"""
-        execution_id = await self._create_execution_record(schedule_id, 'ai_recs')
+        execution_id = await self._create_execution_record(schedule_id, "ai_recs")
 
         try:
             logger.info(f"Executing AI recommendations for schedule {schedule_id}")
@@ -302,31 +300,29 @@ class TradingScheduler:
             recommendations = []
 
             if requires_approval and recommendations:
-                await self._create_approval_requests(
-                    execution_id, recommendations, schedule_id
-                )
+                await self._create_approval_requests(execution_id, recommendations, schedule_id)
                 result = f"Generated {len(recommendations)} high-confidence recs pending approval"
             else:
                 result = f"No high-confidence recommendations at this time"
 
-            await self._complete_execution(execution_id, 'completed', result)
+            await self._complete_execution(execution_id, "completed", result)
 
         except Exception as e:
             logger.error(f"AI recommendations failed for schedule {schedule_id}: {str(e)}")
-            await self._complete_execution(execution_id, 'failed', None, str(e))
+            await self._complete_execution(execution_id, "failed", None, str(e))
 
     async def _execute_custom_action(self, schedule_id: str, requires_approval: bool):
         """Execute custom scheduled action"""
-        execution_id = await self._create_execution_record(schedule_id, 'custom')
+        execution_id = await self._create_execution_record(schedule_id, "custom")
 
         try:
             logger.info(f"Executing custom action for schedule {schedule_id}")
             result = "Custom action completed"
-            await self._complete_execution(execution_id, 'completed', result)
+            await self._complete_execution(execution_id, "completed", result)
 
         except Exception as e:
             logger.error(f"Custom action failed for schedule {schedule_id}: {str(e)}")
-            await self._complete_execution(execution_id, 'failed', None, str(e))
+            await self._complete_execution(execution_id, "failed", None, str(e))
 
     # ========================
     # Helper Functions
@@ -340,91 +336,86 @@ class TradingScheduler:
         schedule_file = SCHEDULES_DIR / f"{schedule_id}.json"
         schedule_name = "Unknown"
         if schedule_file.exists():
-            with open(schedule_file, 'r') as f:
+            with open(schedule_file, "r") as f:
                 schedule = json.load(f)
-                schedule_name = schedule.get('name', 'Unknown')
+                schedule_name = schedule.get("name", "Unknown")
 
         execution = {
-            'id': execution_id,
-            'schedule_id': schedule_id,
-            'schedule_name': schedule_name,
-            'execution_type': execution_type,
-            'status': 'running',
-            'started_at': datetime.utcnow().isoformat(),
-            'completed_at': None,
-            'result': None,
-            'error': None
+            "id": execution_id,
+            "schedule_id": schedule_id,
+            "schedule_name": schedule_name,
+            "execution_type": execution_type,
+            "status": "running",
+            "started_at": datetime.utcnow().isoformat(),
+            "completed_at": None,
+            "result": None,
+            "error": None,
         }
 
-        with open(EXECUTIONS_DIR / f"{execution_id}.json", 'w') as f:
+        with open(EXECUTIONS_DIR / f"{execution_id}.json", "w") as f:
             json.dump(execution, f, indent=2)
 
         return execution_id
 
     async def _complete_execution(
-        self,
-        execution_id: str,
-        status: str,
-        result: Optional[str],
-        error: Optional[str] = None
+        self, execution_id: str, status: str, result: Optional[str], error: Optional[str] = None
     ):
         """Update execution record with completion status"""
         execution_file = EXECUTIONS_DIR / f"{execution_id}.json"
 
         if execution_file.exists():
-            with open(execution_file, 'r') as f:
+            with open(execution_file, "r") as f:
                 execution = json.load(f)
 
-            execution.update({
-                'status': status,
-                'completed_at': datetime.utcnow().isoformat(),
-                'result': result,
-                'error': error
-            })
+            execution.update(
+                {
+                    "status": status,
+                    "completed_at": datetime.utcnow().isoformat(),
+                    "result": result,
+                    "error": error,
+                }
+            )
 
-            with open(execution_file, 'w') as f:
+            with open(execution_file, "w") as f:
                 json.dump(execution, f, indent=2)
 
     async def _create_approval_requests(
-        self,
-        execution_id: str,
-        recommendations: list,
-        schedule_id: str
+        self, execution_id: str, recommendations: list, schedule_id: str
     ):
         """Create approval requests for trades"""
         # Load schedule info
         schedule_file = SCHEDULES_DIR / f"{schedule_id}.json"
         schedule_name = "Unknown"
         if schedule_file.exists():
-            with open(schedule_file, 'r') as f:
+            with open(schedule_file, "r") as f:
                 schedule = json.load(f)
-                schedule_name = schedule.get('name', 'Unknown')
+                schedule_name = schedule.get("name", "Unknown")
 
         for rec in recommendations:
             approval_id = str(uuid.uuid4())
             approval = {
-                'id': approval_id,
-                'execution_id': execution_id,
-                'schedule_id': schedule_id,
-                'schedule_name': schedule_name,
-                'trade_type': rec['action'],
-                'symbol': rec['symbol'],
-                'quantity': rec['quantity'],
-                'estimated_price': rec.get('price', 0),
-                'estimated_value': rec.get('value', 0),
-                'reason': rec.get('reason', ''),
-                'risk_score': rec.get('risk_score', 5),
-                'ai_confidence': rec.get('confidence', 0.5) * 100,
-                'supporting_data': rec.get('supporting_data', {}),
-                'status': 'pending',
-                'created_at': datetime.utcnow().isoformat(),
-                'expires_at': (datetime.utcnow() + timedelta(hours=4)).isoformat(),
-                'approved_at': None,
-                'approved_by': None,
-                'rejection_reason': None
+                "id": approval_id,
+                "execution_id": execution_id,
+                "schedule_id": schedule_id,
+                "schedule_name": schedule_name,
+                "trade_type": rec["action"],
+                "symbol": rec["symbol"],
+                "quantity": rec["quantity"],
+                "estimated_price": rec.get("price", 0),
+                "estimated_value": rec.get("value", 0),
+                "reason": rec.get("reason", ""),
+                "risk_score": rec.get("risk_score", 5),
+                "ai_confidence": rec.get("confidence", 0.5) * 100,
+                "supporting_data": rec.get("supporting_data", {}),
+                "status": "pending",
+                "created_at": datetime.utcnow().isoformat(),
+                "expires_at": (datetime.utcnow() + timedelta(hours=4)).isoformat(),
+                "approved_at": None,
+                "approved_by": None,
+                "rejection_reason": None,
             }
 
-            with open(APPROVALS_DIR / f"{approval_id}.json", 'w') as f:
+            with open(APPROVALS_DIR / f"{approval_id}.json", "w") as f:
                 json.dump(approval, f, indent=2)
 
 

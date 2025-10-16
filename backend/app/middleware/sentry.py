@@ -4,12 +4,13 @@ Sentry Error Context Middleware
 Adds custom context and breadcrumbs to Sentry error reports for better debugging.
 """
 
+import time
+from typing import Callable
+
+import sentry_sdk
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
-import sentry_sdk
-from typing import Callable
-import time
 
 
 class SentryContextMiddleware(BaseHTTPMiddleware):
@@ -21,13 +22,16 @@ class SentryContextMiddleware(BaseHTTPMiddleware):
         # Add request context to Sentry
         with sentry_sdk.push_scope() as scope:
             # Add request metadata
-            scope.set_context("request", {
-                "method": request.method,
-                "url": str(request.url),
-                "path": request.url.path,
-                "query_params": dict(request.query_params),
-                "client_host": request.client.host if request.client else None,
-            })
+            scope.set_context(
+                "request",
+                {
+                    "method": request.method,
+                    "url": str(request.url),
+                    "path": request.url.path,
+                    "query_params": dict(request.query_params),
+                    "client_host": request.client.host if request.client else None,
+                },
+            )
 
             # Add custom tags for filtering in Sentry
             scope.set_tag("endpoint", request.url.path)
@@ -47,35 +51,41 @@ class SentryContextMiddleware(BaseHTTPMiddleware):
                 response = await call_next(request)
 
                 # Add response status to context
-                scope.set_context("response", {
-                    "status_code": response.status_code,
-                    "duration_ms": round((time.time() - start_time) * 1000, 2)
-                })
+                scope.set_context(
+                    "response",
+                    {
+                        "status_code": response.status_code,
+                        "duration_ms": round((time.time() - start_time) * 1000, 2),
+                    },
+                )
 
                 # Add breadcrumb for response
                 sentry_sdk.add_breadcrumb(
                     category="response",
                     message=f"Status {response.status_code}",
                     level="info" if response.status_code < 400 else "warning",
-                    data={"duration_ms": round((time.time() - start_time) * 1000, 2)}
+                    data={"duration_ms": round((time.time() - start_time) * 1000, 2)},
                 )
 
                 return response
 
             except Exception as exc:
                 # Add error context
-                scope.set_context("error", {
-                    "type": type(exc).__name__,
-                    "message": str(exc),
-                    "duration_ms": round((time.time() - start_time) * 1000, 2)
-                })
+                scope.set_context(
+                    "error",
+                    {
+                        "type": type(exc).__name__,
+                        "message": str(exc),
+                        "duration_ms": round((time.time() - start_time) * 1000, 2),
+                    },
+                )
 
                 # Add breadcrumb for error
                 sentry_sdk.add_breadcrumb(
                     category="error",
                     message=f"Exception: {type(exc).__name__}",
                     level="error",
-                    data={"error_message": str(exc)}
+                    data={"error_message": str(exc)},
                 )
 
                 # Capture exception in Sentry
@@ -95,13 +105,7 @@ def capture_trading_event(event_type: str, symbol: str = None, **kwargs):
         **kwargs: Additional context data
     """
     sentry_sdk.add_breadcrumb(
-        category="trading",
-        message=event_type,
-        level="info",
-        data={
-            "symbol": symbol,
-            **kwargs
-        }
+        category="trading", message=event_type, level="info", data={"symbol": symbol, **kwargs}
     )
 
 
@@ -123,8 +127,8 @@ def capture_market_data_fetch(source: str, endpoint: str, success: bool, duratio
             "source": source,
             "endpoint": endpoint,
             "success": success,
-            "duration_ms": duration_ms
-        }
+            "duration_ms": duration_ms,
+        },
     )
 
 
@@ -141,9 +145,5 @@ def capture_cache_operation(operation: str, key: str, hit: bool = None):
         category="cache",
         message=f"{operation}: {key}",
         level="debug",
-        data={
-            "operation": operation,
-            "key": key,
-            "hit": hit
-        }
+        data={"operation": operation, "key": key, "hit": hit},
     )

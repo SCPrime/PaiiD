@@ -67,11 +67,42 @@ jobs:
         cd backend
         python -m pytest tests/ -v --cov=app --cov-report=xml --cov-report=term
 
-    - name: Lint backend code
+    - name: Install code quality tools
+      run: |
+        cd backend
+        pip install black isort mypy pylint bandit flake8
+
+    - name: Check code formatting with Black
+      run: |
+        cd backend
+        black --check --diff .
+
+    - name: Check import sorting with isort
+      run: |
+        cd backend
+        isort --check-only --diff .
+
+    - name: Type check with mypy
       continue-on-error: true
       run: |
         cd backend
-        pip install flake8
+        mypy app/ || echo "mypy found type issues (non-blocking)"
+
+    - name: Lint with pylint
+      continue-on-error: true
+      run: |
+        cd backend
+        pylint app/ --max-line-length=100 || echo "pylint found issues (non-blocking)"
+
+    - name: Security scan with bandit
+      run: |
+        cd backend
+        bandit -r app/ -c .bandit
+
+    - name: Lint with flake8
+      continue-on-error: true
+      run: |
+        cd backend
         flake8 app/ --max-line-length=100
 
     - name: Upload coverage artifact
@@ -97,6 +128,16 @@ jobs:
       run: |
         cd frontend
         npm ci
+
+    - name: Lint frontend code with ESLint
+      run: |
+        cd frontend
+        npm run lint
+
+    - name: Check code formatting with Prettier
+      run: |
+        cd frontend
+        npm run format:check
 
     - name: Run frontend tests with coverage
       run: |

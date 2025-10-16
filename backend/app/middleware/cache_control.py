@@ -6,10 +6,12 @@ Adds intelligent cache headers to API responses to support SWR (stale-while-reva
 Phase 2: Performance Optimization
 """
 
+from typing import Callable
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from typing import Callable
+
 
 class CacheControlMiddleware(BaseHTTPMiddleware):
     """
@@ -33,26 +35,26 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
         path = request.url.path
 
         # High-frequency data (positions, account, orders)
-        if any(endpoint in path for endpoint in ['/positions', '/account', '/orders/history']):
-            response.headers['Cache-Control'] = 'public, max-age=5, stale-while-revalidate=10'
+        if any(endpoint in path for endpoint in ["/positions", "/account", "/orders/history"]):
+            response.headers["Cache-Control"] = "public, max-age=5, stale-while-revalidate=10"
 
         # Medium-frequency data (market quotes, indices)
-        elif any(endpoint in path for endpoint in ['/quotes', '/market/indices', '/analytics']):
-            response.headers['Cache-Control'] = 'public, max-age=10, stale-while-revalidate=60'
+        elif any(endpoint in path for endpoint in ["/quotes", "/market/indices", "/analytics"]):
+            response.headers["Cache-Control"] = "public, max-age=10, stale-while-revalidate=60"
 
         # Low-frequency data (news, company data)
-        elif any(endpoint in path for endpoint in ['/news', '/company']):
-            response.headers['Cache-Control'] = 'public, max-age=300, stale-while-revalidate=600'
+        elif any(endpoint in path for endpoint in ["/news", "/company"]):
+            response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=600"
 
         # Static data (strategies, preferences, templates)
-        elif any(endpoint in path for endpoint in ['/strategies/templates', '/users/preferences']):
-            response.headers['Cache-Control'] = 'public, max-age=3600, stale-while-revalidate=7200'
+        elif any(endpoint in path for endpoint in ["/strategies/templates", "/users/preferences"]):
+            response.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=7200"
 
         # Default: moderate caching
         else:
-            response.headers['Cache-Control'] = 'public, max-age=30, stale-while-revalidate=60'
+            response.headers["Cache-Control"] = "public, max-age=30, stale-while-revalidate=60"
 
         # Add ETag support for conditional requests
-        response.headers['Vary'] = 'Authorization'
+        response.headers["Vary"] = "Authorization"
 
         return response

@@ -5,14 +5,16 @@ Provides portfolio performance metrics, historical equity tracking,
 and risk analytics for the P&L Dashboard.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-from typing import List, Optional, Literal
-from datetime import datetime, timedelta
-from ..core.auth import require_bearer
-from ..services.tradier_client import get_tradier_client
 import logging
 import math
+from datetime import datetime, timedelta
+from typing import List, Literal, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+
+from ..core.auth import require_bearer
+from ..services.tradier_client import get_tradier_client
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,7 @@ router = APIRouter(tags=["analytics"])
 
 class PortfolioSummary(BaseModel):
     """Real-time portfolio summary metrics"""
+
     total_value: float
     cash: float
     buying_power: float
@@ -37,6 +40,7 @@ class PortfolioSummary(BaseModel):
 
 class EquityPoint(BaseModel):
     """Single equity curve data point"""
+
     timestamp: str
     equity: float
     cash: float
@@ -45,6 +49,7 @@ class EquityPoint(BaseModel):
 
 class PerformanceMetrics(BaseModel):
     """Comprehensive performance analytics"""
+
     total_return: float
     total_return_percent: float
     sharpe_ratio: float
@@ -94,8 +99,8 @@ async def get_portfolio_summary() -> PortfolioSummary:
         day_pl = 0.0
         largest_winner = None
         largest_loser = None
-        max_win_pl = float('-inf')
-        max_loss_pl = float('inf')
+        max_win_pl = float("-inf")
+        max_loss_pl = float("inf")
 
         for pos in positions:
             unrealized_pl = float(pos.get("unrealized_pl", 0))
@@ -120,7 +125,7 @@ async def get_portfolio_summary() -> PortfolioSummary:
                 largest_winner = {
                     "symbol": pos.get("symbol"),
                     "pl": unrealized_pl,
-                    "pl_percent": float(pos.get("unrealized_plpc", 0))
+                    "pl_percent": float(pos.get("unrealized_plpc", 0)),
                 }
 
             if unrealized_pl < max_loss_pl:
@@ -128,7 +133,7 @@ async def get_portfolio_summary() -> PortfolioSummary:
                 largest_loser = {
                     "symbol": pos.get("symbol"),
                     "pl": unrealized_pl,
-                    "pl_percent": float(pos.get("unrealized_plpc", 0))
+                    "pl_percent": float(pos.get("unrealized_plpc", 0)),
                 }
 
         # Calculate percentages
@@ -136,7 +141,9 @@ async def get_portfolio_summary() -> PortfolioSummary:
         # Calculate P&L percentage: total_pl / cost_basis = total_pl / (positions_value - total_pl)
         # Guard against division by zero when positions_value == total_pl (break-even after gains)
         cost_basis = positions_value - total_pl
-        total_pl_percent = (total_pl / cost_basis * 100) if cost_basis != 0 and positions_value != 0 else 0
+        total_pl_percent = (
+            (total_pl / cost_basis * 100) if cost_basis != 0 and positions_value != 0 else 0
+        )
         day_pl_percent = (day_pl / positions_value * 100) if positions_value != 0 else 0
 
         logger.info(f"✅ Portfolio summary: ${total_value:.2f}, P&L: ${total_pl:.2f}")
@@ -153,20 +160,17 @@ async def get_portfolio_summary() -> PortfolioSummary:
             num_winning=num_winning,
             num_losing=num_losing,
             largest_winner=largest_winner,
-            largest_loser=largest_loser
+            largest_loser=largest_loser,
         )
 
     except Exception as e:
         logger.error(f"❌ Failed to get portfolio summary: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get portfolio summary: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get portfolio summary: {str(e)}")
 
 
 @router.get("/portfolio/history", dependencies=[Depends(require_bearer)])
 async def get_portfolio_history(
-    period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M")
+    period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M"),
 ) -> dict:
     """
     Get historical portfolio equity data
@@ -220,12 +224,14 @@ async def get_portfolio_history(
                     timestamp=h["timestamp"],
                     equity=h["equity"],
                     cash=h["cash"],
-                    positions_value=h["positions_value"]
+                    positions_value=h["positions_value"],
                 ).model_dump()
                 for h in history
             ]
 
-            logger.info(f"✅ Loaded {len(equity_points)} equity points from history for period {period}")
+            logger.info(
+                f"✅ Loaded {len(equity_points)} equity points from history for period {period}"
+            )
 
         else:
             # Insufficient historical data - return current point only with warning
@@ -234,31 +240,30 @@ async def get_portfolio_history(
                     timestamp=now.isoformat(),
                     equity=round(current_equity, 2),
                     cash=round(float(account.get("cash", 0)), 2),
-                    positions_value=round(current_equity - float(account.get("cash", 0)), 2)
+                    positions_value=round(current_equity - float(account.get("cash", 0)), 2),
                 ).model_dump()
             ]
 
-            logger.warning(f"⚠️ Insufficient historical data for period {period}. Showing current snapshot only. Data will accumulate over time.")
+            logger.warning(
+                f"⚠️ Insufficient historical data for period {period}. Showing current snapshot only. Data will accumulate over time."
+            )
 
         return {
             "period": period,
             "start_date": start_date.isoformat(),
             "end_date": now.isoformat(),
             "data": equity_points,
-            "is_simulated": len(history) < 5
+            "is_simulated": len(history) < 5,
         }
 
     except Exception as e:
         logger.error(f"❌ Failed to get portfolio history: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get portfolio history: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get portfolio history: {str(e)}")
 
 
 @router.get("/analytics/performance", dependencies=[Depends(require_bearer)])
 async def get_performance_metrics(
-    period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M")
+    period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M"),
 ) -> PerformanceMetrics:
     """
     Get comprehensive performance metrics and risk analytics
@@ -304,8 +309,16 @@ async def get_performance_metrics(
         win_rate = (num_wins / num_trades * 100) if num_trades > 0 else 0
 
         # Average win/loss
-        avg_win = sum(float(p.get("unrealized_pl", 0)) for p in winning_positions) / num_wins if num_wins > 0 else 0
-        avg_loss = sum(float(p.get("unrealized_pl", 0)) for p in losing_positions) / num_losses if num_losses > 0 else 0
+        avg_win = (
+            sum(float(p.get("unrealized_pl", 0)) for p in winning_positions) / num_wins
+            if num_wins > 0
+            else 0
+        )
+        avg_loss = (
+            sum(float(p.get("unrealized_pl", 0)) for p in losing_positions) / num_losses
+            if num_losses > 0
+            else 0
+        )
 
         # Profit factor
         gross_profit = sum(float(p.get("unrealized_pl", 0)) for p in winning_positions)
@@ -318,6 +331,7 @@ async def get_performance_metrics(
 
         # Sharpe ratio - calculate actual volatility from equity history
         from ..services.equity_tracker import get_equity_tracker
+
         tracker = get_equity_tracker()
         now = datetime.now()
         equity_history = tracker.get_history(start_date=now - timedelta(days=365))
@@ -326,7 +340,7 @@ async def get_performance_metrics(
             # Calculate daily returns from actual equity data
             daily_returns = []
             for i in range(1, len(equity_history)):
-                prev_equity = equity_history[i-1]["equity"]
+                prev_equity = equity_history[i - 1]["equity"]
                 curr_equity = equity_history[i]["equity"]
                 if prev_equity > 0:
                     daily_return = (curr_equity - prev_equity) / prev_equity
@@ -336,7 +350,7 @@ async def get_performance_metrics(
                 # Calculate actual volatility (standard deviation of returns)
                 mean_return = sum(daily_returns) / len(daily_returns)
                 variance = sum((r - mean_return) ** 2 for r in daily_returns) / len(daily_returns)
-                volatility = (variance ** 0.5) * 100  # Convert to percentage
+                volatility = (variance**0.5) * 100  # Convert to percentage
 
                 # Use actual average return
                 avg_return = mean_return * 100  # Convert to percentage
@@ -391,7 +405,7 @@ async def get_performance_metrics(
             # Calculate daily changes from actual equity data
             daily_changes = []
             for i in range(1, len(equity_history)):
-                prev_equity = equity_history[i-1]["equity"]
+                prev_equity = equity_history[i - 1]["equity"]
                 curr_equity = equity_history[i]["equity"]
                 change = curr_equity - prev_equity
                 daily_changes.append(change)
@@ -399,14 +413,20 @@ async def get_performance_metrics(
             best_day = max(daily_changes) if daily_changes else 0.0
             worst_day = min(daily_changes) if daily_changes else 0.0
 
-            logger.info(f"Calculated best day: ${best_day:.2f}, worst day: ${worst_day:.2f} from {len(daily_changes)} days of history")
+            logger.info(
+                f"Calculated best day: ${best_day:.2f}, worst day: ${worst_day:.2f} from {len(daily_changes)} days of history"
+            )
         else:
             # Insufficient historical data - set to 0
             best_day = 0.0
             worst_day = 0.0
-            logger.warning("⚠️ Insufficient historical data to calculate best/worst day. Returning 0.")
+            logger.warning(
+                "⚠️ Insufficient historical data to calculate best/worst day. Returning 0."
+            )
 
-        logger.info(f"✅ Performance metrics: Return {total_return_percent:.2f}%, Sharpe {sharpe_ratio:.2f}")
+        logger.info(
+            f"✅ Performance metrics: Return {total_return_percent:.2f}%, Sharpe {sharpe_ratio:.2f}"
+        )
 
         return PerformanceMetrics(
             total_return=round(total_return, 2),
@@ -423,12 +443,9 @@ async def get_performance_metrics(
             num_losses=num_losses,
             current_streak=current_streak,
             best_day=round(best_day, 2),
-            worst_day=round(worst_day, 2)
+            worst_day=round(worst_day, 2),
         )
 
     except Exception as e:
         logger.error(f"❌ Failed to get performance metrics: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get performance metrics: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get performance metrics: {str(e)}")

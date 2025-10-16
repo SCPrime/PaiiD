@@ -5,15 +5,15 @@ Exports all SQLAlchemy models for use in migrations and services.
 """
 
 from .database import (
-    User,
-    UserSession,
     ActivityLog,
-    Strategy,
-    Trade,
-    Performance,
+    AIRecommendation,
     EquitySnapshot,
     OrderTemplate,
-    AIRecommendation
+    Performance,
+    Strategy,
+    Trade,
+    User,
+    UserSession,
 )
 
 __all__ = [
@@ -25,5 +25,5 @@ __all__ = [
     "Performance",
     "EquitySnapshot",
     "OrderTemplate",
-    "AIRecommendation"
+    "AIRecommendation",
 ]

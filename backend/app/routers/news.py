@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
-from app.core.auth import require_bearer
-from typing import Optional, List
 from datetime import datetime, timedelta
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from app.core.auth import require_bearer
 
 router = APIRouter()
 
@@ -12,12 +14,14 @@ news_cache = None
 try:
     from app.services.news.news_aggregator import NewsAggregator
     from app.services.news.news_cache import get_news_cache
+
     news_aggregator = NewsAggregator()
     news_cache = get_news_cache()
     print("[OK] News aggregator initialized with available providers")
     print("[OK] News cache initialized")
 except Exception as e:
     print(f"[WARNING] News aggregator failed to initialize: {e}")
+
 
 @router.get("/news/company/{symbol}")
 async def get_company_news(
@@ -26,7 +30,7 @@ async def get_company_news(
     sentiment: Optional[str] = Query(default=None, regex="^(bullish|bearish|neutral)$"),
     provider: Optional[str] = None,
     use_cache: bool = Query(default=True),
-    _: str = Depends(require_bearer)
+    _: str = Depends(require_bearer),
 ):
     """
     Get aggregated news for specific company
@@ -45,11 +49,11 @@ async def get_company_news(
         # Check cache first (cache key includes filters)
         if use_cache and news_cache:
             cached_filtered = news_cache.get(
-                'company',
+                "company",
                 symbol=symbol,
                 days_back=days_back,
                 sentiment=sentiment,
-                provider=provider
+                provider=provider,
             )
             if cached_filtered is not None:
                 # Cached results are already filtered - no need to re-filter
@@ -58,7 +62,7 @@ async def get_company_news(
                     "articles": cached_filtered,
                     "count": len(cached_filtered),
                     "sources": [p.get_provider_name() for p in news_aggregator.providers],
-                    "cached": True
+                    "cached": True,
                 }
 
         # Fetch fresh data
@@ -69,26 +73,34 @@ async def get_company_news(
 
         # Cache the filtered results (cache key includes filters for uniqueness)
         if news_cache:
-            news_cache.set('company', filtered, symbol=symbol, days_back=days_back, sentiment=sentiment, provider=provider)
+            news_cache.set(
+                "company",
+                filtered,
+                symbol=symbol,
+                days_back=days_back,
+                sentiment=sentiment,
+                provider=provider,
+            )
 
         return {
             "symbol": symbol,
             "articles": filtered,
             "count": len(filtered),
             "sources": [p.get_provider_name() for p in news_aggregator.providers],
-            "cached": False
+            "cached": False,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/news/market")
 async def get_market_news(
-    category: str = Query(default='general'),
+    category: str = Query(default="general"),
     limit: int = Query(default=50, ge=1, le=200),
     sentiment: Optional[str] = Query(default=None, regex="^(bullish|bearish|neutral)$"),
     provider: Optional[str] = None,
     use_cache: bool = Query(default=True),
-    _: str = Depends(require_bearer)
+    _: str = Depends(require_bearer),
 ):
     """
     Get aggregated market news
@@ -107,11 +119,7 @@ async def get_market_news(
         # Check cache first (cache key includes filters)
         if use_cache and news_cache:
             cached_filtered = news_cache.get(
-                'market',
-                category=category,
-                limit=limit,
-                sentiment=sentiment,
-                provider=provider
+                "market", category=category, limit=limit, sentiment=sentiment, provider=provider
             )
             if cached_filtered is not None:
                 # Cached results are already filtered - no need to re-filter
@@ -120,7 +128,7 @@ async def get_market_news(
                     "articles": cached_filtered[:limit],
                     "count": len(cached_filtered[:limit]),
                     "sources": [p.get_provider_name() for p in news_aggregator.providers],
-                    "cached": True
+                    "cached": True,
                 }
 
         # Fetch fresh data (fetch more to allow for filtering)
@@ -131,17 +139,25 @@ async def get_market_news(
 
         # Cache the filtered results (cache key includes filters for uniqueness)
         if news_cache:
-            news_cache.set('market', filtered, category=category, limit=limit, sentiment=sentiment, provider=provider)
+            news_cache.set(
+                "market",
+                filtered,
+                category=category,
+                limit=limit,
+                sentiment=sentiment,
+                provider=provider,
+            )
 
         return {
             "category": category,
             "articles": filtered[:limit],
             "count": len(filtered[:limit]),
             "sources": [p.get_provider_name() for p in news_aggregator.providers],
-            "cached": False
+            "cached": False,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/news/providers")
 async def get_news_providers(_: str = Depends(require_bearer)):
@@ -151,10 +167,9 @@ async def get_news_providers(_: str = Depends(require_bearer)):
 
     return {
         "providers": [
-            {"name": p.get_provider_name(), "status": "active"}
-            for p in news_aggregator.providers
+            {"name": p.get_provider_name(), "status": "active"} for p in news_aggregator.providers
         ],
-        "total": len(news_aggregator.providers)
+        "total": len(news_aggregator.providers),
     }
 
 
@@ -172,10 +187,7 @@ async def get_news_health(_: str = Depends(require_bearer)):
     Use this for monitoring and alerting on news service degradation.
     """
     if not news_aggregator:
-        return {
-            "status": "unavailable",
-            "message": "News aggregator not initialized"
-        }
+        return {"status": "unavailable", "message": "News aggregator not initialized"}
 
     try:
         health = news_aggregator.get_provider_health()
@@ -186,9 +198,9 @@ async def get_news_health(_: str = Depends(require_bearer)):
 
 @router.get("/news/sentiment/market")
 async def get_market_sentiment(
-    category: str = Query(default='general'),
+    category: str = Query(default="general"),
     days_back: int = Query(default=7, ge=1, le=30),
-    _: str = Depends(require_bearer)
+    _: str = Depends(require_bearer),
 ):
     """
     Get aggregated market sentiment analytics
@@ -202,13 +214,13 @@ async def get_market_sentiment(
         articles = news_aggregator.get_market_news(category, 200)
 
         # Calculate sentiment stats
-        sentiments = {'bullish': 0, 'bearish': 0, 'neutral': 0}
+        sentiments = {"bullish": 0, "bearish": 0, "neutral": 0}
         total_score = 0.0
 
         for article in articles:
-            sentiment = article.get('sentiment', 'neutral')
+            sentiment = article.get("sentiment", "neutral")
             sentiments[sentiment] = sentiments.get(sentiment, 0) + 1
-            total_score += article.get('sentiment_score', 0.0)
+            total_score += article.get("sentiment_score", 0.0)
 
         total_articles = len(articles)
         avg_score = total_score / total_articles if total_articles > 0 else 0.0
@@ -218,14 +230,28 @@ async def get_market_sentiment(
             "total_articles": total_articles,
             "avg_sentiment_score": round(avg_score, 3),
             "sentiment_distribution": {
-                "bullish": sentiments['bullish'],
-                "bearish": sentiments['bearish'],
-                "neutral": sentiments['neutral'],
-                "bullish_percent": round(sentiments['bullish'] / total_articles * 100, 1) if total_articles > 0 else 0,
-                "bearish_percent": round(sentiments['bearish'] / total_articles * 100, 1) if total_articles > 0 else 0,
-                "neutral_percent": round(sentiments['neutral'] / total_articles * 100, 1) if total_articles > 0 else 0,
+                "bullish": sentiments["bullish"],
+                "bearish": sentiments["bearish"],
+                "neutral": sentiments["neutral"],
+                "bullish_percent": (
+                    round(sentiments["bullish"] / total_articles * 100, 1)
+                    if total_articles > 0
+                    else 0
+                ),
+                "bearish_percent": (
+                    round(sentiments["bearish"] / total_articles * 100, 1)
+                    if total_articles > 0
+                    else 0
+                ),
+                "neutral_percent": (
+                    round(sentiments["neutral"] / total_articles * 100, 1)
+                    if total_articles > 0
+                    else 0
+                ),
             },
-            "overall_sentiment": "bullish" if avg_score > 0.15 else "bearish" if avg_score < -0.15 else "neutral"
+            "overall_sentiment": (
+                "bullish" if avg_score > 0.15 else "bearish" if avg_score < -0.15 else "neutral"
+            ),
         }
 
     except Exception as e:
@@ -252,14 +278,16 @@ async def clear_news_cache(_: str = Depends(require_bearer)):
 
 
 # Helper functions
-def _apply_filters(articles: List[dict], sentiment: Optional[str], provider: Optional[str]) -> List[dict]:
+def _apply_filters(
+    articles: List[dict], sentiment: Optional[str], provider: Optional[str]
+) -> List[dict]:
     """Apply sentiment and provider filters to articles"""
     filtered = articles
 
     if sentiment:
-        filtered = [a for a in filtered if a.get('sentiment') == sentiment]
+        filtered = [a for a in filtered if a.get("sentiment") == sentiment]
 
     if provider:
-        filtered = [a for a in filtered if provider.lower() in a.get('provider', '').lower()]
+        filtered = [a for a in filtered if provider.lower() in a.get("provider", "").lower()]
 
     return filtered

@@ -20,10 +20,12 @@ import asyncio
 import json
 import logging
 import time
-from typing import Set, Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Set
+
 import httpx
 import websockets
+
 from app.core.config import settings
 from app.services.cache import get_cache
 
@@ -74,9 +76,9 @@ class TradierStreamService:
                     self.session_url,
                     headers={
                         "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
-                        "Accept": "application/json"
+                        "Accept": "application/json",
                     },
-                    timeout=10.0
+                    timeout=10.0,
                 )
 
                 if response.status_code == 200:
@@ -92,7 +94,9 @@ class TradierStreamService:
                         logger.error(f"❌ No sessionid in response: {data}")
                         return None
                 else:
-                    logger.error(f"❌ Failed to create session: {response.status_code} - {response.text}")
+                    logger.error(
+                        f"❌ Failed to create session: {response.status_code} - {response.text}"
+                    )
                     return None
 
         except Exception as e:
@@ -145,9 +149,7 @@ class TradierStreamService:
                 logger.info(f"📡 Connecting to Tradier WebSocket: {self.ws_url}")
 
                 async with websockets.connect(
-                    self.ws_url,
-                    ping_interval=20,
-                    ping_timeout=10
+                    self.ws_url, ping_interval=20, ping_timeout=10
                 ) as websocket:
                     self.websocket = websocket
                     self.reconnect_attempts = 0
@@ -168,8 +170,10 @@ class TradierStreamService:
                 if self.running:
                     # Exponential backoff
                     self.reconnect_attempts += 1
-                    wait_time = min(2 ** self.reconnect_attempts, 60)
-                    logger.info(f"🔄 Reconnecting in {wait_time}s (attempt {self.reconnect_attempts})...")
+                    wait_time = min(2**self.reconnect_attempts, 60)
+                    logger.info(
+                        f"🔄 Reconnecting in {wait_time}s (attempt {self.reconnect_attempts})..."
+                    )
                     await asyncio.sleep(wait_time)
                 else:
                     break
@@ -198,7 +202,7 @@ class TradierStreamService:
             subscription_payload = {
                 "symbols": symbols,
                 "sessionid": self.session_id,
-                "linebreak": True  # Add line breaks to messages
+                "linebreak": True,  # Add line breaks to messages
             }
 
             await self.websocket.send(json.dumps(subscription_payload))
@@ -234,9 +238,13 @@ class TradierStreamService:
                     "ask": data.get("ask"),
                     "bidsize": data.get("bidsize"),
                     "asksize": data.get("asksize"),
-                    "mid": (data.get("bid", 0) + data.get("ask", 0)) / 2 if data.get("bid") and data.get("ask") else None,
+                    "mid": (
+                        (data.get("bid", 0) + data.get("ask", 0)) / 2
+                        if data.get("bid") and data.get("ask")
+                        else None
+                    ),
                     "timestamp": datetime.now().isoformat(),
-                    "type": "quote"
+                    "type": "quote",
                 }
 
                 # Cache in Redis (5s TTL)
@@ -249,7 +257,7 @@ class TradierStreamService:
                     "price": data.get("price"),
                     "size": data.get("size"),
                     "timestamp": datetime.now().isoformat(),
-                    "type": "trade"
+                    "type": "trade",
                 }
 
                 # Cache in Redis (5s TTL)
@@ -265,7 +273,7 @@ class TradierStreamService:
                     "close": data.get("close"),
                     "volume": data.get("volume"),
                     "timestamp": datetime.now().isoformat(),
-                    "type": "summary"
+                    "type": "summary",
                 }
 
                 # Cache in Redis (5s TTL)
