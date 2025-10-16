@@ -131,10 +131,15 @@ async def startup_event():
 
     # Start Tradier streaming service
     try:
-        from .services.tradier_stream import start_tradier_stream
+        from .services.tradier_stream import get_tradier_stream, start_tradier_stream
 
         await start_tradier_stream()
         print("[OK] Tradier streaming initialized", flush=True)
+
+        # Subscribe to market indices for radial menu real-time updates
+        stream = get_tradier_stream()
+        await stream.subscribe_quotes(["$DJI", "COMP:GIDS"])
+        print("[OK] Subscribed to $DJI and COMP for real-time streaming", flush=True)
     except Exception as e:
         print(f"[ERROR] Failed to start Tradier stream: {e}", flush=True)
 

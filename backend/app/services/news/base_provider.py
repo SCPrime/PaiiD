@@ -27,12 +27,12 @@ class NewsArticle:
             "summary": self.summary,
             "source": self.source,
             "url": self.url,
-            "publishedAt": self.published_at,
+            "published_at": self.published_at,
             "sentiment": self.sentiment,
-            "sentimentScore": self.sentiment_score,
+            "sentiment_score": self.sentiment_score,
             "symbols": self.symbols,
             "category": self.category,
-            "imageUrl": self.image_url,
+            "image_url": self.image_url,
             "provider": self.provider,
         }
 

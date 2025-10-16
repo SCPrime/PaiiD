@@ -222,7 +222,7 @@ export default function AIChatBot({ isOpen, onClose }: AIChatBotProps) {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.8; } }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }

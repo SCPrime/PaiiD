@@ -60,6 +60,7 @@ export default function ActivePositions() {
       const interval = setInterval(loadPositions, 10000); // Slower polling as fallback
       return () => clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected, connecting]);
 
   // Calculate portfolio metrics from positions

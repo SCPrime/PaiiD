@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Split from 'react-split';
 import RadialMenu, { workflows, Workflow } from '../components/RadialMenu';
+import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
 
 import MorningRoutineAI from '../components/MorningRoutineAI';
 import ExecuteTradeForm from '../components/ExecuteTradeForm';
@@ -428,18 +429,18 @@ export default function Dashboard() {
                 onClick={() => setAiChatOpen(true)}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'scale(1.15) translateY(-2px)';
-                  e.currentTarget.style.textShadow = '0 0 30px rgba(69, 240, 192, 1), 0 0 60px rgba(69, 240, 192, 0.8), 0 0 90px rgba(69, 240, 192, 0.4)';
+                  e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.hover;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                  e.currentTarget.style.textShadow = '0 0 20px rgba(16, 185, 129, 0.6), 0 0 40px rgba(16, 185, 129, 0.4)';
+                  e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.initial;
                 }}
                 style={{
-                background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+                background: LOGO_STYLES.GRADIENT.teal,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                textShadow: '0 0 20px rgba(16, 185, 129, 0.6), 0 0 40px rgba(16, 185, 129, 0.4)',
-                animation: 'glow-ai 3s ease-in-out infinite',
+                textShadow: LOGO_STYLES.GLOW.initial,
+                animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
                 cursor: 'pointer',
                 display: 'inline-block',
                 transition: 'all 0.3s ease',
@@ -543,14 +544,7 @@ export default function Dashboard() {
           }
         }
 
-        @keyframes glow-ai {
-          0%, 100% {
-            text-shadow: 0 0 15px rgba(16, 185, 129, 0.4), 0 0 30px rgba(16, 185, 129, 0.2);
-          }
-          50% {
-            text-shadow: 0 0 25px rgba(16, 185, 129, 0.6), 0 0 50px rgba(16, 185, 129, 0.4), 0 0 75px rgba(16, 185, 129, 0.2);
-          }
-        }
+        ${LOGO_ANIMATION_KEYFRAME}
 
         /* React-split gutter styles - Claude-inspired */
         :global(.split-container) {

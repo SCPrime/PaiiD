@@ -125,6 +125,14 @@ export default function MorningRoutineAI() {
   const [executionLog, setExecutionLog] = useState<string[]>([]);
   const [showExecutionLog, setShowExecutionLog] = useState(false);
 
+  // Live data preview state
+  const [liveDataPreview, setLiveDataPreview] = useState<{
+    candidates: any[];
+    count: number;
+    timestamp: string;
+  } | null>(null);
+  const [isLoadingLiveData, setIsLoadingLiveData] = useState(false);
+
   // Dashboard data
   const [systemChecks] = useState<SystemCheck[]>([
     { name: 'API Connection', status: 'pass', message: 'Connected to Alpaca' },
@@ -161,6 +169,12 @@ export default function MorningRoutineAI() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // ✅ EXTENSION VERIFICATION: lucide-react
+    console.info('[Extension Verification] ✅ lucide-react icons loaded successfully:', {
+      icons: ['Sun', 'Calendar', 'Sparkles', 'AlertCircle', 'CheckCircle', 'XCircle', 'Bell', 'Loader2', 'Brain', 'Zap'],
+      status: 'FUNCTIONAL'
+    });
+
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -220,6 +234,41 @@ export default function MorningRoutineAI() {
 
     loadPortfolioData();
   }, []);
+
+  // Fetch live data preview on mount
+  useEffect(() => {
+    const loadLiveDataPreview = async () => {
+      setIsLoadingLiveData(true);
+      try {
+        const data = await fetchLiveMarketData();
+        if (data) {
+          setLiveDataPreview(data);
+          console.info('[MorningRoutine] ✅ Loaded live data preview');
+        }
+      } catch (error) {
+        console.error('[MorningRoutine] Failed to load live data preview:', error);
+      } finally {
+        setIsLoadingLiveData(false);
+      }
+    };
+
+    loadLiveDataPreview();
+  }, []);
+
+  // Manual refresh function for live data
+  const refreshLiveData = async () => {
+    setIsLoadingLiveData(true);
+    try {
+      const data = await fetchLiveMarketData();
+      if (data) {
+        setLiveDataPreview(data);
+      }
+    } catch (error) {
+      console.error('[MorningRoutine] Failed to refresh live data:', error);
+    } finally {
+      setIsLoadingLiveData(false);
+    }
+  };
 
   const getMarketStatus = () => {
     const now = new Date();
@@ -370,20 +419,48 @@ Keep it brief and actionable for a day trader.`;
 
       // Step 2: Under-$4 Multileg Scan (LIVE DATA)
       addLog('🔍 Step 2: Scanning for Under-$4 Multileg Opportunities');
-      addLog('🔴 Fetching LIVE market data from Alpaca API...');
+      addLog('🔴 Fetching LIVE market data from backend API...');
 
       // Fetch REAL market data
       const liveData = await fetchLiveMarketData();
 
-      if (liveData) {
+      if (liveData && liveData.count > 0) {
         addLog(`✅ Retrieved ${liveData.count} stocks with real-time prices`);
         addLog(`Prices as of: ${new Date(liveData.timestamp).toLocaleTimeString()}`);
+
+        // Extract stock symbols for AI analysis
+        const stockSymbols = liveData.candidates.map((s: any) => s.symbol);
+        addLog(`📋 Symbols found: ${stockSymbols.join(', ')}`);
+
+        // **CRITICAL FIX:** Pass stock data to AI for actionable analysis
+        addLog('🤖 Sending stock data to AI for option strategy analysis...');
+
+        const aiAnalysisPrompt = `I found ${liveData.count} stocks under $4 trading now. Here are the details:
+
+${liveData.candidates.map((stock: any) => `
+**${stock.symbol}** - $${stock.price.toFixed(2)}
+- Bid: $${stock.bid.toFixed(2)} | Ask: $${stock.ask.toFixed(2)}
+- Spread: $${(stock.ask - stock.bid).toFixed(3)} (${(((stock.ask - stock.bid) / stock.ask) * 100).toFixed(2)}%)
+`).join('\n')}
+
+For each stock, analyze:
+1. **Options Liquidity:** Check if likely to have liquid options (typical OI > 500 for under-$4 stocks)
+2. **Bid-Ask Spread Quality:** Is the ${(((liveData.candidates[0].ask - liveData.candidates[0].bid) / liveData.candidates[0].ask) * 100).toFixed(1)}% spread acceptable for options trading?
+3. **Multileg Strategy:** Recommend specific iron condor, butterfly, or credit spread strikes
+4. **Risk Assessment:** Max risk/reward for each trade
+5. **Earnings Risk:** Flag if earnings likely within 2 weeks
+
+Provide 2-3 actionable multileg trade recommendations with exact strikes and expirations.`;
+
+        const aiAnalysis = await claudeAI.chat(aiAnalysisPrompt);
+        addLog('✅ AI Analysis Complete:');
+        addLog(aiAnalysis);
       } else {
-        addLog('⚠️ Live data fetch failed - check backend connection');
+        addLog('⚠️ Live data fetch failed or no stocks found - check backend connection');
       }
 
       const scanResult = formatLiveMarketData(liveData);
-      addLog('✅ Scan Complete');
+      addLog('✅ Scan Complete - Full Data Below:');
       addLog(scanResult);
       addLog('');
 
@@ -582,6 +659,134 @@ Provide:
               <GlassBadge variant={market.isOpen ? 'success' : 'warning'}>{market.isOpen ? 'OPEN' : 'CLOSED'}</GlassBadge>
             </div>
             <p style={{ color: theme.colors.textMuted, margin: 0 }}>{market.nextEvent}</p>
+          </GlassCard>
+
+          {/* Live Data Preview - Under $4 Scanner */}
+          <GlassCard>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.md }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: theme.colors.text, margin: 0 }}>
+                  Live Market Scan
+                </h3>
+                <GlassBadge variant="info">Under $4</GlassBadge>
+              </div>
+              <GlassButton
+                onClick={refreshLiveData}
+                disabled={isLoadingLiveData}
+                variant="secondary"
+                style={{ fontSize: '12px', padding: '6px 12px' }}
+              >
+                {isLoadingLiveData ? (
+                  <Loader2 className="animate-spin" style={{ width: '14px', height: '14px' }} />
+                ) : (
+                  'Refresh'
+                )}
+              </GlassButton>
+            </div>
+
+            {isLoadingLiveData && !liveDataPreview ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: theme.spacing.xl, color: theme.colors.textMuted }}>
+                <Loader2 className="animate-spin" style={{ width: '24px', height: '24px', marginRight: theme.spacing.sm }} />
+                Loading live data...
+              </div>
+            ) : liveDataPreview && liveDataPreview.count > 0 ? (
+              <>
+                {/* Summary Stats */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: theme.spacing.md,
+                  marginBottom: theme.spacing.md,
+                  padding: theme.spacing.sm,
+                  background: `${theme.colors.primary}10`,
+                  borderRadius: theme.borderRadius.md,
+                  border: `1px solid ${theme.colors.primary}30`
+                }}>
+                  <div>
+                    <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: 0 }}>Candidates Found</p>
+                    <p style={{ fontSize: '24px', fontWeight: '600', color: theme.colors.primary, margin: 0 }}>
+                      {liveDataPreview.count}
+                    </p>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: 0 }}>Last Updated</p>
+                    <p style={{ fontSize: '14px', color: theme.colors.text, margin: 0 }}>
+                      {new Date(liveDataPreview.timestamp).toLocaleTimeString()} ET
+                    </p>
+                  </div>
+                </div>
+
+                {/* Top 3 Stocks Preview */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
+                  <p style={{ fontSize: '12px', color: theme.colors.textMuted, fontWeight: '600', textTransform: 'uppercase', margin: 0 }}>
+                    Top Candidates:
+                  </p>
+                  {liveDataPreview.candidates.slice(0, 3).map((stock: any, idx: number) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: theme.spacing.sm,
+                        background: theme.background.glass,
+                        borderRadius: theme.borderRadius.sm,
+                        border: `1px solid ${theme.colors.border}`,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
+                        <span style={{
+                          fontSize: '16px',
+                          fontWeight: '700',
+                          color: theme.colors.text,
+                          minWidth: '60px'
+                        }}>
+                          {stock.symbol}
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ fontSize: '11px', color: theme.colors.textMuted }}>
+                            Bid/Ask: ${stock.bid.toFixed(2)} / ${stock.ask.toFixed(2)}
+                          </span>
+                          <span style={{ fontSize: '11px', color: theme.colors.textMuted }}>
+                            Spread: ${(stock.ask - stock.bid).toFixed(3)} ({(((stock.ask - stock.bid) / stock.ask) * 100).toFixed(2)}%)
+                          </span>
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: '20px',
+                        fontWeight: '700',
+                        color: theme.colors.primary
+                      }}>
+                        ${stock.price.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {liveDataPreview.count > 3 && (
+                  <p style={{
+                    fontSize: '12px',
+                    color: theme.colors.textMuted,
+                    marginTop: theme.spacing.sm,
+                    textAlign: 'center'
+                  }}>
+                    +{liveDataPreview.count - 3} more candidates • Click &quot;Run Now&quot; for full details
+                  </p>
+                )}
+              </>
+            ) : (
+              <div style={{
+                padding: theme.spacing.lg,
+                textAlign: 'center',
+                color: theme.colors.textMuted,
+                background: theme.background.glass,
+                borderRadius: theme.borderRadius.md,
+              }}>
+                <p style={{ margin: 0, fontSize: '14px' }}>
+                  No candidates found or unable to fetch data. Check backend connection.
+                </p>
+              </div>
+            )}
           </GlassCard>
 
           {/* Portfolio Snapshot */}

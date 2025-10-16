@@ -111,6 +111,15 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   } | null>(null);
   const [isLoadingRisk, setIsLoadingRisk] = useState(false);
 
+  // Paper Trading Account Balance State
+  const [paperAccountBalance, setPaperAccountBalance] = useState<number>(100000);
+  const [accountInfo, setAccountInfo] = useState<{
+    equity: number;
+    cash: number;
+    buying_power: number;
+  } | null>(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -123,8 +132,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
       }
     }
 
-    // Fetch risk tolerance from backend
+    // Fetch risk tolerance and account balance from backend
     fetchRiskTolerance();
+    fetchAccountBalance();
 
     if (isAdmin) {
       loadMockUsers();
@@ -218,6 +228,33 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     }
   };
 
+  // Fetch Account Balance from Backend
+  const fetchAccountBalance = async () => {
+    try {
+      const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || '/api/proxy/api';
+
+      const response = await fetch(`${baseUrl}/account`, {
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAccountInfo({
+          equity: parseFloat(data.equity || data.portfolio_value || '0'),
+          cash: parseFloat(data.cash || '0'),
+          buying_power: parseFloat(data.buying_power || '0'),
+        });
+        setPaperAccountBalance(parseFloat(data.equity || data.portfolio_value || '100000'));
+      }
+    } catch (error) {
+      console.error('Failed to fetch account balance:', error);
+    }
+  };
+
   // Update Risk Tolerance with Debounce
   const updateRiskTolerance = useCallback(
     async (newValue: number) => {
@@ -268,6 +305,38 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     },
     []
   );
+
+  // Update Paper Account Balance
+  const updatePaperAccountBalance = async () => {
+    setIsLoadingBalance(true);
+
+    try {
+      const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || '/api/proxy/api';
+
+      const response = await fetch(`${baseUrl}/users/preferences`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ paper_account_balance: paperAccountBalance }),
+      });
+
+      if (response.ok) {
+        toast.success(`Paper account balance updated to $${paperAccountBalance.toLocaleString()}`);
+        // Refresh account info after update
+        await fetchAccountBalance();
+      } else {
+        toast.error('Failed to update paper account balance');
+      }
+    } catch (error) {
+      console.error('Failed to update paper account balance:', error);
+      toast.error('Failed to update paper account balance');
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  };
 
   const updateSetting = <K extends keyof SettingsData>(key: K, value: SettingsData[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -456,10 +525,19 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                 className={`
                   px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap
                   ${isActive
-                    ? 'bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-white border-2 border-cyan-400/50 shadow-lg shadow-cyan-500/10'
-                    : 'bg-slate-800/60 text-slate-400 hover:bg-slate-700/80 border-2 border-slate-700/30 hover:border-cyan-400/30'
+                    ? 'text-white border-2 shadow-lg'
+                    : 'text-slate-400 hover:bg-slate-700/80 border-2 border-slate-700/30 hover:border-cyan-400/30'
                   }
                 `}
+                style={isActive ? {
+                  background: 'linear-gradient(to right, rgba(0, 172, 193, 0.2), rgba(126, 87, 194, 0.2))',
+                  borderColor: 'rgba(0, 172, 193, 0.5)',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 0 20px rgba(0, 172, 193, 0.15)',
+                } : {
+                  background: 'rgba(30, 41, 59, 0.6)',
+                  backdropFilter: 'blur(8px)',
+                }}
               >
                 <Icon size={16} />
                 {tab.label}
@@ -602,6 +680,82 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       />
                     </label>
                   ))}
+                </div>
+              </div>
+
+              {/* Paper Trading Account Balance Section */}
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <span className="text-xl">💵</span>
+                  Paper Trading Account Balance
+                </h3>
+
+                <div className="space-y-4">
+                  {/* Current Account Info Display */}
+                  {accountInfo && (
+                    <div className="p-4 bg-slate-900/40 border border-slate-700/30 rounded-lg">
+                      <div className="grid gap-3" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' }}>
+                        <div>
+                          <div className="text-xs text-slate-400 mb-1">Total Equity</div>
+                          <div className="text-lg font-semibold text-white">${accountInfo.equity.toLocaleString()}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-slate-400 mb-1">Available Cash</div>
+                          <div className="text-lg font-semibold text-cyan-400">${accountInfo.cash.toLocaleString()}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-slate-400 mb-1">Buying Power</div>
+                          <div className="text-lg font-semibold text-purple-400">${accountInfo.buying_power.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Balance Input */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-slate-300">
+                        Set Paper Account Balance ($)
+                      </label>
+                      {isLoadingBalance && (
+                        <div className="text-xs text-cyan-400 animate-pulse">
+                          Updating...
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min="1000"
+                        max="10000000"
+                        step="1000"
+                        value={paperAccountBalance}
+                        onChange={(e) => setPaperAccountBalance(Number(e.target.value))}
+                        className="flex-1 px-4 py-3 bg-slate-900/60 border border-slate-700/50 rounded-lg text-white font-semibold text-lg outline-none focus:ring-2 focus:ring-cyan-500/50"
+                        placeholder="100000"
+                      />
+                      <button
+                        onClick={updatePaperAccountBalance}
+                        disabled={isLoadingBalance}
+                        className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isLoadingBalance ? 'Updating...' : 'Update'}
+                      </button>
+                    </div>
+                    <div className="flex justify-between text-xs text-slate-400 mt-2">
+                      <span>Min: $1,000</span>
+                      <span>Default: $100,000</span>
+                      <span>Max: $10,000,000</span>
+                    </div>
+                  </div>
+
+                  {/* Info Banner */}
+                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded flex items-start gap-2">
+                    <AlertTriangle size={16} className="text-yellow-400 mt-0.5" />
+                    <p className="text-xs text-yellow-400">
+                      <strong>Paper Trading Only:</strong> This setting controls your simulated account balance for paper trading. Real money trading requires separate authentication and approval.
+                    </p>
+                  </div>
                 </div>
               </div>
 

@@ -19,7 +19,12 @@ interface PendingTrade {
     technical_signals?: string[];
     news_sentiment?: number;
     volatility?: number;
-    risk_metrics?: any;
+    risk_metrics?: {
+      sharpe_ratio?: number;
+      max_drawdown?: number;
+      volatility?: number;
+      [key: string]: number | undefined;
+    };
   };
 }
 

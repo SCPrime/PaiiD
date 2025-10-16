@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import StockLookup from './StockLookup';
 import { useIsMobile } from '../hooks/useBreakpoint';
+import { Clock } from 'lucide-react';
 
 interface NewsArticle {
   id: string;
@@ -541,7 +542,24 @@ const NewsReview: React.FC = () => {
                     }}>
                       <span>{article.source}</span>
                       <span>•</span>
-                      <span>{formatDate(article.published_at)}</span>
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        backgroundColor: 'rgba(100, 116, 139, 0.15)',
+                        border: '1px solid rgba(100, 116, 139, 0.3)',
+                      }}>
+                        <Clock style={{ width: '12px', height: '12px', color: '#94a3b8' }} />
+                        <span style={{
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: '#cbd5e1',
+                        }}>
+                          {formatDate(article.published_at)}
+                        </span>
+                      </div>
                       {article.symbols.length > 0 && (
                         <>
                           <span>•</span>

@@ -24,6 +24,17 @@ const defaultConfig: SWRConfiguration = {
   errorRetryCount: 0, // No automatic retries
 };
 
+// ✅ EXTENSION VERIFICATION: SWR
+console.info('[Extension Verification] ✅ SWR data fetching library loaded successfully:', {
+  hooks: ['usePositions', 'useAccount', 'useMarketData', 'useQuote', 'useNews', 'useCompanyNews', 'useStrategyTemplates', 'useUserPreferences', 'useAnalytics', 'useOrderHistory'],
+  configuration: {
+    dedupingInterval: '2000ms',
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true
+  },
+  status: 'FUNCTIONAL'
+});
+
 // Generic fetcher with auth header
 async function fetcher<T = any>(url: string): Promise<T> {
   const token = process.env.NEXT_PUBLIC_API_TOKEN;

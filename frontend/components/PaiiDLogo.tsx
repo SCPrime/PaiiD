@@ -1,6 +1,7 @@
 'use client';
 
 import { useChat } from './ChatContext';
+import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
 
 interface PaiiDLogoProps {
   size?: 'small' | 'medium' | 'large' | 'xlarge' | 'custom';
@@ -62,12 +63,12 @@ export default function PaiiDLogo({
         <span
           onClick={onClick || openChat}
           style={{
-            background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+            background: LOGO_STYLES.GRADIENT.teal,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            textShadow: `0 0 ${fontSize * 0.25}px rgba(16, 185, 129, 0.9), 0 0 ${fontSize * 0.5}px rgba(16, 185, 129, 0.6)`,
-            animation: 'logo-breathe 3s ease-in-out infinite',
+            textShadow: LOGO_STYLES.GLOW.initial,
+            animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
             fontStyle: 'italic',
             cursor: 'pointer',
             display: 'inline-block',
@@ -76,11 +77,11 @@ export default function PaiiDLogo({
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'scale(1.15) translateY(-2px)';
-            e.currentTarget.style.textShadow = `0 0 ${fontSize * 0.4}px rgba(16, 185, 129, 1), 0 0 ${fontSize * 0.8}px rgba(16, 185, 129, 0.8)`;
+            e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.hover;
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'scale(1) translateY(0)';
-            e.currentTarget.style.textShadow = `0 0 ${fontSize * 0.25}px rgba(16, 185, 129, 0.9), 0 0 ${fontSize * 0.5}px rgba(16, 185, 129, 0.6)`;
+            e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.initial;
           }}
           title="Click to open AI assistant"
         >
@@ -152,17 +153,7 @@ export default function PaiiDLogo({
       )}
 
       <style jsx>{`
-        @keyframes logo-breathe {
-          0%, 100% {
-            text-shadow: 0 0 ${fontSize * 0.2}px rgba(16, 185, 129, 0.8),
-                         0 0 ${fontSize * 0.4}px rgba(16, 185, 129, 0.5);
-          }
-          50% {
-            text-shadow: 0 0 ${fontSize * 0.3}px rgba(16, 185, 129, 1),
-                         0 0 ${fontSize * 0.6}px rgba(16, 185, 129, 0.8),
-                         0 0 ${fontSize * 0.9}px rgba(16, 185, 129, 0.4);
-          }
-        }
+        ${LOGO_ANIMATION_KEYFRAME}
       `}</style>
     </div>
   );

@@ -18,6 +18,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { theme } from '../styles/theme';
+import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
 import { claudeAI, UserPreferences } from '../lib/aiAdapter';
 import { createUser } from '../lib/userManagement';
 import { useChat } from './ChatContext';
@@ -97,7 +98,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
     setMessages([
       {
         role: 'assistant',
-        content: `Hi! I&apos;m your AI trading assistant. I'll help you set up your PaiiD account.\n\nFirst, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
+        content: `Hi! I'm your AI trading assistant. I'll help you set up your PaiiD account.\n\nFirst, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
       },
     ]);
   };
@@ -133,7 +134,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
           ...prev,
           {
             role: 'assistant',
-            content: `Got it! Now let's set up your trading preferences.\n\nTell me about your trading goals. For example:\n\n• "I want to day-trade tech stocks with $25K, focusing on momentum"\n• "I&apos;m interested in swing trading with $5K, moderate risk"\n• "I want to learn options trading with $1000"\n\nWhat are your goals?`,
+            content: `Got it! Now let's set up your trading preferences.\n\nTell me about your trading goals. For example:\n\n• "I want to day-trade tech stocks with $25K, focusing on momentum"\n• "I'm interested in swing trading with $5K, moderate risk"\n• "I want to learn options trading with $1000"\n• "I have my own strategies I'd like help executing"\n\nWhat are your goals?`,
           },
         ]);
         return;
@@ -169,7 +170,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
           ...prev,
           {
             role: 'assistant',
-            content: `${email ? 'Great! ' : ''}Now let's set up your trading preferences.\n\nTell me about your trading goals. For example:\n\n• "I want to day-trade tech stocks with $25K, focusing on momentum"\n• "I&apos;m interested in swing trading with $5K, moderate risk"\n• "I want to learn options trading with $1000"\n\nWhat are your goals?`,
+            content: `${email ? 'Great! ' : ''}Now let's set up your trading preferences.\n\nTell me about your trading goals. For example:\n\n• "I want to day-trade tech stocks with $25K, focusing on momentum"\n• "I'm interested in swing trading with $5K, moderate risk"\n• "I want to learn options trading with $1000"\n\nWhat are your goals?`,
           },
         ]);
       } else if (conversationStep === 'trading') {
@@ -190,7 +191,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
           ...prev,
           {
             role: 'assistant',
-            content: `I&apos;m having trouble understanding. Could you try rephrasing your trading goals? For example: "I want to trade stocks with $10K, moderate risk, swing trading style."`,
+            content: `I'm having trouble understanding. This usually means the backend is offline.\n\nYou can:\n1. Try rephrasing: "I want to trade stocks with $10K, moderate risk, swing trading style"\n2. Click "Skip to Dashboard" below to proceed without AI setup`,
           },
         ]);
       } else {
@@ -198,7 +199,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
           ...prev,
           {
             role: 'assistant',
-            content: `Sorry, I encountered an error. Please try again.`,
+            content: `Sorry, I encountered an error (backend may be offline). Click "Skip to Dashboard" below to proceed.`,
           },
         ]);
       }
@@ -319,9 +320,11 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               <span
                 onClick={openChat}
                 style={{
-                  color: '#45f0c0',
-                  textShadow: '0 0 25px rgba(69, 240, 192, 0.9), 0 0 50px rgba(69, 240, 192, 0.6)',
-                  animation: 'breathe-glow 3s ease-in-out infinite',
+                  background: LOGO_STYLES.GRADIENT.teal,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  textShadow: LOGO_STYLES.GLOW.initial,
+                  animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
                   fontStyle: 'italic',
                   cursor: 'pointer',
                   display: 'inline-block',
@@ -330,13 +333,11 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'scale(1.1) translateY(-4px)';
-                  e.currentTarget.style.textShadow =
-                    '0 0 35px rgba(69, 240, 192, 1), 0 0 70px rgba(69, 240, 192, 0.8), 0 0 100px rgba(69, 240, 192, 0.4)';
+                  e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.hover;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                  e.currentTarget.style.textShadow =
-                    '0 0 25px rgba(69, 240, 192, 0.9), 0 0 50px rgba(69, 240, 192, 0.6)';
+                  e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.initial;
                 }}
               >
                 aii
@@ -374,7 +375,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               >
                 artificial intelligence
               </span>
-              /investment Dashboard
+              {' '}Investment Dashboard
             </p>
 
             {/* Line 3: Secondary Subtitle (14px) */}
@@ -612,59 +613,174 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
                 </div>
               </div>
             )}
+
+            {/* Quick Action Buttons (only show on trading step) */}
+            {conversationStep === 'trading' && !isProcessing && (
+              <div style={{ marginBottom: theme.spacing.md }}>
+                <p style={{ color: theme.colors.textMuted, fontSize: '14px', marginBottom: theme.spacing.sm, textAlign: 'center' }}>
+                  Or click an example:
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: theme.spacing.sm }}>
+                  {[
+                    { emoji: '📊', text: 'Day Trading - $25K', fullText: 'I want to day-trade tech stocks with $25K, focusing on momentum' },
+                    { emoji: '📈', text: 'Swing Trading - $5K', fullText: "I'm interested in swing trading with $5K, moderate risk" },
+                    { emoji: '💡', text: 'Learn Options - $1K', fullText: 'I want to learn options trading with $1000' },
+                    { emoji: '🎯', text: 'My Own Strategies', fullText: "I have my own strategies I'd like help executing" },
+                  ].map((option, idx) => (
+                    <button
+                      key={idx}
+                      onClick={async () => {
+                        // Show text in input briefly
+                        setInput(option.fullText);
+
+                        // Submit immediately (no delay)
+                        setMessages((prev) => [...prev, { role: 'user', content: option.fullText }]);
+                        setInput('');
+                        setIsProcessing(true);
+
+                        try {
+                          // Extract trading preferences from clicked option
+                          const prefs = await claudeAI.extractSetupPreferences(option.fullText);
+                          setExtractedPrefs(prefs);
+                          setMessages((prev) => [...prev, {
+                            role: 'assistant',
+                            content: `Perfect! I've extracted your trading preferences. Let me show you what I understood so you can verify everything is correct.`
+                          }]);
+                          setConversationStep('done');
+                          setShowReview(true);
+                        } catch (error) {
+                          setMessages((prev) => [
+                            ...prev,
+                            {
+                              role: 'assistant',
+                              content: `I'm having trouble understanding. This usually means the backend is offline.\n\nYou can:\n1. Try rephrasing: "I want to trade stocks with $10K, moderate risk, swing trading style"\n2. Click "Skip to Dashboard" below to proceed without AI setup`,
+                            },
+                          ]);
+                        } finally {
+                          setIsProcessing(false);
+                        }
+                      }}
+                      style={{
+                        padding: theme.spacing.sm,
+                        background: theme.background.glass,
+                        backdropFilter: theme.blur.light,
+                        border: `1px solid ${theme.colors.border}`,
+                        borderRadius: theme.borderRadius.lg,
+                        color: theme.colors.text,
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: theme.transitions.fast,
+                        textAlign: 'center',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = theme.workflow.strategyBuilder;
+                        e.currentTarget.style.background = `${theme.workflow.strategyBuilder}15`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = theme.colors.border;
+                        e.currentTarget.style.background = theme.background.glass;
+                      }}
+                    >
+                      <div>{option.emoji}</div>
+                      <div style={{ marginTop: '4px' }}>{option.text}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input */}
-          <div style={{ display: 'flex', gap: theme.spacing.sm }}>
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder={
-                conversationStep === 'name'
-                  ? 'Enter your name...'
-                  : conversationStep === 'email'
-                  ? 'Enter your email...'
-                  : 'Describe your trading goals...'
-              }
-              disabled={isProcessing}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
+            <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                placeholder={
+                  conversationStep === 'name'
+                    ? 'Enter your name...'
+                    : conversationStep === 'email'
+                    ? 'Enter your email...'
+                    : 'Describe your trading goals...'
+                }
+                disabled={isProcessing}
+                style={{
+                  flex: 1,
+                  padding: theme.spacing.md,
+                  background: theme.background.input,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: theme.borderRadius.lg,
+                  color: theme.colors.text,
+                  fontSize: '16px',
+                  outline: 'none',
+                  transition: theme.transitions.fast,
+                }}
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={!input.trim() || isProcessing}
+                style={{
+                  padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+                  background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
+                  border: 'none',
+                  borderRadius: theme.borderRadius.lg,
+                  color: '#ffffff',
+                  fontWeight: '600',
+                  cursor: !input.trim() || isProcessing ? 'not-allowed' : 'pointer',
+                  opacity: !input.trim() || isProcessing ? 0.5 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: theme.spacing.xs,
+                  transition: theme.transitions.fast,
+                }}
+              >
+                {isProcessing ? (
+                  <Loader2 className="animate-spin" style={{ width: '20px', height: '20px' }} />
+                ) : (
+                  <Send style={{ width: '20px', height: '20px' }} />
+                )}
+              </button>
+            </div>
+
+            {/* Skip to Dashboard Button */}
+            <button
+              onClick={() => {
+                localStorage.setItem('user-setup-complete', 'true');
+                localStorage.setItem('manual-skip', 'true');
+                onComplete();
+              }}
               style={{
-                flex: 1,
+                width: '100%',
                 padding: theme.spacing.md,
-                background: theme.background.input,
+                background: theme.background.glass,
+                backdropFilter: theme.blur.light,
                 border: `1px solid ${theme.colors.border}`,
                 borderRadius: theme.borderRadius.lg,
                 color: theme.colors.text,
-                fontSize: '16px',
-                outline: 'none',
-                transition: theme.transitions.fast,
-              }}
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!input.trim() || isProcessing}
-              style={{
-                padding: `${theme.spacing.md} ${theme.spacing.lg}`,
-                background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
-                border: 'none',
-                borderRadius: theme.borderRadius.lg,
-                color: '#ffffff',
                 fontWeight: '600',
-                cursor: !input.trim() || isProcessing ? 'not-allowed' : 'pointer',
-                opacity: !input.trim() || isProcessing ? 0.5 : 1,
+                cursor: 'pointer',
+                transition: theme.transitions.fast,
                 display: 'flex',
                 alignItems: 'center',
-                gap: theme.spacing.xs,
-                transition: theme.transitions.fast,
+                justifyContent: 'center',
+                gap: theme.spacing.sm,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = theme.colors.primary;
+                e.currentTarget.style.background = `${theme.colors.primary}15`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = theme.colors.border;
+                e.currentTarget.style.background = theme.background.glass;
               }}
             >
-              {isProcessing ? (
-                <Loader2 className="animate-spin" style={{ width: '20px', height: '20px' }} />
-              ) : (
-                <Send style={{ width: '20px', height: '20px' }} />
-              )}
+              <ArrowRight style={{ width: '18px', height: '18px' }} />
+              Skip to Dashboard
             </button>
           </div>
         </div>
@@ -879,17 +995,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
       {null}
       {/* CSS Animations */}
       <style jsx>{`
-        @keyframes breathe-glow {
-          0%, 100% {
-            text-shadow: 0 0 20px rgba(69, 240, 192, 0.8), 0 0 40px rgba(69, 240, 192, 0.5);
-            transform: scale(1);
-          }
-          50% {
-            text-shadow: 0 0 30px rgba(69, 240, 192, 1), 0 0 60px rgba(69, 240, 192, 0.8),
-              0 0 90px rgba(69, 240, 192, 0.4);
-            transform: scale(1.05);
-          }
-        }
+        ${LOGO_ANIMATION_KEYFRAME}
 
         ${particles.map((particle) => `
           @keyframes float-${particle.id} {

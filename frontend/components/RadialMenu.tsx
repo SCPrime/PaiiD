@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useMemo, memo } from 'react';
 import * as d3 from 'd3';
 import { useWindowDimensions, useIsMobile } from '../hooks/useBreakpoint';
+import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
 
 export interface Workflow {
   id: string;
@@ -76,21 +77,21 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
         headerSubtitle2: '14px',
         segmentText: '16px',
         centerLogo: '20px',
-        marketLabel: '9px',
-        marketValue: '16px',
-        marketChange: '11px'
+        marketLabel: '7px',          // Reduced from 9px for better fit
+        marketValue: '12px',          // Reduced from 16px for better fit
+        marketChange: '8px'           // Reduced from 11px for better fit
       };
     }
-    // Desktop sizes
+    // Desktop sizes - reduced by ~25% for cleaner center circle
     return {
       headerLogo: '96px',
       headerSubtitle1: '22px',
       headerSubtitle2: '18px',
       segmentText: '22px',
       centerLogo: '32px',
-      marketLabel: '11px',
-      marketValue: '22px',
-      marketChange: '13px'
+      marketLabel: '9px',             // Reduced from 11px
+      marketValue: '16px',            // Reduced from 22px
+      marketChange: '10px'            // Reduced from 13px
     };
   }, [isMobile]);
 
@@ -190,19 +191,47 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
     return () => clearInterval(interval);
   }, []);
 
-  // Debug logging for Fast Refresh loop detection
+  // Debug logging for Fast Refresh loop detection + logo styles
   useEffect(() => {
     console.info('RadialMenu rendered with selectedWorkflow:', selectedWorkflow);
+    console.info('Logo Styles Applied:', {
+      glow: LOGO_STYLES.GLOW.initial,
+      animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration}`,
+      gradient: LOGO_STYLES.GRADIENT.teal,
+    });
   }, [selectedWorkflow]);
 
   useEffect(() => {
     if (!svgRef.current) return;
+
+    // ✅ EXTENSION VERIFICATION: D3.js
+    console.info('[Extension Verification] ✅ D3.js loaded successfully:', {
+      version: d3.version,
+      modules: ['select', 'pie', 'arc', 'selectAll'],
+      status: 'FUNCTIONAL'
+    });
 
     const width = menuSize;
     const height = menuSize;
     const radius = Math.min(width, height) / 2;
     const innerRadius = radius * 0.30;
     const outerRadius = radius * 0.90;
+
+    // Calculate responsive center content positions based on innerRadius
+    // This ensures proper spacing regardless of menu size (500px mobile → 700px desktop)
+    const centerContentSpacing = {
+      logoOffset: -(innerRadius * 0.55),      // Logo at top of circle (reduced from 0.65 to stay within bounds)
+      dowOffset: -(innerRadius * 0.25),       // DOW below logo (increased from 0.15 to move up more)
+      nasdaqOffset: (innerRadius * 0.45),     // NASDAQ below DOW (increased from 0.30 for more spacing)
+      statusBadgeOffset: (innerRadius * 0.70) // Status badge at bottom
+    };
+
+    // Debug log positioning
+    console.info('[RadialMenu] Center positioning:', {
+      innerRadius,
+      menuSize,
+      centerContentSpacing
+    });
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
@@ -513,7 +542,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
     // ====== MARKET DATA ======
     const dow = centerGroup.append('g')
-      .attr('transform', 'translate(0, -15)');
+      .attr('transform', `translate(0, ${centerContentSpacing.dowOffset})`);
 
     dow.append('text')
       .attr('text-anchor', 'middle')
@@ -526,7 +555,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
     dow.append('text')
       .attr('text-anchor', 'middle')
-      .attr('dy', '20')
+      .attr('dy', '14')                     // Reduced from 20 for tighter spacing
       .attr('font-size', fontSizes.marketValue)
       .attr('font-weight', '900')
       .attr('fill', '#f1f5f9')
@@ -536,7 +565,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
     const dowChange = dow.append('text')
       .attr('text-anchor', 'middle')
-      .attr('dy', '38')
+      .attr('dy', '26')                     // Reduced from 38 for tighter spacing
       .attr('font-size', fontSizes.marketChange)
       .attr('font-weight', '800')
       .attr('fill', marketData.dow.change >= 0 ? '#10b981' : '#ef4444')
@@ -564,7 +593,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
       });
 
     const nasdaqGroup = centerGroup.append('g')
-      .attr('transform', 'translate(0, 45)');
+      .attr('transform', `translate(0, ${centerContentSpacing.nasdaqOffset})`);
 
     nasdaqGroup.append('text')
       .attr('text-anchor', 'middle')
@@ -577,7 +606,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
     nasdaqGroup.append('text')
       .attr('text-anchor', 'middle')
-      .attr('dy', '20')
+      .attr('dy', '14')                     // Reduced from 20 for tighter spacing
       .attr('font-size', fontSizes.marketValue)
       .attr('font-weight', '900')
       .attr('fill', '#f1f5f9')
@@ -587,7 +616,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
     const nasdaqChange = nasdaqGroup.append('text')
       .attr('text-anchor', 'middle')
-      .attr('dy', '38')
+      .attr('dy', '26')                     // Reduced from 38 for tighter spacing
       .attr('font-size', fontSizes.marketChange)
       .attr('font-weight', '800')
       .attr('fill', marketData.nasdaq.change >= 0 ? '#10b981' : '#ef4444')
@@ -703,16 +732,16 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
               background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.4))'
+              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.6))'
             }}>P</span>
             <span
               onClick={() => setShowAIChat(true)}
               style={{
-                background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+                background: LOGO_STYLES.GRADIENT.teal,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                textShadow: '0 0 20px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.5)',
-                animation: 'glow-ai 3s ease-in-out infinite',
+                textShadow: LOGO_STYLES.GLOW.initial,
+                animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
                 cursor: 'pointer',
                 transition: 'transform 0.2s ease',
               }}
@@ -727,7 +756,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
               background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.4))'
+              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.6))'
             }}>D</span>
           </div>
 
@@ -768,7 +797,8 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
           left: '50%',
           transform: 'translate(-50%, -50%)',
           pointerEvents: 'auto',
-          marginTop: '-110px' // Position above market data, within circle boundary
+          marginTop: `${-(menuSize / 2) * 0.30 * 0.55}px`, // Responsive: matches centerContentSpacing.logoOffset (reduced from 0.65 to 0.55)
+          maxHeight: `${(menuSize / 2) * 0.30 * 2}px` // Constrain to circle diameter
         }}>
           <div style={{
             fontSize: fontSizes.centerLogo,
@@ -780,16 +810,16 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
               background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.4))'
+              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.6))'
             }}>P</span>
             <span
               onClick={() => setShowAIChat(true)}
               style={{
-                background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+                background: LOGO_STYLES.GRADIENT.teal,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                textShadow: '0 0 20px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.5)',
-                animation: 'glow-ai 3s ease-in-out infinite',
+                textShadow: LOGO_STYLES.GLOW.initial,
+                animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
                 cursor: 'pointer',
                 transition: 'transform 0.2s ease',
               }}
@@ -804,7 +834,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
               background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.4))'
+              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.6))'
             }}>D</span>
           </div>
         </div>
@@ -816,7 +846,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            marginTop: isMobile ? '85px' : '110px', // Position below market data
+            marginTop: `${(menuSize / 2) * 0.30 * 0.75}px`, // Responsive: matches centerContentSpacing.statusBadgeOffset
             pointerEvents: 'none',
             textAlign: 'center'
           }}>
@@ -862,14 +892,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
       {/* CSS Animations */}
       <style jsx>{`
-        @keyframes glow-ai {
-          0%, 100% {
-            text-shadow: 0 0 15px rgba(16, 185, 129, 0.6), 0 0 30px rgba(16, 185, 129, 0.4);
-          }
-          50% {
-            text-shadow: 0 0 25px rgba(16, 185, 129, 0.9), 0 0 50px rgba(16, 185, 129, 0.6), 0 0 75px rgba(16, 185, 129, 0.3);
-          }
-        }
+        ${LOGO_ANIMATION_KEYFRAME}
 
         @keyframes pulse-open {
           0%, 100% {

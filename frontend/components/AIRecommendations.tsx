@@ -111,9 +111,9 @@ export default function AIRecommendations() {
       const data = await res.json();
       setRecommendations(data.recommendations || []);
       setPortfolioAnalysis(data.portfolioAnalysis || null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching recommendations:', err);
-      setError(err.message || 'Failed to load AI recommendations. Please ensure backend is running.');
+      setError(err instanceof Error ? err.message : 'Failed to load AI recommendations. Please ensure backend is running.');
       setRecommendations([]);
       setPortfolioAnalysis(null);
     } finally {
@@ -172,14 +172,7 @@ export default function AIRecommendations() {
     return theme.colors.warning;
   };
 
-  const getVolumeColor = (strength?: string) => {
-    switch (strength) {
-      case "High": return theme.colors.primary;
-      case "Low": return theme.colors.danger;
-      case "Normal": return theme.colors.warning;
-      default: return theme.colors.textMuted;
-    }
-  };
+  // Removed unused getVolumeColor - keeping logic in inline styles
 
   const getMomentumBadgeColor = (priceVsSma: number) => {
     if (priceVsSma > 2) return theme.colors.primary;  // Green - above SMA
@@ -538,143 +531,58 @@ export default function AIRecommendations() {
                   </div>
                 )}
 
-                {/* Momentum & Volume Indicators */}
-                <div style={{
-                  display: 'flex',
-                  gap: '6px',
-                  marginTop: theme.spacing.sm,
-                  flexWrap: 'wrap'
-                }}>
-                  {/* Trend Badge */}
-                  {rec.momentum?.trend_alignment && (
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '3px 8px',
-                      background: `${getTrendColor(rec.momentum.trend_alignment)}15`,
-                      border: `1px solid ${getTrendColor(rec.momentum.trend_alignment)}`,
-                      borderRadius: '9999px',
-                      fontSize: '11px',
-                      fontWeight: '600',
-                      color: getTrendColor(rec.momentum.trend_alignment)
-                    }}>
-                      📈 {rec.momentum.trend_alignment}
-                    </div>
-                  )}
-
-                  {/* Volume Badge */}
-                  {rec.momentum?.volume_strength && (
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '3px 8px',
-                      background: `${getVolumeColor(rec.momentum.volume_strength)}15`,
-                      border: `1px solid ${getVolumeColor(rec.momentum.volume_strength)}`,
-                      borderRadius: '9999px',
-                      fontSize: '11px',
-                      fontWeight: '600',
-                      color: getVolumeColor(rec.momentum.volume_strength)
-                    }}>
-                      🔊 {rec.momentum.volume_strength} Vol ({rec.momentum.volume_ratio.toFixed(1)}x)
-                    </div>
-                  )}
-                </div>
-
-                {/* SMA Alignment Badges */}
+                {/* Market Activity - Combined Momentum & Volume */}
                 {rec.momentum && (
                   <div style={{
-                    display: 'flex',
-                    gap: '4px',
-                    marginTop: theme.spacing.xs
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '2px 10px',
+                    background: `${getTrendColor(rec.momentum.trend_alignment)}15`,
+                    border: `1px solid ${getTrendColor(rec.momentum.trend_alignment)}`,
+                    borderRadius: '9999px',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    color: getTrendColor(rec.momentum.trend_alignment),
+                    marginTop: theme.spacing.sm
                   }}>
-                    <div style={{
-                      padding: '2px 6px',
-                      background: `${getMomentumBadgeColor(rec.momentum.price_vs_sma_20)}15`,
-                      border: `1px solid ${getMomentumBadgeColor(rec.momentum.price_vs_sma_20)}`,
-                      borderRadius: theme.borderRadius.sm,
-                      fontSize: '10px',
-                      fontWeight: '600',
-                      color: getMomentumBadgeColor(rec.momentum.price_vs_sma_20)
-                    }}>
-                      SMA-20: {rec.momentum.price_vs_sma_20 > 0 ? '+' : ''}{rec.momentum.price_vs_sma_20.toFixed(1)}%
-                    </div>
-                    <div style={{
-                      padding: '2px 6px',
-                      background: `${getMomentumBadgeColor(rec.momentum.price_vs_sma_50)}15`,
-                      border: `1px solid ${getMomentumBadgeColor(rec.momentum.price_vs_sma_50)}`,
-                      borderRadius: theme.borderRadius.sm,
-                      fontSize: '10px',
-                      fontWeight: '600',
-                      color: getMomentumBadgeColor(rec.momentum.price_vs_sma_50)
-                    }}>
-                      SMA-50: {rec.momentum.price_vs_sma_50 > 0 ? '+' : ''}{rec.momentum.price_vs_sma_50.toFixed(1)}%
-                    </div>
-                    <div style={{
-                      padding: '2px 6px',
-                      background: `${getMomentumBadgeColor(rec.momentum.price_vs_sma_200)}15`,
-                      border: `1px solid ${getMomentumBadgeColor(rec.momentum.price_vs_sma_200)}`,
-                      borderRadius: theme.borderRadius.sm,
-                      fontSize: '10px',
-                      fontWeight: '600',
-                      color: getMomentumBadgeColor(rec.momentum.price_vs_sma_200)
-                    }}>
-                      SMA-200: {rec.momentum.price_vs_sma_200 > 0 ? '+' : ''}{rec.momentum.price_vs_sma_200.toFixed(1)}%
-                    </div>
+                    📊 {rec.momentum.trend_alignment} • {rec.momentum.volume_strength} Vol ({rec.momentum.volume_ratio.toFixed(1)}x)
                   </div>
                 )}
 
-                {/* Volatility Badges */}
+                {/* SMA Alignment - Consolidated */}
+                {rec.momentum && (
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '2px 8px',
+                    background: `${getMomentumBadgeColor(rec.momentum.price_vs_sma_50)}15`,
+                    border: `1px solid ${getMomentumBadgeColor(rec.momentum.price_vs_sma_50)}`,
+                    borderRadius: theme.borderRadius.sm,
+                    fontSize: '10px',
+                    fontWeight: '600',
+                    color: getMomentumBadgeColor(rec.momentum.price_vs_sma_50),
+                    marginTop: theme.spacing.xs
+                  }}>
+                    SMA: {rec.momentum.price_vs_sma_50 > 0 ? '+' : ''}{rec.momentum.price_vs_sma_50.toFixed(1)}%
+                  </div>
+                )}
+
+                {/* Volatility - Consolidated */}
                 {rec.volatility && (
                   <div style={{
-                    display: 'flex',
-                    gap: '6px',
-                    marginTop: theme.spacing.sm,
-                    flexWrap: 'wrap'
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '2px 10px',
+                    background: `${getVolatilityColor(rec.volatility.volatility_class)}15`,
+                    border: `1px solid ${getVolatilityColor(rec.volatility.volatility_class)}`,
+                    borderRadius: '9999px',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    color: getVolatilityColor(rec.volatility.volatility_class),
+                    marginTop: theme.spacing.xs
                   }}>
-                    {/* Volatility Class Badge */}
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '3px 8px',
-                      background: `${getVolatilityColor(rec.volatility.volatility_class)}15`,
-                      border: `1px solid ${getVolatilityColor(rec.volatility.volatility_class)}`,
-                      borderRadius: '9999px',
-                      fontSize: '11px',
-                      fontWeight: '600',
-                      color: getVolatilityColor(rec.volatility.volatility_class)
-                    }}>
-                      {rec.volatility.volatility_class === "Low" ? "🔵" : rec.volatility.volatility_class === "High" ? "🔴" : "🟡"} {rec.volatility.volatility_class} Volatility
-                    </div>
-
-                    {/* ATR Badge */}
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '3px 8px',
-                      background: `${theme.colors.secondary}15`,
-                      border: `1px solid ${theme.colors.secondary}`,
-                      borderRadius: '9999px',
-                      fontSize: '11px',
-                      fontWeight: '600',
-                      color: theme.colors.secondary
-                    }}>
-                      ATR: {rec.volatility.atr_percent.toFixed(1)}%
-                    </div>
-
-                    {/* BB Width Badge */}
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '3px 8px',
-                      background: `${theme.colors.secondary}15`,
-                      border: `1px solid ${theme.colors.secondary}`,
-                      borderRadius: '9999px',
-                      fontSize: '11px',
-                      fontWeight: '600',
-                      color: theme.colors.secondary
-                    }}>
-                      BB Width: {rec.volatility.bb_width.toFixed(1)}%
-                    </div>
+                    {rec.volatility.volatility_class === "Low" ? "🔵" : rec.volatility.volatility_class === "High" ? "🔴" : "🟡"} {rec.volatility.volatility_class} • ATR {rec.volatility.atr_percent.toFixed(1)}%
                   </div>
                 )}
 

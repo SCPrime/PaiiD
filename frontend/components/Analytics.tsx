@@ -228,6 +228,7 @@ export default function Analytics() {
 
   useEffect(() => {
     loadAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeframe]);
 
   const loadAnalytics = async () => {
@@ -258,7 +259,7 @@ export default function Analytics() {
       };
 
       // Transform equity history to daily performance format
-      const dailyPerf: DailyPerformance[] = historyData.data.map((point: any) => ({
+      const dailyPerf: DailyPerformance[] = historyData.data.map((point: { timestamp: string; equity: number }) => ({
         date: point.timestamp.split('T')[0],
         pnl: 0, // Calculate from equity changes
         portfolioValue: point.equity,

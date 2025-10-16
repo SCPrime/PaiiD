@@ -213,6 +213,123 @@ async def stream_positions(_=Depends(require_bearer), cache: CacheService = Depe
     return EventSourceResponse(position_generator())
 
 
+@router.get("/stream/market-indices")
+async def stream_market_indices(_=Depends(require_bearer), cache: CacheService = Depends(get_cache)):
+    """
+    Stream real-time market indices (Dow Jones, NASDAQ) via Server-Sent Events
+
+    This endpoint:
+    1. Reads $DJI and COMP:GIDS from Redis cache (updated by Tradier WebSocket)
+    2. Sends formatted data every 1s when prices change
+    3. Optimized for RadialMenu center circle display
+
+    Response Format (SSE):
+        event: indices_update
+        data: {
+            "dow": {"last": 42500.00, "change": 125.50, "changePercent": 0.30},
+            "nasdaq": {"last": 18350.00, "change": 98.75, "changePercent": 0.54}
+        }
+
+    Usage:
+        const eventSource = new EventSource('/api/proxy/stream/market-indices');
+        eventSource.addEventListener('indices_update', (e) => {
+            const { dow, nasdaq } = JSON.parse(e.data);
+            updateRadialMenu(dow, nasdaq);
+        });
+    """
+    logger.info("📡 Client subscribed to market indices stream")
+
+    async def indices_generator() -> AsyncGenerator:
+        """
+        Generate market indices updates from Redis cache with periodic heartbeats.
+
+        Sends:
+        - indices_update: When index prices change (every 1s)
+        - heartbeat: Every 15s to keep connection alive
+        """
+        last_indices_hash = None
+        last_heartbeat_time = time.time()
+
+        try:
+            while True:
+                current_time = time.time()
+                indices = {}
+
+                # Read $DJI from cache
+                dji_trade = cache.get("price:$DJI")
+                dji_quote = cache.get("quote:$DJI")
+
+                if dji_trade:
+                    indices["dow"] = {
+                        "last": round(dji_trade.get("price", 0), 2),
+                        "timestamp": dji_trade.get("timestamp"),
+                    }
+                elif dji_quote:
+                    indices["dow"] = {
+                        "last": round(dji_quote.get("mid", 0), 2),
+                        "timestamp": dji_quote.get("timestamp"),
+                    }
+
+                # Read COMP:GIDS from cache
+                comp_trade = cache.get("price:COMP:GIDS")
+                comp_quote = cache.get("quote:COMP:GIDS")
+
+                if comp_trade:
+                    indices["nasdaq"] = {
+                        "last": round(comp_trade.get("price", 0), 2),
+                        "timestamp": comp_trade.get("timestamp"),
+                    }
+                elif comp_quote:
+                    indices["nasdaq"] = {
+                        "last": round(comp_quote.get("mid", 0), 2),
+                        "timestamp": comp_quote.get("timestamp"),
+                    }
+
+                # Add change percentage if available from summary data
+                for symbol, key in [("$DJI", "dow"), ("COMP:GIDS", "nasdaq")]:
+                    summary = cache.get(f"summary:{symbol}")
+                    if summary and key in indices:
+                        open_price = summary.get("open", 0)
+                        current_price = indices[key]["last"]
+                        if open_price > 0:
+                            change = current_price - open_price
+                            change_percent = (change / open_price) * 100
+                            indices[key]["change"] = round(change, 2)
+                            indices[key]["changePercent"] = round(change_percent, 2)
+
+                # Send update if data changed
+                if indices:
+                    current_hash = hash(json.dumps(indices, sort_keys=True))
+                    if current_hash != last_indices_hash:
+                        yield {"event": "indices_update", "data": json.dumps(indices)}
+                        last_indices_hash = current_hash
+                        logger.debug(f"📊 Sent indices update: DOW={indices.get('dow', {}).get('last')}, NASDAQ={indices.get('nasdaq', {}).get('last')}")
+
+                # Send periodic heartbeat
+                if current_time - last_heartbeat_time >= HEARTBEAT_INTERVAL:
+                    yield {
+                        "event": "heartbeat",
+                        "data": json.dumps({
+                            "timestamp": current_time,
+                            "stream_type": "market_indices",
+                        }),
+                    }
+                    last_heartbeat_time = current_time
+                    logger.debug(f"💓 Heartbeat sent (indices stream)")
+
+                # Wait before next check
+                await asyncio.sleep(DATA_CHECK_INTERVAL)
+
+        except asyncio.CancelledError:
+            logger.info("📡 Client disconnected from indices stream")
+            raise
+        except Exception as e:
+            logger.error(f"❌ Error in indices stream: {e}")
+            yield {"event": "error", "data": json.dumps({"error": str(e)})}
+
+    return EventSourceResponse(indices_generator())
+
+
 @router.get("/stream/status")
 async def stream_status(_=Depends(require_bearer)):
     """

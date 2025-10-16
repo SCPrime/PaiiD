@@ -43,6 +43,18 @@ interface AIAnalysisModalProps {
   onAddToWatchlist?: (symbol: string) => void;
 }
 
+interface ThemeColors {
+  bg: string;
+  bgLight: string;
+  text: string;
+  textMuted: string;
+  primary: string;
+  danger: string;
+  warning: string;
+  info: string;
+  border: string;
+}
+
 const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
   symbol,
   isOpen,
@@ -77,6 +89,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
     if (isOpen && symbol) {
       fetchAnalysis();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, symbol]);
 
   useEffect(() => {
@@ -803,7 +816,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
         )}
 
         {/* Animations */}
-        <style jsx>{`
+        <style>{`
           @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -834,7 +847,7 @@ const MetricCard = ({ label, value, color, icon }: { label: string; value: strin
   </div>
 );
 
-const InfoCard = ({ title, content, icon, theme }: { title: string; content: string; icon: React.ReactNode; theme: any }) => (
+const InfoCard = ({ title, content, icon, theme }: { title: string; content: string; icon: React.ReactNode; theme: ThemeColors }) => (
   <div style={{
     padding: '16px',
     background: theme.bgLight,
@@ -853,7 +866,7 @@ const InfoCard = ({ title, content, icon, theme }: { title: string; content: str
   </div>
 );
 
-const SuggestionCard = ({ title, content, color, theme }: { title: string; content: string; color: string; theme: any }) => (
+const SuggestionCard = ({ title, content, color, theme }: { title: string; content: string; color: string; theme: ThemeColors }) => (
   <div style={{
     padding: '16px',
     background: `${color}10`,
@@ -881,7 +894,7 @@ const SuggestionCard = ({ title, content, color, theme }: { title: string; conte
   </div>
 );
 
-const IndicatorItem = ({ label, value, theme }: { label: string; value: string; theme: any }) => (
+const IndicatorItem = ({ label, value, theme }: { label: string; value: string; theme: ThemeColors }) => (
   <div>
     <div style={{ fontSize: '11px', color: theme.textMuted, marginBottom: '4px', textTransform: 'uppercase' }}>
       {label}
