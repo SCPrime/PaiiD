@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useEffect, useRef, useState, useMemo, memo } from 'react';
 import * as d3 from 'd3';
 import { useWindowDimensions, useIsMobile } from '../hooks/useBreakpoint';

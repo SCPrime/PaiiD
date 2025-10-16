@@ -191,7 +191,7 @@ export function useMarketStream(
       });
 
       // Handle heartbeat (keep-alive and timeout detection)
-      eventSource.addEventListener('heartbeat', (event) => {
+      eventSource.addEventListener('heartbeat', (_event) => {
         const now = new Date();
         log('💓 Heartbeat received');
         setState(prev => ({
@@ -217,7 +217,7 @@ export function useMarketStream(
       });
 
       // Handle connection errors/close
-      eventSource.onerror = (error) => {
+      eventSource.onerror = (_error) => {
         log('❌ Connection error or closed');
 
         setState(prev => ({

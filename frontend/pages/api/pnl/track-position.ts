@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import type { PositionTracking, ActualMetrics, Greeks } from '@/types/pnl';
+import type { PositionTracking, Greeks } from '@/types/pnl';
 
 /**
  * Track Position P&L Endpoint

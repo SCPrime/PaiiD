@@ -164,7 +164,7 @@ function scoreStrategy(
   const reasons: string[] = [];
   let score = 0;
 
-  const { symbol, currentPrice, technicals, optionsChain, earningsDate } = context;
+  const { _symbol, currentPrice, technicals, optionsChain, earningsDate } = context;
 
   // Check price range filter
   if (strategy.universe?.filters?.price_between) {
@@ -321,7 +321,7 @@ function generateStrategyProposal(
  */
 function generateAnalysis(
   technicals?: TechnicalIndicators,
-  optionsChain?: OptionsMetrics
+  _optionsChain?: OptionsMetrics
 ): { technicalSetup: string; ivEnvironment: string; riskLevel: 'low' | 'medium' | 'high' } {
   let technicalSetup = 'Neutral';
   let ivEnvironment = 'Normal';

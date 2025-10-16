@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Morning Routine with AI Scheduler + Run Now Feature
  * Schedule custom morning trading routines with AI assistance

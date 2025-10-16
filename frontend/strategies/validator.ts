@@ -5,7 +5,6 @@
  */
 
 import type {
-  Strategy,
   ValidationResult,
   ValidationError,
   ValidationWarning,

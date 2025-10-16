@@ -93,7 +93,7 @@ export const TodaySchedule: React.FC = () => {
           justifyContent: 'space-between',
         }}
       >
-        <span>Today's Schedule</span>
+        <span>Today&apos;s Schedule</span>
         <div
           style={{
             fontSize: paidTheme.typography.fontSize.xs,
