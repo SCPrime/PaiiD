@@ -18,41 +18,41 @@ class TestPackageStructure:
 
     def test_middleware_package_has_init(self):
         """Verify middleware package has __init__.py"""
-        init_file = Path('backend/app/middleware/__init__.py')
+        init_file = Path('app/middleware/__init__.py')
         assert init_file.exists(), (
-            "backend/app/middleware/__init__.py is REQUIRED for Python to treat "
+            "app/middleware/__init__.py is REQUIRED for Python to treat "
             "the directory as a package. Without it, imports like "
             "'from .middleware.rate_limit import limiter' will fail."
         )
 
     def test_services_package_has_init(self):
         """Verify services package has __init__.py"""
-        init_file = Path('backend/app/services/__init__.py')
+        init_file = Path('app/services/__init__.py')
         assert init_file.exists(), (
-            "backend/app/services/__init__.py is REQUIRED. "
+            "app/services/__init__.py is REQUIRED. "
             "Missing this file caused 16+ hours of downtime in Oct 2025."
         )
 
     def test_routers_package_has_init(self):
         """Verify routers package has __init__.py"""
-        init_file = Path('backend/app/routers/__init__.py')
+        init_file = Path('app/routers/__init__.py')
         assert init_file.exists(), (
-            "backend/app/routers/__init__.py is required for router imports"
+            "app/routers/__init__.py is required for router imports"
         )
 
     def test_core_package_has_init(self):
         """Verify core package has __init__.py"""
-        init_file = Path('backend/app/core/__init__.py')
+        init_file = Path('app/core/__init__.py')
         assert init_file.exists(), (
-            "backend/app/core/__init__.py is required for core imports"
+            "app/core/__init__.py is required for core imports"
         )
 
     def test_all_app_subdirectories_have_init(self):
-        """Verify ALL subdirectories in backend/app/ have __init__.py"""
-        app_dir = Path('backend/app')
+        """Verify ALL subdirectories in app/ have __init__.py"""
+        app_dir = Path('app')
 
         if not app_dir.exists():
-            pytest.skip("backend/app directory not found (may be running from different location)")
+            pytest.skip("app directory not found (may be running from different location)")
 
         missing_init = []
         for subdir in app_dir.iterdir():
@@ -74,9 +74,9 @@ class TestCriticalImports:
     def test_middleware_imports(self):
         """Verify middleware imports work"""
         try:
-            from backend.app.middleware.rate_limit import limiter, custom_rate_limit_exceeded_handler
-            from backend.app.middleware.cache_control import CacheControlMiddleware
-            from backend.app.middleware.sentry import SentryContextMiddleware
+            from app.middleware.rate_limit import limiter, custom_rate_limit_exceeded_handler
+            from app.middleware.cache_control import CacheControlMiddleware
+            from app.middleware.sentry import SentryContextMiddleware
 
             # Verify objects exist
             assert limiter is not None
@@ -89,8 +89,8 @@ class TestCriticalImports:
     def test_services_imports(self):
         """Verify services imports work"""
         try:
-            from backend.app.services.cache import init_cache
-            from backend.app.services.tradier_stream import start_tradier_stream, stop_tradier_stream
+            from app.services.cache import init_cache
+            from app.services.tradier_stream import start_tradier_stream, stop_tradier_stream
 
             # Verify functions exist
             assert init_cache is not None
@@ -102,17 +102,17 @@ class TestCriticalImports:
     def test_routers_imports(self):
         """Verify all routers can be imported"""
         try:
-            from backend.app.routers import health
-            from backend.app.routers import portfolio
-            from backend.app.routers import orders
-            from backend.app.routers import market
-            from backend.app.routers import ai
-            from backend.app.routers import claude
-            from backend.app.routers import strategies
-            from backend.app.routers import scheduler
-            from backend.app.routers import telemetry
-            from backend.app.routers import stream
-            from backend.app.routers import news
+            from app.routers import health
+            from app.routers import portfolio
+            from app.routers import orders
+            from app.routers import market
+            from app.routers import ai
+            from app.routers import claude
+            from app.routers import strategies
+            from app.routers import scheduler
+            from app.routers import telemetry
+            from app.routers import stream
+            from app.routers import news
 
             # Verify all routers have a router object
             assert hasattr(health, 'router')
@@ -125,7 +125,7 @@ class TestCriticalImports:
     def test_main_app_imports(self):
         """Verify main FastAPI app can be imported"""
         try:
-            from backend.app.main import app
+            from app.main import app
 
             assert app is not None
             assert hasattr(app, 'routes')
@@ -135,7 +135,7 @@ class TestCriticalImports:
     def test_config_imports(self):
         """Verify config can be imported"""
         try:
-            from backend.app.core.config import settings
+            from app.core.config import settings
 
             assert settings is not None
         except ImportError as e:
@@ -149,9 +149,9 @@ class TestImportOrdering:
         """Verify middleware imports don't create circular dependencies"""
         try:
             # Import in the order main.py does
-            from backend.app.middleware.rate_limit import limiter
-            from backend.app.middleware.cache_control import CacheControlMiddleware
-            from backend.app.middleware.sentry import SentryContextMiddleware
+            from app.middleware.rate_limit import limiter
+            from app.middleware.cache_control import CacheControlMiddleware
+            from app.middleware.sentry import SentryContextMiddleware
 
             # If we get here, no circular imports
             assert True
@@ -164,8 +164,8 @@ class TestImportOrdering:
     def test_services_has_no_circular_imports(self):
         """Verify services imports don't create circular dependencies"""
         try:
-            from backend.app.services.cache import init_cache
-            from backend.app.services.tradier_stream import start_tradier_stream
+            from app.services.cache import init_cache
+            from app.services.tradier_stream import start_tradier_stream
 
             assert True
         except ImportError as e:
@@ -180,7 +180,7 @@ class TestExportLists:
 
     def test_middleware_exports(self):
         """Verify middleware __init__.py exports correct items"""
-        from backend.app import middleware
+        from app import middleware
 
         # Check __all__ is defined
         assert hasattr(middleware, '__all__'), (
@@ -205,7 +205,7 @@ class TestExportLists:
 
     def test_services_exports(self):
         """Verify services __init__.py exports correct items"""
-        from backend.app import services
+        from app import services
 
         # Check __all__ is defined
         assert hasattr(services, '__all__'), (
