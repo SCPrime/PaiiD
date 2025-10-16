@@ -51,7 +51,13 @@ class CircuitBreaker:
 
     def record_failure(self):
         """Record failed call - increment counter and potentially open circuit"""
-        self.failure_count += 1
+        # If we're in HALF_OPEN, reset count to allow gradual recovery
+        if self.state == 'HALF_OPEN':
+            self.failure_count = 1  # Gradual recovery: start with 1 failure instead of keeping full count
+            logger.info(f"[Circuit Breaker] HALF_OPEN test failed - resetting to 1 failure for gradual recovery")
+        else:
+            self.failure_count += 1
+
         self.last_failure_time = datetime.now()
 
         if self.failure_count >= self.failure_threshold:
@@ -100,7 +106,7 @@ class NewsAggregator:
             self.providers.append(provider)
             self.circuit_breakers[provider.get_provider_name()] = CircuitBreaker(
                 failure_threshold=3,
-                cooldown_seconds=60
+                cooldown_seconds=30  # Tuned: 60s→30s for faster recovery
             )
             logger.info("[OK] Finnhub provider initialized")
         except Exception as e:
@@ -111,7 +117,7 @@ class NewsAggregator:
             self.providers.append(provider)
             self.circuit_breakers[provider.get_provider_name()] = CircuitBreaker(
                 failure_threshold=3,
-                cooldown_seconds=60
+                cooldown_seconds=30  # Tuned: 60s→30s for faster recovery
             )
             logger.info("[OK] Alpha Vantage provider initialized")
         except Exception as e:
@@ -122,7 +128,7 @@ class NewsAggregator:
             self.providers.append(provider)
             self.circuit_breakers[provider.get_provider_name()] = CircuitBreaker(
                 failure_threshold=3,
-                cooldown_seconds=60
+                cooldown_seconds=30  # Tuned: 60s→30s for faster recovery
             )
             logger.info("[OK] Polygon provider initialized")
         except Exception as e:
