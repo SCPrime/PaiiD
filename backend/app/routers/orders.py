@@ -240,7 +240,7 @@ class ExecRequest(BaseModel):
         return v
 
 @router.post("/trading/execute")
-@limiter.limit("1000/minute" if settings.TESTING else "10/minute")  # Bypass rate limit in tests
+@limiter.limit("10/minute")  # Strict: 10 order executions per minute max
 async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer)):
     if not req.requestId:
         raise HTTPException(status_code=400, detail="requestId required")

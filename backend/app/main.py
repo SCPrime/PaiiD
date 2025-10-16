@@ -55,9 +55,14 @@ app = FastAPI(
 )
 
 # Configure rate limiting (Phase 3: Bulletproof Reliability)
-from .middleware.rate_limit import limiter, custom_rate_limit_exceeded_handler
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
+# Skip rate limiting in test environment to avoid middleware conflicts with TestClient
+if not settings.TESTING:
+    from .middleware.rate_limit import limiter, custom_rate_limit_exceeded_handler
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
+    print("[OK] Rate limiting enabled", flush=True)
+else:
+    print("[TEST MODE] Rate limiting disabled for tests", flush=True)
 
 # Initialize scheduler, cache, and streaming on startup
 @app.on_event("startup")
