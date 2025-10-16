@@ -77,7 +77,7 @@ export default function UserProfileDropdown() {
         >
           {initials}
         </div>
-        <div style={{ textAlign: 'left', display: 'none', '@media (min-width: 640px)': { display: 'block' } }}>
+        <div className="user-info">
           <div style={{ fontSize: '14px', fontWeight: 600, lineHeight: 1.2 }}>
             {displayName}
           </div>
@@ -205,6 +205,17 @@ export default function UserProfileDropdown() {
       )}
 
       <style jsx>{`
+        .user-info {
+          text-align: left;
+          display: none;
+        }
+
+        @media (min-width: 640px) {
+          .user-info {
+            display: block;
+          }
+        }
+
         @keyframes fadeIn {
           from {
             opacity: 0;
