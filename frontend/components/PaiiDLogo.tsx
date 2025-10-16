@@ -3,9 +3,11 @@
 import { useChat } from './ChatContext';
 
 interface PaiiDLogoProps {
-  size?: 'small' | 'medium' | 'large' | 'xlarge';
+  size?: 'small' | 'medium' | 'large' | 'xlarge' | 'custom';
+  customFontSize?: number;
   showSubtitle?: boolean;
   style?: React.CSSProperties;
+  onClick?: () => void;
 }
 
 const sizeMap = {
@@ -13,15 +15,18 @@ const sizeMap = {
   medium: 42,
   large: 64,
   xlarge: 96,
+  custom: 32, // fallback if customFontSize not provided
 };
 
 export default function PaiiDLogo({
   size = 'medium',
+  customFontSize,
   showSubtitle = false,
-  style = {}
+  style = {},
+  onClick
 }: PaiiDLogoProps) {
   const { openChat } = useChat();
-  const fontSize = sizeMap[size];
+  const fontSize = size === 'custom' && customFontSize ? customFontSize : sizeMap[size];
 
   return (
     <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', ...style }}>
@@ -55,7 +60,7 @@ export default function PaiiDLogo({
           a
         </span>
         <span
-          onClick={openChat}
+          onClick={onClick || openChat}
           style={{
             background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
             WebkitBackgroundClip: 'text',

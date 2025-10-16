@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback, memo } from 'react';
 import * as d3 from 'd3';
 import { useWindowDimensions, useIsMobile } from '../hooks/useBreakpoint';
+import PaiiDLogo from './PaiiDLogo';
 
 export interface Workflow {
   id: string;
