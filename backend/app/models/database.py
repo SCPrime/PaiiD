@@ -16,12 +16,21 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)  # bcrypt hash
+    full_name = Column(String(255), nullable=True)
+
+    # Role-based access control
+    role = Column(String(50), default="personal_only", nullable=False, index=True)  # owner, beta_tester, personal_only
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+
+    # Legacy broker integration
     alpaca_account_id = Column(String(100), unique=True, nullable=True, index=True)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    last_login_at = Column(DateTime, nullable=True)
 
     # Preferences (stored as JSON for flexibility)
     # Example: {
@@ -35,9 +44,70 @@ class User(Base):
     # Relationships
     strategies = relationship("Strategy", back_populates="user", cascade="all, delete-orphan")
     trades = relationship("Trade", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
+    activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<User(id={self.id}, email={self.email})>"
+        return f"<User(id={self.id}, email={self.email}, role={self.role})>"
+
+
+class UserSession(Base):
+    """User session tracking for JWT tokens"""
+    __tablename__ = "user_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Token identifiers (JTI - JWT Token ID)
+    access_token_jti = Column(String(100), unique=True, nullable=False, index=True)
+    refresh_token_jti = Column(String(100), unique=True, nullable=False, index=True)
+
+    # Session metadata
+    expires_at = Column(DateTime, nullable=False, index=True)  # Refresh token expiry
+    last_activity_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Audit trail
+    ip_address = Column(String(45), nullable=True)  # IPv6 max length
+    user_agent = Column(String(500), nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationship
+    user = relationship("User", back_populates="sessions")
+
+    def __repr__(self):
+        return f"<UserSession(id={self.id}, user_id={self.user_id}, expires={self.expires_at})>"
+
+
+class ActivityLog(Base):
+    """Comprehensive activity log for owner dashboard"""
+    __tablename__ = "activity_log"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Activity classification
+    action_type = Column(String(50), nullable=False, index=True)  # login, trade_execute, strategy_create, etc.
+    resource_type = Column(String(50), nullable=True, index=True)  # trade, strategy, portfolio, etc.
+    resource_id = Column(Integer, nullable=True)  # ID of the affected resource
+
+    # Details (flexible JSON for action-specific data)
+    # Example: {"symbol": "AAPL", "quantity": 10, "side": "buy", "price": 175.50}
+    details = Column(JSON, default=dict, nullable=False)
+
+    # Audit trail
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+
+    # Timestamp
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Relationship
+    user = relationship("User", back_populates="activity_logs")
+
+    def __repr__(self):
+        return f"<ActivityLog(id={self.id}, user_id={self.user_id}, action={self.action_type}, timestamp={self.timestamp})>"
 
 
 class Strategy(Base):
