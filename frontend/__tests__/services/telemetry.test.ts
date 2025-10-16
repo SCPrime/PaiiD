@@ -2,6 +2,7 @@ import { telemetry } from '../../services/telemetry'
 
 describe('TelemetryService', () => {
   beforeEach(() => {
+    telemetry.enable()  // Enable telemetry for tests
     telemetry.clear()
   })
 
@@ -28,12 +29,12 @@ describe('TelemetryService', () => {
   })
 
   test('tracks clicks', () => {
-    telemetry.trackClick('user-1', 'beta', 'Button', 'submit-btn', { extra: 'data' })
+    telemetry.trackClick('user-1', 'beta', 'Button', 'submit-btn')
 
     const events = telemetry.exportEvents()
     expect(events).toHaveLength(1)
-    expect(events[0].action).toBe('click')
-    expect(events[0].metadata?.elementId).toBe('submit-btn')
+    expect(events[0].action).toBe('button_click')
+    expect(events[0].metadata?.buttonName).toBe('submit-btn')
   })
 
   test('tracks errors', () => {
@@ -43,11 +44,11 @@ describe('TelemetryService', () => {
     const events = telemetry.exportEvents()
     expect(events).toHaveLength(1)
     expect(events[0].action).toBe('error')
-    expect(events[0].metadata?.error).toBe('Test error')
+    expect(events[0].metadata?.message).toBe('Test error')
   })
 
   test('tracks form submissions', () => {
-    telemetry.trackFormSubmit('user-1', 'beta', 'TradeForm', 'trade-form', true, { symbol: 'AAPL' })
+    telemetry.trackFormSubmit('user-1', 'beta', 'TradeForm', { formId: 'trade-form', success: true, symbol: 'AAPL' })
 
     const events = telemetry.exportEvents()
     expect(events).toHaveLength(1)
