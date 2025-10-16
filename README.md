@@ -135,8 +135,7 @@ PaiiD/
 │   │   └── api/
 │   │       └── proxy/[...path].ts  # Backend API proxy
 │   ├── package.json
-│   ├── tsconfig.json
-│   └── vercel.json                 # Vercel deployment config
+│   └── tsconfig.json
 ├── backend/
 │   ├── main.py                     # FastAPI application
 │   ├── requirements.txt

@@ -520,7 +520,7 @@ curl https://paiid-backend.onrender.com/api/news/market
    - Watch for any user-reported issues
 
 4. **Test All 10 Workflows in Browser** (if not done yet)
-   - Open: https://frontend-scprimes-projects.vercel.app
+   - Open: https://paiid-frontend.onrender.com
    - Click through each stage
    - Verify data loads correctly
 
@@ -548,7 +548,7 @@ curl https://paiid-backend.onrender.com/api/news/market
 
 | Service | URL | Status |
 |---------|-----|--------|
-| **Frontend** | https://frontend-scprimes-projects.vercel.app | ✅ UP |
+| **Frontend** | https://paiid-frontend.onrender.com | ✅ UP |
 | **Backend API** | https://paiid-backend.onrender.com | ✅ UP |
 | **Health Check** | https://paiid-backend.onrender.com/api/health | ✅ UP |
 | **API Docs** | https://paiid-backend.onrender.com/docs | ✅ UP |
@@ -564,7 +564,7 @@ curl https://paiid-backend.onrender.com/api/health
 curl https://paiid-backend.onrender.com/api/market/indices
 
 # Frontend Status
-curl -I https://frontend-scprimes-projects.vercel.app
+curl -I https://paiid-frontend.onrender.com
 
 # Run All Connection Tests
 bash test-all-connections.sh

@@ -10,6 +10,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Frontend: https://paiid-frontend.onrender.com (Render)
 - Backend: https://paiid-backend.onrender.com (Render)
 
+**⚠️ IMPORTANT - Vercel Decommissioned (October 2025):**
+All Vercel deployments have been permanently deleted. DO NOT use any Vercel URLs:
+- ❌ frontend-scprimes-projects.vercel.app (DELETED)
+- ❌ ai-trader-snowy.vercel.app (DELETED)
+- ❌ paiid-snowy.vercel.app (DELETED)
+
+Only use Render URLs listed above. See `VERCEL_DECOMMISSIONED.md` for details.
+
 ## Architecture
 
 ### Monorepo Structure
@@ -225,13 +233,14 @@ npm run test:ci      # CI mode with coverage
 
 ## Deployment
 
-### Frontend (Render)
+### Frontend (Render - Production Platform)
 - Auto-deploys from `main` branch via Docker
 - Root Directory: `frontend`
 - Runtime: Docker (uses `Dockerfile` with Next.js standalone build)
 - Docker Command: `node server.js` (from standalone output)
 - Environment Variables: Set in Render dashboard (NEXT_PUBLIC_API_TOKEN, NEXT_PUBLIC_ANTHROPIC_API_KEY)
-- URL: https://paiid-frontend.onrender.com
+- Production URL: https://paiid-frontend.onrender.com
+- **Note:** Previously used Vercel, migrated to Render October 2025. All Vercel URLs deleted.
 
 ### Backend (Render)
 - Auto-deploys from `main` branch
