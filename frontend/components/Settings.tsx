@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { Settings as SettingsIcon, Users, Palette, Shield, Database, Activity, Save, AlertTriangle, CheckCircle2, ToggleLeft, ToggleRight, FileText, Bell, TrendingUp, Lock, BookOpen, Clock, Target } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Palette, Shield, Database, Activity, Save, AlertTriangle, CheckCircle2, ToggleLeft, ToggleRight, FileText, Bell, Lock, BookOpen, Clock, Target } from 'lucide-react';
 import TradingJournal from './TradingJournal';
 import RiskDashboard from './RiskDashboard';
 import SchedulerSettings from './SchedulerSettings';
@@ -9,7 +9,7 @@ import ApprovalQueue from './ApprovalQueue';
 import KillSwitchToggle from './KillSwitchToggle';
 import { getCurrentUser, getUserAnalytics, clearUserData } from '../lib/userManagement';
 import toast from 'react-hot-toast';
-import { useIsMobile, useBreakpoint } from '../hooks/useBreakpoint';
+import { useIsMobile } from '../hooks/useBreakpoint';
 
 interface User {
   id: string;
@@ -64,7 +64,6 @@ interface SettingsProps {
 
 export default function Settings({ isOpen, onClose }: SettingsProps) {
   const isMobile = useIsMobile();
-  const breakpoint = useBreakpoint();
   const currentUserData = getCurrentUser();
   const [currentUser] = useState({
     id: currentUserData?.userId || 'owner-001',
@@ -99,7 +98,6 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   const [telemetryData, setTelemetryData] = useState<TelemetryData[]>([]);
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
@@ -274,7 +272,6 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   const updateSetting = <K extends keyof SettingsData>(key: K, value: SettingsData[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
     setHasUnsavedChanges(true);
-    setSaveSuccess(false);
   };
 
   const handleSaveSettings = async () => {
@@ -287,12 +284,10 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
     setIsSaving(false);
     setHasUnsavedChanges(false);
-    setSaveSuccess(true);
     setSaveMessage('Settings saved successfully!');
 
     setTimeout(() => {
       setSaveMessage('');
-      setSaveSuccess(false);
     }, 3000);
   };
 
@@ -309,7 +304,6 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     };
     setSettings(defaultSettings);
     setHasUnsavedChanges(true);
-    setSaveSuccess(false);
   };
 
   const toggleUserStatus = (userId: string) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, AlertTriangle, DollarSign } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 
 interface PendingTrade {
   id: string;

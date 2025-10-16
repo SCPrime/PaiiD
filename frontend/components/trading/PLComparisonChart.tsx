@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { createChart, IChartApi, ISeriesApi, LineData } from 'lightweight-charts';
+import { createChart, IChartApi, LineData } from 'lightweight-charts';
 import type { TheoreticalPayoff, PLComparison, PositionTracking, PLViewMode } from '@/types/pnl';
 
 /**
@@ -333,7 +333,7 @@ function renderPreTradeView(container: HTMLDivElement, payoff: TheoreticalPayoff
 /**
  * Render live position view (theoretical vs actual)
  */
-function renderLivePositionView(container: HTMLDivElement, position: PositionTracking) {
+function renderLivePositionView(container: HTMLDivElement, _position: PositionTracking) {
   // For live view, show simple P&L comparison bars
   // In production, render side-by-side payoff curves
   const mockData = `
@@ -350,7 +350,7 @@ function renderLivePositionView(container: HTMLDivElement, position: PositionTra
 /**
  * Render post-trade analysis view
  */
-function renderPostTradeView(container: HTMLDivElement, comparison: PLComparison) {
+function renderPostTradeView(container: HTMLDivElement, _comparison: PLComparison) {
   // Render bar chart showing theoretical vs actual breakdown
   const mockData = `
     <div class="flex items-center justify-center h-full">

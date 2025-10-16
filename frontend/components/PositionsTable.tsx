@@ -34,6 +34,7 @@ export default function PositionsTable() {
         throw new Error(`Positions failed: ${res.status} ${text}`);
       }
       const data = await res.json();
+      // eslint-disable-next-line no-console
       console.log('API response data:', data);
 
       // Accept either {positions:[...]} or plain array
@@ -60,6 +61,7 @@ export default function PositionsTable() {
         };
       });
 
+      // eslint-disable-next-line no-console
       console.log('Enhanced positions:', enhanced);
       setPositions(enhanced);
       setLastRefreshed(new Date().toLocaleTimeString());
@@ -282,7 +284,7 @@ export default function PositionsTable() {
               No Positions
             </div>
             <div style={{ fontSize: '14px', color: theme.colors.textMuted }}>
-              You don't have any open positions yet.
+              You don&apos;t have any open positions yet.
             </div>
           </div>
         </Card>

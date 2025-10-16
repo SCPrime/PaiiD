@@ -31,7 +31,7 @@ interface NewsItem {
 }
 
 export default function MorningRoutine() {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [_currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [systemChecks] = useState<SystemCheck[]>([
     { name: 'API Connection', status: 'pass', message: 'Connected to Alpaca' },
@@ -284,7 +284,7 @@ export default function MorningRoutine() {
             gap: theme.spacing.sm,
           }}>
             <Calendar style={{ width: '20px', height: '20px', color: accentColor }} />
-            Today's Economic Calendar
+            Today&apos;s Economic Calendar
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.md }}>
             {todaysNews.map((item, index) => (

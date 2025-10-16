@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 /**
  * AI-Powered Strategy Builder
  * Natural language strategy generation with visual editing
@@ -14,7 +14,7 @@ import {
   Trash2,
   Edit3,
   AlertCircle,
-  TrendingUp,
+
   Shield,
   Target,
   Brain,
@@ -24,7 +24,7 @@ import {
   Award,
   BarChart3,
 } from 'lucide-react';
-import { GlassCard, GlassButton, GlassInput, GlassBadge } from './GlassmorphicComponents';
+import { GlassCard, GlassButton, GlassBadge } from './GlassmorphicComponents';
 import { theme } from '../styles/theme';
 import { claudeAI } from '../lib/aiAdapter';
 import StockLookup from './StockLookup';
@@ -124,7 +124,7 @@ export default function StrategyBuilderAI() {
         throw new Error(`Failed to fetch templates: ${response.status}`);
       }
 
-      const data = await response.json();
+      const _data = await response.json();
       setTemplates(data.templates || []);
       setUserRiskTolerance(data.user_risk_tolerance || 50);
     } catch (err: any) {
@@ -156,7 +156,7 @@ export default function StrategyBuilderAI() {
         throw new Error(`Failed to clone template: ${response.status}`);
       }
 
-      const data = await response.json();
+      const _data = await response.json();
       toast.success(`Template "${template.name}" cloned successfully!`);
 
       // Refresh saved strategies or add to local state
@@ -832,7 +832,7 @@ export default function StrategyBuilderAI() {
                           WebkitBoxOrient: 'vertical',
                         }}
                       >
-                        "{strategy.aiPrompt}"
+                        &quot;{strategy.aiPrompt}&quot;
                       </p>
                     )}
 

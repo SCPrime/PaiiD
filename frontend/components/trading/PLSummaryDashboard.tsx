@@ -23,7 +23,7 @@ export default function PLSummaryDashboard() {
     fetchSummaryStats(timeframe);
   }, [timeframe]);
 
-  const fetchSummaryStats = async (period: string) => {
+  const fetchSummaryStats = async (_period: string) => {
     setLoading(true);
     try {
       // In production, fetch from API

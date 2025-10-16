@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { Shield, AlertTriangle, TrendingDown, DollarSign, Percent, Clock, Activity } from 'lucide-react';
-import { Card, Button } from './ui';
+import { Shield, AlertTriangle, TrendingDown, DollarSign, Percent } from 'lucide-react';
+import { Card } from './ui';
 import { theme } from '../styles/theme';
 import { alpaca } from '../lib/alpaca';
 

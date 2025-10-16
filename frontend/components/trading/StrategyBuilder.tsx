@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { validateStrategy } from '@/strategies/validator';
-import type { Strategy, ValidationResult, ValidationError, ValidationWarning } from '@/strategies/schema';
+import type { Strategy, ValidationResult } from '@/strategies/schema';
 
 /**
  * Strategy Builder Component

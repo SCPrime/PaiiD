@@ -67,7 +67,7 @@ const IndicatorPanel: React.FC<IndicatorPanelProps> = ({
 
   const getBBSignal = (bb: typeof indicators.bollingerBands): { color: string; signal: string } => {
     if (!bb) return { color: theme.textMuted, signal: 'N/A' };
-    const { currentPrice, upper, lower, middle } = bb;
+    const { currentPrice, upper, lower, middle: _middle } = bb;
     if (currentPrice >= upper) return { color: theme.danger, signal: 'Overbought' };
     if (currentPrice <= lower) return { color: theme.primary, signal: 'Oversold' };
     return { color: theme.warning, signal: 'Neutral' };

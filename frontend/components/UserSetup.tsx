@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Rocket, User, Mail, Users, Info, ChevronLeft, ChevronRight, ArrowRight, Target, DollarSign, TrendingUp, BookOpen, Clock, Zap, Save, X, CheckCircle, Activity, Search, Book, AlertCircle, BarChart3, Bell } from 'lucide-react';
+import { User, Mail, Users, Info, ChevronLeft, ChevronRight, ArrowRight, Target, DollarSign, TrendingUp, BookOpen, Clock, Zap, Save, X, CheckCircle, Activity, Search, Book, AlertCircle, BarChart3, Bell } from 'lucide-react';
 import { createUser } from '../lib/userManagement';
 import { GlassCard, GlassButton, GlassInput } from './GlassmorphicComponents';
 import { theme } from '../styles/theme';
@@ -506,7 +506,7 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
                     zIndex: 100,
                     boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
                   }}>
-                    Your morning routine is the workflow you'll follow each trading day. Select steps in the order you want to complete them. This helps establish consistent habits and ensures you don't miss critical steps.
+                    Your morning routine is the workflow you&apos;ll follow each trading day. Select steps in the order you want to complete them. This helps establish consistent habits and ensures you don&apos;t miss critical steps.
                   </div>
                 )}
               </div>
@@ -1093,7 +1093,7 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
                 color: '#64748b',
                 margin: 0,
               }}>
-                Let's set up your trading account
+                Let&apos;s set up your trading account
               </p>
             </div>
           )}

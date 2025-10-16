@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { TrendingUp, Check, AlertCircle, Loader2, ChevronDown, Save, BookmarkPlus, Trash2, Search } from "lucide-react";
+import { TrendingUp, Check, AlertCircle, ChevronDown, Save, BookmarkPlus, Trash2, Search } from "lucide-react";
 import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
 import ConfirmDialog from "./ConfirmDialog";
@@ -88,6 +88,7 @@ export default function ExecuteTradeForm() {
     if (pendingNavigation && pendingNavigation.workflow === 'execute-trade' && pendingNavigation.tradeData) {
       const { tradeData } = pendingNavigation;
 
+      // eslint-disable-next-line no-console
       console.log('[ExecuteTradeForm] Pre-filling form with trade data:', tradeData);
 
       // Pre-fill form fields

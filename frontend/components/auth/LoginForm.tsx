@@ -131,7 +131,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
       </button>
 
       <div style={{ textAlign: 'center', fontSize: '14px', color: '#94a3b8' }}>
-        Don't have an account?{' '}
+        Don&apos;t have an account?{' '}
         <button
           type="button"
           onClick={onSwitchToRegister}

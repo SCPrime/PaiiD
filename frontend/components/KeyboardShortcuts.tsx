@@ -2,7 +2,6 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import { useState } from 'react';
 import { Keyboard, X } from 'lucide-react';
 import { theme } from '../styles/theme';
-import { Button } from './ui';
 
 interface KeyboardShortcutsProps {
   onOpenTrade?: () => void;

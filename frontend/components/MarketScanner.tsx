@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { Search, TrendingUp, TrendingDown, Zap, RefreshCw, Filter, Star } from 'lucide-react';
+import { Search, RefreshCw } from 'lucide-react';
 import { Card, Button, Input, Select } from './ui';
 import { theme } from '../styles/theme';
 import { useIsMobile } from '../hooks/useBreakpoint';

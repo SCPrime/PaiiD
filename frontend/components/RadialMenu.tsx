@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState, useMemo, useCallback, memo } from 'react';
+import { useEffect, useRef, useState, useMemo, memo } from 'react';
 import * as d3 from 'd3';
 import { useWindowDimensions, useIsMobile } from '../hooks/useBreakpoint';
-import PaiiDLogo from './PaiiDLogo';
 
 export interface Workflow {
   id: string;
@@ -34,8 +33,8 @@ export const workflows: Workflow[] = [
 function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkflow, compact }: RadialMenuProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const [hoveredWorkflow, setHoveredWorkflow] = useState<Workflow | null>(null);
-  const [showAIChat, setShowAIChat] = useState(false);
+  const [_hoveredWorkflow, setHoveredWorkflow] = useState<Workflow | null>(null);
+  const [_showAIChat, setShowAIChat] = useState(false);
   const [marketData, setMarketData] = useState({
     dow: { value: 0, change: 0, symbol: 'DJI' },
     nasdaq: { value: 0, change: 0, symbol: 'COMP' }

@@ -464,7 +464,7 @@ export default function AIRecommendations() {
           }}>
             <div style={{ fontSize: '48px', marginBottom: theme.spacing.md }}>🎯</div>
             <div style={{ fontSize: '16px' }}>
-              Click "Generate Recommendations" to get AI-powered trading suggestions
+              Click &quot;Generate Recommendations&quot; to get AI-powered trading suggestions
             </div>
           </div>
         </Card>

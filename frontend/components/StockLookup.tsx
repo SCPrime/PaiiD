@@ -46,7 +46,7 @@ const StockLookup: React.FC<StockLookupProps> = ({
   showNews = false,
   enableAIAnalysis = true,
   onSymbolSelect,
-  onAIAnalysisClick,
+  onAIAnalysisClick: _onAIAnalysisClick,
   initialSymbol = ''
 }) => {
   const [symbol, setSymbol] = useState(initialSymbol);

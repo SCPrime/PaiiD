@@ -21,6 +21,9 @@ import { theme } from '../styles/theme';
 import { claudeAI, UserPreferences } from '../lib/aiAdapter';
 import { createUser } from '../lib/userManagement';
 import { useChat } from './ChatContext';
+import dynamic from 'next/dynamic';
+
+const UserSetup = dynamic(() => import('./UserSetup'), { ssr: false });
 
 interface Message {
   role: 'user' | 'assistant';
@@ -94,7 +97,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
     setMessages([
       {
         role: 'assistant',
-        content: `Hi! I'm your AI trading assistant. I'll help you set up your PaiiD account.\n\nFirst, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
+        content: `Hi! I&apos;m your AI trading assistant. I'll help you set up your PaiiD account.\n\nFirst, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
       },
     ]);
   };
@@ -130,7 +133,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
           ...prev,
           {
             role: 'assistant',
-            content: `Got it! Now let's set up your trading preferences.\n\nTell me about your trading goals. For example:\n\n• "I want to day-trade tech stocks with $25K, focusing on momentum"\n• "I'm interested in swing trading with $5K, moderate risk"\n• "I want to learn options trading with $1000"\n\nWhat are your goals?`,
+            content: `Got it! Now let's set up your trading preferences.\n\nTell me about your trading goals. For example:\n\n• "I want to day-trade tech stocks with $25K, focusing on momentum"\n• "I&apos;m interested in swing trading with $5K, moderate risk"\n• "I want to learn options trading with $1000"\n\nWhat are your goals?`,
           },
         ]);
         return;
@@ -166,7 +169,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
           ...prev,
           {
             role: 'assistant',
-            content: `${email ? 'Great! ' : ''}Now let's set up your trading preferences.\n\nTell me about your trading goals. For example:\n\n• "I want to day-trade tech stocks with $25K, focusing on momentum"\n• "I'm interested in swing trading with $5K, moderate risk"\n• "I want to learn options trading with $1000"\n\nWhat are your goals?`,
+            content: `${email ? 'Great! ' : ''}Now let's set up your trading preferences.\n\nTell me about your trading goals. For example:\n\n• "I want to day-trade tech stocks with $25K, focusing on momentum"\n• "I&apos;m interested in swing trading with $5K, moderate risk"\n• "I want to learn options trading with $1000"\n\nWhat are your goals?`,
           },
         ]);
       } else if (conversationStep === 'trading') {
@@ -187,7 +190,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
           ...prev,
           {
             role: 'assistant',
-            content: `I'm having trouble understanding. Could you try rephrasing your trading goals? For example: "I want to trade stocks with $10K, moderate risk, swing trading style."`,
+            content: `I&apos;m having trouble understanding. Could you try rephrasing your trading goals? For example: "I want to trade stocks with $10K, moderate risk, swing trading style."`,
           },
         ]);
       } else {
@@ -209,7 +212,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
     if (!extractedPrefs) return;
 
     // Create user with collected name, email (if provided), and trading preferences
-    const user = createUser(
+    const _user = createUser(
       userName || 'PaiiD User', // Use collected name or default
       userEmail || undefined, // Use collected email or undefined
       undefined, // No test group
@@ -383,7 +386,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
                 letterSpacing: '0.5px',
               }}
             >
-              Let's set up your trading account
+              Let&apos;s set up your trading account
             </p>
 
             {/* Hint about clicking "aii" */}
@@ -698,7 +701,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               Review Your Setup
             </h2>
             <p style={{ color: theme.colors.textMuted }}>
-              Here's what we configured for {userName || 'you'}
+              Here&apos;s what we configured for {userName || 'you'}
             </p>
           </div>
 
@@ -867,7 +870,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
 
   // Manual setup - use the full UserSetup component
   if (setupMethod === 'manual') {
-    const UserSetup = require('./UserSetup').default;
+    
     return <UserSetup onComplete={onComplete} />;
   }
 

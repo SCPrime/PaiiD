@@ -7,18 +7,11 @@
 import { useState, useEffect } from 'react';
 import {
   Sun,
-  Clock,
   Calendar,
   Sparkles,
-  Plus,
-  Trash2,
-  Edit3,
-  Play,
-  Pause,
   AlertCircle,
   CheckCircle,
   XCircle,
-  DollarSign,
   Bell,
   Loader2,
   Brain,
@@ -157,7 +150,7 @@ export default function MorningRoutineAI() {
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduleTime, setScheduleTime] = useState('07:00');
   const [scheduleFrequency, setScheduleFrequency] = useState<'daily' | 'weekdays' | 'custom'>('weekdays');
-  const [customDays, setCustomDays] = useState<string[]>(['mon', 'tue', 'wed', 'thu', 'fri']);
+  const [_customDays, _setCustomDays] = useState<string[]>(['mon', 'tue', 'wed', 'thu', 'fri']);
   const [selectedSteps, setSelectedSteps] = useState<string[]>(['briefing', 'recommendations', 'portfolio']);
 
   // AI Routine Builder
@@ -691,7 +684,7 @@ Provide:
           {/* Today's News */}
           <GlassCard>
             <h3 style={{ fontSize: '18px', fontWeight: '600', color: theme.colors.text, marginBottom: theme.spacing.md }}>
-              Today's Market Events
+              Today&apos;s Market Events
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
               {todaysNews.map((news, idx) => (
@@ -985,7 +978,7 @@ Provide:
                 }}
               >
                 <p style={{ color: theme.colors.text, fontWeight: '600', marginBottom: theme.spacing.sm }}>
-                  Good morning! Here's your {scheduleTime} briefing:
+                  Good morning! Here&apos;s your {scheduleTime} briefing:
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.xs, color: theme.colors.textMuted, fontSize: '14px' }}>
                   {selectedSteps.map((stepId) => {

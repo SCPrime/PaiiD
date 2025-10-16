@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { BookOpen, Plus, Edit2, Trash2, Filter, Search, TrendingUp, TrendingDown, Tag } from 'lucide-react';
-import { Card, Button, Input, Select } from './ui';
+import { BookOpen, Plus, Edit2, Trash2, Tag } from 'lucide-react';
+import { Card, Button, Input } from './ui';
 import { theme } from '../styles/theme';
 
 interface JournalEntry {

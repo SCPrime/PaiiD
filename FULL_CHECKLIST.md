@@ -1689,7 +1689,7 @@ Would you like me to:
 - Tradier streaming for real-time market data
 - Options chains and multi-leg orders (via Tradier)
 - Greeks calculation and IV analysis
-- ML prediction engine (NO machine learning yet)
+- ML prediction engine (NO machine learning yet)yes
 - Auto-trading automation
 - PostgreSQL database persistence
 - Redis production setup

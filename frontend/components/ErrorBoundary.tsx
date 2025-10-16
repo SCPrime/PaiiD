@@ -62,6 +62,7 @@ export class ErrorBoundary extends Component<Props, State> {
               componentStack: errorInfo.componentStack,
             },
           });
+          // eslint-disable-next-line no-console
           console.log('[ErrorBoundary] Error sent to Sentry');
         }
       }).catch(() => {
@@ -136,7 +137,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 lineHeight: '1.6',
               }}
             >
-              We encountered an unexpected error. This has been logged and we'll look into it.
+              We encountered an unexpected error. This has been logged and we&apos;ll look into it.
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (

@@ -1,9 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { BarChart3, TrendingDown, DollarSign, Percent, Calendar, Target, Award, Download } from 'lucide-react';
+import { BarChart3, TrendingDown, DollarSign, Percent, Target, Award, Download } from 'lucide-react';
 import { Card, Button } from './ui';
 import { theme } from '../styles/theme';
-import { alpaca } from '../lib/alpaca';
 import TradingViewChart from './TradingViewChart';
 import { useIsMobile, useBreakpoint } from '../hooks/useBreakpoint';
 import html2canvas from 'html2canvas';
@@ -121,7 +120,7 @@ function PortfolioSummaryCard() {
         {/* Day P&L */}
         <div>
           <p style={{ fontSize: '12px', color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.xs} 0` }}>
-            Today's P&L
+            Today&apos;s P&L
           </p>
           <p style={{
             fontSize: '24px',
@@ -203,7 +202,7 @@ export default function Analytics() {
 
   // Mobile responsiveness
   const isMobile = useIsMobile();
-  const breakpoint = useBreakpoint();
+  const _breakpoint = useBreakpoint();
 
   // Chart refs for export functionality
   const equityChartRef = useRef<HTMLDivElement>(null);

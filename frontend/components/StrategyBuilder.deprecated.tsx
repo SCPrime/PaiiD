@@ -228,7 +228,7 @@ export default function StrategyBuilder() {
               border: `1px solid ${theme.colors.border}`,
             }}>
               <AlertTriangle style={{ width: '48px', height: '48px', margin: '0 auto 12px', color: theme.colors.textMuted }} />
-              <p style={{ margin: 0 }}>No conditions added yet. Click "Add Condition" to start.</p>
+              <p style={{ margin: 0 }}>No conditions added yet. Click &quot;Add Condition&quot; to start.</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.md }}>
@@ -371,7 +371,7 @@ export default function StrategyBuilder() {
               border: `1px solid ${theme.colors.border}`,
             }}>
               <AlertTriangle style={{ width: '48px', height: '48px', margin: '0 auto 12px', color: theme.colors.textMuted }} />
-              <p style={{ margin: 0 }}>No actions added yet. Click "Add Action" to define what happens.</p>
+              <p style={{ margin: 0 }}>No actions added yet. Click &quot;Add Action&quot; to define what happens.</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.md }}>

@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { X, Copy, BarChart3, TrendingUp, Shield, Target } from 'lucide-react';
-import { GlassCard, GlassButton, GlassInput } from './GlassmorphicComponents';
+import { GlassButton } from './GlassmorphicComponents';
 import { theme } from '../styles/theme';
 import toast from 'react-hot-toast';
 import { useIsMobile } from '../hooks/useBreakpoint';
@@ -109,7 +109,7 @@ export default function TemplateCustomizationModal({
         throw new Error(`Failed to clone template: ${response.status}`);
       }
 
-      const data = await response.json();
+      const _data = await response.json();
       toast.success(`Strategy "${customName}" created successfully!`);
       onClose();
       if (onCloneSuccess) onCloneSuccess();
@@ -399,7 +399,7 @@ export default function TemplateCustomizationModal({
                 color: theme.colors.info,
               }}
             >
-              You've made custom changes to this template
+              You&apos;ve made custom changes to this template
             </div>
           )}
         </div>

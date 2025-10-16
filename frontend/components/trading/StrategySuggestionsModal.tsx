@@ -127,7 +127,7 @@ export default function StrategySuggestionsModal({
               <div className="text-4xl mb-4">🤔</div>
               <div className="text-lg text-slate-300 mb-2">No suitable strategies found</div>
               <div className="text-sm text-slate-400">
-                Current market conditions don't align well with available strategies.
+                Current market conditions don&apos;t align well with available strategies.
                 Try adjusting your filters or checking back later.
               </div>
             </div>

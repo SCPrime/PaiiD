@@ -28,6 +28,7 @@ export default function StatusBar() {
       }
 
       const data = await res.json();
+      // eslint-disable-next-line no-console
       console.log('Health check response:', data);
 
       setStatus('healthy');
@@ -44,10 +45,12 @@ export default function StatusBar() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line no-console
     console.log('StatusBar mounted, starting health checks');
     fetchHealth();
     const interval = setInterval(fetchHealth, 30000);
     return () => {
+      // eslint-disable-next-line no-console
       console.log('StatusBar unmounting, clearing interval');
       clearInterval(interval);
     };

@@ -1,27 +1,27 @@
 import { useState, useEffect } from 'react';
 import Split from 'react-split';
 import RadialMenu, { workflows, Workflow } from '../components/RadialMenu';
-import PositionsTable from '../components/PositionsTable';
+
 import MorningRoutineAI from '../components/MorningRoutineAI';
 import ExecuteTradeForm from '../components/ExecuteTradeForm';
-import ResearchDashboardSimple from '../components/ResearchDashboardSimple';
+
 import AIRecommendations from '../components/AIRecommendations';
-import ProposalReview from '../components/trading/ProposalReview';
+
 import Settings from '../components/Settings';
-import UserSetup from '../components/UserSetup';
+
 import UserSetupAI from '../components/UserSetupAI';
 import NewsReview from '../components/NewsReview';
 import ActivePositions from '../components/ActivePositions';
 import StrategyBuilderAI from '../components/StrategyBuilderAI';
 import Backtesting from '../components/Backtesting';
 import Analytics from '../components/Analytics';
-import TradingJournal from '../components/TradingJournal';
-import RiskDashboard from '../components/RiskDashboard';
+
+
 import MarketScanner from '../components/MarketScanner';
-import { isUserLoggedIn, initializeSession } from '../lib/userManagement';
+import { initializeSession } from '../lib/userManagement';
 import AIChat from '../components/AIChat';
 import KeyboardShortcuts from '../components/KeyboardShortcuts';
-import { useBreakpoint, useIsMobile } from '../hooks/useBreakpoint';
+import { useIsMobile } from '../hooks/useBreakpoint';
 
 export default function Dashboard() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>('');
@@ -33,7 +33,7 @@ export default function Dashboard() {
 
   // Detect mobile viewport
   const isMobile = useIsMobile();
-  const breakpoint = useBreakpoint();
+  
 
   // Check if user is set up on mount
   useEffect(() => {
