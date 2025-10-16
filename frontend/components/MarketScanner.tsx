@@ -207,6 +207,48 @@ export default function MarketScanner() {
         </Button>
       </div>
 
+      {/* Direct Symbol Search */}
+      <Card style={{ marginBottom: theme.spacing.md, padding: theme.spacing.md }}>
+        <div style={{ marginBottom: theme.spacing.xs }}>
+          <p style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.textMuted, margin: `0 0 ${theme.spacing.sm} 0` }}>
+            Search Stock Symbol
+          </p>
+          <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+            <Input
+              type="text"
+              placeholder="Enter symbol (e.g., AAPL, TSLA, SPY)"
+              value={selectedSymbol}
+              onChange={(e) => setSelectedSymbol(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && selectedSymbol.trim()) {
+                  setShowResearch(true);
+                }
+              }}
+              style={{ flex: 1 }}
+            />
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => {
+                if (selectedSymbol.trim()) {
+                  setShowResearch(true);
+                }
+              }}
+              disabled={!selectedSymbol.trim()}
+              style={{ width: isMobile ? '120px' : 'auto' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
+                <Search size={18} />
+                Research
+              </div>
+            </Button>
+          </div>
+          <p style={{ fontSize: '12px', color: theme.colors.textMuted, marginTop: theme.spacing.xs }}>
+            Research any stock with detailed analysis, charts, and AI insights
+          </p>
+        </div>
+      </Card>
+
       {/* Scan Type Selection */}
       <Card style={{ marginBottom: theme.spacing.md, padding: theme.spacing.md }}>
         <div style={{ marginBottom: theme.spacing.md }}>
