@@ -7,6 +7,7 @@ Tests for SQLAlchemy models: User, Strategy, Trade, Performance, EquitySnapshot
 import pytest
 from datetime import datetime
 from app.models.database import User, Strategy, Trade, Performance, EquitySnapshot
+from conftest import TEST_PASSWORD_HASH  # Import test password hash
 
 
 class TestUserModel:
@@ -16,6 +17,7 @@ class TestUserModel:
         """Test creating a new user"""
         user = User(
             email="user@example.com",
+            password_hash=TEST_PASSWORD_HASH,
             alpaca_account_id="ACCOUNT123",
             preferences={"risk_tolerance": "moderate", "position_size": 0.02}
         )
@@ -31,22 +33,34 @@ class TestUserModel:
         assert user.updated_at is not None
 
     def test_user_without_email(self, test_db):
-        """Test creating user without email (nullable)"""
-        user = User(preferences={})
+        """Test creating user with minimal required fields"""
+        user = User(
+            email="minimal@example.com",
+            password_hash=TEST_PASSWORD_HASH,
+            preferences={}
+        )
         test_db.add(user)
         test_db.commit()
         test_db.refresh(user)
 
         assert user.id is not None
-        assert user.email is None
+        assert user.email == "minimal@example.com"
 
     def test_user_unique_email(self, test_db):
         """Test email uniqueness constraint"""
-        user1 = User(email="same@example.com", preferences={})
+        user1 = User(
+            email="same@example.com",
+            password_hash=TEST_PASSWORD_HASH,
+            preferences={}
+        )
         test_db.add(user1)
         test_db.commit()
 
-        user2 = User(email="same@example.com", preferences={})
+        user2 = User(
+            email="same@example.com",
+            password_hash=TEST_PASSWORD_HASH,
+            preferences={}
+        )
         test_db.add(user2)
 
         with pytest.raises(Exception):  # IntegrityError
@@ -386,11 +400,19 @@ class TestModelConstraints:
 
     def test_user_email_unique_constraint(self, test_db):
         """Test unique constraint on email"""
-        user1 = User(email="unique@example.com", preferences={})
+        user1 = User(
+            email="unique@example.com",
+            password_hash=TEST_PASSWORD_HASH,
+            preferences={}
+        )
         test_db.add(user1)
         test_db.commit()
 
-        user2 = User(email="unique@example.com", preferences={})
+        user2 = User(
+            email="unique@example.com",
+            password_hash=TEST_PASSWORD_HASH,
+            preferences={}
+        )
         test_db.add(user2)
 
         with pytest.raises(Exception):
