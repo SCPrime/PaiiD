@@ -38,6 +38,23 @@ interface UserSetupAIProps {
 export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
   const { openChat } = useChat();
   const [setupMethod, setSetupMethod] = useState<'manual' | 'ai' | null>(null);
+
+  // Detect glow style from URL parameter
+  const [glowStyle, setGlowStyle] = useState<'radial' | 'halo'>('radial');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const glow = params.get('glow');
+      if (glow === 'halo') {
+        setGlowStyle('halo');
+        console.info('[UserSetupAI] 🎨 Using HALO glow style');
+      } else {
+        setGlowStyle('radial');
+        console.info('[UserSetupAI] 🎨 Using RADIAL glow style (default)');
+      }
+    }
+  }, []);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -296,64 +313,80 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               position: 'relative',
             }}
           >
-            {/* Line 1: Large PaiiD Logo (72px) */}
-            <h1
+            {/* Line 1: Large PaiiD Logo (72px) with Dynamic Glow Cloud */}
+            <div
+              onClick={openChat}
               style={{
                 fontSize: '72px',
                 fontWeight: 'bold',
                 margin: 0,
                 letterSpacing: '4px',
                 lineHeight: '1',
+                display: 'inline-flex',
+                alignItems: 'center',
+                ...(glowStyle === 'halo' ? LOGO_STYLES.HALO_GLOW : LOGO_STYLES.RADIAL_GLOW),
+                boxShadow: LOGO_STYLES.GLOW.initial,
+                animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                transform: 'scale(1) translateY(0)',
               }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.1) translateY(-4px)';
+                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.hover;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.initial;
+              }}
+              title="Click to open AI assistant"
             >
               <span
                 style={{
-                  background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+                  background: LOGO_STYLES.GRADIENT.teal,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                  filter: 'drop-shadow(0 4px 8px rgba(26, 117, 96, 0.4))',
+                  filter: LOGO_STYLES.DROP_SHADOW.standard,
                 }}
               >
                 P
               </span>
               <span
-                onClick={openChat}
                 style={{
                   background: LOGO_STYLES.GRADIENT.teal,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  textShadow: LOGO_STYLES.GLOW.initial,
-                  animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
+                  backgroundClip: 'text',
+                }}
+              >
+                a
+              </span>
+              <span
+                style={{
+                  background: LOGO_STYLES.GRADIENT.teal,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  filter: LOGO_STYLES.DROP_SHADOW.standard,
                   fontStyle: 'italic',
-                  cursor: 'pointer',
                   display: 'inline-block',
-                  position: 'relative',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1) translateY(-4px)';
-                  e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.hover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                  e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.initial;
                 }}
               >
                 aii
               </span>
               <span
                 style={{
-                  background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+                  background: LOGO_STYLES.GRADIENT.teal,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                  filter: 'drop-shadow(0 4px 8px rgba(26, 117, 96, 0.4))',
+                  filter: LOGO_STYLES.DROP_SHADOW.standard,
                 }}
               >
                 D
               </span>
-            </h1>
+            </div>
 
             {/* Line 2: Primary Subtitle (18px) */}
             <p
@@ -378,7 +411,19 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               {' '}Investment Dashboard
             </p>
 
-            {/* Line 3: Secondary Subtitle (14px) */}
+            {/* Line 3: Workflow Subtitle (14px) */}
+            <p
+              style={{
+                fontSize: '14px',
+                color: '#94a3b8',
+                margin: 0,
+                letterSpacing: '0.5px',
+              }}
+            >
+              10 Stage Workflow
+            </p>
+
+            {/* Line 4: Secondary Subtitle (14px) */}
             <p
               style={{
                 fontSize: '14px',
@@ -994,7 +1039,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
     <>
       {null}
       {/* CSS Animations */}
-      <style jsx>{`
+      <style jsx global>{`
         ${LOGO_ANIMATION_KEYFRAME}
 
         ${particles.map((particle) => `

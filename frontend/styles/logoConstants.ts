@@ -2,27 +2,26 @@
  * Shared PaiiD Logo Style Constants
  *
  * Single source of truth for logo styling across all components.
- * Based on the STRONG glow effect from RadialMenu "open screen".
+ * FIXED: Using filter:drop-shadow() instead of textShadow for gradient text compatibility
  */
 
 export const LOGO_STYLES = {
   /**
-   * Text shadow glow effects for the "aii" letters
-   * Values: Increased by 75% for stronger visual impact
-   * Original: 40px/80px/120px → New: 70px/140px/210px
+   * Box-shadow glow effects for the "aii" letters (works with gradient text!)
+   * Applied to wrapper div, not the text itself (text is transparent via background-clip)
    */
   GLOW: {
     // Base glow (animation start/end state)
-    base: '0 0 52px rgba(16, 185, 129, 0.9), 0 0 105px rgba(16, 185, 129, 0.6), 0 0 158px rgba(16, 185, 129, 0.4)',
+    base: '0 0 30px rgba(16, 185, 129, 0.9), 0 0 60px rgba(16, 185, 129, 0.6), 0 0 90px rgba(16, 185, 129, 0.4)',
 
     // Peak glow (animation mid-point, brightest)
-    peak: '0 0 88px rgba(16, 185, 129, 1), 0 0 175px rgba(16, 185, 129, 0.8), 0 0 263px rgba(16, 185, 129, 0.5)',
+    peak: '0 0 50px rgba(16, 185, 129, 1), 0 0 100px rgba(16, 185, 129, 0.8), 0 0 150px rgba(16, 185, 129, 0.6)',
 
     // Initial inline style (before animation)
-    initial: '0 0 70px rgba(16, 185, 129, 1), 0 0 140px rgba(16, 185, 129, 0.7), 0 0 210px rgba(16, 185, 129, 0.4)',
+    initial: '0 0 40px rgba(16, 185, 129, 1), 0 0 80px rgba(16, 185, 129, 0.7), 0 0 120px rgba(16, 185, 129, 0.5)',
 
     // Hover state (enhanced glow)
-    hover: '0 0 88px rgba(16, 185, 129, 1), 0 0 175px rgba(16, 185, 129, 0.8), 0 0 263px rgba(16, 185, 129, 0.5)',
+    hover: '0 0 50px rgba(16, 185, 129, 1), 0 0 100px rgba(16, 185, 129, 0.8), 0 0 150px rgba(16, 185, 129, 0.6)',
   },
 
   /**
@@ -50,18 +49,37 @@ export const LOGO_STYLES = {
     timing: 'ease-in-out',
     iteration: 'infinite',
   },
+
+  /**
+   * Full PaiiD Logo Wrapper Styles (toggled via URL parameter)
+   */
+  RADIAL_GLOW: {
+    background: 'radial-gradient(ellipse, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0.25) 40%, rgba(16, 185, 129, 0.10) 70%, rgba(16, 185, 129, 0.02) 90%, transparent 100%)',
+    borderRadius: '50px',
+    padding: '8px 16px',
+    backdropFilter: 'none',
+  },
+  HALO_GLOW: {
+    background: 'rgba(16, 185, 129, 0.4)',
+    borderRadius: '12px',
+    padding: '6px 14px',
+    backdropFilter: 'blur(8px)',
+  },
 };
 
 /**
  * CSS keyframe animation string for use in styled-jsx
+ * FIXED: Animates box-shadow property (applied to wrapper div, not text)
  */
 export const LOGO_ANIMATION_KEYFRAME = `
   @keyframes glow-ai {
     0%, 100% {
-      text-shadow: ${LOGO_STYLES.GLOW.base};
+      box-shadow: ${LOGO_STYLES.GLOW.base};
+      transform: scale(1);
     }
     50% {
-      text-shadow: ${LOGO_STYLES.GLOW.peak};
+      box-shadow: ${LOGO_STYLES.GLOW.peak};
+      transform: scale(1.02);
     }
   }
 `;
@@ -72,16 +90,27 @@ export const LOGO_ANIMATION_KEYFRAME = `
 export const LOGO_ANIMATION_CSS = `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`;
 
 /**
- * Common inline styles for "aii" span
+ * Common inline styles for "aii" wrapper div (contains the glow)
+ * The glow is applied to the wrapper, not the text itself
+ */
+export const AII_WRAPPER_STYLES = {
+  display: 'inline-block',
+  borderRadius: '8px',
+  boxShadow: LOGO_STYLES.GLOW.initial,
+  animation: LOGO_ANIMATION_CSS,
+  cursor: 'pointer',
+  transition: 'all 0.3s ease',
+};
+
+/**
+ * Common inline styles for "aii" span (the gradient text inside the wrapper)
  */
 export const AII_SPAN_STYLES = {
   background: LOGO_STYLES.GRADIENT.teal,
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
-  textShadow: LOGO_STYLES.GLOW.initial,
-  animation: LOGO_ANIMATION_CSS,
-  cursor: 'pointer',
-  transition: 'transform 0.2s ease',
+  fontStyle: 'italic',
+  display: 'inline-block',
 };
 
 /**

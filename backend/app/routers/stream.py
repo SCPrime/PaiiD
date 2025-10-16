@@ -289,13 +289,17 @@ async def stream_market_indices(_=Depends(require_bearer), cache: CacheService =
                 for symbol, key in [("$DJI", "dow"), ("COMP:GIDS", "nasdaq")]:
                     summary = cache.get(f"summary:{symbol}")
                     if summary and key in indices:
-                        open_price = summary.get("open", 0)
-                        current_price = indices[key]["last"]
-                        if open_price > 0:
-                            change = current_price - open_price
-                            change_percent = (change / open_price) * 100
-                            indices[key]["change"] = round(change, 2)
-                            indices[key]["changePercent"] = round(change_percent, 2)
+                        # Convert open_price to float (Tradier sends strings)
+                        try:
+                            open_price = float(summary.get("open", 0))
+                            current_price = float(indices[key]["last"])
+                            if open_price > 0:
+                                change = current_price - open_price
+                                change_percent = (change / open_price) * 100
+                                indices[key]["change"] = round(change, 2)
+                                indices[key]["changePercent"] = round(change_percent, 2)
+                        except (ValueError, TypeError) as e:
+                            logger.debug(f"⚠️ Could not calculate change for {key}: {e}")
 
                 # Send update if data changed
                 if indices:

@@ -420,37 +420,49 @@ export default function Dashboard() {
           }}>
             <div style={{ fontSize: '48px', fontWeight: '900', lineHeight: '1', marginBottom: '8px' }}>
               <span style={{
-                background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.4))'
-              }}>P</span>
-              <span
-                onClick={() => setAiChatOpen(true)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.15) translateY(-2px)';
-                  e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.hover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                  e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.initial;
-                }}
-                style={{
                 background: LOGO_STYLES.GRADIENT.teal,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                textShadow: LOGO_STYLES.GLOW.initial,
+                filter: LOGO_STYLES.DROP_SHADOW.standard
+              }}>P</span>
+              <div
+                onClick={() => setAiChatOpen(true)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.15) translateY(-2px)';
+                  e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.hover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                  e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.initial;
+                }}
+                style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(16, 185, 129, 0.35)',
+                padding: 0,
+                width: 'fit-content',
+                height: 'fit-content',
+                borderRadius: '8px',
+                boxShadow: LOGO_STYLES.GLOW.initial,
                 animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
                 cursor: 'pointer',
-                display: 'inline-block',
                 transition: 'all 0.3s ease',
-                position: 'relative'
-              }}>aii</span>
+              }}>
+                <span style={{
+                  background: LOGO_STYLES.GRADIENT.teal,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: LOGO_STYLES.DROP_SHADOW.standard,
+                  fontStyle: 'italic',
+                  display: 'inline-block',
+                }}>aii</span>
+              </div>
               <span style={{
-                background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+                background: LOGO_STYLES.GRADIENT.teal,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.4))'
+                filter: LOGO_STYLES.DROP_SHADOW.standard
               }}>D</span>
             </div>
             <div style={{

@@ -95,7 +95,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
     };
   }, [isMobile]);
 
-  // Fetch live market data from backend (with market hours detection)
+  // ⚡ REAL-TIME STREAMING: SSE for instant market data (no 60s delay!)
   useEffect(() => {
     // Load cached market data on mount
     const loadCachedData = () => {
@@ -105,90 +105,81 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
           const parsed = JSON.parse(cached);
           // Only use cache if it's less than 24 hours old
           if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-            console.info('[RadialMenu] Loading cached market data from localStorage');
+            console.info('[RadialMenu] 💾 Loading cached market data from localStorage');
             setMarketData(parsed.data);
           }
         }
       } catch (error) {
-        console.error('[RadialMenu] Failed to load cached market data:', error);
+        console.error('[RadialMenu] ❌ Failed to load cached market data:', error);
       }
     };
 
-    const fetchMarketStatus = async () => {
-      try {
-        const response = await fetch(`/api/proxy/api/market/status`);
-        if (response.ok) {
-          const data = await response.json();
-          setMarketStatus({
-            is_open: data.is_open,
-            state: data.state,
-            description: data.description || 'Market status unknown'
-          });
-          return data.is_open;
-        }
-      } catch (error) {
-        console.error('[RadialMenu] Failed to fetch market status:', error);
-        // Assume open on error to allow data fetching
-        return true;
-      }
-      return false;
-    };
-
-    const fetchMarketData = async () => {
-      try {
-        // Check market status first
-        const isOpen = await fetchMarketStatus();
-
-        // Only fetch indices if market is open
-        if (!isOpen) {
-          console.info('[RadialMenu] Market closed, displaying cached values');
-          return;
-        }
-
-        const response = await fetch(`/api/proxy/api/market/indices`);
-
-        if (response.ok) {
-          const data = await response.json();
-
-          const newData = {
-            dow: {
-              value: data.dow?.last || 0,
-              change: data.dow?.changePercent || 0,
-              symbol: 'DJI'
-            },
-            nasdaq: {
-              value: data.nasdaq?.last || 0,
-              change: data.nasdaq?.changePercent || 0,
-              symbol: 'COMP'
-            }
-          };
-
-          setMarketData(newData);
-
-          // Cache the data in localStorage
-          try {
-            localStorage.setItem('paiid-market-data', JSON.stringify({
-              data: newData,
-              timestamp: Date.now()
-            }));
-            console.info('[RadialMenu] Cached market data to localStorage');
-          } catch (error) {
-            console.error('[RadialMenu] Failed to cache market data:', error);
-          }
-        }
-      } catch (error) {
-        console.error('[RadialMenu] Failed to fetch market data:', error);
-      }
-    };
-
-    // Load cached data immediately
     loadCachedData();
 
-    // Fetch fresh data
-    fetchMarketData();
-    const interval = setInterval(fetchMarketData, 60000); // Refresh every minute
+    // Connect to Server-Sent Events (SSE) stream for REAL-TIME updates
+    console.info('[RadialMenu] 📡 Connecting to SSE stream for real-time market data...');
 
-    return () => clearInterval(interval);
+    const eventSource = new EventSource('/api/proxy/stream/market-indices');
+
+    eventSource.addEventListener('indices_update', (e) => {
+      const data = JSON.parse(e.data);
+      console.info('[RadialMenu] 📊 Received live market data:', data);
+
+      const newData = {
+        dow: {
+          value: data.dow?.last || 0,
+          change: data.dow?.changePercent || 0,
+          symbol: 'DJI'
+        },
+        nasdaq: {
+          value: data.nasdaq?.last || 0,
+          change: data.nasdaq?.changePercent || 0,
+          symbol: 'COMP'
+        }
+      };
+
+      setMarketData(newData);
+
+      // Cache the data in localStorage
+      try {
+        localStorage.setItem('paiid-market-data', JSON.stringify({
+          data: newData,
+          timestamp: Date.now()
+        }));
+      } catch (error) {
+        console.error('[RadialMenu] ❌ Failed to cache market data:', error);
+      }
+    });
+
+    eventSource.addEventListener('heartbeat', (e) => {
+      const data = JSON.parse(e.data);
+      console.debug('[RadialMenu] 💓 SSE heartbeat received:', data.timestamp);
+    });
+
+    eventSource.addEventListener('error', (e) => {
+      console.error('[RadialMenu] ❌ SSE connection error:', e);
+      eventSource.close();
+
+      // Fallback: fetch once if SSE fails
+      console.warn('[RadialMenu] ⚠️ Falling back to single fetch (SSE unavailable)');
+      fetch('/api/proxy/api/market/indices')
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data) {
+            setMarketData({
+              dow: { value: data.dow?.last || 0, change: data.dow?.changePercent || 0, symbol: 'DJI' },
+              nasdaq: { value: data.nasdaq?.last || 0, change: data.nasdaq?.changePercent || 0, symbol: 'COMP' }
+            });
+          }
+        })
+        .catch(err => console.error('[RadialMenu] ❌ Fallback fetch failed:', err));
+    });
+
+    // Cleanup: close SSE connection on unmount
+    return () => {
+      console.info('[RadialMenu] 🔌 Closing SSE connection');
+      eventSource.close();
+    };
   }, []);
 
   // Debug logging for Fast Refresh loop detection + logo styles
@@ -729,34 +720,50 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
           {/* Main Logo */}
           <div style={{ fontSize: fontSizes.headerLogo, fontWeight: '900', lineHeight: '1', marginBottom: '12px' }}>
             <span style={{
-              background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+              background: LOGO_STYLES.GRADIENT.teal,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.6))'
+              filter: LOGO_STYLES.DROP_SHADOW.standard
             }}>P</span>
-            <span
+            <div
               onClick={() => setShowAIChat(true)}
               style={{
-                background: LOGO_STYLES.GRADIENT.teal,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: LOGO_STYLES.GLOW.initial,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(16, 185, 129, 0.35)',
+                padding: 0,
+                width: 'fit-content',
+                height: 'fit-content',
+                borderRadius: '8px',
+                boxShadow: LOGO_STYLES.GLOW.initial,
                 animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
                 cursor: 'pointer',
-                transition: 'transform 0.2s ease',
+                transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'scale(1.1)';
+                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.hover;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.initial;
               }}
-            >aii</span>
+            >
+              <span style={{
+                background: LOGO_STYLES.GRADIENT.teal,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: LOGO_STYLES.DROP_SHADOW.standard,
+                fontStyle: 'italic',
+                display: 'inline-block',
+              }}>aii</span>
+            </div>
             <span style={{
-              background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+              background: LOGO_STYLES.GRADIENT.teal,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.6))'
+              filter: LOGO_STYLES.DROP_SHADOW.standard
             }}>D</span>
           </div>
 
@@ -807,34 +814,50 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
             whiteSpace: 'nowrap'
           }}>
             <span style={{
-              background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+              background: LOGO_STYLES.GRADIENT.teal,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.6))'
+              filter: LOGO_STYLES.DROP_SHADOW.standard
             }}>P</span>
-            <span
+            <div
               onClick={() => setShowAIChat(true)}
               style={{
-                background: LOGO_STYLES.GRADIENT.teal,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: LOGO_STYLES.GLOW.initial,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(16, 185, 129, 0.35)',
+                padding: 0,
+                width: 'fit-content',
+                height: 'fit-content',
+                borderRadius: '8px',
+                boxShadow: LOGO_STYLES.GLOW.initial,
                 animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
                 cursor: 'pointer',
-                transition: 'transform 0.2s ease',
+                transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'scale(1.1)';
+                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.hover;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.initial;
               }}
-            >aii</span>
+            >
+              <span style={{
+                background: LOGO_STYLES.GRADIENT.teal,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: LOGO_STYLES.DROP_SHADOW.standard,
+                fontStyle: 'italic',
+                display: 'inline-block',
+              }}>aii</span>
+            </div>
             <span style={{
-              background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+              background: LOGO_STYLES.GRADIENT.teal,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.6))'
+              filter: LOGO_STYLES.DROP_SHADOW.standard
             }}>D</span>
           </div>
         </div>

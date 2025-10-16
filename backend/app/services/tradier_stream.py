@@ -231,16 +231,23 @@ class TradierStreamService:
 
             # Handle different message types
             if msg_type == "quote":
-                # Quote update (bid/ask)
+                # Quote update (bid/ask) - convert strings to floats (Tradier sends "NaN")
+                try:
+                    bid = float(data.get("bid", 0)) if data.get("bid") not in [None, "NaN", ""] else None
+                    ask = float(data.get("ask", 0)) if data.get("ask") not in [None, "NaN", ""] else None
+                except (ValueError, TypeError):
+                    bid = None
+                    ask = None
+
                 quote_data = {
                     "symbol": symbol,
-                    "bid": data.get("bid"),
-                    "ask": data.get("ask"),
+                    "bid": bid,
+                    "ask": ask,
                     "bidsize": data.get("bidsize"),
                     "asksize": data.get("asksize"),
                     "mid": (
-                        (data.get("bid", 0) + data.get("ask", 0)) / 2
-                        if data.get("bid") and data.get("ask")
+                        (bid + ask) / 2
+                        if bid is not None and ask is not None
                         else None
                     ),
                     "timestamp": datetime.now().isoformat(),

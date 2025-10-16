@@ -9,6 +9,7 @@ interface PaiiDLogoProps {
   showSubtitle?: boolean;
   style?: React.CSSProperties;
   onClick?: () => void;
+  glowStyle?: 'radial' | 'halo'; // Toggle between glow effects
 }
 
 const sizeMap = {
@@ -16,7 +17,7 @@ const sizeMap = {
   medium: 42,
   large: 64,
   xlarge: 96,
-  custom: 32, // fallback if customFontSize not provided
+  custom: 32,
 };
 
 export default function PaiiDLogo({
@@ -24,35 +25,56 @@ export default function PaiiDLogo({
   customFontSize,
   showSubtitle = false,
   style = {},
-  onClick
+  onClick,
+  glowStyle = 'radial' // Default to radial glow cloud
 }: PaiiDLogoProps) {
   const { openChat } = useChat();
   const fontSize = size === 'custom' && customFontSize ? customFontSize : sizeMap[size];
 
+  const currentGlowStyle = glowStyle === 'halo' ? LOGO_STYLES.HALO_GLOW : LOGO_STYLES.RADIAL_GLOW;
+
   return (
     <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', ...style }}>
+      {/* Entire PaiiD wrapped in glowing container */}
       <div
+        onClick={onClick || openChat}
         style={{
           fontSize: `${fontSize}px`,
           fontWeight: 'bold',
           letterSpacing: size === 'xlarge' ? '4px' : size === 'large' ? '2px' : '1px',
           lineHeight: '1',
+          display: 'inline-flex',
+          alignItems: 'center',
+          ...currentGlowStyle,
+          boxShadow: LOGO_STYLES.GLOW.initial,
+          animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
         }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1) translateY(-2px)';
+          e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.hover;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1) translateY(0)';
+          e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.initial;
+        }}
+        title="Click to open AI assistant"
       >
         <span
           style={{
-            background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+            background: LOGO_STYLES.GRADIENT.teal,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            filter: 'drop-shadow(0 2px 4px rgba(26, 117, 96, 0.4))',
+            filter: LOGO_STYLES.DROP_SHADOW.standard,
           }}
         >
           P
         </span>
         <span
           style={{
-            background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+            background: LOGO_STYLES.GRADIENT.teal,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -61,39 +83,25 @@ export default function PaiiDLogo({
           a
         </span>
         <span
-          onClick={onClick || openChat}
           style={{
             background: LOGO_STYLES.GRADIENT.teal,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            textShadow: LOGO_STYLES.GLOW.initial,
-            animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
+            filter: LOGO_STYLES.DROP_SHADOW.standard,
             fontStyle: 'italic',
-            cursor: 'pointer',
             display: 'inline-block',
-            position: 'relative',
-            transition: 'all 0.3s ease',
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.15) translateY(-2px)';
-            e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.hover;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1) translateY(0)';
-            e.currentTarget.style.textShadow = LOGO_STYLES.GLOW.initial;
-          }}
-          title="Click to open AI assistant"
         >
           aii
         </span>
         <span
           style={{
-            background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+            background: LOGO_STYLES.GRADIENT.teal,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            filter: 'drop-shadow(0 2px 4px rgba(26, 117, 96, 0.4))',
+            filter: LOGO_STYLES.DROP_SHADOW.standard,
           }}
         >
           D

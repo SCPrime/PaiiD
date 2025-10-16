@@ -5,6 +5,7 @@ import { User, Mail, Users, Info, ChevronLeft, ChevronRight, ArrowRight, Target,
 import { createUser } from '../lib/userManagement';
 import { GlassCard, GlassButton, GlassInput } from './GlassmorphicComponents';
 import { theme } from '../styles/theme';
+import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
 
 interface UserSetupProps {
   onComplete: () => void;
@@ -1037,41 +1038,49 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
                 fontWeight: 'bold',
                 margin: '0 0 12px 0',
                 letterSpacing: '2px',
+                lineHeight: '1',
               }}>
                 <span style={{
-                  background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+                  background: LOGO_STYLES.GRADIENT.teal,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
+                  filter: LOGO_STYLES.DROP_SHADOW.standard,
                 }}>
                   P
                 </span>
-                <span style={{
-                  background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'rgba(16, 185, 129, 0.35)',
+                  padding: 0,
+                  width: 'fit-content',
+                  height: 'fit-content',
+                  borderRadius: '8px',
+                  boxShadow: LOGO_STYLES.GLOW.initial,
+                  animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
+                  cursor: 'default',
+                  transition: 'all 0.3s ease',
                 }}>
-                  a
-                </span>
-                <span
-                  style={{
-                    background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+                  <span style={{
+                    background: LOGO_STYLES.GRADIENT.teal,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
-                    textShadow: '0 0 20px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.5)',
-                    animation: 'glow-ai 3s ease-in-out infinite',
+                    filter: LOGO_STYLES.DROP_SHADOW.standard,
                     fontStyle: 'italic',
-                  }}
-                >
-                  aii
-                </span>
+                    display: 'inline-block',
+                  }}>
+                    aii
+                  </span>
+                </div>
                 <span style={{
-                  background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+                  background: LOGO_STYLES.GRADIENT.teal,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
+                  filter: LOGO_STYLES.DROP_SHADOW.standard,
                 }}>
                   D
                 </span>
@@ -1356,14 +1365,7 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
 
       {/* CSS Animations */}
       <style jsx>{`
-        @keyframes glow-ai {
-          0%, 100% {
-            text-shadow: 0 0 15px rgba(16, 185, 129, 0.6), 0 0 30px rgba(16, 185, 129, 0.4);
-          }
-          50% {
-            text-shadow: 0 0 25px rgba(16, 185, 129, 0.9), 0 0 50px rgba(16, 185, 129, 0.6), 0 0 75px rgba(16, 185, 129, 0.3);
-          }
-        }
+        ${LOGO_ANIMATION_KEYFRAME}
       `}</style>
     </div>
   );
