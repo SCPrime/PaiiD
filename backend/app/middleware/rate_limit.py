@@ -11,15 +11,30 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi import Request
 from typing import Callable
+import os
+
+# Check if running in test mode
+TESTING = os.getenv("TESTING", "false").lower() == "true"
 
 # Initialize rate limiter with IP-based keying
-limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=["100/minute"],  # Global default: 100 requests per minute per IP
-    storage_uri="memory://",  # Use in-memory storage (can upgrade to Redis for production)
-    strategy="fixed-window",  # Fixed window strategy
-    headers_enabled=True,  # Enable rate limit headers (X-RateLimit-*)
-)
+# In test mode, use extremely high limits to effectively disable rate limiting
+if TESTING:
+    limiter = Limiter(
+        key_func=get_remote_address,
+        default_limits=["100000/minute"],  # Effectively unlimited in tests
+        storage_uri="memory://",
+        strategy="fixed-window",
+        headers_enabled=False,  # Disable headers in test mode
+        enabled=False  # Disable rate limiting entirely in tests
+    )
+else:
+    limiter = Limiter(
+        key_func=get_remote_address,
+        default_limits=["100/minute"],  # Global default: 100 requests per minute per IP
+        storage_uri="memory://",  # Use in-memory storage (can upgrade to Redis for production)
+        strategy="fixed-window",  # Fixed window strategy
+        headers_enabled=True,  # Enable rate limit headers (X-RateLimit-*)
+    )
 
 # Custom rate limit exceeded handler
 async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
