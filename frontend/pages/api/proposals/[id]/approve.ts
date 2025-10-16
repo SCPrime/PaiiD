@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 4. Submit to execution engine
     // 5. Track approval in analytics
 
-    console.log(`Approving proposal: ${id}`);
+    console.info(`Approving proposal: ${id}`);
 
     // Mock approval logic
     await new Promise((resolve) => setTimeout(resolve, 100));

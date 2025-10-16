@@ -251,7 +251,7 @@ export function seedMockTradeData(strategyId: string, userId: string) {
     });
   }
 
-  console.log(`Seeded ${strategyId} with 20 mock trades for user ${userId}`);
+  console.info(`Seeded ${strategyId} with 20 mock trades for user ${userId}`);
 }
 
 /**

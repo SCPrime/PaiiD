@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 3. Track rejection in analytics
     // 4. Optionally notify strategy engine
 
-    console.log(`Rejecting proposal: ${id}`);
+    console.info(`Rejecting proposal: ${id}`);
 
     // Mock rejection logic
     await new Promise((resolve) => setTimeout(resolve, 100));

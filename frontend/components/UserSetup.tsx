@@ -420,7 +420,7 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
         }
       );
 
-      console.log('User created successfully:', user.userId);
+      console.info('User created successfully:', user.userId);
 
       setTimeout(() => {
         onComplete();

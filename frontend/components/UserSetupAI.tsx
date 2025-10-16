@@ -71,7 +71,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
       // Check for Ctrl+Shift+A (Windows/Linux) or Cmd+Shift+A (Mac)
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
         e.preventDefault();
-        console.log('[UserSetupAI] 🔓 Admin bypass activated during onboarding');
+        console.info('[UserSetupAI] 🔓 Admin bypass activated during onboarding');
 
         // Set localStorage flags
         if (typeof window !== 'undefined') {
@@ -227,7 +227,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
       }
     );
 
-    console.log('[UserSetupAI] User created:', {
+    console.info('[UserSetupAI] User created:', {
       name: userName || 'PaiiD User',
       email: userEmail || 'not provided',
       preferences: extractedPrefs,

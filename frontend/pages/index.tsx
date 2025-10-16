@@ -51,7 +51,7 @@ export default function Dashboard() {
       // Check for Ctrl+Shift+A (Windows/Linux) or Cmd+Shift+A (Mac)
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
         e.preventDefault();
-        console.log('[PaiiD] 🔓 Admin bypass activated');
+        console.info('[PaiiD] 🔓 Admin bypass activated');
 
         // Set localStorage flags
         if (typeof window !== 'undefined') {

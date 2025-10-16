@@ -47,10 +47,10 @@ interface NewsItem {
 // Helper function to fetch real market data
 async function fetchLiveMarketData() {
   try {
-    console.log('[MorningRoutine] 🔴 Fetching LIVE market data...');
+    console.info('[MorningRoutine] 🔴 Fetching LIVE market data...');
     const scanner = await fetchUnder4Scanner();
 
-    console.log('[MorningRoutine] ✅ Received live data:', scanner);
+    console.info('[MorningRoutine] ✅ Received live data:', scanner);
 
     return {
       candidates: scanner.candidates || [],
@@ -195,7 +195,7 @@ export default function MorningRoutineAI() {
               : 0,
             buyingPower: parseFloat(accountData.buying_power || accountData.cash || '0'),
           });
-          console.log('[MorningRoutine] ✅ Loaded real portfolio data from API');
+          console.info('[MorningRoutine] ✅ Loaded real portfolio data from API');
         } else {
           // Fallback to user profile if API fails
           const user = getCurrentUser();
@@ -210,7 +210,7 @@ export default function MorningRoutineAI() {
               dayChangePercent: 0,
               buyingPower: amount,
             });
-            console.log('[MorningRoutine] ✅ Loaded portfolio data from user profile');
+            console.info('[MorningRoutine] ✅ Loaded portfolio data from user profile');
           }
         }
       } catch (error) {
@@ -269,9 +269,9 @@ export default function MorningRoutineAI() {
     setError(null);
 
     try {
-      console.log('[MorningRoutine] Generating routine from input:', aiInput);
+      console.info('[MorningRoutine] Generating routine from input:', aiInput);
       const response = await claudeAI.generateMorningRoutine({ wakeTime: '7:00 AM', marketOpen: true, checkNews: true, reviewPositions: true, aiRecommendations: true });
-      console.log('[MorningRoutine] Raw AI response:', response);
+      console.info('[MorningRoutine] Raw AI response:', response);
 
       // Try to parse JSON from the response
       let routine: any = null;
@@ -285,7 +285,7 @@ export default function MorningRoutineAI() {
       if (jsonMatch) {
         try {
           routine = JSON.parse(jsonMatch[0]);
-          console.log('[MorningRoutine] Successfully parsed JSON:', routine);
+          console.info('[MorningRoutine] Successfully parsed JSON:', routine);
         } catch (parseError) {
           console.error('[MorningRoutine] JSON parse error:', parseError);
         }
@@ -293,7 +293,7 @@ export default function MorningRoutineAI() {
 
       // If we couldn't parse JSON, create a simple routine from the response
       if (!routine) {
-        console.log('[MorningRoutine] Could not parse JSON, using fallback with defaults');
+        console.info('[MorningRoutine] Could not parse JSON, using fallback with defaults');
         // Just use default values and keep the selected steps
         alert('AI generated a routine suggestion. Using default schedule settings.');
         setShowAIBuilder(false);
@@ -303,12 +303,12 @@ export default function MorningRoutineAI() {
 
       // Map AI-generated routine to schedule settings with fallbacks
       if (routine.schedule?.startTime) {
-        console.log('[MorningRoutine] Setting schedule time:', routine.schedule.startTime);
+        console.info('[MorningRoutine] Setting schedule time:', routine.schedule.startTime);
         setScheduleTime(routine.schedule.startTime);
       }
 
       if (routine.schedule?.frequency) {
-        console.log('[MorningRoutine] Setting frequency:', routine.schedule.frequency);
+        console.info('[MorningRoutine] Setting frequency:', routine.schedule.frequency);
         setScheduleFrequency(routine.schedule.frequency);
       }
 
@@ -317,7 +317,7 @@ export default function MorningRoutineAI() {
         const stepTypes = routine.steps.map((step: any) => step.type).filter((type: string) =>
           availableSteps.some(s => s.id === type)
         );
-        console.log('[MorningRoutine] Setting step types:', stepTypes);
+        console.info('[MorningRoutine] Setting step types:', stepTypes);
         if (stepTypes.length > 0) {
           setSelectedSteps(stepTypes);
         }
@@ -326,7 +326,7 @@ export default function MorningRoutineAI() {
       setShowAIBuilder(false);
       setAiInput('');
       alert(`AI generated routine: "${routine.name || 'Custom Routine'}"`);
-      console.log('[MorningRoutine] ✅ Routine generated successfully');
+      console.info('[MorningRoutine] ✅ Routine generated successfully');
     } catch (err: any) {
       console.error('[MorningRoutine] Error generating routine:', err);
       setError(err.message || 'Failed to generate routine. Please try again.');

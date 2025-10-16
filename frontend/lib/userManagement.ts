@@ -126,7 +126,7 @@ export function createUser(
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 
   // Track user creation event (in production, send to analytics)
-  console.log('User created:', {
+  console.info('User created:', {
     userId: user.userId,
     testGroup: user.testGroup,
     onboarding: user.onboarding,
@@ -217,7 +217,7 @@ export function startSession(): Session {
   });
 
   // Track session start (in production, send to analytics)
-  console.log('Session started:', {
+  console.info('Session started:', {
     sessionId: session.sessionId,
     userId: user.userId,
     timestamp: now,
@@ -258,7 +258,7 @@ export function updateSessionActivity(action?: string): Session | null {
 
   // Track action (in production, send to analytics)
   if (action) {
-    console.log('User action:', {
+    console.info('User action:', {
       sessionId: session.sessionId,
       userId: session.userId,
       action,
@@ -284,7 +284,7 @@ export function trackPageView(pageName: string): void {
 
   sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(updatedSession));
 
-  console.log('Page view:', {
+  console.info('Page view:', {
     sessionId: session.sessionId,
     userId: session.userId,
     page: pageName,
@@ -301,7 +301,7 @@ export function endSession(): void {
 
   const duration = new Date().getTime() - new Date(session.startedAt).getTime();
 
-  console.log('Session ended:', {
+  console.info('Session ended:', {
     sessionId: session.sessionId,
     userId: session.userId,
     duration: `${Math.floor(duration / 1000)}s`,
@@ -351,7 +351,7 @@ export function initializeSession(): Session | null {
 export function clearUserData(): void {
   localStorage.removeItem(USER_STORAGE_KEY);
   sessionStorage.removeItem(SESSION_STORAGE_KEY);
-  console.log('User data cleared');
+  console.info('User data cleared');
 }
 
 /**

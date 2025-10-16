@@ -162,7 +162,7 @@ class TelemetryService {
         throw new Error(`Telemetry flush failed: ${response.status}`);
       }
 
-      console.log(`[Telemetry] Flushed ${events.length} events`);
+      console.info(`[Telemetry] Flushed ${events.length} events`);
     } catch (error) {
       console.error('[Telemetry] Flush error:', error);
       // Re-add failed events to buffer

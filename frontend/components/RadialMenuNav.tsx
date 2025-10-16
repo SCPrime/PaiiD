@@ -15,7 +15,7 @@ export default function RadialMenuNav({ onWorkflowSelect }: RadialMenuNavProps) 
       if (event.source === iframeRef.current?.contentWindow) {
         if (event.data?.type === 'workflow-selected' && event.data?.workflowId) {
           // eslint-disable-next-line no-console
-          console.log('Radial menu selected:', event.data.workflowId);
+          console.info('Radial menu selected:', event.data.workflowId);
           onWorkflowSelect(event.data.workflowId);
         }
       }

@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 4. Recalculate risk metrics (max_risk, max_profit, breakevens)
     // 5. Extend approval deadline by a few minutes
 
-    console.log(`Repricing proposal: ${id}`);
+    console.info(`Repricing proposal: ${id}`);
 
     // Mock reprice logic - simulate small price change
     const priceChange = (Math.random() - 0.5) * 0.20; // ±$0.10

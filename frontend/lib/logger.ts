@@ -7,6 +7,9 @@
  *   logger.error('API call failed', error);
  */
 
+/* eslint-disable no-console */
+// Console methods are intentionally used in this logging utility
+
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -26,7 +29,7 @@ class Logger {
    */
   info(message: string, data?: LogData): void {
     if (isDevelopment && !isTest) {
-      console.log(this.formatMessage('INFO', message, data));
+      console.info(this.formatMessage('INFO', message, data));
     }
   }
 

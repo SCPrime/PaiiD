@@ -30,7 +30,7 @@ export class ClaudeAI {
    */
   resetConversation(): void {
     this.conversationHistory = [];
-    console.log('[aiAdapter] 🔄 Conversation reset');
+    console.info('[aiAdapter] 🔄 Conversation reset');
   }
 
   /**
@@ -68,7 +68,7 @@ export class ClaudeAI {
       }
     }
     try {
-      console.log('[aiAdapter] Sending chat request to backend via proxy');
+      console.info('[aiAdapter] Sending chat request to backend via proxy');
 
       // Use proxy to avoid CORS and add auth automatically
       const response = await fetch('/api/proxy/claude/chat', {
@@ -91,7 +91,7 @@ export class ClaudeAI {
 
       // Extract text from response content
       if (data.content && typeof data.content === 'string') {
-        console.log('[aiAdapter] ✅ Received response from Claude');
+        console.info('[aiAdapter] ✅ Received response from Claude');
 
         // Add assistant response to conversation history if we used it
         if (typeof messagesOrString === 'string') {
@@ -138,7 +138,7 @@ Please provide a structured morning routine with specific times and activities. 
         2000
       );
 
-      console.log('[aiAdapter] ✅ Morning routine generated successfully');
+      console.info('[aiAdapter] ✅ Morning routine generated successfully');
       return response;
     } catch (error) {
       console.error('[aiAdapter] Failed to generate morning routine:', error);
@@ -180,7 +180,7 @@ Do not include any text outside the JSON object.`;
       }
 
       const preferences = JSON.parse(jsonMatch[0]);
-      console.log('[aiAdapter] ✅ Extracted preferences:', preferences);
+      console.info('[aiAdapter] ✅ Extracted preferences:', preferences);
       return preferences;
     } catch (error) {
       console.error('[aiAdapter] Failed to extract preferences:', error);
@@ -224,7 +224,7 @@ Do not include any text outside the JSON object.`;
       }
 
       const strategy = JSON.parse(jsonMatch[0]);
-      console.log('[aiAdapter] ✅ Generated strategy:', strategy.name);
+      console.info('[aiAdapter] ✅ Generated strategy:', strategy.name);
       return strategy;
     } catch (error) {
       console.error('[aiAdapter] Failed to generate strategy:', error);
@@ -258,7 +258,7 @@ Provide a concise analysis with:
         1500
       );
 
-      console.log('[aiAdapter] ✅ Market analysis completed');
+      console.info('[aiAdapter] ✅ Market analysis completed');
       return response;
     } catch (error) {
       console.error('[aiAdapter] Failed to analyze market:', error);
@@ -282,7 +282,7 @@ Provide a concise analysis with:
       });
 
       if (response.ok) {
-        console.log('[aiAdapter] ✅ Health check passed');
+        console.info('[aiAdapter] ✅ Health check passed');
         return true;
       }
 

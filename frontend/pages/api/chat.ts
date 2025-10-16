@@ -23,7 +23,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid request: messages required' });
     }
 
-    console.log('[Claude Chat API] Proxying to backend:', BACKEND_URL);
+    console.info('[Claude Chat API] Proxying to backend:', BACKEND_URL);
 
     // Call backend Claude endpoint
     const response = await fetch(`${BACKEND_URL}/api/claude/chat`, {
@@ -48,7 +48,7 @@ export default async function handler(
     }
 
     const data = await response.json();
-    console.log('[Claude Chat API] ✅ Response received from backend');
+    console.info('[Claude Chat API] ✅ Response received from backend');
 
     return res.status(200).json(data);
 

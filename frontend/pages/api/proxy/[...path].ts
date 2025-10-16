@@ -9,7 +9,7 @@ if (!API_TOKEN) {
   console.error('[PROXY] ⚠️ API_TOKEN not configured in environment variables');
   console.error('[PROXY] ⚠️ Checked: process.env.API_TOKEN and process.env.NEXT_PUBLIC_API_TOKEN');
 } else {
-  console.log(`[PROXY] ✅ API_TOKEN loaded: ${API_TOKEN.substring(0, 10)}...`);
+  console.info(`[PROXY] ✅ API_TOKEN loaded: ${API_TOKEN.substring(0, 10)}...`);
 }
 
 // Exact endpoints our UI uses (paths without /api prefix - added in URL construction)
@@ -101,7 +101,7 @@ function isAllowedOrigin(req: NextApiRequest): boolean {
 
   // Check if origin is in allowed list
   if (origin && ALLOWED_ORIGINS.has(origin)) {
-    console.log(`[PROXY] ✅ Origin allowed: ${origin}`);
+    console.info(`[PROXY] ✅ Origin allowed: ${origin}`);
     return true;
   }
 
@@ -111,7 +111,7 @@ function isAllowedOrigin(req: NextApiRequest): boolean {
       const refererUrl = new URL(referer);
       const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`;
       if (ALLOWED_ORIGINS.has(refererOrigin)) {
-        console.log(`[PROXY] ✅ Referer allowed: ${refererOrigin}`);
+        console.info(`[PROXY] ✅ Referer allowed: ${refererOrigin}`);
         return true;
       }
     } catch (e) {
@@ -125,14 +125,14 @@ function isAllowedOrigin(req: NextApiRequest): boolean {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Log EVERY request for debugging
-  console.log(`\n[PROXY] ====== NEW REQUEST ======`);
-  console.log(`[PROXY] Method: ${req.method}`);
-  console.log(`[PROXY] URL: ${req.url}`);
-  console.log(`[PROXY] Origin: ${req.headers.origin || 'NONE'}`);
+  console.info(`\n[PROXY] ====== NEW REQUEST ======`);
+  console.info(`[PROXY] Method: ${req.method}`);
+  console.info(`[PROXY] URL: ${req.url}`);
+  console.info(`[PROXY] Origin: ${req.headers.origin || 'NONE'}`);
 
   // CORS preflight - Validate origin first
   if (req.method === "OPTIONS") {
-    console.log(`[PROXY] Handling OPTIONS preflight`);
+    console.info(`[PROXY] Handling OPTIONS preflight`);
     const origin = req.headers.origin;
 
     // Only allow preflight from authorized origins
@@ -152,7 +152,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const originAllowed = isAllowedOrigin(req);
-  console.log(`[PROXY] Origin check result: ${originAllowed ? 'ALLOWED' : 'BLOCKED'}`);
+  console.info(`[PROXY] Origin check result: ${originAllowed ? 'ALLOWED' : 'BLOCKED'}`);
 
   if (!originAllowed) {
     console.error(`[PROXY] ⛔ REJECTING REQUEST WITH 403`);
@@ -167,7 +167,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader("access-control-allow-credentials", "true");
   }
 
-  console.log(`[PROXY] ✅ Origin check passed, proceeding with request`);
+  console.info(`[PROXY] ✅ Origin check passed, proceeding with request`);
 
 
   const parts = (req.query.path as string[]) || [];
@@ -217,15 +217,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (rid) headers["x-request-id"] = rid;
 
   // Enhanced debug logging
-  console.log(`\n[PROXY] ====== New Request ======`);
-  console.log(`[PROXY] Method: ${req.method}`);
-  console.log(`[PROXY] Original URL: ${req.url}`);
-  console.log(`[PROXY] Extracted path: "${path}"`);
-  console.log(`[PROXY] Constructed URL: ${url}`);
-  console.log(`[PROXY] Auth header: Bearer ${API_TOKEN?.substring(0, 8)}...`);
-  console.log(`[PROXY] Backend: ${BACKEND}`);
+  console.info(`\n[PROXY] ====== New Request ======`);
+  console.info(`[PROXY] Method: ${req.method}`);
+  console.info(`[PROXY] Original URL: ${req.url}`);
+  console.info(`[PROXY] Extracted path: "${path}"`);
+  console.info(`[PROXY] Constructed URL: ${url}`);
+  console.info(`[PROXY] Auth header: Bearer ${API_TOKEN?.substring(0, 8)}...`);
+  console.info(`[PROXY] Backend: ${BACKEND}`);
   if (req.method === "POST") {
-    console.log(`[PROXY] Body:`, JSON.stringify(req.body, null, 2));
+    console.info(`[PROXY] Body:`, JSON.stringify(req.body, null, 2));
   }
 
   try {
@@ -238,9 +238,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const text = await upstream.text();
-    console.log(`[PROXY] Response status: ${upstream.status}`);
-    console.log(`[PROXY] Response body: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`);
-    console.log(`[PROXY] ====== End Request ======\n`);
+    console.info(`[PROXY] Response status: ${upstream.status}`);
+    console.info(`[PROXY] Response body: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`);
+    console.info(`[PROXY] ====== End Request ======\n`);
 
     res
       .status(upstream.status)
@@ -250,7 +250,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (err) {
     console.error(`[PROXY] ERROR: ${err}`);
     console.error(`[PROXY] Error details:`, err);
-    console.log(`[PROXY] ====== End Request (ERROR) ======\n`);
+    console.info(`[PROXY] ====== End Request (ERROR) ======\n`);
     res.status(502).json({ error: "Upstream error", detail: String(err) });
   }
 }

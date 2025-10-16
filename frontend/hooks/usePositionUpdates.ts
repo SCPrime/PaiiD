@@ -58,7 +58,7 @@ export interface UsePositionUpdatesOptions {
  *
  * // Use positions in component
  * const totalPL = positions.reduce((sum, p) => sum + p.unrealizedPL, 0);
- * console.log(`Total P&L: $${totalPL.toFixed(2)}`);
+ * console.info(`Total P&L: $${totalPL.toFixed(2)}`);
  */
 export function usePositionUpdates(
   options: UsePositionUpdatesOptions = {}
@@ -86,7 +86,7 @@ export function usePositionUpdates(
 
   const log = useCallback((...args: any[]) => {
     if (debug) {
-      console.log('[usePositionUpdates]', ...args);
+      console.info('[usePositionUpdates]', ...args);
     }
   }, [debug]);
 

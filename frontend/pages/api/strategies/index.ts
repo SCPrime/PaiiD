@@ -133,7 +133,7 @@ async function saveStrategy(
   };
 
   // Mock: Store in database
-  console.log('Saving strategy:', record.strategy_id, 'version:', record.version);
+  console.info('Saving strategy:', record.strategy_id, 'version:', record.version);
 
   return record;
 }

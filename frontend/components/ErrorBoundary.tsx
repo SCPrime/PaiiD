@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
             },
           });
           // eslint-disable-next-line no-console
-          console.log('[ErrorBoundary] Error sent to Sentry');
+          console.info('[ErrorBoundary] Error sent to Sentry');
         }
       }).catch(() => {
         // Sentry not available, skip

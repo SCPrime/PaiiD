@@ -35,7 +35,7 @@ export default function PositionsTable() {
       }
       const data = await res.json();
       // eslint-disable-next-line no-console
-      console.log('API response data:', data);
+      console.info('API response data:', data);
 
       // Accept either {positions:[...]} or plain array
       const rawPositions = Array.isArray(data) ? data : Array.isArray(data?.positions) ? data.positions : [];
@@ -62,7 +62,7 @@ export default function PositionsTable() {
       });
 
       // eslint-disable-next-line no-console
-      console.log('Enhanced positions:', enhanced);
+      console.info('Enhanced positions:', enhanced);
       setPositions(enhanced);
       setLastRefreshed(new Date().toLocaleTimeString());
     } catch (e: any) {

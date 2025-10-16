@@ -68,7 +68,7 @@ export default function StrategyBuilder() {
   };
 
   const saveStrategy = () => {
-    console.log('Saving strategy:', { strategyName, description, conditions, actions });
+    console.info('Saving strategy:', { strategyName, description, conditions, actions });
     alert('Strategy saved successfully!');
   };
 

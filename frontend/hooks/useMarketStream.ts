@@ -55,7 +55,7 @@ export interface UseMarketStreamOptions {
  *
  * // Use prices in component
  * const aaplPrice = prices['AAPL']?.price ?? 0;
- * console.log(`AAPL: $${aaplPrice.toFixed(2)}`);
+ * console.info(`AAPL: $${aaplPrice.toFixed(2)}`);
  */
 export function useMarketStream(
   symbols: string[],
@@ -84,7 +84,7 @@ export function useMarketStream(
 
   const log = useCallback((...args: any[]) => {
     if (debug) {
-      console.log('[useMarketStream]', ...args);
+      console.info('[useMarketStream]', ...args);
     }
   }, [debug]);
 
@@ -305,7 +305,7 @@ export function useMarketStream(
  *
  * @example
  * const { price, connected } = useSymbolPrice('AAPL');
- * console.log(`AAPL: $${(price ?? 0).toFixed(2)}`);
+ * console.info(`AAPL: $${(price ?? 0).toFixed(2)}`);
  */
 export function useSymbolPrice(symbol: string) {
   const { prices, connected, connecting, error } = useMarketStream([symbol]);

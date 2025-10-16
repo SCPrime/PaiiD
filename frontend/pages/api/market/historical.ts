@@ -76,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const params = getAlpacaParams(timeframe as Timeframe);
 
-    console.log('Alpaca keys configured:', {
+    console.info('Alpaca keys configured:', {
       hasKey: !!ALPACA_API_KEY,
       hasSecret: !!ALPACA_API_SECRET,
       keyLength: ALPACA_API_KEY?.length || 0
@@ -89,7 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                          ALPACA_API_KEY.length > 10;
 
     if (!hasValidKeys) {
-      console.log('Using mock data (Alpaca API keys not configured)');
+      console.info('Using mock data (Alpaca API keys not configured)');
 
       // Generate realistic mock data
       const now = Date.now();

@@ -104,7 +104,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
           const parsed = JSON.parse(cached);
           // Only use cache if it's less than 24 hours old
           if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-            console.log('[RadialMenu] Loading cached market data from localStorage');
+            console.info('[RadialMenu] Loading cached market data from localStorage');
             setMarketData(parsed.data);
           }
         }
@@ -140,7 +140,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
         // Only fetch indices if market is open
         if (!isOpen) {
-          console.log('[RadialMenu] Market closed, displaying cached values');
+          console.info('[RadialMenu] Market closed, displaying cached values');
           return;
         }
 
@@ -170,7 +170,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
               data: newData,
               timestamp: Date.now()
             }));
-            console.log('[RadialMenu] Cached market data to localStorage');
+            console.info('[RadialMenu] Cached market data to localStorage');
           } catch (error) {
             console.error('[RadialMenu] Failed to cache market data:', error);
           }
@@ -192,7 +192,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
   // Debug logging for Fast Refresh loop detection
   useEffect(() => {
-    console.log('RadialMenu rendered with selectedWorkflow:', selectedWorkflow);
+    console.info('RadialMenu rendered with selectedWorkflow:', selectedWorkflow);
   }, [selectedWorkflow]);
 
   useEffect(() => {
@@ -453,7 +453,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
           .style('filter', 'url(#hoverGlow)');
       })
       .on('click', (event, d) => {
-        console.log('RadialMenu: Workflow clicked:', d.data.id);
+        console.info('RadialMenu: Workflow clicked:', d.data.id);
         onWorkflowSelect(d.data.id);
       });
 

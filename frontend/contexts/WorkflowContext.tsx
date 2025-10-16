@@ -82,7 +82,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({ children }) 
       new CustomEvent('workflow-navigate', { detail: navigationData })
     );
 
-    console.log('[WorkflowContext] Navigating to:', workflow, data);
+    console.info('[WorkflowContext] Navigating to:', workflow, data);
   };
 
   const navigateToTrade = (tradeData: TradeData) => {
@@ -100,7 +100,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({ children }) 
       new CustomEvent('workflow-navigate', { detail: navigationData })
     );
 
-    console.log('[WorkflowContext] Navigating to Execute Trade:', tradeData);
+    console.info('[WorkflowContext] Navigating to Execute Trade:', tradeData);
   };
 
   const clearPendingNavigation = () => {

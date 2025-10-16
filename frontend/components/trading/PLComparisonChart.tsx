@@ -37,7 +37,7 @@ export default function PLComparisonChart({
     if (mode === 'live-position' && autoRefresh) {
       const interval = setInterval(() => {
         // Trigger refresh - in production, refetch position data
-        console.log('Refreshing live position data...');
+        console.info('Refreshing live position data...');
       }, 5000);
 
       return () => clearInterval(interval);

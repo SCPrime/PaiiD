@@ -25,8 +25,8 @@ export function initSentry(): void {
 
   // Skip initialization if no DSN configured
   if (!SENTRY_DSN) {
-    console.log('[Sentry] DSN not configured - error tracking disabled');
-    console.log('[Sentry] To enable: Add NEXT_PUBLIC_SENTRY_DSN to environment variables');
+    console.info('[Sentry] DSN not configured - error tracking disabled');
+    console.info('[Sentry] To enable: Add NEXT_PUBLIC_SENTRY_DSN to environment variables');
     return;
   }
 
@@ -101,7 +101,7 @@ export function initSentry(): void {
     });
 
     sentryInitialized = true;
-    console.log('[Sentry] ✅ Error tracking initialized');
+    console.info('[Sentry] ✅ Error tracking initialized');
   } catch (error) {
     console.error('[Sentry] ❌ Failed to initialize:', error);
   }
@@ -126,7 +126,7 @@ export function captureException(error: Error, context?: Record<string, any>): v
  */
 export function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info'): void {
   if (!sentryInitialized) {
-    console.log(`[Sentry] Not initialized, logging message [${level}]:`, message);
+    console.info(`[Sentry] Not initialized, logging message [${level}]:`, message);
     return;
   }
 

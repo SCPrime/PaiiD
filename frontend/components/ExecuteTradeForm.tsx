@@ -89,7 +89,7 @@ export default function ExecuteTradeForm() {
       const { tradeData } = pendingNavigation;
 
       // eslint-disable-next-line no-console
-      console.log('[ExecuteTradeForm] Pre-filling form with trade data:', tradeData);
+      console.info('[ExecuteTradeForm] Pre-filling form with trade data:', tradeData);
 
       // Pre-fill form fields
       if (tradeData.symbol) setSymbol(tradeData.symbol);
