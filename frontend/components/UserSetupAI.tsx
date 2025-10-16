@@ -18,10 +18,11 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { theme } from '../styles/theme';
-import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
+import { LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
 import { claudeAI, UserPreferences } from '../lib/aiAdapter';
 import { createUser } from '../lib/userManagement';
 import { useChat } from './ChatContext';
+import PaiiDLogo from './PaiiDLogo';
 import dynamic from 'next/dynamic';
 
 const UserSetup = dynamic(() => import('./UserSetup'), { ssr: false });
@@ -38,23 +39,6 @@ interface UserSetupAIProps {
 export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
   const { openChat } = useChat();
   const [setupMethod, setSetupMethod] = useState<'manual' | 'ai' | null>(null);
-
-  // Detect glow style from URL parameter
-  const [glowStyle, setGlowStyle] = useState<'radial' | 'halo'>('radial');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const glow = params.get('glow');
-      if (glow === 'halo') {
-        setGlowStyle('halo');
-        console.info('[UserSetupAI] 🎨 Using HALO glow style');
-      } else {
-        setGlowStyle('radial');
-        console.info('[UserSetupAI] 🎨 Using RADIAL glow style (default)');
-      }
-    }
-  }, []);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -313,117 +297,14 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               position: 'relative',
             }}
           >
-            {/* Line 1: Large PaiiD Logo (72px) with Dynamic Glow Cloud */}
-            <div
+            <PaiiDLogo
+              size="custom"
+              customFontSize={72}
+              showSubtitle={true}
               onClick={openChat}
-              style={{
-                fontSize: '72px',
-                fontWeight: 'bold',
-                margin: 0,
-                letterSpacing: '4px',
-                lineHeight: '1',
-                display: 'inline-flex',
-                alignItems: 'center',
-                ...(glowStyle === 'halo' ? LOGO_STYLES.HALO_GLOW : LOGO_STYLES.RADIAL_GLOW),
-                boxShadow: LOGO_STYLES.GLOW.initial,
-                animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                transform: 'scale(1) translateY(0)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1) translateY(-4px)';
-                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.hover;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.initial;
-              }}
-              title="Click to open AI assistant"
-            >
-              <span
-                style={{
-                  background: LOGO_STYLES.GRADIENT.teal,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  filter: LOGO_STYLES.DROP_SHADOW.standard,
-                }}
-              >
-                P
-              </span>
-              <span
-                style={{
-                  background: LOGO_STYLES.GRADIENT.teal,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
-                a
-              </span>
-              <span
-                style={{
-                  background: LOGO_STYLES.GRADIENT.teal,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  filter: LOGO_STYLES.DROP_SHADOW.standard,
-                  fontStyle: 'italic',
-                  display: 'inline-block',
-                }}
-              >
-                aii
-              </span>
-              <span
-                style={{
-                  background: LOGO_STYLES.GRADIENT.teal,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  filter: LOGO_STYLES.DROP_SHADOW.standard,
-                }}
-              >
-                D
-              </span>
-            </div>
+            />
 
-            {/* Line 2: Primary Subtitle (18px) */}
-            <p
-              style={{
-                fontSize: '18px',
-                color: '#cbd5e1',
-                margin: 0,
-                letterSpacing: '1px',
-                fontWeight: '500',
-              }}
-            >
-              Personal{' '}
-              <span
-                style={{
-                  color: '#45f0c0',
-                  fontStyle: 'italic',
-                  textShadow: '0 0 8px rgba(69, 240, 192, 0.5)',
-                }}
-              >
-                artificial intelligence
-              </span>
-              {' '}Investment Dashboard
-            </p>
-
-            {/* Line 3: Workflow Subtitle (14px) */}
-            <p
-              style={{
-                fontSize: '14px',
-                color: '#94a3b8',
-                margin: 0,
-                letterSpacing: '0.5px',
-              }}
-            >
-              10 Stage Workflow
-            </p>
-
-            {/* Line 4: Secondary Subtitle (14px) */}
+            {/* Additional subtitle: Set up prompt */}
             <p
               style={{
                 fontSize: '14px',

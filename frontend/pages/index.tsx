@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import Split from 'react-split';
 import RadialMenu, { workflows, Workflow } from '../components/RadialMenu';
-import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
+import { LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
+import PaiiDLogo from '../components/PaiiDLogo';
 
 import MorningRoutineAI from '../components/MorningRoutineAI';
 import ExecuteTradeForm from '../components/ExecuteTradeForm';
@@ -418,61 +419,11 @@ export default function Dashboard() {
             paddingTop: '20px',
             paddingBottom: '10px',
           }}>
-            <div style={{ fontSize: '48px', fontWeight: '900', lineHeight: '1', marginBottom: '8px' }}>
-              <span style={{
-                background: LOGO_STYLES.GRADIENT.teal,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: LOGO_STYLES.DROP_SHADOW.standard
-              }}>P</span>
-              <div
-                onClick={() => setAiChatOpen(true)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.15) translateY(-2px)';
-                  e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.hover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                  e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.initial;
-                }}
-                style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(16, 185, 129, 0.35)',
-                padding: 0,
-                width: 'fit-content',
-                height: 'fit-content',
-                borderRadius: '8px',
-                boxShadow: LOGO_STYLES.GLOW.initial,
-                animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-              }}>
-                <span style={{
-                  background: LOGO_STYLES.GRADIENT.teal,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  filter: LOGO_STYLES.DROP_SHADOW.standard,
-                  fontStyle: 'italic',
-                  display: 'inline-block',
-                }}>aii</span>
-              </div>
-              <span style={{
-                background: LOGO_STYLES.GRADIENT.teal,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: LOGO_STYLES.DROP_SHADOW.standard
-              }}>D</span>
-            </div>
-            <div style={{
-              fontSize: '12px',
-              fontWeight: '500',
-              color: '#94a3b8',
-              letterSpacing: '1px',
-            }}>
-              10 Stage Workflow
-            </div>
+            <PaiiDLogo
+              size="large"
+              showSubtitle={true}
+              onClick={() => setAiChatOpen(true)}
+            />
           </div>
 
           {/* Radial Menu */}

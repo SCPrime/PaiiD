@@ -1,6 +1,7 @@
 'use client';
 
 import { useChat } from './ChatContext';
+import { useGlowStyle } from '../contexts/GlowStyleContext';
 import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
 
 interface PaiiDLogoProps {
@@ -9,7 +10,6 @@ interface PaiiDLogoProps {
   showSubtitle?: boolean;
   style?: React.CSSProperties;
   onClick?: () => void;
-  glowStyle?: 'radial' | 'halo'; // Toggle between glow effects
 }
 
 const sizeMap = {
@@ -26,9 +26,9 @@ export default function PaiiDLogo({
   showSubtitle = false,
   style = {},
   onClick,
-  glowStyle = 'radial' // Default to radial glow cloud
 }: PaiiDLogoProps) {
   const { openChat } = useChat();
+  const { glowStyle } = useGlowStyle(); // Use context instead of prop
   const fontSize = size === 'custom' && customFontSize ? customFontSize : sizeMap[size];
 
   const currentGlowStyle = glowStyle === 'halo' ? LOGO_STYLES.HALO_GLOW : LOGO_STYLES.RADIAL_GLOW;

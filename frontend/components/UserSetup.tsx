@@ -5,7 +5,8 @@ import { User, Mail, Users, Info, ChevronLeft, ChevronRight, ArrowRight, Target,
 import { createUser } from '../lib/userManagement';
 import { GlassCard, GlassButton, GlassInput } from './GlassmorphicComponents';
 import { theme } from '../styles/theme';
-import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
+import { LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
+import PaiiDLogo from './PaiiDLogo';
 
 interface UserSetupProps {
   onComplete: () => void;
@@ -1032,78 +1033,7 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
           {/* Header */}
           {currentPage === 0 && (
             <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              {/* Main Logo */}
-              <h1 style={{
-                fontSize: '48px',
-                fontWeight: 'bold',
-                margin: '0 0 12px 0',
-                letterSpacing: '2px',
-                lineHeight: '1',
-              }}>
-                <span style={{
-                  background: LOGO_STYLES.GRADIENT.teal,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  filter: LOGO_STYLES.DROP_SHADOW.standard,
-                }}>
-                  P
-                </span>
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'rgba(16, 185, 129, 0.35)',
-                  padding: 0,
-                  width: 'fit-content',
-                  height: 'fit-content',
-                  borderRadius: '8px',
-                  boxShadow: LOGO_STYLES.GLOW.initial,
-                  animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
-                  cursor: 'default',
-                  transition: 'all 0.3s ease',
-                }}>
-                  <span style={{
-                    background: LOGO_STYLES.GRADIENT.teal,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    filter: LOGO_STYLES.DROP_SHADOW.standard,
-                    fontStyle: 'italic',
-                    display: 'inline-block',
-                  }}>
-                    aii
-                  </span>
-                </div>
-                <span style={{
-                  background: LOGO_STYLES.GRADIENT.teal,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  filter: LOGO_STYLES.DROP_SHADOW.standard,
-                }}>
-                  D
-                </span>
-              </h1>
-
-              {/* Subtitle */}
-              <p style={{
-                fontSize: '16px',
-                color: '#94a3b8',
-                margin: '0 0 8px 0',
-                letterSpacing: '0.5px',
-              }}>
-                Personal <span style={{ color: '#45f0c0', fontStyle: 'italic' }}>artificial intelligence</span>/investment Dashboard
-              </p>
-
-              {/* Sub-subtitle */}
-              <p style={{
-                fontSize: '14px',
-                color: '#64748b',
-                margin: 0,
-              }}>
-                Let&apos;s set up your trading account
-              </p>
+              <PaiiDLogo size="large" />
             </div>
           )}
 

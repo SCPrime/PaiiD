@@ -7,6 +7,7 @@ import { WorkflowProvider } from '../contexts/WorkflowContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import AIChatBot from '../components/AIChatBot';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { GlowStyleProvider } from '../contexts/GlowStyleContext';
 import { initSentry, setUser } from '../lib/sentry';
 import '../styles/globals.css';
 
@@ -110,19 +111,21 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <ChatProvider>
-          <WorkflowProvider>
-            <AppContent
-              Component={Component}
-              pageProps={pageProps}
-              userId={user.id}
-              userRole={user.role}
-              telemetryEnabled={telemetryEnabled}
-            />
-          </WorkflowProvider>
-        </ChatProvider>
-      </AuthProvider>
+      <GlowStyleProvider>
+        <AuthProvider>
+          <ChatProvider>
+            <WorkflowProvider>
+              <AppContent
+                Component={Component}
+                pageProps={pageProps}
+                userId={user.id}
+                userRole={user.role}
+                telemetryEnabled={telemetryEnabled}
+              />
+            </WorkflowProvider>
+          </ChatProvider>
+        </AuthProvider>
+      </GlowStyleProvider>
     </ErrorBoundary>
   );
 }

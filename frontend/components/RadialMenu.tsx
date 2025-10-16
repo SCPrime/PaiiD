@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useMemo, memo } from 'react';
 import * as d3 from 'd3';
 import { useWindowDimensions, useIsMobile } from '../hooks/useBreakpoint';
 import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
+import PaiiDLogo from './PaiiDLogo';
 
 export interface Workflow {
   id: string;
@@ -41,7 +42,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
     dow: { value: 0, change: 0, symbol: 'DJI' },
     nasdaq: { value: 0, change: 0, symbol: 'COMP' }
   });
-  const [marketStatus, setMarketStatus] = useState<{
+  const [marketStatus, _setMarketStatus] = useState<{
     is_open: boolean;
     state: string;
     description: string;
@@ -717,79 +718,12 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
       {/* Title Header - only show in full screen mode */}
       {!compact && (
         <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-          {/* Main Logo */}
-          <div style={{ fontSize: fontSizes.headerLogo, fontWeight: '900', lineHeight: '1', marginBottom: '12px' }}>
-            <span style={{
-              background: LOGO_STYLES.GRADIENT.teal,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: LOGO_STYLES.DROP_SHADOW.standard
-            }}>P</span>
-            <div
-              onClick={() => setShowAIChat(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(16, 185, 129, 0.35)',
-                padding: 0,
-                width: 'fit-content',
-                height: 'fit-content',
-                borderRadius: '8px',
-                boxShadow: LOGO_STYLES.GLOW.initial,
-                animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1)';
-                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.hover;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.initial;
-              }}
-            >
-              <span style={{
-                background: LOGO_STYLES.GRADIENT.teal,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: LOGO_STYLES.DROP_SHADOW.standard,
-                fontStyle: 'italic',
-                display: 'inline-block',
-              }}>aii</span>
-            </div>
-            <span style={{
-              background: LOGO_STYLES.GRADIENT.teal,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: LOGO_STYLES.DROP_SHADOW.standard
-            }}>D</span>
-          </div>
-
-          {/* Line 1: Personal Artificial Intelligence Investment Dashboard */}
-          <div style={{
-            fontSize: fontSizes.headerSubtitle1,
-            fontWeight: '600',
-            color: '#cbd5e1',
-            letterSpacing: '3px',
-            marginBottom: '12px',
-            textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)'
-          }}>
-            Personal Artificial Intelligence Investment Dashboard
-          </div>
-
-          {/* Line 2: 10 Stage Workflow */}
-          <div style={{
-            fontSize: fontSizes.headerSubtitle2,
-            fontWeight: '500',
-            color: '#94a3b8',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)'
-          }}>
-            10 Stage Workflow
-          </div>
+          <PaiiDLogo
+            size={isMobile ? 'custom' : 'xlarge'}
+            customFontSize={isMobile ? 48 : undefined}
+            showSubtitle={true}
+            onClick={() => setShowAIChat(true)}
+          />
         </div>
       )}
 
@@ -807,59 +741,12 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
           marginTop: `${-(menuSize / 2) * 0.30 * 0.55}px`, // Responsive: matches centerContentSpacing.logoOffset (reduced from 0.65 to 0.55)
           maxHeight: `${(menuSize / 2) * 0.30 * 2}px` // Constrain to circle diameter
         }}>
-          <div style={{
-            fontSize: fontSizes.centerLogo,
-            fontWeight: '900',
-            lineHeight: '1',
-            whiteSpace: 'nowrap'
-          }}>
-            <span style={{
-              background: LOGO_STYLES.GRADIENT.teal,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: LOGO_STYLES.DROP_SHADOW.standard
-            }}>P</span>
-            <div
-              onClick={() => setShowAIChat(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(16, 185, 129, 0.35)',
-                padding: 0,
-                width: 'fit-content',
-                height: 'fit-content',
-                borderRadius: '8px',
-                boxShadow: LOGO_STYLES.GLOW.initial,
-                animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1)';
-                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.hover;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.initial;
-              }}
-            >
-              <span style={{
-                background: LOGO_STYLES.GRADIENT.teal,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: LOGO_STYLES.DROP_SHADOW.standard,
-                fontStyle: 'italic',
-                display: 'inline-block',
-              }}>aii</span>
-            </div>
-            <span style={{
-              background: LOGO_STYLES.GRADIENT.teal,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: LOGO_STYLES.DROP_SHADOW.standard
-            }}>D</span>
-          </div>
+          <PaiiDLogo
+            size="custom"
+            customFontSize={isMobile ? 20 : 32}
+            showSubtitle={false}
+            onClick={() => setShowAIChat(true)}
+          />
         </div>
 
         {/* Market Status Badge */}

@@ -54,10 +54,11 @@ export const LOGO_STYLES = {
    * Full PaiiD Logo Wrapper Styles (toggled via URL parameter)
    */
   RADIAL_GLOW: {
-    background: 'radial-gradient(ellipse, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0.25) 40%, rgba(16, 185, 129, 0.10) 70%, rgba(16, 185, 129, 0.02) 90%, transparent 100%)',
+    background: 'radial-gradient(ellipse, rgba(16, 185, 129, 0.40) 0%, rgba(16, 185, 129, 0.28) 35%, rgba(16, 185, 129, 0.12) 65%, rgba(16, 185, 129, 0.03) 88%, transparent 100%)',
     borderRadius: '50px',
     padding: '8px 16px',
     backdropFilter: 'none',
+    boxShadow: '0 0 40px rgba(16, 185, 129, 0.3), 0 0 80px rgba(16, 185, 129, 0.15)',
   },
   HALO_GLOW: {
     background: 'rgba(16, 185, 129, 0.4)',
