@@ -505,6 +505,7 @@ const NewsReview: React.FC = () => {
                 {/* Article Header */}
                 <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
                   {article.image_url && !isMobile && (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={article.image_url}
                       alt={article.title}
