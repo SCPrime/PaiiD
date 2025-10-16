@@ -13,6 +13,7 @@ class Settings(BaseModel):
     API_TOKEN: str = os.getenv("API_TOKEN", "change-me")
     ALLOW_ORIGIN: Optional[str] = os.getenv("ALLOW_ORIGIN")
     LIVE_TRADING: bool = os.getenv("LIVE_TRADING", "false").lower() == "true"
+    TESTING: bool = os.getenv("TESTING", "false").lower() == "true"
     IDMP_TTL_SECONDS: int = int(os.getenv("IDMP_TTL_SECONDS", "600"))
 
     # Alpaca API credentials (PAPER TRADING EXECUTION ONLY)

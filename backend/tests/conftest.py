@@ -15,6 +15,7 @@ import os
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["REDIS_URL"] = ""  # Disable Redis for tests
 os.environ["SENTRY_DSN"] = ""  # Disable Sentry for tests
+os.environ["TESTING"] = "true"  # Disable rate limiting for tests
 os.environ["API_TOKEN"] = "test-token-12345"
 os.environ["TRADIER_API_KEY"] = "test-tradier-key"
 os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
