@@ -4,6 +4,26 @@ Database Models
 Exports all SQLAlchemy models for use in migrations and services.
 """
 
-from .database import User, Strategy, Trade, Performance, EquitySnapshot
+from .database import (
+    User,
+    UserSession,
+    ActivityLog,
+    Strategy,
+    Trade,
+    Performance,
+    EquitySnapshot,
+    OrderTemplate,
+    AIRecommendation
+)
 
-__all__ = ["User", "Strategy", "Trade", "Performance", "EquitySnapshot"]
+__all__ = [
+    "User",
+    "UserSession",
+    "ActivityLog",
+    "Strategy",
+    "Trade",
+    "Performance",
+    "EquitySnapshot",
+    "OrderTemplate",
+    "AIRecommendation"
+]
