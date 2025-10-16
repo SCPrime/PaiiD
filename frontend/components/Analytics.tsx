@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { BarChart3, TrendingUp, TrendingDown, DollarSign, Percent, Calendar, Target, Award, Download } from 'lucide-react';
+import { BarChart3, TrendingDown, DollarSign, Percent, Calendar, Target, Award, Download } from 'lucide-react';
 import { Card, Button } from './ui';
 import { theme } from '../styles/theme';
 import { alpaca } from '../lib/alpaca';

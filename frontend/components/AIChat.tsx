@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Brain, Sparkles, Loader2 } from 'lucide-react';
 import { claudeAI, AIMessage } from '../lib/aiAdapter';
-import { GlassCard, GlassButton, GlassInput } from './GlassmorphicComponents';
+import { GlassCard } from './GlassmorphicComponents';
 
 interface AIChatProps {
   isOpen: boolean;

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Percent, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { Card, Button } from './ui';
 import { theme } from '../styles/theme';
 import { alpaca, formatPosition } from '../lib/alpaca';
@@ -38,7 +38,7 @@ export default function ActivePositions() {
   const [sortBy, setSortBy] = useState<'symbol' | 'pl' | 'plPercent' | 'value'>('symbol');
 
   // Real-time position updates via SSE
-  const { positions: streamedPositions, connected, connecting, error: streamError, reconnect } = usePositionUpdates({
+  const { positions: streamedPositions, connected, connecting, error: _streamError, reconnect: _reconnect } = usePositionUpdates({
     autoReconnect: true,
     maxReconnectAttempts: 5,
     debug: false,
