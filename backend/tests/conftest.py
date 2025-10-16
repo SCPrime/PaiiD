@@ -22,6 +22,23 @@ os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 from app.main import app
 from app.db.session import Base, get_db
 from app.services.cache import CacheService
+from passlib.context import CryptContext
+
+# ===========================================
+# TEST AUTHENTICATION
+# ===========================================
+# IMPORTANT: User model requires password_hash (NOT NULL)
+#
+# DO NOT use real passwords in tests!
+# The cached TEST_PASSWORD_HASH is used for all test users.
+#
+# If auth tests need specific passwords, hash them individually:
+#   pwd_context.hash("your-test-password")
+# ===========================================
+
+# Test password hasher (bcrypt) - matches production auth
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+TEST_PASSWORD_HASH = pwd_context.hash("TestPassword123!")  # Cached for performance
 
 
 # ==================== DATABASE FIXTURES ====================
@@ -137,6 +154,7 @@ def sample_user(test_db):
 
     user = User(
         email="test@example.com",
+        password_hash=TEST_PASSWORD_HASH,
         alpaca_account_id="TEST123",
         preferences={"risk_tolerance": "moderate"}
     )
@@ -241,7 +259,11 @@ def mock_market_indices():
 def create_test_user(db, email="test@example.com"):
     """Helper to create test user"""
     from app.models.database import User
-    user = User(email=email, preferences={})
+    user = User(
+        email=email,
+        password_hash=TEST_PASSWORD_HASH,
+        preferences={}
+    )
     db.add(user)
     db.commit()
     db.refresh(user)

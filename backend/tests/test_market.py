@@ -124,8 +124,8 @@ def test_market_hours_status():
 
     if response.status_code == 200:
         data = response.json()
-        # Should indicate if market is open
-        assert "isOpen" in data or "marketStatus" in data
+        # Should indicate if market is open (accept both snake_case and camelCase)
+        assert "is_open" in data or "isOpen" in data or "marketStatus" in data
 
 
 def test_historical_bars_endpoint():
