@@ -482,3 +482,76 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
             "source": "fallback",
             "error": str(e)
         }
+
+
+@router.get("/market/status", dependencies=[Depends(require_bearer)])
+async def get_market_status(cache: CacheService = Depends(get_cache)) -> dict:
+    """
+    Get current market status (open/closed) and trading hours
+
+    Uses Tradier market clock API to determine if markets are currently open.
+    Cached for 60 seconds to minimize API calls.
+
+    Returns:
+        - state: "open" | "premarket" | "postmarket" | "closed"
+        - is_open: boolean
+        - next_change: timestamp of next state change
+        - description: human-readable status
+    """
+    from datetime import datetime
+
+    # Check cache first (60s TTL)
+    cache_key = "market:status"
+    cached = cache.get(cache_key)
+    if cached:
+        print("[Market Status] ✅ Cache HIT")
+        return {**cached, "cached": True}
+
+    try:
+        # Fetch market clock from Tradier
+        resp = requests.get(
+            f"{settings.TRADIER_API_BASE_URL}/markets/clock",
+            headers={
+                "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
+                "Accept": "application/json"
+            }
+        )
+
+        if resp.status_code == 200:
+            data = resp.json()
+            clock = data.get("clock", {})
+
+            state = clock.get("state", "closed")  # open, premarket, postmarket, closed
+            is_open = state == "open"
+            next_change = clock.get("next_change", "")
+            description = clock.get("description", "")
+
+            result = {
+                "state": state,
+                "is_open": is_open,
+                "next_change": next_change,
+                "description": description,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "source": "tradier"
+            }
+
+            # Cache for 60 seconds
+            cache.set(cache_key, result, ttl=60)
+
+            print(f"[Market Status] ✅ Market is {state} (is_open={is_open})")
+            return result
+        else:
+            raise Exception(f"Tradier API returned status {resp.status_code}")
+
+    except Exception as e:
+        print(f"[Market Status] ❌ Error fetching from Tradier: {e}")
+        # Return fallback - assume closed to prevent unnecessary updates
+        return {
+            "state": "closed",
+            "is_open": False,
+            "next_change": "",
+            "description": "Market status unavailable",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "source": "fallback",
+            "error": str(e)
+        }

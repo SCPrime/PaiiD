@@ -40,6 +40,11 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
     dow: { value: 0, change: 0, symbol: 'DJI' },
     nasdaq: { value: 0, change: 0, symbol: 'COMP' }
   });
+  const [marketStatus, setMarketStatus] = useState<{
+    is_open: boolean;
+    state: string;
+    description: string;
+  } | null>(null);
 
   // Responsive sizing
   const { width: viewportWidth } = useWindowDimensions();
@@ -82,10 +87,39 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
     };
   }, [isMobile]);
 
-  // Fetch live market data from backend
+  // Fetch live market data from backend (with market hours detection)
   useEffect(() => {
+    const fetchMarketStatus = async () => {
+      try {
+        const response = await fetch(`/api/proxy/api/market/status`);
+        if (response.ok) {
+          const data = await response.json();
+          setMarketStatus({
+            is_open: data.is_open,
+            state: data.state,
+            description: data.description || 'Market status unknown'
+          });
+          return data.is_open;
+        }
+      } catch (error) {
+        console.error('[RadialMenu] Failed to fetch market status:', error);
+        // Assume open on error to allow data fetching
+        return true;
+      }
+      return false;
+    };
+
     const fetchMarketData = async () => {
       try {
+        // Check market status first
+        const isOpen = await fetchMarketStatus();
+
+        // Only fetch indices if market is open
+        if (!isOpen) {
+          console.log('[RadialMenu] Market closed, skipping data fetch');
+          return;
+        }
+
         const response = await fetch(`/api/proxy/api/market/indices`);
 
         if (response.ok) {
@@ -731,6 +765,56 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
             }}>D</span>
           </div>
         </div>
+
+        {/* Market Status Badge */}
+        {marketStatus && (
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            marginTop: isMobile ? '85px' : '110px', // Position below market data
+            pointerEvents: 'none',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: isMobile ? '4px 10px' : '6px 14px',
+              background: marketStatus.is_open
+                ? 'rgba(16, 185, 129, 0.15)'
+                : 'rgba(239, 68, 68, 0.15)',
+              border: `1px solid ${marketStatus.is_open ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+              borderRadius: '20px',
+              backdropFilter: 'blur(10px)',
+              boxShadow: marketStatus.is_open
+                ? '0 0 15px rgba(16, 185, 129, 0.2)'
+                : '0 0 15px rgba(239, 68, 68, 0.2)'
+            }}>
+              <div style={{
+                width: isMobile ? '6px' : '8px',
+                height: isMobile ? '6px' : '8px',
+                borderRadius: '50%',
+                background: marketStatus.is_open ? '#10b981' : '#ef4444',
+                boxShadow: `0 0 8px ${marketStatus.is_open ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'}`,
+                animation: marketStatus.is_open ? 'pulse-open 2s ease-in-out infinite' : 'none'
+              }} />
+              <div style={{
+                fontSize: isMobile ? '9px' : '11px',
+                fontWeight: '800',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+                color: marketStatus.is_open ? '#10b981' : '#ef4444'
+              }}>
+                {marketStatus.state === 'open' && 'Market Open'}
+                {marketStatus.state === 'premarket' && 'Pre-Market'}
+                {marketStatus.state === 'postmarket' && 'After Hours'}
+                {marketStatus.state === 'closed' && 'Market Closed'}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* CSS Animations */}
@@ -741,6 +825,17 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
           }
           50% {
             text-shadow: 0 0 25px rgba(16, 185, 129, 0.9), 0 0 50px rgba(16, 185, 129, 0.6), 0 0 75px rgba(16, 185, 129, 0.3);
+          }
+        }
+
+        @keyframes pulse-open {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.7;
+            transform: scale(1.2);
           }
         }
       `}</style>
