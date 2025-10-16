@@ -7,7 +7,7 @@ services:
   branch: main
   rootDir: backend
   buildCommand: pip install -r requirements.txt
-  startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+  startCommand: bash start.sh
   envVars:
     - key: API_TOKEN
       sync: false  # Set via Render dashboard for security
@@ -36,3 +36,6 @@ services:
       value: paper
     - key: REDIS_URL
       generateValue: true
+    # PostgreSQL Database - Required for auth and data persistence
+    - key: DATABASE_URL
+      sync: false  # Set via Render dashboard (connect to Render Postgres)
