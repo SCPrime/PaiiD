@@ -49,9 +49,12 @@ services:
   dockerfilePath: ./Dockerfile
   dockerCommand: node server.js
   envVars:
-    # Backend API configuration
+    # API Tokens (both prefixed and non-prefixed for Next.js API routes)
+    - key: API_TOKEN
+      sync: false  # Set via Render dashboard - CRITICAL for /api/proxy routes
     - key: NEXT_PUBLIC_API_TOKEN
       sync: false  # Set via Render dashboard
+    # Backend API configuration
     - key: NEXT_PUBLIC_BACKEND_API_BASE_URL
       value: https://paiid-backend.onrender.com
     - key: NEXT_PUBLIC_ANTHROPIC_API_KEY

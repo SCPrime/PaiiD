@@ -15,6 +15,16 @@ RUN npm ci
 # Copy application code
 COPY . .
 
+# Accept build arguments for API tokens (needed for Next.js build)
+ARG NEXT_PUBLIC_API_TOKEN
+ARG NEXT_PUBLIC_BACKEND_API_BASE_URL
+ARG NEXT_PUBLIC_ANTHROPIC_API_KEY
+
+# Set as environment variables for build process
+ENV NEXT_PUBLIC_API_TOKEN=$NEXT_PUBLIC_API_TOKEN
+ENV NEXT_PUBLIC_BACKEND_API_BASE_URL=$NEXT_PUBLIC_BACKEND_API_BASE_URL
+ENV NEXT_PUBLIC_ANTHROPIC_API_KEY=$NEXT_PUBLIC_ANTHROPIC_API_KEY
+
 # Build Next.js for production
 RUN npm run build
 
@@ -42,9 +52,19 @@ USER nextjs
 # Expose port
 EXPOSE 3000
 
-# Set port environment variable
+# Accept runtime arguments for API proxy (server-side API routes need these)
+ARG API_TOKEN
+ARG NEXT_PUBLIC_API_TOKEN
+ARG NEXT_PUBLIC_BACKEND_API_BASE_URL
+ARG NEXT_PUBLIC_ANTHROPIC_API_KEY
+
+# Set runtime environment variables
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV API_TOKEN=$API_TOKEN
+ENV NEXT_PUBLIC_API_TOKEN=$NEXT_PUBLIC_API_TOKEN
+ENV NEXT_PUBLIC_BACKEND_API_BASE_URL=$NEXT_PUBLIC_BACKEND_API_BASE_URL
+ENV NEXT_PUBLIC_ANTHROPIC_API_KEY=$NEXT_PUBLIC_ANTHROPIC_API_KEY
 
 # Health check - check root path
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
