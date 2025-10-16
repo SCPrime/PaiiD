@@ -148,7 +148,7 @@ export function validateStrategy(strategy: any): ValidationResult {
 function validateUniverse(
   universe: any,
   errors: ValidationError[],
-  warnings: ValidationWarning[]
+  _warnings: ValidationWarning[]
 ) {
   if (!universe.filters) {
     errors.push({
@@ -346,7 +346,7 @@ function validatePosition(
 function validateSizing(
   sizing: any,
   errors: ValidationError[],
-  warnings: ValidationWarning[]
+  _warnings: ValidationWarning[]
 ) {
   const validTypes = ['cash', 'cash_max_loss', 'max_loss'];
   if (!sizing.allocation_type) {
@@ -416,7 +416,7 @@ function validateSizing(
 function validateExits(
   exits: any,
   errors: ValidationError[],
-  warnings: ValidationWarning[]
+  _warnings: ValidationWarning[]
 ) {
   if (
     exits.profit_target_pct !== undefined &&
@@ -456,7 +456,7 @@ function validateExits(
 function validateRisk(
   risk: any,
   errors: ValidationError[],
-  warnings: ValidationWarning[]
+  _warnings: ValidationWarning[]
 ) {
   if (!risk.circuit_breakers) {
     errors.push({
@@ -549,7 +549,7 @@ function validateAutomation(
 function validateBrokerRouting(
   routing: any,
   errors: ValidationError[],
-  warnings: ValidationWarning[]
+  _warnings: ValidationWarning[]
 ) {
   const validOrderTypes = ['NET_MULTI', 'NET_DEBIT_OR_CREDIT_MULTI'];
   if (!routing.order_type) {

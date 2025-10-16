@@ -141,7 +141,7 @@ async function saveStrategy(
 /**
  * Get current version number for a strategy
  */
-async function getCurrentVersion(strategyId: string): Promise<number> {
+async function getCurrentVersion(_strategyId: string): Promise<number> {
   // Mock - in production, query database:
   // SELECT MAX(version) FROM strategies WHERE strategy_id = $1
   return 0; // New strategy starts at version 1
@@ -150,7 +150,7 @@ async function getCurrentVersion(strategyId: string): Promise<number> {
 /**
  * Get creation timestamp for existing strategy
  */
-async function getCreatedAt(strategyId: string): Promise<string> {
+async function getCreatedAt(_strategyId: string): Promise<string> {
   // Mock - in production, query database
   return new Date().toISOString();
 }

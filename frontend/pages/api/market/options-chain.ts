@@ -180,8 +180,8 @@ function generateMockOptionsChain(symbol: string, expiration?: string): OptionsC
   }
 
   const chains = strikes.map(strike => {
-    const isITM_Call = strike < underlyingPrice;
-    const isITM_Put = strike > underlyingPrice;
+    const _isITM_Call = strike < underlyingPrice;
+    const _isITM_Put = strike > underlyingPrice;
     const distanceFromATM = Math.abs(strike - underlyingPrice);
 
     // Calculate mock greeks based on moneyness

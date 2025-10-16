@@ -157,7 +157,7 @@ function calculateMaxProfitLoss(payoffCurve: PayoffPoint[]): { maxProfit: number
 /**
  * Calculate probability of profit (simplified using normal distribution)
  */
-function calculatePOP(payoffCurve: PayoffPoint[], underlyingPrice: number): number {
+function calculatePOP(payoffCurve: PayoffPoint[], _underlyingPrice: number): number {
   // Count points where P&L > 0
   const profitablePoints = payoffCurve.filter(p => p.pnl > 0).length;
   const totalPoints = payoffCurve.length;
