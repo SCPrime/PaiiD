@@ -56,7 +56,14 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
       // Mobile: 90% of viewport width, max 500px
       return Math.min(viewportWidth * 0.9, 500);
     }
-    // Desktop: Standard 700px
+
+    // Desktop: Responsive to viewport width for split-screen mode
+    // When viewport < 1400px (typical split screen), scale down proportionally
+    if (viewportWidth < 1400) {
+      return Math.min(viewportWidth * 0.85, 700);
+    }
+
+    // Desktop full screen: Standard 700px
     return 700;
   }, [isMobile, viewportWidth]);
 
