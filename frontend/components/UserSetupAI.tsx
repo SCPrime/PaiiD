@@ -23,6 +23,7 @@ import { claudeAI, UserPreferences } from '../lib/aiAdapter';
 import { createUser } from '../lib/userManagement';
 import { useChat } from './ChatContext';
 import dynamic from 'next/dynamic';
+import PaiiDLogo from './PaiiDLogo';
 
 const UserSetup = dynamic(() => import('./UserSetup'), { ssr: false });
 
@@ -297,65 +298,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             }}
           >
             {/* Compact PaiiD Logo */}
-            <div style={{
-              fontSize: '36px',
-              fontWeight: 'bold',
-              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-              display: 'flex',
-              alignItems: 'center',
-              userSelect: 'none',
-              marginBottom: '4px',
-            }}>
-              <span style={{ color: '#45f0c0' }}>P</span>
-              <span style={{ color: '#45f0c0' }}>a</span>
-              <span
-                onClick={openChat}
-                style={{
-                  color: '#45f0c0',
-                  textShadow: '0 0 20px rgba(69, 240, 192, 0.7), 0 0 40px rgba(69, 240, 192, 0.5)',
-                  animation: 'glow-ai 3s ease-in-out infinite',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  display: 'inline-block',
-                }}
-              >
-                {/* Left dot above π */}
-                <span style={{
-                  position: 'absolute',
-                  top: '12px',
-                  left: '22%',
-                  width: '4px',
-                  height: '4px',
-                  background: '#45f0c0',
-                  borderRadius: '50%',
-                  boxShadow: '0 0 8px rgba(69, 240, 192, 0.8)',
-                }}></span>
-                {/* Right dot above π */}
-                <span style={{
-                  position: 'absolute',
-                  top: '12px',
-                  right: '22%',
-                  width: '4px',
-                  height: '4px',
-                  background: '#45f0c0',
-                  borderRadius: '50%',
-                  boxShadow: '0 0 8px rgba(69, 240, 192, 0.8)',
-                }}></span>
-                π
-              </span>
-              <span style={{ color: '#45f0c0' }}>D</span>
-            </div>
-
-            {/* Subtitle */}
-            <div style={{
-              fontSize: '11px',
-              color: '#cbd5e1',
-              fontFamily: '"Inter", sans-serif',
-              letterSpacing: '0.3px',
-              marginBottom: '2px',
-            }}>
-              Personal <span style={{ fontStyle: 'italic' }}>artificial intelligence</span>/<span style={{ fontStyle: 'italic' }}>investment</span> Dashboard
-            </div>
+            <PaiiDLogo size="small" showSubtitle={true} onClick={openChat} />
 
             {/* Instruction box */}
             <div style={{

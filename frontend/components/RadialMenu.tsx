@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import { throttle } from 'lodash';
 import { useWindowDimensions, useIsMobile } from '../hooks/useBreakpoint';
 import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
+import PaiiDLogo from './PaiiDLogo';
 
 export interface Workflow {
   id: string;
@@ -35,168 +36,24 @@ export const workflows: Workflow[] = [
 
 // Memoized logo component - prevents re-renders from parent state changes
 const MemoizedCenterLogo = memo(
-  ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => {
-    const fontSize = isMobile ? 22 : 36;
-    const dotSize = isMobile ? 2.5 : 4;
-    const dotTop = isMobile ? '9px' : '14px';
-
-    return (
-      <div
-        style={{
-          fontSize: `${fontSize}px`,
-          fontWeight: 'bold',
-          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-          display: 'flex',
-          alignItems: 'center',
-          userSelect: 'none',
-          cursor: 'pointer',
-        }}
-        onClick={() => setShowAIChat(true)}
-      >
-        <span style={{ color: LOGO_STYLES.COLOR.primary }}>P</span>
-        <span style={{ color: LOGO_STYLES.COLOR.primary }}>a</span>
-        <span
-          style={{
-            color: LOGO_STYLES.COLOR.primary,
-            textShadow: LOGO_STYLES.GLOW.initial,
-            animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration}`,
-            position: 'relative',
-            display: 'inline-block',
-          }}
-        >
-          {/* Left dot above π */}
-          <span
-            style={{
-              position: 'absolute',
-              top: dotTop,
-              left: '22%',
-              width: `${dotSize}px`,
-              height: `${dotSize}px`,
-              background: LOGO_STYLES.PI_DOTS.background,
-              borderRadius: '50%',
-              boxShadow: LOGO_STYLES.PI_DOTS.boxShadow,
-            }}
-          />
-          {/* Right dot above π */}
-          <span
-            style={{
-              position: 'absolute',
-              top: dotTop,
-              right: '22%',
-              width: `${dotSize}px`,
-              height: `${dotSize}px`,
-              background: LOGO_STYLES.PI_DOTS.background,
-              borderRadius: '50%',
-              boxShadow: LOGO_STYLES.PI_DOTS.boxShadow,
-            }}
-          />
-          π
-        </span>
-        <span style={{ color: LOGO_STYLES.COLOR.primary }}>D</span>
-      </div>
-    );
-  }
+  ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => (
+    <PaiiDLogo
+      size={isMobile ? 'xs' : 'small'}
+      showSubtitle={false}
+      onClick={() => setShowAIChat(true)}
+    />
+  )
 );
 MemoizedCenterLogo.displayName = 'MemoizedCenterLogo';
 
 const MemoizedHeaderLogo = memo(
-  ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => {
-    const fontSize = isMobile ? 48 : 96;
-    const subtitleSize1 = isMobile ? 16 : 22;
-    const subtitleSize2 = isMobile ? 14 : 18;
-    const dotSize = isMobile ? 5 : 12;
-    const dotTop = isMobile ? '20px' : '50px';
-
-    return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          cursor: 'pointer',
-        }}
-        onClick={() => setShowAIChat(true)}
-      >
-        {/* Logo */}
-        <div
-          style={{
-            fontSize: `${fontSize}px`,
-            fontWeight: 'bold',
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: '8px',
-            userSelect: 'none',
-          }}
-        >
-          <span style={{ color: LOGO_STYLES.COLOR.primary }}>P</span>
-          <span style={{ color: LOGO_STYLES.COLOR.primary }}>a</span>
-          <span
-            style={{
-              color: LOGO_STYLES.COLOR.primary,
-              textShadow: LOGO_STYLES.GLOW.initial,
-              animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration}`,
-              position: 'relative',
-              display: 'inline-block',
-            }}
-          >
-            {/* Left dot above π */}
-            <span
-              style={{
-                position: 'absolute',
-                top: dotTop,
-                left: '22%',
-                width: `${dotSize}px`,
-                height: `${dotSize}px`,
-                background: LOGO_STYLES.PI_DOTS.background,
-                borderRadius: '50%',
-                boxShadow: LOGO_STYLES.PI_DOTS.boxShadow,
-              }}
-            />
-            {/* Right dot above π */}
-            <span
-              style={{
-                position: 'absolute',
-                top: dotTop,
-                right: '22%',
-                width: `${dotSize}px`,
-                height: `${dotSize}px`,
-                background: LOGO_STYLES.PI_DOTS.background,
-                borderRadius: '50%',
-                boxShadow: LOGO_STYLES.PI_DOTS.boxShadow,
-              }}
-            />
-            π
-          </span>
-          <span style={{ color: LOGO_STYLES.COLOR.primary }}>D</span>
-        </div>
-        {/* Subtitles */}
-        <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              fontSize: `${subtitleSize1}px`,
-              color: '#cbd5e1',
-              marginBottom: '2px',
-              fontFamily: '"Inter", sans-serif',
-              letterSpacing: '0.5px',
-            }}
-          >
-            Personal <span style={{ fontStyle: 'italic' }}>artificial intelligence</span>/
-            <span style={{ fontStyle: 'italic' }}>investment</span> Dashboard
-          </div>
-          <div
-            style={{
-              fontSize: `${subtitleSize2}px`,
-              color: '#94a3b8',
-              fontFamily: '"Inter", sans-serif',
-            }}
-          >
-            10 Stage Workflow
-          </div>
-        </div>
-      </div>
-    );
-  }
+  ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => (
+    <PaiiDLogo
+      size={isMobile ? 'medium' : 'large'}
+      showSubtitle={true}
+      onClick={() => setShowAIChat(true)}
+    />
+  )
 );
 MemoizedHeaderLogo.displayName = 'MemoizedHeaderLogo';
 
