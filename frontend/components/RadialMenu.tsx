@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useMemo, memo, useCallback } from 'react';
 import * as d3 from 'd3';
 import { throttle } from 'lodash';
 import { useWindowDimensions, useIsMobile } from '../hooks/useBreakpoint';
-import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
+import { LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
 import PaiiDLogo from './PaiiDLogo';
 
 export interface Workflow {
@@ -271,14 +271,9 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
     };
   }, [throttledSetMarketData]);
 
-  // Debug logging for Fast Refresh loop detection + logo styles
+  // Debug logging for Fast Refresh loop detection
   useEffect(() => {
     console.info('RadialMenu rendered with selectedWorkflow:', selectedWorkflow);
-    console.info('Logo Styles Applied:', {
-      color: LOGO_STYLES.COLOR.primary,
-      glow: LOGO_STYLES.GLOW.initial,
-      animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration}`,
-    });
   }, [selectedWorkflow]);
 
   useEffect(() => {
