@@ -68,7 +68,7 @@ PaiiD has successfully unified all logo instances into a single reusable compone
 - **Options Trading:** Greeks display, multi-leg strategies, P/L diagrams
 - **ML Strategy:** Feature extraction, model training, prediction API
 - **UI/UX:** Consistent loading states, error boundaries, mobile fixes
-- **Code Quality:** TypeScript cleanup (120+ `any` types), dead code removal
+- **Code Quality:** 151 ESLint warnings (131 `any` types, 17 hook deps, 3 misc)
 
 ---
 
@@ -92,11 +92,15 @@ PaiiD has successfully unified all logo instances into a single reusable compone
 - Fix mobile responsiveness across all workflows
 - Optimize D3 rendering and reduce bundle size
 
-### Phase 4: Code Quality (4-6 hours)
-- Fix 120+ TypeScript `any` types
+### Phase 4: Code Quality (8-10 hours)
+- Fix 131 TypeScript `any` types (87% of warnings)
+- Fix 17 React Hook dependency warnings
+- Remove 2 console statements + 1 Next.js title warning
 - Remove commented-out code and unused imports
 - Update documentation (CLAUDE.md, OPTIONS_TRADING_GUIDE.md)
 - Add integration tests for options API
+
+**See:** `WARNINGS_CLEANUP_PLAN.md` for detailed breakdown
 
 ---
 
@@ -134,8 +138,11 @@ PaiiD has successfully unified all logo instances into a single reusable compone
 - [ ] Toast notifications
 
 ### Code Quality
-- [ ] Zero TypeScript errors
-- [ ] < 10 ESLint warnings
+- [x] Zero TypeScript errors (✅ Current: 0)
+- [ ] < 10 ESLint warnings (❌ Current: 151)
+  - [ ] Fix 131 `any` types
+  - [ ] Fix 17 hook dependencies
+  - [ ] Fix 3 misc warnings
 - [ ] All docs updated
 - [ ] Integration tests pass
 - [ ] Build time < 60 seconds
