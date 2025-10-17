@@ -1,0 +1,191 @@
+/**
+ * GPU-Accelerated Logo Animations
+ *
+ * ARCHITECTURE: Uses CSS Modules instead of styled-jsx to bypass keyframe bugs
+ * PERFORMANCE: Animates ONLY opacity + transform (GPU-accelerated, bypasses Paint)
+ * DRAMATIC EFFECT: Pre-rendered radial gradient glow + 8-layer text shadows
+ */
+
+/* Container with GPU layer hints */
+.logoContainer {
+  position: relative;
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+/* Logo base with static drop-shadow (painted ONCE at load) */
+.logoBase {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  /* Static base shadow - no animation, no repaints */
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4))
+          drop-shadow(0 0 20px rgba(16, 185, 129, 0.3));
+}
+
+/* Dramatic glow layer - PRE-RENDERED, animated via opacity only */
+.logoBase::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(16, 185, 129, 0.6) 0%,
+    rgba(16, 185, 129, 0.5) 15%,
+    rgba(16, 185, 129, 0.4) 30%,
+    rgba(16, 185, 129, 0.3) 45%,
+    rgba(16, 185, 129, 0.2) 60%,
+    rgba(16, 185, 129, 0.1) 75%,
+    transparent 90%
+  );
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 50%;
+  /* GPU-accelerated animation - only opacity and transform */
+  animation: glowPulse 3s ease-in-out infinite;
+  /* Force GPU layer creation */
+  transform: translateZ(0);
+}
+
+/* Primary breathing animation - GPU-accelerated (Composite layer only) */
+/* AMPLIFIED: More dramatic opacity and scale changes for better visibility */
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1) translateZ(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.4) translateZ(0);
+  }
+}
+
+/* Individual letter styling with DRAMATIC text-shadow stack */
+.logoText {
+  display: inline-block;
+  background: linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  /* 8 layered shadows - MAXIMUM VISIBILITY */
+  filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.8))
+          drop-shadow(0 0 14px rgba(255, 255, 255, 0.6))
+          drop-shadow(0 0 21px rgba(16, 185, 129, 1))
+          drop-shadow(0 0 42px rgba(16, 185, 129, 0.9))
+          drop-shadow(0 0 63px rgba(16, 185, 129, 0.7))
+          drop-shadow(0 0 84px rgba(16, 185, 129, 0.5))
+          drop-shadow(0 0 105px rgba(16, 185, 129, 0.3))
+          drop-shadow(0 0 151px rgba(16, 185, 129, 0.2));
+  /* Subtle text breathing - GPU-accelerated */
+  animation: textBreathing 3s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Text breathing animation - ONLY opacity and scale (GPU-accelerated) */
+/* AMPLIFIED: More visible pulsing effect */
+@keyframes textBreathing {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1) translateZ(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) translateZ(0);
+  }
+}
+
+/* Italic "aii" styling */
+.logoItalic {
+  font-style: italic;
+}
+
+/* Radial glow wrapper (for ?glow=radial parameter) */
+.radialGlowWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: radial-gradient(
+    ellipse,
+    rgba(16, 185, 129, 0.95) 0%,
+    rgba(16, 185, 129, 0.80) 35%,
+    rgba(16, 185, 129, 0.50) 65%,
+    rgba(16, 185, 129, 0.20) 88%,
+    transparent 100%
+  );
+  border-radius: 50px;
+  padding: 12px 20px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 80px rgba(16, 185, 129, 0.8),
+              0 0 120px rgba(16, 185, 129, 0.6),
+              0 0 160px rgba(16, 185, 129, 0.4);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* Breathing animation for wrapper */
+  animation: wrapperPulse 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Wrapper pulse animation - GPU-accelerated */
+/* AMPLIFIED: More dramatic pulse with brightness and shadow changes */
+@keyframes wrapperPulse {
+  0%, 100% {
+    transform: scale(1) translateZ(0);
+    filter: brightness(1);
+    box-shadow: 0 0 80px rgba(16, 185, 129, 0.8),
+                0 0 120px rgba(16, 185, 129, 0.6),
+                0 0 160px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    transform: scale(1.12) translateZ(0);
+    filter: brightness(1.4);
+    box-shadow: 0 0 120px rgba(16, 185, 129, 1),
+                0 0 180px rgba(16, 185, 129, 0.9),
+                0 0 240px rgba(16, 185, 129, 0.7);
+  }
+}
+
+.radialGlowWrapper:hover {
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 0 100px rgba(16, 185, 129, 1),
+              0 0 150px rgba(16, 185, 129, 0.8),
+              0 0 200px rgba(16, 185, 129, 0.6);
+}
+
+/* Halo glow wrapper (for ?glow=halo parameter) */
+.haloGlowWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: rgba(16, 185, 129, 0.9);
+  border-radius: 12px;
+  padding: 8px 18px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 40px rgba(16, 185, 129, 1),
+              0 0 80px rgba(16, 185, 129, 0.8);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* Breathing animation for wrapper */
+  animation: wrapperPulse 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+.haloGlowWrapper:hover {
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 0 60px rgba(16, 185, 129, 1),
+              0 0 100px rgba(16, 185, 129, 0.9);
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .logoBase::after,
+  .logoText,
+  .radialGlowWrapper,
+  .haloGlowWrapper {
+    animation: none;
+  }
+}

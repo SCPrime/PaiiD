@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
-import { useEffect, useRef, useState, useMemo, memo } from 'react';
+import { useEffect, useRef, useState, useMemo, memo, useCallback } from 'react';
 import * as d3 from 'd3';
+import { throttle } from 'lodash';
 import { useWindowDimensions, useIsMobile } from '../hooks/useBreakpoint';
 import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
 import PaiiDLogo from './PaiiDLogo';
@@ -32,6 +33,31 @@ export const workflows: Workflow[] = [
   { id: 'research', name: 'RESEARCH', color: '#F97316', icon: '🔍', description: 'Market scanner, technical analysis, charts, and trading opportunities.' },
   { id: 'settings', name: 'SETTINGS', color: '#64748b', icon: '⚙️', description: 'Trading journal, risk control, and system configuration.' }
 ];
+
+// Memoized logo component - prevents re-renders from parent state changes
+const MemoizedCenterLogo = memo(
+  ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => (
+    <PaiiDLogo
+      size="custom"
+      customFontSize={isMobile ? 18 : 28}
+      showSubtitle={false}
+      onClick={() => setShowAIChat(true)}
+    />
+  )
+);
+MemoizedCenterLogo.displayName = 'MemoizedCenterLogo';
+
+const MemoizedHeaderLogo = memo(
+  ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => (
+    <PaiiDLogo
+      size={isMobile ? 'custom' : 'xlarge'}
+      customFontSize={isMobile ? 48 : undefined}
+      showSubtitle={true}
+      onClick={() => setShowAIChat(true)}
+    />
+  )
+);
+MemoizedHeaderLogo.displayName = 'MemoizedHeaderLogo';
 
 function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkflow, compact }: RadialMenuProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -96,7 +122,17 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
     };
   }, [isMobile]);
 
-  // ⚡ REAL-TIME STREAMING: SSE for instant market data (no 60s delay!)
+  // Throttled market data update - prevents animation interruptions
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const throttledSetMarketData = useCallback(
+    throttle((newData: typeof marketData) => {
+      setMarketData(newData);
+      console.info('[RadialMenu] 🎯 Market data updated (throttled)');
+    }, 10000), // Update max once per 10 seconds
+    []
+  );
+
+  // ⚡ REAL-TIME STREAMING: SSE for market data (throttled to prevent animation interruptions)
   useEffect(() => {
     // Load cached market data on mount
     const loadCachedData = () => {
@@ -124,7 +160,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
 
     eventSource.addEventListener('indices_update', (e) => {
       const data = JSON.parse(e.data);
-      console.info('[RadialMenu] 📊 Received live market data:', data);
+      console.debug('[RadialMenu] 📊 Received live market data:', data);
 
       const newData = {
         dow: {
@@ -139,9 +175,10 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
         }
       };
 
-      setMarketData(newData);
+      // Use throttled update to prevent logo animation interruptions
+      throttledSetMarketData(newData);
 
-      // Cache the data in localStorage
+      // Cache the data in localStorage (immediate, not throttled)
       try {
         localStorage.setItem('paiid-market-data', JSON.stringify({
           data: newData,
@@ -718,12 +755,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
       {/* Title Header - only show in full screen mode */}
       {!compact && (
         <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-          <PaiiDLogo
-            size={isMobile ? 'custom' : 'xlarge'}
-            customFontSize={isMobile ? 48 : undefined}
-            showSubtitle={true}
-            onClick={() => setShowAIChat(true)}
-          />
+          <MemoizedHeaderLogo isMobile={isMobile} setShowAIChat={setShowAIChat} />
         </div>
       )}
 
@@ -731,22 +763,15 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
       <div style={{ position: 'relative' }}>
         <svg ref={svgRef} className="drop-shadow-2xl" />
 
-        {/* Center Logo Overlay - matches top logo styling */}
+        {/* Center Logo Overlay - perfectly centered in circle */}
         <div style={{
           position: 'absolute',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
           pointerEvents: 'auto',
-          marginTop: `${-(menuSize / 2) * 0.30 * 0.55}px`, // Responsive: matches centerContentSpacing.logoOffset (reduced from 0.65 to 0.55)
-          maxHeight: `${(menuSize / 2) * 0.30 * 2}px` // Constrain to circle diameter
         }}>
-          <PaiiDLogo
-            size="custom"
-            customFontSize={isMobile ? 20 : 32}
-            showSubtitle={false}
-            onClick={() => setShowAIChat(true)}
-          />
+          <MemoizedCenterLogo isMobile={isMobile} setShowAIChat={setShowAIChat} />
         </div>
 
         {/* Market Status Badge */}

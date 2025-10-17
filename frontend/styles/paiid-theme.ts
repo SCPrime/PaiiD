@@ -87,4 +87,4 @@ export const paidTheme = {
   },
 };
 
-export type PaidTheme = typeof paidTheme;
+export type PaiiDTheme = typeof paidTheme;

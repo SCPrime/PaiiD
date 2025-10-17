@@ -2,7 +2,7 @@
 
 import { useChat } from './ChatContext';
 import { useGlowStyle } from '../contexts/GlowStyleContext';
-import { LOGO_STYLES, LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
+import styles from '../styles/logo.module.css';
 
 interface PaiiDLogoProps {
   size?: 'small' | 'medium' | 'large' | 'xlarge' | 'custom';
@@ -28,84 +28,32 @@ export default function PaiiDLogo({
   onClick,
 }: PaiiDLogoProps) {
   const { openChat } = useChat();
-  const { glowStyle } = useGlowStyle(); // Use context instead of prop
+  const { glowStyle } = useGlowStyle();
   const fontSize = size === 'custom' && customFontSize ? customFontSize : sizeMap[size];
 
-  const currentGlowStyle = glowStyle === 'halo' ? LOGO_STYLES.HALO_GLOW : LOGO_STYLES.RADIAL_GLOW;
+  // Determine wrapper class based on glow style
+  const wrapperClass = glowStyle === 'halo' ? styles.haloGlowWrapper : styles.radialGlowWrapper;
 
   return (
     <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', ...style }}>
-      {/* Entire PaiiD wrapped in glowing container */}
+      {/* GPU-accelerated logo with CSS Modules */}
       <div
+        className={wrapperClass}
         onClick={onClick || openChat}
         style={{
           fontSize: `${fontSize}px`,
           fontWeight: 'bold',
           letterSpacing: size === 'xlarge' ? '4px' : size === 'large' ? '2px' : '1px',
           lineHeight: '1',
-          display: 'inline-flex',
-          alignItems: 'center',
-          ...currentGlowStyle,
-          boxShadow: LOGO_STYLES.GLOW.initial,
-          animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration} ${LOGO_STYLES.ANIMATION.timing} ${LOGO_STYLES.ANIMATION.iteration}`,
-          cursor: 'pointer',
-          transition: 'all 0.3s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1) translateY(-2px)';
-          e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.hover;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1) translateY(0)';
-          e.currentTarget.style.boxShadow = LOGO_STYLES.GLOW.initial;
         }}
         title="Click to open AI assistant"
       >
-        <span
-          style={{
-            background: LOGO_STYLES.GRADIENT.teal,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            filter: LOGO_STYLES.DROP_SHADOW.standard,
-          }}
-        >
-          P
-        </span>
-        <span
-          style={{
-            background: LOGO_STYLES.GRADIENT.teal,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
-          a
-        </span>
-        <span
-          style={{
-            background: LOGO_STYLES.GRADIENT.teal,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            filter: LOGO_STYLES.DROP_SHADOW.standard,
-            fontStyle: 'italic',
-            display: 'inline-block',
-          }}
-        >
-          aii
-        </span>
-        <span
-          style={{
-            background: LOGO_STYLES.GRADIENT.teal,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            filter: LOGO_STYLES.DROP_SHADOW.standard,
-          }}
-        >
-          D
-        </span>
+        <div className={styles.logoBase}>
+          <span className={styles.logoText}>P</span>
+          <span className={styles.logoText}>a</span>
+          <span className={`${styles.logoText} ${styles.logoItalic}`}>aii</span>
+          <span className={styles.logoText}>D</span>
+        </div>
       </div>
 
       {showSubtitle && size === 'xlarge' && (
@@ -159,10 +107,6 @@ export default function PaiiDLogo({
           10 Stage Workflow
         </p>
       )}
-
-      <style jsx>{`
-        ${LOGO_ANIMATION_KEYFRAME}
-      `}</style>
     </div>
   );
 }

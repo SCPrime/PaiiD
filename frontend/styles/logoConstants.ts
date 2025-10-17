@@ -9,19 +9,20 @@ export const LOGO_STYLES = {
   /**
    * Box-shadow glow effects for the "aii" letters (works with gradient text!)
    * Applied to wrapper div, not the text itself (text is transparent via background-clip)
+   * AMPLIFIED: 3X stronger glow radius for dramatic effect
    */
   GLOW: {
     // Base glow (animation start/end state)
-    base: '0 0 30px rgba(16, 185, 129, 0.9), 0 0 60px rgba(16, 185, 129, 0.6), 0 0 90px rgba(16, 185, 129, 0.4)',
+    base: '0 0 50px rgba(16, 185, 129, 1), 0 0 100px rgba(16, 185, 129, 0.8), 0 0 150px rgba(16, 185, 129, 0.6)',
 
     // Peak glow (animation mid-point, brightest)
-    peak: '0 0 50px rgba(16, 185, 129, 1), 0 0 100px rgba(16, 185, 129, 0.8), 0 0 150px rgba(16, 185, 129, 0.6)',
+    peak: '0 0 80px rgba(16, 185, 129, 1), 0 0 150px rgba(16, 185, 129, 1), 0 0 220px rgba(16, 185, 129, 0.8)',
 
     // Initial inline style (before animation)
-    initial: '0 0 40px rgba(16, 185, 129, 1), 0 0 80px rgba(16, 185, 129, 0.7), 0 0 120px rgba(16, 185, 129, 0.5)',
+    initial: '0 0 60px rgba(16, 185, 129, 1), 0 0 120px rgba(16, 185, 129, 0.9), 0 0 180px rgba(16, 185, 129, 0.7)',
 
     // Hover state (enhanced glow)
-    hover: '0 0 50px rgba(16, 185, 129, 1), 0 0 100px rgba(16, 185, 129, 0.8), 0 0 150px rgba(16, 185, 129, 0.6)',
+    hover: '0 0 80px rgba(16, 185, 129, 1), 0 0 150px rgba(16, 185, 129, 1), 0 0 220px rgba(16, 185, 129, 0.8)',
   },
 
   /**
@@ -52,35 +53,41 @@ export const LOGO_STYLES = {
 
   /**
    * Full PaiiD Logo Wrapper Styles (toggled via URL parameter)
+   * AMPLIFIED: Maximum opacity and glow radius for dramatic visual impact
    */
   RADIAL_GLOW: {
-    background: 'radial-gradient(ellipse, rgba(16, 185, 129, 0.40) 0%, rgba(16, 185, 129, 0.28) 35%, rgba(16, 185, 129, 0.12) 65%, rgba(16, 185, 129, 0.03) 88%, transparent 100%)',
+    background: 'radial-gradient(ellipse, rgba(16, 185, 129, 0.95) 0%, rgba(16, 185, 129, 0.80) 35%, rgba(16, 185, 129, 0.50) 65%, rgba(16, 185, 129, 0.20) 88%, transparent 100%)',
     borderRadius: '50px',
-    padding: '8px 16px',
-    backdropFilter: 'none',
-    boxShadow: '0 0 40px rgba(16, 185, 129, 0.3), 0 0 80px rgba(16, 185, 129, 0.15)',
+    padding: '12px 20px',
+    backdropFilter: 'blur(4px)',
+    boxShadow: '0 0 80px rgba(16, 185, 129, 0.8), 0 0 120px rgba(16, 185, 129, 0.6), 0 0 160px rgba(16, 185, 129, 0.4)',
   },
   HALO_GLOW: {
-    background: 'rgba(16, 185, 129, 0.4)',
+    background: 'rgba(16, 185, 129, 0.9)',
     borderRadius: '12px',
-    padding: '6px 14px',
-    backdropFilter: 'blur(8px)',
+    padding: '8px 18px',
+    backdropFilter: 'blur(12px)',
+    boxShadow: '0 0 40px rgba(16, 185, 129, 1), 0 0 80px rgba(16, 185, 129, 0.8)',
   },
 };
 
 /**
  * CSS keyframe animation string for use in styled-jsx
- * FIXED: Animates box-shadow property (applied to wrapper div, not text)
+ * AMPLIFIED: Dramatic pulse with scale, brightness flash, and massive shadows
  */
 export const LOGO_ANIMATION_KEYFRAME = `
   @keyframes glow-ai {
     0%, 100% {
       box-shadow: ${LOGO_STYLES.GLOW.base};
       transform: scale(1);
+      opacity: 0.9;
+      filter: brightness(1);
     }
     50% {
       box-shadow: ${LOGO_STYLES.GLOW.peak};
-      transform: scale(1.02);
+      transform: scale(1.08);
+      opacity: 1;
+      filter: brightness(1.2);
     }
   }
 `;
