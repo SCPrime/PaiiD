@@ -39,7 +39,7 @@ const MemoizedCenterLogo = memo(
   ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => (
     <PaiiDLogo
       size="custom"
-      customFontSize={isMobile ? 18 : 28}
+      customFontSize={isMobile ? 22 : 36}
       showSubtitle={false}
       onClick={() => setShowAIChat(true)}
     />
@@ -68,6 +68,9 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
     dow: { value: 0, change: 0, symbol: 'DJI' },
     nasdaq: { value: 0, change: 0, symbol: 'COMP' }
   });
+  const [isMarketDataLoading, setIsMarketDataLoading] = useState(true);
+  const [sseConnected, setSseConnected] = useState(false);
+  const [sseRetryCount, setSseRetryCount] = useState(0);
   const [marketStatus, _setMarketStatus] = useState<{
     is_open: boolean;
     state: string;
@@ -132,8 +135,12 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
     []
   );
 
-  // ⚡ REAL-TIME STREAMING: SSE for market data (throttled to prevent animation interruptions)
+  // ⚡ REAL-TIME STREAMING: SSE for market data with auto-reconnection
   useEffect(() => {
+    let eventSource: EventSource | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let isUnmounted = false;
+
     // Load cached market data on mount
     const loadCachedData = () => {
       try {
@@ -144,6 +151,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
           if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
             console.info('[RadialMenu] 💾 Loading cached market data from localStorage');
             setMarketData(parsed.data);
+            setIsMarketDataLoading(false);
           }
         }
       } catch (error) {
@@ -151,82 +159,127 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
       }
     };
 
-    loadCachedData();
+    // SSE connection with exponential backoff retry
+    const connectSSE = (retryAttempt = 0) => {
+      if (isUnmounted) return;
 
-    // Connect to Server-Sent Events (SSE) stream for REAL-TIME updates
-    console.info('[RadialMenu] 📡 Connecting to SSE stream for real-time market data...');
+      const maxRetries = 10;
+      const baseDelay = 2000; // 2 seconds
 
-    const eventSource = new EventSource('/api/proxy/stream/market-indices');
-
-    eventSource.addEventListener('indices_update', (e) => {
-      const data = JSON.parse(e.data);
-      console.debug('[RadialMenu] 📊 Received live market data:', data);
-
-      const newData = {
-        dow: {
-          value: data.dow?.last || 0,
-          change: data.dow?.changePercent || 0,
-          symbol: 'DJI'
-        },
-        nasdaq: {
-          value: data.nasdaq?.last || 0,
-          change: data.nasdaq?.changePercent || 0,
-          symbol: 'COMP'
-        }
-      };
-
-      // Use throttled update to prevent logo animation interruptions
-      throttledSetMarketData(newData);
-
-      // Cache the data in localStorage (immediate, not throttled)
-      try {
-        localStorage.setItem('paiid-market-data', JSON.stringify({
-          data: newData,
-          timestamp: Date.now()
-        }));
-      } catch (error) {
-        console.error('[RadialMenu] ❌ Failed to cache market data:', error);
+      if (retryAttempt >= maxRetries) {
+        console.error('[RadialMenu] 🚨 Max SSE retry attempts reached. Giving up.');
+        setIsMarketDataLoading(false);
+        return;
       }
-    });
 
-    eventSource.addEventListener('heartbeat', (e) => {
-      const data = JSON.parse(e.data);
-      console.debug('[RadialMenu] 💓 SSE heartbeat received:', data.timestamp);
-    });
+      console.info(`[RadialMenu] 📡 Connecting to SSE stream (attempt ${retryAttempt + 1}/${maxRetries})...`);
+      setSseRetryCount(retryAttempt);
 
-    eventSource.addEventListener('error', (e) => {
-      console.error('[RadialMenu] ❌ SSE connection error:', e);
-      eventSource.close();
+      try {
+        eventSource = new EventSource('/api/proxy/stream/market-indices');
 
-      // Fallback: fetch once if SSE fails
-      console.warn('[RadialMenu] ⚠️ Falling back to single fetch (SSE unavailable)');
-      fetch('/api/proxy/api/market/indices')
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data) {
-            setMarketData({
-              dow: { value: data.dow?.last || 0, change: data.dow?.changePercent || 0, symbol: 'DJI' },
-              nasdaq: { value: data.nasdaq?.last || 0, change: data.nasdaq?.changePercent || 0, symbol: 'COMP' }
-            });
+        eventSource.addEventListener('indices_update', (e) => {
+          const data = JSON.parse(e.data);
+          console.debug('[RadialMenu] 📊 Received live market data:', data);
+
+          const newData = {
+            dow: {
+              value: data.dow?.last || 0,
+              change: data.dow?.changePercent || 0,
+              symbol: 'DJI'
+            },
+            nasdaq: {
+              value: data.nasdaq?.last || 0,
+              change: data.nasdaq?.changePercent || 0,
+              symbol: 'COMP'
+            }
+          };
+
+          // Use throttled update to prevent logo animation interruptions
+          throttledSetMarketData(newData);
+
+          // Mark as connected and loading complete
+          setSseConnected(true);
+          setIsMarketDataLoading(false);
+          setSseRetryCount(0); // Reset retry count on success
+
+          // Cache the data in localStorage (immediate, not throttled)
+          try {
+            localStorage.setItem('paiid-market-data', JSON.stringify({
+              data: newData,
+              timestamp: Date.now()
+            }));
+          } catch (error) {
+            console.error('[RadialMenu] ❌ Failed to cache market data:', error);
           }
-        })
-        .catch(err => console.error('[RadialMenu] ❌ Fallback fetch failed:', err));
-    });
+        });
+
+        eventSource.addEventListener('heartbeat', (e) => {
+          const data = JSON.parse(e.data);
+          console.debug('[RadialMenu] 💓 SSE heartbeat received:', data.timestamp);
+        });
+
+        eventSource.addEventListener('error', (e) => {
+          console.error('[RadialMenu] ❌ SSE connection error:', e);
+          setSseConnected(false);
+
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+
+          // Exponential backoff: 2s, 4s, 8s, 16s, 32s, 64s, 128s (max ~2min)
+          const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 128000);
+          console.warn(`[RadialMenu] ⚠️ SSE disconnected. Retrying in ${delay / 1000}s... (attempt ${retryAttempt + 1}/${maxRetries})`);
+
+          reconnectTimeout = setTimeout(() => {
+            connectSSE(retryAttempt + 1);
+          }, delay);
+        });
+
+        eventSource.addEventListener('open', () => {
+          console.info('[RadialMenu] ✅ SSE connection established');
+          setSseConnected(true);
+        });
+
+      } catch (error) {
+        console.error('[RadialMenu] ❌ Failed to create EventSource:', error);
+        setSseConnected(false);
+
+        // Retry with exponential backoff
+        const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 128000);
+        reconnectTimeout = setTimeout(() => {
+          connectSSE(retryAttempt + 1);
+        }, delay);
+      }
+    };
+
+    // Initialize
+    loadCachedData();
+    connectSSE(0);
 
     // Cleanup: close SSE connection on unmount
     return () => {
+      isUnmounted = true;
       console.info('[RadialMenu] 🔌 Closing SSE connection');
-      eventSource.close();
+
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+
+      if (eventSource) {
+        eventSource.close();
+      }
     };
-  }, []);
+  }, [throttledSetMarketData]);
 
   // Debug logging for Fast Refresh loop detection + logo styles
   useEffect(() => {
     console.info('RadialMenu rendered with selectedWorkflow:', selectedWorkflow);
     console.info('Logo Styles Applied:', {
+      color: LOGO_STYLES.COLOR.primary,
       glow: LOGO_STYLES.GLOW.initial,
       animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration}`,
-      gradient: LOGO_STYLES.GRADIENT.teal,
     });
   }, [selectedWorkflow]);
 
@@ -549,7 +602,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
     centerGroup.append('circle')
       .attr('r', innerRadius - 15)
       .attr('fill', 'url(#centerGradient)')
-      .attr('stroke', '#059669')
+      .attr('stroke', '#45f0c0')
       .attr('stroke-width', 3)
       .style('filter', 'url(#innerShadow)');
 
@@ -557,7 +610,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
     centerGroup.append('circle')
       .attr('r', innerRadius - 15)
       .attr('fill', 'none')
-      .attr('stroke', '#10b981')
+      .attr('stroke', '#45f0c0')
       .attr('stroke-width', 2)
       .attr('opacity', 0.3)
       .append('animate')
@@ -590,15 +643,19 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
       .attr('fill', '#f1f5f9')
       .style('text-shadow', '0 2px 6px rgba(0, 0, 0, 0.6)')
       .style('pointer-events', 'none')
-      .text(marketData.dow.value.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+      .text(
+        isMarketDataLoading && marketData.dow.value === 0
+          ? 'Loading...'
+          : marketData.dow.value.toLocaleString('en-US', { minimumFractionDigits: 2 })
+      );
 
     const dowChange = dow.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '26')                     // Reduced from 38 for tighter spacing
       .attr('font-size', fontSizes.marketChange)
       .attr('font-weight', '800')
-      .attr('fill', marketData.dow.change >= 0 ? '#10b981' : '#ef4444')
-      .style('text-shadow', '0 0 10px ' + (marketData.dow.change >= 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
+      .attr('fill', marketData.dow.change >= 0 ? '#45f0c0' : '#ef4444')
+      .style('text-shadow', '0 0 10px ' + (marketData.dow.change >= 0 ? 'rgba(69, 240, 192, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
       .style('pointer-events', 'none')
       .text(`${marketData.dow.change >= 0 ? '▲' : '▼'} ${Math.abs(marketData.dow.change).toFixed(2)}%`);
 
@@ -641,15 +698,19 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
       .attr('fill', '#f1f5f9')
       .style('text-shadow', '0 2px 6px rgba(0, 0, 0, 0.6)')
       .style('pointer-events', 'none')
-      .text(marketData.nasdaq.value.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+      .text(
+        isMarketDataLoading && marketData.nasdaq.value === 0
+          ? 'Loading...'
+          : marketData.nasdaq.value.toLocaleString('en-US', { minimumFractionDigits: 2 })
+      );
 
     const nasdaqChange = nasdaqGroup.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '26')                     // Reduced from 38 for tighter spacing
       .attr('font-size', fontSizes.marketChange)
       .attr('font-weight', '800')
-      .attr('fill', marketData.nasdaq.change >= 0 ? '#10b981' : '#ef4444')
-      .style('text-shadow', '0 0 10px ' + (marketData.nasdaq.change >= 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
+      .attr('fill', marketData.nasdaq.change >= 0 ? '#45f0c0' : '#ef4444')
+      .style('text-shadow', '0 0 10px ' + (marketData.nasdaq.change >= 0 ? 'rgba(69, 240, 192, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
       .style('pointer-events', 'none')
       .text(`${marketData.nasdaq.change >= 0 ? '▲' : '▼'} ${Math.abs(marketData.nasdaq.change).toFixed(2)}%`);
 
@@ -673,7 +734,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
           .on('end', repeat);
       });
 
-  }, [menuSize, fontSizes, onWorkflowSelect, onWorkflowHover]); // Re-render when menu size changes (responsive to viewport)
+  }, [menuSize, fontSizes, onWorkflowSelect, onWorkflowHover, isMarketDataLoading]); // Re-render when menu size or loading state changes
 
   // Separate effect for market data updates - only update text when data changes
   useEffect(() => {
@@ -713,14 +774,14 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
         if (transform && transform.includes('-15')) {
           // DOW change
           text
-            .attr('fill', marketData.dow.change >= 0 ? '#10b981' : '#ef4444')
-            .style('text-shadow', '0 0 10px ' + (marketData.dow.change >= 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
+            .attr('fill', marketData.dow.change >= 0 ? '#45f0c0' : '#ef4444')
+            .style('text-shadow', '0 0 10px ' + (marketData.dow.change >= 0 ? 'rgba(69, 240, 192, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
             .text(`${marketData.dow.change >= 0 ? '▲' : '▼'} ${Math.abs(marketData.dow.change).toFixed(2)}%`);
         } else if (transform && transform.includes('45')) {
           // NASDAQ change
           text
-            .attr('fill', marketData.nasdaq.change >= 0 ? '#10b981' : '#ef4444')
-            .style('text-shadow', '0 0 10px ' + (marketData.nasdaq.change >= 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
+            .attr('fill', marketData.nasdaq.change >= 0 ? '#45f0c0' : '#ef4444')
+            .style('text-shadow', '0 0 10px ' + (marketData.nasdaq.change >= 0 ? 'rgba(69, 240, 192, 0.5)' : 'rgba(239, 68, 68, 0.5)'))
             .text(`${marketData.nasdaq.change >= 0 ? '▲' : '▼'} ${Math.abs(marketData.nasdaq.change).toFixed(2)}%`);
         }
       });
@@ -791,21 +852,21 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
               gap: '6px',
               padding: isMobile ? '4px 10px' : '6px 14px',
               background: marketStatus.is_open
-                ? 'rgba(16, 185, 129, 0.15)'
+                ? 'rgba(69, 240, 192, 0.15)'
                 : 'rgba(239, 68, 68, 0.15)',
-              border: `1px solid ${marketStatus.is_open ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+              border: `1px solid ${marketStatus.is_open ? 'rgba(69, 240, 192, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
               borderRadius: '20px',
               backdropFilter: 'blur(10px)',
               boxShadow: marketStatus.is_open
-                ? '0 0 15px rgba(16, 185, 129, 0.2)'
+                ? '0 0 15px rgba(69, 240, 192, 0.2)'
                 : '0 0 15px rgba(239, 68, 68, 0.2)'
             }}>
               <div style={{
                 width: isMobile ? '6px' : '8px',
                 height: isMobile ? '6px' : '8px',
                 borderRadius: '50%',
-                background: marketStatus.is_open ? '#10b981' : '#ef4444',
-                boxShadow: `0 0 8px ${marketStatus.is_open ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'}`,
+                background: marketStatus.is_open ? '#45f0c0' : '#ef4444',
+                boxShadow: `0 0 8px ${marketStatus.is_open ? 'rgba(69, 240, 192, 0.6)' : 'rgba(239, 68, 68, 0.6)'}`,
                 animation: marketStatus.is_open ? 'pulse-open 2s ease-in-out infinite' : 'none'
               }} />
               <div style={{
@@ -813,7 +874,7 @@ function RadialMenuComponent({ onWorkflowSelect, onWorkflowHover, selectedWorkfl
                 fontWeight: '800',
                 letterSpacing: '1px',
                 textTransform: 'uppercase',
-                color: marketStatus.is_open ? '#10b981' : '#ef4444'
+                color: marketStatus.is_open ? '#45f0c0' : '#ef4444'
               }}>
                 {marketStatus.state === 'open' && 'Market Open'}
                 {marketStatus.state === 'premarket' && 'Pre-Market'}

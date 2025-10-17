@@ -9,6 +9,7 @@ import { showSuccess, showError, showWarning } from "../lib/toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { useWorkflow } from "../contexts/WorkflowContext";
 import StockLookup from "./StockLookup";
+import OptionsGreeksDisplay from "./OptionsGreeksDisplay";
 
 interface Order {
   symbol: string;
@@ -16,6 +17,11 @@ interface Order {
   qty: number;
   type: "market" | "limit";
   limitPrice?: number;
+  // Options fields
+  asset_class?: "stock" | "option";
+  option_type?: "call" | "put";
+  strike_price?: number;
+  expiration_date?: string;
 }
 
 interface ExecuteResponse {
@@ -78,6 +84,15 @@ export default function ExecuteTradeForm() {
   // Stock research state
   const [showStockLookup, setShowStockLookup] = useState(false);
 
+  // Options trading state
+  const [assetClass, setAssetClass] = useState<"stock" | "option">("stock");
+  const [optionType, setOptionType] = useState<"call" | "put">("call");
+  const [strikePrice, setStrikePrice] = useState<string>("");
+  const [expirationDate, setExpirationDate] = useState<string>("");
+  const [availableExpirations, setAvailableExpirations] = useState<string[]>([]);
+  const [availableStrikes, setAvailableStrikes] = useState<number[]>([]);
+  const [loadingOptionsChain, setLoadingOptionsChain] = useState(false);
+
   // Load templates on mount
   useEffect(() => {
     loadTemplates();
@@ -127,6 +142,64 @@ export default function ExecuteTradeForm() {
       console.error("Failed to load templates:", err);
     }
   };
+
+  // Fetch available expiration dates when symbol changes (for options mode)
+  const fetchExpirations = async (sym: string) => {
+    if (!sym || sym.trim() === "" || assetClass !== "option") return;
+
+    setLoadingOptionsChain(true);
+    try {
+      const response = await fetch(`/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableExpirations(data.expirations || []);
+        if (data.expirations && data.expirations.length > 0) {
+          setExpirationDate(data.expirations[0]); // Auto-select first expiration
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch expirations:", err);
+    } finally {
+      setLoadingOptionsChain(false);
+    }
+  };
+
+  // Fetch available strikes when expiration changes
+  const fetchStrikes = async (sym: string, expiry: string) => {
+    if (!sym || !expiry || assetClass !== "option") return;
+
+    setLoadingOptionsChain(true);
+    try {
+      const response = await fetch(`/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}&expiration=${expiry}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableStrikes(data.strikes || []);
+        if (data.strikes && data.strikes.length > 0) {
+          // Auto-select strike closest to ATM
+          const middleIndex = Math.floor(data.strikes.length / 2);
+          setStrikePrice(data.strikes[middleIndex].toString());
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch strikes:", err);
+    } finally {
+      setLoadingOptionsChain(false);
+    }
+  };
+
+  // Fetch expirations when symbol or asset class changes
+  useEffect(() => {
+    if (assetClass === "option" && symbol.trim()) {
+      fetchExpirations(symbol);
+    }
+  }, [symbol, assetClass]);
+
+  // Fetch strikes when expiration changes
+  useEffect(() => {
+    if (assetClass === "option" && symbol.trim() && expirationDate) {
+      fetchStrikes(symbol, expirationDate);
+    }
+  }, [expirationDate]);
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplateId(templateId);
@@ -222,15 +295,39 @@ export default function ExecuteTradeForm() {
       return;
     }
 
+    // Options-specific validation
+    if (assetClass === "option") {
+      if (!optionType) {
+        setError("Option type (call/put) is required");
+        return;
+      }
+      if (!strikePrice || parseFloat(strikePrice) <= 0) {
+        setError("Strike price is required for options");
+        return;
+      }
+      if (!expirationDate) {
+        setError("Expiration date is required for options");
+        return;
+      }
+    }
+
     const order: Order = {
       symbol: symbol.trim().toUpperCase(),
       side,
       qty,
       type: orderType,
+      asset_class: assetClass,
     };
 
     if (orderType === "limit") {
       order.limitPrice = parseFloat(limitPrice);
+    }
+
+    // Add options fields if applicable
+    if (assetClass === "option") {
+      order.option_type = optionType;
+      order.strike_price = parseFloat(strikePrice);
+      order.expiration_date = expirationDate;
     }
 
     // Show confirmation dialog
@@ -344,10 +441,16 @@ export default function ExecuteTradeForm() {
 
   const getConfirmMessage = () => {
     if (!pendingOrder) return "";
+
     const priceStr =
       pendingOrder.type === "limit" && pendingOrder.limitPrice
         ? ` at $${pendingOrder.limitPrice.toFixed(2)}`
         : " at market price";
+
+    if (pendingOrder.asset_class === "option") {
+      return `${pendingOrder.side.toUpperCase()} ${pendingOrder.qty} ${pendingOrder.symbol} $${pendingOrder.strike_price} ${pendingOrder.option_type?.toUpperCase()} (exp: ${pendingOrder.expiration_date})${priceStr}?`;
+    }
+
     return `${pendingOrder.side.toUpperCase()} ${pendingOrder.qty} shares of ${pendingOrder.symbol}${priceStr}?`;
   };
 
@@ -554,6 +657,63 @@ export default function ExecuteTradeForm() {
             )}
           </div>
 
+          {/* Asset Class Toggle (Stock vs Options) */}
+          <div style={{
+            marginBottom: theme.spacing.xl,
+            padding: theme.spacing.lg,
+            background: theme.background.input,
+            border: `1px solid ${theme.colors.border}`,
+            borderRadius: theme.borderRadius.lg
+          }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: theme.colors.textMuted,
+              marginBottom: theme.spacing.md
+            }}>
+              Asset Type
+            </label>
+            <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+              <button
+                type="button"
+                onClick={() => setAssetClass("stock")}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: assetClass === "stock" ? theme.colors.primary : theme.background.card,
+                  border: `2px solid ${assetClass === "stock" ? theme.colors.primary : theme.colors.border}`,
+                  borderRadius: theme.borderRadius.md,
+                  color: assetClass === "stock" ? '#0f172a' : theme.colors.text,
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: theme.transitions.normal
+                }}
+              >
+                Stock
+              </button>
+              <button
+                type="button"
+                onClick={() => setAssetClass("option")}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: assetClass === "option" ? theme.colors.primary : theme.background.card,
+                  border: `2px solid ${assetClass === "option" ? theme.colors.primary : theme.colors.border}`,
+                  borderRadius: theme.borderRadius.md,
+                  color: assetClass === "option" ? '#0f172a' : theme.colors.text,
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: theme.transitions.normal
+                }}
+              >
+                Options
+              </button>
+            </div>
+          </div>
+
           {/* Form */}
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.xl }}>
               {/* Form Grid */}
@@ -714,6 +874,117 @@ export default function ExecuteTradeForm() {
                   </select>
                 </div>
 
+                {/* Options-specific fields (conditional) */}
+                {assetClass === "option" && (
+                  <>
+                    {/* Call/Put Selector */}
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: theme.colors.textMuted,
+                        marginBottom: theme.spacing.sm
+                      }}>
+                        Option Type
+                      </label>
+                      <select
+                        value={optionType}
+                        onChange={(e) => setOptionType(e.target.value as "call" | "put")}
+                        disabled={loading}
+                        style={{
+                          width: '100%',
+                          padding: responsiveSizes.inputPadding,
+                          background: theme.background.input,
+                          border: `1px solid ${theme.colors.border}`,
+                          borderRadius: theme.borderRadius.md,
+                          color: theme.colors.text,
+                          fontSize: responsiveSizes.inputFontSize,
+                          transition: theme.transitions.normal,
+                          opacity: loading ? 0.5 : 1
+                        }}
+                      >
+                        <option value="call">Call</option>
+                        <option value="put">Put</option>
+                      </select>
+                    </div>
+
+                    {/* Expiration Date */}
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: theme.colors.textMuted,
+                        marginBottom: theme.spacing.sm
+                      }}>
+                        Expiration Date
+                      </label>
+                      <select
+                        value={expirationDate}
+                        onChange={(e) => setExpirationDate(e.target.value)}
+                        disabled={loading || loadingOptionsChain || availableExpirations.length === 0}
+                        style={{
+                          width: '100%',
+                          padding: responsiveSizes.inputPadding,
+                          background: theme.background.input,
+                          border: `1px solid ${theme.colors.border}`,
+                          borderRadius: theme.borderRadius.md,
+                          color: theme.colors.text,
+                          fontSize: responsiveSizes.inputFontSize,
+                          transition: theme.transitions.normal,
+                          opacity: (loading || loadingOptionsChain) ? 0.5 : 1
+                        }}
+                      >
+                        {availableExpirations.length === 0 ? (
+                          <option value="">Loading expirations...</option>
+                        ) : (
+                          availableExpirations.map(exp => (
+                            <option key={exp} value={exp}>{exp}</option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+
+                    {/* Strike Price */}
+                    <div style={{ gridColumn: isMobile ? 'auto' : 'span 2' }}>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: theme.colors.textMuted,
+                        marginBottom: theme.spacing.sm
+                      }}>
+                        Strike Price
+                      </label>
+                      <select
+                        value={strikePrice}
+                        onChange={(e) => setStrikePrice(e.target.value)}
+                        disabled={loading || loadingOptionsChain || availableStrikes.length === 0}
+                        style={{
+                          width: '100%',
+                          padding: responsiveSizes.inputPadding,
+                          background: theme.background.input,
+                          border: `1px solid ${theme.colors.border}`,
+                          borderRadius: theme.borderRadius.md,
+                          color: theme.colors.text,
+                          fontSize: responsiveSizes.inputFontSize,
+                          transition: theme.transitions.normal,
+                          opacity: (loading || loadingOptionsChain) ? 0.5 : 1
+                        }}
+                      >
+                        {availableStrikes.length === 0 ? (
+                          <option value="">Select expiration first...</option>
+                        ) : (
+                          availableStrikes.map(strike => (
+                            <option key={strike} value={strike}>${strike.toFixed(2)}</option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+                  </>
+                )}
+
                 {/* Limit Price (conditional) */}
                 {orderType === "limit" && (
                   <div style={{ gridColumn: isMobile ? 'auto' : 'span 2' }}>
@@ -750,6 +1021,33 @@ export default function ExecuteTradeForm() {
                   </div>
                 )}
               </div>
+
+              {/* Options Greeks Preview (conditional) */}
+              {assetClass === "option" && symbol.trim() && strikePrice && expirationDate && (
+                <div style={{
+                  marginTop: theme.spacing.lg,
+                  padding: theme.spacing.lg,
+                  background: theme.background.input,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: theme.borderRadius.lg
+                }}>
+                  <h4 style={{
+                    margin: 0,
+                    marginBottom: theme.spacing.md,
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: theme.colors.text
+                  }}>
+                    Live Greeks Preview
+                  </h4>
+                  <OptionsGreeksDisplay
+                    symbol={symbol.trim().toUpperCase()}
+                    strike={parseFloat(strikePrice)}
+                    expiry={expirationDate}
+                    optionType={optionType}
+                  />
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: theme.spacing.md, marginTop: theme.spacing.lg }}>
