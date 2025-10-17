@@ -38,6 +38,9 @@ class TradierStreamService:
 
     Manages WebSocket connection to Tradier for live quotes, trades, and market data.
     Implements auto-reconnection, session renewal, and Redis caching.
+
+    CRITICAL: Tradier allows only ONE WebSocket session per API token.
+    Must DELETE old session before creating a new one to avoid "too many sessions" error.
     """
 
     def __init__(self):
@@ -51,6 +54,12 @@ class TradierStreamService:
         self.max_reconnect_attempts = 10
         self.cache = get_cache()
 
+        # Circuit breaker for "too many sessions" errors
+        self.session_error_count = 0
+        self.max_session_errors = 5
+        self.circuit_breaker_active = False
+        self.circuit_breaker_reset_time: Optional[float] = None
+
         # WebSocket endpoint
         self.ws_url = "wss://ws.tradier.com/v1/markets/events"
 
@@ -63,13 +72,60 @@ class TradierStreamService:
 
         logger.info("✅ TradierStreamService initialized")
 
+    async def _delete_session(self, session_id: str) -> bool:
+        """
+        Delete an existing streaming session via Tradier API
+
+        CRITICAL: Must delete old session before creating new one
+        to avoid "too many sessions requested" error.
+
+        Args:
+            session_id: The session ID to delete
+
+        Returns:
+            True if successfully deleted, False otherwise
+        """
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.delete(
+                    self.session_url,
+                    headers={
+                        "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
+                        "Accept": "application/json",
+                    },
+                    params={"sessionid": session_id},
+                    timeout=10.0,
+                )
+
+                if response.status_code == 200:
+                    logger.info(f"✅ Deleted Tradier session: {session_id[:8]}...")
+                    return True
+                else:
+                    logger.warning(
+                        f"⚠️ Failed to delete session {session_id[:8]}: {response.status_code} - {response.text}"
+                    )
+                    return False
+
+        except Exception as e:
+            logger.error(f"❌ Error deleting Tradier session: {e}")
+            return False
+
     async def _create_session(self) -> Optional[str]:
         """
         Create a new streaming session via Tradier API
 
+        CRITICAL: Always deletes old session first to avoid
+        "too many sessions requested" error.
+
         Returns:
             Session ID string or None if failed
         """
+        # CRITICAL: Delete old session first if it exists
+        if self.session_id:
+            logger.info(f"🔄 Deleting old session before creating new one: {self.session_id[:8]}...")
+            await self._delete_session(self.session_id)
+            self.session_id = None
+
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -88,6 +144,7 @@ class TradierStreamService:
                     if session_id:
                         self.session_id = session_id
                         self.session_created_at = time.time()
+                        # Note: Do NOT reset circuit breaker here - only reset after successful WebSocket message receipt
                         logger.info(f"✅ Created Tradier streaming session: {session_id[:8]}...")
                         return session_id
                     else:
@@ -134,16 +191,50 @@ class TradierStreamService:
     async def _connect_websocket(self):
         """
         Connect to Tradier WebSocket and handle messages
+
+        Implements circuit breaker to prevent rapid reconnection on
+        "too many sessions" errors (5 failures → 30s backoff).
         """
         while self.running:
             try:
-                # Create session first
-                if not self.session_id:
-                    session_id = await self._create_session()
-                    if not session_id:
-                        logger.error("❌ Failed to create session, retrying in 5s...")
-                        await asyncio.sleep(5)
-                        continue
+                # Check circuit breaker
+                if self.circuit_breaker_active:
+                    if time.time() < self.circuit_breaker_reset_time:
+                        wait_time = int(self.circuit_breaker_reset_time - time.time())
+                        if wait_time > 0:
+                            logger.warning(
+                                f"⚠️ Circuit breaker ACTIVE - waiting {wait_time}s before retry..."
+                            )
+                            await asyncio.sleep(wait_time)
+                            continue
+                        else:
+                            # Timer expired, reset immediately
+                            logger.info("✅ Circuit breaker timer expired - resetting now")
+                            self.circuit_breaker_active = False
+                            self.session_error_count = 0
+                    else:
+                        logger.info("✅ Circuit breaker RESET - attempting connection")
+                        self.circuit_breaker_active = False
+                        self.session_error_count = 0
+
+                # CRITICAL: Clear old session ID before creating new one
+                # This forces creation of a fresh session and prevents reuse of stale sessions
+                if self.session_id:
+                    logger.info(f"🔄 Clearing old session ID before reconnection")
+                    old_session = self.session_id
+                    self.session_id = None
+                    # Attempt to delete old session (best effort)
+                    try:
+                        await self._delete_session(old_session)
+                    except:
+                        pass
+
+                # Create fresh session
+                session_id = await self._create_session()
+                if not session_id:
+                    logger.error("❌ Failed to create session, retrying in 5s...")
+                    await asyncio.sleep(5)
+                    continue
 
                 # Connect to WebSocket
                 logger.info(f"📡 Connecting to Tradier WebSocket: {self.ws_url}")
@@ -166,6 +257,7 @@ class TradierStreamService:
             except websockets.exceptions.ConnectionClosed as e:
                 logger.warning(f"⚠️ WebSocket connection closed: {e}")
                 self.websocket = None
+                self.session_id = None  # Clear session on disconnect
 
                 if self.running:
                     # Exponential backoff
@@ -181,6 +273,7 @@ class TradierStreamService:
             except Exception as e:
                 logger.error(f"❌ WebSocket error: {e}")
                 self.websocket = None
+                self.session_id = None  # Clear session on error
 
                 if self.running:
                     await asyncio.sleep(5)
@@ -222,12 +315,46 @@ class TradierStreamService:
             # Parse JSON
             data = json.loads(message)
 
+            # CRITICAL: Check for "too many sessions" error
+            if "error" in data:
+                error_msg = data.get("error", "")
+                if "too many sessions" in error_msg.lower():
+                    self.session_error_count += 1
+                    logger.error(
+                        f"🚨 'Too many sessions' error detected ({self.session_error_count}/{self.max_session_errors})"
+                    )
+
+                    # IMMEDIATE CIRCUIT BREAKER: Activate on FIRST error
+                    # Wait 6 minutes (360s) for all zombie sessions to expire (Tradier TTL is 5 min)
+                    if not self.circuit_breaker_active:
+                        self.circuit_breaker_active = True
+                        self.circuit_breaker_reset_time = time.time() + 360  # 6 minute timeout
+                        logger.error(
+                            f"🔴 CIRCUIT BREAKER ACTIVATED - Too many sessions error. Waiting 6 minutes for session cleanup."
+                        )
+                        logger.error(
+                            f"🔴 Root cause: Zombie sessions from previous reconnections must expire (Tradier TTL: 5 min)"
+                        )
+                        # Close WebSocket to force reconnection with circuit breaker logic
+                        if self.websocket:
+                            await self.websocket.close()
+                    return
+                else:
+                    logger.error(f"❌ WebSocket error message: {error_msg}")
+                    return
+
             # Extract message type and symbol
             msg_type = data.get("type")
             symbol = data.get("symbol")
 
             if not symbol:
                 return
+
+            # Reset circuit breaker on successful data message (proves WebSocket is working)
+            if self.session_error_count > 0:
+                logger.info(f"✅ Received valid data - resetting error count from {self.session_error_count}")
+                self.session_error_count = 0
+                self.circuit_breaker_active = False
 
             # Handle different message types
             if msg_type == "quote":
@@ -309,7 +436,7 @@ class TradierStreamService:
         logger.info("✅ Tradier streaming service started")
 
     async def stop(self):
-        """Stop the streaming service"""
+        """Stop the streaming service and cleanup sessions"""
         logger.info("🛑 Stopping Tradier streaming service...")
         self.running = False
 
@@ -332,6 +459,12 @@ class TradierStreamService:
         if self.websocket:
             await self.websocket.close()
             self.websocket = None
+
+        # CRITICAL: Delete session on shutdown to free up API token
+        if self.session_id:
+            logger.info(f"🧹 Cleaning up session on shutdown: {self.session_id[:8]}...")
+            await self._delete_session(self.session_id)
+            self.session_id = None
 
         logger.info("✅ Tradier streaming service stopped")
 

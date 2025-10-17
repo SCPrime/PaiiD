@@ -23,6 +23,16 @@ def health():
             info["redis"] = {"connected": True, "latency_ms": ms}
         except Exception:
             info["redis"] = {"connected": False}
+    else:
+        info["redis"] = {"connected": False}
+
+    # Include startup performance metrics
+    try:
+        from ..core.startup_monitor import get_startup_monitor
+        startup_metrics = get_startup_monitor().get_metrics()
+        info["startup"] = startup_metrics
+    except Exception:
+        pass  # Startup monitor not initialized yet
 
     return info
 

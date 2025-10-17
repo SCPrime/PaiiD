@@ -35,6 +35,7 @@ from .routers import (
     market,
     market_data,
     news,
+    options,
     orders,
     portfolio,
     scheduler,
@@ -109,18 +110,24 @@ else:
 # Initialize scheduler, cache, and streaming on startup
 @app.on_event("startup")
 async def startup_event():
+    from .core.startup_monitor import get_startup_monitor
+
+    monitor = get_startup_monitor()
+    monitor.start()
+
     # Initialize cache service
     try:
-        from .services.cache import init_cache
-
-        init_cache()
+        async with monitor.phase("cache_init", timeout=5.0):
+            from .services.cache import init_cache
+            init_cache()
     except Exception as e:
         print(f"[ERROR] Failed to initialize cache: {str(e)}", flush=True)
 
     # Initialize scheduler
     try:
-        scheduler_instance = init_scheduler()
-        print("[OK] Scheduler initialized and started", flush=True)
+        async with monitor.phase("scheduler_init", timeout=5.0):
+            scheduler_instance = init_scheduler()
+            print("[OK] Scheduler initialized and started", flush=True)
     except Exception as e:
         print(f"[ERROR] Failed to initialize scheduler: {str(e)}", flush=True)
 
@@ -129,19 +136,29 @@ async def startup_event():
     # Future: Tradier will also handle live trading post-MVP
     print("[INFO] Market data: Tradier API | Trade execution: Alpaca Paper Trading", flush=True)
 
-    # Start Tradier streaming service
+    # Start Tradier streaming service (non-blocking background task)
+    # The streaming service runs independently and should NOT block application startup
+    # If circuit breaker is active, it will wait in the background without blocking HTTP requests
     try:
-        from .services.tradier_stream import get_tradier_stream, start_tradier_stream
+        async with monitor.phase("tradier_stream_init", timeout=10.0):
+            from .services.tradier_stream import get_tradier_stream, start_tradier_stream
 
-        await start_tradier_stream()
-        print("[OK] Tradier streaming initialized", flush=True)
+            # Start returns immediately - WebSocket connection happens in background
+            await start_tradier_stream()
+            print("[OK] Tradier streaming service started (running in background)", flush=True)
 
-        # Subscribe to market indices for radial menu real-time updates
-        stream = get_tradier_stream()
-        await stream.subscribe_quotes(["$DJI", "COMP:GIDS"])
-        print("[OK] Subscribed to $DJI and COMP for real-time streaming", flush=True)
+            # Queue subscription request (non-blocking) - will be sent when WebSocket connects
+            stream = get_tradier_stream()
+            if stream:
+                # Add symbols to active set - they'll be subscribed when WebSocket connects
+                stream.active_symbols.update(["$DJI", "COMP:GIDS"])
+                print("[INFO] Queued subscription to $DJI and COMP (will connect when circuit breaker clears)", flush=True)
     except Exception as e:
-        print(f"[ERROR] Failed to start Tradier stream: {e}", flush=True)
+        print(f"[WARNING] Tradier stream startup failed (non-blocking): {e}", flush=True)
+        print("[INFO] Application will continue - streaming will retry automatically", flush=True)
+
+    # Finish monitoring and log summary
+    monitor.finish()
 
 
 # Shutdown scheduler and streaming gracefully
@@ -182,8 +199,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:3002",
+        "http://localhost:3003",  # Alternative dev server port
         "https://paiid-frontend.onrender.com",
     ],
     allow_credentials=True,
@@ -201,6 +217,7 @@ app.include_router(screening.router, prefix="/api")
 app.include_router(market.router, prefix="/api")
 app.include_router(market_data.router, prefix="/api", tags=["market-data"])
 app.include_router(news.router, prefix="/api", tags=["news"])
+app.include_router(options.router, prefix="/api")  # Options Greeks calculator
 app.include_router(ai.router, prefix="/api")
 app.include_router(claude.router, prefix="/api")
 app.include_router(stock.router, prefix="/api")
