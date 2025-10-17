@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import Split from 'react-split';
 import RadialMenu, { workflows, Workflow } from '../components/RadialMenu';
-import { LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
-import PaiiDLogo from '../components/PaiiDLogo';
+import { LOGO_ANIMATION_KEYFRAME, LOGO_STYLES } from '../styles/logoConstants';
 
 import MorningRoutineAI from '../components/MorningRoutineAI';
 import ExecuteTradeForm from '../components/ExecuteTradeForm';
@@ -414,16 +413,93 @@ export default function Dashboard() {
           overflow: 'hidden',
         }}>
           {/* Header Logo */}
-          <div style={{
-            textAlign: 'center',
-            paddingTop: '20px',
-            paddingBottom: '10px',
-          }}>
-            <PaiiDLogo
-              size="large"
-              showSubtitle={true}
-              onClick={() => setAiChatOpen(true)}
-            />
+          <div
+            style={{
+              textAlign: 'center',
+              paddingTop: '20px',
+              paddingBottom: '10px',
+              cursor: 'pointer',
+            }}
+            onClick={() => setAiChatOpen(true)}
+          >
+            {/* Inline PaiiD Logo */}
+            <div
+              style={{
+                fontSize: '64px',
+                fontWeight: 'bold',
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '8px',
+                userSelect: 'none',
+              }}
+            >
+              <span style={{ color: LOGO_STYLES.COLOR.primary }}>P</span>
+              <span style={{ color: LOGO_STYLES.COLOR.primary }}>a</span>
+              <span
+                style={{
+                  color: LOGO_STYLES.COLOR.primary,
+                  textShadow: LOGO_STYLES.GLOW.initial,
+                  animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration}`,
+                  position: 'relative',
+                  display: 'inline-block',
+                }}
+              >
+                {/* Left dot above π */}
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '26px',
+                    left: '22%',
+                    width: '7px',
+                    height: '7px',
+                    background: LOGO_STYLES.PI_DOTS.background,
+                    borderRadius: '50%',
+                    boxShadow: LOGO_STYLES.PI_DOTS.boxShadow,
+                  }}
+                />
+                {/* Right dot above π */}
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '26px',
+                    right: '22%',
+                    width: '7px',
+                    height: '7px',
+                    background: LOGO_STYLES.PI_DOTS.background,
+                    borderRadius: '50%',
+                    boxShadow: LOGO_STYLES.PI_DOTS.boxShadow,
+                  }}
+                />
+                π
+              </span>
+              <span style={{ color: LOGO_STYLES.COLOR.primary }}>D</span>
+            </div>
+            {/* Subtitles */}
+            <div style={{ textAlign: 'center' }}>
+              <div
+                style={{
+                  fontSize: '18px',
+                  color: '#cbd5e1',
+                  marginBottom: '2px',
+                  fontFamily: '"Inter", sans-serif',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                Personal <span style={{ fontStyle: 'italic' }}>artificial intelligence</span>/
+                <span style={{ fontStyle: 'italic' }}>investment</span> Dashboard
+              </div>
+              <div
+                style={{
+                  fontSize: '14px',
+                  color: '#94a3b8',
+                  fontFamily: '"Inter", sans-serif',
+                }}
+              >
+                10 Stage Workflow
+              </div>
+            </div>
           </div>
 
           {/* Radial Menu */}

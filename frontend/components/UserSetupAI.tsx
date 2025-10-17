@@ -22,7 +22,6 @@ import { LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
 import { claudeAI, UserPreferences } from '../lib/aiAdapter';
 import { createUser } from '../lib/userManagement';
 import { useChat } from './ChatContext';
-import PaiiDLogo from './PaiiDLogo';
 import dynamic from 'next/dynamic';
 
 const UserSetup = dynamic(() => import('./UserSetup'), { ssr: false });

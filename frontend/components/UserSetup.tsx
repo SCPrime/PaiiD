@@ -5,8 +5,7 @@ import { User, Mail, Users, Info, ChevronLeft, ChevronRight, ArrowRight, Target,
 import { createUser } from '../lib/userManagement';
 import { GlassCard, GlassButton, GlassInput } from './GlassmorphicComponents';
 import { theme } from '../styles/theme';
-import { LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
-import PaiiDLogo from './PaiiDLogo';
+import { LOGO_ANIMATION_KEYFRAME, LOGO_STYLES } from '../styles/logoConstants';
 
 interface UserSetupProps {
   onComplete: () => void;
@@ -1033,7 +1032,60 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
           {/* Header */}
           {currentPage === 0 && (
             <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <PaiiDLogo size="large" />
+              {/* Inline PaiiD Logo */}
+              <div
+                style={{
+                  fontSize: '72px',
+                  fontWeight: 'bold',
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '8px',
+                  userSelect: 'none',
+                }}
+              >
+                <span style={{ color: LOGO_STYLES.COLOR.primary }}>P</span>
+                <span style={{ color: LOGO_STYLES.COLOR.primary }}>a</span>
+                <span
+                  style={{
+                    color: LOGO_STYLES.COLOR.primary,
+                    textShadow: LOGO_STYLES.GLOW.initial,
+                    animation: `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.ANIMATION.duration}`,
+                    position: 'relative',
+                    display: 'inline-block',
+                  }}
+                >
+                  {/* Left dot above π */}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '30px',
+                      left: '22%',
+                      width: '8px',
+                      height: '8px',
+                      background: LOGO_STYLES.PI_DOTS.background,
+                      borderRadius: '50%',
+                      boxShadow: LOGO_STYLES.PI_DOTS.boxShadow,
+                    }}
+                  />
+                  {/* Right dot above π */}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '30px',
+                      right: '22%',
+                      width: '8px',
+                      height: '8px',
+                      background: LOGO_STYLES.PI_DOTS.background,
+                      borderRadius: '50%',
+                      boxShadow: LOGO_STYLES.PI_DOTS.boxShadow,
+                    }}
+                  />
+                  π
+                </span>
+                <span style={{ color: LOGO_STYLES.COLOR.primary }}>D</span>
+              </div>
             </div>
           )}
 
