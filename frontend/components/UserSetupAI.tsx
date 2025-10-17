@@ -248,11 +248,11 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '16px',
+          padding: '16px 12px',
           overflow: 'hidden',
         }}
       >
-        <div style={{ maxWidth: '800px', width: '100%', position: 'relative', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto' }}>
+        <div style={{ maxWidth: '800px', width: '100%', position: 'relative', display: 'flex', flexDirection: 'column', gap: '0px' }}>
           {/* Particle Background for "aii" area */}
           <div
             style={{
@@ -285,29 +285,97 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             ))}
           </div>
 
-          {/* Centered Enhanced Logo Header - 72px */}
+          {/* Centered Compact Logo Header */}
           <div
             style={{
               textAlign: 'center',
-              marginBottom: theme.spacing.lg,
+              marginBottom: '8px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '12px',
+              gap: '4px',
               position: 'relative',
             }}
           >
-            <PaiiDLogo
-              size="custom"
-              customFontSize={72}
-              showSubtitle={true}
-              onClick={openChat}
-            />
+            {/* Compact PaiiD Logo */}
+            <div style={{
+              fontSize: '36px',
+              fontWeight: 'bold',
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              display: 'flex',
+              alignItems: 'center',
+              userSelect: 'none',
+              marginBottom: '4px',
+            }}>
+              <span style={{ color: '#45f0c0' }}>P</span>
+              <span style={{ color: '#45f0c0' }}>a</span>
+              <span
+                onClick={openChat}
+                style={{
+                  color: '#45f0c0',
+                  textShadow: '0 0 20px rgba(69, 240, 192, 0.7), 0 0 40px rgba(69, 240, 192, 0.5)',
+                  animation: 'glow-ai 3s ease-in-out infinite',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  display: 'inline-block',
+                }}
+              >
+                {/* Left dot above π */}
+                <span style={{
+                  position: 'absolute',
+                  top: '12px',
+                  left: '22%',
+                  width: '4px',
+                  height: '4px',
+                  background: '#45f0c0',
+                  borderRadius: '50%',
+                  boxShadow: '0 0 8px rgba(69, 240, 192, 0.8)',
+                }}></span>
+                {/* Right dot above π */}
+                <span style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '22%',
+                  width: '4px',
+                  height: '4px',
+                  background: '#45f0c0',
+                  borderRadius: '50%',
+                  boxShadow: '0 0 8px rgba(69, 240, 192, 0.8)',
+                }}></span>
+                π
+              </span>
+              <span style={{ color: '#45f0c0' }}>D</span>
+            </div>
+
+            {/* Subtitle */}
+            <div style={{
+              fontSize: '11px',
+              color: '#cbd5e1',
+              fontFamily: '"Inter", sans-serif',
+              letterSpacing: '0.3px',
+              marginBottom: '2px',
+            }}>
+              Personal <span style={{ fontStyle: 'italic' }}>artificial intelligence</span>/<span style={{ fontStyle: 'italic' }}>investment</span> Dashboard
+            </div>
+
+            {/* Instruction box */}
+            <div style={{
+              padding: '8px 16px',
+              background: 'rgba(69, 240, 192, 0.1)',
+              border: '1px solid rgba(69, 240, 192, 0.3)',
+              borderRadius: '6px',
+              color: '#45f0c0',
+              fontSize: '11px',
+              fontFamily: '"Inter", sans-serif',
+              marginBottom: '4px',
+            }}>
+              Click the <span style={{ fontWeight: 'bold' }}>π</span> symbol to launch <span style={{ fontWeight: 'bold' }}>PaiiD</span> Assistant interface
+            </div>
 
             {/* Additional subtitle: Set up prompt */}
             <p
               style={{
-                fontSize: '14px',
+                fontSize: '12px',
                 color: '#94a3b8',
                 margin: 0,
                 letterSpacing: '0.5px',
@@ -316,49 +384,36 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               Let&apos;s set up your trading account
             </p>
 
-            {/* Hint about clicking "aii" */}
-            <div
-              style={{
-                fontSize: '13px',
-                color: '#64748b',
-                fontStyle: 'italic',
-                marginTop: '8px',
-                opacity: 0.7,
-              }}
-            >
-              💡 Click <span style={{ color: '#45f0c0', fontWeight: 'bold' }}>aii</span> anytime to chat with AI assistant
-            </div>
-
             {/* Owner bypass hint */}
             <div
               style={{
-                fontSize: '12px',
+                fontSize: '9px',
                 color: '#475569',
-                marginTop: '16px',
-                padding: '8px 12px',
+                marginTop: '2px',
+                padding: '3px 6px',
                 background: 'rgba(26, 117, 96, 0.1)',
-                borderRadius: '6px',
+                borderRadius: '4px',
                 border: '1px solid rgba(26, 117, 96, 0.2)',
               }}
             >
               <kbd style={{
                 background: 'rgba(26, 117, 96, 0.2)',
-                padding: '2px 6px',
-                borderRadius: '3px',
+                padding: '2px 5px',
+                borderRadius: '2px',
                 fontFamily: 'monospace',
                 color: '#45f0c0',
-                fontSize: '11px',
+                fontSize: '8px',
               }}>Ctrl+Shift+A</kbd> admin bypass
             </div>
           </div>
 
           {/* Method Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing.lg }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing.sm }}>
             {/* AI-Guided Setup */}
             <button
               onClick={startAISetup}
               style={{
-                padding: theme.spacing.xl,
+                padding: '10px',
                 background: theme.background.glass,
                 backdropFilter: theme.blur.light,
                 border: `2px solid ${theme.workflow.strategyBuilder}40`,
@@ -379,16 +434,16 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             >
               <Brain
                 style={{
-                  width: '48px',
-                  height: '48px',
+                  width: '36px',
+                  height: '36px',
                   color: theme.workflow.strategyBuilder,
-                  margin: `0 auto ${theme.spacing.md}`,
+                  margin: `0 auto 6px`,
                 }}
               />
-              <h3 style={{ color: theme.colors.text, marginBottom: theme.spacing.sm, fontSize: '24px' }}>
+              <h3 style={{ color: theme.colors.text, marginBottom: '5px', fontSize: '18px' }}>
                 AI-Guided Setup
               </h3>
-              <p style={{ color: theme.colors.textMuted, marginBottom: theme.spacing.md, lineHeight: 1.6 }}>
+              <p style={{ color: theme.colors.textMuted, marginBottom: '6px', lineHeight: 1.4, fontSize: '12px' }}>
                 Chat with Claude AI to set up your account. Just describe your trading goals naturally.
               </p>
               <div
@@ -398,9 +453,10 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
                   gap: theme.spacing.xs,
                   color: theme.workflow.strategyBuilder,
                   fontWeight: '600',
+                  fontSize: '12px',
                 }}
               >
-                <Sparkles style={{ width: '16px', height: '16px' }} />
+                <Sparkles style={{ width: '13px', height: '13px' }} />
                 Recommended
               </div>
             </button>
@@ -409,7 +465,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             <button
               onClick={() => setSetupMethod('manual')}
               style={{
-                padding: theme.spacing.xl,
+                padding: '10px',
                 background: theme.background.glass,
                 backdropFilter: theme.blur.light,
                 border: `1px solid ${theme.colors.border}`,
@@ -428,15 +484,15 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               }}
             >
               <Target
-                style={{ width: '48px', height: '48px', color: theme.colors.primary, margin: `0 auto ${theme.spacing.md}` }}
+                style={{ width: '36px', height: '36px', color: theme.colors.primary, margin: `0 auto 6px` }}
               />
-              <h3 style={{ color: theme.colors.text, marginBottom: theme.spacing.sm, fontSize: '24px' }}>
+              <h3 style={{ color: theme.colors.text, marginBottom: '5px', fontSize: '18px' }}>
                 Manual Setup
               </h3>
-              <p style={{ color: theme.colors.textMuted, marginBottom: theme.spacing.md, lineHeight: 1.6 }}>
+              <p style={{ color: theme.colors.textMuted, marginBottom: '6px', lineHeight: 1.4, fontSize: '12px' }}>
                 Fill out a traditional form with dropdowns and inputs. More control over each field.
               </p>
-              <div style={{ height: '24px' }}></div>
+              <div style={{ height: '18px' }}></div>
             </button>
           </div>
         </div>
