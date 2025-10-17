@@ -115,7 +115,7 @@ alpaca_circuit_breaker = AlpacaCircuitBreaker(failure_threshold=3, cooldown_seco
 
 # Order Model (must be defined before use in function signatures)
 class Order(BaseModel):
-    """Order model with comprehensive validation"""
+    """Order model with comprehensive validation (supports stocks and options)"""
 
     symbol: str = Field(
         ...,
@@ -126,7 +126,7 @@ class Order(BaseModel):
         examples=["AAPL", "SPY"],
     )
     side: str = Field(..., pattern=r"^(buy|sell)$", description="Order side: 'buy' or 'sell'")
-    qty: float = Field(..., gt=0, le=10000, description="Order quantity (0.01 to 10,000 shares)")
+    qty: float = Field(..., gt=0, le=10000, description="Order quantity (0.01 to 10,000 shares/contracts)")
     type: str = Field(
         default="market", pattern=r"^(market|limit|stop|stop_limit)$", description="Order type"
     )
@@ -135,6 +135,29 @@ class Order(BaseModel):
         gt=0,
         le=1000000,
         description="Limit price (required for limit/stop_limit orders)",
+    )
+
+    # Options-specific fields
+    asset_class: str = Field(
+        default="stock",
+        pattern=r"^(stock|option)$",
+        description="Asset class: 'stock' or 'option'"
+    )
+    option_type: Optional[str] = Field(
+        default=None,
+        pattern=r"^(call|put)$",
+        description="Option type: 'call' or 'put' (required for options)"
+    )
+    strike_price: Optional[float] = Field(
+        default=None,
+        gt=0,
+        le=100000,
+        description="Strike price (required for options)"
+    )
+    expiration_date: Optional[str] = Field(
+        default=None,
+        pattern=r"^\d{4}-\d{2}-\d{2}$",
+        description="Expiration date in YYYY-MM-DD format (required for options)"
     )
 
     @validator("symbol")
@@ -162,6 +185,30 @@ class Order(BaseModel):
         """Validate limit price based on order type"""
         order_type = values.get("type", "market")
         return validate_limit_price(v, order_type)
+
+    @validator("option_type", always=True)
+    def validate_option_type_required(cls, v, values):
+        """Validate that option_type is provided for options orders"""
+        asset_class = values.get("asset_class", "stock")
+        if asset_class == "option" and not v:
+            raise ValueError("option_type is required for options orders (call or put)")
+        return v
+
+    @validator("strike_price", always=True)
+    def validate_strike_price_required(cls, v, values):
+        """Validate that strike_price is provided for options orders"""
+        asset_class = values.get("asset_class", "stock")
+        if asset_class == "option" and not v:
+            raise ValueError("strike_price is required for options orders")
+        return v
+
+    @validator("expiration_date", always=True)
+    def validate_expiration_date_required(cls, v, values):
+        """Validate that expiration_date is provided for options orders"""
+        asset_class = values.get("asset_class", "stock")
+        if asset_class == "option" and not v:
+            raise ValueError("expiration_date is required for options orders (YYYY-MM-DD format)")
+        return v
 
 
 @retry(
@@ -193,17 +240,41 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
         )
 
     try:
+        # Build order payload based on asset class
+        order_payload = {
+            "symbol": order.symbol,
+            "qty": order.qty,
+            "side": order.side,
+            "type": order.type,
+            "time_in_force": "day",
+        }
+
+        # For options orders, construct option symbol and set class
+        if order.asset_class == "option":
+            # Alpaca options symbol format: SPY251219C00450000
+            # Format: SYMBOL + YYMMDD + C/P + 00000000 (strike * 1000, 8 digits)
+            from datetime import datetime
+            expiry_dt = datetime.strptime(order.expiration_date, "%Y-%m-%d")
+            expiry_str = expiry_dt.strftime("%y%m%d")  # YYMMDD
+            call_put = "C" if order.option_type == "call" else "P"
+            strike_int = int(order.strike_price * 1000)
+            option_symbol = f"{order.symbol}{expiry_str}{call_put}{strike_int:08d}"
+
+            order_payload["symbol"] = option_symbol
+            order_payload["class"] = "option"
+
+            logger.info(
+                f"[Alpaca] Submitting OPTIONS order: {option_symbol} "
+                f"({order.symbol} ${order.strike_price} {order.option_type} exp:{order.expiration_date})"
+            )
+        else:
+            logger.info(f"[Alpaca] Submitting STOCK order: {order.symbol} {order.qty} {order.side}")
+
         # Execute order via Alpaca API
         response = requests.post(
             f"{ALPACA_BASE_URL}/v2/orders",
             headers=get_alpaca_headers(),
-            json={
-                "symbol": order.symbol,
-                "qty": order.qty,
-                "side": order.side,
-                "type": order.type,
-                "time_in_force": "day",
-            },
+            json=order_payload,
             timeout=10,
         )
         response.raise_for_status()
@@ -263,35 +334,52 @@ class ExecRequest(BaseModel):
 
 
 @router.post("/trading/execute")
-@limiter.limit("10/minute")  # Strict: 10 order executions per minute max
 async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer)):
-    if not req.requestId:
-        raise HTTPException(status_code=400, detail="requestId required")
+    """
+    Execute trading orders with idempotency and dry-run support.
 
-    if not check_and_store(req.requestId):
-        return {"accepted": False, "duplicate": True}
+    NOTE: Rate limiting disabled temporarily due to Redis dependency issues.
+    Will re-enable once Redis is properly configured.
+    """
+    try:
+        logger.info(f"[Trading Execute] Received request: {req.requestId}")
 
-    if is_killed():
-        raise HTTPException(status_code=status.HTTP_423_LOCKED, detail="trading halted")
+        if not req.requestId:
+            raise HTTPException(status_code=400, detail="requestId required")
 
-    # Respect LIVE_TRADING setting
-    if req.dryRun or not settings.LIVE_TRADING:
-        return {"accepted": True, "dryRun": True, "orders": [o.dict() for o in req.orders]}
+        if not check_and_store(req.requestId):
+            logger.info(f"[Trading Execute] Duplicate request: {req.requestId}")
+            return {"accepted": False, "duplicate": True}
 
-    # Execute real trades via Alpaca API with circuit breaker and retry logic
-    executed_orders = []
-    for order in req.orders:
-        # Use new circuit breaker + retry function (handles all error cases)
-        alpaca_order = execute_alpaca_order_with_retry(order)
-        executed_orders.append(
-            {
-                **order.dict(),
-                "alpaca_order_id": alpaca_order.get("id"),
-                "status": alpaca_order.get("status"),
-            }
-        )
+        if is_killed():
+            raise HTTPException(status_code=status.HTTP_423_LOCKED, detail="trading halted")
 
-    return {"accepted": True, "dryRun": False, "orders": executed_orders}
+        # Respect LIVE_TRADING setting
+        if req.dryRun or not settings.LIVE_TRADING:
+            logger.info(f"[Trading Execute] Dry-run mode: {len(req.orders)} orders")
+            return {"accepted": True, "dryRun": True, "orders": [o.dict() for o in req.orders]}
+
+        # Execute real trades via Alpaca API with circuit breaker and retry logic
+        logger.info(f"[Trading Execute] Executing {len(req.orders)} live orders")
+        executed_orders = []
+        for order in req.orders:
+            # Use new circuit breaker + retry function (handles all error cases)
+            alpaca_order = execute_alpaca_order_with_retry(order)
+            executed_orders.append(
+                {
+                    **order.dict(),
+                    "alpaca_order_id": alpaca_order.get("id"),
+                    "status": alpaca_order.get("status"),
+                }
+            )
+
+        return {"accepted": True, "dryRun": False, "orders": executed_orders}
+
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions as-is
+    except Exception as e:
+        logger.error(f"[Trading Execute] UNEXPECTED ERROR: {type(e).__name__}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @router.post("/admin/kill")

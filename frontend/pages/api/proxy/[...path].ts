@@ -31,6 +31,9 @@ const ALLOW_GET = new Set<string>([
   "market/quotes",
   "market/scanner/under4",
   "market/bars",
+  // Options endpoints
+  "options/greeks",
+  "options/chain",
   // News endpoints
   "news/providers",
   "news/company",
@@ -45,6 +48,8 @@ const ALLOW_GET = new Set<string>([
   "clock",
   "calendar",
   "watchlists",
+  // Order templates
+  "order-templates",
   // Claude AI endpoints
   "claude/chat",
   "claude/health",
@@ -58,6 +63,8 @@ const ALLOW_GET = new Set<string>([
   "backtesting/strategy-templates",
   // Strategy endpoints
   "strategies/templates",
+  // SSE streaming endpoints
+  "stream/market-indices",
 ]);
 
 const ALLOW_POST = new Set<string>([
@@ -67,6 +74,8 @@ const ALLOW_POST = new Set<string>([
   // Alpaca endpoints
   "orders",
   "watchlists",
+  // Order templates
+  "order-templates",
   // Claude AI endpoints (both full and simplified paths)
   "claude/chat",
   "claude/health",
@@ -84,13 +93,14 @@ const ALLOW_DELETE = new Set<string>([
   "positions",
   "orders",
   "watchlists",
+  // Order templates
+  "order-templates",
 ]);
 
 // Allowed origins for CORS (production and development only)
 const ALLOWED_ORIGINS = new Set<string>([
   "http://localhost:3000",
-  "http://localhost:3001",
-  "http://localhost:3002",
+  "http://localhost:3003",  // Alternative dev server port
   "https://paiid-frontend.onrender.com",
 ]);
 
@@ -206,7 +216,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  const url = `${BACKEND}/api/${path}`;
+  // Preserve query parameters from original request
+  const queryString = req.url?.split('?')[1] || '';
+  const url = `${BACKEND}/api/${path}${queryString ? '?' + queryString : ''}`;
+
   const headers: Record<string, string> = {
     authorization: `Bearer ${API_TOKEN}`,
     "content-type": "application/json",
