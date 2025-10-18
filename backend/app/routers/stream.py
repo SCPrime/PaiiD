@@ -214,7 +214,9 @@ async def stream_positions(_=Depends(require_bearer), cache: CacheService = Depe
 
 
 @router.get("/stream/market-indices")
-async def stream_market_indices(_=Depends(require_bearer), cache: CacheService = Depends(get_cache)):
+async def stream_market_indices(
+    _=Depends(require_bearer), cache: CacheService = Depends(get_cache)
+):
     """
     Stream real-time market indices (Dow Jones, NASDAQ) via Server-Sent Events
 
@@ -307,16 +309,20 @@ async def stream_market_indices(_=Depends(require_bearer), cache: CacheService =
                     if current_hash != last_indices_hash:
                         yield {"event": "indices_update", "data": json.dumps(indices)}
                         last_indices_hash = current_hash
-                        logger.debug(f"📊 Sent indices update: DOW={indices.get('dow', {}).get('last')}, NASDAQ={indices.get('nasdaq', {}).get('last')}")
+                        logger.debug(
+                            f"📊 Sent indices update: DOW={indices.get('dow', {}).get('last')}, NASDAQ={indices.get('nasdaq', {}).get('last')}"
+                        )
 
                 # Send periodic heartbeat
                 if current_time - last_heartbeat_time >= HEARTBEAT_INTERVAL:
                     yield {
                         "event": "heartbeat",
-                        "data": json.dumps({
-                            "timestamp": current_time,
-                            "stream_type": "market_indices",
-                        }),
+                        "data": json.dumps(
+                            {
+                                "timestamp": current_time,
+                                "stream_type": "market_indices",
+                            }
+                        ),
                     }
                     last_heartbeat_time = current_time
                     logger.debug(f"💓 Heartbeat sent (indices stream)")

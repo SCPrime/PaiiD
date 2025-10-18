@@ -63,7 +63,10 @@ class OptionsChainResponse(BaseModel):
 @router.get("/options/chain", dependencies=[Depends(require_bearer)])
 async def get_options_chain(
     symbol: str = Query(..., description="Stock symbol (e.g., SPY)"),
-    expiration: str = Query(None, description="Specific expiration date (YYYY-MM-DD). If not provided, returns all available expirations."),
+    expiration: str = Query(
+        None,
+        description="Specific expiration date (YYYY-MM-DD). If not provided, returns all available expirations.",
+    ),
     cache: CacheService = Depends(get_cache),
 ) -> OptionsChainResponse | dict:
     """
@@ -271,9 +274,7 @@ async def get_option_greeks(
                         abs(float(option.get("strike", 0)) - strike) < 0.01
                         and option.get("option_type", "").lower() == option_type
                     ):
-                        market_price = float(option.get("last", 0)) or float(
-                            option.get("bid", 0)
-                        )
+                        market_price = float(option.get("last", 0)) or float(option.get("bid", 0))
                         implied_volatility = float(option.get("greeks", {}).get("mid_iv", 0))
                         volume = int(option.get("volume", 0))
                         open_interest = int(option.get("open_interest", 0))

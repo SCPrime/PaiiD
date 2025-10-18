@@ -6,11 +6,10 @@ Learned from: 2025-10-17 - Tradier stream blocking startup for 360s causing 500 
 """
 
 import asyncio
+import logging
 import time
 from contextlib import asynccontextmanager
 from typing import Dict, Optional
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +61,9 @@ class StartupMonitor:
             self.phases[name] = duration
 
             if duration > effective_timeout:
-                warning = f"⚠️  [{name}] took {duration:.2f}s (exceeded {effective_timeout}s threshold)"
+                warning = (
+                    f"⚠️  [{name}] took {duration:.2f}s (exceeded {effective_timeout}s threshold)"
+                )
                 self.warnings.append(warning)
                 logger.warning(warning)
             else:
@@ -89,7 +90,7 @@ class StartupMonitor:
 
         total_duration = time.time() - self.start_time
 
-        logger.info("="  * 70)
+        logger.info("=" * 70)
         logger.info("🎯 [StartupMonitor] Application startup complete")
         logger.info(f"   Total Time: {total_duration:.2f}s")
 
@@ -119,9 +120,8 @@ class StartupMonitor:
             "phases": self.phases,
             "warnings": self.warnings,
             "slow_phases": [
-                name for name, duration in self.phases.items()
-                if duration > self.PHASE_TIMEOUT
-            ]
+                name for name, duration in self.phases.items() if duration > self.PHASE_TIMEOUT
+            ],
         }
 
 

@@ -119,6 +119,7 @@ async def startup_event():
     try:
         async with monitor.phase("cache_init", timeout=5.0):
             from .services.cache import init_cache
+
             init_cache()
     except Exception as e:
         print(f"[ERROR] Failed to initialize cache: {str(e)}", flush=True)
@@ -152,7 +153,10 @@ async def startup_event():
             if stream:
                 # Add symbols to active set - they'll be subscribed when WebSocket connects
                 stream.active_symbols.update(["$DJI", "COMP:GIDS"])
-                print("[INFO] Queued subscription to $DJI and COMP (will connect when circuit breaker clears)", flush=True)
+                print(
+                    "[INFO] Queued subscription to $DJI and COMP (will connect when circuit breaker clears)",
+                    flush=True,
+                )
     except Exception as e:
         print(f"[WARNING] Tradier stream startup failed (non-blocking): {e}", flush=True)
         print("[INFO] Application will continue - streaming will retry automatically", flush=True)

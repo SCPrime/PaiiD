@@ -122,7 +122,9 @@ class TradierStreamService:
         """
         # CRITICAL: Delete old session first if it exists
         if self.session_id:
-            logger.info(f"🔄 Deleting old session before creating new one: {self.session_id[:8]}...")
+            logger.info(
+                f"🔄 Deleting old session before creating new one: {self.session_id[:8]}..."
+            )
             await self._delete_session(self.session_id)
             self.session_id = None
 
@@ -352,7 +354,9 @@ class TradierStreamService:
 
             # Reset circuit breaker on successful data message (proves WebSocket is working)
             if self.session_error_count > 0:
-                logger.info(f"✅ Received valid data - resetting error count from {self.session_error_count}")
+                logger.info(
+                    f"✅ Received valid data - resetting error count from {self.session_error_count}"
+                )
                 self.session_error_count = 0
                 self.circuit_breaker_active = False
 
@@ -360,8 +364,16 @@ class TradierStreamService:
             if msg_type == "quote":
                 # Quote update (bid/ask) - convert strings to floats (Tradier sends "NaN")
                 try:
-                    bid = float(data.get("bid", 0)) if data.get("bid") not in [None, "NaN", ""] else None
-                    ask = float(data.get("ask", 0)) if data.get("ask") not in [None, "NaN", ""] else None
+                    bid = (
+                        float(data.get("bid", 0))
+                        if data.get("bid") not in [None, "NaN", ""]
+                        else None
+                    )
+                    ask = (
+                        float(data.get("ask", 0))
+                        if data.get("ask") not in [None, "NaN", ""]
+                        else None
+                    )
                 except (ValueError, TypeError):
                     bid = None
                     ask = None
@@ -372,11 +384,7 @@ class TradierStreamService:
                     "ask": ask,
                     "bidsize": data.get("bidsize"),
                     "asksize": data.get("asksize"),
-                    "mid": (
-                        (bid + ask) / 2
-                        if bid is not None and ask is not None
-                        else None
-                    ),
+                    "mid": ((bid + ask) / 2 if bid is not None and ask is not None else None),
                     "timestamp": datetime.now().isoformat(),
                     "type": "quote",
                 }

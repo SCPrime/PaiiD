@@ -29,6 +29,7 @@ def health():
     # Include startup performance metrics
     try:
         from ..core.startup_monitor import get_startup_monitor
+
         startup_metrics = get_startup_monitor().get_metrics()
         info["startup"] = startup_metrics
     except Exception:

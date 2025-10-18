@@ -126,7 +126,9 @@ class Order(BaseModel):
         examples=["AAPL", "SPY"],
     )
     side: str = Field(..., pattern=r"^(buy|sell)$", description="Order side: 'buy' or 'sell'")
-    qty: float = Field(..., gt=0, le=10000, description="Order quantity (0.01 to 10,000 shares/contracts)")
+    qty: float = Field(
+        ..., gt=0, le=10000, description="Order quantity (0.01 to 10,000 shares/contracts)"
+    )
     type: str = Field(
         default="market", pattern=r"^(market|limit|stop|stop_limit)$", description="Order type"
     )
@@ -139,25 +141,20 @@ class Order(BaseModel):
 
     # Options-specific fields
     asset_class: str = Field(
-        default="stock",
-        pattern=r"^(stock|option)$",
-        description="Asset class: 'stock' or 'option'"
+        default="stock", pattern=r"^(stock|option)$", description="Asset class: 'stock' or 'option'"
     )
     option_type: Optional[str] = Field(
         default=None,
         pattern=r"^(call|put)$",
-        description="Option type: 'call' or 'put' (required for options)"
+        description="Option type: 'call' or 'put' (required for options)",
     )
     strike_price: Optional[float] = Field(
-        default=None,
-        gt=0,
-        le=100000,
-        description="Strike price (required for options)"
+        default=None, gt=0, le=100000, description="Strike price (required for options)"
     )
     expiration_date: Optional[str] = Field(
         default=None,
         pattern=r"^\d{4}-\d{2}-\d{2}$",
-        description="Expiration date in YYYY-MM-DD format (required for options)"
+        description="Expiration date in YYYY-MM-DD format (required for options)",
     )
 
     @validator("symbol")
@@ -254,6 +251,7 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
             # Alpaca options symbol format: SPY251219C00450000
             # Format: SYMBOL + YYMMDD + C/P + 00000000 (strike * 1000, 8 digits)
             from datetime import datetime
+
             expiry_dt = datetime.strptime(order.expiration_date, "%Y-%m-%d")
             expiry_str = expiry_dt.strftime("%y%m%d")  # YYMMDD
             call_put = "C" if order.option_type == "call" else "P"
@@ -378,7 +376,9 @@ async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer))
     except HTTPException:
         raise  # Re-raise HTTP exceptions as-is
     except Exception as e:
-        logger.error(f"[Trading Execute] UNEXPECTED ERROR: {type(e).__name__}: {str(e)}", exc_info=True)
+        logger.error(
+            f"[Trading Execute] UNEXPECTED ERROR: {type(e).__name__}: {str(e)}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
