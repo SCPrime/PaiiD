@@ -139,6 +139,132 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
               opacity: 0;
             }
           }
+
+          .pi-dot-left {
+            position: absolute;
+            top: 58px;
+            left: 22%;
+            width: 12px;
+            height: 12px;
+            background: #45f0c0;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(69, 240, 192, 0.8);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+          }
+
+          .pi-dot-left:hover {
+            transform: scale(1.2);
+          }
+
+          .pi-dot-right {
+            position: absolute;
+            top: 58px;
+            right: 22%;
+            width: 12px;
+            height: 12px;
+            background: #45f0c0;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(69, 240, 192, 0.8);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+          }
+
+          .pi-dot-right:hover {
+            transform: scale(1.2);
+          }
+
+          /* Dots for medium size (48px) */
+          .pi-dot-left-md {
+            position: absolute;
+            top: 23px;
+            left: 22%;
+            width: 5px;
+            height: 5px;
+            background: #45f0c0;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(69, 240, 192, 0.8);
+          }
+
+          .pi-dot-right-md {
+            position: absolute;
+            top: 23px;
+            right: 22%;
+            width: 5px;
+            height: 5px;
+            background: #45f0c0;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(69, 240, 192, 0.8);
+          }
+
+          /* Dots for small size (20px) */
+          .pi-dot-left-sm {
+            position: absolute;
+            top: 10px;
+            left: 22%;
+            width: 2.5px;
+            height: 2.5px;
+            background: #45f0c0;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(69, 240, 192, 0.8);
+          }
+
+          .pi-dot-right-sm {
+            position: absolute;
+            top: 10px;
+            right: 22%;
+            width: 2.5px;
+            height: 2.5px;
+            background: #45f0c0;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(69, 240, 192, 0.8);
+          }
+
+          /* Dots for button size (20px) - adjusted for button context */
+          .pi-dot-left-btn {
+            position: absolute;
+            top: 4px;
+            left: 22%;
+            width: 2.5px;
+            height: 2.5px;
+            background: #0f172a;
+            border-radius: 50%;
+            box-shadow: 0 0 3px rgba(15, 23, 42, 0.8);
+          }
+
+          .pi-dot-right-btn {
+            position: absolute;
+            top: 4px;
+            right: 22%;
+            width: 2.5px;
+            height: 2.5px;
+            background: #0f172a;
+            border-radius: 50%;
+            box-shadow: 0 0 3px rgba(15, 23, 42, 0.8);
+          }
+
+          /* Dots for extra small size (18px) */
+          .pi-dot-left-xs {
+            position: absolute;
+            top: 9px;
+            left: 22%;
+            width: 2px;
+            height: 2px;
+            background: #45f0c0;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(69, 240, 192, 0.8);
+          }
+
+          .pi-dot-right-xs {
+            position: absolute;
+            top: 9px;
+            right: 22%;
+            width: 2px;
+            height: 2px;
+            background: #45f0c0;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(69, 240, 192, 0.8);
+          }
         `}
       </style>
 
@@ -147,14 +273,13 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
         style={{
           fontSize: `${fontSize}px`,
           fontWeight: "bold",
-          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+          fontFamily:
+            '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
           display: "flex",
           alignItems: "center",
-          marginBottom: showSubtitle ? "8px" : "0",
+          marginBottom: fullPage ? "20px" : "0",
           userSelect: "none",
-          cursor: onClick ? "pointer" : "default",
         }}
-        onClick={onClick}
       >
         {/* P */}
         <span style={{ color: "#45f0c0" }}>P</span>
@@ -176,38 +301,8 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
           }}
         >
           <span className="pi-symbol">
-            {/* Left dot above π */}
-            <span
-              onClick={handlePiClick}
-              style={{
-                position: "absolute",
-                top: `${dotTop}px`,
-                left: "22%",
-                width: `${dotSize}px`,
-                height: `${dotSize}px`,
-                background: "#45f0c0",
-                borderRadius: "50%",
-                boxShadow: "0 0 10px rgba(69, 240, 192, 0.8)",
-                cursor: "pointer",
-                transition: "transform 0.2s ease",
-              }}
-            />
-            {/* Right dot above π */}
-            <span
-              onClick={handlePiClick}
-              style={{
-                position: "absolute",
-                top: `${dotTop}px`,
-                right: "22%",
-                width: `${dotSize}px`,
-                height: `${dotSize}px`,
-                background: "#45f0c0",
-                borderRadius: "50%",
-                boxShadow: "0 0 10px rgba(69, 240, 192, 0.8)",
-                cursor: "pointer",
-                transition: "transform 0.2s ease",
-              }}
-            />
+            <span className="pi-dot-left" onClick={handlePiClick}></span>
+            <span className="pi-dot-right" onClick={handlePiClick}></span>
             π
           </span>
         </span>
@@ -216,14 +311,14 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
         <span style={{ color: "#45f0c0" }}>D</span>
       </div>
 
-      {/* Subtitles */}
+      {/* Subtitles - only show if enabled */}
       {showSubtitle && (
         <div style={{ textAlign: "center" }}>
           <div
             style={{
               fontSize: `${subtitleSize1}px`,
               color: "#cbd5e1",
-              marginBottom: "2px",
+              marginBottom: "8px",
               fontFamily: '"Inter", sans-serif',
               letterSpacing: "0.5px",
             }}
@@ -267,7 +362,8 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
             style={{
               fontSize: "18px",
               fontWeight: "bold",
-              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontFamily:
+                '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
               display: "inline-flex",
               alignItems: "center",
             }}
@@ -282,30 +378,8 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
               }}
             >
               <span className="pi-symbol">
-                <span
-                  style={{
-                    position: "absolute",
-                    top: `${dotSizeXS * 4.5}px`,
-                    left: "22%",
-                    width: `${dotSizeXS * 0.111}px`,
-                    height: `${dotSizeXS * 0.111}px`,
-                    background: "#45f0c0",
-                    borderRadius: "50%",
-                    boxShadow: "0 0 4px rgba(69, 240, 192, 0.8)",
-                  }}
-                />
-                <span
-                  style={{
-                    position: "absolute",
-                    top: `${dotSizeXS * 4.5}px`,
-                    right: "22%",
-                    width: `${dotSizeXS * 0.111}px`,
-                    height: `${dotSizeXS * 0.111}px`,
-                    background: "#45f0c0",
-                    borderRadius: "50%",
-                    boxShadow: "0 0 4px rgba(69, 240, 192, 0.8)",
-                  }}
-                />
+                <span className="pi-dot-left-xs"></span>
+                <span className="pi-dot-right-xs"></span>
                 π
               </span>
             </span>
@@ -381,7 +455,8 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
                 style={{
                   fontSize: "48px",
                   fontWeight: "bold",
-                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                  fontFamily:
+                    '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                   display: "flex",
                   alignItems: "center",
                 }}
@@ -396,30 +471,8 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
                   }}
                 >
                   <span className="pi-symbol">
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: `${dotSizeMD * 0.48}px`,
-                        left: "22%",
-                        width: `${dotSizeMD * 0.104}px`,
-                        height: `${dotSizeMD * 0.104}px`,
-                        background: "#45f0c0",
-                        borderRadius: "50%",
-                        boxShadow: "0 0 8px rgba(69, 240, 192, 0.8)",
-                      }}
-                    />
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: `${dotSizeMD * 0.48}px`,
-                        right: "22%",
-                        width: `${dotSizeMD * 0.104}px`,
-                        height: `${dotSizeMD * 0.104}px`,
-                        background: "#45f0c0",
-                        borderRadius: "50%",
-                        boxShadow: "0 0 8px rgba(69, 240, 192, 0.8)",
-                      }}
-                    />
+                    <span className="pi-dot-left-md"></span>
+                    <span className="pi-dot-right-md"></span>
                     π
                   </span>
                 </span>
@@ -455,7 +508,8 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
                 style={{
                   fontSize: "20px",
                   fontWeight: "bold",
-                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                  fontFamily:
+                    '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                   display: "inline-flex",
                   alignItems: "center",
                 }}
@@ -470,30 +524,8 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
                   }}
                 >
                   <span className="pi-symbol">
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: `${dotSizeSM}px`,
-                        left: "22%",
-                        width: `${dotSizeSM * 0.125}px`,
-                        height: `${dotSizeSM * 0.125}px`,
-                        background: "#45f0c0",
-                        borderRadius: "50%",
-                        boxShadow: "0 0 5px rgba(69, 240, 192, 0.8)",
-                      }}
-                    />
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: `${dotSizeSM}px`,
-                        right: "22%",
-                        width: `${dotSizeSM * 0.125}px`,
-                        height: `${dotSizeSM * 0.125}px`,
-                        background: "#45f0c0",
-                        borderRadius: "50%",
-                        boxShadow: "0 0 5px rgba(69, 240, 192, 0.8)",
-                      }}
-                    />
+                    <span className="pi-dot-left-sm"></span>
+                    <span className="pi-dot-right-sm"></span>
                     π
                   </span>
                 </span>
@@ -543,30 +575,8 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
                     }}
                   >
                     <span className="pi-symbol">
-                      <span
-                        style={{
-                          position: "absolute",
-                          top: `${dotSizeSM}px`,
-                          left: "22%",
-                          width: `${dotSizeSM * 0.125}px`,
-                          height: `${dotSizeSM * 0.125}px`,
-                          background: "#45f0c0",
-                          borderRadius: "50%",
-                          boxShadow: "0 0 5px rgba(69, 240, 192, 0.8)",
-                        }}
-                      />
-                      <span
-                        style={{
-                          position: "absolute",
-                          top: `${dotSizeSM}px`,
-                          right: "22%",
-                          width: `${dotSizeSM * 0.125}px`,
-                          height: `${dotSizeSM * 0.125}px`,
-                          background: "#45f0c0",
-                          borderRadius: "50%",
-                          boxShadow: "0 0 5px rgba(69, 240, 192, 0.8)",
-                        }}
-                      />
+                      <span className="pi-dot-left-sm"></span>
+                      <span className="pi-dot-right-sm"></span>
                       π
                     </span>
                   </span>
@@ -619,30 +629,8 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
                     }}
                   >
                     <span className="pi-symbol">
-                      <span
-                        style={{
-                          position: "absolute",
-                          top: `${dotSizeSM}px`,
-                          left: "22%",
-                          width: `${dotSizeSM * 0.125}px`,
-                          height: `${dotSizeSM * 0.125}px`,
-                          background: "#45f0c0",
-                          borderRadius: "50%",
-                          boxShadow: "0 0 5px rgba(69, 240, 192, 0.8)",
-                        }}
-                      />
-                      <span
-                        style={{
-                          position: "absolute",
-                          top: `${dotSizeSM}px`,
-                          right: "22%",
-                          width: `${dotSizeSM * 0.125}px`,
-                          height: `${dotSizeSM * 0.125}px`,
-                          background: "#45f0c0",
-                          borderRadius: "50%",
-                          boxShadow: "0 0 5px rgba(69, 240, 192, 0.8)",
-                        }}
-                      />
+                      <span className="pi-dot-left-sm"></span>
+                      <span className="pi-dot-right-sm"></span>
                       π
                     </span>
                   </span>
