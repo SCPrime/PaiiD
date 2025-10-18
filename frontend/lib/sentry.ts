@@ -11,7 +11,7 @@
  * 5. Redeploy
  */
 
-import * as Sentry from '@sentry/nextjs';
+import * as Sentry from "@sentry/nextjs";
 
 let sentryInitialized = false;
 
@@ -25,8 +25,8 @@ export function initSentry(): void {
 
   // Skip initialization if no DSN configured
   if (!SENTRY_DSN) {
-    console.info('[Sentry] DSN not configured - error tracking disabled');
-    console.info('[Sentry] To enable: Add NEXT_PUBLIC_SENTRY_DSN to environment variables');
+    console.info("[Sentry] DSN not configured - error tracking disabled");
+    console.info("[Sentry] To enable: Add NEXT_PUBLIC_SENTRY_DSN to environment variables");
     return;
   }
 
@@ -35,7 +35,7 @@ export function initSentry(): void {
       dsn: SENTRY_DSN,
 
       // Environment detection
-      environment: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+      environment: process.env.NODE_ENV === "production" ? "production" : "development",
 
       // Performance Monitoring
       tracesSampleRate: 0.1, // 10% of transactions for performance monitoring
@@ -45,7 +45,7 @@ export function initSentry(): void {
       replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors
 
       // Release tracking
-      release: `paiid-frontend@${process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || 'dev'}`,
+      release: `paiid-frontend@${process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || "dev"}`,
 
       // Integrations
       integrations: [
@@ -70,9 +70,9 @@ export function initSentry(): void {
 
         // Remove API tokens from breadcrumbs
         if (event.breadcrumbs) {
-          event.breadcrumbs = event.breadcrumbs.map(breadcrumb => {
+          event.breadcrumbs = event.breadcrumbs.map((breadcrumb) => {
             if (breadcrumb.data?.url) {
-              breadcrumb.data.url = breadcrumb.data.url.replace(/token=[^&]*/g, 'token=REDACTED');
+              breadcrumb.data.url = breadcrumb.data.url.replace(/token=[^&]*/g, "token=REDACTED");
             }
             return breadcrumb;
           });
@@ -84,16 +84,16 @@ export function initSentry(): void {
       // Ignore known non-critical errors
       ignoreErrors: [
         // Browser extensions
-        'top.GLOBALS',
-        'canvas.contentDocument',
-        'MyApp_RemoveAllHighlights',
-        'atomicFindClose',
+        "top.GLOBALS",
+        "canvas.contentDocument",
+        "MyApp_RemoveAllHighlights",
+        "atomicFindClose",
         // Network errors (handled gracefully)
-        'NetworkError',
-        'Failed to fetch',
+        "NetworkError",
+        "Failed to fetch",
         // React hydration warnings (cosmetic)
-        'Hydration failed',
-        'There was an error while hydrating',
+        "Hydration failed",
+        "There was an error while hydrating",
       ],
 
       // Don't send PII (personally identifiable information)
@@ -101,9 +101,9 @@ export function initSentry(): void {
     });
 
     sentryInitialized = true;
-    console.info('[Sentry] ✅ Error tracking initialized');
+    console.info("[Sentry] ✅ Error tracking initialized");
   } catch (error) {
-    console.error('[Sentry] ❌ Failed to initialize:', error);
+    console.error("[Sentry] ❌ Failed to initialize:", error);
   }
 }
 
@@ -112,7 +112,7 @@ export function initSentry(): void {
  */
 export function captureException(error: Error, context?: Record<string, any>): void {
   if (!sentryInitialized) {
-    console.error('[Sentry] Not initialized, logging error:', error);
+    console.error("[Sentry] Not initialized, logging error:", error);
     return;
   }
 
@@ -124,7 +124,10 @@ export function captureException(error: Error, context?: Record<string, any>): v
 /**
  * Capture a message (non-error event)
  */
-export function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info'): void {
+export function captureMessage(
+  message: string,
+  level: "info" | "warning" | "error" = "info"
+): void {
   if (!sentryInitialized) {
     console.info(`[Sentry] Not initialized, logging message [${level}]:`, message);
     return;
@@ -158,7 +161,7 @@ export function addBreadcrumb(message: string, data?: Record<string, any>): void
   Sentry.addBreadcrumb({
     message,
     data,
-    level: 'info',
+    level: "info",
     timestamp: Date.now() / 1000,
   });
 }

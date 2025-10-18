@@ -6,7 +6,7 @@
     "filters": {
       "price_between": [20, 500],
       "min_option_oi_per_strike": 1000,
-      "max_option_spread": 0.10,
+      "max_option_spread": 0.1,
       "earnings_within_days": 3
     },
     "ranking": [
@@ -42,7 +42,7 @@
         "type": "CALL",
         "side": "BUY",
         "dte": 7,
-        "delta": 0.50
+        "delta": 0.5
       },
       {
         "type": "CALL",
@@ -63,11 +63,11 @@
     "allocation_type": "cash_max_loss",
     "risk_per_trade_pct": 0.03,
     "max_concurrent_positions": 6,
-    "portfolio_heat_max": 0.10
+    "portfolio_heat_max": 0.1
   },
   "exits": {
-    "profit_target_pct": 0.40,
-    "max_loss_pct": 0.80,
+    "profit_target_pct": 0.4,
+    "max_loss_pct": 0.8,
     "time_exit_dte": 1,
     "oco_brackets": true
   },
@@ -82,7 +82,7 @@
         "cancel_unfilled": true
       }
     },
-    "slippage_budget_pct": 0.60,
+    "slippage_budget_pct": 0.6,
     "max_order_reprices": 5
   },
   "automation": {
@@ -92,13 +92,7 @@
     "execution_mode": "requires_approval"
   },
   "user_overrides": {
-    "editable_fields": [
-      "risk_per_trade_pct",
-      "delta",
-      "dte",
-      "profit_target_pct",
-      "max_loss_pct"
-    ],
+    "editable_fields": ["risk_per_trade_pct", "delta", "dte", "profit_target_pct", "max_loss_pct"],
     "allow_override_strikes": true,
     "allow_override_qty": false,
     "allow_override_dte": true

@@ -1,5 +1,5 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import type { TheoreticalPayoff, PayoffPoint, Greeks, PositionLeg } from '@/types/pnl';
+import type { NextApiRequest, NextApiResponse } from "next";
+import type { TheoreticalPayoff, PayoffPoint, Greeks, PositionLeg } from "@/types/pnl";
 
 /**
  * Calculate Theoretical P&L Endpoint
@@ -17,14 +17,16 @@ interface CalculateTheoreticalRequest {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { symbol, underlyingPrice, legs }: CalculateTheoreticalRequest = req.body;
 
   if (!symbol || !underlyingPrice || !legs || legs.length === 0) {
-    return res.status(400).json({ error: 'Missing required parameters: symbol, underlyingPrice, legs' });
+    return res
+      .status(400)
+      .json({ error: "Missing required parameters: symbol, underlyingPrice, legs" });
   }
 
   try {
@@ -57,9 +59,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.status(200).json(result);
   } catch (error) {
-    console.error('Theoretical P&L calculation error:', error);
+    console.error("Theoretical P&L calculation error:", error);
     res.status(500).json({
-      error: 'Failed to calculate theoretical P&L',
+      error: "Failed to calculate theoretical P&L",
       detail: String(error),
     });
   }
@@ -94,9 +96,9 @@ function calculatePayoffCurve(underlyingPrice: number, legs: PositionLeg[]): Pay
  * Calculate P&L for a single leg at a given underlying price
  */
 function calculateLegPnL(leg: PositionLeg, underlyingPrice: number): number {
-  const multiplier = leg.side === 'BUY' ? 1 : -1;
+  const multiplier = leg.side === "BUY" ? 1 : -1;
 
-  if (leg.type === 'STOCK') {
+  if (leg.type === "STOCK") {
     // Stock: P&L = (current price - entry price) * qty
     const priceDiff = underlyingPrice - leg.theoreticalPrice;
     return multiplier * priceDiff * leg.qty;
@@ -106,9 +108,9 @@ function calculateLegPnL(leg: PositionLeg, underlyingPrice: number): number {
   const strike = leg.strike || 0;
   let intrinsicValue = 0;
 
-  if (leg.type === 'CALL') {
+  if (leg.type === "CALL") {
     intrinsicValue = Math.max(0, underlyingPrice - strike);
-  } else if (leg.type === 'PUT') {
+  } else if (leg.type === "PUT") {
     intrinsicValue = Math.max(0, strike - underlyingPrice);
   }
 
@@ -142,7 +144,10 @@ function findBreakevens(payoffCurve: PayoffPoint[]): number[] {
 /**
  * Calculate max profit and max loss from payoff curve
  */
-function calculateMaxProfitLoss(payoffCurve: PayoffPoint[]): { maxProfit: number; maxLoss: number } {
+function calculateMaxProfitLoss(payoffCurve: PayoffPoint[]): {
+  maxProfit: number;
+  maxLoss: number;
+} {
   let maxProfit = -Infinity;
   let maxLoss = Infinity;
 
@@ -159,7 +164,7 @@ function calculateMaxProfitLoss(payoffCurve: PayoffPoint[]): { maxProfit: number
  */
 function calculatePOP(payoffCurve: PayoffPoint[], _underlyingPrice: number): number {
   // Count points where P&L > 0
-  const profitablePoints = payoffCurve.filter(p => p.pnl > 0).length;
+  const profitablePoints = payoffCurve.filter((p) => p.pnl > 0).length;
   const totalPoints = payoffCurve.length;
 
   // Simple approximation: percentage of profitable price points
@@ -179,9 +184,9 @@ function calculateAggregateGreeks(legs: PositionLeg[]): Greeks {
   let totalVega = 0;
 
   for (const leg of legs) {
-    const multiplier = leg.side === 'BUY' ? 1 : -1;
+    const multiplier = leg.side === "BUY" ? 1 : -1;
 
-    if (leg.type === 'STOCK') {
+    if (leg.type === "STOCK") {
       // Stock has delta of 1 per share
       totalDelta += multiplier * leg.qty;
     } else {
@@ -208,16 +213,16 @@ function calculateAggregateGreeks(legs: PositionLeg[]): Greeks {
  */
 function estimateGreeks(leg: PositionLeg): Greeks {
   // Mock greeks - in production, use Black-Scholes or fetch from API
-  if (leg.type === 'CALL') {
+  if (leg.type === "CALL") {
     return {
-      delta: 0.50,
+      delta: 0.5,
       gamma: 0.02,
       theta: -0.05,
       vega: 0.15,
     };
   } else {
     return {
-      delta: -0.50,
+      delta: -0.5,
       gamma: 0.02,
       theta: -0.05,
       vega: 0.15,

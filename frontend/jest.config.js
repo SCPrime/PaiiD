@@ -1,12 +1,19 @@
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'jest-environment-jsdom',
+  testEnvironment: 'jsdom',
+  transform: {
+    '^.+\\.tsx?$': [require.resolve('ts-jest'), {
+      tsconfig: {
+        jsx: 'react',
+      },
+    }],
+  },
   moduleNameMapper: {
     '^@/components/(.*)$': '<rootDir>/components/$1',
     '^@/pages/(.*)$': '<rootDir>/pages/$1',
     '^@/styles/(.*)$': '<rootDir>/styles/$1',
     '^@/services/(.*)$': '<rootDir>/services/$1',
   },
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   collectCoverageFrom: [
     'services/**/*.{js,jsx,ts,tsx}',
     '!**/*.d.ts',

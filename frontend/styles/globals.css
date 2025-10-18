@@ -1,5 +1,6 @@
 /* Prevent body overflow */
-html, body {
+html,
+body {
   overflow: hidden !important;
   height: 100vh;
   width: 100vw;

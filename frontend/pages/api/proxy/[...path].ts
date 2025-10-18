@@ -2,12 +2,15 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 // NOTE: API routes run server-side and use NON-PREFIXED env vars
 // NEXT_PUBLIC_* is for client-side code only!
-const BACKEND = process.env.BACKEND_API_BASE_URL || process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://paiid-backend.onrender.com';
-const API_TOKEN = process.env.API_TOKEN || process.env.NEXT_PUBLIC_API_TOKEN || '';
+const BACKEND =
+  process.env.BACKEND_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL ||
+  "https://paiid-backend.onrender.com";
+const API_TOKEN = process.env.API_TOKEN || process.env.NEXT_PUBLIC_API_TOKEN || "";
 
 if (!API_TOKEN) {
-  console.error('[PROXY] ⚠️ API_TOKEN not configured in environment variables');
-  console.error('[PROXY] ⚠️ Checked: process.env.API_TOKEN and process.env.NEXT_PUBLIC_API_TOKEN');
+  console.error("[PROXY] ⚠️ API_TOKEN not configured in environment variables");
+  console.error("[PROXY] ⚠️ Checked: process.env.API_TOKEN and process.env.NEXT_PUBLIC_API_TOKEN");
 } else {
   console.info(`[PROXY] ✅ API_TOKEN loaded: ${API_TOKEN.substring(0, 10)}...`);
 }
@@ -25,7 +28,7 @@ const ALLOW_GET = new Set<string>([
   "market/conditions",
   "market/indices",
   "market/sectors",
-  "market/status",  // Market hours detection
+  "market/status", // Market hours detection
   // Live market data endpoints
   "market/quote",
   "market/quotes",
@@ -100,7 +103,7 @@ const ALLOW_DELETE = new Set<string>([
 // Allowed origins for CORS (production and development only)
 const ALLOWED_ORIGINS = new Set<string>([
   "http://localhost:3000",
-  "http://localhost:3003",  // Alternative dev server port
+  "http://localhost:3003", // Alternative dev server port
   "https://paiid-frontend.onrender.com",
 ]);
 
@@ -129,7 +132,9 @@ function isAllowedOrigin(req: NextApiRequest): boolean {
     }
   }
 
-  console.warn(`[PROXY] ⚠️ Origin blocked: ${origin || 'none'} (referer: ${referer || 'none'}, host: ${host})`);
+  console.warn(
+    `[PROXY] ⚠️ Origin blocked: ${origin || "none"} (referer: ${referer || "none"}, host: ${host})`
+  );
   return false;
 }
 
@@ -138,7 +143,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.info(`\n[PROXY] ====== NEW REQUEST ======`);
   console.info(`[PROXY] Method: ${req.method}`);
   console.info(`[PROXY] URL: ${req.url}`);
-  console.info(`[PROXY] Origin: ${req.headers.origin || 'NONE'}`);
+  console.info(`[PROXY] Origin: ${req.headers.origin || "NONE"}`);
 
   // CORS preflight - Validate origin first
   if (req.method === "OPTIONS") {
@@ -155,18 +160,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     } else {
       // Block unauthorized preflight requests
-      console.warn(`[PROXY] ⚠️ Blocked OPTIONS from: ${origin || 'unknown'}`);
+      console.warn(`[PROXY] ⚠️ Blocked OPTIONS from: ${origin || "unknown"}`);
       res.status(403).json({ error: "Forbidden origin" });
       return;
     }
   }
 
   const originAllowed = isAllowedOrigin(req);
-  console.info(`[PROXY] Origin check result: ${originAllowed ? 'ALLOWED' : 'BLOCKED'}`);
+  console.info(`[PROXY] Origin check result: ${originAllowed ? "ALLOWED" : "BLOCKED"}`);
 
   if (!originAllowed) {
     console.error(`[PROXY] ⛔ REJECTING REQUEST WITH 403`);
-    res.status(403).json({ error: "Forbidden (origin)", origin: req.headers.origin || 'none', url: req.url });
+    res
+      .status(403)
+      .json({ error: "Forbidden (origin)", origin: req.headers.origin || "none", url: req.url });
     return;
   }
 
@@ -178,7 +185,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   console.info(`[PROXY] ✅ Origin check passed, proceeding with request`);
-
 
   const parts = (req.query.path as string[]) || [];
   let path = parts.join("/");
@@ -192,24 +198,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Check if path is allowed based on method
   if (req.method === "GET" && !ALLOW_GET.has(path)) {
     // Allow wildcard patterns for dynamic routes
-    const isAllowedPattern = Array.from(ALLOW_GET).some(allowed =>
-      path.startsWith(allowed + "/") || path === allowed
+    const isAllowedPattern = Array.from(ALLOW_GET).some(
+      (allowed) => path.startsWith(allowed + "/") || path === allowed
     );
     if (!isAllowedPattern) {
       return res.status(405).json({ error: "Not allowed" });
     }
   }
   if (req.method === "POST" && !ALLOW_POST.has(path)) {
-    const isAllowedPattern = Array.from(ALLOW_POST).some(allowed =>
-      path.startsWith(allowed + "/") || path === allowed
+    const isAllowedPattern = Array.from(ALLOW_POST).some(
+      (allowed) => path.startsWith(allowed + "/") || path === allowed
     );
     if (!isAllowedPattern) {
       return res.status(405).json({ error: "Not allowed" });
     }
   }
   if (req.method === "DELETE" && !ALLOW_DELETE.has(path)) {
-    const isAllowedPattern = Array.from(ALLOW_DELETE).some(allowed =>
-      path.startsWith(allowed + "/") || path === allowed
+    const isAllowedPattern = Array.from(ALLOW_DELETE).some(
+      (allowed) => path.startsWith(allowed + "/") || path === allowed
     );
     if (!isAllowedPattern) {
       return res.status(405).json({ error: "Not allowed" });
@@ -217,8 +223,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Preserve query parameters from original request
-  const queryString = req.url?.split('?')[1] || '';
-  const url = `${BACKEND}/api/${path}${queryString ? '?' + queryString : ''}`;
+  const queryString = req.url?.split("?")[1] || "";
+  const url = `${BACKEND}/api/${path}${queryString ? "?" + queryString : ""}`;
 
   const headers: Record<string, string> = {
     authorization: `Bearer ${API_TOKEN}`,
@@ -245,14 +251,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const upstream = await fetch(url, {
       method: req.method,
       headers,
-      body: (req.method === "POST" || req.method === "DELETE") ? JSON.stringify(req.body ?? {}) : undefined,
+      body:
+        req.method === "POST" || req.method === "DELETE"
+          ? JSON.stringify(req.body ?? {})
+          : undefined,
       // avoid any CDN caching at the edge
       cache: "no-store",
     });
 
     const text = await upstream.text();
     console.info(`[PROXY] Response status: ${upstream.status}`);
-    console.info(`[PROXY] Response body: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`);
+    console.info(
+      `[PROXY] Response body: ${text.substring(0, 200)}${text.length > 200 ? "..." : ""}`
+    );
     console.info(`[PROXY] ====== End Request ======\n`);
 
     res

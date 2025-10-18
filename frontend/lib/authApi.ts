@@ -5,7 +5,7 @@
  * All requests go through the Next.js API proxy.
  */
 
-const API_BASE = '/api/proxy/api';
+const API_BASE = "/api/proxy/api";
 
 export interface RegisterData {
   email: string;
@@ -37,9 +37,12 @@ export interface UserProfile {
 }
 
 export class AuthError extends Error {
-  constructor(public statusCode: number, message: string) {
+  constructor(
+    public statusCode: number,
+    message: string
+  ) {
     super(message);
-    this.name = 'AuthError';
+    this.name = "AuthError";
   }
 }
 
@@ -48,14 +51,14 @@ export class AuthError extends Error {
  */
 export async function register(data: RegisterData): Promise<TokenResponse> {
   const response = await fetch(`${API_BASE}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Registration failed' }));
-    throw new AuthError(response.status, error.detail || 'Registration failed');
+    const error = await response.json().catch(() => ({ detail: "Registration failed" }));
+    throw new AuthError(response.status, error.detail || "Registration failed");
   }
 
   return response.json();
@@ -66,14 +69,14 @@ export async function register(data: RegisterData): Promise<TokenResponse> {
  */
 export async function login(data: LoginData): Promise<TokenResponse> {
   const response = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Login failed' }));
-    throw new AuthError(response.status, error.detail || 'Login failed');
+    const error = await response.json().catch(() => ({ detail: "Login failed" }));
+    throw new AuthError(response.status, error.detail || "Login failed");
   }
 
   return response.json();
@@ -84,15 +87,15 @@ export async function login(data: LoginData): Promise<TokenResponse> {
  */
 export async function logout(accessToken: string): Promise<void> {
   const response = await fetch(`${API_BASE}/auth/logout`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
 
   if (!response.ok && response.status !== 401) {
     // 401 means already logged out, which is fine
-    throw new AuthError(response.status, 'Logout failed');
+    throw new AuthError(response.status, "Logout failed");
   }
 }
 
@@ -101,13 +104,13 @@ export async function logout(accessToken: string): Promise<void> {
  */
 export async function refreshToken(refreshToken: string): Promise<TokenResponse> {
   const response = await fetch(`${API_BASE}/auth/refresh`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh_token: refreshToken }),
   });
 
   if (!response.ok) {
-    throw new AuthError(response.status, 'Token refresh failed');
+    throw new AuthError(response.status, "Token refresh failed");
   }
 
   return response.json();
@@ -118,14 +121,14 @@ export async function refreshToken(refreshToken: string): Promise<TokenResponse>
  */
 export async function getCurrentUser(accessToken: string): Promise<UserProfile> {
   const response = await fetch(`${API_BASE}/auth/me`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
 
   if (!response.ok) {
-    throw new AuthError(response.status, 'Failed to fetch user profile');
+    throw new AuthError(response.status, "Failed to fetch user profile");
   }
 
   return response.json();
@@ -134,7 +137,7 @@ export async function getCurrentUser(accessToken: string): Promise<UserProfile> 
 /**
  * Token storage helpers
  */
-export const TOKEN_STORAGE_KEY = 'paiid_tokens';
+export const TOKEN_STORAGE_KEY = "paiid_tokens";
 
 export interface StoredTokens {
   accessToken: string;
@@ -146,16 +149,16 @@ export function saveTokens(tokens: TokenResponse): void {
   const stored: StoredTokens = {
     accessToken: tokens.access_token,
     refreshToken: tokens.refresh_token,
-    expiresAt: Date.now() + (15 * 60 * 1000), // 15 minutes from now
+    expiresAt: Date.now() + 15 * 60 * 1000, // 15 minutes from now
   };
 
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(stored));
   }
 }
 
 export function getStoredTokens(): StoredTokens | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
 
   const stored = localStorage.getItem(TOKEN_STORAGE_KEY);
   if (!stored) return null;
@@ -168,12 +171,12 @@ export function getStoredTokens(): StoredTokens | null {
 }
 
 export function clearTokens(): void {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
   }
 }
 
 export function isTokenExpiringSoon(storedTokens: StoredTokens): boolean {
   // Refresh if token expires in less than 2 minutes
-  return Date.now() >= (storedTokens.expiresAt - (2 * 60 * 1000));
+  return Date.now() >= storedTokens.expiresAt - 2 * 60 * 1000;
 }

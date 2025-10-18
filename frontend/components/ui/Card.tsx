@@ -1,5 +1,5 @@
-import React from 'react';
-import { theme } from '../../styles/theme';
+import React from "react";
+import { theme } from "../../styles/theme";
 
 interface CardProps {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ export const Card: React.FC<CardProps> = ({ children, className, style, glow }) 
         borderRadius: theme.borderRadius.lg,
         padding: theme.spacing.lg,
         transition: `all ${theme.transitions.normal}`,
-        boxShadow: glow ? theme.glow[glow] : 'none',
+        boxShadow: glow ? theme.glow[glow] : "none",
         ...style,
       }}
     >

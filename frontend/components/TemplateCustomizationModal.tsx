@@ -3,12 +3,12 @@
  * Allows users to customize strategy template parameters before cloning
  */
 
-import { useState } from 'react';
-import { X, Copy, BarChart3, TrendingUp, Shield, Target } from 'lucide-react';
-import { GlassButton } from './GlassmorphicComponents';
-import { theme } from '../styles/theme';
-import toast from 'react-hot-toast';
-import { useIsMobile } from '../hooks/useBreakpoint';
+import { useState } from "react";
+import { X, Copy, BarChart3, TrendingUp, Shield, Target } from "lucide-react";
+import { GlassButton } from "./GlassmorphicComponents";
+import { theme } from "../styles/theme";
+import toast from "react-hot-toast";
+import { useIsMobile } from "../hooks/useBreakpoint";
 
 interface Template {
   id: string;
@@ -36,7 +36,7 @@ export default function TemplateCustomizationModal({
   onCloneSuccess,
 }: TemplateCustomizationModalProps) {
   const isMobile = useIsMobile();
-  const [customName, setCustomName] = useState('');
+  const [customName, setCustomName] = useState("");
   const [positionSize, setPositionSize] = useState(0);
   const [stopLoss, setStopLoss] = useState(0);
   const [takeProfit, setTakeProfit] = useState(0);
@@ -54,8 +54,8 @@ export default function TemplateCustomizationModal({
 
       // Extract stop loss and take profit from exit rules
       const exitRules = template.config?.exit_rules || [];
-      const stopLossRule = exitRules.find((r: any) => r.type === 'stop_loss');
-      const takeProfitRule = exitRules.find((r: any) => r.type === 'take_profit');
+      const stopLossRule = exitRules.find((r: any) => r.type === "stop_loss");
+      const takeProfitRule = exitRules.find((r: any) => r.type === "take_profit");
 
       setStopLoss(stopLossRule?.value || 3);
       setTakeProfit(takeProfitRule?.value || 8);
@@ -65,8 +65,9 @@ export default function TemplateCustomizationModal({
   if (!template) return null;
 
   const handleClone = async () => {
-    const apiToken = process.env.NEXT_PUBLIC_API_TOKEN || '';
-    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://paiid-backend.onrender.com';
+    const apiToken = process.env.NEXT_PUBLIC_API_TOKEN || "";
+    const baseUrl =
+      process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "https://paiid-backend.onrender.com";
 
     setIsCloning(true);
 
@@ -80,8 +81,8 @@ export default function TemplateCustomizationModal({
 
       // Update exit rules
       const exitRules = [...(template.config.exit_rules || [])];
-      const stopLossIndex = exitRules.findIndex((r: any) => r.type === 'stop_loss');
-      const takeProfitIndex = exitRules.findIndex((r: any) => r.type === 'take_profit');
+      const stopLossIndex = exitRules.findIndex((r: any) => r.type === "stop_loss");
+      const takeProfitIndex = exitRules.findIndex((r: any) => r.type === "take_profit");
 
       if (stopLossIndex >= 0) {
         exitRules[stopLossIndex] = { ...exitRules[stopLossIndex], value: stopLoss };
@@ -93,10 +94,10 @@ export default function TemplateCustomizationModal({
       configOverrides.exit_rules = exitRules;
 
       const response = await fetch(`${baseUrl}/api/strategies/templates/${template.id}/clone`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           custom_name: customName,
@@ -114,24 +115,26 @@ export default function TemplateCustomizationModal({
       onClose();
       if (onCloneSuccess) onCloneSuccess();
     } catch (err: any) {
-      console.error('Clone template error:', err);
-      toast.error(err.message || 'Failed to clone template');
+      console.error("Clone template error:", err);
+      toast.error(err.message || "Failed to clone template");
     } finally {
       setIsCloning(false);
     }
   };
 
   const getRiskColor = (risk: string) => {
-    if (risk === 'Conservative') return theme.colors.primary; // Green/Teal for conservative
-    if (risk === 'Moderate') return theme.colors.warning;
+    if (risk === "Conservative") return theme.colors.primary; // Green/Teal for conservative
+    if (risk === "Moderate") return theme.colors.warning;
     return theme.colors.danger;
   };
 
   // Calculate changes from template defaults
   const originalPositionSize = template.config?.position_size_percent || 10;
   const originalMaxPositions = template.config?.max_positions || 5;
-  const originalStopLoss = template.config?.exit_rules?.find((r: any) => r.type === 'stop_loss')?.value || 3;
-  const originalTakeProfit = template.config?.exit_rules?.find((r: any) => r.type === 'take_profit')?.value || 8;
+  const originalStopLoss =
+    template.config?.exit_rules?.find((r: any) => r.type === "stop_loss")?.value || 3;
+  const originalTakeProfit =
+    template.config?.exit_rules?.find((r: any) => r.type === "take_profit")?.value || 8;
 
   const hasChanges =
     positionSize !== originalPositionSize ||
@@ -143,16 +146,16 @@ export default function TemplateCustomizationModal({
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(0, 0, 0, 0.8)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        background: "rgba(0, 0, 0, 0.8)",
+        backdropFilter: "blur(4px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         zIndex: 1000,
         padding: theme.spacing.lg,
       }}
@@ -161,10 +164,10 @@ export default function TemplateCustomizationModal({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: isMobile ? '95vw' : '700px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflowY: 'auto',
+          maxWidth: isMobile ? "95vw" : "700px",
+          width: "100%",
+          maxHeight: "90vh",
+          overflowY: "auto",
           background: theme.background.primary,
           border: `1px solid ${theme.colors.border}`,
           borderRadius: theme.borderRadius.lg,
@@ -172,22 +175,42 @@ export default function TemplateCustomizationModal({
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: theme.spacing.lg }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginBottom: theme.spacing.lg,
+          }}
+        >
           <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: '600', color: theme.colors.text, margin: `0 0 ${theme.spacing.xs} 0` }}>
+            <h2
+              style={{
+                fontSize: isMobile ? "20px" : "24px",
+                fontWeight: "600",
+                color: theme.colors.text,
+                margin: `0 0 ${theme.spacing.xs} 0`,
+              }}
+            >
               Customize Template
             </h2>
-            <p style={{ fontSize: isMobile ? '12px' : '14px', color: theme.colors.textMuted, margin: 0 }}>
+            <p
+              style={{
+                fontSize: isMobile ? "12px" : "14px",
+                color: theme.colors.textMuted,
+                margin: 0,
+              }}
+            >
               {template.name}
             </p>
           </div>
           <button
             onClick={onClose}
             style={{
-              background: 'transparent',
-              border: 'none',
+              background: "transparent",
+              border: "none",
               color: theme.colors.textMuted,
-              cursor: 'pointer',
+              cursor: "pointer",
               padding: theme.spacing.xs,
               borderRadius: theme.borderRadius.md,
               transition: theme.transitions.fast,
@@ -197,11 +220,11 @@ export default function TemplateCustomizationModal({
               e.currentTarget.style.color = theme.colors.danger;
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.background = "transparent";
               e.currentTarget.style.color = theme.colors.textMuted;
             }}
           >
-            <X style={{ width: '20px', height: '20px' }} />
+            <X style={{ width: "20px", height: "20px" }} />
           </button>
         </div>
 
@@ -215,32 +238,89 @@ export default function TemplateCustomizationModal({
             marginBottom: theme.spacing.lg,
           }}
         >
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-            gap: theme.spacing.md,
-          }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+              gap: theme.spacing.md,
+            }}
+          >
             <div>
-              <span style={{ fontSize: '11px', color: theme.colors.textMuted, textTransform: 'uppercase' }}>Risk</span>
-              <p style={{ fontSize: '14px', fontWeight: '600', color: getRiskColor(template.risk_level), margin: 0 }}>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: theme.colors.textMuted,
+                  textTransform: "uppercase",
+                }}
+              >
+                Risk
+              </span>
+              <p
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: getRiskColor(template.risk_level),
+                  margin: 0,
+                }}
+              >
                 {template.risk_level}
               </p>
             </div>
             <div>
-              <span style={{ fontSize: '11px', color: theme.colors.textMuted, textTransform: 'uppercase' }}>Win Rate</span>
-              <p style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.text, margin: 0 }}>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: theme.colors.textMuted,
+                  textTransform: "uppercase",
+                }}
+              >
+                Win Rate
+              </span>
+              <p
+                style={{ fontSize: "14px", fontWeight: "600", color: theme.colors.text, margin: 0 }}
+              >
                 {template.expected_win_rate}%
               </p>
             </div>
             <div>
-              <span style={{ fontSize: '11px', color: theme.colors.textMuted, textTransform: 'uppercase' }}>Avg Return</span>
-              <p style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.primary, margin: 0 }}>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: theme.colors.textMuted,
+                  textTransform: "uppercase",
+                }}
+              >
+                Avg Return
+              </span>
+              <p
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: theme.colors.primary,
+                  margin: 0,
+                }}
+              >
                 +{template.avg_return_percent}%
               </p>
             </div>
             <div>
-              <span style={{ fontSize: '11px', color: theme.colors.textMuted, textTransform: 'uppercase' }}>Max DD</span>
-              <p style={{ fontSize: '14px', fontWeight: '600', color: theme.colors.danger, margin: 0 }}>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: theme.colors.textMuted,
+                  textTransform: "uppercase",
+                }}
+              >
+                Max DD
+              </span>
+              <p
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: theme.colors.danger,
+                  margin: 0,
+                }}
+              >
                 -{template.max_drawdown_percent}%
               </p>
             </div>
@@ -248,10 +328,18 @@ export default function TemplateCustomizationModal({
         </div>
 
         {/* Customization Form */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.lg }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: theme.spacing.lg }}>
           {/* Strategy Name */}
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: theme.colors.text, marginBottom: theme.spacing.xs }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: "600",
+                color: theme.colors.text,
+                marginBottom: theme.spacing.xs,
+              }}
+            >
               Strategy Name
             </label>
             <input
@@ -260,26 +348,41 @@ export default function TemplateCustomizationModal({
               onChange={(e) => setCustomName(e.target.value)}
               placeholder="Enter custom name"
               style={{
-                width: '100%',
+                width: "100%",
                 padding: theme.spacing.md,
                 background: theme.background.input,
                 border: `1px solid ${theme.colors.border}`,
                 borderRadius: theme.borderRadius.md,
                 color: theme.colors.text,
-                fontSize: '14px',
-                outline: 'none',
+                fontSize: "14px",
+                outline: "none",
               }}
             />
           </div>
 
           {/* Position Sizing */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.xs }}>
-              <label style={{ fontSize: '13px', fontWeight: '600', color: theme.colors.text }}>
-                <Target style={{ width: '14px', height: '14px', display: 'inline', marginRight: '6px' }} />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: theme.spacing.xs,
+              }}
+            >
+              <label style={{ fontSize: "13px", fontWeight: "600", color: theme.colors.text }}>
+                <Target
+                  style={{ width: "14px", height: "14px", display: "inline", marginRight: "6px" }}
+                />
                 Position Size
               </label>
-              <span style={{ fontSize: '16px', fontWeight: '600', color: theme.workflow.strategyBuilder }}>
+              <span
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  color: theme.workflow.strategyBuilder,
+                }}
+              >
                 {positionSize}%
               </span>
             </div>
@@ -290,9 +393,17 @@ export default function TemplateCustomizationModal({
               step="0.5"
               value={positionSize}
               onChange={(e) => setPositionSize(parseFloat(e.target.value))}
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: theme.colors.textMuted, marginTop: '4px' }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "11px",
+                color: theme.colors.textMuted,
+                marginTop: "4px",
+              }}
+            >
               <span>Conservative (1%)</span>
               <span>Original: {originalPositionSize}%</span>
               <span>Aggressive (20%)</span>
@@ -300,10 +411,26 @@ export default function TemplateCustomizationModal({
           </div>
 
           {/* Stop Loss & Take Profit */}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: theme.spacing.md }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+              gap: theme.spacing.md,
+            }}
+          >
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: theme.colors.text, marginBottom: theme.spacing.xs }}>
-                <Shield style={{ width: '14px', height: '14px', display: 'inline', marginRight: '6px' }} />
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  color: theme.colors.text,
+                  marginBottom: theme.spacing.xs,
+                }}
+              >
+                <Shield
+                  style={{ width: "14px", height: "14px", display: "inline", marginRight: "6px" }}
+                />
                 Stop Loss %
               </label>
               <input
@@ -314,24 +441,34 @@ export default function TemplateCustomizationModal({
                 value={stopLoss}
                 onChange={(e) => setStopLoss(parseFloat(e.target.value) || 0)}
                 style={{
-                  width: '100%',
+                  width: "100%",
                   padding: theme.spacing.md,
                   background: theme.background.input,
                   border: `1px solid ${theme.colors.border}`,
                   borderRadius: theme.borderRadius.md,
                   color: theme.colors.text,
-                  fontSize: '14px',
-                  outline: 'none',
+                  fontSize: "14px",
+                  outline: "none",
                 }}
               />
-              <p style={{ fontSize: '11px', color: theme.colors.textMuted, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: "11px", color: theme.colors.textMuted, margin: "4px 0 0 0" }}>
                 Original: {originalStopLoss}%
               </p>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: theme.colors.text, marginBottom: theme.spacing.xs }}>
-                <TrendingUp style={{ width: '14px', height: '14px', display: 'inline', marginRight: '6px' }} />
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  color: theme.colors.text,
+                  marginBottom: theme.spacing.xs,
+                }}
+              >
+                <TrendingUp
+                  style={{ width: "14px", height: "14px", display: "inline", marginRight: "6px" }}
+                />
                 Take Profit %
               </label>
               <input
@@ -342,17 +479,17 @@ export default function TemplateCustomizationModal({
                 value={takeProfit}
                 onChange={(e) => setTakeProfit(parseFloat(e.target.value) || 0)}
                 style={{
-                  width: '100%',
+                  width: "100%",
                   padding: theme.spacing.md,
                   background: theme.background.input,
                   border: `1px solid ${theme.colors.border}`,
                   borderRadius: theme.borderRadius.md,
                   color: theme.colors.text,
-                  fontSize: '14px',
-                  outline: 'none',
+                  fontSize: "14px",
+                  outline: "none",
                 }}
               />
-              <p style={{ fontSize: '11px', color: theme.colors.textMuted, margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: "11px", color: theme.colors.textMuted, margin: "4px 0 0 0" }}>
                 Original: {originalTakeProfit}%
               </p>
             </div>
@@ -360,8 +497,18 @@ export default function TemplateCustomizationModal({
 
           {/* Max Positions */}
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: theme.colors.text, marginBottom: theme.spacing.xs }}>
-              <BarChart3 style={{ width: '14px', height: '14px', display: 'inline', marginRight: '6px' }} />
+            <label
+              style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: "600",
+                color: theme.colors.text,
+                marginBottom: theme.spacing.xs,
+              }}
+            >
+              <BarChart3
+                style={{ width: "14px", height: "14px", display: "inline", marginRight: "6px" }}
+              />
               Max Positions
             </label>
             <input
@@ -372,17 +519,17 @@ export default function TemplateCustomizationModal({
               value={maxPositions}
               onChange={(e) => setMaxPositions(parseInt(e.target.value) || 0)}
               style={{
-                width: '100%',
+                width: "100%",
                 padding: theme.spacing.md,
                 background: theme.background.input,
                 border: `1px solid ${theme.colors.border}`,
                 borderRadius: theme.borderRadius.md,
                 color: theme.colors.text,
-                fontSize: '14px',
-                outline: 'none',
+                fontSize: "14px",
+                outline: "none",
               }}
             />
-            <p style={{ fontSize: '11px', color: theme.colors.textMuted, margin: '4px 0 0 0' }}>
+            <p style={{ fontSize: "11px", color: theme.colors.textMuted, margin: "4px 0 0 0" }}>
               Original: {originalMaxPositions} | Diversification vs. concentration tradeoff
             </p>
           </div>
@@ -395,7 +542,7 @@ export default function TemplateCustomizationModal({
                 background: `${theme.colors.info}10`,
                 border: `1px solid ${theme.colors.info}40`,
                 borderRadius: theme.borderRadius.md,
-                fontSize: '13px',
+                fontSize: "13px",
                 color: theme.colors.info,
               }}
             >
@@ -405,17 +552,19 @@ export default function TemplateCustomizationModal({
         </div>
 
         {/* Action Buttons */}
-        <div style={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: theme.spacing.sm,
-          marginTop: theme.spacing.xl
-        }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            gap: theme.spacing.sm,
+            marginTop: theme.spacing.xl,
+          }}
+        >
           <GlassButton
             variant="secondary"
             onClick={onClose}
             disabled={isCloning}
-            style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}
+            style={{ flex: 1, width: isMobile ? "100%" : "auto" }}
           >
             Cancel
           </GlassButton>
@@ -424,16 +573,25 @@ export default function TemplateCustomizationModal({
             workflowColor="strategyBuilder"
             onClick={handleClone}
             disabled={isCloning || !customName.trim()}
-            style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}
+            style={{ flex: 1, width: isMobile ? "100%" : "auto" }}
           >
             {isCloning ? (
               <>
-                <div className="animate-spin" style={{ width: '16px', height: '16px', border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />
+                <div
+                  className="animate-spin"
+                  style={{
+                    width: "16px",
+                    height: "16px",
+                    border: "2px solid currentColor",
+                    borderTopColor: "transparent",
+                    borderRadius: "50%",
+                  }}
+                />
                 Cloning...
               </>
             ) : (
               <>
-                <Copy style={{ width: '16px', height: '16px' }} />
+                <Copy style={{ width: "16px", height: "16px" }} />
                 Clone Strategy
               </>
             )}

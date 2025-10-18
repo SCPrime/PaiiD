@@ -93,8 +93,8 @@ export interface PositionTracking {
 }
 
 export interface PositionLeg {
-  type: 'STOCK' | 'CALL' | 'PUT';
-  side: 'BUY' | 'SELL';
+  type: "STOCK" | "CALL" | "PUT";
+  side: "BUY" | "SELL";
   qty: number;
   strike?: number;
   expiration?: string;
@@ -133,4 +133,4 @@ export interface PLSummaryStats {
   };
 }
 
-export type PLViewMode = 'pre-trade' | 'live-position' | 'historical';
+export type PLViewMode = "pre-trade" | "live-position" | "historical";

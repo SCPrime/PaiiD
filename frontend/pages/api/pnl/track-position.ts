@@ -1,5 +1,5 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import type { PositionTracking, Greeks } from '@/types/pnl';
+import type { NextApiRequest, NextApiResponse } from "next";
+import type { PositionTracking, Greeks } from "@/types/pnl";
 
 /**
  * Track Position P&L Endpoint
@@ -15,14 +15,14 @@ interface TrackPositionRequest {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { positionId }: TrackPositionRequest = req.body;
 
   if (!positionId) {
-    return res.status(400).json({ error: 'Missing required parameter: positionId' });
+    return res.status(400).json({ error: "Missing required parameter: positionId" });
   }
 
   try {
@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const positionTracking = await fetchPositionTracking(positionId);
 
     if (!positionTracking) {
-      return res.status(404).json({ error: 'Position not found' });
+      return res.status(404).json({ error: "Position not found" });
     }
 
     // Update current prices and P&L
@@ -38,9 +38,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.status(200).json(updatedTracking);
   } catch (error) {
-    console.error('Position tracking error:', error);
+    console.error("Position tracking error:", error);
     res.status(500).json({
-      error: 'Failed to track position',
+      error: "Failed to track position",
       detail: String(error),
     });
   }
@@ -53,48 +53,48 @@ async function fetchPositionTracking(positionId: string): Promise<PositionTracki
   // Mock data - in production, query database
   const mockPosition: PositionTracking = {
     positionId,
-    symbol: 'AAPL',
-    strategy: 'Iron Condor',
+    symbol: "AAPL",
+    strategy: "Iron Condor",
     legs: [
       {
-        type: 'PUT',
-        side: 'SELL',
+        type: "PUT",
+        side: "SELL",
         qty: 1,
         strike: 175,
-        expiration: '2025-02-21',
-        theoreticalPrice: 2.50,
+        expiration: "2025-02-21",
+        theoreticalPrice: 2.5,
         actualPrice: 2.45, // Slightly worse fill
-        currentPrice: 2.30,
+        currentPrice: 2.3,
       },
       {
-        type: 'PUT',
-        side: 'BUY',
+        type: "PUT",
+        side: "BUY",
         qty: 1,
         strike: 170,
-        expiration: '2025-02-21',
-        theoreticalPrice: 1.20,
+        expiration: "2025-02-21",
+        theoreticalPrice: 1.2,
         actualPrice: 1.22,
         currentPrice: 1.15,
       },
       {
-        type: 'CALL',
-        side: 'SELL',
+        type: "CALL",
+        side: "SELL",
         qty: 1,
         strike: 195,
-        expiration: '2025-02-21',
-        theoreticalPrice: 2.40,
+        expiration: "2025-02-21",
+        theoreticalPrice: 2.4,
         actualPrice: 2.38,
         currentPrice: 2.25,
       },
       {
-        type: 'CALL',
-        side: 'BUY',
+        type: "CALL",
+        side: "BUY",
         qty: 1,
         strike: 200,
-        expiration: '2025-02-21',
+        expiration: "2025-02-21",
         theoreticalPrice: 1.15,
         actualPrice: 1.17,
-        currentPrice: 1.10,
+        currentPrice: 1.1,
       },
     ],
     theoretical: {
@@ -141,7 +141,7 @@ async function updateRealTimePL(position: PositionTracking): Promise<PositionTra
   let entryValue = 0;
 
   for (const leg of position.legs) {
-    const legMultiplier = leg.side === 'BUY' ? -1 : 1; // BUY = debit, SELL = credit
+    const legMultiplier = leg.side === "BUY" ? -1 : 1; // BUY = debit, SELL = credit
 
     // Entry value
     entryValue += legMultiplier * leg.actualPrice * leg.qty * 100;
@@ -176,7 +176,7 @@ function calculateCurrentGreeks(legs: any[]): Greeks {
   let vega = 0;
 
   for (const leg of legs) {
-    const multiplier = leg.side === 'BUY' ? 1 : -1;
+    const multiplier = leg.side === "BUY" ? 1 : -1;
 
     // Estimate greeks based on option type
     const legGreeks = estimateLegGreeks(leg);
@@ -199,7 +199,7 @@ function calculateCurrentGreeks(legs: any[]): Greeks {
  */
 function estimateLegGreeks(leg: any): Greeks {
   // Simplified - in production, use Black-Scholes or fetch from API
-  if (leg.type === 'CALL') {
+  if (leg.type === "CALL") {
     return {
       delta: 0.48,
       gamma: 0.018,

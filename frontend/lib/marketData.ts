@@ -32,27 +32,30 @@ export async function fetchQuote(symbol: string): Promise<Quote> {
 }
 
 export async function fetchQuotes(symbols: string[]): Promise<Record<string, Quote>> {
-  const symbolsStr = symbols.join(',');
+  const symbolsStr = symbols.join(",");
   const res = await fetch(`/api/proxy/api/market/quotes?symbols=${symbolsStr}`);
-  if (!res.ok) throw new Error('Failed to fetch quotes');
+  if (!res.ok) throw new Error("Failed to fetch quotes");
   return await res.json();
 }
 
 export async function fetchIndices(): Promise<IndexData> {
-  const res = await fetch('/api/proxy/api/market/indices');
-  if (!res.ok) throw new Error('Failed to fetch indices');
+  const res = await fetch("/api/proxy/api/market/indices");
+  if (!res.ok) throw new Error("Failed to fetch indices");
   return await res.json();
 }
 
-export async function fetchUnder4Scanner(): Promise<{ candidates: ScannerResult[]; count: number }> {
-  const res = await fetch('/api/proxy/api/market/scanner/under4');
-  if (!res.ok) throw new Error('Failed to fetch scanner results');
+export async function fetchUnder4Scanner(): Promise<{
+  candidates: ScannerResult[];
+  count: number;
+}> {
+  const res = await fetch("/api/proxy/api/market/scanner/under4");
+  if (!res.ok) throw new Error("Failed to fetch scanner results");
   return await res.json();
 }
 
 export async function fetchBars(
   symbol: string,
-  timeframe: '1Min' | '5Min' | '1Hour' | '1Day' = '1Day',
+  timeframe: "1Min" | "5Min" | "1Hour" | "1Day" = "1Day",
   limit: number = 100
 ): Promise<any> {
   const res = await fetch(

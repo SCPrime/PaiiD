@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { AlertTriangle, Shield, Power, CheckCircle2 } from 'lucide-react';
-import { showSuccess, showError } from '../lib/toast';
+import { useState, useEffect } from "react";
+import { AlertTriangle, Shield, Power, CheckCircle2 } from "lucide-react";
+import { showSuccess, showError } from "../lib/toast";
 
 interface KillSwitchToggleProps {
   /** Whether component is standalone or embedded in Settings */
@@ -20,15 +20,15 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
   // Fetch current kill-switch status
   const fetchStatus = async () => {
     try {
-      const res = await fetch('/api/proxy/api/orders');
+      const res = await fetch("/api/proxy/api/orders");
       if (res.ok) {
         // If orders endpoint works, trading is active
         setTradingHalted(false);
         setLastChecked(new Date());
       }
     } catch (err: any) {
-      console.error('Error fetching kill-switch status:', err);
-      setError('Unable to determine status');
+      console.error("Error fetching kill-switch status:", err);
+      setError("Unable to determine status");
     }
   };
 
@@ -41,12 +41,12 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
     setError(null);
 
     try {
-      const res = await fetch('/api/proxy/api/admin/kill', {
-        method: 'POST',
+      const res = await fetch("/api/proxy/api/admin/kill", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(pendingState)
+        body: JSON.stringify(pendingState),
       });
 
       if (!res.ok) {
@@ -61,15 +61,15 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
       // Show success toast
       showSuccess(
         data.tradingHalted
-          ? '✅ Trading halted successfully - All order submissions blocked'
-          : '▶️ Trading resumed - Orders can now be submitted'
+          ? "✅ Trading halted successfully - All order submissions blocked"
+          : "▶️ Trading resumed - Orders can now be submitted"
       );
     } catch (err: any) {
-      setError(err.message || 'Failed to update kill-switch');
-      console.error('Kill-switch error:', err);
+      setError(err.message || "Failed to update kill-switch");
+      console.error("Kill-switch error:", err);
 
       // Show error toast
-      showError(`Failed to update kill-switch: ${err.message || 'Unknown error'}`);
+      showError(`Failed to update kill-switch: ${err.message || "Unknown error"}`);
     } finally {
       setLoading(false);
     }
@@ -98,21 +98,27 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
       <div className="p-4 bg-slate-900/40 border border-slate-700/30 rounded-lg">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className={`w-4 h-4 rounded-full animate-pulse ${
-              tradingHalted === null ? 'bg-gray-500' :
-              tradingHalted ? 'bg-red-500' :
-              'bg-green-500'
-            }`} />
+            <div
+              className={`w-4 h-4 rounded-full animate-pulse ${
+                tradingHalted === null
+                  ? "bg-gray-500"
+                  : tradingHalted
+                    ? "bg-red-500"
+                    : "bg-green-500"
+              }`}
+            />
             <div>
               <div className="text-sm font-medium text-slate-300">Trading Status</div>
-              <div className={`text-2xl font-bold ${
-                tradingHalted === null ? 'text-gray-400' :
-                tradingHalted ? 'text-red-400' :
-                'text-green-400'
-              }`}>
-                {tradingHalted === null ? 'Loading...' :
-                 tradingHalted ? 'HALTED' :
-                 'ACTIVE'}
+              <div
+                className={`text-2xl font-bold ${
+                  tradingHalted === null
+                    ? "text-gray-400"
+                    : tradingHalted
+                      ? "text-red-400"
+                      : "text-green-400"
+                }`}
+              >
+                {tradingHalted === null ? "Loading..." : tradingHalted ? "HALTED" : "ACTIVE"}
               </div>
             </div>
           </div>
@@ -124,13 +130,11 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
               disabled={loading}
               className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                 tradingHalted
-                  ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400 border-2 border-green-500'
-                  : 'bg-red-500/20 hover:bg-red-500/30 text-red-400 border-2 border-red-500'
-              } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border-2 border-green-500"
+                  : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border-2 border-red-500"
+              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
             >
-              {loading ? 'Updating...' :
-               tradingHalted ? '▶ Resume Trading' :
-               '⏸ Halt Trading'}
+              {loading ? "Updating..." : tradingHalted ? "▶ Resume Trading" : "⏸ Halt Trading"}
             </button>
           )}
         </div>
@@ -156,7 +160,8 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
         <div className="p-3 bg-red-500/10 border border-red-500/30 rounded flex items-start gap-2">
           <AlertTriangle size={16} className="text-red-400 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-red-400">
-            <strong>Trading Halted:</strong> All order submissions are currently blocked. No new trades can be executed until trading is resumed.
+            <strong>Trading Halted:</strong> All order submissions are currently blocked. No new
+            trades can be executed until trading is resumed.
           </div>
         </div>
       )}
@@ -173,7 +178,8 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
       <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded flex items-start gap-2">
         <Shield size={16} className="text-purple-400 mt-0.5 flex-shrink-0" />
         <div className="text-sm text-purple-400">
-          <strong>Admin Only:</strong> Only system administrators can toggle the kill switch. This immediately affects all users.
+          <strong>Admin Only:</strong> Only system administrators can toggle the kill switch. This
+          immediately affects all users.
         </div>
       </div>
 
@@ -182,22 +188,27 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="bg-slate-800 border-2 border-slate-700 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle size={32} className={pendingState ? 'text-red-500' : 'text-green-500'} />
+              <AlertTriangle
+                size={32}
+                className={pendingState ? "text-red-500" : "text-green-500"}
+              />
               <h3 className="text-xl font-bold text-white">
-                {pendingState ? 'Halt Trading?' : 'Resume Trading?'}
+                {pendingState ? "Halt Trading?" : "Resume Trading?"}
               </h3>
             </div>
 
             <p className="text-slate-300 mb-6">
               {pendingState ? (
                 <>
-                  Are you sure you want to <strong className="text-red-400">halt all trading</strong>?
-                  This will immediately block all order submissions from all users until you resume trading.
+                  Are you sure you want to{" "}
+                  <strong className="text-red-400">halt all trading</strong>? This will immediately
+                  block all order submissions from all users until you resume trading.
                 </>
               ) : (
                 <>
-                  Are you sure you want to <strong className="text-green-400">resume trading</strong>?
-                  This will allow all users to submit orders again.
+                  Are you sure you want to{" "}
+                  <strong className="text-green-400">resume trading</strong>? This will allow all
+                  users to submit orders again.
                 </>
               )}
             </p>
@@ -214,13 +225,15 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
                 disabled={loading}
                 className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all ${
                   pendingState
-                    ? 'bg-red-500 hover:bg-red-600 text-white'
-                    : 'bg-green-500 hover:bg-green-600 text-white'
-                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-green-500 hover:bg-green-600 text-white"
+                } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                {loading ? 'Processing...' :
-                 pendingState ? 'Yes, Halt Trading' :
-                 'Yes, Resume Trading'}
+                {loading
+                  ? "Processing..."
+                  : pendingState
+                    ? "Yes, Halt Trading"
+                    : "Yes, Resume Trading"}
               </button>
             </div>
           </div>

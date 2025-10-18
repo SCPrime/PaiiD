@@ -4,7 +4,7 @@
  * Wrapper around react-hot-toast with consistent styling and messaging
  */
 
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 /**
  * Show a success toast notification
@@ -26,9 +26,9 @@ export const showError = (message: string, duration?: number) => {
 export const showInfo = (message: string, duration?: number) => {
   return toast(message, {
     duration,
-    icon: 'ℹ️',
+    icon: "ℹ️",
     style: {
-      border: '1px solid rgba(59, 130, 246, 0.5)',
+      border: "1px solid rgba(59, 130, 246, 0.5)",
     },
   });
 };
@@ -39,9 +39,9 @@ export const showInfo = (message: string, duration?: number) => {
 export const showWarning = (message: string, duration?: number) => {
   return toast(message, {
     duration,
-    icon: '⚠️',
+    icon: "⚠️",
     style: {
-      border: '1px solid rgba(245, 158, 11, 0.5)',
+      border: "1px solid rgba(245, 158, 11, 0.5)",
     },
   });
 };
@@ -72,7 +72,7 @@ export const dismissAllToasts = () => {
  * Show a promise-based toast
  * Automatically shows loading, success, and error states
  */
-export const showPromise = <T,>(
+export const showPromise = <T>(
   promise: Promise<T>,
   messages: {
     loading: string;

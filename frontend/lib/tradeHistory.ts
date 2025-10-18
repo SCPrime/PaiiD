@@ -46,7 +46,7 @@ let mockPerformanceCache: Record<string, StrategyPerformance> = {};
 /**
  * Record a new trade
  */
-export function recordTrade(trade: Omit<TradeRecord, 'id'>): TradeRecord {
+export function recordTrade(trade: Omit<TradeRecord, "id">): TradeRecord {
   const newTrade: TradeRecord = {
     id: `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     ...trade,
@@ -64,11 +64,11 @@ export function recordTrade(trade: Omit<TradeRecord, 'id'>): TradeRecord {
  * Get all trades for a strategy
  */
 export function getTradesForStrategy(strategyId: string, userId?: string): TradeRecord[] {
-  let trades = mockTradeHistory.filter(trade => trade.strategy_id === strategyId);
+  let trades = mockTradeHistory.filter((trade) => trade.strategy_id === strategyId);
 
   // Optionally filter by userId
   if (userId) {
-    trades = trades.filter(trade => trade.userId === userId);
+    trades = trades.filter((trade) => trade.userId === userId);
   }
 
   return trades;
@@ -78,7 +78,7 @@ export function getTradesForStrategy(strategyId: string, userId?: string): Trade
  * Get all trades for a user
  */
 export function getTradesForUser(userId: string): TradeRecord[] {
-  return mockTradeHistory.filter(trade => trade.userId === userId);
+  return mockTradeHistory.filter((trade) => trade.userId === userId);
 }
 
 /**
@@ -97,14 +97,14 @@ export function getStrategyPerformance(strategyId: string): StrategyPerformance 
   }
 
   // Filter to closed trades only
-  const closedTrades = trades.filter(t => t.closed_at && t.realized_pnl !== undefined);
+  const closedTrades = trades.filter((t) => t.closed_at && t.realized_pnl !== undefined);
 
   if (closedTrades.length === 0) {
     return null;
   }
 
   // Calculate metrics
-  const winningTrades = closedTrades.filter(t => t.was_winner).length;
+  const winningTrades = closedTrades.filter((t) => t.was_winner).length;
   const losingTrades = closedTrades.length - winningTrades;
   const winRate = (winningTrades / closedTrades.length) * 100;
 
@@ -112,15 +112,14 @@ export function getStrategyPerformance(strategyId: string): StrategyPerformance 
   const avgReturn = totalReturn / closedTrades.length;
 
   // Calculate Sharpe ratio (simplified - assumes risk-free rate = 0)
-  const returns = closedTrades.map(t => t.realized_pnl || 0);
+  const returns = closedTrades.map((t) => t.realized_pnl || 0);
   const mean = avgReturn;
-  const variance =
-    returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
+  const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
   const stdDev = Math.sqrt(variance);
   const sharpeRatio = stdDev > 0 ? mean / stdDev : 0;
 
   // Max drawdown
-  const maxDrawdown = Math.min(...closedTrades.map(t => t.max_drawdown || 0), 0);
+  const maxDrawdown = Math.min(...closedTrades.map((t) => t.max_drawdown || 0), 0);
 
   // Average duration
   const avgDuration =
@@ -238,7 +237,7 @@ export function seedMockTradeData(strategyId: string, userId: string) {
       userId,
       strategy_id: strategyId,
       strategy_version: 1,
-      ticker: ['AAPL', 'MSFT', 'GOOGL', 'SPY', 'QQQ'][Math.floor(Math.random() * 5)],
+      ticker: ["AAPL", "MSFT", "GOOGL", "SPY", "QQQ"][Math.floor(Math.random() * 5)],
       entered_at: enteredAt.toISOString(),
       closed_at: closedAt.toISOString(),
       entry_price: 100 + Math.random() * 50,

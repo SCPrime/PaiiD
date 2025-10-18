@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-type GlowStyle = 'radial' | 'halo';
+type GlowStyle = "radial" | "halo";
 
 interface GlowStyleContextType {
   glowStyle: GlowStyle;
@@ -12,18 +12,18 @@ interface GlowStyleContextType {
 const GlowStyleContext = createContext<GlowStyleContextType | undefined>(undefined);
 
 export function GlowStyleProvider({ children }: { children: ReactNode }) {
-  const [glowStyle, setGlowStyle] = useState<GlowStyle>('radial');
+  const [glowStyle, setGlowStyle] = useState<GlowStyle>("radial");
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const glow = params.get('glow');
-      if (glow === 'halo') {
-        setGlowStyle('halo');
-        console.info('[GlowStyle] 🎨 Using HALO glow');
+      const glow = params.get("glow");
+      if (glow === "halo") {
+        setGlowStyle("halo");
+        console.info("[GlowStyle] 🎨 Using HALO glow");
       } else {
-        setGlowStyle('radial');
-        console.info('[GlowStyle] 🎨 Using RADIAL glow (default)');
+        setGlowStyle("radial");
+        console.info("[GlowStyle] 🎨 Using RADIAL glow (default)");
       }
     }
   }, []);
@@ -38,7 +38,7 @@ export function GlowStyleProvider({ children }: { children: ReactNode }) {
 export function useGlowStyle() {
   const context = useContext(GlowStyleContext);
   if (context === undefined) {
-    throw new Error('useGlowStyle must be used within GlowStyleProvider');
+    throw new Error("useGlowStyle must be used within GlowStyleProvider");
   }
   return context;
 }

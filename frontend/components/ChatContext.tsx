@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from "react";
 
 interface ChatContextType {
   isChatOpen: boolean;
@@ -16,7 +16,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const openChat = () => setIsChatOpen(true);
   const closeChat = () => setIsChatOpen(false);
-  const toggleChat = () => setIsChatOpen(prev => !prev);
+  const toggleChat = () => setIsChatOpen((prev) => !prev);
 
   return (
     <ChatContext.Provider value={{ isChatOpen, openChat, closeChat, toggleChat }}>
@@ -28,7 +28,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 export function useChat() {
   const context = useContext(ChatContext);
   if (context === undefined) {
-    throw new Error('useChat must be used within a ChatProvider');
+    throw new Error("useChat must be used within a ChatProvider");
   }
   return context;
 }

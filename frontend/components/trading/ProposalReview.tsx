@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 /**
  * Proposal Review Component
@@ -12,8 +12,8 @@ import { useState, useEffect } from 'react';
 interface OptionLeg {
   strike: number;
   expiration: string;
-  option_type: 'call' | 'put';
-  side: 'buy' | 'sell';
+  option_type: "call" | "put";
+  side: "buy" | "sell";
   quantity: number;
 }
 
@@ -31,7 +31,7 @@ interface Proposal {
   breakevens: number[];
   ivp: number; // IV percentile
   approval_deadline: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   created_at: string;
   budget_required: number;
 }
@@ -57,7 +57,7 @@ function ProposalCard({
 }: ProposalCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedProposal, setEditedProposal] = useState(proposal);
-  const [timeRemaining, setTimeRemaining] = useState('');
+  const [timeRemaining, setTimeRemaining] = useState("");
 
   // Update countdown timer
   useEffect(() => {
@@ -67,7 +67,7 @@ function ProposalCard({
       const diff = deadline.getTime() - now.getTime();
 
       if (diff <= 0) {
-        setTimeRemaining('EXPIRED');
+        setTimeRemaining("EXPIRED");
         return;
       }
 
@@ -103,14 +103,14 @@ function ProposalCard({
     setIsEditing(false);
   };
 
-  const isExpired = timeRemaining === 'EXPIRED';
+  const isExpired = timeRemaining === "EXPIRED";
 
   return (
     <div
       className={`bg-slate-800/60 border rounded-xl p-5 transition-all ${
         isSelected
-          ? 'border-cyan-500 ring-2 ring-cyan-500/50'
-          : 'border-white/10 hover:border-white/20'
+          ? "border-cyan-500 ring-2 ring-cyan-500/50"
+          : "border-white/10 hover:border-white/20"
       }`}
     >
       {/* Header */}
@@ -134,11 +134,11 @@ function ProposalCard({
         <div
           className={`px-3 py-1 rounded-lg text-sm font-semibold ${
             isExpired
-              ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-              : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+              ? "bg-red-500/20 text-red-400 border border-red-500/30"
+              : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
           }`}
         >
-          {isExpired ? '⏰ EXPIRED' : `⏱️ ${timeRemaining}`}
+          {isExpired ? "⏰ EXPIRED" : `⏱️ ${timeRemaining}`}
         </div>
       </div>
 
@@ -153,9 +153,9 @@ function ProposalCard({
             >
               <span
                 className={`px-2 py-1 rounded font-semibold ${
-                  leg.side === 'buy'
-                    ? 'bg-green-500/20 text-green-400'
-                    : 'bg-red-500/20 text-red-400'
+                  leg.side === "buy"
+                    ? "bg-green-500/20 text-green-400"
+                    : "bg-red-500/20 text-red-400"
                 }`}
               >
                 {leg.side.toUpperCase()}
@@ -191,24 +191,18 @@ function ProposalCard({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <div className="p-3 bg-slate-900/50 rounded-lg">
           <div className="text-xs text-slate-400 mb-1">Entry Price</div>
-          <div className="text-lg font-bold text-white">
-            ${proposal.entry_price.toFixed(2)}
-          </div>
+          <div className="text-lg font-bold text-white">${proposal.entry_price.toFixed(2)}</div>
           <div className="text-xs text-slate-500">±${proposal.entry_tolerance.toFixed(2)}</div>
         </div>
 
         <div className="p-3 bg-slate-900/50 rounded-lg">
           <div className="text-xs text-slate-400 mb-1">Max Risk</div>
-          <div className="text-lg font-bold text-red-400">
-            ${proposal.max_risk.toFixed(0)}
-          </div>
+          <div className="text-lg font-bold text-red-400">${proposal.max_risk.toFixed(0)}</div>
         </div>
 
         <div className="p-3 bg-slate-900/50 rounded-lg">
           <div className="text-xs text-slate-400 mb-1">Max Profit</div>
-          <div className="text-lg font-bold text-green-400">
-            ${proposal.max_profit.toFixed(0)}
-          </div>
+          <div className="text-lg font-bold text-green-400">${proposal.max_profit.toFixed(0)}</div>
         </div>
 
         <div className="p-3 bg-slate-900/50 rounded-lg">
@@ -222,7 +216,7 @@ function ProposalCard({
         <div className="p-3 bg-slate-900/50 rounded-lg">
           <div className="text-xs text-slate-400 mb-1">Breakevens</div>
           <div className="text-sm font-mono text-white">
-            {proposal.breakevens.map((be) => `$${be.toFixed(2)}`).join(' / ')}
+            {proposal.breakevens.map((be) => `$${be.toFixed(2)}`).join(" / ")}
           </div>
         </div>
 
@@ -299,60 +293,84 @@ export default function ProposalReview() {
     setError(null);
 
     try {
-      const response = await fetch('/api/proposals?status=pending');
+      const response = await fetch("/api/proposals?status=pending");
       if (!response.ok) {
-        throw new Error('Failed to fetch proposals');
+        throw new Error("Failed to fetch proposals");
       }
 
       const data = await response.json();
       setProposals(data.proposals || []);
     } catch (err) {
-      console.error('Error fetching proposals:', err);
-      setError('Failed to load proposals');
+      console.error("Error fetching proposals:", err);
+      setError("Failed to load proposals");
 
       // Mock data for testing
       setProposals([
         {
-          id: 'prop_1',
-          ticker: 'SPY',
-          strategy_name: 'Iron Condor',
-          strategy_id: 'strat_ic_001',
+          id: "prop_1",
+          ticker: "SPY",
+          strategy_name: "Iron Condor",
+          strategy_id: "strat_ic_001",
           legs: [
-            { strike: 580, expiration: '2025-11-15', option_type: 'put', side: 'sell', quantity: 1 },
-            { strike: 575, expiration: '2025-11-15', option_type: 'put', side: 'buy', quantity: 1 },
-            { strike: 600, expiration: '2025-11-15', option_type: 'call', side: 'sell', quantity: 1 },
-            { strike: 605, expiration: '2025-11-15', option_type: 'call', side: 'buy', quantity: 1 },
+            {
+              strike: 580,
+              expiration: "2025-11-15",
+              option_type: "put",
+              side: "sell",
+              quantity: 1,
+            },
+            { strike: 575, expiration: "2025-11-15", option_type: "put", side: "buy", quantity: 1 },
+            {
+              strike: 600,
+              expiration: "2025-11-15",
+              option_type: "call",
+              side: "sell",
+              quantity: 1,
+            },
+            {
+              strike: 605,
+              expiration: "2025-11-15",
+              option_type: "call",
+              side: "buy",
+              quantity: 1,
+            },
           ],
           entry_price: 1.25,
-          entry_tolerance: 0.10,
+          entry_tolerance: 0.1,
           max_risk: -375,
           max_profit: 125,
           pop: 68.5,
           breakevens: [578.75, 601.25],
           ivp: 45.2,
           approval_deadline: new Date(Date.now() + 15 * 60000).toISOString(), // 15 minutes
-          status: 'pending',
+          status: "pending",
           created_at: new Date().toISOString(),
           budget_required: 375,
         },
         {
-          id: 'prop_2',
-          ticker: 'AAPL',
-          strategy_name: 'Bull Put Spread',
-          strategy_id: 'strat_bps_002',
+          id: "prop_2",
+          ticker: "AAPL",
+          strategy_name: "Bull Put Spread",
+          strategy_id: "strat_bps_002",
           legs: [
-            { strike: 230, expiration: '2025-10-20', option_type: 'put', side: 'sell', quantity: 2 },
-            { strike: 225, expiration: '2025-10-20', option_type: 'put', side: 'buy', quantity: 2 },
+            {
+              strike: 230,
+              expiration: "2025-10-20",
+              option_type: "put",
+              side: "sell",
+              quantity: 2,
+            },
+            { strike: 225, expiration: "2025-10-20", option_type: "put", side: "buy", quantity: 2 },
           ],
-          entry_price: 1.50,
+          entry_price: 1.5,
           entry_tolerance: 0.15,
           max_risk: -700,
           max_profit: 300,
           pop: 72.3,
-          breakevens: [228.50],
+          breakevens: [228.5],
           ivp: 38.7,
           approval_deadline: new Date(Date.now() + 10 * 60000).toISOString(), // 10 minutes
-          status: 'pending',
+          status: "pending",
           created_at: new Date().toISOString(),
           budget_required: 700,
         },
@@ -365,43 +383,43 @@ export default function ProposalReview() {
   const handleApprove = async (id: string) => {
     try {
       const response = await fetch(`/api/proposals/${id}/approve`, {
-        method: 'POST',
+        method: "POST",
       });
 
       if (response.ok) {
         setProposals((prev) => prev.filter((p) => p.id !== id));
-        alert('✅ Proposal approved!');
+        alert("✅ Proposal approved!");
       } else {
-        throw new Error('Approval failed');
+        throw new Error("Approval failed");
       }
     } catch (err) {
-      console.error('Error approving proposal:', err);
-      alert('❌ Failed to approve proposal');
+      console.error("Error approving proposal:", err);
+      alert("❌ Failed to approve proposal");
     }
   };
 
   const handleReject = async (id: string) => {
     try {
       const response = await fetch(`/api/proposals/${id}/reject`, {
-        method: 'POST',
+        method: "POST",
       });
 
       if (response.ok) {
         setProposals((prev) => prev.filter((p) => p.id !== id));
-        alert('🚫 Proposal rejected');
+        alert("🚫 Proposal rejected");
       } else {
-        throw new Error('Rejection failed');
+        throw new Error("Rejection failed");
       }
     } catch (err) {
-      console.error('Error rejecting proposal:', err);
-      alert('❌ Failed to reject proposal');
+      console.error("Error rejecting proposal:", err);
+      alert("❌ Failed to reject proposal");
     }
   };
 
   const handleReprice = async (id: string) => {
     try {
       const response = await fetch(`/api/proposals/${id}/reprice`, {
-        method: 'POST',
+        method: "POST",
       });
 
       if (response.ok) {
@@ -411,18 +429,18 @@ export default function ProposalReview() {
         );
         alert(`💱 Repriced at mid: $${data.new_price.toFixed(2)}`);
       } else {
-        throw new Error('Reprice failed');
+        throw new Error("Reprice failed");
       }
     } catch (err) {
-      console.error('Error repricing proposal:', err);
-      alert('❌ Failed to reprice proposal');
+      console.error("Error repricing proposal:", err);
+      alert("❌ Failed to reprice proposal");
     }
   };
 
   const handleEdit = async (id: string, updates: Partial<Proposal>) => {
     // Update locally (in production, send to backend)
     setProposals((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
-    alert('✏️ Proposal updated (changes are local for demo)');
+    alert("✏️ Proposal updated (changes are local for demo)");
   };
 
   const handleSelect = (id: string, selected: boolean) => {
@@ -443,7 +461,7 @@ export default function ProposalReview() {
     );
 
     if (selectedItems.length === 0) {
-      alert('⚠️ No proposals within budget selected');
+      alert("⚠️ No proposals within budget selected");
       return;
     }
 
@@ -455,9 +473,7 @@ export default function ProposalReview() {
     }
 
     if (
-      !confirm(
-        `Approve ${selectedItems.length} proposals requiring $${totalBudget} total budget?`
-      )
+      !confirm(`Approve ${selectedItems.length} proposals requiring $${totalBudget} total budget?`)
     ) {
       return;
     }
@@ -527,12 +543,10 @@ export default function ProposalReview() {
 
             {selectedProposals.size > 0 && (
               <div className="w-full md:w-auto text-sm">
-                <div className="text-slate-400">
-                  Selected: {selectedProposals.size} proposals
-                </div>
+                <div className="text-slate-400">Selected: {selectedProposals.size} proposals</div>
                 <div
                   className={`font-semibold ${
-                    totalBudgetRequired <= budget ? 'text-green-400' : 'text-red-400'
+                    totalBudgetRequired <= budget ? "text-green-400" : "text-red-400"
                   }`}
                 >
                   Total Budget: ${totalBudgetRequired}

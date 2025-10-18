@@ -28,7 +28,7 @@ export interface Strategy {
 // Universe & Filtering
 // ============================================================================
 
-export type TargetClass = 'current' | 'invested' | 'future';
+export type TargetClass = "current" | "invested" | "future";
 
 export interface Universe {
   tickers?: string[];
@@ -52,7 +52,7 @@ export interface UniverseFilters {
 export interface RankingRule {
   feature: string;
   weight: number;
-  direction: 'asc' | 'desc';
+  direction: "asc" | "desc";
 }
 
 // ============================================================================
@@ -75,8 +75,8 @@ export interface TimeWindow {
 // Position Structure (Multi-Leg)
 // ============================================================================
 
-export type LegType = 'STOCK' | 'CALL' | 'PUT';
-export type LegSide = 'BUY' | 'SELL';
+export type LegType = "STOCK" | "CALL" | "PUT";
+export type LegSide = "BUY" | "SELL";
 
 export interface Position {
   legs: Leg[];
@@ -112,7 +112,7 @@ export interface RollRule {
 // Position Sizing
 // ============================================================================
 
-export type AllocationType = 'cash' | 'cash_max_loss' | 'max_loss';
+export type AllocationType = "cash" | "cash_max_loss" | "max_loss";
 
 export interface Sizing {
   allocation_type: AllocationType;
@@ -180,7 +180,7 @@ export interface LiquidityBreaker {
 // Automation & Execution
 // ============================================================================
 
-export type ExecutionMode = 'requires_approval' | 'autopilot';
+export type ExecutionMode = "requires_approval" | "autopilot";
 
 export interface Automation {
   scan_time: string;
@@ -209,9 +209,9 @@ export interface UserOverrides {
 // Broker Routing
 // ============================================================================
 
-export type OrderType = 'NET_MULTI' | 'NET_DEBIT_OR_CREDIT_MULTI';
-export type LimitPriceStrategy = 'mid_with_tolerance' | 'bid' | 'ask' | 'last';
-export type TimeInForce = 'DAY' | 'IOC' | 'FOK' | 'GTC';
+export type OrderType = "NET_MULTI" | "NET_DEBIT_OR_CREDIT_MULTI";
+export type LimitPriceStrategy = "mid_with_tolerance" | "bid" | "ask" | "last";
+export type TimeInForce = "DAY" | "IOC" | "FOK" | "GTC";
 
 export interface BrokerRouting {
   order_type: OrderType;
@@ -257,7 +257,7 @@ export interface Proposal {
   as_of: string;
   ticker: string;
   payload: ProposalPayload;
-  status: 'pending' | 'approved' | 'rejected' | 'expired';
+  status: "pending" | "approved" | "rejected" | "expired";
   approval_deadline: string;
   reason?: string;
 }
@@ -283,7 +283,7 @@ export interface ProposalLeg {
 
 export interface Pricing {
   net_debit_credit: number;
-  net_type: 'DEBIT' | 'CREDIT';
+  net_type: "DEBIT" | "CREDIT";
   mid_price: number;
   bid_price: number;
   ask_price: number;
@@ -334,7 +334,7 @@ export interface Order {
   proposal_id: string;
   broker_order_id?: string;
   route: string;
-  status: 'staged' | 'submitted' | 'partial' | 'filled' | 'rejected' | 'canceled';
+  status: "staged" | "submitted" | "partial" | "filled" | "rejected" | "canceled";
   legs: OrderLeg[];
   pricing: OrderPricing;
   risk: RiskMetrics;
@@ -354,7 +354,7 @@ export interface OrderLeg {
 
 export interface OrderPricing {
   limit_price: number;
-  net_type: 'DEBIT' | 'CREDIT';
+  net_type: "DEBIT" | "CREDIT";
   tif: TimeInForce;
   slippage_budget_pct: number;
   max_reprices: number;
@@ -390,7 +390,7 @@ export interface PositionRecord {
   id: string;
   user_id: string;
   ticker: string;
-  type: 'stock' | 'option_combo' | 'option_single';
+  type: "stock" | "option_combo" | "option_single";
   legs: PositionLeg[];
   cost_basis: number;
   qty: number;
@@ -415,7 +415,12 @@ export interface PositionLeg {
 // Risk Events
 // ============================================================================
 
-export type RiskEventKind = 'market_vix' | 'market_gap' | 'news_sentiment' | 'liquidity_spread' | 'position_breach';
+export type RiskEventKind =
+  | "market_vix"
+  | "market_gap"
+  | "news_sentiment"
+  | "liquidity_spread"
+  | "position_breach";
 
 export interface RiskEvent {
   id: string;
@@ -432,7 +437,7 @@ export interface RiskEventPayload {
   threshold: number;
   actual: number;
   message: string;
-  action: 'pause_entries' | 'close_position' | 'alert_only';
+  action: "pause_entries" | "close_position" | "alert_only";
   cooldown_min?: number;
 }
 
@@ -440,7 +445,7 @@ export interface RiskEventPayload {
 // Reports
 // ============================================================================
 
-export type ReportKind = 'pre' | 'mid' | 'post';
+export type ReportKind = "pre" | "mid" | "post";
 
 export interface Report {
   id: string;
@@ -491,7 +496,7 @@ export interface NewsItem {
 export interface CandidateSummary {
   strategy_id: string;
   ticker: string;
-  credit_or_debit: 'credit' | 'debit';
+  credit_or_debit: "credit" | "debit";
   pop: number;
   max_risk: number;
   max_profit: number;
@@ -534,7 +539,7 @@ export interface NewsArticle {
   sentiment: number;
   novelty: number;
   relevance: number;
-  time_to_impact?: 'immediate' | 'short' | 'mid' | 'long';
+  time_to_impact?: "immediate" | "short" | "mid" | "long";
   raw: Record<string, any>;
 }
 
@@ -556,16 +561,16 @@ export interface Target {
 // Notification
 // ============================================================================
 
-export type NotificationChannel = 'sms' | 'email' | 'push';
+export type NotificationChannel = "sms" | "email" | "push";
 export type NotificationKind =
-  | 'proposals_ready'
-  | 'approval_deadline'
-  | 'fill_complete'
-  | 'risk_breaker'
-  | 'profit_target'
-  | 'stop_loss'
-  | 'roll_due'
-  | 'report_ready';
+  | "proposals_ready"
+  | "approval_deadline"
+  | "fill_complete"
+  | "risk_breaker"
+  | "profit_target"
+  | "stop_loss"
+  | "roll_due"
+  | "report_ready";
 
 export interface Notification {
   id: string;
@@ -616,7 +621,7 @@ export interface MultiLegOrderLeg {
 
 export interface MultiLegOrder {
   legs: MultiLegOrderLeg[];
-  netType: 'DEBIT' | 'CREDIT';
+  netType: "DEBIT" | "CREDIT";
   limit: number;
   tif: TimeInForce;
   clientOrderId: string;
@@ -677,7 +682,7 @@ export interface BacktestConfig {
   end_date: string;
   initial_capital: number;
   commission_per_contract: number;
-  slippage_model: 'fixed' | 'dynamic';
+  slippage_model: "fixed" | "dynamic";
   include_events: boolean;
 }
 

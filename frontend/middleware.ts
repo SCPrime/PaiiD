@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 /**
  * Middleware to handle maintenance mode.
@@ -9,23 +9,23 @@ import type { NextRequest } from 'next/server';
  */
 export function middleware(request: NextRequest) {
   // Allow proxy API routes even during maintenance (for backend health checks)
-  if (request.nextUrl.pathname.startsWith('/api/proxy')) {
+  if (request.nextUrl.pathname.startsWith("/api/proxy")) {
     return NextResponse.next();
   }
 
   // If maintenance mode is enabled, return 503 for all other routes
-  if (process.env.MAINTENANCE_MODE === 'true') {
+  if (process.env.MAINTENANCE_MODE === "true") {
     return new NextResponse(
       JSON.stringify({
-        error: 'Under maintenance',
-        message: 'The service is currently under maintenance. Please try again later.',
+        error: "Under maintenance",
+        message: "The service is currently under maintenance. Please try again later.",
         timestamp: new Date().toISOString(),
       }),
       {
         status: 503,
         headers: {
-          'Content-Type': 'application/json',
-          'Retry-After': '300', // Suggest retry after 5 minutes
+          "Content-Type": "application/json",
+          "Retry-After": "300", // Suggest retry after 5 minutes
         },
       }
     );
@@ -44,6 +44,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

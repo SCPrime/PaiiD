@@ -1,28 +1,26 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { symbol } = req.query;
 
-  if (!symbol || typeof symbol !== 'string') {
-    return res.status(400).json({ error: 'Symbol is required' });
+  if (!symbol || typeof symbol !== "string") {
+    return res.status(400).json({ error: "Symbol is required" });
   }
 
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || 'https://paiid-backend.onrender.com';
+  const BACKEND_URL =
+    process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "https://paiid-backend.onrender.com";
 
   try {
     const response = await fetch(
       `${BACKEND_URL}/api/ai/recommendations?symbol=${encodeURIComponent(symbol)}`,
       {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
@@ -34,9 +32,9 @@ export default async function handler(
     const data = await response.json();
     res.status(200).json(data);
   } catch (error) {
-    console.error('AI recommendations error:', error);
+    console.error("AI recommendations error:", error);
     res.status(500).json({
-      error: 'Failed to fetch AI recommendations',
+      error: "Failed to fetch AI recommendations",
       recommendations: [],
     });
   }

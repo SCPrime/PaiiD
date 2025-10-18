@@ -31,7 +31,7 @@ export function calculateSMA(data: BarData[], period: number): LinePoint[] {
     const sum = data.slice(i - period + 1, i + 1).reduce((acc, bar) => acc + bar.close, 0);
     result.push({
       time: data[i].time,
-      value: sum / period
+      value: sum / period,
     });
   }
   return result;
@@ -52,18 +52,21 @@ export function calculateRSI(data: BarData[], period: number = 14): LinePoint[] 
   }
 
   for (let i = period; i < changes.length; i++) {
-    const gains = changes.slice(i - period, i).filter(c => c > 0);
-    const losses = changes.slice(i - period, i).filter(c => c < 0).map(Math.abs);
+    const gains = changes.slice(i - period, i).filter((c) => c > 0);
+    const losses = changes
+      .slice(i - period, i)
+      .filter((c) => c < 0)
+      .map(Math.abs);
 
     const avgGain = gains.length > 0 ? gains.reduce((a, b) => a + b, 0) / period : 0;
     const avgLoss = losses.length > 0 ? losses.reduce((a, b) => a + b, 0) / period : 0;
 
     const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
-    const rsi = 100 - (100 / (1 + rs));
+    const rsi = 100 - 100 / (1 + rs);
 
     result.push({
       time: data[i + 1].time,
-      value: rsi
+      value: rsi,
     });
   }
 
@@ -89,7 +92,7 @@ export function calculateMACD(
     return result;
   };
 
-  const closes = data.map(d => d.close);
+  const closes = data.map((d) => d.close);
   const fastEMA = ema(closes, fastPeriod);
   const slowEMA = ema(closes, slowPeriod);
 
@@ -100,7 +103,7 @@ export function calculateMACD(
   return {
     macd: macdLine.map((val, i) => ({ time: data[i].time, value: val })),
     signal: signalLine.map((val, i) => ({ time: data[i].time, value: val })),
-    histogram: histogram.map((val, i) => ({ time: data[i].time, value: val }))
+    histogram: histogram.map((val, i) => ({ time: data[i].time, value: val })),
   };
 }
 
@@ -108,16 +111,12 @@ export function calculateMACD(
  * Bollinger Bands
  * Volatility bands placed above and below a moving average
  */
-export function calculateBollingerBands(
-  data: BarData[],
-  period: number = 20,
-  stdDev: number = 2
-) {
+export function calculateBollingerBands(data: BarData[], period: number = 20, stdDev: number = 2) {
   const sma = calculateSMA(data, period);
-  const result: { upper: LinePoint[], middle: LinePoint[], lower: LinePoint[] } = {
+  const result: { upper: LinePoint[]; middle: LinePoint[]; lower: LinePoint[] } = {
     upper: [],
     middle: sma,
-    lower: []
+    lower: [],
   };
 
   for (let i = period - 1; i < data.length; i++) {
@@ -140,8 +139,8 @@ export function calculateBollingerBands(
 export function calculateIchimoku(data: BarData[]) {
   const highLow = (period: number, index: number): number => {
     const slice = data.slice(Math.max(0, index - period + 1), index + 1);
-    const high = Math.max(...slice.map(d => d.high));
-    const low = Math.min(...slice.map(d => d.low));
+    const high = Math.max(...slice.map((d) => d.high));
+    const low = Math.min(...slice.map((d) => d.low));
     return (high + low) / 2;
   };
 
@@ -201,11 +200,7 @@ export function calculateATR(data: BarData[], period: number = 14): LinePoint[] 
     const low = data[i].low;
     const prevClose = data[i - 1].close;
 
-    const tr = Math.max(
-      high - low,
-      Math.abs(high - prevClose),
-      Math.abs(low - prevClose)
-    );
+    const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
     trueRanges.push(tr);
   }
 
@@ -232,15 +227,15 @@ export function calculateStochastic(
   data: BarData[],
   kPeriod: number = 14,
   dPeriod: number = 3
-): { k: LinePoint[], d: LinePoint[] } {
+): { k: LinePoint[]; d: LinePoint[] } {
   if (data.length < kPeriod) return { k: [], d: [] };
 
   const kValues: LinePoint[] = [];
 
   for (let i = kPeriod - 1; i < data.length; i++) {
     const slice = data.slice(i - kPeriod + 1, i + 1);
-    const high = Math.max(...slice.map(d => d.high));
-    const low = Math.min(...slice.map(d => d.low));
+    const high = Math.max(...slice.map((d) => d.high));
+    const low = Math.min(...slice.map((d) => d.low));
     const close = data[i].close;
 
     const k = ((close - low) / (high - low)) * 100;

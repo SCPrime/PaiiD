@@ -10,8 +10,8 @@
 /* eslint-disable no-console */
 // Console methods are intentionally used in this logging utility
 
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isTest = process.env.NODE_ENV === 'test';
+const isDevelopment = process.env.NODE_ENV === "development";
+const isTest = process.env.NODE_ENV === "test";
 
 interface LogData {
   [key: string]: any;
@@ -20,7 +20,7 @@ interface LogData {
 class Logger {
   private formatMessage(level: string, message: string, data?: LogData): string {
     const timestamp = new Date().toISOString();
-    const dataStr = data ? ` ${JSON.stringify(data)}` : '';
+    const dataStr = data ? ` ${JSON.stringify(data)}` : "";
     return `[${timestamp}] [${level}] ${message}${dataStr}`;
   }
 
@@ -29,7 +29,7 @@ class Logger {
    */
   info(message: string, data?: LogData): void {
     if (isDevelopment && !isTest) {
-      console.info(this.formatMessage('INFO', message, data));
+      console.info(this.formatMessage("INFO", message, data));
     }
   }
 
@@ -38,7 +38,7 @@ class Logger {
    */
   warn(message: string, data?: LogData): void {
     if (isDevelopment && !isTest) {
-      console.warn(this.formatMessage('WARN', message, data));
+      console.warn(this.formatMessage("WARN", message, data));
     }
   }
 
@@ -46,11 +46,12 @@ class Logger {
    * Log error messages (always logged)
    */
   error(message: string, error?: Error | any, data?: LogData): void {
-    const errorData = error instanceof Error
-      ? { message: error.message, stack: error.stack, ...data }
-      : { error, ...data };
+    const errorData =
+      error instanceof Error
+        ? { message: error.message, stack: error.stack, ...data }
+        : { error, ...data };
 
-    console.error(this.formatMessage('ERROR', message, errorData));
+    console.error(this.formatMessage("ERROR", message, errorData));
   }
 
   /**
@@ -58,7 +59,7 @@ class Logger {
    */
   debug(message: string, data?: LogData): void {
     if (isDevelopment && !isTest) {
-      console.debug(this.formatMessage('DEBUG', message, data));
+      console.debug(this.formatMessage("DEBUG", message, data));
     }
   }
 

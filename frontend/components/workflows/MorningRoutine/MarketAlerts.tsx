@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { paidTheme } from '../../../styles/paiid-theme';
+import React, { useState } from "react";
+import { paidTheme } from "../../../styles/paiid-theme";
 
-type AlertSeverity = 'critical' | 'warning' | 'info' | 'success' | 'neutral';
+type AlertSeverity = "critical" | "warning" | "info" | "success" | "neutral";
 
 interface Alert {
   id: string;
@@ -15,28 +15,28 @@ interface Alert {
 const severityConfig = {
   critical: {
     color: paidTheme.colors.error,
-    icon: '🚨',
-    label: 'Critical',
+    icon: "🚨",
+    label: "Critical",
   },
   warning: {
     color: paidTheme.colors.warning,
-    icon: '⚠️',
-    label: 'Warning',
+    icon: "⚠️",
+    label: "Warning",
   },
   info: {
     color: paidTheme.colors.info,
-    icon: 'ℹ️',
-    label: 'Info',
+    icon: "ℹ️",
+    label: "Info",
   },
   success: {
     color: paidTheme.colors.success,
-    icon: '✅',
-    label: 'Success',
+    icon: "✅",
+    label: "Success",
   },
   neutral: {
     color: paidTheme.colors.textMuted,
-    icon: '📌',
-    label: 'Notice',
+    icon: "📌",
+    label: "Notice",
   },
 };
 
@@ -44,42 +44,42 @@ export const MarketAlerts: React.FC = () => {
   // Mock alerts - in production, fetch from API/WebSocket
   const [alerts] = useState<Alert[]>([
     {
-      id: '1',
-      severity: 'critical',
-      title: 'Stop Loss Triggered',
-      message: 'TSLA position closed at $242.50, -2.5% loss',
+      id: "1",
+      severity: "critical",
+      title: "Stop Loss Triggered",
+      message: "TSLA position closed at $242.50, -2.5% loss",
       timestamp: new Date(Date.now() - 5 * 60000),
-      symbol: 'TSLA',
+      symbol: "TSLA",
     },
     {
-      id: '2',
-      severity: 'warning',
-      title: 'High Volatility Alert',
-      message: 'NVDA volatility spike detected, IV increased 35%',
+      id: "2",
+      severity: "warning",
+      title: "High Volatility Alert",
+      message: "NVDA volatility spike detected, IV increased 35%",
       timestamp: new Date(Date.now() - 15 * 60000),
-      symbol: 'NVDA',
+      symbol: "NVDA",
     },
     {
-      id: '3',
-      severity: 'success',
-      title: 'Profit Target Reached',
-      message: 'AAPL position hit +15% target, consider scaling out',
+      id: "3",
+      severity: "success",
+      title: "Profit Target Reached",
+      message: "AAPL position hit +15% target, consider scaling out",
       timestamp: new Date(Date.now() - 25 * 60000),
-      symbol: 'AAPL',
+      symbol: "AAPL",
     },
     {
-      id: '4',
-      severity: 'info',
-      title: 'Earnings Reminder',
-      message: 'MSFT reports earnings today after market close',
+      id: "4",
+      severity: "info",
+      title: "Earnings Reminder",
+      message: "MSFT reports earnings today after market close",
       timestamp: new Date(Date.now() - 45 * 60000),
-      symbol: 'MSFT',
+      symbol: "MSFT",
     },
     {
-      id: '5',
-      severity: 'neutral',
-      title: 'Market Update',
-      message: 'S&P 500 testing resistance at 4,500',
+      id: "5",
+      severity: "neutral",
+      title: "Market Update",
+      message: "S&P 500 testing resistance at 4,500",
       timestamp: new Date(Date.now() - 60 * 60000),
     },
   ]);
@@ -89,16 +89,14 @@ export const MarketAlerts: React.FC = () => {
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return 'Just now';
+    if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins}m ago`;
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `${diffHours}h ago`;
     return date.toLocaleDateString();
   };
 
-  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(
-    new Set()
-  );
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
 
   const handleDismiss = (alertId: string) => {
     setDismissedAlerts((prev) => new Set(prev).add(alertId));
@@ -122,9 +120,9 @@ export const MarketAlerts: React.FC = () => {
           color: paidTheme.colors.text,
           fontWeight: 600,
           marginBottom: paidTheme.spacing.lg,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
         <span>Market Alerts</span>
@@ -145,18 +143,18 @@ export const MarketAlerts: React.FC = () => {
 
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           gap: paidTheme.spacing.sm,
-          maxHeight: '400px',
-          overflowY: 'auto',
+          maxHeight: "400px",
+          overflowY: "auto",
           paddingRight: paidTheme.spacing.xs,
         }}
       >
         {visibleAlerts.length === 0 ? (
           <div
             style={{
-              textAlign: 'center',
+              textAlign: "center",
               padding: paidTheme.spacing.xl,
               color: paidTheme.colors.textMuted,
             }}
@@ -177,7 +175,7 @@ export const MarketAlerts: React.FC = () => {
                   borderRadius: paidTheme.borderRadius.md,
                   padding: paidTheme.spacing.md,
                   transition: `all ${paidTheme.animation.duration.normal}`,
-                  cursor: 'pointer',
+                  cursor: "pointer",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = `${config.color}20`;
@@ -190,8 +188,8 @@ export const MarketAlerts: React.FC = () => {
               >
                 <div
                   style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
+                    display: "flex",
+                    alignItems: "flex-start",
                     gap: paidTheme.spacing.md,
                   }}
                 >
@@ -207,8 +205,8 @@ export const MarketAlerts: React.FC = () => {
                   <div style={{ flex: 1 }}>
                     <div
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
+                        display: "flex",
+                        alignItems: "center",
                         gap: paidTheme.spacing.sm,
                         marginBottom: paidTheme.spacing.xs,
                       }}
@@ -251,9 +249,9 @@ export const MarketAlerts: React.FC = () => {
 
                     <div
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
                       }}
                     >
                       <div
@@ -271,22 +269,20 @@ export const MarketAlerts: React.FC = () => {
                         style={{
                           fontSize: paidTheme.typography.fontSize.xs,
                           color: paidTheme.colors.textMuted,
-                          background: 'transparent',
-                          border: 'none',
-                          cursor: 'pointer',
+                          background: "transparent",
+                          border: "none",
+                          cursor: "pointer",
                           padding: `${paidTheme.spacing.xs} ${paidTheme.spacing.sm}`,
                           borderRadius: paidTheme.borderRadius.sm,
                           transition: `all ${paidTheme.animation.duration.fast}`,
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            paidTheme.colors.glass;
+                          e.currentTarget.style.background = paidTheme.colors.glass;
                           e.currentTarget.style.color = paidTheme.colors.text;
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.color =
-                            paidTheme.colors.textMuted;
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = paidTheme.colors.textMuted;
                         }}
                       >
                         Dismiss

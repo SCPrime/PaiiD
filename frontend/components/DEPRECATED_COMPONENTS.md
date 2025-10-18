@@ -5,12 +5,14 @@ This document tracks deprecated components that have been replaced with improved
 ## Deprecated on October 11, 2025
 
 ### 1. StrategyBuilder.tsx → StrategyBuilderAI.tsx
+
 **Status:** Deprecated (renamed to `.deprecated.tsx`)
 **Reason:** Replaced by AI-powered version with Claude integration
 **Migration:** Use `StrategyBuilderAI` component instead
 **Removal date:** TBD (after verifying no imports remain)
 
 ### 2. MorningRoutine.tsx → MorningRoutineAI.tsx
+
 **Status:** Deprecated (renamed to `.deprecated.tsx`)
 **Reason:** Replaced by AI-powered version with personalized morning routine generation
 **Migration:** Use `MorningRoutineAI` component instead
@@ -22,15 +24,16 @@ If you have custom code importing these components:
 
 ```typescript
 // OLD (deprecated):
-import StrategyBuilder from '../components/StrategyBuilder';
-import MorningRoutine from '../components/MorningRoutine';
+import StrategyBuilder from "../components/StrategyBuilder";
+import MorningRoutine from "../components/MorningRoutine";
 
 // NEW (recommended):
-import StrategyBuilderAI from '../components/StrategyBuilderAI';
-import MorningRoutineAI from '../components/MorningRoutineAI';
+import StrategyBuilderAI from "../components/StrategyBuilderAI";
+import MorningRoutineAI from "../components/MorningRoutineAI";
 ```
 
 The AI versions provide:
+
 - Claude-powered natural language interaction
 - Personalized recommendations
 - Better UX with conversational interface

@@ -1,5 +1,5 @@
-import { ReactNode, CSSProperties } from 'react';
-import { theme } from '../styles/theme';
+import { ReactNode, CSSProperties } from "react";
+import { theme } from "../styles/theme";
 
 interface GlassCardProps {
   children: ReactNode;
@@ -8,7 +8,7 @@ interface GlassCardProps {
   glow?: keyof typeof theme.glow;
 }
 
-export function GlassCard({ children, className = '', style, glow }: GlassCardProps) {
+export function GlassCard({ children, className = "", style, glow }: GlassCardProps) {
   const glassStyle: CSSProperties = {
     background: theme.background.glass,
     backdropFilter: theme.blur.light,
@@ -30,38 +30,38 @@ export function GlassCard({ children, className = '', style, glow }: GlassCardPr
 interface GlassButtonProps {
   children: ReactNode;
   onClick?: () => void;
-  variant?: 'primary' | 'secondary' | 'danger' | 'workflow';
+  variant?: "primary" | "secondary" | "danger" | "workflow";
   workflowColor?: keyof typeof theme.workflow;
   className?: string;
   disabled?: boolean;
-  type?: 'button' | 'submit' | 'reset';
+  type?: "button" | "submit" | "reset";
   style?: CSSProperties;
 }
 
 export function GlassButton({
   children,
   onClick,
-  variant = 'primary',
+  variant = "primary",
   workflowColor,
-  className = '',
+  className = "",
   disabled = false,
-  type = 'button',
-  style: customStyle
+  type = "button",
+  style: customStyle,
 }: GlassButtonProps) {
   const getButtonStyle = (): CSSProperties => {
     const baseStyle: CSSProperties = {
       padding: `${theme.spacing.md} ${theme.spacing.lg}`,
       borderRadius: theme.borderRadius.lg,
-      fontWeight: '600',
-      cursor: disabled ? 'not-allowed' : 'pointer',
+      fontWeight: "600",
+      cursor: disabled ? "not-allowed" : "pointer",
       opacity: disabled ? 0.5 : 1,
       transition: theme.transitions.fast,
-      border: 'none',
-      outline: 'none',
+      border: "none",
+      outline: "none",
       ...customStyle,
     };
 
-    if (workflowColor && variant === 'workflow') {
+    if (workflowColor && variant === "workflow") {
       const color = theme.workflow[workflowColor];
       return {
         ...baseStyle,
@@ -72,20 +72,20 @@ export function GlassButton({
     }
 
     switch (variant) {
-      case 'primary':
+      case "primary":
         return {
           ...baseStyle,
           background: `linear-gradient(to right, ${theme.colors.secondary}, ${theme.colors.accent})`,
-          color: '#ffffff',
+          color: "#ffffff",
         };
-      case 'secondary':
+      case "secondary":
         return {
           ...baseStyle,
           background: `${theme.colors.secondary}20`,
           border: `1px solid ${theme.colors.secondary}50`,
           color: theme.colors.secondary,
         };
-      case 'danger':
+      case "danger":
         return {
           ...baseStyle,
           background: `${theme.colors.danger}20`,
@@ -112,7 +112,9 @@ export function GlassButton({
 
 interface GlassInputProps {
   value: string | number;
-  onChange: ((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void) | ((value: string) => void);
+  onChange:
+    | ((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void)
+    | ((value: string) => void);
   type?: string;
   placeholder?: string;
   className?: string;
@@ -126,24 +128,24 @@ interface GlassInputProps {
 export function GlassInput({
   value,
   onChange,
-  type = 'text',
+  type = "text",
   placeholder,
-  className = '',
+  className = "",
   multiline = false,
   rows,
   min,
   max,
-  step
+  step,
 }: GlassInputProps) {
   const inputStyle: CSSProperties = {
-    width: '100%',
+    width: "100%",
     padding: theme.spacing.md,
     background: theme.background.input,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.borderRadius.md,
     color: theme.colors.text,
-    fontSize: '14px',
-    outline: 'none',
+    fontSize: "14px",
+    outline: "none",
     transition: theme.transitions.fast,
   };
 
@@ -187,35 +189,40 @@ export function GlassInput({
 
 interface GlassBadgeProps {
   children: ReactNode;
-  variant: 'success' | 'warning' | 'danger' | 'info' | 'custom';
+  variant: "success" | "warning" | "danger" | "info" | "custom";
   customColor?: string;
   className?: string;
 }
 
-export function GlassBadge({ children, variant, customColor, className = '' }: GlassBadgeProps) {
+export function GlassBadge({ children, variant, customColor, className = "" }: GlassBadgeProps) {
   const getColor = () => {
-    if (variant === 'custom' && customColor) return customColor;
+    if (variant === "custom" && customColor) return customColor;
     switch (variant) {
-      case 'success': return theme.colors.primary;
-      case 'warning': return theme.colors.warning;
-      case 'danger': return theme.colors.danger;
-      case 'info': return theme.colors.info;
-      default: return theme.colors.textMuted;
+      case "success":
+        return theme.colors.primary;
+      case "warning":
+        return theme.colors.warning;
+      case "danger":
+        return theme.colors.danger;
+      case "info":
+        return theme.colors.info;
+      default:
+        return theme.colors.textMuted;
     }
   };
 
   const color = getColor();
   const badgeStyle: CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
+    display: "inline-flex",
+    alignItems: "center",
     padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
     background: `${color}20`,
     border: `1px solid ${color}50`,
     borderRadius: theme.borderRadius.sm,
     color: color,
-    fontSize: '12px',
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontSize: "12px",
+    fontWeight: "600",
+    textTransform: "uppercase",
   };
 
   return (

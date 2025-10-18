@@ -1,17 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, Play, Pause, Trash2, Plus, AlertTriangle, CheckCircle, XCircle, Calendar, Bell } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  Clock,
+  Play,
+  Pause,
+  Trash2,
+  Plus,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Calendar,
+  Bell,
+} from "lucide-react";
 
 interface Schedule {
   id: string;
   name: string;
-  type: 'morning_routine' | 'news_review' | 'ai_recs' | 'custom';
+  type: "morning_routine" | "news_review" | "ai_recs" | "custom";
   enabled: boolean;
   cron_expression: string;
   timezone: string;
   requires_approval: boolean;
   last_run?: string;
   next_run?: string;
-  status: 'active' | 'paused' | 'error';
+  status: "active" | "paused" | "error";
 }
 
 interface Execution {
@@ -20,7 +31,7 @@ interface Execution {
   schedule_name: string;
   started_at: string;
   completed_at?: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'awaiting_approval';
+  status: "pending" | "running" | "completed" | "failed" | "awaiting_approval";
   result?: string;
   error?: string;
 }
@@ -31,16 +42,16 @@ export default function SchedulerSettings() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [globalPaused, setGlobalPaused] = useState(false);
-  const [activeTab, setActiveTab] = useState<'schedules' | 'history'>('schedules');
+  const [activeTab, setActiveTab] = useState<"schedules" | "history">("schedules");
 
   // New schedule form state
   const [newSchedule, setNewSchedule] = useState({
-    name: '',
-    type: 'morning_routine' as Schedule['type'],
-    cron_expression: '0 9 * * 1-5',
-    timezone: 'America/New_York',
+    name: "",
+    type: "morning_routine" as Schedule["type"],
+    cron_expression: "0 9 * * 1-5",
+    timezone: "America/New_York",
     requires_approval: true,
-    enabled: true
+    enabled: true,
   });
 
   useEffect(() => {
@@ -55,119 +66,130 @@ export default function SchedulerSettings() {
 
   const fetchSchedules = async () => {
     try {
-      const response = await fetch('/api/proxy/scheduler/schedules');
+      const response = await fetch("/api/proxy/scheduler/schedules");
       const data = await response.json();
       setSchedules(data);
       setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch schedules:', error);
+      console.error("Failed to fetch schedules:", error);
       setLoading(false);
     }
   };
 
   const fetchExecutions = async () => {
     try {
-      const response = await fetch('/api/proxy/scheduler/executions?limit=20');
+      const response = await fetch("/api/proxy/scheduler/executions?limit=20");
       const data = await response.json();
       setExecutions(data);
     } catch (error) {
-      console.error('Failed to fetch executions:', error);
+      console.error("Failed to fetch executions:", error);
     }
   };
 
   const toggleSchedule = async (id: string, enabled: boolean) => {
     try {
       await fetch(`/api/proxy/scheduler/schedules/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled })
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled }),
       });
       fetchSchedules();
     } catch (error) {
-      console.error('Failed to toggle schedule:', error);
+      console.error("Failed to toggle schedule:", error);
     }
   };
 
   const deleteSchedule = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this schedule?')) return;
+    if (!confirm("Are you sure you want to delete this schedule?")) return;
     try {
-      await fetch(`/api/proxy/scheduler/schedules/${id}`, { method: 'DELETE' });
+      await fetch(`/api/proxy/scheduler/schedules/${id}`, { method: "DELETE" });
       fetchSchedules();
     } catch (error) {
-      console.error('Failed to delete schedule:', error);
+      console.error("Failed to delete schedule:", error);
     }
   };
 
   const createSchedule = async () => {
     try {
-      await fetch('/api/proxy/scheduler/schedules', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSchedule)
+      await fetch("/api/proxy/scheduler/schedules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newSchedule),
       });
       setShowCreateModal(false);
       setNewSchedule({
-        name: '',
-        type: 'morning_routine',
-        cron_expression: '0 9 * * 1-5',
-        timezone: 'America/New_York',
+        name: "",
+        type: "morning_routine",
+        cron_expression: "0 9 * * 1-5",
+        timezone: "America/New_York",
         requires_approval: true,
-        enabled: true
+        enabled: true,
       });
       fetchSchedules();
     } catch (error) {
-      console.error('Failed to create schedule:', error);
+      console.error("Failed to create schedule:", error);
     }
   };
 
   const pauseAllSchedules = async () => {
-    if (!confirm('⚠️ PAUSE ALL SCHEDULES? This will immediately stop all automated trading.')) return;
+    if (!confirm("⚠️ PAUSE ALL SCHEDULES? This will immediately stop all automated trading."))
+      return;
     try {
-      await fetch('/api/proxy/scheduler/pause-all', { method: 'POST' });
+      await fetch("/api/proxy/scheduler/pause-all", { method: "POST" });
       setGlobalPaused(true);
       fetchSchedules();
     } catch (error) {
-      console.error('Failed to pause all schedules:', error);
+      console.error("Failed to pause all schedules:", error);
     }
   };
 
   const resumeAllSchedules = async () => {
     try {
-      await fetch('/api/proxy/scheduler/resume-all', { method: 'POST' });
+      await fetch("/api/proxy/scheduler/resume-all", { method: "POST" });
       setGlobalPaused(false);
       fetchSchedules();
     } catch (error) {
-      console.error('Failed to resume schedules:', error);
+      console.error("Failed to resume schedules:", error);
     }
   };
 
   const getCronDescription = (cron: string) => {
     const descriptions: { [key: string]: string } = {
-      '0 9 * * 1-5': 'Weekdays at 9:00 AM',
-      '0 8 * * 1-5': 'Weekdays at 8:00 AM',
-      '30 9 * * 1-5': 'Weekdays at 9:30 AM',
-      '0 10 * * 1-5': 'Weekdays at 10:00 AM',
-      '0 */4 * * 1-5': 'Every 4 hours (weekdays)',
-      '0 9,15 * * 1-5': 'Weekdays at 9 AM & 3 PM'
+      "0 9 * * 1-5": "Weekdays at 9:00 AM",
+      "0 8 * * 1-5": "Weekdays at 8:00 AM",
+      "30 9 * * 1-5": "Weekdays at 9:30 AM",
+      "0 10 * * 1-5": "Weekdays at 10:00 AM",
+      "0 */4 * * 1-5": "Every 4 hours (weekdays)",
+      "0 9,15 * * 1-5": "Weekdays at 9 AM & 3 PM",
     };
     return descriptions[cron] || cron;
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'text-green-400';
-      case 'completed': return 'text-green-400';
-      case 'paused': return 'text-yellow-400';
-      case 'error': return 'text-red-400';
-      case 'failed': return 'text-red-400';
-      case 'running': return 'text-blue-400';
-      case 'awaiting_approval': return 'text-purple-400';
-      default: return 'text-slate-400';
+      case "active":
+        return "text-green-400";
+      case "completed":
+        return "text-green-400";
+      case "paused":
+        return "text-yellow-400";
+      case "error":
+        return "text-red-400";
+      case "failed":
+        return "text-red-400";
+      case "running":
+        return "text-blue-400";
+      case "awaiting_approval":
+        return "text-purple-400";
+      default:
+        return "text-slate-400";
     }
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64 text-white">Loading schedules...</div>;
+    return (
+      <div className="flex justify-center items-center h-64 text-white">Loading schedules...</div>
+    );
   }
 
   return (
@@ -224,21 +246,21 @@ export default function SchedulerSettings() {
         {/* Tabs */}
         <div className="flex gap-4 border-b border-slate-700">
           <button
-            onClick={() => setActiveTab('schedules')}
+            onClick={() => setActiveTab("schedules")}
             className={`pb-3 px-1 font-medium transition-colors ${
-              activeTab === 'schedules'
-                ? 'border-b-2 border-cyan-400 text-cyan-400'
-                : 'text-slate-400 hover:text-white'
+              activeTab === "schedules"
+                ? "border-b-2 border-cyan-400 text-cyan-400"
+                : "text-slate-400 hover:text-white"
             }`}
           >
             Active Schedules ({schedules.length})
           </button>
           <button
-            onClick={() => setActiveTab('history')}
+            onClick={() => setActiveTab("history")}
             className={`pb-3 px-1 font-medium transition-colors ${
-              activeTab === 'history'
-                ? 'border-b-2 border-cyan-400 text-cyan-400'
-                : 'text-slate-400 hover:text-white'
+              activeTab === "history"
+                ? "border-b-2 border-cyan-400 text-cyan-400"
+                : "text-slate-400 hover:text-white"
             }`}
           >
             Execution History
@@ -246,7 +268,7 @@ export default function SchedulerSettings() {
         </div>
 
         {/* Schedules Tab */}
-        {activeTab === 'schedules' && (
+        {activeTab === "schedules" && (
           <div className="space-y-4">
             {schedules.length === 0 ? (
               <div className="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700">
@@ -261,12 +283,17 @@ export default function SchedulerSettings() {
               </div>
             ) : (
               schedules.map((schedule) => (
-                <div key={schedule.id} className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
+                <div
+                  key={schedule.id}
+                  className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-semibold text-white">{schedule.name}</h3>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full bg-slate-900/50 ${getStatusColor(schedule.status)}`}>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full bg-slate-900/50 ${getStatusColor(schedule.status)}`}
+                        >
                           {schedule.status}
                         </span>
                         {schedule.requires_approval && (
@@ -278,17 +305,22 @@ export default function SchedulerSettings() {
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm text-slate-400">
                         <div>
-                          <span className="font-medium text-slate-300">Type:</span> {schedule.type.replace('_', ' ').toUpperCase()}
+                          <span className="font-medium text-slate-300">Type:</span>{" "}
+                          {schedule.type.replace("_", " ").toUpperCase()}
                         </div>
                         <div>
-                          <span className="font-medium text-slate-300">Schedule:</span> {getCronDescription(schedule.cron_expression)}
+                          <span className="font-medium text-slate-300">Schedule:</span>{" "}
+                          {getCronDescription(schedule.cron_expression)}
                         </div>
                         <div>
-                          <span className="font-medium text-slate-300">Timezone:</span> {schedule.timezone}
+                          <span className="font-medium text-slate-300">Timezone:</span>{" "}
+                          {schedule.timezone}
                         </div>
                         <div>
-                          <span className="font-medium text-slate-300">Next Run:</span>{' '}
-                          {schedule.next_run ? new Date(schedule.next_run).toLocaleString() : 'Not scheduled'}
+                          <span className="font-medium text-slate-300">Next Run:</span>{" "}
+                          {schedule.next_run
+                            ? new Date(schedule.next_run).toLocaleString()
+                            : "Not scheduled"}
                         </div>
                       </div>
                       {schedule.last_run && (
@@ -302,12 +334,16 @@ export default function SchedulerSettings() {
                         onClick={() => toggleSchedule(schedule.id, !schedule.enabled)}
                         className={`p-2 rounded-lg transition-colors ${
                           schedule.enabled
-                            ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
-                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                            ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                            : "bg-slate-700 text-slate-400 hover:bg-slate-600"
                         }`}
-                        title={schedule.enabled ? 'Disable' : 'Enable'}
+                        title={schedule.enabled ? "Disable" : "Enable"}
                       >
-                        {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        {schedule.enabled ? (
+                          <Pause className="w-4 h-4" />
+                        ) : (
+                          <Play className="w-4 h-4" />
+                        )}
                       </button>
                       <button
                         onClick={() => deleteSchedule(schedule.id)}
@@ -325,7 +361,7 @@ export default function SchedulerSettings() {
         )}
 
         {/* History Tab */}
-        {activeTab === 'history' && (
+        {activeTab === "history" && (
           <div className="space-y-3">
             {executions.length === 0 ? (
               <div className="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700">
@@ -334,12 +370,17 @@ export default function SchedulerSettings() {
               </div>
             ) : (
               executions.map((execution) => (
-                <div key={execution.id} className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4">
+                <div
+                  key={execution.id}
+                  className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
                         <span className="font-medium text-white">{execution.schedule_name}</span>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full bg-slate-900/50 ${getStatusColor(execution.status)}`}>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full bg-slate-900/50 ${getStatusColor(execution.status)}`}
+                        >
                           {execution.status}
                         </span>
                       </div>
@@ -361,8 +402,12 @@ export default function SchedulerSettings() {
                       )}
                     </div>
                     <div>
-                      {execution.status === 'completed' && <CheckCircle className="w-5 h-5 text-green-400" />}
-                      {execution.status === 'failed' && <XCircle className="w-5 h-5 text-red-400" />}
+                      {execution.status === "completed" && (
+                        <CheckCircle className="w-5 h-5 text-green-400" />
+                      )}
+                      {execution.status === "failed" && (
+                        <XCircle className="w-5 h-5 text-red-400" />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -378,7 +423,9 @@ export default function SchedulerSettings() {
               <h3 className="text-xl font-bold text-white mb-4">Create New Schedule</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Schedule Name</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                    Schedule Name
+                  </label>
                   <input
                     type="text"
                     value={newSchedule.name}
@@ -389,10 +436,14 @@ export default function SchedulerSettings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Schedule Type</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                    Schedule Type
+                  </label>
                   <select
                     value={newSchedule.type}
-                    onChange={(e) => setNewSchedule({ ...newSchedule, type: e.target.value as Schedule['type'] })}
+                    onChange={(e) =>
+                      setNewSchedule({ ...newSchedule, type: e.target.value as Schedule["type"] })
+                    }
                     className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white outline-none focus:ring-2 focus:ring-cyan-500/50"
                   >
                     <option value="morning_routine">Morning Routine</option>
@@ -403,10 +454,14 @@ export default function SchedulerSettings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Schedule (Cron)</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                    Schedule (Cron)
+                  </label>
                   <select
                     value={newSchedule.cron_expression}
-                    onChange={(e) => setNewSchedule({ ...newSchedule, cron_expression: e.target.value })}
+                    onChange={(e) =>
+                      setNewSchedule({ ...newSchedule, cron_expression: e.target.value })
+                    }
                     className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white outline-none focus:ring-2 focus:ring-cyan-500/50"
                   >
                     <option value="0 9 * * 1-5">Weekdays at 9:00 AM</option>
@@ -437,7 +492,9 @@ export default function SchedulerSettings() {
                     type="checkbox"
                     id="requires_approval"
                     checked={newSchedule.requires_approval}
-                    onChange={(e) => setNewSchedule({ ...newSchedule, requires_approval: e.target.checked })}
+                    onChange={(e) =>
+                      setNewSchedule({ ...newSchedule, requires_approval: e.target.checked })
+                    }
                     className="rounded"
                   />
                   <label htmlFor="requires_approval" className="text-sm text-slate-300">

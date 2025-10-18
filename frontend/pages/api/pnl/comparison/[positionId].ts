@@ -1,5 +1,5 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import type { PLComparison } from '@/types/pnl';
+import type { NextApiRequest, NextApiResponse } from "next";
+import type { PLComparison } from "@/types/pnl";
 
 /**
  * P&L Comparison Endpoint
@@ -11,14 +11,14 @@ import type { PLComparison } from '@/types/pnl';
  */
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { positionId } = req.query;
 
-  if (!positionId || typeof positionId !== 'string') {
-    return res.status(400).json({ error: 'Missing or invalid positionId' });
+  if (!positionId || typeof positionId !== "string") {
+    return res.status(400).json({ error: "Missing or invalid positionId" });
   }
 
   try {
@@ -26,14 +26,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const comparison = await fetchPLComparison(positionId);
 
     if (!comparison) {
-      return res.status(404).json({ error: 'Position comparison not found' });
+      return res.status(404).json({ error: "Position comparison not found" });
     }
 
     res.status(200).json(comparison);
   } catch (error) {
-    console.error('P&L comparison fetch error:', error);
+    console.error("P&L comparison fetch error:", error);
     res.status(500).json({
-      error: 'Failed to fetch P&L comparison',
+      error: "Failed to fetch P&L comparison",
       detail: String(error),
     });
   }
@@ -45,14 +45,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 async function fetchPLComparison(positionId: string): Promise<PLComparison | null> {
   // Mock data - in production, query database with full position history
 
-  const proposedAt = new Date('2025-01-15T10:30:00Z');
-  const enteredAt = new Date('2025-01-15T10:35:12Z');
-  const closedAt = new Date('2025-02-18T15:45:30Z'); // Closed position
+  const proposedAt = new Date("2025-01-15T10:30:00Z");
+  const enteredAt = new Date("2025-01-15T10:35:12Z");
+  const closedAt = new Date("2025-02-18T15:45:30Z"); // Closed position
 
   const mockComparison: PLComparison = {
     positionId,
-    symbol: 'AAPL',
-    strategy: 'Iron Condor (175/170/195/200)',
+    symbol: "AAPL",
+    strategy: "Iron Condor (175/170/195/200)",
 
     // Theoretical (pre-trade)
     theoretical: {

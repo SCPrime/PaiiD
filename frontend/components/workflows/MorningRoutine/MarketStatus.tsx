@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { paidTheme } from '../../../styles/paiid-theme';
+import React, { useState, useEffect } from "react";
+import { paidTheme } from "../../../styles/paiid-theme";
 
 interface MarketHours {
   isOpen: boolean;
@@ -11,8 +11,8 @@ export const MarketStatus: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [marketHours, setMarketHours] = useState<MarketHours>({
     isOpen: false,
-    nextEvent: 'Market Open',
-    timeUntil: '--:--:--',
+    nextEvent: "Market Open",
+    timeUntil: "--:--:--",
   });
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export const MarketStatus: React.FC = () => {
 
         setMarketHours({
           isOpen: false,
-          nextEvent: 'Market Open (Monday)',
+          nextEvent: "Market Open (Monday)",
           timeUntil: `${hoursLeft}h ${minutesLeft}m`,
         });
         return;
@@ -62,7 +62,7 @@ export const MarketStatus: React.FC = () => {
 
         setMarketHours({
           isOpen: true,
-          nextEvent: 'Market Close',
+          nextEvent: "Market Close",
           timeUntil: `${hoursLeft}h ${minsLeft}m`,
         });
       } else if (currentMinutes < marketOpen) {
@@ -73,7 +73,7 @@ export const MarketStatus: React.FC = () => {
 
         setMarketHours({
           isOpen: false,
-          nextEvent: 'Market Open',
+          nextEvent: "Market Open",
           timeUntil: `${hoursLeft}h ${minsLeft}m`,
         });
       } else {
@@ -88,7 +88,7 @@ export const MarketStatus: React.FC = () => {
 
         setMarketHours({
           isOpen: false,
-          nextEvent: day === 5 ? 'Market Open (Monday)' : 'Market Open',
+          nextEvent: day === 5 ? "Market Open (Monday)" : "Market Open",
           timeUntil: `${hoursLeft}h ${minutesLeft}m`,
         });
       }
@@ -101,20 +101,20 @@ export const MarketStatus: React.FC = () => {
   }, [currentTime]);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
       hour12: true,
     });
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -132,11 +132,11 @@ export const MarketStatus: React.FC = () => {
       <div style={{ marginBottom: paidTheme.spacing.md }}>
         <div
           style={{
-            fontSize: paidTheme.typography.fontSize['3xl'],
+            fontSize: paidTheme.typography.fontSize["3xl"],
             fontFamily: paidTheme.typography.fontFamily.mono,
             color: paidTheme.colors.text,
             fontWeight: 600,
-            letterSpacing: '0.05em',
+            letterSpacing: "0.05em",
           }}
         >
           {formatTime(currentTime)}
@@ -154,8 +154,8 @@ export const MarketStatus: React.FC = () => {
 
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: paidTheme.spacing.md,
           padding: paidTheme.spacing.md,
           background: marketHours.isOpen
@@ -163,23 +163,19 @@ export const MarketStatus: React.FC = () => {
             : `${paidTheme.colors.textMuted}15`,
           borderRadius: paidTheme.borderRadius.md,
           border: `1px solid ${
-            marketHours.isOpen
-              ? `${paidTheme.colors.success}40`
-              : `${paidTheme.colors.textMuted}40`
+            marketHours.isOpen ? `${paidTheme.colors.success}40` : `${paidTheme.colors.textMuted}40`
           }`,
         }}
       >
         <div
           style={{
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            background: marketHours.isOpen
-              ? paidTheme.colors.success
-              : paidTheme.colors.textMuted,
+            width: "12px",
+            height: "12px",
+            borderRadius: "50%",
+            background: marketHours.isOpen ? paidTheme.colors.success : paidTheme.colors.textMuted,
             boxShadow: marketHours.isOpen
               ? paidTheme.effects.glow(paidTheme.colors.success)
-              : 'none',
+              : "none",
           }}
         />
         <div style={{ flex: 1 }}>

@@ -14,14 +14,14 @@ export interface User {
   lastActive: string;
   sessionCount: number;
   preferences: {
-    defaultExecutionMode: 'requires_approval' | 'autopilot';
+    defaultExecutionMode: "requires_approval" | "autopilot";
     enableNotifications: boolean;
   };
   // Onboarding profile data
   onboarding?: {
     // Setup method
-    setupMethod?: 'manual' | 'ai-guided';
-    aiConversation?: Array<{ role: 'user' | 'assistant'; content: string }>;
+    setupMethod?: "manual" | "ai-guided";
+    aiConversation?: Array<{ role: "user" | "assistant"; content: string }>;
 
     // Financial profile
     financialGoals?: string;
@@ -34,7 +34,7 @@ export interface User {
 
     // Enhanced investment amount
     investmentAmount?: {
-      mode: 'range' | 'custom' | 'unlimited';
+      mode: "range" | "custom" | "unlimited";
       value?: number;
       range?: string;
     };
@@ -74,8 +74,8 @@ export interface Session {
   actionsCount: number;
 }
 
-const USER_STORAGE_KEY = 'allessandra_user';
-const SESSION_STORAGE_KEY = 'allessandra_session';
+const USER_STORAGE_KEY = "allessandra_user";
+const SESSION_STORAGE_KEY = "allessandra_session";
 
 /**
  * Generate a unique user ID
@@ -103,7 +103,7 @@ export function createUser(
   displayName: string,
   email?: string,
   testGroup?: string,
-  onboardingData?: User['onboarding']
+  onboardingData?: User["onboarding"]
 ): User {
   const now = new Date().toISOString();
 
@@ -116,7 +116,7 @@ export function createUser(
     lastActive: now,
     sessionCount: 0,
     preferences: {
-      defaultExecutionMode: 'requires_approval',
+      defaultExecutionMode: "requires_approval",
       enableNotifications: true,
     },
     onboarding: onboardingData ? { ...onboardingData, completedAt: now } : undefined,
@@ -126,7 +126,7 @@ export function createUser(
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 
   // Track user creation event (in production, send to analytics)
-  console.info('User created:', {
+  console.info("User created:", {
     userId: user.userId,
     testGroup: user.testGroup,
     onboarding: user.onboarding,
@@ -146,7 +146,7 @@ export function getCurrentUser(): User | null {
       return JSON.parse(userData);
     }
   } catch (error) {
-    console.error('Failed to load user:', error);
+    console.error("Failed to load user:", error);
   }
   return null;
 }
@@ -173,9 +173,7 @@ export function updateUser(updates: Partial<User>): User | null {
 /**
  * Update user preferences
  */
-export function updateUserPreferences(
-  preferences: Partial<User['preferences']>
-): User | null {
+export function updateUserPreferences(preferences: Partial<User["preferences"]>): User | null {
   const currentUser = getCurrentUser();
   if (!currentUser) return null;
 
@@ -193,7 +191,7 @@ export function updateUserPreferences(
 export function startSession(): Session {
   const user = getCurrentUser();
   if (!user) {
-    throw new Error('No user found. Create user first.');
+    throw new Error("No user found. Create user first.");
   }
 
   const now = new Date().toISOString();
@@ -217,7 +215,7 @@ export function startSession(): Session {
   });
 
   // Track session start (in production, send to analytics)
-  console.info('Session started:', {
+  console.info("Session started:", {
     sessionId: session.sessionId,
     userId: user.userId,
     timestamp: now,
@@ -236,7 +234,7 @@ export function getCurrentSession(): Session | null {
       return JSON.parse(sessionData);
     }
   } catch (error) {
-    console.error('Failed to load session:', error);
+    console.error("Failed to load session:", error);
   }
   return null;
 }
@@ -258,7 +256,7 @@ export function updateSessionActivity(action?: string): Session | null {
 
   // Track action (in production, send to analytics)
   if (action) {
-    console.info('User action:', {
+    console.info("User action:", {
       sessionId: session.sessionId,
       userId: session.userId,
       action,
@@ -284,7 +282,7 @@ export function trackPageView(pageName: string): void {
 
   sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(updatedSession));
 
-  console.info('Page view:', {
+  console.info("Page view:", {
     sessionId: session.sessionId,
     userId: session.userId,
     page: pageName,
@@ -301,7 +299,7 @@ export function endSession(): void {
 
   const duration = new Date().getTime() - new Date(session.startedAt).getTime();
 
-  console.info('Session ended:', {
+  console.info("Session ended:", {
     sessionId: session.sessionId,
     userId: session.userId,
     duration: `${Math.floor(duration / 1000)}s`,
@@ -351,7 +349,7 @@ export function initializeSession(): Session | null {
 export function clearUserData(): void {
   localStorage.removeItem(USER_STORAGE_KEY);
   sessionStorage.removeItem(SESSION_STORAGE_KEY);
-  console.info('User data cleared');
+  console.info("User data cleared");
 }
 
 /**

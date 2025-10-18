@@ -5,7 +5,7 @@
  * through the backend proxy. All requests go through /api/proxy to secure API keys.
  */
 
-const API_BASE = '/api/proxy';
+const API_BASE = "/api/proxy";
 
 // Types
 export interface AlpacaAccount {
@@ -42,7 +42,7 @@ export interface AlpacaPosition {
   asset_class: string;
   avg_entry_price: string;
   qty: string;
-  side: 'long' | 'short';
+  side: "long" | "short";
   market_value: string;
   cost_basis: string;
   unrealized_pl: string;
@@ -75,13 +75,29 @@ export interface AlpacaOrder {
   filled_qty: string;
   filled_avg_price?: string;
   order_class: string;
-  order_type: 'market' | 'limit' | 'stop' | 'stop_limit' | 'trailing_stop';
-  type: 'market' | 'limit' | 'stop' | 'stop_limit' | 'trailing_stop';
-  side: 'buy' | 'sell';
-  time_in_force: 'day' | 'gtc' | 'opg' | 'cls' | 'ioc' | 'fok';
+  order_type: "market" | "limit" | "stop" | "stop_limit" | "trailing_stop";
+  type: "market" | "limit" | "stop" | "stop_limit" | "trailing_stop";
+  side: "buy" | "sell";
+  time_in_force: "day" | "gtc" | "opg" | "cls" | "ioc" | "fok";
   limit_price?: string;
   stop_price?: string;
-  status: 'new' | 'partially_filled' | 'filled' | 'done_for_day' | 'canceled' | 'expired' | 'replaced' | 'pending_cancel' | 'pending_replace' | 'accepted' | 'pending_new' | 'accepted_for_bidding' | 'stopped' | 'rejected' | 'suspended' | 'calculated';
+  status:
+    | "new"
+    | "partially_filled"
+    | "filled"
+    | "done_for_day"
+    | "canceled"
+    | "expired"
+    | "replaced"
+    | "pending_cancel"
+    | "pending_replace"
+    | "accepted"
+    | "pending_new"
+    | "accepted_for_bidding"
+    | "stopped"
+    | "rejected"
+    | "suspended"
+    | "calculated";
   extended_hours: boolean;
   legs?: AlpacaOrder[];
   trail_percent?: string;
@@ -93,16 +109,16 @@ export interface CreateOrderRequest {
   symbol: string;
   qty?: number;
   notional?: number;
-  side: 'buy' | 'sell';
-  type: 'market' | 'limit' | 'stop' | 'stop_limit' | 'trailing_stop';
-  time_in_force: 'day' | 'gtc' | 'opg' | 'cls' | 'ioc' | 'fok';
+  side: "buy" | "sell";
+  type: "market" | "limit" | "stop" | "stop_limit" | "trailing_stop";
+  time_in_force: "day" | "gtc" | "opg" | "cls" | "ioc" | "fok";
   limit_price?: number;
   stop_price?: number;
   trail_price?: number;
   trail_percent?: number;
   extended_hours?: boolean;
   client_order_id?: string;
-  order_class?: 'simple' | 'bracket' | 'oco' | 'oto';
+  order_class?: "simple" | "bracket" | "oco" | "oto";
   take_profit?: {
     limit_price: number;
   };
@@ -169,7 +185,7 @@ class AlpacaClient {
     const response = await fetch(url, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...options.headers,
       },
     });
@@ -188,7 +204,7 @@ class AlpacaClient {
    * Get account information
    */
   async getAccount(): Promise<AlpacaAccount> {
-    return this.request<AlpacaAccount>('/api/account');
+    return this.request<AlpacaAccount>("/api/account");
   }
 
   // ==================== Positions ====================
@@ -197,7 +213,7 @@ class AlpacaClient {
    * Get all open positions
    */
   async getPositions(): Promise<AlpacaPosition[]> {
-    return this.request<AlpacaPosition[]>('/api/positions');
+    return this.request<AlpacaPosition[]>("/api/positions");
   }
 
   /**
@@ -212,7 +228,7 @@ class AlpacaClient {
    */
   async closeAllPositions(cancelOrders: boolean = false): Promise<{ status: number }[]> {
     return this.request<{ status: number }[]>(`/api/positions?cancel_orders=${cancelOrders}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
@@ -221,11 +237,11 @@ class AlpacaClient {
    */
   async closePosition(symbol: string, qty?: number, percentage?: number): Promise<AlpacaOrder> {
     const params = new URLSearchParams();
-    if (qty) params.append('qty', qty.toString());
-    if (percentage) params.append('percentage', percentage.toString());
+    if (qty) params.append("qty", qty.toString());
+    if (percentage) params.append("percentage", percentage.toString());
 
     return this.request<AlpacaOrder>(`/api/positions/${symbol}?${params}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
@@ -235,22 +251,22 @@ class AlpacaClient {
    * Get all orders
    */
   async getOrders(params?: {
-    status?: 'open' | 'closed' | 'all';
+    status?: "open" | "closed" | "all";
     limit?: number;
     after?: string;
     until?: string;
-    direction?: 'asc' | 'desc';
+    direction?: "asc" | "desc";
     nested?: boolean;
     symbols?: string[];
   }): Promise<AlpacaOrder[]> {
     const queryParams = new URLSearchParams();
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.after) queryParams.append('after', params.after);
-    if (params?.until) queryParams.append('until', params.until);
-    if (params?.direction) queryParams.append('direction', params.direction);
-    if (params?.nested) queryParams.append('nested', params.nested.toString());
-    if (params?.symbols) queryParams.append('symbols', params.symbols.join(','));
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.after) queryParams.append("after", params.after);
+    if (params?.until) queryParams.append("until", params.until);
+    if (params?.direction) queryParams.append("direction", params.direction);
+    if (params?.nested) queryParams.append("nested", params.nested.toString());
+    if (params?.symbols) queryParams.append("symbols", params.symbols.join(","));
 
     return this.request<AlpacaOrder[]>(`/api/orders?${queryParams}`);
   }
@@ -266,8 +282,8 @@ class AlpacaClient {
    * Create a new order
    */
   async createOrder(order: CreateOrderRequest): Promise<AlpacaOrder> {
-    return this.request<AlpacaOrder>('/api/orders', {
-      method: 'POST',
+    return this.request<AlpacaOrder>("/api/orders", {
+      method: "POST",
       body: JSON.stringify(order),
     });
   }
@@ -277,7 +293,7 @@ class AlpacaClient {
    */
   async cancelOrder(orderId: string): Promise<void> {
     return this.request<void>(`/api/orders/${orderId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
@@ -285,8 +301,8 @@ class AlpacaClient {
    * Cancel all orders
    */
   async cancelAllOrders(): Promise<{ id: string; status: number }[]> {
-    return this.request<{ id: string; status: number }[]>('/api/orders', {
-      method: 'DELETE',
+    return this.request<{ id: string; status: number }[]>("/api/orders", {
+      method: "DELETE",
     });
   }
 
@@ -296,12 +312,12 @@ class AlpacaClient {
    * Get all assets
    */
   async getAssets(params?: {
-    status?: 'active' | 'inactive';
+    status?: "active" | "inactive";
     asset_class?: string;
   }): Promise<AlpacaAsset[]> {
     const queryParams = new URLSearchParams();
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.asset_class) queryParams.append('asset_class', params.asset_class);
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.asset_class) queryParams.append("asset_class", params.asset_class);
 
     return this.request<AlpacaAsset[]>(`/api/assets?${queryParams}`);
   }
@@ -321,17 +337,17 @@ class AlpacaClient {
   async getBars(
     symbol: string,
     params: {
-      timeframe: '1Min' | '5Min' | '15Min' | '1Hour' | '1Day';
+      timeframe: "1Min" | "5Min" | "15Min" | "1Hour" | "1Day";
       start?: string;
       end?: string;
       limit?: number;
     }
   ): Promise<{ bars: AlpacaBar[] }> {
     const queryParams = new URLSearchParams();
-    queryParams.append('timeframe', params.timeframe);
-    if (params.start) queryParams.append('start', params.start);
-    if (params.end) queryParams.append('end', params.end);
-    if (params.limit) queryParams.append('limit', params.limit.toString());
+    queryParams.append("timeframe", params.timeframe);
+    if (params.start) queryParams.append("start", params.start);
+    if (params.end) queryParams.append("end", params.end);
+    if (params.limit) queryParams.append("limit", params.limit.toString());
 
     return this.request<{ bars: AlpacaBar[] }>(`/api/bars/${symbol}?${queryParams}`);
   }
@@ -368,19 +384,16 @@ class AlpacaClient {
    * Get market clock
    */
   async getClock(): Promise<AlpacaClock> {
-    return this.request<AlpacaClock>('/api/clock');
+    return this.request<AlpacaClock>("/api/clock");
   }
 
   /**
    * Get market calendar
    */
-  async getCalendar(params?: {
-    start?: string;
-    end?: string;
-  }): Promise<AlpacaCalendar[]> {
+  async getCalendar(params?: { start?: string; end?: string }): Promise<AlpacaCalendar[]> {
     const queryParams = new URLSearchParams();
-    if (params?.start) queryParams.append('start', params.start);
-    if (params?.end) queryParams.append('end', params.end);
+    if (params?.start) queryParams.append("start", params.start);
+    if (params?.end) queryParams.append("end", params.end);
 
     return this.request<AlpacaCalendar[]>(`/api/calendar?${queryParams}`);
   }
@@ -391,15 +404,15 @@ class AlpacaClient {
    * Get all watchlists
    */
   async getWatchlists(): Promise<any[]> {
-    return this.request<any[]>('/api/watchlists');
+    return this.request<any[]>("/api/watchlists");
   }
 
   /**
    * Create a watchlist
    */
   async createWatchlist(name: string, symbols: string[]): Promise<any> {
-    return this.request('/api/watchlists', {
-      method: 'POST',
+    return this.request("/api/watchlists", {
+      method: "POST",
       body: JSON.stringify({ name, symbols }),
     });
   }
@@ -409,7 +422,7 @@ class AlpacaClient {
    */
   async deleteWatchlist(watchlistId: string): Promise<void> {
     return this.request<void>(`/api/watchlists/${watchlistId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 }
@@ -445,7 +458,7 @@ export async function isMarketOpen(): Promise<boolean> {
     const clock = await alpaca.getClock();
     return clock.is_open;
   } catch (error) {
-    console.error('Failed to check market status:', error);
+    console.error("Failed to check market status:", error);
     return false;
   }
 }

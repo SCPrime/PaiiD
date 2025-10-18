@@ -12,8 +12,8 @@
  * Phase 2: Performance Optimization
  */
 
-import useSWR from 'swr';
-import type { SWRConfiguration } from 'swr';
+import useSWR from "swr";
+import type { SWRConfiguration } from "swr";
 
 // Global SWR configuration
 const defaultConfig: SWRConfiguration = {
@@ -25,14 +25,25 @@ const defaultConfig: SWRConfiguration = {
 };
 
 // ✅ EXTENSION VERIFICATION: SWR
-console.info('[Extension Verification] ✅ SWR data fetching library loaded successfully:', {
-  hooks: ['usePositions', 'useAccount', 'useMarketData', 'useQuote', 'useNews', 'useCompanyNews', 'useStrategyTemplates', 'useUserPreferences', 'useAnalytics', 'useOrderHistory'],
+console.info("[Extension Verification] ✅ SWR data fetching library loaded successfully:", {
+  hooks: [
+    "usePositions",
+    "useAccount",
+    "useMarketData",
+    "useQuote",
+    "useNews",
+    "useCompanyNews",
+    "useStrategyTemplates",
+    "useUserPreferences",
+    "useAnalytics",
+    "useOrderHistory",
+  ],
   configuration: {
-    dedupingInterval: '2000ms',
+    dedupingInterval: "2000ms",
     revalidateOnFocus: true,
-    revalidateOnReconnect: true
+    revalidateOnReconnect: true,
   },
-  status: 'FUNCTIONAL'
+  status: "FUNCTIONAL",
 });
 
 // Generic fetcher with auth header
@@ -41,8 +52,8 @@ async function fetcher<T = any>(url: string): Promise<T> {
 
   const response = await fetch(url, {
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
   });
 
@@ -62,14 +73,10 @@ async function fetcher<T = any>(url: string): Promise<T> {
  * const { data: positions, error, isLoading } = usePositions();
  */
 export function usePositions() {
-  return useSWR(
-    '/api/proxy/api/positions',
-    fetcher,
-    {
-      ...defaultConfig,
-      refreshInterval: 5000, // Refresh every 5 seconds
-    }
-  );
+  return useSWR("/api/proxy/api/positions", fetcher, {
+    ...defaultConfig,
+    refreshInterval: 5000, // Refresh every 5 seconds
+  });
 }
 
 /**
@@ -81,14 +88,10 @@ export function usePositions() {
  * const { data: account, error, isLoading } = useAccount();
  */
 export function useAccount() {
-  return useSWR(
-    '/api/proxy/api/account',
-    fetcher,
-    {
-      ...defaultConfig,
-      refreshInterval: 10000, // Refresh every 10 seconds
-    }
-  );
+  return useSWR("/api/proxy/api/account", fetcher, {
+    ...defaultConfig,
+    refreshInterval: 10000, // Refresh every 10 seconds
+  });
 }
 
 /**
@@ -100,14 +103,10 @@ export function useAccount() {
  * const { data: marketData, error, isLoading } = useMarketData();
  */
 export function useMarketData() {
-  return useSWR(
-    '/api/proxy/api/market/indices',
-    fetcher,
-    {
-      ...defaultConfig,
-      refreshInterval: 10000, // Refresh every 10 seconds
-    }
-  );
+  return useSWR("/api/proxy/api/market/indices", fetcher, {
+    ...defaultConfig,
+    refreshInterval: 10000, // Refresh every 10 seconds
+  });
 }
 
 /**
@@ -120,14 +119,10 @@ export function useMarketData() {
  * const { data: quote, error, isLoading } = useQuote('AAPL');
  */
 export function useQuote(symbol: string | null) {
-  return useSWR(
-    symbol ? `/api/proxy/api/quotes/${symbol}` : null,
-    fetcher,
-    {
-      ...defaultConfig,
-      refreshInterval: 10000, // Refresh every 10 seconds
-    }
-  );
+  return useSWR(symbol ? `/api/proxy/api/quotes/${symbol}` : null, fetcher, {
+    ...defaultConfig,
+    refreshInterval: 10000, // Refresh every 10 seconds
+  });
 }
 
 /**
@@ -140,15 +135,11 @@ export function useQuote(symbol: string | null) {
  * @example
  * const { data: news, error, isLoading } = useNews('general', 50);
  */
-export function useNews(category: string = 'general', limit: number = 50) {
-  return useSWR(
-    `/api/proxy/api/news/market?category=${category}&limit=${limit}`,
-    fetcher,
-    {
-      ...defaultConfig,
-      refreshInterval: 300000, // Refresh every 5 minutes
-    }
-  );
+export function useNews(category: string = "general", limit: number = 50) {
+  return useSWR(`/api/proxy/api/news/market?category=${category}&limit=${limit}`, fetcher, {
+    ...defaultConfig,
+    refreshInterval: 300000, // Refresh every 5 minutes
+  });
 }
 
 /**
@@ -181,14 +172,10 @@ export function useCompanyNews(symbol: string | null, daysBack: number = 7) {
  * const { data: strategies, error, isLoading } = useStrategyTemplates();
  */
 export function useStrategyTemplates() {
-  return useSWR(
-    '/api/proxy/api/strategies/templates',
-    fetcher,
-    {
-      ...defaultConfig,
-      refreshInterval: 0, // Only refresh on focus/reconnect
-    }
-  );
+  return useSWR("/api/proxy/api/strategies/templates", fetcher, {
+    ...defaultConfig,
+    refreshInterval: 0, // Only refresh on focus/reconnect
+  });
 }
 
 /**
@@ -200,14 +187,10 @@ export function useStrategyTemplates() {
  * const { data: preferences, error, isLoading } = useUserPreferences();
  */
 export function useUserPreferences() {
-  return useSWR(
-    '/api/proxy/api/users/preferences',
-    fetcher,
-    {
-      ...defaultConfig,
-      refreshInterval: 0, // Only refresh on focus/reconnect
-    }
-  );
+  return useSWR("/api/proxy/api/users/preferences", fetcher, {
+    ...defaultConfig,
+    refreshInterval: 0, // Only refresh on focus/reconnect
+  });
 }
 
 /**
@@ -219,15 +202,11 @@ export function useUserPreferences() {
  * @example
  * const { data: analytics, error, isLoading } = useAnalytics('1D');
  */
-export function useAnalytics(timeframe: string = '1D') {
-  return useSWR(
-    `/api/proxy/api/analytics?timeframe=${timeframe}`,
-    fetcher,
-    {
-      ...defaultConfig,
-      refreshInterval: 30000, // Refresh every 30 seconds
-    }
-  );
+export function useAnalytics(timeframe: string = "1D") {
+  return useSWR(`/api/proxy/api/analytics?timeframe=${timeframe}`, fetcher, {
+    ...defaultConfig,
+    refreshInterval: 30000, // Refresh every 30 seconds
+  });
 }
 
 /**
@@ -239,12 +218,8 @@ export function useAnalytics(timeframe: string = '1D') {
  * const { data: orders, error, isLoading } = useOrderHistory();
  */
 export function useOrderHistory() {
-  return useSWR(
-    '/api/proxy/api/orders/history',
-    fetcher,
-    {
-      ...defaultConfig,
-      refreshInterval: 15000, // Refresh every 15 seconds
-    }
-  );
+  return useSWR("/api/proxy/api/orders/history", fetcher, {
+    ...defaultConfig,
+    refreshInterval: 15000, // Refresh every 15 seconds
+  });
 }

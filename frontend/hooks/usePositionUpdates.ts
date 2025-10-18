@@ -12,7 +12,7 @@
  * Phase 5.B.2 - Real-Time UI Updates
  */
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from "react";
 
 export interface Position {
   symbol: string;
@@ -22,7 +22,7 @@ export interface Position {
   marketValue: number;
   unrealizedPL: number;
   unrealizedPLPercent: number;
-  side: 'long' | 'short';
+  side: "long" | "short";
   dayChange: number;
   dayChangePercent: number;
 }
@@ -66,8 +66,8 @@ export function usePositionUpdates(
   const {
     autoReconnect = true,
     maxReconnectAttempts = 5,
-    heartbeatTimeout = 45,  // 45 seconds default (3x heartbeat interval)
-    debug = false
+    heartbeatTimeout = 45, // 45 seconds default (3x heartbeat interval)
+    debug = false,
   } = options;
 
   const [state, setState] = useState<PositionStreamState>({
@@ -76,7 +76,7 @@ export function usePositionUpdates(
     connecting: false,
     error: null,
     lastUpdate: null,
-    lastHeartbeat: null
+    lastHeartbeat: null,
   });
 
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -84,11 +84,14 @@ export function usePositionUpdates(
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const log = useCallback((...args: any[]) => {
-    if (debug) {
-      console.info('[usePositionUpdates]', ...args);
-    }
-  }, [debug]);
+  const log = useCallback(
+    (...args: any[]) => {
+      if (debug) {
+        console.info("[usePositionUpdates]", ...args);
+      }
+    },
+    [debug]
+  );
 
   const connect = useCallback(() => {
     // Clean up existing connection
@@ -109,8 +112,8 @@ export function usePositionUpdates(
       heartbeatCheckIntervalRef.current = null;
     }
 
-    setState(prev => ({ ...prev, connecting: true, error: null }));
-    log('Connecting to position stream');
+    setState((prev) => ({ ...prev, connecting: true, error: null }));
+    log("Connecting to position stream");
 
     try {
       // Build SSE URL
@@ -122,20 +125,20 @@ export function usePositionUpdates(
 
       // Handle connection open
       eventSource.onopen = () => {
-        log('✅ Connected to position stream');
+        log("✅ Connected to position stream");
         const now = new Date();
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           connected: true,
           connecting: false,
           error: null,
-          lastHeartbeat: now  // Initialize heartbeat timestamp on connect
+          lastHeartbeat: now, // Initialize heartbeat timestamp on connect
         }));
-        reconnectAttemptsRef.current = 0;  // Reset reconnect counter on success
+        reconnectAttemptsRef.current = 0; // Reset reconnect counter on success
 
         // Start heartbeat timeout checker
         heartbeatCheckIntervalRef.current = setInterval(() => {
-          setState(currentState => {
+          setState((currentState) => {
             if (!currentState.lastHeartbeat || !currentState.connected) {
               return currentState;
             }
@@ -153,73 +156,75 @@ export function usePositionUpdates(
 
               if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
                 reconnectAttemptsRef.current++;
-                log(`🔄 Reconnecting due to heartbeat timeout (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
+                log(
+                  `🔄 Reconnecting due to heartbeat timeout (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
+                );
                 connect();
               }
 
               return {
                 ...currentState,
                 connected: false,
-                error: 'Heartbeat timeout - reconnecting...'
+                error: "Heartbeat timeout - reconnecting...",
               };
             }
 
             return currentState;
           });
-        }, 10000);  // Check every 10 seconds
+        }, 10000); // Check every 10 seconds
       };
 
       // Handle position updates
-      eventSource.addEventListener('position_update', (event) => {
+      eventSource.addEventListener("position_update", (event) => {
         try {
           const newPositions = JSON.parse(event.data) as Position[];
-          log('📊 Position update:', newPositions.length, 'positions');
+          log("📊 Position update:", newPositions.length, "positions");
 
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             positions: newPositions,
-            lastUpdate: new Date()
+            lastUpdate: new Date(),
           }));
         } catch (error) {
-          console.error('[usePositionUpdates] Error parsing position update:', error);
+          console.error("[usePositionUpdates] Error parsing position update:", error);
         }
       });
 
       // Handle heartbeat (keep-alive and timeout detection)
-      eventSource.addEventListener('heartbeat', (_event) => {
+      eventSource.addEventListener("heartbeat", (_event) => {
         const now = new Date();
-        log('💓 Heartbeat received');
-        setState(prev => ({
+        log("💓 Heartbeat received");
+        setState((prev) => ({
           ...prev,
-          lastHeartbeat: now
+          lastHeartbeat: now,
         }));
       });
 
       // Handle errors
-      eventSource.addEventListener('error', (event) => {
+      eventSource.addEventListener("error", (event) => {
         try {
           const errorData = JSON.parse((event as MessageEvent).data);
-          console.error('[usePositionUpdates] Server error:', errorData.error);
-          setState(prev => ({
+          console.error("[usePositionUpdates] Server error:", errorData.error);
+          setState((prev) => ({
             ...prev,
             error: errorData.error,
-            connected: false
+            connected: false,
           }));
         } catch {
           // Not a formatted error event, just log it
-          log('Error event (likely connection issue)');
+          log("Error event (likely connection issue)");
         }
       });
 
       // Handle connection errors/close
       eventSource.onerror = (_error) => {
-        log('❌ Connection error or closed');
+        log("❌ Connection error or closed");
 
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           connected: false,
           connecting: false,
-          error: 'Connection lost'
+          error: "Connection lost",
         }));
 
         // Close the connection
@@ -229,36 +234,37 @@ export function usePositionUpdates(
         // Attempt reconnect if enabled
         if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
           reconnectAttemptsRef.current++;
-          const backoffTime = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);  // Max 30s
+          const backoffTime = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Max 30s
 
-          log(`⏳ Reconnecting in ${backoffTime/1000}s (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
+          log(
+            `⏳ Reconnecting in ${backoffTime / 1000}s (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
+          );
 
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, backoffTime);
         } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
-            error: 'Max reconnect attempts reached. Please refresh the page.'
+            error: "Max reconnect attempts reached. Please refresh the page.",
           }));
         }
       };
-
     } catch (error: any) {
-      console.error('[usePositionUpdates] Connection error:', error);
-      setState(prev => ({
+      console.error("[usePositionUpdates] Connection error:", error);
+      setState((prev) => ({
         ...prev,
         connected: false,
         connecting: false,
-        error: error.message || 'Failed to connect'
+        error: error.message || "Failed to connect",
       }));
     }
   }, [autoReconnect, maxReconnectAttempts, log]);
 
   // Manual reconnect method
   const reconnect = useCallback(() => {
-    log('🔄 Manual reconnect triggered');
-    reconnectAttemptsRef.current = 0;  // Reset counter on manual reconnect
+    log("🔄 Manual reconnect triggered");
+    reconnectAttemptsRef.current = 0; // Reset counter on manual reconnect
     connect();
   }, [connect, log]);
 
@@ -268,7 +274,7 @@ export function usePositionUpdates(
 
     // Cleanup on unmount
     return () => {
-      log('🧹 Cleaning up position stream');
+      log("🧹 Cleaning up position stream");
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
@@ -286,6 +292,6 @@ export function usePositionUpdates(
 
   return {
     ...state,
-    reconnect
+    reconnect,
   };
 }

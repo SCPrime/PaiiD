@@ -1,13 +1,13 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from "next";
 
 const ALPACA_API_KEY = process.env.ALPACA_API_KEY!;
 const ALPACA_API_SECRET = process.env.ALPACA_API_SECRET!;
-const ALPACA_BASE_URL = process.env.ALPACA_BASE_URL || 'https://data.alpaca.markets';
+const ALPACA_BASE_URL = process.env.ALPACA_BASE_URL || "https://data.alpaca.markets";
 
 interface OptionQuote {
   strike: number;
   expiration: string;
-  type: 'call' | 'put';
+  type: "call" | "put";
   last: number;
   bid: number;
   ask: number;
@@ -39,43 +39,45 @@ interface OptionsChainResponse {
  * Returns options chain data with greeks and IV
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { symbol, expiration } = req.query;
 
-  if (!symbol || typeof symbol !== 'string') {
-    return res.status(400).json({ error: 'Missing or invalid symbol parameter' });
+  if (!symbol || typeof symbol !== "string") {
+    return res.status(400).json({ error: "Missing or invalid symbol parameter" });
   }
 
   try {
     // Fetch options snapshots from Alpaca
     const url = new URL(`${ALPACA_BASE_URL}/v1beta1/options/snapshots/${symbol.toUpperCase()}`);
-    if (expiration && typeof expiration === 'string') {
-      url.searchParams.set('expiration_date', expiration);
+    if (expiration && typeof expiration === "string") {
+      url.searchParams.set("expiration_date", expiration);
     }
 
     const response = await fetch(url.toString(), {
       headers: {
-        'APCA-API-KEY-ID': ALPACA_API_KEY,
-        'APCA-API-SECRET-KEY': ALPACA_API_SECRET,
+        "APCA-API-KEY-ID": ALPACA_API_KEY,
+        "APCA-API-SECRET-KEY": ALPACA_API_SECRET,
       },
-      cache: 'no-store',
+      cache: "no-store",
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Alpaca options API error:', response.status, errorText);
+      console.error("Alpaca options API error:", response.status, errorText);
 
       // If no options data available, return mock data for demo
       if (response.status === 404 || response.status === 422) {
-        return res.status(200).json(generateMockOptionsChain(symbol.toUpperCase(), expiration as string | undefined));
+        return res
+          .status(200)
+          .json(generateMockOptionsChain(symbol.toUpperCase(), expiration as string | undefined));
       }
 
       return res.status(response.status).json({
-        error: 'Failed to fetch options data from Alpaca',
-        detail: errorText
+        error: "Failed to fetch options data from Alpaca",
+        detail: errorText,
       });
     }
 
@@ -84,13 +86,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Transform Alpaca data to our format
     const result = transformAlpacaOptions(data, symbol.toUpperCase());
 
-    res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
+    res.setHeader("Cache-Control", "public, s-maxage=30, stale-while-revalidate=60");
     res.status(200).json(result);
   } catch (error) {
-    console.error('Options chain fetch error:', error);
+    console.error("Options chain fetch error:", error);
 
     // Fallback to mock data on error
-    res.status(200).json(generateMockOptionsChain(symbol.toUpperCase(), expiration as string | undefined));
+    res
+      .status(200)
+      .json(generateMockOptionsChain(symbol.toUpperCase(), expiration as string | undefined));
   }
 }
 
@@ -125,7 +129,7 @@ function transformAlpacaOptions(alpacaData: any, symbol: string): OptionsChainRe
     const optionQuote: OptionQuote = {
       strike,
       expiration,
-      type: type === 'C' ? 'call' : 'put',
+      type: type === "C" ? "call" : "put",
       last: quote.ap || 0,
       bid: quote.bp || 0,
       ask: quote.ap || 0,
@@ -139,7 +143,7 @@ function transformAlpacaOptions(alpacaData: any, symbol: string): OptionsChainRe
     };
 
     const chain = chains.get(strike)!;
-    if (type === 'C') {
+    if (type === "C") {
       chain.call = optionQuote;
     } else {
       chain.put = optionQuote;
@@ -148,7 +152,7 @@ function transformAlpacaOptions(alpacaData: any, symbol: string): OptionsChainRe
 
   return {
     symbol,
-    underlyingPrice: 184.10, // TODO: Get from quote API
+    underlyingPrice: 184.1, // TODO: Get from quote API
     expirations: Array.from(expirations).sort(),
     chains: Array.from(chains.entries())
       .map(([strike, { call, put }]) => ({ strike, call, put }))
@@ -160,14 +164,14 @@ function transformAlpacaOptions(alpacaData: any, symbol: string): OptionsChainRe
  * Generate mock options chain data for demo purposes
  */
 function generateMockOptionsChain(symbol: string, expiration?: string): OptionsChainResponse {
-  const underlyingPrice = 184.10;
+  const underlyingPrice = 184.1;
   const expirations = [
-    '2025-01-17',
-    '2025-01-24',
-    '2025-02-21',
-    '2025-03-21',
-    '2025-06-20',
-    '2026-01-16',
+    "2025-01-17",
+    "2025-01-24",
+    "2025-02-21",
+    "2025-03-21",
+    "2025-06-20",
+    "2026-01-16",
   ];
 
   const selectedExpiration = expiration || expirations[2];
@@ -179,7 +183,7 @@ function generateMockOptionsChain(symbol: string, expiration?: string): OptionsC
     strikes.push(atmStrike + i * 5);
   }
 
-  const chains = strikes.map(strike => {
+  const chains = strikes.map((strike) => {
     const distanceFromATM = Math.abs(strike - underlyingPrice);
 
     // Calculate mock greeks based on moneyness
@@ -187,8 +191,8 @@ function generateMockOptionsChain(symbol: string, expiration?: string): OptionsC
     const putDelta = -Math.max(0.05, Math.min(0.95, 0.5 + (strike - underlyingPrice) / 100));
     const gamma = 0.01 * Math.exp(-Math.pow(distanceFromATM / 20, 2));
     const theta = -0.05 - 0.02 * Math.exp(-Math.pow(distanceFromATM / 20, 2));
-    const vega = 0.15 + 0.10 * Math.exp(-Math.pow(distanceFromATM / 20, 2));
-    const iv = 0.25 + 0.10 * Math.exp(-Math.pow(distanceFromATM / 30, 2));
+    const vega = 0.15 + 0.1 * Math.exp(-Math.pow(distanceFromATM / 20, 2));
+    const iv = 0.25 + 0.1 * Math.exp(-Math.pow(distanceFromATM / 30, 2));
 
     // Calculate intrinsic and extrinsic value
     const callIntrinsic = Math.max(0, underlyingPrice - strike);
@@ -208,7 +212,7 @@ function generateMockOptionsChain(symbol: string, expiration?: string): OptionsC
     const call: OptionQuote = {
       strike,
       expiration: selectedExpiration,
-      type: 'call',
+      type: "call",
       last: callLast,
       bid: callLast * 0.98,
       ask: callLast * 1.02,
@@ -224,7 +228,7 @@ function generateMockOptionsChain(symbol: string, expiration?: string): OptionsC
     const put: OptionQuote = {
       strike,
       expiration: selectedExpiration,
-      type: 'put',
+      type: "put",
       last: putLast,
       bid: putLast * 0.98,
       ask: putLast * 1.02,

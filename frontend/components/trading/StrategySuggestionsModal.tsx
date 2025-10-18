@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 /**
  * Strategy Suggestions Modal
@@ -13,8 +13,8 @@ import { useState } from 'react';
  */
 
 interface StrategyLeg {
-  type: 'STOCK' | 'CALL' | 'PUT';
-  side: 'BUY' | 'SELL';
+  type: "STOCK" | "CALL" | "PUT";
+  side: "BUY" | "SELL";
   qty?: number;
   strike?: number;
   dte?: number;
@@ -42,7 +42,7 @@ interface StrategySuggestionsModalProps {
   analysis: {
     technicalSetup: string;
     ivEnvironment: string;
-    riskLevel: 'low' | 'medium' | 'high';
+    riskLevel: "low" | "medium" | "high";
   };
   onApprove: (strategyId: string) => void;
 }
@@ -62,19 +62,19 @@ export default function StrategySuggestionsModal({
 
   const getRiskColor = (level: string) => {
     switch (level) {
-      case 'low':
-        return 'text-green-400 bg-green-500/10 border-green-500/30';
-      case 'high':
-        return 'text-red-400 bg-red-500/10 border-red-500/30';
+      case "low":
+        return "text-green-400 bg-green-500/10 border-green-500/30";
+      case "high":
+        return "text-red-400 bg-red-500/10 border-red-500/30";
       default:
-        return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30';
+        return "text-yellow-400 bg-yellow-500/10 border-yellow-500/30";
     }
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 70) return 'text-green-400';
-    if (confidence >= 40) return 'text-yellow-400';
-    return 'text-red-400';
+    if (confidence >= 70) return "text-green-400";
+    if (confidence >= 40) return "text-yellow-400";
+    return "text-red-400";
   };
 
   return (
@@ -84,9 +84,7 @@ export default function StrategySuggestionsModal({
         <div className="px-6 py-4 border-b border-white/10 bg-gradient-to-r from-purple-500/20 to-cyan-500/20">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-1">
-                🤖 AI Strategy Recommendations
-              </h2>
+              <h2 className="text-2xl font-bold text-white mb-1">🤖 AI Strategy Recommendations</h2>
               <p className="text-sm text-slate-300">
                 {symbol} @ ${currentPrice.toFixed(2)}
               </p>
@@ -113,7 +111,9 @@ export default function StrategySuggestionsModal({
             </div>
             <div>
               <div className="text-xs text-slate-400 mb-1">Risk Level</div>
-              <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${getRiskColor(analysis.riskLevel)}`}>
+              <div
+                className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${getRiskColor(analysis.riskLevel)}`}
+              >
                 {analysis.riskLevel.toUpperCase()}
               </div>
             </div>
@@ -127,19 +127,19 @@ export default function StrategySuggestionsModal({
               <div className="text-4xl mb-4">🤔</div>
               <div className="text-lg text-slate-300 mb-2">No suitable strategies found</div>
               <div className="text-sm text-slate-400">
-                Current market conditions don&apos;t align well with available strategies.
-                Try adjusting your filters or checking back later.
+                Current market conditions don&apos;t align well with available strategies. Try
+                adjusting your filters or checking back later.
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {suggestions.map(suggestion => (
+              {suggestions.map((suggestion) => (
                 <div
                   key={suggestion.strategyId}
                   className={`bg-slate-900/60 border rounded-xl p-4 transition-all cursor-pointer ${
                     selectedStrategy === suggestion.strategyId
-                      ? 'border-cyan-400 ring-2 ring-cyan-400/50'
-                      : 'border-white/10 hover:border-white/30'
+                      ? "border-cyan-400 ring-2 ring-cyan-400/50"
+                      : "border-white/10 hover:border-white/30"
                   }`}
                   onClick={() => setSelectedStrategy(suggestion.strategyId)}
                 >
@@ -149,13 +149,13 @@ export default function StrategySuggestionsModal({
                       <h3 className="text-sm font-semibold text-white pr-2">
                         {suggestion.strategyName}
                       </h3>
-                      <div className={`text-2xl font-bold ${getConfidenceColor(suggestion.confidence)}`}>
+                      <div
+                        className={`text-2xl font-bold ${getConfidenceColor(suggestion.confidence)}`}
+                      >
                         {suggestion.confidence}%
                       </div>
                     </div>
-                    <div className="text-xs text-slate-400">
-                      {suggestion.strategyId}
-                    </div>
+                    <div className="text-xs text-slate-400">{suggestion.strategyId}</div>
                   </div>
 
                   {/* Reasoning */}
@@ -174,13 +174,13 @@ export default function StrategySuggestionsModal({
                           key={idx}
                           className="text-xs px-2 py-1 bg-slate-800/50 rounded flex items-center justify-between"
                         >
-                          <span className={leg.side === 'BUY' ? 'text-green-400' : 'text-red-400'}>
+                          <span className={leg.side === "BUY" ? "text-green-400" : "text-red-400"}>
                             {leg.side} {leg.type}
                           </span>
                           <span className="text-slate-300">
-                            {leg.strike ? `$${leg.strike.toFixed(0)}` : ''}
-                            {leg.dte ? ` ${leg.dte}DTE` : ''}
-                            {leg.delta ? ` Δ${leg.delta.toFixed(2)}` : ''}
+                            {leg.strike ? `$${leg.strike.toFixed(0)}` : ""}
+                            {leg.dte ? ` ${leg.dte}DTE` : ""}
+                            {leg.delta ? ` Δ${leg.delta.toFixed(2)}` : ""}
                           </span>
                         </div>
                       ))}
@@ -207,7 +207,7 @@ export default function StrategySuggestionsModal({
                   <div className="mb-3">
                     <div className="text-xs text-slate-400 mb-1">Breakeven(s):</div>
                     <div className="text-xs text-cyan-400 font-mono">
-                      {suggestion.breakevens.map(be => `$${be.toFixed(2)}`).join(', ')}
+                      {suggestion.breakevens.map((be) => `$${be.toFixed(2)}`).join(", ")}
                     </div>
                   </div>
 

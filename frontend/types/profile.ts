@@ -15,9 +15,9 @@ export interface InvestmentSettings {
 }
 
 export interface TradingPreferences {
-  riskTolerance: 'conservative' | 'moderate' | 'aggressive';
-  tradingStyle: 'day' | 'swing' | 'long-term' | 'mixed';
-  preferredInstruments: ('stocks' | 'options' | 'crypto' | 'futures')[];
+  riskTolerance: "conservative" | "moderate" | "aggressive";
+  tradingStyle: "day" | "swing" | "long-term" | "mixed";
+  preferredInstruments: ("stocks" | "options" | "crypto" | "futures")[];
   preferredStrategies: string[]; // e.g., ["momentum", "mean-reversion", "breakout"]
   priceRange?: {
     min: number;
@@ -45,7 +45,7 @@ export interface PersonalInfo {
 export interface Position {
   id: string;
   symbol: string;
-  type: 'stock' | 'option' | 'crypto';
+  type: "stock" | "option" | "crypto";
   quantity: number;
   entryPrice: number;
   currentPrice: number;
@@ -104,8 +104,8 @@ export function createDefaultProfile(): UserProfile {
     personalInfo: {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       tradingHours: {
-        start: '09:30',
-        end: '16:00',
+        start: "09:30",
+        end: "16:00",
       },
       notifications: {
         email: false,
@@ -122,9 +122,9 @@ export function createDefaultProfile(): UserProfile {
       marginEnabled: false,
     },
     tradingPreferences: {
-      riskTolerance: 'moderate',
-      tradingStyle: 'mixed',
-      preferredInstruments: ['stocks'],
+      riskTolerance: "moderate",
+      tradingStyle: "mixed",
+      preferredInstruments: ["stocks"],
       preferredStrategies: [],
       avoidEarnings: true,
     },
@@ -175,23 +175,21 @@ export function calculateDerivedValues(profile: UserProfile): UserProfile {
 export function saveProfile(profile: UserProfile): void {
   profile.updatedAt = new Date().toISOString();
   const calculated = calculateDerivedValues(profile);
-  localStorage.setItem('paid_user_profile', JSON.stringify(calculated));
+  localStorage.setItem("paid_user_profile", JSON.stringify(calculated));
 
   // Emit custom event for other components to listen
-  window.dispatchEvent(
-    new CustomEvent('profile-updated', { detail: calculated })
-  );
+  window.dispatchEvent(new CustomEvent("profile-updated", { detail: calculated }));
 }
 
 export function loadProfile(): UserProfile | null {
   try {
-    const stored = localStorage.getItem('paid_user_profile');
+    const stored = localStorage.getItem("paid_user_profile");
     if (!stored) return null;
 
     const profile = JSON.parse(stored) as UserProfile;
     return calculateDerivedValues(profile);
   } catch (error) {
-    console.error('[Profile] Failed to load profile:', error);
+    console.error("[Profile] Failed to load profile:", error);
     return null;
   }
 }
@@ -205,10 +203,7 @@ export function getOrCreateProfile(): UserProfile {
   return newProfile;
 }
 
-export function updateInvestmentCapital(
-  profile: UserProfile,
-  newCapital: number
-): UserProfile {
+export function updateInvestmentCapital(profile: UserProfile, newCapital: number): UserProfile {
   profile.investmentSettings.initialCapital = newCapital;
   return calculateDerivedValues(profile);
 }
@@ -222,9 +217,7 @@ export function addPosition(profile: UserProfile, position: Position): UserProfi
 export function removePosition(profile: UserProfile, positionId: string): UserProfile {
   const position = profile.portfolio.positions.find((p) => p.id === positionId);
   if (position) {
-    profile.portfolio.positions = profile.portfolio.positions.filter(
-      (p) => p.id !== positionId
-    );
+    profile.portfolio.positions = profile.portfolio.positions.filter((p) => p.id !== positionId);
     profile.investmentSettings.allocatedCapital -= position.entryPrice * position.quantity;
   }
   return calculateDerivedValues(profile);
@@ -246,10 +239,10 @@ export function removeWatchlist(profile: UserProfile, watchlistId: string): User
 export function isValidProfile(obj: any): obj is UserProfile {
   return (
     obj &&
-    typeof obj === 'object' &&
-    'id' in obj &&
-    'investmentSettings' in obj &&
-    'tradingPreferences' in obj &&
-    'portfolio' in obj
+    typeof obj === "object" &&
+    "id" in obj &&
+    "investmentSettings" in obj &&
+    "tradingPreferences" in obj &&
+    "portfolio" in obj
   );
 }

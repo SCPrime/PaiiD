@@ -1,6 +1,6 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import type { Strategy, ValidationResult } from '@/strategies/schema';
-import { validateStrategy } from '@/strategies/validator';
+import type { NextApiRequest, NextApiResponse } from "next";
+import type { Strategy, ValidationResult } from "@/strategies/schema";
+import { validateStrategy } from "@/strategies/validator";
 
 /**
  * Strategies API Endpoint
@@ -12,12 +12,12 @@ import { validateStrategy } from '@/strategies/validator';
  */
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
+  if (req.method === "POST") {
     return handleCreate(req, res);
-  } else if (req.method === 'GET') {
+  } else if (req.method === "GET") {
     return handleList(req, res);
   } else {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: "Method not allowed" });
   }
 }
 
@@ -54,10 +54,10 @@ async function handleCreate(req: NextApiRequest, res: NextApiResponse) {
       warnings: validation.warnings, // Include warnings even on success
     });
   } catch (error) {
-    console.error('Strategy save error:', error);
+    console.error("Strategy save error:", error);
     return res.status(500).json({
       success: false,
-      error: 'Failed to save strategy',
+      error: "Failed to save strategy",
       detail: String(error),
     });
   }
@@ -77,10 +77,10 @@ async function handleList(_req: NextApiRequest, res: NextApiResponse) {
       strategies,
     });
   } catch (error) {
-    console.error('Strategy list error:', error);
+    console.error("Strategy list error:", error);
     return res.status(500).json({
       success: false,
-      error: 'Failed to list strategies',
+      error: "Failed to list strategies",
       detail: String(error),
     });
   }
@@ -100,10 +100,7 @@ interface StrategyRecord {
   active: boolean;
 }
 
-async function saveStrategy(
-  strategy: Strategy,
-  isUpdate: boolean
-): Promise<StrategyRecord> {
+async function saveStrategy(strategy: Strategy, isUpdate: boolean): Promise<StrategyRecord> {
   // Mock implementation - in production:
   // 1. Check if strategy_id exists
   // 2. If update, increment version
@@ -124,7 +121,7 @@ async function saveStrategy(
   const record: StrategyRecord = {
     strategy_id: strategy.strategy_id,
     version: newVersion,
-    user_id: 'mock_user_1', // In production, get from auth session
+    user_id: "mock_user_1", // In production, get from auth session
     name: strategy.name,
     strategy_json: strategy,
     created_at: isUpdate ? await getCreatedAt(strategy.strategy_id) : now,
@@ -133,7 +130,7 @@ async function saveStrategy(
   };
 
   // Mock: Store in database
-  console.info('Saving strategy:', record.strategy_id, 'version:', record.version);
+  console.info("Saving strategy:", record.strategy_id, "version:", record.version);
 
   return record;
 }
@@ -165,13 +162,13 @@ async function listStrategies(): Promise<StrategyRecord[]> {
 
   return [
     {
-      strategy_id: 'micro_collar_sub4_v1',
+      strategy_id: "micro_collar_sub4_v1",
       version: 1,
-      user_id: 'mock_user_1',
-      name: 'Micro Protective Collar – Sub-$4',
+      user_id: "mock_user_1",
+      name: "Micro Protective Collar – Sub-$4",
       strategy_json: {} as Strategy, // Would include full JSON
-      created_at: '2025-01-15T10:00:00Z',
-      updated_at: '2025-01-15T10:00:00Z',
+      created_at: "2025-01-15T10:00:00Z",
+      updated_at: "2025-01-15T10:00:00Z",
       active: true,
     },
   ];

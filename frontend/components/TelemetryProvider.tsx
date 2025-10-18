@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, ReactNode } from 'react';
-import { telemetry } from '../services/telemetry';
+import { createContext, useContext, useEffect, ReactNode } from "react";
+import { telemetry } from "../services/telemetry";
 
 interface TelemetryContextValue {
   track: typeof telemetry.track;
@@ -17,7 +17,7 @@ const TelemetryContext = createContext<TelemetryContextValue | null>(null);
 interface TelemetryProviderProps {
   children: ReactNode;
   userId: string;
-  userRole: 'admin' | 'beta' | 'alpha' | 'user' | 'owner';
+  userRole: "admin" | "beta" | "alpha" | "user" | "owner";
   enabled?: boolean;
 }
 
@@ -25,9 +25,8 @@ export function TelemetryProvider({
   children,
   userId,
   userRole,
-  enabled = true
+  enabled = true,
 }: TelemetryProviderProps) {
-
   useEffect(() => {
     if (!enabled) {
       telemetry.disable();
@@ -37,11 +36,11 @@ export function TelemetryProvider({
     telemetry.enable();
 
     // Store user info in localStorage for error tracking
-    localStorage.setItem('userId', userId);
-    localStorage.setItem('userRole', userRole);
+    localStorage.setItem("userId", userId);
+    localStorage.setItem("userRole", userRole);
 
     // Track initial page load
-    telemetry.trackPageView(userId, userRole, 'App');
+    telemetry.trackPageView(userId, userRole, "App");
 
     // Track performance metrics
     if (window.performance && window.performance.timing) {
@@ -51,8 +50,8 @@ export function TelemetryProvider({
       telemetry.track({
         userId,
         userRole,
-        component: 'App',
-        action: 'performance',
+        component: "App",
+        action: "performance",
         metadata: {
           loadTime,
           domContentLoaded: perfData.domContentLoadedEventEnd - perfData.navigationStart,
@@ -76,11 +75,7 @@ export function TelemetryProvider({
     trackFeature: telemetry.trackFeature.bind(telemetry),
   };
 
-  return (
-    <TelemetryContext.Provider value={contextValue}>
-      {children}
-    </TelemetryContext.Provider>
-  );
+  return <TelemetryContext.Provider value={contextValue}>{children}</TelemetryContext.Provider>;
 }
 
 // Hook to use telemetry in components

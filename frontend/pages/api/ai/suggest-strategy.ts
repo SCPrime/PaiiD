@@ -1,5 +1,5 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { Strategy } from '@/strategies/schema';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { Strategy } from "@/strategies/schema";
 
 /**
  * AI Strategy Suggestion Endpoint
@@ -39,8 +39,8 @@ interface SuggestStrategyRequest {
 }
 
 interface StrategyLeg {
-  type: 'STOCK' | 'CALL' | 'PUT';
-  side: 'BUY' | 'SELL';
+  type: "STOCK" | "CALL" | "PUT";
+  side: "BUY" | "SELL";
   qty?: number;
   strike?: number;
   dte?: number;
@@ -66,19 +66,20 @@ interface SuggestStrategyResponse {
   analysis: {
     technicalSetup: string;
     ivEnvironment: string;
-    riskLevel: 'low' | 'medium' | 'high';
+    riskLevel: "low" | "medium" | "high";
   };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { symbol, currentPrice, technicals, optionsChain, earningsDate }: SuggestStrategyRequest = req.body;
+  const { symbol, currentPrice, technicals, optionsChain, earningsDate }: SuggestStrategyRequest =
+    req.body;
 
   if (!symbol || !currentPrice) {
-    return res.status(400).json({ error: 'Missing required parameters: symbol, currentPrice' });
+    return res.status(400).json({ error: "Missing required parameters: symbol, currentPrice" });
   }
 
   try {
@@ -86,7 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const strategies = await loadSeedStrategies();
 
     // Score each strategy based on current conditions
-    const scoredStrategies = strategies.map(strategy => ({
+    const scoredStrategies = strategies.map((strategy) => ({
       strategy,
       score: scoreStrategy(strategy, {
         symbol,
@@ -116,9 +117,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       analysis,
     } as SuggestStrategyResponse);
   } catch (error) {
-    console.error('Strategy suggestion error:', error);
+    console.error("Strategy suggestion error:", error);
     res.status(500).json({
-      error: 'Failed to generate strategy suggestions',
+      error: "Failed to generate strategy suggestions",
       detail: String(error),
     });
   }
@@ -132,24 +133,24 @@ async function loadSeedStrategies(): Promise<Strategy[]> {
   // For now, return mock strategy definitions
   return [
     {
-      strategy_id: 'micro_collar_sub4_v1',
-      name: 'Micro Protective Collar – Sub-$4',
-      goal: 'Income with capped downside on cheap stocks',
+      strategy_id: "micro_collar_sub4_v1",
+      name: "Micro Protective Collar – Sub-$4",
+      goal: "Income with capped downside on cheap stocks",
     } as Strategy,
     {
-      strategy_id: 'pc_spread_sub4_v1',
-      name: 'Put Credit Spread – Sub-$4',
-      goal: 'Defined-risk premium capture',
+      strategy_id: "pc_spread_sub4_v1",
+      name: "Put Credit Spread – Sub-$4",
+      goal: "Defined-risk premium capture",
     } as Strategy,
     {
-      strategy_id: 'csp_wheel_sub4_v1',
-      name: 'Cash-Secured Put Wheel – Sub-$4',
-      goal: 'Premium income willing-to-own',
+      strategy_id: "csp_wheel_sub4_v1",
+      name: "Cash-Secured Put Wheel – Sub-$4",
+      goal: "Premium income willing-to-own",
     } as Strategy,
     {
-      strategy_id: 'spy_iron_condor_v1',
-      name: 'SPY Iron Condor – Range-bound',
-      goal: 'High-probability income in low volatility',
+      strategy_id: "spy_iron_condor_v1",
+      name: "SPY Iron Condor – Range-bound",
+      goal: "High-probability income in low volatility",
     } as Strategy,
   ];
 }
@@ -171,7 +172,9 @@ function scoreStrategy(
     const [min, max] = strategy.universe.filters.price_between;
     if (currentPrice >= min && currentPrice <= max) {
       score += 25;
-      reasons.push(`Price $${currentPrice.toFixed(2)} fits ${strategy.name} target range ($${min}-$${max})`);
+      reasons.push(
+        `Price $${currentPrice.toFixed(2)} fits ${strategy.name} target range ($${min}-$${max})`
+      );
     } else {
       score -= 30;
       reasons.push(`Price $${currentPrice.toFixed(2)} outside target range ($${min}-$${max})`);
@@ -203,12 +206,14 @@ function scoreStrategy(
 
   // Check technical indicators
   if (technicals?.rsi) {
-    if (strategy.strategy_id.includes('put') && technicals.rsi < 40) {
+    if (strategy.strategy_id.includes("put") && technicals.rsi < 40) {
       score += 15;
       reasons.push(`RSI oversold (${technicals.rsi.toFixed(1)}) - bullish setup for put selling`);
-    } else if (strategy.strategy_id.includes('call') && technicals.rsi > 60) {
+    } else if (strategy.strategy_id.includes("call") && technicals.rsi > 60) {
       score += 15;
-      reasons.push(`RSI overbought (${technicals.rsi.toFixed(1)}) - bearish setup for call selling`);
+      reasons.push(
+        `RSI overbought (${technicals.rsi.toFixed(1)}) - bearish setup for call selling`
+      );
     }
   }
 
@@ -228,14 +233,18 @@ function scoreStrategy(
 
   // IV environment check
   if (technicals?.iv_percentile) {
-    if (strategy.strategy_id.includes('credit') || strategy.strategy_id.includes('wheel')) {
+    if (strategy.strategy_id.includes("credit") || strategy.strategy_id.includes("wheel")) {
       // Premium selling strategies prefer high IV
       if (technicals.iv_percentile > 50) {
         score += 15;
-        reasons.push(`High IV environment (${technicals.iv_percentile.toFixed(0)}th percentile) - good for premium selling`);
+        reasons.push(
+          `High IV environment (${technicals.iv_percentile.toFixed(0)}th percentile) - good for premium selling`
+        );
       } else {
         score -= 10;
-        reasons.push(`Low IV environment (${technicals.iv_percentile.toFixed(0)}th percentile) - less attractive for premium selling`);
+        reasons.push(
+          `Low IV environment (${technicals.iv_percentile.toFixed(0)}th percentile) - less attractive for premium selling`
+        );
       }
     }
   }
@@ -262,41 +271,41 @@ function generateStrategyProposal(
   let breakevens: number[] = [];
 
   // Generate legs based on strategy type
-  if (strategy.strategy_id.includes('collar')) {
+  if (strategy.strategy_id.includes("collar")) {
     // Protective Collar: Long stock + Long put + Short call
     proposedLegs = [
-      { type: 'STOCK', side: 'BUY', qty: 100 },
-      { type: 'PUT', side: 'BUY', strike: atmStrike - 5, dte: 35, delta: -0.20 },
-      { type: 'CALL', side: 'SELL', strike: atmStrike + 5, dte: 14, delta: 0.30 },
+      { type: "STOCK", side: "BUY", qty: 100 },
+      { type: "PUT", side: "BUY", strike: atmStrike - 5, dte: 35, delta: -0.2 },
+      { type: "CALL", side: "SELL", strike: atmStrike + 5, dte: 14, delta: 0.3 },
     ];
     maxRisk = 500; // Stock can drop $5 to put strike
     maxProfit = 500; // Stock can rise $5 to call strike
     breakevens = [currentPrice];
-  } else if (strategy.strategy_id.includes('pc_spread')) {
+  } else if (strategy.strategy_id.includes("pc_spread")) {
     // Put Credit Spread
     const shortStrike = atmStrike - 5;
     const longStrike = atmStrike - 10;
     proposedLegs = [
-      { type: 'PUT', side: 'SELL', strike: shortStrike, dte: 28, delta: -0.25 },
-      { type: 'PUT', side: 'BUY', strike: longStrike, dte: 28, delta: -0.10 },
+      { type: "PUT", side: "SELL", strike: shortStrike, dte: 28, delta: -0.25 },
+      { type: "PUT", side: "BUY", strike: longStrike, dte: 28, delta: -0.1 },
     ];
     maxRisk = (shortStrike - longStrike) * 100 - 150; // Width minus credit
     maxProfit = 150; // Credit received
     breakevens = [shortStrike - 1.5];
-  } else if (strategy.strategy_id.includes('csp')) {
+  } else if (strategy.strategy_id.includes("csp")) {
     // Cash-Secured Put
     const strike = atmStrike - 5;
-    proposedLegs = [{ type: 'PUT', side: 'SELL', strike, dte: 28, delta: -0.25 }];
+    proposedLegs = [{ type: "PUT", side: "SELL", strike, dte: 28, delta: -0.25 }];
     maxRisk = strike * 100 - 150; // Strike minus credit
     maxProfit = 150; // Credit received
     breakevens = [strike - 1.5];
-  } else if (strategy.strategy_id.includes('condor')) {
+  } else if (strategy.strategy_id.includes("condor")) {
     // Iron Condor
     proposedLegs = [
-      { type: 'PUT', side: 'SELL', strike: atmStrike - 10, dte: 30, delta: -0.20 },
-      { type: 'PUT', side: 'BUY', strike: atmStrike - 15, dte: 30, delta: -0.10 },
-      { type: 'CALL', side: 'SELL', strike: atmStrike + 10, dte: 30, delta: 0.20 },
-      { type: 'CALL', side: 'BUY', strike: atmStrike + 15, dte: 30, delta: 0.10 },
+      { type: "PUT", side: "SELL", strike: atmStrike - 10, dte: 30, delta: -0.2 },
+      { type: "PUT", side: "BUY", strike: atmStrike - 15, dte: 30, delta: -0.1 },
+      { type: "CALL", side: "SELL", strike: atmStrike + 10, dte: 30, delta: 0.2 },
+      { type: "CALL", side: "BUY", strike: atmStrike + 15, dte: 30, delta: 0.1 },
     ];
     maxRisk = 350;
     maxProfit = 150;
@@ -307,7 +316,7 @@ function generateStrategyProposal(
     strategyId: strategy.strategy_id,
     strategyName: strategy.name,
     confidence: scoreData.confidence,
-    reasoning: scoreData.reasoning.join('\n'),
+    reasoning: scoreData.reasoning.join("\n"),
     proposedLegs,
     maxRisk,
     maxProfit,
@@ -322,24 +331,24 @@ function generateStrategyProposal(
 function generateAnalysis(
   technicals?: TechnicalIndicators,
   _optionsChain?: OptionsMetrics
-): { technicalSetup: string; ivEnvironment: string; riskLevel: 'low' | 'medium' | 'high' } {
-  let technicalSetup = 'Neutral';
-  let ivEnvironment = 'Normal';
-  let riskLevel: 'low' | 'medium' | 'high' = 'medium';
+): { technicalSetup: string; ivEnvironment: string; riskLevel: "low" | "medium" | "high" } {
+  let technicalSetup = "Neutral";
+  let ivEnvironment = "Normal";
+  let riskLevel: "low" | "medium" | "high" = "medium";
 
   // Technical setup
   if (technicals?.rsi) {
     if (technicals.rsi < 30) {
-      technicalSetup = 'Oversold - Bullish reversal potential';
-      riskLevel = 'low';
+      technicalSetup = "Oversold - Bullish reversal potential";
+      riskLevel = "low";
     } else if (technicals.rsi > 70) {
-      technicalSetup = 'Overbought - Bearish reversal potential';
-      riskLevel = 'high';
+      technicalSetup = "Overbought - Bearish reversal potential";
+      riskLevel = "high";
     } else if (technicals.sma20 && technicals.sma50) {
       if (technicals.sma20 > technicals.sma50) {
-        technicalSetup = 'Uptrend - Bullish momentum';
+        technicalSetup = "Uptrend - Bullish momentum";
       } else {
-        technicalSetup = 'Downtrend - Bearish momentum';
+        technicalSetup = "Downtrend - Bearish momentum";
       }
     }
   }
@@ -347,11 +356,11 @@ function generateAnalysis(
   // IV environment
   if (technicals?.iv_percentile) {
     if (technicals.iv_percentile > 75) {
-      ivEnvironment = 'Elevated IV - Favorable for premium selling';
-      riskLevel = 'high';
+      ivEnvironment = "Elevated IV - Favorable for premium selling";
+      riskLevel = "high";
     } else if (technicals.iv_percentile < 25) {
-      ivEnvironment = 'Low IV - Favorable for premium buying';
-      riskLevel = 'low';
+      ivEnvironment = "Low IV - Favorable for premium buying";
+      riskLevel = "low";
     } else {
       ivEnvironment = `Moderate IV (${technicals.iv_percentile.toFixed(0)}th percentile)`;
     }

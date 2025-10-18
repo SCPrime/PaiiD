@@ -1,6 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
-import { TrendingUp, Check, AlertCircle, ChevronDown, Save, BookmarkPlus, Trash2, Search } from "lucide-react";
+import {
+  TrendingUp,
+  Check,
+  AlertCircle,
+  ChevronDown,
+  Save,
+  BookmarkPlus,
+  Trash2,
+  Search,
+} from "lucide-react";
 import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
 import ConfirmDialog from "./ConfirmDialog";
@@ -54,11 +63,11 @@ export default function ExecuteTradeForm() {
 
   // Responsive sizing
   const responsiveSizes = {
-    headerLogo: isMobile ? '32px' : '42px',
+    headerLogo: isMobile ? "32px" : "42px",
     iconSize: isMobile ? 24 : 32,
-    titleSize: isMobile ? '20px' : '28px',
-    inputPadding: isMobile ? '14px 16px' : '12px 16px',
-    inputFontSize: '16px' // Always 16px to prevent iOS zoom
+    titleSize: isMobile ? "20px" : "28px",
+    inputPadding: isMobile ? "14px 16px" : "12px 16px",
+    inputFontSize: "16px", // Always 16px to prevent iOS zoom
   };
 
   const [symbol, setSymbol] = useState("SPY");
@@ -100,11 +109,15 @@ export default function ExecuteTradeForm() {
 
   // Consume pre-filled data from workflow navigation
   useEffect(() => {
-    if (pendingNavigation && pendingNavigation.workflow === 'execute-trade' && pendingNavigation.tradeData) {
+    if (
+      pendingNavigation &&
+      pendingNavigation.workflow === "execute-trade" &&
+      pendingNavigation.tradeData
+    ) {
       const { tradeData } = pendingNavigation;
 
       // eslint-disable-next-line no-console
-      console.info('[ExecuteTradeForm] Pre-filling form with trade data:', tradeData);
+      console.info("[ExecuteTradeForm] Pre-filling form with trade data:", tradeData);
 
       // Pre-fill form fields
       if (tradeData.symbol) setSymbol(tradeData.symbol);
@@ -113,18 +126,23 @@ export default function ExecuteTradeForm() {
 
       // Set order type and price based on available data
       if (tradeData.entryPrice && tradeData.entryPrice > 0) {
-        setOrderType('limit');
+        setOrderType("limit");
         setLimitPrice(tradeData.entryPrice.toString());
-      } else if (tradeData.orderType && (tradeData.orderType === 'market' || tradeData.orderType === 'limit')) {
+      } else if (
+        tradeData.orderType &&
+        (tradeData.orderType === "market" || tradeData.orderType === "limit")
+      ) {
         // Only use orderType if it's supported (market or limit)
         setOrderType(tradeData.orderType);
-        if (tradeData.orderType === 'limit' && tradeData.entryPrice) {
+        if (tradeData.orderType === "limit" && tradeData.entryPrice) {
           setLimitPrice(tradeData.entryPrice.toString());
         }
       }
 
       // Show success toast
-      showSuccess(`✅ Pre-filled trade data for ${tradeData.symbol}${tradeData.entryPrice ? ` at $${tradeData.entryPrice.toFixed(2)}` : ''}`);
+      showSuccess(
+        `✅ Pre-filled trade data for ${tradeData.symbol}${tradeData.entryPrice ? ` at $${tradeData.entryPrice.toFixed(2)}` : ""}`
+      );
 
       // Clear the pending navigation
       clearPendingNavigation();
@@ -170,7 +188,9 @@ export default function ExecuteTradeForm() {
 
     setLoadingOptionsChain(true);
     try {
-      const response = await fetch(`/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}&expiration=${expiry}`);
+      const response = await fetch(
+        `/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}&expiration=${expiry}`
+      );
       if (response.ok) {
         const data = await response.json();
         setAvailableStrikes(data.strikes || []);
@@ -205,7 +225,7 @@ export default function ExecuteTradeForm() {
     setSelectedTemplateId(templateId);
     if (templateId === "") return;
 
-    const template = templates.find(t => t.id === parseInt(templateId));
+    const template = templates.find((t) => t.id === parseInt(templateId));
     if (template) {
       setSymbol(template.symbol);
       setSide(template.side);
@@ -217,7 +237,7 @@ export default function ExecuteTradeForm() {
       // Mark template as used
       fetch(`/api/proxy/api/order-templates/${template.id}/use`, {
         method: "POST",
-      }).catch(err => console.error("Failed to mark template as used:", err));
+      }).catch((err) => console.error("Failed to mark template as used:", err));
     }
   };
 
@@ -265,7 +285,7 @@ export default function ExecuteTradeForm() {
 
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 
-      setTemplates(templates.filter(t => t.id !== templateId));
+      setTemplates(templates.filter((t) => t.id !== templateId));
       if (selectedTemplateId === templateId.toString()) {
         setSelectedTemplateId("");
       }
@@ -370,7 +390,9 @@ export default function ExecuteTradeForm() {
       if (data.duplicate) {
         showWarning(`⚠️ Duplicate request detected - Order not resubmitted`);
       } else if (data.accepted) {
-        showSuccess(`✅ ${pendingOrder.side.toUpperCase()} order accepted (Dry-Run): ${pendingOrder.qty} shares of ${pendingOrder.symbol}`);
+        showSuccess(
+          `✅ ${pendingOrder.side.toUpperCase()} order accepted (Dry-Run): ${pendingOrder.qty} shares of ${pendingOrder.symbol}`
+        );
       }
 
       // Add to order history
@@ -473,113 +495,150 @@ export default function ExecuteTradeForm() {
       <div style={{ padding: theme.spacing.lg }}>
         <Card glow="green">
           {/* Header with PaiiD Logo */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: theme.spacing.md,
-            marginBottom: theme.spacing.xl,
-            flexWrap: isMobile ? 'wrap' : 'nowrap'
-          }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: theme.spacing.md,
+              marginBottom: theme.spacing.xl,
+              flexWrap: isMobile ? "wrap" : "nowrap",
+            }}
+          >
             {/* PaiiD Logo */}
-            <div style={{ fontSize: responsiveSizes.headerLogo, fontWeight: '900', lineHeight: '1' }}>
-              <span style={{
-                background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))'
-              }}>P</span>
-              <span style={{
-                background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: '0 0 18px rgba(69, 240, 192, 0.8), 0 0 36px rgba(69, 240, 192, 0.4)',
-                animation: 'glow-ai 3s ease-in-out infinite'
-              }}>aii</span>
-              <span style={{
-                background: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))'
-              }}>D</span>
+            <div
+              style={{ fontSize: responsiveSizes.headerLogo, fontWeight: "900", lineHeight: "1" }}
+            >
+              <span
+                style={{
+                  background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  filter: "drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))",
+                }}
+              >
+                P
+              </span>
+              <span
+                style={{
+                  background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  textShadow: "0 0 18px rgba(69, 240, 192, 0.8), 0 0 36px rgba(69, 240, 192, 0.4)",
+                  animation: "glow-ai 3s ease-in-out infinite",
+                }}
+              >
+                aii
+              </span>
+              <span
+                style={{
+                  background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  filter: "drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))",
+                }}
+              >
+                D
+              </span>
             </div>
 
-            <div style={{
-              padding: theme.spacing.md,
-              background: 'rgba(16, 185, 129, 0.1)',
-              borderRadius: theme.borderRadius.lg,
-              border: '1px solid rgba(16, 185, 129, 0.2)'
-            }}>
-              <TrendingUp style={{ width: responsiveSizes.iconSize, height: responsiveSizes.iconSize, color: theme.colors.primary }} />
+            <div
+              style={{
+                padding: theme.spacing.md,
+                background: "rgba(16, 185, 129, 0.1)",
+                borderRadius: theme.borderRadius.lg,
+                border: "1px solid rgba(16, 185, 129, 0.2)",
+              }}
+            >
+              <TrendingUp
+                style={{
+                  width: responsiveSizes.iconSize,
+                  height: responsiveSizes.iconSize,
+                  color: theme.colors.primary,
+                }}
+              />
             </div>
             <div>
-              <h1 style={{
-                margin: 0,
-                fontSize: responsiveSizes.titleSize,
-                fontWeight: '700',
-                color: theme.colors.text
-              }}>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: responsiveSizes.titleSize,
+                  fontWeight: "700",
+                  color: theme.colors.text,
+                }}
+              >
                 Execute Trade
               </h1>
-              <p style={{
-                margin: 0,
-                marginTop: '4px',
-                color: theme.colors.textMuted,
-                fontSize: '14px'
-              }}>
+              <p
+                style={{
+                  margin: 0,
+                  marginTop: "4px",
+                  color: theme.colors.textMuted,
+                  fontSize: "14px",
+                }}
+              >
                 Place orders with dry-run mode enabled
               </p>
             </div>
           </div>
 
           {/* Template Selection and Management */}
-          <div style={{
-            marginBottom: theme.spacing.xl,
-            padding: theme.spacing.lg,
-            background: theme.background.input,
-            border: `1px solid ${theme.colors.border}`,
-            borderRadius: theme.borderRadius.lg
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: theme.spacing.md
-            }}>
-              <label style={{
-                fontSize: '14px',
-                fontWeight: '600',
-                color: theme.colors.textMuted
-              }}>
-                <BookmarkPlus size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
+          <div
+            style={{
+              marginBottom: theme.spacing.xl,
+              padding: theme.spacing.lg,
+              background: theme.background.input,
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: theme.borderRadius.lg,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: theme.spacing.md,
+              }}
+            >
+              <label
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: theme.colors.textMuted,
+                }}
+              >
+                <BookmarkPlus
+                  size={16}
+                  style={{ display: "inline", marginRight: "8px", verticalAlign: "middle" }}
+                />
                 Order Templates
               </label>
               <Button
                 variant="secondary"
                 onClick={() => setShowSaveTemplate(!showSaveTemplate)}
-                style={{ fontSize: '12px', padding: '6px 12px' }}
+                style={{ fontSize: "12px", padding: "6px 12px" }}
               >
-                <Save size={14} style={{ marginRight: '4px' }} />
+                <Save size={14} style={{ marginRight: "4px" }} />
                 Save Current as Template
               </Button>
             </div>
 
             {/* Template Selector */}
-            <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+            <div style={{ display: "flex", gap: theme.spacing.sm }}>
               <select
                 value={selectedTemplateId}
                 onChange={(e) => handleTemplateSelect(e.target.value)}
                 style={{
                   flex: 1,
-                  padding: '10px 14px',
+                  padding: "10px 14px",
                   background: theme.background.card,
                   border: `1px solid ${theme.colors.border}`,
                   borderRadius: theme.borderRadius.md,
                   color: theme.colors.text,
-                  fontSize: '14px'
+                  fontSize: "14px",
                 }}
               >
                 <option value="">-- Select a template --</option>
-                {templates.map(t => (
+                {templates.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name} ({t.symbol} - {t.side.toUpperCase()})
                   </option>
@@ -589,7 +648,7 @@ export default function ExecuteTradeForm() {
                 <Button
                   variant="danger"
                   onClick={() => handleDeleteTemplate(parseInt(selectedTemplateId))}
-                  style={{ padding: '10px' }}
+                  style={{ padding: "10px" }}
                 >
                   <Trash2 size={16} />
                 </Button>
@@ -598,19 +657,23 @@ export default function ExecuteTradeForm() {
 
             {/* Save Template Modal */}
             {showSaveTemplate && (
-              <div style={{
-                marginTop: theme.spacing.md,
-                padding: theme.spacing.md,
-                background: theme.background.card,
-                border: `1px solid ${theme.colors.primary}`,
-                borderRadius: theme.borderRadius.md
-              }}>
-                <h4 style={{
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: theme.colors.text,
-                  marginBottom: theme.spacing.sm
-                }}>
+              <div
+                style={{
+                  marginTop: theme.spacing.md,
+                  padding: theme.spacing.md,
+                  background: theme.background.card,
+                  border: `1px solid ${theme.colors.primary}`,
+                  borderRadius: theme.borderRadius.md,
+                }}
+              >
+                <h4
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: theme.colors.text,
+                    marginBottom: theme.spacing.sm,
+                  }}
+                >
                   Save as Template
                 </h4>
                 <input
@@ -619,14 +682,14 @@ export default function ExecuteTradeForm() {
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
                   style={{
-                    width: '100%',
-                    padding: '8px 12px',
+                    width: "100%",
+                    padding: "8px 12px",
                     marginBottom: theme.spacing.sm,
                     background: theme.background.input,
                     border: `1px solid ${theme.colors.border}`,
                     borderRadius: theme.borderRadius.sm,
                     color: theme.colors.text,
-                    fontSize: '13px'
+                    fontSize: "13px",
                   }}
                 />
                 <input
@@ -635,21 +698,25 @@ export default function ExecuteTradeForm() {
                   value={templateDescription}
                   onChange={(e) => setTemplateDescription(e.target.value)}
                   style={{
-                    width: '100%',
-                    padding: '8px 12px',
+                    width: "100%",
+                    padding: "8px 12px",
                     marginBottom: theme.spacing.sm,
                     background: theme.background.input,
                     border: `1px solid ${theme.colors.border}`,
                     borderRadius: theme.borderRadius.sm,
                     color: theme.colors.text,
-                    fontSize: '13px'
+                    fontSize: "13px",
                   }}
                 />
-                <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+                <div style={{ display: "flex", gap: theme.spacing.sm }}>
                   <Button variant="primary" onClick={handleSaveTemplate} style={{ flex: 1 }}>
                     Save
                   </Button>
-                  <Button variant="secondary" onClick={() => setShowSaveTemplate(false)} style={{ flex: 1 }}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowSaveTemplate(false)}
+                    style={{ flex: 1 }}
+                  >
                     Cancel
                   </Button>
                 </div>
@@ -658,37 +725,41 @@ export default function ExecuteTradeForm() {
           </div>
 
           {/* Asset Class Toggle (Stock vs Options) */}
-          <div style={{
-            marginBottom: theme.spacing.xl,
-            padding: theme.spacing.lg,
-            background: theme.background.input,
-            border: `1px solid ${theme.colors.border}`,
-            borderRadius: theme.borderRadius.lg
-          }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '600',
-              color: theme.colors.textMuted,
-              marginBottom: theme.spacing.md
-            }}>
+          <div
+            style={{
+              marginBottom: theme.spacing.xl,
+              padding: theme.spacing.lg,
+              background: theme.background.input,
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: theme.borderRadius.lg,
+            }}
+          >
+            <label
+              style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "600",
+                color: theme.colors.textMuted,
+                marginBottom: theme.spacing.md,
+              }}
+            >
               Asset Type
             </label>
-            <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+            <div style={{ display: "flex", gap: theme.spacing.sm }}>
               <button
                 type="button"
                 onClick={() => setAssetClass("stock")}
                 style={{
                   flex: 1,
-                  padding: '12px',
+                  padding: "12px",
                   background: assetClass === "stock" ? theme.colors.primary : theme.background.card,
                   border: `2px solid ${assetClass === "stock" ? theme.colors.primary : theme.colors.border}`,
                   borderRadius: theme.borderRadius.md,
-                  color: assetClass === "stock" ? '#0f172a' : theme.colors.text,
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: theme.transitions.normal
+                  color: assetClass === "stock" ? "#0f172a" : theme.colors.text,
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: theme.transitions.normal,
                 }}
               >
                 Stock
@@ -698,15 +769,16 @@ export default function ExecuteTradeForm() {
                 onClick={() => setAssetClass("option")}
                 style={{
                   flex: 1,
-                  padding: '12px',
-                  background: assetClass === "option" ? theme.colors.primary : theme.background.card,
+                  padding: "12px",
+                  background:
+                    assetClass === "option" ? theme.colors.primary : theme.background.card,
                   border: `2px solid ${assetClass === "option" ? theme.colors.primary : theme.colors.border}`,
                   borderRadius: theme.borderRadius.md,
-                  color: assetClass === "option" ? '#0f172a' : theme.colors.text,
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: theme.transitions.normal
+                  color: assetClass === "option" ? "#0f172a" : theme.colors.text,
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: theme.transitions.normal,
                 }}
               >
                 Options
@@ -715,121 +787,41 @@ export default function ExecuteTradeForm() {
           </div>
 
           {/* Form */}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.xl }}>
-              {/* Form Grid */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-                gap: theme.spacing.xl
-              }}>
-                {/* Symbol */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: '600',
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: theme.spacing.xl }}
+          >
+            {/* Form Grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+                gap: theme.spacing.xl,
+              }}
+            >
+              {/* Symbol */}
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: "600",
                     color: theme.colors.textMuted,
-                    marginBottom: theme.spacing.sm
-                  }}>
-                    Symbol
-                  </label>
-                  <div style={{ display: 'flex', gap: theme.spacing.sm }}>
-                    <input
-                      type="text"
-                      value={symbol}
-                      onChange={(e) => setSymbol(e.target.value)}
-                      placeholder="SPY, AAPL, QQQ..."
-                      disabled={loading}
-                      required
-                      style={{
-                        flex: 1,
-                        padding: responsiveSizes.inputPadding,
-                        background: theme.background.input,
-                        border: `1px solid ${theme.colors.border}`,
-                        borderRadius: theme.borderRadius.md,
-                        color: theme.colors.text,
-                        fontSize: responsiveSizes.inputFontSize,
-                        transition: theme.transitions.normal,
-                        opacity: loading ? 0.5 : 1
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => {
-                        if (symbol.trim()) {
-                          setShowStockLookup(!showStockLookup);
-                        } else {
-                          showWarning("⚠️ Enter a symbol first");
-                        }
-                      }}
-                      disabled={loading}
-                      style={{
-                        padding: isMobile ? '12px' : '12px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <Search size={18} />
-                      {!isMobile && <span>Research</span>}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Side */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: theme.colors.textMuted,
-                    marginBottom: theme.spacing.sm
-                  }}>
-                    Side
-                  </label>
-                  <select
-                    value={side}
-                    onChange={(e) => setSide(e.target.value as "buy" | "sell")}
-                    disabled={loading}
-                    style={{
-                      width: '100%',
-                      padding: responsiveSizes.inputPadding,
-                      background: theme.background.input,
-                      border: `1px solid ${theme.colors.border}`,
-                      borderRadius: theme.borderRadius.md,
-                      color: theme.colors.text,
-                      fontSize: responsiveSizes.inputFontSize,
-                      transition: theme.transitions.normal,
-                      opacity: loading ? 0.5 : 1
-                    }}
-                  >
-                    <option value="buy">Buy</option>
-                    <option value="sell">Sell</option>
-                  </select>
-                </div>
-
-                {/* Quantity */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: theme.colors.textMuted,
-                    marginBottom: theme.spacing.sm
-                  }}>
-                    Quantity
-                  </label>
+                    marginBottom: theme.spacing.sm,
+                  }}
+                >
+                  Symbol
+                </label>
+                <div style={{ display: "flex", gap: theme.spacing.sm }}>
                   <input
-                    type="number"
-                    value={qty}
-                    onChange={(e) => setQty(parseInt(e.target.value) || 0)}
-                    min="1"
-                    step="1"
+                    type="text"
+                    value={symbol}
+                    onChange={(e) => setSymbol(e.target.value)}
+                    placeholder="SPY, AAPL, QQQ..."
                     disabled={loading}
                     required
                     style={{
-                      width: '100%',
+                      flex: 1,
                       padding: responsiveSizes.inputPadding,
                       background: theme.background.input,
                       border: `1px solid ${theme.colors.border}`,
@@ -837,177 +829,158 @@ export default function ExecuteTradeForm() {
                       color: theme.colors.text,
                       fontSize: responsiveSizes.inputFontSize,
                       transition: theme.transitions.normal,
-                      opacity: loading ? 0.5 : 1
+                      opacity: loading ? 0.5 : 1,
                     }}
                   />
-                </div>
-
-                {/* Order Type */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: theme.colors.textMuted,
-                    marginBottom: theme.spacing.sm
-                  }}>
-                    Order Type
-                  </label>
-                  <select
-                    value={orderType}
-                    onChange={(e) => setOrderType(e.target.value as "market" | "limit")}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      if (symbol.trim()) {
+                        setShowStockLookup(!showStockLookup);
+                      } else {
+                        showWarning("⚠️ Enter a symbol first");
+                      }
+                    }}
                     disabled={loading}
                     style={{
-                      width: '100%',
-                      padding: responsiveSizes.inputPadding,
-                      background: theme.background.input,
-                      border: `1px solid ${theme.colors.border}`,
-                      borderRadius: theme.borderRadius.md,
-                      color: theme.colors.text,
-                      fontSize: responsiveSizes.inputFontSize,
-                      transition: theme.transitions.normal,
-                      opacity: loading ? 0.5 : 1
+                      padding: isMobile ? "12px" : "12px 16px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
                     }}
                   >
-                    <option value="market">Market</option>
-                    <option value="limit">Limit</option>
-                  </select>
+                    <Search size={18} />
+                    {!isMobile && <span>Research</span>}
+                  </Button>
                 </div>
+              </div>
 
-                {/* Options-specific fields (conditional) */}
-                {assetClass === "option" && (
-                  <>
-                    {/* Call/Put Selector */}
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: theme.colors.textMuted,
-                        marginBottom: theme.spacing.sm
-                      }}>
-                        Option Type
-                      </label>
-                      <select
-                        value={optionType}
-                        onChange={(e) => setOptionType(e.target.value as "call" | "put")}
-                        disabled={loading}
-                        style={{
-                          width: '100%',
-                          padding: responsiveSizes.inputPadding,
-                          background: theme.background.input,
-                          border: `1px solid ${theme.colors.border}`,
-                          borderRadius: theme.borderRadius.md,
-                          color: theme.colors.text,
-                          fontSize: responsiveSizes.inputFontSize,
-                          transition: theme.transitions.normal,
-                          opacity: loading ? 0.5 : 1
-                        }}
-                      >
-                        <option value="call">Call</option>
-                        <option value="put">Put</option>
-                      </select>
-                    </div>
+              {/* Side */}
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: theme.colors.textMuted,
+                    marginBottom: theme.spacing.sm,
+                  }}
+                >
+                  Side
+                </label>
+                <select
+                  value={side}
+                  onChange={(e) => setSide(e.target.value as "buy" | "sell")}
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: responsiveSizes.inputPadding,
+                    background: theme.background.input,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.borderRadius.md,
+                    color: theme.colors.text,
+                    fontSize: responsiveSizes.inputFontSize,
+                    transition: theme.transitions.normal,
+                    opacity: loading ? 0.5 : 1,
+                  }}
+                >
+                  <option value="buy">Buy</option>
+                  <option value="sell">Sell</option>
+                </select>
+              </div>
 
-                    {/* Expiration Date */}
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: theme.colors.textMuted,
-                        marginBottom: theme.spacing.sm
-                      }}>
-                        Expiration Date
-                      </label>
-                      <select
-                        value={expirationDate}
-                        onChange={(e) => setExpirationDate(e.target.value)}
-                        disabled={loading || loadingOptionsChain || availableExpirations.length === 0}
-                        style={{
-                          width: '100%',
-                          padding: responsiveSizes.inputPadding,
-                          background: theme.background.input,
-                          border: `1px solid ${theme.colors.border}`,
-                          borderRadius: theme.borderRadius.md,
-                          color: theme.colors.text,
-                          fontSize: responsiveSizes.inputFontSize,
-                          transition: theme.transitions.normal,
-                          opacity: (loading || loadingOptionsChain) ? 0.5 : 1
-                        }}
-                      >
-                        {availableExpirations.length === 0 ? (
-                          <option value="">Loading expirations...</option>
-                        ) : (
-                          availableExpirations.map(exp => (
-                            <option key={exp} value={exp}>{exp}</option>
-                          ))
-                        )}
-                      </select>
-                    </div>
+              {/* Quantity */}
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: theme.colors.textMuted,
+                    marginBottom: theme.spacing.sm,
+                  }}
+                >
+                  Quantity
+                </label>
+                <input
+                  type="number"
+                  value={qty}
+                  onChange={(e) => setQty(parseInt(e.target.value) || 0)}
+                  min="1"
+                  step="1"
+                  disabled={loading}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: responsiveSizes.inputPadding,
+                    background: theme.background.input,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.borderRadius.md,
+                    color: theme.colors.text,
+                    fontSize: responsiveSizes.inputFontSize,
+                    transition: theme.transitions.normal,
+                    opacity: loading ? 0.5 : 1,
+                  }}
+                />
+              </div>
 
-                    {/* Strike Price */}
-                    <div style={{ gridColumn: isMobile ? 'auto' : 'span 2' }}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: theme.colors.textMuted,
-                        marginBottom: theme.spacing.sm
-                      }}>
-                        Strike Price
-                      </label>
-                      <select
-                        value={strikePrice}
-                        onChange={(e) => setStrikePrice(e.target.value)}
-                        disabled={loading || loadingOptionsChain || availableStrikes.length === 0}
-                        style={{
-                          width: '100%',
-                          padding: responsiveSizes.inputPadding,
-                          background: theme.background.input,
-                          border: `1px solid ${theme.colors.border}`,
-                          borderRadius: theme.borderRadius.md,
-                          color: theme.colors.text,
-                          fontSize: responsiveSizes.inputFontSize,
-                          transition: theme.transitions.normal,
-                          opacity: (loading || loadingOptionsChain) ? 0.5 : 1
-                        }}
-                      >
-                        {availableStrikes.length === 0 ? (
-                          <option value="">Select expiration first...</option>
-                        ) : (
-                          availableStrikes.map(strike => (
-                            <option key={strike} value={strike}>${strike.toFixed(2)}</option>
-                          ))
-                        )}
-                      </select>
-                    </div>
-                  </>
-                )}
+              {/* Order Type */}
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: theme.colors.textMuted,
+                    marginBottom: theme.spacing.sm,
+                  }}
+                >
+                  Order Type
+                </label>
+                <select
+                  value={orderType}
+                  onChange={(e) => setOrderType(e.target.value as "market" | "limit")}
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: responsiveSizes.inputPadding,
+                    background: theme.background.input,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.borderRadius.md,
+                    color: theme.colors.text,
+                    fontSize: responsiveSizes.inputFontSize,
+                    transition: theme.transitions.normal,
+                    opacity: loading ? 0.5 : 1,
+                  }}
+                >
+                  <option value="market">Market</option>
+                  <option value="limit">Limit</option>
+                </select>
+              </div>
 
-                {/* Limit Price (conditional) */}
-                {orderType === "limit" && (
-                  <div style={{ gridColumn: isMobile ? 'auto' : 'span 2' }}>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: theme.colors.textMuted,
-                      marginBottom: theme.spacing.sm
-                    }}>
-                      Limit Price
-                    </label>
-                    <input
-                      type="number"
-                      value={limitPrice}
-                      onChange={(e) => setLimitPrice(e.target.value)}
-                      min="0.01"
-                      step="0.01"
-                      placeholder="0.00"
-                      disabled={loading}
-                      required
+              {/* Options-specific fields (conditional) */}
+              {assetClass === "option" && (
+                <>
+                  {/* Call/Put Selector */}
+                  <div>
+                    <label
                       style={{
-                        width: '100%',
+                        display: "block",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: theme.colors.textMuted,
+                        marginBottom: theme.spacing.sm,
+                      }}
+                    >
+                      Option Type
+                    </label>
+                    <select
+                      value={optionType}
+                      onChange={(e) => setOptionType(e.target.value as "call" | "put")}
+                      disabled={loading}
+                      style={{
+                        width: "100%",
                         padding: responsiveSizes.inputPadding,
                         background: theme.background.input,
                         border: `1px solid ${theme.colors.border}`,
@@ -1015,250 +988,403 @@ export default function ExecuteTradeForm() {
                         color: theme.colors.text,
                         fontSize: responsiveSizes.inputFontSize,
                         transition: theme.transitions.normal,
-                        opacity: loading ? 0.5 : 1
+                        opacity: loading ? 0.5 : 1,
                       }}
-                    />
+                    >
+                      <option value="call">Call</option>
+                      <option value="put">Put</option>
+                    </select>
                   </div>
-                )}
-              </div>
 
-              {/* Options Greeks Preview (conditional) */}
-              {assetClass === "option" && symbol.trim() && strikePrice && expirationDate && (
-                <div style={{
+                  {/* Expiration Date */}
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: theme.colors.textMuted,
+                        marginBottom: theme.spacing.sm,
+                      }}
+                    >
+                      Expiration Date
+                    </label>
+                    <select
+                      value={expirationDate}
+                      onChange={(e) => setExpirationDate(e.target.value)}
+                      disabled={loading || loadingOptionsChain || availableExpirations.length === 0}
+                      style={{
+                        width: "100%",
+                        padding: responsiveSizes.inputPadding,
+                        background: theme.background.input,
+                        border: `1px solid ${theme.colors.border}`,
+                        borderRadius: theme.borderRadius.md,
+                        color: theme.colors.text,
+                        fontSize: responsiveSizes.inputFontSize,
+                        transition: theme.transitions.normal,
+                        opacity: loading || loadingOptionsChain ? 0.5 : 1,
+                      }}
+                    >
+                      {availableExpirations.length === 0 ? (
+                        <option value="">Loading expirations...</option>
+                      ) : (
+                        availableExpirations.map((exp) => (
+                          <option key={exp} value={exp}>
+                            {exp}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+
+                  {/* Strike Price */}
+                  <div style={{ gridColumn: isMobile ? "auto" : "span 2" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: theme.colors.textMuted,
+                        marginBottom: theme.spacing.sm,
+                      }}
+                    >
+                      Strike Price
+                    </label>
+                    <select
+                      value={strikePrice}
+                      onChange={(e) => setStrikePrice(e.target.value)}
+                      disabled={loading || loadingOptionsChain || availableStrikes.length === 0}
+                      style={{
+                        width: "100%",
+                        padding: responsiveSizes.inputPadding,
+                        background: theme.background.input,
+                        border: `1px solid ${theme.colors.border}`,
+                        borderRadius: theme.borderRadius.md,
+                        color: theme.colors.text,
+                        fontSize: responsiveSizes.inputFontSize,
+                        transition: theme.transitions.normal,
+                        opacity: loading || loadingOptionsChain ? 0.5 : 1,
+                      }}
+                    >
+                      {availableStrikes.length === 0 ? (
+                        <option value="">Select expiration first...</option>
+                      ) : (
+                        availableStrikes.map((strike) => (
+                          <option key={strike} value={strike}>
+                            ${strike.toFixed(2)}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {/* Limit Price (conditional) */}
+              {orderType === "limit" && (
+                <div style={{ gridColumn: isMobile ? "auto" : "span 2" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: theme.colors.textMuted,
+                      marginBottom: theme.spacing.sm,
+                    }}
+                  >
+                    Limit Price
+                  </label>
+                  <input
+                    type="number"
+                    value={limitPrice}
+                    onChange={(e) => setLimitPrice(e.target.value)}
+                    min="0.01"
+                    step="0.01"
+                    placeholder="0.00"
+                    disabled={loading}
+                    required
+                    style={{
+                      width: "100%",
+                      padding: responsiveSizes.inputPadding,
+                      background: theme.background.input,
+                      border: `1px solid ${theme.colors.border}`,
+                      borderRadius: theme.borderRadius.md,
+                      color: theme.colors.text,
+                      fontSize: responsiveSizes.inputFontSize,
+                      transition: theme.transitions.normal,
+                      opacity: loading ? 0.5 : 1,
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Options Greeks Preview (conditional) */}
+            {assetClass === "option" && symbol.trim() && strikePrice && expirationDate && (
+              <div
+                style={{
                   marginTop: theme.spacing.lg,
                   padding: theme.spacing.lg,
                   background: theme.background.input,
                   border: `1px solid ${theme.colors.border}`,
-                  borderRadius: theme.borderRadius.lg
-                }}>
-                  <h4 style={{
+                  borderRadius: theme.borderRadius.lg,
+                }}
+              >
+                <h4
+                  style={{
                     margin: 0,
                     marginBottom: theme.spacing.md,
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    color: theme.colors.text
-                  }}>
-                    Live Greeks Preview
-                  </h4>
-                  <OptionsGreeksDisplay
-                    symbol={symbol.trim().toUpperCase()}
-                    strike={parseFloat(strikePrice)}
-                    expiry={expirationDate}
-                    optionType={optionType}
-                  />
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: theme.spacing.md, marginTop: theme.spacing.lg }}>
-                <Button type="submit" loading={loading} variant="primary" style={{ flex: 1 }}>
-                  {loading ? 'Processing...' : 'Submit Order (Dry-Run)'}
-                </Button>
-
-                {lastRequestId && (
-                  <Button
-                    type="button"
-                    onClick={testDuplicate}
-                    loading={loading}
-                    variant="secondary"
-                  >
-                    Test Duplicate
-                  </Button>
-                )}
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: theme.colors.text,
+                  }}
+                >
+                  Live Greeks Preview
+                </h4>
+                <OptionsGreeksDisplay
+                  symbol={symbol.trim().toUpperCase()}
+                  strike={parseFloat(strikePrice)}
+                  expiry={expirationDate}
+                  optionType={optionType}
+                />
               </div>
-            </form>
+            )}
 
-            {/* Last Request ID */}
-            {lastRequestId && (
-              <div style={{
+            {/* Action Buttons */}
+            <div style={{ display: "flex", gap: theme.spacing.md, marginTop: theme.spacing.lg }}>
+              <Button type="submit" loading={loading} variant="primary" style={{ flex: 1 }}>
+                {loading ? "Processing..." : "Submit Order (Dry-Run)"}
+              </Button>
+
+              {lastRequestId && (
+                <Button type="button" onClick={testDuplicate} loading={loading} variant="secondary">
+                  Test Duplicate
+                </Button>
+              )}
+            </div>
+          </form>
+
+          {/* Last Request ID */}
+          {lastRequestId && (
+            <div
+              style={{
                 marginTop: theme.spacing.lg,
                 padding: theme.spacing.md,
                 background: theme.background.input,
                 border: `1px solid ${theme.colors.border}`,
                 borderRadius: theme.borderRadius.sm,
-                fontSize: '12px',
+                fontSize: "12px",
                 color: theme.colors.textMuted,
-                fontFamily: 'monospace'
-              }}>
-                <strong>Last Request ID:</strong> {lastRequestId}
-              </div>
-            )}
+                fontFamily: "monospace",
+              }}
+            >
+              <strong>Last Request ID:</strong> {lastRequestId}
+            </div>
+          )}
 
-            {/* Success Response */}
-            {response && !error && (
-              <div style={{ marginTop: theme.spacing.lg }}>
-                <div style={{
+          {/* Success Response */}
+          {response && !error && (
+            <div style={{ marginTop: theme.spacing.lg }}>
+              <div
+                style={{
                   padding: theme.spacing.lg,
-                  background: response.duplicate ? 'rgba(255, 136, 0, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                  background: response.duplicate
+                    ? "rgba(255, 136, 0, 0.2)"
+                    : "rgba(16, 185, 129, 0.2)",
                   border: `2px solid ${response.duplicate ? theme.colors.warning : theme.colors.primary}`,
                   borderRadius: theme.borderRadius.md,
                   boxShadow: response.duplicate ? theme.glow.orange : theme.glow.green,
-                  marginBottom: theme.spacing.md
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: theme.spacing.md }}>
-                    <div style={{
+                  marginBottom: theme.spacing.md,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "flex-start", gap: theme.spacing.md }}>
+                  <div
+                    style={{
                       padding: theme.spacing.sm,
-                      background: response.duplicate ? 'rgba(255, 136, 0, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                      borderRadius: theme.borderRadius.sm
-                    }}>
-                      {response.duplicate ? (
-                        <AlertCircle style={{ width: 24, height: 24, color: theme.colors.warning }} />
-                      ) : (
-                        <Check style={{ width: 24, height: 24, color: theme.colors.primary }} />
-                      )}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{
-                        fontSize: '18px',
-                        fontWeight: '700',
+                      background: response.duplicate
+                        ? "rgba(255, 136, 0, 0.2)"
+                        : "rgba(16, 185, 129, 0.2)",
+                      borderRadius: theme.borderRadius.sm,
+                    }}
+                  >
+                    {response.duplicate ? (
+                      <AlertCircle style={{ width: 24, height: 24, color: theme.colors.warning }} />
+                    ) : (
+                      <Check style={{ width: 24, height: 24, color: theme.colors.primary }} />
+                    )}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h3
+                      style={{
+                        fontSize: "18px",
+                        fontWeight: "700",
                         color: response.duplicate ? theme.colors.warning : theme.colors.primary,
-                        marginBottom: theme.spacing.sm
-                      }}>
-                        {response.duplicate ? "⚠️ Duplicate Detected" : "✅ Order Accepted"}
-                      </h3>
-                      <div style={{ fontSize: '14px', color: theme.colors.textMuted }}>
-                        <p style={{ marginBottom: theme.spacing.xs }}>
-                          <strong>Status:</strong> {response.accepted ? "Accepted" : "Rejected"}
+                        marginBottom: theme.spacing.sm,
+                      }}
+                    >
+                      {response.duplicate ? "⚠️ Duplicate Detected" : "✅ Order Accepted"}
+                    </h3>
+                    <div style={{ fontSize: "14px", color: theme.colors.textMuted }}>
+                      <p style={{ marginBottom: theme.spacing.xs }}>
+                        <strong>Status:</strong> {response.accepted ? "Accepted" : "Rejected"}
+                      </p>
+                      {response.dryRun && (
+                        <p>
+                          <strong>Mode:</strong>{" "}
+                          <span style={{ color: theme.colors.info }}>Dry Run</span>
                         </p>
-                        {response.dryRun && (
-                          <p><strong>Mode:</strong> <span style={{ color: theme.colors.info }}>Dry Run</span>
-                          </p>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <button
-                  onClick={() => setShowRawJson(!showRawJson)}
+              <button
+                onClick={() => setShowRawJson(!showRawJson)}
+                style={{
+                  width: "100%",
+                  padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+                  background: theme.background.input,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: theme.borderRadius.md,
+                  color: theme.colors.textMuted,
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: theme.transitions.normal,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span>View Raw Response</span>
+                <ChevronDown
                   style={{
-                    width: '100%',
-                    padding: `${theme.spacing.md} ${theme.spacing.lg}`,
-                    background: theme.background.input,
-                    border: `1px solid ${theme.colors.border}`,
-                    borderRadius: theme.borderRadius.md,
-                    color: theme.colors.textMuted,
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: theme.transitions.normal,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                >
-                  <span>View Raw Response</span>
-                  <ChevronDown style={{
                     width: 20,
                     height: 20,
-                    transform: showRawJson ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: theme.transitions.normal
-                  }} />
-                </button>
+                    transform: showRawJson ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: theme.transitions.normal,
+                  }}
+                />
+              </button>
 
-                {showRawJson && (
-                  <div style={{
+              {showRawJson && (
+                <div
+                  style={{
                     marginTop: theme.spacing.md,
                     padding: theme.spacing.md,
                     background: theme.background.input,
                     border: `1px solid ${theme.colors.border}`,
                     borderRadius: theme.borderRadius.md,
-                    overflowX: 'auto'
-                  }}>
-                    <pre style={{
-                      fontSize: '12px',
-                      fontFamily: 'monospace',
+                    overflowX: "auto",
+                  }}
+                >
+                  <pre
+                    style={{
+                      fontSize: "12px",
+                      fontFamily: "monospace",
                       margin: 0,
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                      color: theme.colors.textMuted
-                    }}>
-                      {JSON.stringify(response, null, 2)}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            )}
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                      color: theme.colors.textMuted,
+                    }}
+                  >
+                    {JSON.stringify(response, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
 
-            {/* Error Display */}
-            {error && (
-              <div style={{
+          {/* Error Display */}
+          {error && (
+            <div
+              style={{
                 marginTop: theme.spacing.lg,
                 padding: theme.spacing.lg,
-                background: 'rgba(255, 68, 68, 0.2)',
+                background: "rgba(255, 68, 68, 0.2)",
                 border: `2px solid ${theme.colors.danger}`,
                 borderRadius: theme.borderRadius.md,
-                boxShadow: theme.glow.red
-              }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: theme.spacing.md }}>
-                  <div style={{
+                boxShadow: theme.glow.red,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", gap: theme.spacing.md }}>
+                <div
+                  style={{
                     padding: theme.spacing.sm,
-                    background: 'rgba(255, 68, 68, 0.2)',
-                    borderRadius: theme.borderRadius.sm
-                  }}>
-                    <AlertCircle style={{ width: 24, height: 24, color: theme.colors.danger }} />
-                  </div>
-                  <div>
-                    <h3 style={{
-                      fontSize: '18px',
-                      fontWeight: '700',
+                    background: "rgba(255, 68, 68, 0.2)",
+                    borderRadius: theme.borderRadius.sm,
+                  }}
+                >
+                  <AlertCircle style={{ width: 24, height: 24, color: theme.colors.danger }} />
+                </div>
+                <div>
+                  <h3
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: "700",
                       color: theme.colors.danger,
-                      marginBottom: theme.spacing.sm
-                    }}>
-                      ❌ Error
-                    </h3>
-                    <p style={{ fontSize: '14px', color: theme.colors.text, margin: 0 }}>
-                      {error}
-                    </p>
-                  </div>
+                      marginBottom: theme.spacing.sm,
+                    }}
+                  >
+                    ❌ Error
+                  </h3>
+                  <p style={{ fontSize: "14px", color: theme.colors.text, margin: 0 }}>{error}</p>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Stock Research Section */}
-            {showStockLookup && symbol.trim() && (
-              <div style={{
+          {/* Stock Research Section */}
+          {showStockLookup && symbol.trim() && (
+            <div
+              style={{
                 marginTop: theme.spacing.xl,
                 padding: theme.spacing.lg,
                 background: theme.background.input,
                 border: `1px solid ${theme.colors.border}`,
-                borderRadius: theme.borderRadius.lg
-              }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                borderRadius: theme.borderRadius.lg,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   marginBottom: theme.spacing.lg,
                   paddingBottom: theme.spacing.md,
-                  borderBottom: `1px solid ${theme.colors.border}`
-                }}>
-                  <h3 style={{
+                  borderBottom: `1px solid ${theme.colors.border}`,
+                }}
+              >
+                <h3
+                  style={{
                     margin: 0,
-                    fontSize: '20px',
-                    fontWeight: '700',
-                    color: theme.colors.text
-                  }}>
-                    Research: {symbol.toUpperCase()}
-                  </h3>
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowStockLookup(false)}
-                    style={{ fontSize: '14px', padding: '8px 16px' }}
-                  >
-                    Close
-                  </Button>
-                </div>
-                <StockLookup
-                  initialSymbol={symbol.trim().toUpperCase()}
-                  showChart={true}
-                  showIndicators={true}
-                  showCompanyInfo={true}
-                  showNews={false}
-                  enableAIAnalysis={true}
-                  onSymbolSelect={(sym) => setSymbol(sym)}
-                />
+                    fontSize: "20px",
+                    fontWeight: "700",
+                    color: theme.colors.text,
+                  }}
+                >
+                  Research: {symbol.toUpperCase()}
+                </h3>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowStockLookup(false)}
+                  style={{ fontSize: "14px", padding: "8px 16px" }}
+                >
+                  Close
+                </Button>
               </div>
-            )}
+              <StockLookup
+                initialSymbol={symbol.trim().toUpperCase()}
+                showChart={true}
+                showIndicators={true}
+                showCompanyInfo={true}
+                showNews={false}
+                enableAIAnalysis={true}
+                onSymbolSelect={(sym) => setSymbol(sym)}
+              />
+            </div>
+          )}
         </Card>
       </div>
     </>

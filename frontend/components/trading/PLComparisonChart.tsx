@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { createChart, IChartApi, LineData } from 'lightweight-charts';
-import type { TheoreticalPayoff, PLComparison, PositionTracking, PLViewMode } from '@/types/pnl';
+import { useState, useEffect, useRef } from "react";
+import { createChart, IChartApi, LineData } from "lightweight-charts";
+import type { TheoreticalPayoff, PLComparison, PositionTracking, PLViewMode } from "@/types/pnl";
 
 /**
  * P&L Comparison Chart
@@ -34,10 +34,10 @@ export default function PLComparisonChart({
 
   // Auto-refresh for live positions
   useEffect(() => {
-    if (mode === 'live-position' && autoRefresh) {
+    if (mode === "live-position" && autoRefresh) {
       const interval = setInterval(() => {
         // Trigger refresh - in production, refetch position data
-        console.info('Refreshing live position data...');
+        console.info("Refreshing live position data...");
       }, 5000);
 
       return () => clearInterval(interval);
@@ -53,11 +53,11 @@ export default function PLComparisonChart({
       chartRef.current.remove();
     }
 
-    if (mode === 'pre-trade' && theoreticalPayoff) {
+    if (mode === "pre-trade" && theoreticalPayoff) {
       renderPreTradeView(chartContainerRef.current, theoreticalPayoff);
-    } else if (mode === 'live-position' && positionTracking) {
+    } else if (mode === "live-position" && positionTracking) {
       renderLivePositionView(chartContainerRef.current, positionTracking);
-    } else if (mode === 'historical' && comparison) {
+    } else if (mode === "historical" && comparison) {
       renderPostTradeView(chartContainerRef.current, comparison);
     }
 
@@ -73,24 +73,24 @@ export default function PLComparisonChart({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-lg font-semibold text-cyan-400">
-          {mode === 'pre-trade' && '📊 Theoretical Payoff Diagram'}
-          {mode === 'live-position' && '⚡ Live Position Tracking'}
-          {mode === 'historical' && '📈 Post-Trade Analysis'}
+          {mode === "pre-trade" && "📊 Theoretical Payoff Diagram"}
+          {mode === "live-position" && "⚡ Live Position Tracking"}
+          {mode === "historical" && "📈 Post-Trade Analysis"}
         </h4>
         <div className="flex gap-2">
-          {mode === 'live-position' && (
+          {mode === "live-position" && (
             <button
               onClick={() => setAutoRefresh(!autoRefresh)}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                 autoRefresh
-                  ? 'bg-green-500 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  ? "bg-green-500 text-white"
+                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
               }`}
             >
-              {autoRefresh ? '🔄 Auto-Refresh ON' : 'Auto-Refresh OFF'}
+              {autoRefresh ? "🔄 Auto-Refresh ON" : "Auto-Refresh OFF"}
             </button>
           )}
-          {mode === 'pre-trade' && onSaveBaseline && (
+          {mode === "pre-trade" && onSaveBaseline && (
             <button
               onClick={onSaveBaseline}
               className="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-xs font-semibold rounded-lg transition-all"
@@ -102,7 +102,7 @@ export default function PLComparisonChart({
       </div>
 
       {/* Pre-Trade Metrics */}
-      {mode === 'pre-trade' && theoreticalPayoff && (
+      {mode === "pre-trade" && theoreticalPayoff && (
         <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
             <div className="text-xs text-green-400 mb-1">Max Profit</div>
@@ -119,7 +119,7 @@ export default function PLComparisonChart({
           <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
             <div className="text-xs text-cyan-400 mb-1">Breakevens</div>
             <div className="text-sm font-bold text-cyan-300">
-              {theoreticalPayoff.breakevens.map(be => `$${be.toFixed(2)}`).join(', ')}
+              {theoreticalPayoff.breakevens.map((be) => `$${be.toFixed(2)}`).join(", ")}
             </div>
           </div>
           <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
@@ -132,27 +132,35 @@ export default function PLComparisonChart({
       )}
 
       {/* Live Position Metrics */}
-      {mode === 'live-position' && positionTracking && (
+      {mode === "live-position" && positionTracking && (
         <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="p-3 bg-slate-800/50 border border-white/10 rounded-lg">
             <div className="text-xs text-slate-400 mb-1">Entry Fill</div>
             <div className="text-lg font-bold text-white">
               ${positionTracking.actual.entryPrice.toFixed(2)}
             </div>
-            <div className={`text-xs ${positionTracking.actual.entrySlippage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {positionTracking.actual.entrySlippage >= 0 ? '+' : ''}
-              ${positionTracking.actual.entrySlippage.toFixed(0)} slippage
+            <div
+              className={`text-xs ${positionTracking.actual.entrySlippage >= 0 ? "text-green-400" : "text-red-400"}`}
+            >
+              {positionTracking.actual.entrySlippage >= 0 ? "+" : ""}$
+              {positionTracking.actual.entrySlippage.toFixed(0)} slippage
             </div>
           </div>
-          <div className={`p-3 border rounded-lg ${
-            positionTracking.actual.currentPL >= 0
-              ? 'bg-green-500/10 border-green-500/30'
-              : 'bg-red-500/10 border-red-500/30'
-          }`}>
-            <div className={`text-xs mb-1 ${positionTracking.actual.currentPL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          <div
+            className={`p-3 border rounded-lg ${
+              positionTracking.actual.currentPL >= 0
+                ? "bg-green-500/10 border-green-500/30"
+                : "bg-red-500/10 border-red-500/30"
+            }`}
+          >
+            <div
+              className={`text-xs mb-1 ${positionTracking.actual.currentPL >= 0 ? "text-green-400" : "text-red-400"}`}
+            >
               Current P&L
             </div>
-            <div className={`text-lg font-bold ${positionTracking.actual.currentPL >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+            <div
+              className={`text-lg font-bold ${positionTracking.actual.currentPL >= 0 ? "text-green-300" : "text-red-300"}`}
+            >
               ${positionTracking.actual.currentPL.toFixed(0)}
             </div>
           </div>
@@ -168,7 +176,11 @@ export default function PLComparisonChart({
           <div className="p-3 bg-slate-800/50 border border-white/10 rounded-lg">
             <div className="text-xs text-slate-400 mb-1">vs Theoretical</div>
             <div className="text-sm font-bold text-cyan-300">
-              {((positionTracking.actual.currentPL / positionTracking.theoretical.expectedValue) * 100).toFixed(1)}%
+              {(
+                (positionTracking.actual.currentPL / positionTracking.theoretical.expectedValue) *
+                100
+              ).toFixed(1)}
+              %
             </div>
             <div className="text-xs text-slate-500">captured</div>
           </div>
@@ -176,7 +188,7 @@ export default function PLComparisonChart({
       )}
 
       {/* Post-Trade Metrics */}
-      {mode === 'historical' && comparison && comparison.executionQuality && (
+      {mode === "historical" && comparison && comparison.executionQuality && (
         <div className="mb-4 grid grid-cols-2 md:grid-cols-5 gap-3">
           <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
             <div className="text-xs text-purple-400 mb-1">Execution Score</div>
@@ -206,49 +218,65 @@ export default function PLComparisonChart({
             <div className="text-xs text-slate-400 mb-1">Duration</div>
             <div className="text-sm font-bold text-white">
               {comparison.closedAt &&
-                Math.floor((new Date(comparison.closedAt).getTime() - new Date(comparison.enteredAt).getTime()) / (1000 * 60 * 60 * 24))} days
+                Math.floor(
+                  (new Date(comparison.closedAt).getTime() -
+                    new Date(comparison.enteredAt).getTime()) /
+                    (1000 * 60 * 60 * 24)
+                )}{" "}
+              days
             </div>
           </div>
         </div>
       )}
 
       {/* Chart Container */}
-      <div ref={chartContainerRef} style={{ width: '100%', height: '400px' }} />
+      <div ref={chartContainerRef} style={{ width: "100%", height: "400px" }} />
 
       {/* Greeks Comparison (Live/Post-Trade) */}
-      {(mode === 'live-position' || mode === 'historical') && (
+      {(mode === "live-position" || mode === "historical") && (
         <div className="mt-4 p-4 bg-slate-800/50 border border-white/10 rounded-lg">
           <h5 className="text-sm font-semibold text-slate-300 mb-3">Greeks Variance</h5>
           <div className="grid grid-cols-4 gap-3 text-xs">
             <div>
               <div className="text-slate-400 mb-1">Delta</div>
               <div className="font-mono text-cyan-400">
-                {mode === 'live-position' && positionTracking
-                  ? (positionTracking.actual.greeks.delta - positionTracking.theoretical.greeks.delta).toFixed(2)
+                {mode === "live-position" && positionTracking
+                  ? (
+                      positionTracking.actual.greeks.delta -
+                      positionTracking.theoretical.greeks.delta
+                    ).toFixed(2)
                   : comparison?.greeks.variance.delta.toFixed(2)}
               </div>
             </div>
             <div>
               <div className="text-slate-400 mb-1">Gamma</div>
               <div className="font-mono text-cyan-400">
-                {mode === 'live-position' && positionTracking
-                  ? (positionTracking.actual.greeks.gamma - positionTracking.theoretical.greeks.gamma).toFixed(3)
+                {mode === "live-position" && positionTracking
+                  ? (
+                      positionTracking.actual.greeks.gamma -
+                      positionTracking.theoretical.greeks.gamma
+                    ).toFixed(3)
                   : comparison?.greeks.variance.gamma.toFixed(3)}
               </div>
             </div>
             <div>
               <div className="text-slate-400 mb-1">Theta</div>
               <div className="font-mono text-cyan-400">
-                {mode === 'live-position' && positionTracking
-                  ? (positionTracking.actual.greeks.theta - positionTracking.theoretical.greeks.theta).toFixed(2)
+                {mode === "live-position" && positionTracking
+                  ? (
+                      positionTracking.actual.greeks.theta -
+                      positionTracking.theoretical.greeks.theta
+                    ).toFixed(2)
                   : comparison?.greeks.variance.theta.toFixed(2)}
               </div>
             </div>
             <div>
               <div className="text-slate-400 mb-1">Vega</div>
               <div className="font-mono text-cyan-400">
-                {mode === 'live-position' && positionTracking
-                  ? (positionTracking.actual.greeks.vega - positionTracking.theoretical.greeks.vega).toFixed(2)
+                {mode === "live-position" && positionTracking
+                  ? (
+                      positionTracking.actual.greeks.vega - positionTracking.theoretical.greeks.vega
+                    ).toFixed(2)
                   : comparison?.greeks.variance.vega.toFixed(2)}
               </div>
             </div>
@@ -267,15 +295,15 @@ function renderPreTradeView(container: HTMLDivElement, payoff: TheoreticalPayoff
     width: container.clientWidth,
     height: 400,
     layout: {
-      background: { color: '#0f172a' },
-      textColor: '#94a3b8',
+      background: { color: "#0f172a" },
+      textColor: "#94a3b8",
     },
     grid: {
-      vertLines: { color: '#1e293b' },
-      horzLines: { color: '#1e293b' },
+      vertLines: { color: "#1e293b" },
+      horzLines: { color: "#1e293b" },
     },
     rightPriceScale: {
-      borderColor: '#334155',
+      borderColor: "#334155",
     },
     timeScale: {
       visible: false,
@@ -284,9 +312,9 @@ function renderPreTradeView(container: HTMLDivElement, payoff: TheoreticalPayoff
 
   // Payoff curve
   const payoffSeries = chart.addLineSeries({
-    color: '#06b6d4',
+    color: "#06b6d4",
     lineWidth: 3,
-    title: 'Payoff at Expiration',
+    title: "Payoff at Expiration",
   });
 
   const payoffData: LineData[] = payoff.payoffCurve.map((point, index) => ({
@@ -298,13 +326,13 @@ function renderPreTradeView(container: HTMLDivElement, payoff: TheoreticalPayoff
 
   // Zero line
   const zeroSeries = chart.addLineSeries({
-    color: '#64748b',
+    color: "#64748b",
     lineWidth: 1,
     lineStyle: 2, // Dashed
   });
 
   zeroSeries.setData(
-    payoffData.map(point => ({
+    payoffData.map((point) => ({
       time: point.time,
       value: 0,
     }))
@@ -313,9 +341,9 @@ function renderPreTradeView(container: HTMLDivElement, payoff: TheoreticalPayoff
   // Probability distribution (if available)
   if (payoff.probabilityDistribution) {
     const probSeries = chart.addAreaSeries({
-      topColor: 'rgba(139, 92, 246, 0.4)',
-      bottomColor: 'rgba(139, 92, 246, 0.0)',
-      lineColor: 'rgba(139, 92, 246, 0.8)',
+      topColor: "rgba(139, 92, 246, 0.4)",
+      bottomColor: "rgba(139, 92, 246, 0.0)",
+      lineColor: "rgba(139, 92, 246, 0.8)",
       lineWidth: 1,
     });
 

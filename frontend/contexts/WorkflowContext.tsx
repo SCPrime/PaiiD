@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from "react";
 
 /**
  * WorkflowContext
@@ -10,26 +10,26 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
  */
 
 export type WorkflowType =
-  | 'morning-routine'
-  | 'active-positions'
-  | 'execute-trade'
-  | 'research'
-  | 'ai-recommendations'
-  | 'analytics'
-  | 'news-review'
-  | 'strategy-builder'
-  | 'backtesting'
-  | 'settings';
+  | "morning-routine"
+  | "active-positions"
+  | "execute-trade"
+  | "research"
+  | "ai-recommendations"
+  | "analytics"
+  | "news-review"
+  | "strategy-builder"
+  | "backtesting"
+  | "settings";
 
 export interface TradeData {
   symbol: string;
-  side?: 'buy' | 'sell';
+  side?: "buy" | "sell";
   quantity?: number;
   entryPrice?: number;
   stopLoss?: number;
   takeProfit?: number;
-  orderType?: 'market' | 'limit' | 'stop' | 'stop_limit';
-  timeInForce?: 'day' | 'gtc' | 'ioc' | 'fok';
+  orderType?: "market" | "limit" | "stop" | "stop_limit";
+  timeInForce?: "day" | "gtc" | "ioc" | "fok";
   notes?: string;
 }
 
@@ -54,7 +54,7 @@ const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined
 export const useWorkflow = () => {
   const context = useContext(WorkflowContext);
   if (!context) {
-    throw new Error('useWorkflow must be used within a WorkflowProvider');
+    throw new Error("useWorkflow must be used within a WorkflowProvider");
   }
   return context;
 };
@@ -71,36 +71,32 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({ children }) 
     const navigationData: WorkflowNavigationData = {
       workflow,
       data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     setPendingNavigation(navigationData);
     setCurrentWorkflow(workflow);
 
     // Dispatch custom event for components that listen
-    window.dispatchEvent(
-      new CustomEvent('workflow-navigate', { detail: navigationData })
-    );
+    window.dispatchEvent(new CustomEvent("workflow-navigate", { detail: navigationData }));
 
-    console.info('[WorkflowContext] Navigating to:', workflow, data);
+    console.info("[WorkflowContext] Navigating to:", workflow, data);
   };
 
   const navigateToTrade = (tradeData: TradeData) => {
     const navigationData: WorkflowNavigationData = {
-      workflow: 'execute-trade',
+      workflow: "execute-trade",
       tradeData,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     setPendingNavigation(navigationData);
-    setCurrentWorkflow('execute-trade');
+    setCurrentWorkflow("execute-trade");
 
     // Dispatch custom event
-    window.dispatchEvent(
-      new CustomEvent('workflow-navigate', { detail: navigationData })
-    );
+    window.dispatchEvent(new CustomEvent("workflow-navigate", { detail: navigationData }));
 
-    console.info('[WorkflowContext] Navigating to Execute Trade:', tradeData);
+    console.info("[WorkflowContext] Navigating to Execute Trade:", tradeData);
   };
 
   const clearPendingNavigation = () => {
@@ -113,14 +109,10 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({ children }) 
     setCurrentWorkflow,
     navigateToWorkflow,
     navigateToTrade,
-    clearPendingNavigation
+    clearPendingNavigation,
   };
 
-  return (
-    <WorkflowContext.Provider value={value}>
-      {children}
-    </WorkflowContext.Provider>
-  );
+  return <WorkflowContext.Provider value={value}>{children}</WorkflowContext.Provider>;
 };
 
 export default WorkflowContext;

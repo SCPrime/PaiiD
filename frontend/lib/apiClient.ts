@@ -11,7 +11,7 @@
  *   await apiClient.post('/orders', { symbol: 'AAPL', qty: 10 });
  */
 
-import { logger } from './logger';
+import { logger } from "./logger";
 
 export interface APIError extends Error {
   status?: number;
@@ -23,10 +23,10 @@ export class APIClient {
   private baseUrl: string;
   private defaultHeaders: HeadersInit;
 
-  constructor(baseUrl = '/api/proxy') {
+  constructor(baseUrl = "/api/proxy") {
     this.baseUrl = baseUrl;
     this.defaultHeaders = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
   }
 
@@ -55,7 +55,7 @@ export class APIClient {
 
     try {
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: { ...this.defaultHeaders, ...options?.headers },
         ...options,
       });
@@ -88,7 +88,7 @@ export class APIClient {
 
     try {
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: { ...this.defaultHeaders, ...options?.headers },
         body: body ? JSON.stringify(body) : undefined,
         ...options,
@@ -122,7 +122,7 @@ export class APIClient {
 
     try {
       const response = await fetch(url, {
-        method: 'PUT',
+        method: "PUT",
         headers: { ...this.defaultHeaders, ...options?.headers },
         body: body ? JSON.stringify(body) : undefined,
         ...options,
@@ -156,7 +156,7 @@ export class APIClient {
 
     try {
       const response = await fetch(url, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: { ...this.defaultHeaders, ...options?.headers },
         ...options,
       });
@@ -183,28 +183,28 @@ export class APIClient {
    * Health check endpoint
    */
   async healthCheck(): Promise<{ status: string; time: string }> {
-    return this.get('/health');
+    return this.get("/health");
   }
 
   /**
    * Get account information
    */
   async getAccount(): Promise<any> {
-    return this.get('/account');
+    return this.get("/account");
   }
 
   /**
    * Get current positions
    */
   async getPositions(): Promise<any[]> {
-    return this.get('/positions');
+    return this.get("/positions");
   }
 
   /**
    * Get market indices (Dow, NASDAQ)
    */
   async getMarketIndices(): Promise<any> {
-    return this.get('/market/indices');
+    return this.get("/market/indices");
   }
 
   /**
@@ -213,11 +213,11 @@ export class APIClient {
   async executeTrade(order: {
     symbol: string;
     qty: number;
-    side: 'buy' | 'sell';
-    type: 'market' | 'limit';
+    side: "buy" | "sell";
+    type: "market" | "limit";
     limitPrice?: number;
   }): Promise<any> {
-    return this.post('/orders', order);
+    return this.post("/orders", order);
   }
 }
 

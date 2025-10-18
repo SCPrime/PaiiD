@@ -1,4 +1,4 @@
-import { Html, Head, Main, NextScript } from 'next/document';
+import { Html, Head, Main, NextScript } from "next/document";
 
 export default function Document() {
   return (
@@ -8,7 +8,7 @@ export default function Document() {
         <title>PaiiD - Personal AI Investment Dashboard</title>
         {/* Using Georgia serif font as fallback - no external font loading needed */}
       </Head>
-      <body style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
+      <body style={{ margin: 0, padding: 0, overflow: "hidden" }}>
         <Main />
         <NextScript />
       </body>

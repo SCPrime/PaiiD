@@ -131,11 +131,8 @@ export default function OrderHistory() {
             onClick={() => setFilter(f)}
             style={{
               padding: `${theme.spacing.sm} ${theme.spacing.md}`,
-              background:
-                filter === f ? theme.colors.primary : theme.background.card,
-              border: `1px solid ${
-                filter === f ? theme.colors.primary : theme.colors.border
-              }`,
+              background: filter === f ? theme.colors.primary : theme.background.card,
+              border: `1px solid ${filter === f ? theme.colors.primary : theme.colors.border}`,
               borderRadius: theme.borderRadius.md,
               color: filter === f ? "white" : theme.colors.textMuted,
               fontSize: "14px",
@@ -172,9 +169,7 @@ export default function OrderHistory() {
               color: theme.colors.textMuted,
             }}
           >
-            <div style={{ fontSize: "48px", marginBottom: theme.spacing.md }}>
-              📋
-            </div>
+            <div style={{ fontSize: "48px", marginBottom: theme.spacing.md }}>📋</div>
             <p style={{ fontSize: "18px" }}>
               No orders found
               {filter !== "all" && ` in ${filter} category`}

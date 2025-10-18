@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from "next";
 
 /**
  * Proposals API - Get pending proposals
@@ -10,8 +10,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 interface OptionLeg {
   strike: number;
   expiration: string;
-  option_type: 'call' | 'put';
-  side: 'buy' | 'sell';
+  option_type: "call" | "put";
+  side: "buy" | "sell";
   quantity: number;
 }
 
@@ -29,7 +29,7 @@ interface Proposal {
   breakevens: number[];
   ivp: number;
   approval_deadline: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   created_at: string;
   budget_required: number;
 }
@@ -37,53 +37,53 @@ interface Proposal {
 // Mock database (in production, use PostgreSQL)
 const mockProposals: Proposal[] = [
   {
-    id: 'prop_1',
-    ticker: 'SPY',
-    strategy_name: 'Iron Condor',
-    strategy_id: 'strat_ic_001',
+    id: "prop_1",
+    ticker: "SPY",
+    strategy_name: "Iron Condor",
+    strategy_id: "strat_ic_001",
     legs: [
-      { strike: 580, expiration: '2025-11-15', option_type: 'put', side: 'sell', quantity: 1 },
-      { strike: 575, expiration: '2025-11-15', option_type: 'put', side: 'buy', quantity: 1 },
-      { strike: 600, expiration: '2025-11-15', option_type: 'call', side: 'sell', quantity: 1 },
-      { strike: 605, expiration: '2025-11-15', option_type: 'call', side: 'buy', quantity: 1 },
+      { strike: 580, expiration: "2025-11-15", option_type: "put", side: "sell", quantity: 1 },
+      { strike: 575, expiration: "2025-11-15", option_type: "put", side: "buy", quantity: 1 },
+      { strike: 600, expiration: "2025-11-15", option_type: "call", side: "sell", quantity: 1 },
+      { strike: 605, expiration: "2025-11-15", option_type: "call", side: "buy", quantity: 1 },
     ],
     entry_price: 1.25,
-    entry_tolerance: 0.10,
+    entry_tolerance: 0.1,
     max_risk: -375,
     max_profit: 125,
     pop: 68.5,
     breakevens: [578.75, 601.25],
     ivp: 45.2,
     approval_deadline: new Date(Date.now() + 15 * 60000).toISOString(),
-    status: 'pending',
+    status: "pending",
     created_at: new Date().toISOString(),
     budget_required: 375,
   },
   {
-    id: 'prop_2',
-    ticker: 'AAPL',
-    strategy_name: 'Bull Put Spread',
-    strategy_id: 'strat_bps_002',
+    id: "prop_2",
+    ticker: "AAPL",
+    strategy_name: "Bull Put Spread",
+    strategy_id: "strat_bps_002",
     legs: [
-      { strike: 230, expiration: '2025-10-20', option_type: 'put', side: 'sell', quantity: 2 },
-      { strike: 225, expiration: '2025-10-20', option_type: 'put', side: 'buy', quantity: 2 },
+      { strike: 230, expiration: "2025-10-20", option_type: "put", side: "sell", quantity: 2 },
+      { strike: 225, expiration: "2025-10-20", option_type: "put", side: "buy", quantity: 2 },
     ],
-    entry_price: 1.50,
+    entry_price: 1.5,
     entry_tolerance: 0.15,
     max_risk: -700,
     max_profit: 300,
     pop: 72.3,
-    breakevens: [228.50],
+    breakevens: [228.5],
     ivp: 38.7,
     approval_deadline: new Date(Date.now() + 10 * 60000).toISOString(),
-    status: 'pending',
+    status: "pending",
     created_at: new Date().toISOString(),
     budget_required: 700,
   },
 ];
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'GET') {
+  if (req.method === "GET") {
     const { status } = req.query;
 
     let proposals = mockProposals;
@@ -105,7 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Method not allowed
-  res.setHeader('Allow', ['GET']);
+  res.setHeader("Allow", ["GET"]);
   return res.status(405).json({
     success: false,
     error: `Method ${req.method} not allowed`,

@@ -1,5 +1,5 @@
-import React from 'react';
-import { paidTheme } from '../../../styles/paiid-theme';
+import React from "react";
+import { paidTheme } from "../../../styles/paiid-theme";
 
 interface MetricCardProps {
   label: string;
@@ -26,11 +26,11 @@ const MetricCard: React.FC<MetricCardProps> = ({
         borderRadius: paidTheme.borderRadius.md,
         padding: paidTheme.spacing.md,
         transition: `all ${paidTheme.animation.duration.normal}`,
-        cursor: 'pointer',
+        cursor: "pointer",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = paidTheme.colors.glassHover;
-        e.currentTarget.style.borderColor = paidTheme.colors.accent + '40';
+        e.currentTarget.style.borderColor = paidTheme.colors.accent + "40";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = paidTheme.colors.glass;
@@ -39,9 +39,9 @@ const MetricCard: React.FC<MetricCardProps> = ({
     >
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
           marginBottom: paidTheme.spacing.sm,
         }}
       >
@@ -49,8 +49,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
           style={{
             fontSize: paidTheme.typography.fontSize.xs,
             color: paidTheme.colors.textMuted,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
           }}
         >
           {label}
@@ -69,7 +69,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
 
       <div
         style={{
-          fontSize: paidTheme.typography.fontSize['2xl'],
+          fontSize: paidTheme.typography.fontSize["2xl"],
           color: paidTheme.colors.text,
           fontWeight: 600,
           fontFamily: paidTheme.typography.fontFamily.mono,
@@ -82,16 +82,14 @@ const MetricCard: React.FC<MetricCardProps> = ({
       {change && (
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: paidTheme.spacing.xs,
             fontSize: paidTheme.typography.fontSize.sm,
-            color: isPositive
-              ? paidTheme.colors.success
-              : paidTheme.colors.error,
+            color: isPositive ? paidTheme.colors.success : paidTheme.colors.error,
           }}
         >
-          <span>{isPositive ? '↑' : '↓'}</span>
+          <span>{isPositive ? "↑" : "↓"}</span>
           <span>{change}</span>
           {changePercent && <span>({changePercent})</span>}
         </div>
@@ -104,47 +102,47 @@ export const PortfolioSummary: React.FC = () => {
   // Mock data - in production, this would come from your API/state
   const metrics = [
     {
-      label: 'Total Value',
-      value: '$125,432.18',
-      change: '+$3,284.92',
-      changePercent: '+2.69%',
+      label: "Total Value",
+      value: "$125,432.18",
+      change: "+$3,284.92",
+      changePercent: "+2.69%",
       isPositive: true,
-      icon: '💰',
+      icon: "💰",
     },
     {
-      label: 'Day P&L',
-      value: '+$1,847.23',
-      change: '+$1,847.23',
-      changePercent: '+1.49%',
+      label: "Day P&L",
+      value: "+$1,847.23",
+      change: "+$1,847.23",
+      changePercent: "+1.49%",
       isPositive: true,
-      icon: '📈',
+      icon: "📈",
     },
     {
-      label: 'Buying Power',
-      value: '$42,891.50',
-      change: '-$5,200.00',
-      changePercent: '-10.8%',
+      label: "Buying Power",
+      value: "$42,891.50",
+      change: "-$5,200.00",
+      changePercent: "-10.8%",
       isPositive: false,
-      icon: '💵',
+      icon: "💵",
     },
     {
-      label: 'Open Positions',
-      value: '14',
-      icon: '📊',
+      label: "Open Positions",
+      value: "14",
+      icon: "📊",
     },
     {
-      label: 'Win Rate',
-      value: '68.4%',
-      change: '+2.1%',
+      label: "Win Rate",
+      value: "68.4%",
+      change: "+2.1%",
       isPositive: true,
-      icon: '🎯',
+      icon: "🎯",
     },
     {
-      label: 'Sharpe Ratio',
-      value: '1.87',
-      change: '+0.12',
+      label: "Sharpe Ratio",
+      value: "1.87",
+      change: "+0.12",
       isPositive: true,
-      icon: '📉',
+      icon: "📉",
     },
   ];
 
@@ -164,17 +162,17 @@ export const PortfolioSummary: React.FC = () => {
           color: paidTheme.colors.text,
           fontWeight: 600,
           marginBottom: paidTheme.spacing.lg,
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: paidTheme.spacing.sm,
         }}
       >
         <span>Portfolio Summary</span>
         <div
           style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
             background: paidTheme.colors.success,
             boxShadow: paidTheme.effects.glow(paidTheme.colors.success),
           }}
@@ -183,8 +181,8 @@ export const PortfolioSummary: React.FC = () => {
 
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
           gap: paidTheme.spacing.md,
         }}
       >
@@ -200,8 +198,8 @@ export const PortfolioSummary: React.FC = () => {
           background: `${paidTheme.colors.info}10`,
           border: `1px solid ${paidTheme.colors.info}30`,
           borderRadius: paidTheme.borderRadius.md,
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: paidTheme.spacing.md,
         }}
       >
@@ -226,7 +224,7 @@ export const PortfolioSummary: React.FC = () => {
             style={{
               fontSize: paidTheme.typography.fontSize.xs,
               color: paidTheme.colors.textMuted,
-              marginTop: '2px',
+              marginTop: "2px",
             }}
           >
             VIX at 14.2 • Low volatility environment

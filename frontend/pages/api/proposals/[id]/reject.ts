@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from "next";
 
 /**
  * Reject Proposal API
@@ -8,8 +8,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
  */
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
+  if (req.method !== "POST") {
+    res.setHeader("Allow", ["POST"]);
     return res.status(405).json({
       success: false,
       error: `Method ${req.method} not allowed`,
@@ -18,10 +18,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { id } = req.query;
 
-  if (!id || typeof id !== 'string') {
+  if (!id || typeof id !== "string") {
     return res.status(400).json({
       success: false,
-      error: 'Proposal ID is required',
+      error: "Proposal ID is required",
     });
   }
 
@@ -39,14 +39,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({
       success: true,
-      message: 'Proposal rejected',
+      message: "Proposal rejected",
       proposal_id: id,
     });
   } catch (error) {
-    console.error('Error rejecting proposal:', error);
+    console.error("Error rejecting proposal:", error);
     return res.status(500).json({
       success: false,
-      error: 'Failed to reject proposal',
+      error: "Failed to reject proposal",
     });
   }
 }

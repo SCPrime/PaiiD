@@ -5,9 +5,9 @@
  * Provides login, register, logout functions and auto token refresh.
  */
 
-import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
-import toast from 'react-hot-toast';
-import * as authApi from '../lib/authApi';
+import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
+import toast from "react-hot-toast";
+import * as authApi from "../lib/authApi";
 
 interface AuthContextValue {
   user: authApi.UserProfile | null;
@@ -83,15 +83,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Refresh every 10 minutes (access token expires in 15)
-    refreshTimerRef.current = setTimeout(async () => {
-      try {
-        await refreshSessionInternal();
-        startRefreshTimer(); // Schedule next refresh
-      } catch (error) {
-        console.error('Token refresh failed:', error);
-        // Let user continue, they'll be logged out on next API call
-      }
-    }, 10 * 60 * 1000); // 10 minutes
+    refreshTimerRef.current = setTimeout(
+      async () => {
+        try {
+          await refreshSessionInternal();
+          startRefreshTimer(); // Schedule next refresh
+        } catch (error) {
+          console.error("Token refresh failed:", error);
+          // Let user continue, they'll be logged out on next API call
+        }
+      },
+      10 * 60 * 1000
+    ); // 10 minutes
   }, []);
 
   /**
@@ -99,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const refreshSessionInternal = async () => {
     const tokens = authApi.getStoredTokens();
-    if (!tokens) throw new Error('No tokens to refresh');
+    if (!tokens) throw new Error("No tokens to refresh");
 
     const newTokens = await authApi.refreshToken(tokens.refreshToken);
     authApi.saveTokens(newTokens);
@@ -117,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await refreshSessionInternal();
       startRefreshTimer();
     } catch (error) {
-      toast.error('Session refresh failed. Please login again.');
+      toast.error("Session refresh failed. Please login again.");
       authApi.clearTokens();
       setUser(null);
     }
@@ -126,52 +129,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /**
    * Login with email and password
    */
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      const tokens = await authApi.login({ email, password });
-      authApi.saveTokens(tokens);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      try {
+        const tokens = await authApi.login({ email, password });
+        authApi.saveTokens(tokens);
 
-      // Fetch user profile
-      const profile = await authApi.getCurrentUser(tokens.access_token);
-      setUser(profile);
+        // Fetch user profile
+        const profile = await authApi.getCurrentUser(tokens.access_token);
+        setUser(profile);
 
-      startRefreshTimer();
-      toast.success(`Welcome back, ${profile.full_name || profile.email}!`);
-    } catch (error) {
-      if (error instanceof authApi.AuthError) {
-        if (error.statusCode === 401) {
-          throw new Error('Invalid email or password');
-        } else if (error.statusCode === 403) {
-          throw new Error('Your account has been disabled');
+        startRefreshTimer();
+        toast.success(`Welcome back, ${profile.full_name || profile.email}!`);
+      } catch (error) {
+        if (error instanceof authApi.AuthError) {
+          if (error.statusCode === 401) {
+            throw new Error("Invalid email or password");
+          } else if (error.statusCode === 403) {
+            throw new Error("Your account has been disabled");
+          }
         }
+        throw new Error("Login failed. Please try again.");
       }
-      throw new Error('Login failed. Please try again.');
-    }
-  }, [startRefreshTimer]);
+    },
+    [startRefreshTimer]
+  );
 
   /**
    * Register new user
    */
-  const register = useCallback(async (data: authApi.RegisterData) => {
-    try {
-      const tokens = await authApi.register(data);
-      authApi.saveTokens(tokens);
+  const register = useCallback(
+    async (data: authApi.RegisterData) => {
+      try {
+        const tokens = await authApi.register(data);
+        authApi.saveTokens(tokens);
 
-      // Fetch user profile
-      const profile = await authApi.getCurrentUser(tokens.access_token);
-      setUser(profile);
+        // Fetch user profile
+        const profile = await authApi.getCurrentUser(tokens.access_token);
+        setUser(profile);
 
-      startRefreshTimer();
-      toast.success(`Welcome to PaiiD, ${profile.full_name || profile.email}!`);
-    } catch (error) {
-      if (error instanceof authApi.AuthError) {
-        if (error.statusCode === 400) {
-          throw new Error('Email already registered or invalid invite code');
+        startRefreshTimer();
+        toast.success(`Welcome to PaiiD, ${profile.full_name || profile.email}!`);
+      } catch (error) {
+        if (error instanceof authApi.AuthError) {
+          if (error.statusCode === 400) {
+            throw new Error("Email already registered or invalid invite code");
+          }
         }
+        throw new Error("Registration failed. Please try again.");
       }
-      throw new Error('Registration failed. Please try again.');
-    }
-  }, [startRefreshTimer]);
+    },
+    [startRefreshTimer]
+  );
 
   /**
    * Logout user
@@ -193,11 +202,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await authApi.logout(tokens.accessToken);
       } catch (error) {
         // Ignore errors, we already cleared local state
-        console.warn('Server logout failed:', error);
+        console.warn("Server logout failed:", error);
       }
     }
 
-    toast.success('Logged out successfully');
+    toast.success("Logged out successfully");
   }, []);
 
   const value: AuthContextValue = {

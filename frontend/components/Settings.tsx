@@ -1,29 +1,47 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Settings as SettingsIcon, Users, Palette, Shield, Database, Activity, Save, AlertTriangle, CheckCircle2, ToggleLeft, ToggleRight, FileText, Bell, Lock, BookOpen, Clock, Target } from 'lucide-react';
-import TradingJournal from './TradingJournal';
-import RiskDashboard from './RiskDashboard';
-import SchedulerSettings from './SchedulerSettings';
-import ApprovalQueue from './ApprovalQueue';
-import KillSwitchToggle from './KillSwitchToggle';
-import { getCurrentUser, getUserAnalytics, clearUserData } from '../lib/userManagement';
-import toast from 'react-hot-toast';
-import { useIsMobile } from '../hooks/useBreakpoint';
+import { useState, useEffect, useCallback } from "react";
+import {
+  Settings as SettingsIcon,
+  Users,
+  Palette,
+  Shield,
+  Database,
+  Activity,
+  Save,
+  AlertTriangle,
+  CheckCircle2,
+  ToggleLeft,
+  ToggleRight,
+  FileText,
+  Bell,
+  Lock,
+  BookOpen,
+  Clock,
+  Target,
+} from "lucide-react";
+import TradingJournal from "./TradingJournal";
+import RiskDashboard from "./RiskDashboard";
+import SchedulerSettings from "./SchedulerSettings";
+import ApprovalQueue from "./ApprovalQueue";
+import KillSwitchToggle from "./KillSwitchToggle";
+import { getCurrentUser, getUserAnalytics, clearUserData } from "../lib/userManagement";
+import toast from "react-hot-toast";
+import { useIsMobile } from "../hooks/useBreakpoint";
 
 interface User {
   id: string;
   email: string;
   name: string;
-  role: 'owner' | 'admin' | 'beta' | 'alpha' | 'user';
-  tradingMode: 'paper' | 'live';
+  role: "owner" | "admin" | "beta" | "alpha" | "user";
+  tradingMode: "paper" | "live";
   permissions: {
     canTrade: boolean;
     canBacktest: boolean;
     canViewAnalytics: boolean;
     canModifyStrategies: boolean;
   };
-  status: 'active' | 'suspended';
+  status: "active" | "suspended";
   createdAt: string;
   lastLogin: string;
 }
@@ -47,7 +65,7 @@ interface TelemetryData {
 }
 
 interface SettingsData {
-  defaultExecutionMode: 'requires_approval' | 'autopilot';
+  defaultExecutionMode: "requires_approval" | "autopilot";
   enableSMSAlerts: boolean;
   enableEmailAlerts: boolean;
   enablePushNotifications: boolean;
@@ -66,16 +84,27 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   const isMobile = useIsMobile();
   const currentUserData = getCurrentUser();
   const [currentUser] = useState({
-    id: currentUserData?.userId || 'owner-001',
-    role: 'owner' as const
+    id: currentUserData?.userId || "owner-001",
+    role: "owner" as const,
   });
-  const isOwner = currentUser.role === 'owner';
-  const isAdmin = currentUser.role === 'owner' || currentUser.role === 'admin';
+  const isOwner = currentUser.role === "owner";
+  const isAdmin = currentUser.role === "owner" || currentUser.role === "admin";
 
-  const [activeTab, setActiveTab] = useState<'personal' | 'users' | 'theme' | 'permissions' | 'telemetry' | 'trading' | 'journal' | 'risk' | 'automation' | 'approvals'>('personal');
+  const [activeTab, setActiveTab] = useState<
+    | "personal"
+    | "users"
+    | "theme"
+    | "permissions"
+    | "telemetry"
+    | "trading"
+    | "journal"
+    | "risk"
+    | "automation"
+    | "approvals"
+  >("personal");
 
   const [settings, setSettings] = useState<SettingsData>({
-    defaultExecutionMode: 'requires_approval',
+    defaultExecutionMode: "requires_approval",
     enableSMSAlerts: true,
     enableEmailAlerts: true,
     enablePushNotifications: false,
@@ -87,19 +116,19 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
   const [users, setUsers] = useState<User[]>([]);
   const [themeCustom, setThemeCustom] = useState<ThemeCustomization>({
-    primaryColor: '#10b981',
-    accentColor: '#7E57C2',
-    successColor: '#10b981',
-    errorColor: '#ef4444',
-    warningColor: '#f59e0b',
-    infoColor: '#14b8a6',
+    primaryColor: "#10b981",
+    accentColor: "#7E57C2",
+    successColor: "#10b981",
+    errorColor: "#ef4444",
+    warningColor: "#f59e0b",
+    infoColor: "#14b8a6",
   });
   const [telemetryEnabled, setTelemetryEnabled] = useState(true);
   const [telemetryData, setTelemetryData] = useState<TelemetryData[]>([]);
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
+  const [saveMessage, setSaveMessage] = useState("");
 
   // Risk Tolerance State
   const [riskTolerance, setRiskTolerance] = useState<number>(50);
@@ -123,12 +152,12 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   useEffect(() => {
     if (!isOpen) return;
 
-    const savedSettings = localStorage.getItem('allessandra_settings');
+    const savedSettings = localStorage.getItem("allessandra_settings");
     if (savedSettings) {
       try {
         setSettings(JSON.parse(savedSettings));
       } catch (error) {
-        console.error('Failed to load settings:', error);
+        console.error("Failed to load settings:", error);
       }
     }
 
@@ -145,36 +174,36 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   const loadMockUsers = () => {
     setUsers([
       {
-        id: 'owner-001',
-        email: 'owner@paid.com',
-        name: 'System Owner',
-        role: 'owner',
-        tradingMode: 'paper',
+        id: "owner-001",
+        email: "owner@paid.com",
+        name: "System Owner",
+        role: "owner",
+        tradingMode: "paper",
         permissions: {
           canTrade: true,
           canBacktest: true,
           canViewAnalytics: true,
           canModifyStrategies: true,
         },
-        status: 'active',
-        createdAt: '2025-01-01',
-        lastLogin: new Date().toISOString().split('T')[0],
+        status: "active",
+        createdAt: "2025-01-01",
+        lastLogin: new Date().toISOString().split("T")[0],
       },
       {
-        id: 'beta-001',
-        email: 'beta.tester1@paid.com',
-        name: 'Beta Tester 1',
-        role: 'beta',
-        tradingMode: 'paper',
+        id: "beta-001",
+        email: "beta.tester1@paid.com",
+        name: "Beta Tester 1",
+        role: "beta",
+        tradingMode: "paper",
         permissions: {
           canTrade: true,
           canBacktest: true,
           canViewAnalytics: true,
           canModifyStrategies: false,
         },
-        status: 'active',
-        createdAt: '2025-09-15',
-        lastLogin: '2025-10-05',
+        status: "active",
+        createdAt: "2025-09-15",
+        lastLogin: "2025-10-05",
       },
     ]);
   };
@@ -182,12 +211,12 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   const loadTelemetryData = () => {
     const mockData: TelemetryData[] = [
       {
-        sessionId: 'sess-001',
-        userId: 'beta-001',
-        action: 'execute_trade',
-        component: 'ExecuteTradeForm',
+        sessionId: "sess-001",
+        userId: "beta-001",
+        action: "execute_trade",
+        component: "ExecuteTradeForm",
         timestamp: new Date().toISOString(),
-        metadata: { symbol: 'AAPL', side: 'buy', quantity: 10 },
+        metadata: { symbol: "AAPL", side: "buy", quantity: 10 },
       },
     ];
     setTelemetryData(mockData);
@@ -197,12 +226,12 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   const fetchRiskTolerance = async () => {
     try {
       const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
-      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || '/api/proxy/api';
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api/proxy/api";
 
       const response = await fetch(`${baseUrl}/users/preferences`, {
         headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -213,8 +242,8 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         // Fetch risk limits
         const limitsResponse = await fetch(`${baseUrl}/users/risk-limits`, {
           headers: {
-            'Authorization': `Bearer ${apiToken}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
           },
         });
 
@@ -224,7 +253,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch risk tolerance:', error);
+      console.error("Failed to fetch risk tolerance:", error);
     }
   };
 
@@ -232,79 +261,78 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   const fetchAccountBalance = async () => {
     try {
       const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
-      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || '/api/proxy/api';
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api/proxy/api";
 
       const response = await fetch(`${baseUrl}/account`, {
         headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
         },
       });
 
       if (response.ok) {
         const data = await response.json();
         setAccountInfo({
-          equity: parseFloat(data.equity || data.portfolio_value || '0'),
-          cash: parseFloat(data.cash || '0'),
-          buying_power: parseFloat(data.buying_power || '0'),
+          equity: parseFloat(data.equity || data.portfolio_value || "0"),
+          cash: parseFloat(data.cash || "0"),
+          buying_power: parseFloat(data.buying_power || "0"),
         });
-        setPaperAccountBalance(parseFloat(data.equity || data.portfolio_value || '100000'));
+        setPaperAccountBalance(parseFloat(data.equity || data.portfolio_value || "100000"));
       }
     } catch (error) {
-      console.error('Failed to fetch account balance:', error);
+      console.error("Failed to fetch account balance:", error);
     }
   };
 
   // Update Risk Tolerance with Debounce
-  const updateRiskTolerance = useCallback(
-    async (newValue: number) => {
-      setIsLoadingRisk(true);
+  const updateRiskTolerance = useCallback(async (newValue: number) => {
+    setIsLoadingRisk(true);
 
-      try {
-        const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
-        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || '/api/proxy/api';
+    try {
+      const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api/proxy/api";
 
-        const response = await fetch(`${baseUrl}/users/preferences`, {
-          method: 'PATCH',
+      const response = await fetch(`${baseUrl}/users/preferences`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ risk_tolerance: newValue }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRiskTolerance(data.risk_tolerance);
+
+        // Refresh risk limits
+        const limitsResponse = await fetch(`${baseUrl}/users/risk-limits`, {
           headers: {
-            'Authorization': `Bearer ${apiToken}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ risk_tolerance: newValue }),
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setRiskTolerance(data.risk_tolerance);
-
-          // Refresh risk limits
-          const limitsResponse = await fetch(`${baseUrl}/users/risk-limits`, {
-            headers: {
-              'Authorization': `Bearer ${apiToken}`,
-              'Content-Type': 'application/json',
-            },
-          });
-
-          let limitsData = null;
-          if (limitsResponse.ok) {
-            limitsData = await limitsResponse.json();
-            setRiskLimits(limitsData);
-          }
-
-          const riskCategory = limitsData?.risk_category || (newValue <= 33 ? 'Conservative' : newValue <= 66 ? 'Moderate' : 'Aggressive');
-          toast.success(`Risk tolerance updated to ${newValue}% (${riskCategory})`);
-        } else {
-          toast.error('Failed to update risk tolerance');
+        let limitsData = null;
+        if (limitsResponse.ok) {
+          limitsData = await limitsResponse.json();
+          setRiskLimits(limitsData);
         }
-      } catch (error) {
-        console.error('Failed to update risk tolerance:', error);
-        toast.error('Failed to update risk tolerance');
-      } finally {
-        setIsLoadingRisk(false);
+
+        const riskCategory =
+          limitsData?.risk_category ||
+          (newValue <= 33 ? "Conservative" : newValue <= 66 ? "Moderate" : "Aggressive");
+        toast.success(`Risk tolerance updated to ${newValue}% (${riskCategory})`);
+      } else {
+        toast.error("Failed to update risk tolerance");
       }
-    },
-    []
-  );
+    } catch (error) {
+      console.error("Failed to update risk tolerance:", error);
+      toast.error("Failed to update risk tolerance");
+    } finally {
+      setIsLoadingRisk(false);
+    }
+  }, []);
 
   // Update Paper Account Balance
   const updatePaperAccountBalance = async () => {
@@ -312,13 +340,13 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
     try {
       const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
-      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || '/api/proxy/api';
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api/proxy/api";
 
       const response = await fetch(`${baseUrl}/users/preferences`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ paper_account_balance: paperAccountBalance }),
       });
@@ -328,41 +356,41 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         // Refresh account info after update
         await fetchAccountBalance();
       } else {
-        toast.error('Failed to update paper account balance');
+        toast.error("Failed to update paper account balance");
       }
     } catch (error) {
-      console.error('Failed to update paper account balance:', error);
-      toast.error('Failed to update paper account balance');
+      console.error("Failed to update paper account balance:", error);
+      toast.error("Failed to update paper account balance");
     } finally {
       setIsLoadingBalance(false);
     }
   };
 
   const updateSetting = <K extends keyof SettingsData>(key: K, value: SettingsData[K]) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    setSettings((prev) => ({ ...prev, [key]: value }));
     setHasUnsavedChanges(true);
   };
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
-    setSaveMessage('');
+    setSaveMessage("");
 
-    localStorage.setItem('allessandra_settings', JSON.stringify(settings));
+    localStorage.setItem("allessandra_settings", JSON.stringify(settings));
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     setIsSaving(false);
     setHasUnsavedChanges(false);
-    setSaveMessage('Settings saved successfully!');
+    setSaveMessage("Settings saved successfully!");
 
     setTimeout(() => {
-      setSaveMessage('');
+      setSaveMessage("");
     }, 3000);
   };
 
   const handleReset = () => {
     const defaultSettings: SettingsData = {
-      defaultExecutionMode: 'requires_approval',
+      defaultExecutionMode: "requires_approval",
       enableSMSAlerts: true,
       enableEmailAlerts: true,
       enablePushNotifications: false,
@@ -377,39 +405,49 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
   const toggleUserStatus = (userId: string) => {
     if (!isOwner) return;
-    setUsers(users.map(user =>
-      user.id === userId
-        ? { ...user, status: user.status === 'active' ? 'suspended' : 'active' }
-        : user
-    ));
+    setUsers(
+      users.map((user) =>
+        user.id === userId
+          ? { ...user, status: user.status === "active" ? "suspended" : "active" }
+          : user
+      )
+    );
     setHasUnsavedChanges(true);
   };
 
-  const updateUserPermission = (userId: string, permission: keyof User['permissions'], value: boolean) => {
+  const updateUserPermission = (
+    userId: string,
+    permission: keyof User["permissions"],
+    value: boolean
+  ) => {
     if (!isOwner) return;
-    setUsers(users.map(user =>
-      user.id === userId
-        ? { ...user, permissions: { ...user.permissions, [permission]: value } }
-        : user
-    ));
+    setUsers(
+      users.map((user) =>
+        user.id === userId
+          ? { ...user, permissions: { ...user.permissions, [permission]: value } }
+          : user
+      )
+    );
     setHasUnsavedChanges(true);
   };
 
   const toggleTradingMode = (userId: string) => {
     if (!isOwner && userId !== currentUser.id) return;
-    setUsers(users.map(user =>
-      user.id === userId
-        ? { ...user, tradingMode: user.tradingMode === 'paper' ? 'live' : 'paper' }
-        : user
-    ));
+    setUsers(
+      users.map((user) =>
+        user.id === userId
+          ? { ...user, tradingMode: user.tradingMode === "paper" ? "live" : "paper" }
+          : user
+      )
+    );
     setHasUnsavedChanges(true);
   };
 
   const exportTelemetryReport = () => {
     const dataStr = JSON.stringify(telemetryData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = `telemetry-${new Date().toISOString()}.json`;
     link.click();
@@ -420,76 +458,83 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   const analytics = currentUserData ? getUserAnalytics() : null;
 
   const tabs = [
-    { id: 'personal', label: 'Personal Settings', icon: SettingsIcon, alwaysShow: true },
-    { id: 'journal', label: 'Trading Journal', icon: BookOpen, alwaysShow: true },
-    { id: 'risk', label: 'Risk Control', icon: Shield, alwaysShow: true },
-    { id: 'automation', label: 'Automation', icon: Clock, alwaysShow: true },
-    { id: 'approvals', label: 'Approvals', icon: CheckCircle2, alwaysShow: true },
-    { id: 'users', label: 'User Management', icon: Users, adminOnly: true },
-    { id: 'theme', label: 'Theme', icon: Palette, adminOnly: true },
-    { id: 'permissions', label: 'Permissions', icon: Lock, adminOnly: true },
-    { id: 'telemetry', label: 'Telemetry', icon: Database, adminOnly: true },
-    { id: 'trading', label: 'Trading Control', icon: Activity, adminOnly: true },
-  ].filter(tab => tab.alwaysShow || (tab.adminOnly && isAdmin));
+    { id: "personal", label: "Personal Settings", icon: SettingsIcon, alwaysShow: true },
+    { id: "journal", label: "Trading Journal", icon: BookOpen, alwaysShow: true },
+    { id: "risk", label: "Risk Control", icon: Shield, alwaysShow: true },
+    { id: "automation", label: "Automation", icon: Clock, alwaysShow: true },
+    { id: "approvals", label: "Approvals", icon: CheckCircle2, alwaysShow: true },
+    { id: "users", label: "User Management", icon: Users, adminOnly: true },
+    { id: "theme", label: "Theme", icon: Palette, adminOnly: true },
+    { id: "permissions", label: "Permissions", icon: Lock, adminOnly: true },
+    { id: "telemetry", label: "Telemetry", icon: Database, adminOnly: true },
+    { id: "trading", label: "Trading Control", icon: Activity, adminOnly: true },
+  ].filter((tab) => tab.alwaysShow || (tab.adminOnly && isAdmin));
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 50,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px',
-      background: 'rgba(0, 0, 0, 0.7)',
-      backdropFilter: 'blur(10px)',
-      overflowY: 'auto',
-      color: '#e2e8f0',
-    }}>
-      <div style={{
-        background: 'rgba(30, 41, 59, 0.8)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(16, 185, 129, 0.3)',
-        borderRadius: '20px',
-        boxShadow: '0 0 40px rgba(16, 185, 129, 0.15)',
-        maxWidth: isMobile ? '95vw' : '1200px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        margin: isMobile ? '16px 0' : '32px 0',
-      }}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+        background: "rgba(0, 0, 0, 0.7)",
+        backdropFilter: "blur(10px)",
+        overflowY: "auto",
+        color: "#e2e8f0",
+      }}
+    >
+      <div
+        style={{
+          background: "rgba(30, 41, 59, 0.8)",
+          backdropFilter: "blur(20px)",
+          border: "1px solid rgba(16, 185, 129, 0.3)",
+          borderRadius: "20px",
+          boxShadow: "0 0 40px rgba(16, 185, 129, 0.15)",
+          maxWidth: isMobile ? "95vw" : "1200px",
+          width: "100%",
+          maxHeight: "90vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          margin: isMobile ? "16px 0" : "32px 0",
+        }}
+      >
         {/* Header */}
-        <div style={{
-          padding: '16px 24px',
-          borderBottom: '1px solid rgba(0, 172, 193, 0.2)',
-          background: 'linear-gradient(to right, rgba(0, 172, 193, 0.1), rgba(126, 87, 194, 0.1), rgba(0, 172, 193, 0.1))',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div
+          style={{
+            padding: "16px 24px",
+            borderBottom: "1px solid rgba(0, 172, 193, 0.2)",
+            background:
+              "linear-gradient(to right, rgba(0, 172, 193, 0.1), rgba(126, 87, 194, 0.1), rgba(0, 172, 193, 0.1))",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <SettingsIcon size={28} style={{ color: '#00ACC1' }} />
-                <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>
-                  {isOwner ? 'Master Control Panel' : 'Settings'}
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <SettingsIcon size={28} style={{ color: "#00ACC1" }} />
+                <h2 style={{ fontSize: "24px", fontWeight: "bold", color: "#ffffff", margin: 0 }}>
+                  {isOwner ? "Master Control Panel" : "Settings"}
                 </h2>
               </div>
-              <p style={{ fontSize: '14px', color: '#cbd5e1', marginTop: '4px', marginBottom: 0 }}>
+              <p style={{ fontSize: "14px", color: "#cbd5e1", marginTop: "4px", marginBottom: 0 }}>
                 {isOwner
-                  ? 'System-wide configuration and user management'
-                  : 'Configure your trading preferences and automation'}
+                  ? "System-wide configuration and user management"
+                  : "Configure your trading preferences and automation"}
               </p>
             </div>
             <button
               onClick={onClose}
               style={{
-                padding: '8px 16px',
-                background: 'rgba(30, 41, 59, 0.8)',
-                border: '1px solid rgba(100, 116, 139, 0.5)',
-                color: '#ffffff',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                padding: "8px 16px",
+                background: "rgba(30, 41, 59, 0.8)",
+                border: "1px solid rgba(100, 116, 139, 0.5)",
+                color: "#ffffff",
+                borderRadius: "8px",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
               }}
             >
               ✕ Close
@@ -515,7 +560,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
         {/* Tabs */}
         <div className="px-6 py-3 border-b border-cyan-500/20 bg-slate-900/50 flex gap-2 overflow-x-auto">
-          {tabs.map(tab => {
+          {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
@@ -524,20 +569,26 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`
                   px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap
-                  ${isActive
-                    ? 'text-white border-2 shadow-lg'
-                    : 'text-slate-400 hover:bg-slate-700/80 border-2 border-slate-700/30 hover:border-cyan-400/30'
+                  ${
+                    isActive
+                      ? "text-white border-2 shadow-lg"
+                      : "text-slate-400 hover:bg-slate-700/80 border-2 border-slate-700/30 hover:border-cyan-400/30"
                   }
                 `}
-                style={isActive ? {
-                  background: 'linear-gradient(to right, rgba(0, 172, 193, 0.2), rgba(126, 87, 194, 0.2))',
-                  borderColor: 'rgba(0, 172, 193, 0.5)',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: '0 0 20px rgba(0, 172, 193, 0.15)',
-                } : {
-                  background: 'rgba(30, 41, 59, 0.6)',
-                  backdropFilter: 'blur(8px)',
-                }}
+                style={
+                  isActive
+                    ? {
+                        background:
+                          "linear-gradient(to right, rgba(0, 172, 193, 0.2), rgba(126, 87, 194, 0.2))",
+                        borderColor: "rgba(0, 172, 193, 0.5)",
+                        backdropFilter: "blur(10px)",
+                        boxShadow: "0 0 20px rgba(0, 172, 193, 0.15)",
+                      }
+                    : {
+                        background: "rgba(30, 41, 59, 0.6)",
+                        backdropFilter: "blur(8px)",
+                      }
+                }
               >
                 <Icon size={16} />
                 {tab.label}
@@ -547,14 +598,16 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         </div>
 
         {/* Content */}
-        <div style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '24px',
-          background: 'rgba(15, 23, 42, 0.2)',
-          color: '#e2e8f0',
-        }}>
-          {activeTab === 'personal' && (
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "24px",
+            background: "rgba(15, 23, 42, 0.2)",
+            color: "#e2e8f0",
+          }}
+        >
+          {activeTab === "personal" && (
             <div className="space-y-6">
               {currentUserData && (
                 <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
@@ -567,7 +620,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                     <div className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-700/30 rounded-lg">
                       <div>
                         <div className="text-xs text-slate-400 mb-1">Display Name</div>
-                        <div className="text-sm font-medium text-white">{currentUserData.displayName}</div>
+                        <div className="text-sm font-medium text-white">
+                          {currentUserData.displayName}
+                        </div>
                       </div>
                     </div>
 
@@ -575,27 +630,40 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       <div className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-700/30 rounded-lg">
                         <div>
                           <div className="text-xs text-slate-400 mb-1">Email</div>
-                          <div className="text-sm font-medium text-white">{currentUserData.email}</div>
+                          <div className="text-sm font-medium text-white">
+                            {currentUserData.email}
+                          </div>
                         </div>
                       </div>
                     )}
 
                     {analytics && (
-                      <div className="grid gap-3" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
+                      <div
+                        className="grid gap-3"
+                        style={{ gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)" }}
+                      >
                         <div className="p-3 bg-slate-900/40 border border-slate-700/30 rounded-lg">
                           <div className="text-xs text-slate-400 mb-1">Account Age</div>
-                          <div className="text-sm font-semibold text-cyan-400">{analytics.accountAge}</div>
+                          <div className="text-sm font-semibold text-cyan-400">
+                            {analytics.accountAge}
+                          </div>
                         </div>
                         <div className="p-3 bg-slate-900/40 border border-slate-700/30 rounded-lg">
                           <div className="text-xs text-slate-400 mb-1">Total Sessions</div>
-                          <div className="text-sm font-semibold text-purple-400">{analytics.totalSessions}</div>
+                          <div className="text-sm font-semibold text-purple-400">
+                            {analytics.totalSessions}
+                          </div>
                         </div>
                       </div>
                     )}
 
                     <button
                       onClick={() => {
-                        if (window.confirm('Are you sure you want to clear all user data? This will log you out.')) {
+                        if (
+                          window.confirm(
+                            "Are you sure you want to clear all user data? This will log you out."
+                          )
+                        ) {
                           clearUserData();
                           window.location.reload();
                         }
@@ -620,8 +688,8 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       type="radio"
                       name="executionMode"
                       value="requires_approval"
-                      checked={settings.defaultExecutionMode === 'requires_approval'}
-                      onChange={() => updateSetting('defaultExecutionMode', 'requires_approval')}
+                      checked={settings.defaultExecutionMode === "requires_approval"}
+                      onChange={() => updateSetting("defaultExecutionMode", "requires_approval")}
                       className="mt-1"
                     />
                     <div>
@@ -639,14 +707,12 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       type="radio"
                       name="executionMode"
                       value="autopilot"
-                      checked={settings.defaultExecutionMode === 'autopilot'}
-                      onChange={() => updateSetting('defaultExecutionMode', 'autopilot')}
+                      checked={settings.defaultExecutionMode === "autopilot"}
+                      onChange={() => updateSetting("defaultExecutionMode", "autopilot")}
                       className="mt-1"
                     />
                     <div>
-                      <div className="text-sm font-semibold text-white mb-1">
-                        Autopilot Mode
-                      </div>
+                      <div className="text-sm font-semibold text-white mb-1">Autopilot Mode</div>
                       <div className="text-xs text-slate-400">
                         Trades execute automatically based on strategy rules.
                       </div>
@@ -663,11 +729,26 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
                 <div className="space-y-3">
                   {[
-                    { key: 'enableSMSAlerts', label: 'SMS Alerts', desc: 'Text messages for trade proposals' },
-                    { key: 'enableEmailAlerts', label: 'Email Alerts', desc: 'Email notifications for trades' },
-                    { key: 'enablePushNotifications', label: 'Push Notifications', desc: 'Browser push notifications' },
+                    {
+                      key: "enableSMSAlerts",
+                      label: "SMS Alerts",
+                      desc: "Text messages for trade proposals",
+                    },
+                    {
+                      key: "enableEmailAlerts",
+                      label: "Email Alerts",
+                      desc: "Email notifications for trades",
+                    },
+                    {
+                      key: "enablePushNotifications",
+                      label: "Push Notifications",
+                      desc: "Browser push notifications",
+                    },
                   ].map(({ key, label, desc }) => (
-                    <label key={key} className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-700/30 rounded-lg cursor-pointer hover:border-cyan-500/30 transition-all">
+                    <label
+                      key={key}
+                      className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-700/30 rounded-lg cursor-pointer hover:border-cyan-500/30 transition-all"
+                    >
                       <div>
                         <div className="text-sm font-medium text-white">{label}</div>
                         <div className="text-xs text-slate-400">{desc}</div>
@@ -675,7 +756,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       <input
                         type="checkbox"
                         checked={settings[key as keyof SettingsData] as boolean}
-                        onChange={e => updateSetting(key as any, e.target.checked)}
+                        onChange={(e) => updateSetting(key as any, e.target.checked)}
                         className="w-5 h-5"
                       />
                     </label>
@@ -694,18 +775,27 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   {/* Current Account Info Display */}
                   {accountInfo && (
                     <div className="p-4 bg-slate-900/40 border border-slate-700/30 rounded-lg">
-                      <div className="grid gap-3" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' }}>
+                      <div
+                        className="grid gap-3"
+                        style={{ gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)" }}
+                      >
                         <div>
                           <div className="text-xs text-slate-400 mb-1">Total Equity</div>
-                          <div className="text-lg font-semibold text-white">${accountInfo.equity.toLocaleString()}</div>
+                          <div className="text-lg font-semibold text-white">
+                            ${accountInfo.equity.toLocaleString()}
+                          </div>
                         </div>
                         <div>
                           <div className="text-xs text-slate-400 mb-1">Available Cash</div>
-                          <div className="text-lg font-semibold text-cyan-400">${accountInfo.cash.toLocaleString()}</div>
+                          <div className="text-lg font-semibold text-cyan-400">
+                            ${accountInfo.cash.toLocaleString()}
+                          </div>
                         </div>
                         <div>
                           <div className="text-xs text-slate-400 mb-1">Buying Power</div>
-                          <div className="text-lg font-semibold text-purple-400">${accountInfo.buying_power.toLocaleString()}</div>
+                          <div className="text-lg font-semibold text-purple-400">
+                            ${accountInfo.buying_power.toLocaleString()}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -718,9 +808,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                         Set Paper Account Balance ($)
                       </label>
                       {isLoadingBalance && (
-                        <div className="text-xs text-cyan-400 animate-pulse">
-                          Updating...
-                        </div>
+                        <div className="text-xs text-cyan-400 animate-pulse">Updating...</div>
                       )}
                     </div>
                     <div className="flex gap-2">
@@ -739,7 +827,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                         disabled={isLoadingBalance}
                         className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {isLoadingBalance ? 'Updating...' : 'Update'}
+                        {isLoadingBalance ? "Updating..." : "Update"}
                       </button>
                     </div>
                     <div className="flex justify-between text-xs text-slate-400 mt-2">
@@ -753,7 +841,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded flex items-start gap-2">
                     <AlertTriangle size={16} className="text-yellow-400 mt-0.5" />
                     <p className="text-xs text-yellow-400">
-                      <strong>Paper Trading Only:</strong> This setting controls your simulated account balance for paper trading. Real money trading requires separate authentication and approval.
+                      <strong>Paper Trading Only:</strong> This setting controls your simulated
+                      account balance for paper trading. Real money trading requires separate
+                      authentication and approval.
                     </p>
                   </div>
                 </div>
@@ -776,7 +866,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       max="1"
                       step="0.05"
                       value={settings.defaultSlippageBudget}
-                      onChange={e => updateSetting('defaultSlippageBudget', Number(e.target.value))}
+                      onChange={(e) =>
+                        updateSetting("defaultSlippageBudget", Number(e.target.value))
+                      }
                       className="w-full px-4 py-3 bg-slate-900/60 border border-slate-700/50 rounded-lg text-white outline-none focus:ring-2 focus:ring-cyan-500/50"
                     />
                   </div>
@@ -790,7 +882,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       min="1"
                       max="10"
                       value={settings.defaultMaxReprices}
-                      onChange={e => updateSetting('defaultMaxReprices', Number(e.target.value))}
+                      onChange={(e) => updateSetting("defaultMaxReprices", Number(e.target.value))}
                       className="w-full px-4 py-3 bg-slate-900/60 border border-slate-700/50 rounded-lg text-white outline-none focus:ring-2 focus:ring-cyan-500/50"
                     />
                   </div>
@@ -808,24 +900,27 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   {/* Current Risk Level Display */}
                   <div className="p-4 bg-slate-900/40 border border-slate-700/30 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <div className="text-sm font-medium text-slate-300">
-                        Current Risk Level
-                      </div>
-                      <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        riskTolerance <= 33 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                        riskTolerance <= 66 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                        'bg-red-500/20 text-red-400 border border-red-500/30'
-                      }`}>
-                        {riskLimits?.risk_category || (
-                          riskTolerance <= 33 ? 'Conservative' :
-                          riskTolerance <= 66 ? 'Moderate' :
-                          'Aggressive'
-                        )}
+                      <div className="text-sm font-medium text-slate-300">Current Risk Level</div>
+                      <div
+                        className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                          riskTolerance <= 33
+                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                            : riskTolerance <= 66
+                              ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                              : "bg-red-500/20 text-red-400 border border-red-500/30"
+                        }`}
+                      >
+                        {riskLimits?.risk_category ||
+                          (riskTolerance <= 33
+                            ? "Conservative"
+                            : riskTolerance <= 66
+                              ? "Moderate"
+                              : "Aggressive")}
                       </div>
                     </div>
                     <div className="text-2xl font-bold text-white">{riskTolerance}%</div>
                     <div className="text-xs text-slate-400 mt-1">
-                      {riskLimits?.description || 'Loading limits...'}
+                      {riskLimits?.description || "Loading limits..."}
                     </div>
                   </div>
 
@@ -836,9 +931,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                         Adjust Risk Tolerance (0-100%)
                       </label>
                       {isLoadingRisk && (
-                        <div className="text-xs text-cyan-400 animate-pulse">
-                          Updating...
-                        </div>
+                        <div className="text-xs text-cyan-400 animate-pulse">Updating...</div>
                       )}
                     </div>
 
@@ -870,9 +963,14 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       className="w-full h-2 rounded-lg appearance-none cursor-pointer"
                       style={{
                         background: `linear-gradient(to right,
-                          ${riskTolerance <= 33 ? '#10b981' :
-                            riskTolerance <= 66 ? '#f59e0b' : '#ef4444'} ${riskTolerance}%,
-                          rgba(100, 116, 139, 0.3) ${riskTolerance}%)`
+                          ${
+                            riskTolerance <= 33
+                              ? "#10b981"
+                              : riskTolerance <= 66
+                                ? "#f59e0b"
+                                : "#ef4444"
+                          } ${riskTolerance}%,
+                          rgba(100, 116, 139, 0.3) ${riskTolerance}%)`,
                       }}
                     />
 
@@ -885,7 +983,10 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
                   {/* Position Sizing Limits Display */}
                   {riskLimits && (
-                    <div className="grid gap-3 mt-4" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
+                    <div
+                      className="grid gap-3 mt-4"
+                      style={{ gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)" }}
+                    >
                       <div className="p-3 bg-slate-900/40 border border-slate-700/30 rounded-lg">
                         <div className="text-xs text-slate-400 mb-1">Max Position Size</div>
                         <div className="text-lg font-semibold text-cyan-400">
@@ -905,7 +1006,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded flex items-start gap-2 mt-4">
                     <Shield size={16} className="text-cyan-400 mt-0.5" />
                     <p className="text-xs text-cyan-400">
-                      <strong>Backend Safeguards:</strong> Position sizing limits are enforced server-side to prevent excessive risk exposure. Strategy templates automatically adjust to your risk profile.
+                      <strong>Backend Safeguards:</strong> Position sizing limits are enforced
+                      server-side to prevent excessive risk exposure. Strategy templates
+                      automatically adjust to your risk profile.
                     </p>
                   </div>
                 </div>
@@ -913,20 +1016,20 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             </div>
           )}
 
-          {activeTab === 'journal' && <TradingJournal />}
-          {activeTab === 'risk' && <RiskDashboard />}
-          {activeTab === 'automation' && (
+          {activeTab === "journal" && <TradingJournal />}
+          {activeTab === "risk" && <RiskDashboard />}
+          {activeTab === "automation" && (
             <div className="min-h-[500px]">
               <SchedulerSettings />
             </div>
           )}
-          {activeTab === 'approvals' && (
+          {activeTab === "approvals" && (
             <div className="min-h-[500px]">
               <ApprovalQueue />
             </div>
           )}
 
-          {activeTab === 'users' && isAdmin && (
+          {activeTab === "users" && isAdmin && (
             <UserManagementTab
               users={users}
               isOwner={isOwner}
@@ -935,7 +1038,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             />
           )}
 
-          {activeTab === 'theme' && isAdmin && (
+          {activeTab === "theme" && isAdmin && (
             <ThemeCustomizationTab
               themeCustom={themeCustom}
               onUpdate={(key: keyof ThemeCustomization, value: string) => {
@@ -945,7 +1048,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             />
           )}
 
-          {activeTab === 'permissions' && isAdmin && (
+          {activeTab === "permissions" && isAdmin && (
             <PermissionsTab
               users={users}
               isOwner={isOwner}
@@ -953,7 +1056,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             />
           )}
 
-          {activeTab === 'telemetry' && isAdmin && (
+          {activeTab === "telemetry" && isAdmin && (
             <TelemetryTab
               enabled={telemetryEnabled}
               data={telemetryData}
@@ -963,7 +1066,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             />
           )}
 
-          {activeTab === 'trading' && isAdmin && (
+          {activeTab === "trading" && isAdmin && (
             <TradingControlTab
               users={users}
               isOwner={isOwner}
@@ -974,40 +1077,42 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         </div>
 
         {/* Footer */}
-        <div style={{
-          padding: '16px 24px',
-          borderTop: '1px solid rgba(0, 172, 193, 0.2)',
-          background: 'rgba(15, 23, 42, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
+        <div
+          style={{
+            padding: "16px 24px",
+            borderTop: "1px solid rgba(0, 172, 193, 0.2)",
+            background: "rgba(15, 23, 42, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <button
             onClick={handleReset}
             style={{
-              padding: '8px 16px',
-              background: 'rgba(30, 41, 59, 0.8)',
-              border: '1px solid rgba(100, 116, 139, 0.5)',
-              color: '#ffffff',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              fontSize: '14px',
+              padding: "8px 16px",
+              background: "rgba(30, 41, 59, 0.8)",
+              border: "1px solid rgba(100, 116, 139, 0.5)",
+              color: "#ffffff",
+              borderRadius: "8px",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              fontSize: "14px",
             }}
           >
             Reset to Defaults
           </button>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: "flex", gap: "12px" }}>
             <button
               onClick={onClose}
               style={{
-                padding: '8px 20px',
-                background: 'rgba(30, 41, 59, 0.8)',
-                border: '1px solid rgba(100, 116, 139, 0.5)',
-                color: '#ffffff',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                padding: "8px 20px",
+                background: "rgba(30, 41, 59, 0.8)",
+                border: "1px solid rgba(100, 116, 139, 0.5)",
+                color: "#ffffff",
+                borderRadius: "8px",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
               }}
             >
               Cancel
@@ -1016,22 +1121,22 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
               onClick={handleSaveSettings}
               disabled={isSaving}
               style={{
-                padding: '8px 20px',
-                background: 'linear-gradient(to right, #00ACC1, #7E57C2)',
-                color: '#ffffff',
-                fontWeight: '600',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: isSaving ? 'not-allowed' : 'pointer',
+                padding: "8px 20px",
+                background: "linear-gradient(to right, #00ACC1, #7E57C2)",
+                color: "#ffffff",
+                fontWeight: "600",
+                borderRadius: "8px",
+                border: "none",
+                cursor: isSaving ? "not-allowed" : "pointer",
                 opacity: isSaving ? 0.5 : 1,
-                transition: 'all 0.15s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
+                transition: "all 0.15s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
               }}
             >
               <Save size={18} />
-              {isSaving ? 'Saving...' : hasUnsavedChanges ? 'Save Changes' : '✓ Saved'}
+              {isSaving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "✓ Saved"}
             </button>
           </div>
         </div>
@@ -1056,17 +1161,26 @@ function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: an
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <h4 className="text-white font-semibold">{user.name}</h4>
-                <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                  user.role === 'owner' ? 'bg-purple-500/20 text-purple-400' :
-                  user.role === 'beta' ? 'bg-cyan-500/20 text-cyan-400' :
-                  user.role === 'alpha' ? 'bg-yellow-500/20 text-yellow-400' :
-                  'bg-slate-500/20 text-slate-400'
-                }`}>
+                <span
+                  className={`px-2 py-1 rounded text-xs font-semibold ${
+                    user.role === "owner"
+                      ? "bg-purple-500/20 text-purple-400"
+                      : user.role === "beta"
+                        ? "bg-cyan-500/20 text-cyan-400"
+                        : user.role === "alpha"
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : "bg-slate-500/20 text-slate-400"
+                  }`}
+                >
                   {user.role.toUpperCase()}
                 </span>
-                <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                  user.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                }`}>
+                <span
+                  className={`px-2 py-1 rounded text-xs font-semibold ${
+                    user.status === "active"
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-red-500/20 text-red-400"
+                  }`}
+                >
                   {user.status.toUpperCase()}
                 </span>
               </div>
@@ -1077,17 +1191,20 @@ function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: an
               <button
                 onClick={() => onToggleStatus(user.id)}
                 className={`px-3 py-1 rounded text-sm font-medium ${
-                  user.status === 'active'
-                    ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                    : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                  user.status === "active"
+                    ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                    : "bg-green-500/20 text-green-400 hover:bg-green-500/30"
                 }`}
               >
-                {user.status === 'active' ? 'Suspend' : 'Activate'}
+                {user.status === "active" ? "Suspend" : "Activate"}
               </button>
             )}
           </div>
 
-          <div className="grid gap-2 text-sm" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' }}>
+          <div
+            className="grid gap-2 text-sm"
+            style={{ gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)" }}
+          >
             <div>
               <div className="text-xs text-slate-500">Created</div>
               <div className="text-white">{user.createdAt}</div>
@@ -1098,7 +1215,9 @@ function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: an
             </div>
             <div>
               <div className="text-xs text-slate-500">Trading Mode</div>
-              <div className={`font-semibold ${user.tradingMode === 'live' ? 'text-red-400' : 'text-yellow-400'}`}>
+              <div
+                className={`font-semibold ${user.tradingMode === "live" ? "text-red-400" : "text-yellow-400"}`}
+              >
                 {user.tradingMode.toUpperCase()}
               </div>
             </div>
@@ -1119,11 +1238,14 @@ function ThemeCustomizationTab({ themeCustom, onUpdate }: any) {
         Theme Customization
       </h3>
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
+      <div
+        className="grid gap-4"
+        style={{ gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)" }}
+      >
         {Object.entries(themeCustom).map(([key, value]) => (
           <div key={key}>
             <label className="block text-sm font-medium text-slate-300 mb-2 capitalize">
-              {key.replace(/([A-Z])/g, ' $1').trim()}
+              {key.replace(/([A-Z])/g, " $1").trim()}
             </label>
             <div className="flex gap-2">
               <input
@@ -1165,9 +1287,14 @@ function PermissionsTab({ users, isOwner, onUpdatePermission }: any) {
 
       {users.map((user: User) => (
         <div key={user.id} className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
-          <h4 className="text-white font-semibold mb-3">{user.name} ({user.role})</h4>
+          <h4 className="text-white font-semibold mb-3">
+            {user.name} ({user.role})
+          </h4>
 
-          <div className="grid gap-3" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
+          <div
+            className="grid gap-3"
+            style={{ gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)" }}
+          >
             {Object.entries(user.permissions).map(([permission, enabled]) => (
               <label
                 key={permission}
@@ -1177,12 +1304,14 @@ function PermissionsTab({ users, isOwner, onUpdatePermission }: any) {
                 <input
                   type="checkbox"
                   checked={enabled as boolean}
-                  onChange={(e) => isOwner && onUpdatePermission(user.id, permission, e.target.checked)}
+                  onChange={(e) =>
+                    isOwner && onUpdatePermission(user.id, permission, e.target.checked)
+                  }
                   disabled={!isOwner}
                   className="w-4 h-4"
                 />
                 <span className="text-sm text-white">
-                  {permission.replace(/([A-Z])/g, ' $1').trim()}
+                  {permission.replace(/([A-Z])/g, " $1").trim()}
                 </span>
               </label>
             ))}
@@ -1206,12 +1335,12 @@ function TelemetryTab({ enabled, data, users, onToggle, onExport }: any) {
           onClick={onToggle}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
             enabled
-              ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-              : 'bg-slate-800/80 text-slate-400 border border-slate-700/50'
+              ? "bg-green-500/20 text-green-400 border border-green-500/50"
+              : "bg-slate-800/80 text-slate-400 border border-slate-700/50"
           }`}
         >
           {enabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
-          {enabled ? 'Enabled' : 'Disabled'}
+          {enabled ? "Enabled" : "Disabled"}
         </button>
       </div>
 
@@ -1223,8 +1352,12 @@ function TelemetryTab({ enabled, data, users, onToggle, onExport }: any) {
                 <tr className="border-b border-slate-700/50">
                   <th className="px-3 py-2 text-left text-xs text-slate-400 font-semibold">Time</th>
                   <th className="px-3 py-2 text-left text-xs text-slate-400 font-semibold">User</th>
-                  <th className="px-3 py-2 text-left text-xs text-slate-400 font-semibold">Component</th>
-                  <th className="px-3 py-2 text-left text-xs text-slate-400 font-semibold">Action</th>
+                  <th className="px-3 py-2 text-left text-xs text-slate-400 font-semibold">
+                    Component
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs text-slate-400 font-semibold">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -1290,48 +1423,50 @@ function TradingControlTab({ users, isOwner, currentUserId, onToggleTradingMode 
         )}
 
         {users.map((user: User) => (
-        <div key={user.id} className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
-          <div className="flex justify-between items-center">
-            <div>
-              <h4 className="text-white font-semibold">{user.name}</h4>
-              <p className="text-sm text-slate-400">{user.email}</p>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="text-xs text-slate-400 uppercase">Trading Mode</div>
-                <div className={`text-2xl font-bold ${user.tradingMode === 'live' ? 'text-red-400' : 'text-yellow-400'}`}>
-                  {user.tradingMode.toUpperCase()}
-                </div>
+          <div key={user.id} className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
+            <div className="flex justify-between items-center">
+              <div>
+                <h4 className="text-white font-semibold">{user.name}</h4>
+                <p className="text-sm text-slate-400">{user.email}</p>
               </div>
 
-              <button
-                onClick={() => onToggleTradingMode(user.id)}
-                disabled={!isOwner && user.id !== currentUserId}
-                className={`p-3 rounded-lg border-2 transition-all ${
-                  user.tradingMode === 'live'
-                    ? 'bg-red-500/20 border-red-500'
-                    : 'bg-yellow-500/20 border-yellow-500'
-                } ${(!isOwner && user.id !== currentUserId) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-80'}`}
-              >
-                {user.tradingMode === 'live' ? (
-                  <ToggleRight size={32} className="text-red-400" />
-                ) : (
-                  <ToggleLeft size={32} className="text-yellow-400" />
-                )}
-              </button>
-            </div>
-          </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <div className="text-xs text-slate-400 uppercase">Trading Mode</div>
+                  <div
+                    className={`text-2xl font-bold ${user.tradingMode === "live" ? "text-red-400" : "text-yellow-400"}`}
+                  >
+                    {user.tradingMode.toUpperCase()}
+                  </div>
+                </div>
 
-          {user.tradingMode === 'live' && (
-            <div className="mt-3 p-2 bg-red-500/10 border border-red-500/30 rounded flex items-center gap-2">
-              <AlertTriangle size={14} className="text-red-400" />
-              <span className="text-xs text-red-400 font-semibold">
-                LIVE TRADING ACTIVE: Real money will be used for all trades.
-              </span>
+                <button
+                  onClick={() => onToggleTradingMode(user.id)}
+                  disabled={!isOwner && user.id !== currentUserId}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    user.tradingMode === "live"
+                      ? "bg-red-500/20 border-red-500"
+                      : "bg-yellow-500/20 border-yellow-500"
+                  } ${!isOwner && user.id !== currentUserId ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:opacity-80"}`}
+                >
+                  {user.tradingMode === "live" ? (
+                    <ToggleRight size={32} className="text-red-400" />
+                  ) : (
+                    <ToggleLeft size={32} className="text-yellow-400" />
+                  )}
+                </button>
+              </div>
             </div>
-          )}
-        </div>
+
+            {user.tradingMode === "live" && (
+              <div className="mt-3 p-2 bg-red-500/10 border border-red-500/30 rounded flex items-center gap-2">
+                <AlertTriangle size={14} className="text-red-400" />
+                <span className="text-xs text-red-400 font-semibold">
+                  LIVE TRADING ACTIVE: Real money will be used for all trades.
+                </span>
+              </div>
+            )}
+          </div>
         ))}
       </div>
     </div>

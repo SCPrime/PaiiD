@@ -1,32 +1,31 @@
-import { useState, useEffect } from 'react';
-import Split from 'react-split';
-import RadialMenu, { workflows, Workflow } from '../components/RadialMenu';
-import { LOGO_ANIMATION_KEYFRAME } from '../styles/logoConstants';
+import { useState, useEffect } from "react";
+import Split from "react-split";
+import RadialMenu, { workflows, Workflow } from "../components/RadialMenu";
+import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 
-import MorningRoutineAI from '../components/MorningRoutineAI';
-import ExecuteTradeForm from '../components/ExecuteTradeForm';
+import MorningRoutineAI from "../components/MorningRoutineAI";
+import ExecuteTradeForm from "../components/ExecuteTradeForm";
 
-import AIRecommendations from '../components/AIRecommendations';
+import AIRecommendations from "../components/AIRecommendations";
 
-import Settings from '../components/Settings';
+import Settings from "../components/Settings";
 
-import UserSetupAI from '../components/UserSetupAI';
-import NewsReview from '../components/NewsReview';
-import ActivePositions from '../components/ActivePositions';
-import StrategyBuilderAI from '../components/StrategyBuilderAI';
-import Backtesting from '../components/Backtesting';
-import Analytics from '../components/Analytics';
+import UserSetupAI from "../components/UserSetupAI";
+import NewsReview from "../components/NewsReview";
+import ActivePositions from "../components/ActivePositions";
+import StrategyBuilderAI from "../components/StrategyBuilderAI";
+import Backtesting from "../components/Backtesting";
+import Analytics from "../components/Analytics";
 
-
-import MarketScanner from '../components/MarketScanner';
-import { initializeSession } from '../lib/userManagement';
-import AIChat from '../components/AIChat';
-import KeyboardShortcuts from '../components/KeyboardShortcuts';
-import { useIsMobile } from '../hooks/useBreakpoint';
-import PaiiDLogo from '../components/PaiiDLogo';
+import MarketScanner from "../components/MarketScanner";
+import { initializeSession } from "../lib/userManagement";
+import AIChat from "../components/AIChat";
+import KeyboardShortcuts from "../components/KeyboardShortcuts";
+import { useIsMobile } from "../hooks/useBreakpoint";
+import PaiiDLogo from "../components/PaiiDLogo";
 
 export default function Dashboard() {
-  const [selectedWorkflow, setSelectedWorkflow] = useState<string>('');
+  const [selectedWorkflow, setSelectedWorkflow] = useState<string>("");
   const [hoveredWorkflow, setHoveredWorkflow] = useState<Workflow | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [isUserSetup, setIsUserSetup] = useState(false); // Start with onboarding
@@ -35,13 +34,13 @@ export default function Dashboard() {
 
   // Detect mobile viewport
   const isMobile = useIsMobile();
-  
 
   // Check if user is set up on mount
   useEffect(() => {
-    const setupComplete = typeof window !== 'undefined'
-      ? localStorage.getItem('user-setup-complete') === 'true'
-      : false;
+    const setupComplete =
+      typeof window !== "undefined"
+        ? localStorage.getItem("user-setup-complete") === "true"
+        : false;
 
     setIsUserSetup(setupComplete);
     setIsLoading(false);
@@ -51,15 +50,15 @@ export default function Dashboard() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check for Ctrl+Shift+A (Windows/Linux) or Cmd+Shift+A (Mac)
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "A") {
         e.preventDefault();
-        console.info('[PaiiD] 🔓 Admin bypass activated');
+        console.info("[PaiiD] 🔓 Admin bypass activated");
 
         // Set localStorage flags
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('user-setup-complete', 'true');
-          localStorage.setItem('admin-bypass', 'true');
-          localStorage.setItem('bypass-timestamp', new Date().toISOString());
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user-setup-complete", "true");
+          localStorage.setItem("admin-bypass", "true");
+          localStorage.setItem("bypass-timestamp", new Date().toISOString());
         }
 
         // Skip onboarding
@@ -67,12 +66,12 @@ export default function Dashboard() {
         initializeSession();
 
         // Show notification (you can replace with a toast library)
-        alert('🔓 Admin bypass activated! Welcome to PaiiD.');
+        alert("🔓 Admin bypass activated! Welcome to PaiiD.");
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Handle user setup completion
@@ -92,7 +91,7 @@ export default function Dashboard() {
   }
 
   const getWorkflowById = (id: string) => {
-    return workflows.find(w => w.id === id);
+    return workflows.find((w) => w.id === id);
   };
 
   const displayWorkflow = selectedWorkflow ? getWorkflowById(selectedWorkflow) : hoveredWorkflow;
@@ -102,35 +101,34 @@ export default function Dashboard() {
     // If a workflow is selected, render its component
     if (selectedWorkflow) {
       switch (selectedWorkflow) {
-        case 'morning-routine':
+        case "morning-routine":
           return <MorningRoutineAI />;
 
-        case 'active-positions':
+        case "active-positions":
           return <ActivePositions />;
 
-        case 'execute':
+        case "execute":
           return <ExecuteTradeForm />;
 
-        case 'research':
+        case "research":
           return <MarketScanner />;
 
-        case 'proposals':
+        case "proposals":
           return <AIRecommendations />;
 
-        case 'settings':
-          return <Settings isOpen={true} onClose={() => setSelectedWorkflow('')} />;
+        case "settings":
+          return <Settings isOpen={true} onClose={() => setSelectedWorkflow("")} />;
 
-        case 'pnl-dashboard':
+        case "pnl-dashboard":
           return <Analytics />;
 
-        case 'news-review':
+        case "news-review":
           return <NewsReview />;
 
-
-        case 'strategy-builder':
+        case "strategy-builder":
           return <StrategyBuilderAI />;
 
-        case 'backtesting':
+        case "backtesting":
           return <Backtesting />;
 
         default:
@@ -141,28 +139,34 @@ export default function Dashboard() {
     // If hovering (but not selected), show description
     if (displayWorkflow) {
       return (
-        <div style={{
-          background: 'rgba(30, 41, 59, 0.8)',
-          backdropFilter: 'blur(10px)',
-          border: `1px solid ${displayWorkflow.color}40`,
-          borderRadius: '16px',
-          padding: '20px',
-          minHeight: '100px',
-          animation: 'slideUp 0.4s ease-out'
-        }}>
-          <h4 style={{
-            color: displayWorkflow.color,
-            fontSize: '1.1rem',
-            margin: 0,
-            marginBottom: '10px'
-          }}>
-            {displayWorkflow.icon} {displayWorkflow.name.replace('\n', ' ')}
+        <div
+          style={{
+            background: "rgba(30, 41, 59, 0.8)",
+            backdropFilter: "blur(10px)",
+            border: `1px solid ${displayWorkflow.color}40`,
+            borderRadius: "16px",
+            padding: "20px",
+            minHeight: "100px",
+            animation: "slideUp 0.4s ease-out",
+          }}
+        >
+          <h4
+            style={{
+              color: displayWorkflow.color,
+              fontSize: "1.1rem",
+              margin: 0,
+              marginBottom: "10px",
+            }}
+          >
+            {displayWorkflow.icon} {displayWorkflow.name.replace("\n", " ")}
           </h4>
-          <p style={{
-            color: '#cbd5e1',
-            lineHeight: 1.5,
-            margin: 0
-          }}>
+          <p
+            style={{
+              color: "#cbd5e1",
+              lineHeight: 1.5,
+              margin: 0,
+            }}
+          >
             {displayWorkflow.description}
           </p>
         </div>
@@ -171,28 +175,35 @@ export default function Dashboard() {
 
     // Default welcome message
     return (
-      <div style={{
-        background: 'rgba(30, 41, 59, 0.8)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '16px',
-        padding: '20px',
-        minHeight: '100px'
-      }}>
-        <h4 style={{
-          color: '#7E57C2',
-          fontSize: '1.1rem',
-          margin: 0,
-          marginBottom: '10px'
-        }}>
+      <div
+        style={{
+          background: "rgba(30, 41, 59, 0.8)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          borderRadius: "16px",
+          padding: "20px",
+          minHeight: "100px",
+        }}
+      >
+        <h4
+          style={{
+            color: "#7E57C2",
+            fontSize: "1.1rem",
+            margin: 0,
+            marginBottom: "10px",
+          }}
+        >
           Welcome to Your Trading Dashboard
         </h4>
-        <p style={{
-          color: '#cbd5e1',
-          lineHeight: 1.5,
-          margin: 0
-        }}>
-          Select a workflow stage from the radial menu above to begin. Each segment represents a key phase in your trading routine, from morning market analysis to strategy execution.
+        <p
+          style={{
+            color: "#cbd5e1",
+            lineHeight: 1.5,
+            margin: 0,
+          }}
+        >
+          Select a workflow stage from the radial menu above to begin. Each segment represents a key
+          phase in your trading routine, from morning market analysis to strategy execution.
         </p>
       </div>
     );
@@ -202,35 +213,41 @@ export default function Dashboard() {
     <>
       {!selectedWorkflow ? (
         // Full screen view when no workflow selected
-        <div style={{
-          width: '100vw',
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          background: 'linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)',
-          overflow: 'hidden',
-          padding: 0,
-          margin: 0,
-          position: 'relative'
-        }}>
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            background: "linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)",
+            overflow: "hidden",
+            padding: 0,
+            margin: 0,
+            position: "relative",
+          }}
+        >
           {/* Radial Menu Container - centered and scaled to fit */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            maxHeight: 'calc(100vh - 60px)',
-            overflow: 'hidden',
-            paddingTop: '0',
-            paddingBottom: '0'
-          }}>
-            <div style={{
-              transform: 'scale(0.65)',
-              transformOrigin: 'center center'
-            }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              maxHeight: "calc(100vh - 60px)",
+              overflow: "hidden",
+              paddingTop: "0",
+              paddingBottom: "0",
+            }}
+          >
+            <div
+              style={{
+                transform: "scale(0.65)",
+                transformOrigin: "center center",
+              }}
+            >
               <RadialMenu
                 onWorkflowSelect={setSelectedWorkflow}
                 onWorkflowHover={setHoveredWorkflow}
@@ -238,130 +255,161 @@ export default function Dashboard() {
             </div>
           </div>
 
-
           {/* Bottom Info Bar - absolute positioned */}
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: 'rgba(15, 24, 40, 0.95)',
-            backdropFilter: 'blur(10px)',
-            borderTop: '1px solid rgba(16, 185, 129, 0.2)',
-            padding: isMobile ? '12px 16px' : '16px 24px',
-            display: 'flex',
-            justifyContent: isMobile ? 'center' : 'space-between',
-            alignItems: 'center',
-            zIndex: 10,
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: isMobile ? '8px' : '0'
-          }}>
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: "rgba(15, 24, 40, 0.95)",
+              backdropFilter: "blur(10px)",
+              borderTop: "1px solid rgba(16, 185, 129, 0.2)",
+              padding: isMobile ? "12px 16px" : "16px 24px",
+              display: "flex",
+              justifyContent: isMobile ? "center" : "space-between",
+              alignItems: "center",
+              zIndex: 10,
+              flexDirection: isMobile ? "column" : "row",
+              gap: isMobile ? "8px" : "0",
+            }}
+          >
             {/* Empty left space for symmetry - hide on mobile */}
             {!isMobile && <div></div>}
 
             {/* Keyboard Hints - hide on mobile (touch devices don't use keyboard) */}
-            {!isMobile && (<div style={{
-              fontSize: '0.875rem',
-              color: '#94a3b8',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <span>
-                <kbd style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  fontFamily: 'monospace',
-                  color: '#e2e8f0',
-                  marginRight: '4px'
-                }}>Tab</kbd>
-                focus
-              </span>
-              <span>
-                <kbd style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  fontFamily: 'monospace',
-                  color: '#e2e8f0',
-                  marginRight: '4px'
-                }}>Enter</kbd>
-                select
-              </span>
-              <span>
-                <kbd style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  fontFamily: 'monospace',
-                  color: '#e2e8f0',
-                  marginRight: '4px'
-                }}>← →</kbd>
-                rotate
-              </span>
-              <span>
-                <kbd style={{
-                  background: 'rgba(26, 117, 96, 0.2)',
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  fontFamily: 'monospace',
-                  color: '#45f0c0',
-                  marginRight: '4px',
-                  boxShadow: '0 0 8px rgba(69, 240, 192, 0.3)'
-                }}>Ctrl+Shift+A</kbd>
-                admin
-              </span>
-            </div>)}
+            {!isMobile && (
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#94a3b8",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                }}
+              >
+                <span>
+                  <kbd
+                    style={{
+                      background: "rgba(255, 255, 255, 0.1)",
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      fontFamily: "monospace",
+                      color: "#e2e8f0",
+                      marginRight: "4px",
+                    }}
+                  >
+                    Tab
+                  </kbd>
+                  focus
+                </span>
+                <span>
+                  <kbd
+                    style={{
+                      background: "rgba(255, 255, 255, 0.1)",
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      fontFamily: "monospace",
+                      color: "#e2e8f0",
+                      marginRight: "4px",
+                    }}
+                  >
+                    Enter
+                  </kbd>
+                  select
+                </span>
+                <span>
+                  <kbd
+                    style={{
+                      background: "rgba(255, 255, 255, 0.1)",
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      fontFamily: "monospace",
+                      color: "#e2e8f0",
+                      marginRight: "4px",
+                    }}
+                  >
+                    ← →
+                  </kbd>
+                  rotate
+                </span>
+                <span>
+                  <kbd
+                    style={{
+                      background: "rgba(26, 117, 96, 0.2)",
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      fontFamily: "monospace",
+                      color: "#45f0c0",
+                      marginRight: "4px",
+                      boxShadow: "0 0 8px rgba(69, 240, 192, 0.3)",
+                    }}
+                  >
+                    Ctrl+Shift+A
+                  </kbd>
+                  admin
+                </span>
+              </div>
+            )}
 
             {/* Hover Description */}
-            <div style={{
-              color: '#cbd5e1',
-              fontSize: isMobile ? '12px' : '14px',
-              fontStyle: 'italic',
-              maxWidth: isMobile ? '100%' : '300px',
-              textAlign: isMobile ? 'center' : 'right',
-              padding: isMobile ? '0 8px' : '0'
-            }}>
-              {hoveredWorkflow ? hoveredWorkflow.description : (isMobile ? 'Tap a segment' : 'Hover over segments for details')}
+            <div
+              style={{
+                color: "#cbd5e1",
+                fontSize: isMobile ? "12px" : "14px",
+                fontStyle: "italic",
+                maxWidth: isMobile ? "100%" : "300px",
+                textAlign: isMobile ? "center" : "right",
+                padding: isMobile ? "0 8px" : "0",
+              }}
+            >
+              {hoveredWorkflow
+                ? hoveredWorkflow.description
+                : isMobile
+                  ? "Tap a segment"
+                  : "Hover over segments for details"}
             </div>
           </div>
         </div>
       ) : isMobile ? (
         // Mobile: Stacked layout (no split view)
-        <div style={{
-          width: '100%',
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)',
-          overflow: 'hidden'
-        }}>
+        <div
+          style={{
+            width: "100%",
+            height: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            background: "linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)",
+            overflow: "hidden",
+          }}
+        >
           {/* Mobile Header with Back Button */}
-          <div style={{
-            padding: '12px 16px',
-            background: 'rgba(15, 24, 40, 0.95)',
-            borderBottom: '1px solid rgba(16, 185, 129, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            minHeight: '56px'
-          }}>
+          <div
+            style={{
+              padding: "12px 16px",
+              background: "rgba(15, 24, 40, 0.95)",
+              borderBottom: "1px solid rgba(16, 185, 129, 0.2)",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              minHeight: "56px",
+            }}
+          >
             {/* Back Button */}
             <button
-              onClick={() => setSelectedWorkflow('')}
+              onClick={() => setSelectedWorkflow("")}
               style={{
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                color: '#10b981',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
+                background: "rgba(16, 185, 129, 0.1)",
+                border: "1px solid rgba(16, 185, 129, 0.3)",
+                borderRadius: "8px",
+                padding: "8px 12px",
+                color: "#10b981",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
               }}
             >
               ← Menu
@@ -369,94 +417,106 @@ export default function Dashboard() {
 
             {/* Current Workflow Title */}
             {displayWorkflow && (
-              <div style={{
-                flex: 1,
-                fontSize: '16px',
-                fontWeight: '700',
-                color: displayWorkflow.color
-              }}>
-                {displayWorkflow.icon} {displayWorkflow.name.replace('\n', ' ')}
+              <div
+                style={{
+                  flex: 1,
+                  fontSize: "16px",
+                  fontWeight: "700",
+                  color: displayWorkflow.color,
+                }}
+              >
+                {displayWorkflow.icon} {displayWorkflow.name.replace("\n", " ")}
               </div>
             )}
           </div>
 
           {/* Workflow Content - Full Width */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            padding: '16px',
-            color: '#e2e8f0'
-          }}>
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "16px",
+              color: "#e2e8f0",
+            }}
+          >
             {renderWorkflowContent()}
           </div>
         </div>
       ) : (
         // Desktop/Tablet: Split view when workflow selected
         <Split
-        sizes={[40, 60]}
-        minSize={[350, 400]}
-        expandToMin={false}
-        gutterSize={8}
-        gutterAlign="center"
-        snapOffset={30}
-        dragInterval={1}
-        direction="horizontal"
-        cursor="col-resize"
-        className="split"
-      >
-        {/* Left panel - radial menu with header */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100vh',
-          background: 'linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)',
-          overflow: 'hidden',
-        }}>
-          {/* Header Logo */}
+          sizes={[40, 60]}
+          minSize={[350, 400]}
+          expandToMin={false}
+          gutterSize={8}
+          gutterAlign="center"
+          snapOffset={30}
+          dragInterval={1}
+          direction="horizontal"
+          cursor="col-resize"
+          className="split"
+        >
+          {/* Left panel - radial menu with header */}
           <div
             style={{
-              textAlign: 'center',
-              paddingTop: '20px',
-              paddingBottom: '10px',
+              display: "flex",
+              flexDirection: "column",
+              height: "100vh",
+              background: "linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)",
+              overflow: "hidden",
             }}
           >
-            <PaiiDLogo size="medium" showSubtitle={true} onClick={() => setAiChatOpen(true)} />
-          </div>
+            {/* Header Logo */}
+            <div
+              style={{
+                textAlign: "center",
+                paddingTop: "20px",
+                paddingBottom: "10px",
+              }}
+            >
+              <PaiiDLogo size="medium" showSubtitle={true} onClick={() => setAiChatOpen(true)} />
+            </div>
 
-          {/* Radial Menu */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <div style={{
-              transform: 'scale(0.5)',
-              transformOrigin: 'center center'
-            }}>
-              <RadialMenu
-                onWorkflowSelect={setSelectedWorkflow}
-                onWorkflowHover={setHoveredWorkflow}
-                selectedWorkflow={selectedWorkflow}
-                compact={true}
-              />
+            {/* Radial Menu */}
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <div
+                style={{
+                  transform: "scale(0.5)",
+                  transformOrigin: "center center",
+                }}
+              >
+                <RadialMenu
+                  onWorkflowSelect={setSelectedWorkflow}
+                  onWorkflowHover={setHoveredWorkflow}
+                  selectedWorkflow={selectedWorkflow}
+                  compact={true}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right panel - workflow content */}
-        <div style={{
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          height: '100vh',
-          background: 'linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)',
-          padding: '20px',
-          color: '#e2e8f0'
-        }}>
-          {renderWorkflowContent()}
-        </div>
-      </Split>
+          {/* Right panel - workflow content */}
+          <div
+            style={{
+              overflowY: "auto",
+              overflowX: "hidden",
+              height: "100vh",
+              background: "linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)",
+              padding: "20px",
+              color: "#e2e8f0",
+            }}
+          >
+            {renderWorkflowContent()}
+          </div>
+        </Split>
       )}
 
       {/* Animations */}
@@ -484,7 +544,8 @@ export default function Dashboard() {
         }
 
         @keyframes pulse {
-          0%, 100% {
+          0%,
+          100% {
             opacity: 1;
             transform: scale(1);
           }
@@ -537,7 +598,7 @@ export default function Dashboard() {
 
         /* Grip indicator - vertical dots like Claude */
         :global(.gutter-horizontal::before) {
-          content: '';
+          content: "";
           position: absolute;
           left: 50%;
           top: 50%;
@@ -594,10 +655,10 @@ export default function Dashboard() {
 
       {/* Keyboard Shortcuts */}
       <KeyboardShortcuts
-        onOpenTrade={() => setSelectedWorkflow('execute')}
-        onQuickBuy={() => setSelectedWorkflow('execute')}
-        onQuickSell={() => setSelectedWorkflow('execute')}
-        onCloseModal={() => setSelectedWorkflow('')}
+        onOpenTrade={() => setSelectedWorkflow("execute")}
+        onQuickBuy={() => setSelectedWorkflow("execute")}
+        onQuickSell={() => setSelectedWorkflow("execute")}
+        onCloseModal={() => setSelectedWorkflow("")}
       />
     </>
   );

@@ -8,7 +8,7 @@ interface TelemetryEvent {
   action: string;
   timestamp: string;
   metadata: Record<string, any>;
-  userRole: 'admin' | 'beta' | 'alpha' | 'user' | 'owner';
+  userRole: "admin" | "beta" | "alpha" | "user" | "owner";
 }
 
 interface TelemetryConfig {
@@ -25,11 +25,11 @@ class TelemetryService {
   private sessionId: string;
 
   constructor(config: Partial<TelemetryConfig> = {}) {
-    const telemetryEnabled = typeof window !== 'undefined' &&
-      process.env.NEXT_PUBLIC_TELEMETRY_ENABLED !== 'false';
+    const telemetryEnabled =
+      typeof window !== "undefined" && process.env.NEXT_PUBLIC_TELEMETRY_ENABLED !== "false";
 
     this.config = {
-      endpoint: config.endpoint || '/api/telemetry',
+      endpoint: config.endpoint || "/api/telemetry",
       batchSize: config.batchSize || 50,
       flushInterval: config.flushInterval || 10000, // 10 seconds
       enabled: config.enabled !== false && telemetryEnabled,
@@ -46,7 +46,7 @@ class TelemetryService {
   /**
    * Track a user action/event
    */
-  track(event: Omit<TelemetryEvent, 'timestamp' | 'sessionId'>) {
+  track(event: Omit<TelemetryEvent, "timestamp" | "sessionId">) {
     if (!this.config.enabled) return;
 
     const telemetryEvent: TelemetryEvent = {
@@ -71,10 +71,10 @@ class TelemetryService {
       userId,
       userRole: userRole as any,
       component,
-      action: 'page_view',
+      action: "page_view",
       metadata: {
-        path: typeof window !== 'undefined' ? window.location.pathname : '',
-        referrer: typeof document !== 'undefined' ? document.referrer : '',
+        path: typeof window !== "undefined" ? window.location.pathname : "",
+        referrer: typeof document !== "undefined" ? document.referrer : "",
         timestamp: Date.now(),
       },
     });
@@ -88,7 +88,7 @@ class TelemetryService {
       userId,
       userRole: userRole as any,
       component,
-      action: 'button_click',
+      action: "button_click",
       metadata: { buttonName },
     });
   }
@@ -101,7 +101,7 @@ class TelemetryService {
       userId,
       userRole: userRole as any,
       component,
-      action: 'form_submit',
+      action: "form_submit",
       metadata: formData,
     });
   }
@@ -114,10 +114,10 @@ class TelemetryService {
       userId,
       userRole: userRole as any,
       component,
-      action: 'error',
+      action: "error",
       metadata: {
-        message: typeof error === 'string' ? error : error.message,
-        stack: typeof error === 'string' ? undefined : error.stack,
+        message: typeof error === "string" ? error : error.message,
+        stack: typeof error === "string" ? undefined : error.stack,
         timestamp: Date.now(),
       },
     });
@@ -130,8 +130,8 @@ class TelemetryService {
     this.track({
       userId,
       userRole: userRole as any,
-      component: 'App',
-      action: 'feature_used',
+      component: "App",
+      action: "feature_used",
       metadata: {
         feature,
         ...metadata,
@@ -151,9 +151,9 @@ class TelemetryService {
     try {
       // Use the Next.js API proxy to avoid CORS and ensure proper routing in production
       const response = await fetch(`/api/proxy${this.config.endpoint}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ events }),
       });
@@ -164,7 +164,7 @@ class TelemetryService {
 
       console.info(`[Telemetry] Flushed ${events.length} events`);
     } catch (error) {
-      console.error('[Telemetry] Flush error:', error);
+      console.error("[Telemetry] Flush error:", error);
       // Re-add failed events to buffer
       this.buffer.unshift(...events);
     }
@@ -223,35 +223,36 @@ class TelemetryService {
   }
 
   private setupEventListeners() {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     // Track page unload
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener("beforeunload", () => {
       this.flush();
     });
 
     // Track errors
-    window.addEventListener('error', (event) => {
+    window.addEventListener("error", (event) => {
       // Get user from localStorage or context
-      const userId = localStorage.getItem('userId') || 'anonymous';
-      const userRole = localStorage.getItem('userRole') || 'user';
+      const userId = localStorage.getItem("userId") || "anonymous";
+      const userRole = localStorage.getItem("userRole") || "user";
 
-      this.trackError(userId, userRole, 'Global', event.error || event.message);
+      this.trackError(userId, userRole, "Global", event.error || event.message);
     });
 
     // Track unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
-      const userId = localStorage.getItem('userId') || 'anonymous';
-      const userRole = localStorage.getItem('userRole') || 'user';
+    window.addEventListener("unhandledrejection", (event) => {
+      const userId = localStorage.getItem("userId") || "anonymous";
+      const userRole = localStorage.getItem("userRole") || "user";
 
-      this.trackError(userId, userRole, 'Global', event.reason);
+      this.trackError(userId, userRole, "Global", event.reason);
     });
   }
 }
 
 // Singleton instance
 export const telemetry = new TelemetryService({
-  enabled: process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_TELEMETRY === 'true',
+  enabled:
+    process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENABLE_TELEMETRY === "true",
 });
 
 export default telemetry;

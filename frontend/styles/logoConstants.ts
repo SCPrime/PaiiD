@@ -12,8 +12,8 @@ export const LOGO_STYLES = {
    * Used for all logo text and glow effects
    */
   COLOR: {
-    primary: '#45f0c0',                    // Main cyan color
-    rgb: 'rgb(69, 240, 192)',              // RGB format
+    primary: "#45f0c0", // Main cyan color
+    rgb: "rgb(69, 240, 192)", // RGB format
     rgba: (opacity: number) => `rgba(69, 240, 192, ${opacity})`, // RGBA helper
   },
 
@@ -23,16 +23,17 @@ export const LOGO_STYLES = {
    */
   GLOW: {
     // Base glow (animation start/end state)
-    base: '0 0 15px rgba(69, 240, 192, 0.6), 0 0 30px rgba(69, 240, 192, 0.4)',
+    base: "0 0 15px rgba(69, 240, 192, 0.6), 0 0 30px rgba(69, 240, 192, 0.4)",
 
     // Peak glow (animation mid-point, brightest)
-    peak: '0 0 25px rgba(69, 240, 192, 0.9), 0 0 50px rgba(69, 240, 192, 0.6), 0 0 75px rgba(69, 240, 192, 0.3)',
+    peak: "0 0 25px rgba(69, 240, 192, 0.9), 0 0 50px rgba(69, 240, 192, 0.6), 0 0 75px rgba(69, 240, 192, 0.3)",
 
     // Initial inline style (before animation)
-    initial: '0 0 20px rgba(69, 240, 192, 0.7), 0 0 40px rgba(69, 240, 192, 0.5)',
+    initial: "0 0 20px rgba(69, 240, 192, 0.7), 0 0 40px rgba(69, 240, 192, 0.5)",
 
     // Hover state (enhanced glow)
-    hover: '0 0 30px rgba(69, 240, 192, 1), 0 0 60px rgba(69, 240, 192, 0.7), 0 0 90px rgba(69, 240, 192, 0.4)',
+    hover:
+      "0 0 30px rgba(69, 240, 192, 1), 0 0 60px rgba(69, 240, 192, 0.7), 0 0 90px rgba(69, 240, 192, 0.4)",
   },
 
   /**
@@ -40,9 +41,9 @@ export const LOGO_STYLES = {
    * Two glowing dots positioned above the π legs (like mathematical notation)
    */
   PI_DOTS: {
-    background: '#45f0c0',
-    boxShadow: '0 0 10px rgba(69, 240, 192, 0.8)',
-    borderRadius: '50%',
+    background: "#45f0c0",
+    boxShadow: "0 0 10px rgba(69, 240, 192, 0.8)",
+    borderRadius: "50%",
     // Sizes calculated dynamically based on font size
   },
 
@@ -51,10 +52,10 @@ export const LOGO_STYLES = {
    * Duration: 3s ease-in-out infinite
    */
   ANIMATION: {
-    name: 'glow-ai',
-    duration: '3s',
-    timing: 'ease-in-out',
-    iteration: 'infinite',
+    name: "glow-ai",
+    duration: "3s",
+    timing: "ease-in-out",
+    iteration: "infinite",
   },
 };
 
@@ -84,10 +85,10 @@ export const LOGO_ANIMATION_CSS = `${LOGO_STYLES.ANIMATION.name} ${LOGO_STYLES.A
 export const PI_SYMBOL_STYLES = {
   color: LOGO_STYLES.COLOR.primary,
   animation: LOGO_ANIMATION_CSS,
-  cursor: 'pointer',
-  position: 'relative' as const,
-  display: 'inline-block',
-  transition: 'transform 0.2s ease',
+  cursor: "pointer",
+  position: "relative" as const,
+  display: "inline-block",
+  transition: "transform 0.2s ease",
 };
 
 /**
@@ -133,11 +134,11 @@ export const MODAL_ANIMATIONS = {
  */
 export const DEPRECATED = {
   GRADIENT: {
-    teal: 'linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)',
+    teal: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
   },
   DROP_SHADOW: {
-    standard: 'drop-shadow(0 4px 12px rgba(26, 117, 96, 0.6))',
-    subtle: 'drop-shadow(0 2px 4px rgba(26, 117, 96, 0.4))',
+    standard: "drop-shadow(0 4px 12px rgba(26, 117, 96, 0.6))",
+    subtle: "drop-shadow(0 2px 4px rgba(26, 117, 96, 0.4))",
   },
-  OLD_COLOR: '#10b981', // Old emerald green
+  OLD_COLOR: "#10b981", // Old emerald green
 };

@@ -1,6 +1,6 @@
-import 'lightweight-charts';
+import "lightweight-charts";
 
-declare module 'lightweight-charts' {
+declare module "lightweight-charts" {
   interface IChartApi {
     addCandlestickSeries(options?: any): any;
     addLineSeries(options?: any): any;

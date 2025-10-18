@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
-export type Breakpoint = 'mobile' | 'tablet' | 'desktop';
+export type Breakpoint = "mobile" | "tablet" | "desktop";
 
 /**
  * Custom hook to detect current viewport breakpoint
@@ -19,18 +19,18 @@ export type Breakpoint = 'mobile' | 'tablet' | 'desktop';
  * }
  */
 export const useBreakpoint = (): Breakpoint => {
-  const [breakpoint, setBreakpoint] = useState<Breakpoint>('desktop');
+  const [breakpoint, setBreakpoint] = useState<Breakpoint>("desktop");
 
   useEffect(() => {
     const checkBreakpoint = () => {
       const width = window.innerWidth;
 
       if (width < 768) {
-        setBreakpoint('mobile');
+        setBreakpoint("mobile");
       } else if (width < 1024) {
-        setBreakpoint('tablet');
+        setBreakpoint("tablet");
       } else {
-        setBreakpoint('desktop');
+        setBreakpoint("desktop");
       }
     };
 
@@ -38,10 +38,10 @@ export const useBreakpoint = (): Breakpoint => {
     checkBreakpoint();
 
     // Check on resize
-    window.addEventListener('resize', checkBreakpoint);
+    window.addEventListener("resize", checkBreakpoint);
 
     // Cleanup
-    return () => window.removeEventListener('resize', checkBreakpoint);
+    return () => window.removeEventListener("resize", checkBreakpoint);
   }, []);
 
   return breakpoint;
@@ -58,7 +58,7 @@ export const useBreakpoint = (): Breakpoint => {
  */
 export const useIsMobile = (): boolean => {
   const breakpoint = useBreakpoint();
-  return breakpoint === 'mobile';
+  return breakpoint === "mobile";
 };
 
 /**
@@ -68,7 +68,7 @@ export const useIsMobile = (): boolean => {
  */
 export const useIsTablet = (): boolean => {
   const breakpoint = useBreakpoint();
-  return breakpoint === 'tablet';
+  return breakpoint === "tablet";
 };
 
 /**
@@ -78,7 +78,7 @@ export const useIsTablet = (): boolean => {
  */
 export const useIsDesktop = (): boolean => {
   const breakpoint = useBreakpoint();
-  return breakpoint === 'desktop';
+  return breakpoint === "desktop";
 };
 
 /**
@@ -92,8 +92,8 @@ export const useIsDesktop = (): boolean => {
  */
 export const useWindowDimensions = () => {
   const [dimensions, setDimensions] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
-    height: typeof window !== 'undefined' ? window.innerHeight : 768,
+    width: typeof window !== "undefined" ? window.innerWidth : 1024,
+    height: typeof window !== "undefined" ? window.innerHeight : 768,
   });
 
   useEffect(() => {
@@ -104,8 +104,8 @@ export const useWindowDimensions = () => {
       });
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return dimensions;

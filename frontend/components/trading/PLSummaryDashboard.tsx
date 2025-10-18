@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import type { PLSummaryStats } from '@/types/pnl';
+import { useState, useEffect } from "react";
+import type { PLSummaryStats } from "@/types/pnl";
 
 /**
  * P&L Summary Dashboard
@@ -17,7 +17,7 @@ import type { PLSummaryStats } from '@/types/pnl';
 export default function PLSummaryDashboard() {
   const [stats, setStats] = useState<PLSummaryStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [timeframe, setTimeframe] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  const [timeframe, setTimeframe] = useState<"7d" | "30d" | "90d" | "all">("30d");
 
   useEffect(() => {
     fetchSummaryStats(timeframe);
@@ -39,23 +39,23 @@ export default function PLSummaryDashboard() {
         totalActualPL: 7703,
         performanceGap: -1247,
         bestCapture: {
-          positionId: 'pos_123',
+          positionId: "pos_123",
           score: 96.8,
-          strategy: 'Iron Condor',
+          strategy: "Iron Condor",
         },
         worstCapture: {
-          positionId: 'pos_456',
+          positionId: "pos_456",
           score: 62.3,
-          strategy: 'Put Credit Spread',
+          strategy: "Put Credit Spread",
         },
         cumulativeReturns: [
-          { date: new Date('2025-01-01'), theoretical: 0, actual: 0 },
-          { date: new Date('2025-01-08'), theoretical: 1200, actual: 1050 },
-          { date: new Date('2025-01-15'), theoretical: 2800, actual: 2400 },
-          { date: new Date('2025-01-22'), theoretical: 4500, actual: 3850 },
-          { date: new Date('2025-01-29'), theoretical: 6200, actual: 5300 },
-          { date: new Date('2025-02-05'), theoretical: 7400, actual: 6350 },
-          { date: new Date('2025-02-12'), theoretical: 8950, actual: 7703 },
+          { date: new Date("2025-01-01"), theoretical: 0, actual: 0 },
+          { date: new Date("2025-01-08"), theoretical: 1200, actual: 1050 },
+          { date: new Date("2025-01-15"), theoretical: 2800, actual: 2400 },
+          { date: new Date("2025-01-22"), theoretical: 4500, actual: 3850 },
+          { date: new Date("2025-01-29"), theoretical: 6200, actual: 5300 },
+          { date: new Date("2025-02-05"), theoretical: 7400, actual: 6350 },
+          { date: new Date("2025-02-12"), theoretical: 8950, actual: 7703 },
         ],
         slippageAttribution: {
           entrySlippage: -687,
@@ -67,7 +67,7 @@ export default function PLSummaryDashboard() {
 
       setStats(mockStats);
     } catch (error) {
-      console.error('Failed to fetch summary stats:', error);
+      console.error("Failed to fetch summary stats:", error);
     } finally {
       setLoading(false);
     }
@@ -89,17 +89,17 @@ export default function PLSummaryDashboard() {
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-cyan-400">📊 Execution Quality Summary</h3>
         <div className="flex gap-2">
-          {(['7d', '30d', '90d', 'all'] as const).map(period => (
+          {(["7d", "30d", "90d", "all"] as const).map((period) => (
             <button
               key={period}
               onClick={() => setTimeframe(period)}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                 timeframe === period
-                  ? 'bg-cyan-500 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  ? "bg-cyan-500 text-white"
+                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
               }`}
             >
-              {period === 'all' ? 'All Time' : period.toUpperCase()}
+              {period === "all" ? "All Time" : period.toUpperCase()}
             </button>
           ))}
         </div>
@@ -145,7 +145,9 @@ export default function PLSummaryDashboard() {
         <div className="p-4 bg-slate-800/50 border border-green-500/30 rounded-xl">
           <div className="flex items-center justify-between mb-2">
             <div className="text-sm font-semibold text-green-400">🏆 Best Capture</div>
-            <div className="text-xl font-bold text-green-300">{stats.bestCapture.score.toFixed(1)}%</div>
+            <div className="text-xl font-bold text-green-300">
+              {stats.bestCapture.score.toFixed(1)}%
+            </div>
           </div>
           <div className="text-xs text-slate-400">
             {stats.bestCapture.strategy} • {stats.bestCapture.positionId}
@@ -155,7 +157,9 @@ export default function PLSummaryDashboard() {
         <div className="p-4 bg-slate-800/50 border border-red-500/30 rounded-xl">
           <div className="flex items-center justify-between mb-2">
             <div className="text-sm font-semibold text-red-400">📉 Worst Capture</div>
-            <div className="text-xl font-bold text-red-300">{stats.worstCapture.score.toFixed(1)}%</div>
+            <div className="text-xl font-bold text-red-300">
+              {stats.worstCapture.score.toFixed(1)}%
+            </div>
           </div>
           <div className="text-xs text-slate-400">
             {stats.worstCapture.strategy} • {stats.worstCapture.positionId}
@@ -172,7 +176,7 @@ export default function PLSummaryDashboard() {
           {/* Simple line chart representation */}
           <svg className="w-full h-full" viewBox="0 0 600 180">
             {/* Grid lines */}
-            {[0, 1, 2, 3, 4].map(i => (
+            {[0, 1, 2, 3, 4].map((i) => (
               <line
                 key={i}
                 x1="0"
@@ -192,7 +196,7 @@ export default function PLSummaryDashboard() {
                   const y = 180 - (point.theoretical / stats.totalTheoreticalPL) * 160;
                   return `${x},${y}`;
                 })
-                .join(' ')}
+                .join(" ")}
               fill="none"
               stroke="#10b981"
               strokeWidth="2"
@@ -206,7 +210,7 @@ export default function PLSummaryDashboard() {
                   const y = 180 - (point.actual / stats.totalTheoreticalPL) * 160;
                   return `${x},${y}`;
                 })
-                .join(' ')}
+                .join(" ")}
               fill="none"
               stroke="#06b6d4"
               strokeWidth="2"
@@ -236,9 +240,7 @@ export default function PLSummaryDashboard() {
         <div className="space-y-3">
           {Object.entries(stats.slippageAttribution).map(([key, value]) => {
             const percentage = (Math.abs(value) / Math.abs(stats.performanceGap)) * 100;
-            const label = key
-              .replace(/([A-Z])/g, ' $1')
-              .replace(/^./, str => str.toUpperCase());
+            const label = key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
 
             return (
               <div key={key}>
@@ -267,10 +269,20 @@ export default function PLSummaryDashboard() {
           <div>
             <div className="text-sm font-semibold text-yellow-400 mb-1">Insights</div>
             <div className="text-xs text-slate-300">
-              Your average execution quality of {stats.avgExecutionQuality.toFixed(1)}% is{' '}
-              {stats.avgExecutionQuality >= 85 ? 'excellent' : stats.avgExecutionQuality >= 75 ? 'good' : 'below target'}.
-              Entry slippage accounts for {((Math.abs(stats.slippageAttribution.entrySlippage) / Math.abs(stats.performanceGap)) * 100).toFixed(0)}%
-              of the performance gap. Consider using limit orders or trading during higher liquidity hours.
+              Your average execution quality of {stats.avgExecutionQuality.toFixed(1)}% is{" "}
+              {stats.avgExecutionQuality >= 85
+                ? "excellent"
+                : stats.avgExecutionQuality >= 75
+                  ? "good"
+                  : "below target"}
+              . Entry slippage accounts for{" "}
+              {(
+                (Math.abs(stats.slippageAttribution.entrySlippage) /
+                  Math.abs(stats.performanceGap)) *
+                100
+              ).toFixed(0)}
+              % of the performance gap. Consider using limit orders or trading during higher
+              liquidity hours.
             </div>
           </div>
         </div>
