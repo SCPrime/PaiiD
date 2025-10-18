@@ -206,6 +206,7 @@ PaiiD/
 - [Development Roadmap](./ROADMAP.md) - Detailed specs for 5 remaining workflows
 - [Component Architecture](./COMPONENT_ARCHITECTURE.md) - Technical implementation guide
 - [API Documentation](./API_DOCUMENTATION.md) - Complete endpoint reference
+- [ChatGPT Integration Guide](./CHATGPT_INTEGRATION.md) - Connect to ChatGPT, Claude Desktop, or OpenAI API
 
 ## 🔐 Security Notes
 
