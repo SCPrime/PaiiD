@@ -27,7 +27,7 @@ def test_get_news_endpoint():
             assert "title" in article
             assert "url" in article
             assert "source" in article
-            assert "publishedAt" in article
+            assert "published_at" in article  # API uses snake_case
 
 
 def test_news_requires_auth():
