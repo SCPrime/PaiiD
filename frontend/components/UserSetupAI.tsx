@@ -310,7 +310,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             }}
           >
             {/* Compact PaiiD Logo */}
-            <PaiiDLogo size="small" showSubtitle={true} onClick={openChat} />
+            <PaiiDLogo size="large" showSubtitle={true} />
 
             {/* Instruction box */}
             <div
