@@ -2,6 +2,8 @@
 
 **Personal Artificial Intelligence Investment Dashboard** - A full-stack AI-powered trading platform with an intuitive 10-stage radial workflow interface, real-time market data, and intelligent trade execution.
 
+## AI-Powered Code Reviews
+
 ## 🚀 Live Deployment
 
 - **Frontend**: https://paiid-frontend.onrender.com
