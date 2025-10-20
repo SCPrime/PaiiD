@@ -3,12 +3,13 @@ Strategy-based opportunity screening endpoints
 """
 
 import random
-from typing import List, Literal
+from typing import Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from ..core.auth import require_bearer
+
 
 router = APIRouter(tags=["screening"])
 
@@ -226,7 +227,7 @@ async def get_opportunities(max_price: float | None = None) -> dict:
     selected_options = random.sample(option_opportunities, min(2, len(option_opportunities)))
     selected_multileg = random.sample(multileg_opportunities, min(2, len(multileg_opportunities)))
 
-    all_opportunities: List[Opportunity] = []
+    all_opportunities: list[Opportunity] = []
 
     # Add stocks
     for stock in selected_stocks:

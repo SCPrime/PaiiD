@@ -7,12 +7,12 @@ Phase 3: Bulletproof Reliability
 """
 
 import os
-from typing import Callable
 
 from fastapi import Request
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+
 
 # Check if running in test mode
 TESTING = os.getenv("TESTING", "false").lower() == "true"
@@ -57,7 +57,7 @@ async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExc
         status_code=429,
         content={
             "error": "Rate limit exceeded",
-            "message": f"Too many requests. Please try again later.",
+            "message": "Too many requests. Please try again later.",
             "retry_after": retry_after,
             "limit": str(exc.detail),
         },
@@ -94,10 +94,10 @@ def rate_limit_very_strict(func):
 
 # Export limiter and handlers
 __all__ = [
-    "limiter",
     "custom_rate_limit_exceeded_handler",
+    "limiter",
+    "rate_limit_relaxed",
     "rate_limit_standard",
     "rate_limit_strict",
-    "rate_limit_relaxed",
     "rate_limit_very_strict",
 ]

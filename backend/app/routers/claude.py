@@ -5,11 +5,11 @@ Proxies Anthropic API calls from frontend to avoid exposing API key in browser
 
 import os
 import sys
-from typing import List, Optional
 
 from anthropic import Anthropic
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
 
 # Set UTF-8 encoding for console output on Windows
 if sys.platform == "win32":
@@ -34,8 +34,8 @@ class Message(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    messages: List[Message]
-    system: Optional[str] = None  # Frontend sends string, we'll convert to list if needed
+    messages: list[Message]
+    system: str | None = None  # Frontend sends string, we'll convert to list if needed
     max_tokens: int = 2000
     model: str = "claude-sonnet-4-5-20250929"
 
@@ -86,7 +86,7 @@ async def claude_chat(request: ChatRequest):
     except Exception as e:
         # Safe error logging for Windows console
         try:
-            print(f"[Claude API Error]: {str(e)}")
+            print(f"[Claude API Error]: {e!s}")
         except UnicodeEncodeError:
             error_msg = str(e).encode("ascii", "ignore").decode("ascii")
             print(f"[Claude API Error]: {error_msg}")

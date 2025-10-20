@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
+
 client = TestClient(app)
 HEAD = {"Authorization": "Bearer test-token-12345"}
 

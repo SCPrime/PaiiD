@@ -1,17 +1,18 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from time import perf_counter
 
 import sentry_sdk
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from ..core.idempotency import get_redis
+
 
 router = APIRouter()
 
 
 @router.get("/health")
 def health():
-    info = {"status": "ok", "time": datetime.now(timezone.utc).isoformat()}
+    info = {"status": "ok", "time": datetime.now(UTC).isoformat()}
 
     # Check Redis connection
     r = get_redis()

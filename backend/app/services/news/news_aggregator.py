@@ -1,8 +1,8 @@
 import logging
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from difflib import SequenceMatcher
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tenacity import (
     before_sleep_log,
@@ -16,6 +16,7 @@ from .alpha_vantage_provider import AlphaVantageProvider
 from .base_provider import NewsArticle
 from .finnhub_provider import FinnhubProvider
 from .polygon_provider import PolygonProvider
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ class CircuitBreaker:
         self.failure_threshold = failure_threshold
         self.cooldown_seconds = cooldown_seconds
         self.failure_count = 0
-        self.last_failure_time: Optional[datetime] = None
+        self.last_failure_time: datetime | None = None
         self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
 
     def record_success(self):
@@ -58,7 +59,7 @@ class CircuitBreaker:
                 1  # Gradual recovery: start with 1 failure instead of keeping full count
             )
             logger.info(
-                f"[Circuit Breaker] HALF_OPEN test failed - resetting to 1 failure for gradual recovery"
+                "[Circuit Breaker] HALF_OPEN test failed - resetting to 1 failure for gradual recovery"
             )
         else:
             self.failure_count += 1
@@ -84,14 +85,14 @@ class CircuitBreaker:
                 if elapsed >= self.cooldown_seconds:
                     # Move to HALF_OPEN to test provider
                     self.state = "HALF_OPEN"
-                    logger.info(f"[Circuit Breaker] HALF_OPEN - testing provider")
+                    logger.info("[Circuit Breaker] HALF_OPEN - testing provider")
                     return True
             return False
 
         # HALF_OPEN state - allow one test request
         return True
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         """Get circuit breaker status"""
         return {
             "state": self.state,
@@ -103,14 +104,15 @@ class CircuitBreaker:
 class NewsAggregator:
     def __init__(self):
         self.providers = []
-        self.circuit_breakers: Dict[str, CircuitBreaker] = {}
+        self.circuit_breakers: dict[str, CircuitBreaker] = {}
 
         # Try to initialize each provider (fail gracefully if API key missing)
         try:
             provider = FinnhubProvider()
             self.providers.append(provider)
             self.circuit_breakers[provider.get_provider_name()] = CircuitBreaker(
-                failure_threshold=3, cooldown_seconds=30  # Tuned: 60s→30s for faster recovery
+                failure_threshold=3,
+                cooldown_seconds=30,  # Tuned: 60s→30s for faster recovery
             )
             logger.info("[OK] Finnhub provider initialized")
         except Exception as e:
@@ -120,7 +122,8 @@ class NewsAggregator:
             provider = AlphaVantageProvider()
             self.providers.append(provider)
             self.circuit_breakers[provider.get_provider_name()] = CircuitBreaker(
-                failure_threshold=3, cooldown_seconds=30  # Tuned: 60s→30s for faster recovery
+                failure_threshold=3,
+                cooldown_seconds=30,  # Tuned: 60s→30s for faster recovery
             )
             logger.info("[OK] Alpha Vantage provider initialized")
         except Exception as e:
@@ -130,7 +133,8 @@ class NewsAggregator:
             provider = PolygonProvider()
             self.providers.append(provider)
             self.circuit_breakers[provider.get_provider_name()] = CircuitBreaker(
-                failure_threshold=3, cooldown_seconds=30  # Tuned: 60s→30s for faster recovery
+                failure_threshold=3,
+                cooldown_seconds=30,  # Tuned: 60s→30s for faster recovery
             )
             logger.info("[OK] Polygon provider initialized")
         except Exception as e:
@@ -147,7 +151,7 @@ class NewsAggregator:
     )
     def _call_provider_with_retry(
         self, provider, method_name: str, *args, **kwargs
-    ) -> List[NewsArticle]:
+    ) -> list[NewsArticle]:
         """
         Call provider method with retry logic and circuit breaker
 
@@ -198,7 +202,7 @@ class NewsAggregator:
             # For non-retryable errors, return empty list
             return []
 
-    def get_company_news(self, symbol: str, days_back: int = 7) -> List[Dict[str, Any]]:
+    def get_company_news(self, symbol: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Aggregate news from all providers for a specific company.
 
@@ -242,7 +246,7 @@ class NewsAggregator:
 
         return [article.to_dict() for article in aggregated]
 
-    def get_market_news(self, category: str = "general", limit: int = 50) -> List[Dict[str, Any]]:
+    def get_market_news(self, category: str = "general", limit: int = 50) -> list[dict[str, Any]]:
         """
         Aggregate market news from all providers.
 
@@ -265,7 +269,7 @@ class NewsAggregator:
 
         # If no articles found from any provider, return empty list
         if not all_articles:
-            logger.warning(f"[NEWS] No market news found from any provider")
+            logger.warning("[NEWS] No market news found from any provider")
             return []
 
         # Deduplicate
@@ -293,7 +297,7 @@ class NewsAggregator:
 
         return [article.to_dict() for article in aggregated[:limit]]
 
-    def _deduplicate(self, articles: List[NewsArticle]) -> List[NewsArticle]:
+    def _deduplicate(self, articles: list[NewsArticle]) -> list[NewsArticle]:
         """Remove duplicate articles based on title similarity"""
         if not articles:
             return []
@@ -331,7 +335,7 @@ class NewsAggregator:
 
         return deduplicated
 
-    def _aggregate_sentiment(self, articles: List[NewsArticle]) -> List[NewsArticle]:
+    def _aggregate_sentiment(self, articles: list[NewsArticle]) -> list[NewsArticle]:
         """Average sentiment scores from multiple sources"""
         url_groups = defaultdict(list)
         for article in articles:
@@ -359,7 +363,7 @@ class NewsAggregator:
         else:
             return "neutral"
 
-    def _prioritize(self, articles: List[NewsArticle]) -> List[NewsArticle]:
+    def _prioritize(self, articles: list[NewsArticle]) -> list[NewsArticle]:
         """Sort by importance"""
 
         def priority_score(article: NewsArticle) -> float:
@@ -386,7 +390,7 @@ class NewsAggregator:
         articles.sort(key=priority_score, reverse=True)
         return articles
 
-    def get_provider_health(self) -> Dict[str, Any]:
+    def get_provider_health(self) -> dict[str, Any]:
         """
         Get health status of all news providers for observability
 
@@ -404,7 +408,9 @@ class NewsAggregator:
                 "status": (
                     "healthy"
                     if (breaker and breaker.state == "CLOSED")
-                    else "degraded" if (breaker and breaker.state == "HALF_OPEN") else "down"
+                    else "degraded"
+                    if (breaker and breaker.state == "HALF_OPEN")
+                    else "down"
                 ),
                 "circuit_breaker": breaker.get_state() if breaker else None,
             }

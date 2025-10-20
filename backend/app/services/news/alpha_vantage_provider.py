@@ -1,6 +1,4 @@
 import os
-from datetime import datetime
-from typing import List
 
 import requests
 
@@ -14,7 +12,7 @@ class AlphaVantageProvider(BaseNewsProvider):
             raise ValueError("ALPHA_VANTAGE_API_KEY not set")
         self.provider_name = "alpha_vantage"
 
-    def get_company_news(self, symbol: str, days_back: int = 7) -> List[NewsArticle]:
+    def get_company_news(self, symbol: str, days_back: int = 7) -> list[NewsArticle]:
         url = "https://www.alphavantage.co/query"
         params = {
             "function": "NEWS_SENTIMENT",
@@ -36,7 +34,7 @@ class AlphaVantageProvider(BaseNewsProvider):
             print(f"[ERROR] Alpha Vantage error: {e}")
             return []
 
-    def get_market_news(self, category: str = "general") -> List[NewsArticle]:
+    def get_market_news(self, category: str = "general") -> list[NewsArticle]:
         url = "https://www.alphavantage.co/query"
         params = {
             "function": "NEWS_SENTIMENT",

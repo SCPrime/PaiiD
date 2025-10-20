@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 
 class NewsArticle:
@@ -20,7 +19,7 @@ class NewsArticle:
         self.image_url = kwargs.get("image_url")
         self.provider = kwargs.get("provider")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "title": self.title,
@@ -41,11 +40,11 @@ class BaseNewsProvider(ABC):
     """Base class for all news providers"""
 
     @abstractmethod
-    def get_company_news(self, symbol: str, days_back: int = 7) -> List[NewsArticle]:
+    def get_company_news(self, symbol: str, days_back: int = 7) -> list[NewsArticle]:
         pass
 
     @abstractmethod
-    def get_market_news(self, category: str = "general") -> List[NewsArticle]:
+    def get_market_news(self, category: str = "general") -> list[NewsArticle]:
         pass
 
     @abstractmethod

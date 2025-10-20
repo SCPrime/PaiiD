@@ -9,9 +9,9 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from ..services.tradier_client import get_tradier_client
+
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class EquityTracker:
     def __init__(self):
         self.data_file = EQUITY_FILE
 
-    def record_snapshot(self) -> Dict:
+    def record_snapshot(self) -> dict:
         """
         Record current portfolio equity snapshot
 
@@ -72,33 +72,33 @@ class EquityTracker:
             return snapshot
 
         except Exception as e:
-            logger.error(f"❌ Failed to record equity snapshot: {str(e)}")
+            logger.error(f"❌ Failed to record equity snapshot: {e!s}")
             raise
 
-    def load_history(self) -> List[Dict]:
+    def load_history(self) -> list[dict]:
         """Load equity history from file"""
         try:
             if self.data_file.exists():
-                with open(self.data_file, "r") as f:
+                with open(self.data_file) as f:
                     return json.load(f)
             return []
         except Exception as e:
-            logger.error(f"❌ Failed to load equity history: {str(e)}")
+            logger.error(f"❌ Failed to load equity history: {e!s}")
             return []
 
-    def save_history(self, history: List[Dict]):
+    def save_history(self, history: list[dict]):
         """Save equity history to file"""
         try:
             with open(self.data_file, "w") as f:
                 json.dump(history, f, indent=2)
             logger.info(f"✅ Saved equity history ({len(history)} snapshots)")
         except Exception as e:
-            logger.error(f"❌ Failed to save equity history: {str(e)}")
+            logger.error(f"❌ Failed to save equity history: {e!s}")
             raise
 
     def get_history(
-        self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> List[Dict]:
+        self, start_date: datetime | None = None, end_date: datetime | None = None
+    ) -> list[dict]:
         """
         Get equity history within date range
 
@@ -129,7 +129,7 @@ class EquityTracker:
 
         return filtered
 
-    def calculate_metrics(self, period_days: int = 30) -> Dict:
+    def calculate_metrics(self, period_days: int = 30) -> dict:
         """
         Calculate performance metrics from equity history
 

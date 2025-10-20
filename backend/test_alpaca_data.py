@@ -1,9 +1,10 @@
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
+
 
 # Load environment variables
 load_dotenv(Path(".env"))
@@ -27,9 +28,8 @@ try:
     if response.status_code == 200:
         data = response.json()
         trade_time = datetime.fromisoformat(data["trade"]["t"].replace("Z", "+00:00"))
-        from datetime import timezone
 
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(UTC)
         delay_minutes = (current_time - trade_time).total_seconds() / 60
 
         print(f"[OK] Latest AAPL trade time: {data['trade']['t']}")
@@ -82,9 +82,8 @@ for symbol in symbols:
         if response.status_code == 200:
             data = response.json()
             quote_time = datetime.fromisoformat(data["quote"]["t"].replace("Z", "+00:00"))
-            from datetime import timezone
 
-            current_time = datetime.now(timezone.utc)
+            current_time = datetime.now(UTC)
             delay_minutes = (current_time - quote_time).total_seconds() / 60
 
             bid = data["quote"]["bp"]
@@ -100,7 +99,7 @@ for symbol in symbols:
             print(f"  Spread: ${spread:.3f} ({spread_pct:.2f}%)")
 
             if delay_minutes < 15:
-                print(f"  [RECENT] Recent data")
+                print("  [RECENT] Recent data")
             else:
                 print(f"  [STALE] Stale data ({delay_minutes:.0f} min old)")
         else:

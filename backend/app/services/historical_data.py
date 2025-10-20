@@ -6,8 +6,9 @@ NO mock data - all data comes from real market sources.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ class HistoricalDataService:
 
     async def get_historical_bars(
         self, symbol: str, start_date: str, end_date: str, interval: str = "daily"
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get historical OHLCV bars from Tradier API
 

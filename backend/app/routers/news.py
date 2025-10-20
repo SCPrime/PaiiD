@@ -1,9 +1,7 @@
-from datetime import datetime, timedelta
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.auth import require_bearer
+
 
 router = APIRouter()
 
@@ -27,8 +25,8 @@ except Exception as e:
 async def get_company_news(
     symbol: str,
     days_back: int = Query(default=7, ge=1, le=30),
-    sentiment: Optional[str] = Query(default=None, regex="^(bullish|bearish|neutral)$"),
-    provider: Optional[str] = None,
+    sentiment: str | None = Query(default=None, regex="^(bullish|bearish|neutral)$"),
+    provider: str | None = None,
     use_cache: bool = Query(default=True),
     _: str = Depends(require_bearer),
 ):
@@ -97,8 +95,8 @@ async def get_company_news(
 async def get_market_news(
     category: str = Query(default="general"),
     limit: int = Query(default=50, ge=1, le=200),
-    sentiment: Optional[str] = Query(default=None, regex="^(bullish|bearish|neutral)$"),
-    provider: Optional[str] = None,
+    sentiment: str | None = Query(default=None, regex="^(bullish|bearish|neutral)$"),
+    provider: str | None = None,
     use_cache: bool = Query(default=True),
     _: str = Depends(require_bearer),
 ):
@@ -193,7 +191,7 @@ async def get_news_health(_: str = Depends(require_bearer)):
         health = news_aggregator.get_provider_health()
         return health
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get health status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get health status: {e!s}")
 
 
 @router.get("/news/sentiment/market")
@@ -278,9 +276,7 @@ async def clear_news_cache(_: str = Depends(require_bearer)):
 
 
 # Helper functions
-def _apply_filters(
-    articles: List[dict], sentiment: Optional[str], provider: Optional[str]
-) -> List[dict]:
+def _apply_filters(articles: list[dict], sentiment: str | None, provider: str | None) -> list[dict]:
     """Apply sentiment and provider filters to articles"""
     filtered = articles
 

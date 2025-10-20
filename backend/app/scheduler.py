@@ -9,10 +9,10 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ class TradingScheduler:
         """Restore all enabled schedules from storage"""
         try:
             for schedule_file in SCHEDULES_DIR.glob("*.json"):
-                with open(schedule_file, "r") as f:
+                with open(schedule_file) as f:
                     schedule = json.load(f)
                     if schedule.get("enabled", False):
                         asyncio.create_task(
@@ -76,7 +76,7 @@ class TradingScheduler:
                         )
             logger.info("Schedules restored from storage")
         except Exception as e:
-            logger.error(f"Failed to restore schedules: {str(e)}")
+            logger.error(f"Failed to restore schedules: {e!s}")
 
     async def add_schedule(
         self,
@@ -110,7 +110,7 @@ class TradingScheduler:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to add schedule {schedule_id}: {str(e)}")
+            logger.error(f"Failed to add schedule {schedule_id}: {e!s}")
             raise
 
     async def remove_schedule(self, schedule_id: str):
@@ -120,7 +120,7 @@ class TradingScheduler:
             logger.info(f"Schedule {schedule_id} removed")
             return True
         except Exception as e:
-            logger.error(f"Failed to remove schedule {schedule_id}: {str(e)}")
+            logger.error(f"Failed to remove schedule {schedule_id}: {e!s}")
             return False
 
     async def pause_schedule(self, schedule_id: str):
@@ -130,7 +130,7 @@ class TradingScheduler:
             logger.info(f"Schedule {schedule_id} paused")
             return True
         except Exception as e:
-            logger.error(f"Failed to pause schedule {schedule_id}: {str(e)}")
+            logger.error(f"Failed to pause schedule {schedule_id}: {e!s}")
             return False
 
     async def resume_schedule(self, schedule_id: str):
@@ -140,7 +140,7 @@ class TradingScheduler:
             logger.info(f"Schedule {schedule_id} resumed")
             return True
         except Exception as e:
-            logger.error(f"Failed to resume schedule {schedule_id}: {str(e)}")
+            logger.error(f"Failed to resume schedule {schedule_id}: {e!s}")
             return False
 
     async def pause_all(self):
@@ -150,7 +150,7 @@ class TradingScheduler:
             logger.warning("ALL SCHEDULES PAUSED - Emergency stop activated")
             return True
         except Exception as e:
-            logger.error(f"Failed to pause all schedules: {str(e)}")
+            logger.error(f"Failed to pause all schedules: {e!s}")
             return False
 
     async def resume_all(self):
@@ -160,10 +160,10 @@ class TradingScheduler:
             logger.info("All schedules resumed")
             return True
         except Exception as e:
-            logger.error(f"Failed to resume all schedules: {str(e)}")
+            logger.error(f"Failed to resume all schedules: {e!s}")
             return False
 
-    def get_schedule_info(self, schedule_id: str) -> Optional[Dict]:
+    def get_schedule_info(self, schedule_id: str) -> dict | None:
         """Get information about a specific schedule"""
         try:
             job = self.scheduler.get_job(schedule_id)
@@ -176,7 +176,7 @@ class TradingScheduler:
                 }
             return None
         except Exception as e:
-            logger.error(f"Failed to get schedule info for {schedule_id}: {str(e)}")
+            logger.error(f"Failed to get schedule info for {schedule_id}: {e!s}")
             return None
 
     def _add_equity_tracking_job(self):
@@ -199,7 +199,7 @@ class TradingScheduler:
             logger.info("✅ Daily equity tracking job added (4:15 PM ET, Mon-Fri)")
 
         except Exception as e:
-            logger.error(f"❌ Failed to add equity tracking job: {str(e)}")
+            logger.error(f"❌ Failed to add equity tracking job: {e!s}")
 
     async def _track_equity_snapshot(self):
         """Record daily equity snapshot"""
@@ -212,7 +212,7 @@ class TradingScheduler:
             logger.info(f"✅ Equity snapshot recorded: ${snapshot['equity']:.2f}")
 
         except Exception as e:
-            logger.error(f"❌ Failed to track equity snapshot: {str(e)}")
+            logger.error(f"❌ Failed to track equity snapshot: {e!s}")
 
     def _get_job_function(self, schedule_type: str):
         """Map schedule type to execution function"""
@@ -264,7 +264,7 @@ class TradingScheduler:
             logger.info(f"Morning routine completed for schedule {schedule_id}")
 
         except Exception as e:
-            logger.error(f"Morning routine failed for schedule {schedule_id}: {str(e)}")
+            logger.error(f"Morning routine failed for schedule {schedule_id}: {e!s}")
             await self._complete_execution(execution_id, "failed", None, str(e))
 
     async def _execute_news_review(self, schedule_id: str, requires_approval: bool):
@@ -281,12 +281,12 @@ class TradingScheduler:
                 await self._create_approval_requests(execution_id, signals, schedule_id)
                 result = f"Generated {len(signals)} signals pending approval"
             else:
-                result = f"No actionable news signals found"
+                result = "No actionable news signals found"
 
             await self._complete_execution(execution_id, "completed", result)
 
         except Exception as e:
-            logger.error(f"News review failed for schedule {schedule_id}: {str(e)}")
+            logger.error(f"News review failed for schedule {schedule_id}: {e!s}")
             await self._complete_execution(execution_id, "failed", None, str(e))
 
     async def _execute_ai_recommendations(self, schedule_id: str, requires_approval: bool):
@@ -303,12 +303,12 @@ class TradingScheduler:
                 await self._create_approval_requests(execution_id, recommendations, schedule_id)
                 result = f"Generated {len(recommendations)} high-confidence recs pending approval"
             else:
-                result = f"No high-confidence recommendations at this time"
+                result = "No high-confidence recommendations at this time"
 
             await self._complete_execution(execution_id, "completed", result)
 
         except Exception as e:
-            logger.error(f"AI recommendations failed for schedule {schedule_id}: {str(e)}")
+            logger.error(f"AI recommendations failed for schedule {schedule_id}: {e!s}")
             await self._complete_execution(execution_id, "failed", None, str(e))
 
     async def _execute_custom_action(self, schedule_id: str, requires_approval: bool):
@@ -321,7 +321,7 @@ class TradingScheduler:
             await self._complete_execution(execution_id, "completed", result)
 
         except Exception as e:
-            logger.error(f"Custom action failed for schedule {schedule_id}: {str(e)}")
+            logger.error(f"Custom action failed for schedule {schedule_id}: {e!s}")
             await self._complete_execution(execution_id, "failed", None, str(e))
 
     # ========================
@@ -336,7 +336,7 @@ class TradingScheduler:
         schedule_file = SCHEDULES_DIR / f"{schedule_id}.json"
         schedule_name = "Unknown"
         if schedule_file.exists():
-            with open(schedule_file, "r") as f:
+            with open(schedule_file) as f:
                 schedule = json.load(f)
                 schedule_name = schedule.get("name", "Unknown")
 
@@ -358,13 +358,13 @@ class TradingScheduler:
         return execution_id
 
     async def _complete_execution(
-        self, execution_id: str, status: str, result: Optional[str], error: Optional[str] = None
+        self, execution_id: str, status: str, result: str | None, error: str | None = None
     ):
         """Update execution record with completion status"""
         execution_file = EXECUTIONS_DIR / f"{execution_id}.json"
 
         if execution_file.exists():
-            with open(execution_file, "r") as f:
+            with open(execution_file) as f:
                 execution = json.load(f)
 
             execution.update(
@@ -387,7 +387,7 @@ class TradingScheduler:
         schedule_file = SCHEDULES_DIR / f"{schedule_id}.json"
         schedule_name = "Unknown"
         if schedule_file.exists():
-            with open(schedule_file, "r") as f:
+            with open(schedule_file) as f:
                 schedule = json.load(f)
                 schedule_name = schedule.get("name", "Unknown")
 
@@ -420,7 +420,7 @@ class TradingScheduler:
 
 
 # Global scheduler instance
-_scheduler_instance: Optional[TradingScheduler] = None
+_scheduler_instance: TradingScheduler | None = None
 
 
 def get_scheduler() -> TradingScheduler:

@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
+
 client = TestClient(app)
 
 # Valid token from config (matches conftest.py line 18)

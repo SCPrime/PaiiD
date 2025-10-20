@@ -2,6 +2,7 @@ import os
 import time
 from typing import Optional
 
+
 try:
     from redis import Redis
 except ImportError:

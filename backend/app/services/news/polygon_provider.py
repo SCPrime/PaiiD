@@ -1,6 +1,4 @@
 import os
-from datetime import datetime, timedelta
-from typing import List
 
 import requests
 
@@ -15,7 +13,7 @@ class PolygonProvider(BaseNewsProvider):
         self.base_url = "https://api.polygon.io"
         self.provider_name = "polygon"
 
-    def get_company_news(self, symbol: str, days_back: int = 7) -> List[NewsArticle]:
+    def get_company_news(self, symbol: str, days_back: int = 7) -> list[NewsArticle]:
         url = f"{self.base_url}/v2/reference/news"
         params = {"ticker": symbol.upper(), "limit": 50, "apiKey": self.api_key}
 
@@ -32,7 +30,7 @@ class PolygonProvider(BaseNewsProvider):
             print(f"[ERROR] Polygon error: {e}")
             return []
 
-    def get_market_news(self, category: str = "general") -> List[NewsArticle]:
+    def get_market_news(self, category: str = "general") -> list[NewsArticle]:
         url = f"{self.base_url}/v2/reference/news"
         params = {"limit": 50, "apiKey": self.api_key}
 

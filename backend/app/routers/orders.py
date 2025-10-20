@@ -1,7 +1,6 @@
 import logging
 import os
 from datetime import datetime
-from typing import List, Optional
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -20,11 +19,7 @@ from ..core.config import settings
 from ..core.idempotency import check_and_store
 from ..core.kill_switch import is_killed, set_kill
 from ..db.session import get_db
-from ..middleware.rate_limit import limiter, rate_limit_strict
 from ..middleware.validation import (
-    price_field,
-    quantity_field,
-    symbol_field,
     validate_limit_price,
     validate_order_type,
     validate_quantity,
@@ -33,6 +28,7 @@ from ..middleware.validation import (
     validate_symbol,
 )
 from ..models.database import OrderTemplate
+
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +63,7 @@ class AlpacaCircuitBreaker:
         self.failure_threshold = failure_threshold
         self.cooldown_seconds = cooldown_seconds
         self.failure_count = 0
-        self.last_failure_time: Optional[datetime] = None
+        self.last_failure_time: datetime | None = None
         self.state = "CLOSED"
 
     def record_success(self):
@@ -132,7 +128,7 @@ class Order(BaseModel):
     type: str = Field(
         default="market", pattern=r"^(market|limit|stop|stop_limit)$", description="Order type"
     )
-    limit_price: Optional[float] = Field(
+    limit_price: float | None = Field(
         default=None,
         gt=0,
         le=1000000,
@@ -143,15 +139,15 @@ class Order(BaseModel):
     asset_class: str = Field(
         default="stock", pattern=r"^(stock|option)$", description="Asset class: 'stock' or 'option'"
     )
-    option_type: Optional[str] = Field(
+    option_type: str | None = Field(
         default=None,
         pattern=r"^(call|put)$",
         description="Option type: 'call' or 'put' (required for options)",
     )
-    strike_price: Optional[float] = Field(
+    strike_price: float | None = Field(
         default=None, gt=0, le=100000, description="Strike price (required for options)"
     )
-    expiration_date: Optional[str] = Field(
+    expiration_date: str | None = Field(
         default=None,
         pattern=r"^\d{4}-\d{2}-\d{2}$",
         description="Expiration date in YYYY-MM-DD format (required for options)",
@@ -297,7 +293,7 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
 
         # For non-retryable errors (4xx, 5xx), fail immediately
         raise HTTPException(
-            status_code=500, detail=f"Failed to execute order for {order.symbol}: {str(e)}"
+            status_code=500, detail=f"Failed to execute order for {order.symbol}: {e!s}"
         )
 
 
@@ -377,9 +373,9 @@ async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer))
         raise  # Re-raise HTTP exceptions as-is
     except Exception as e:
         logger.error(
-            f"[Trading Execute] UNEXPECTED ERROR: {type(e).__name__}: {str(e)}", exc_info=True
+            f"[Trading Execute] UNEXPECTED ERROR: {type(e).__name__}: {e!s}", exc_info=True
         )
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}")
 
 
 @router.post("/admin/kill")
@@ -393,7 +389,7 @@ class OrderTemplateCreate(BaseModel):
     """Create order template with validation"""
 
     name: str = Field(..., min_length=1, max_length=100, description="Template name")
-    description: Optional[str] = Field(None, max_length=500, description="Template description")
+    description: str | None = Field(None, max_length=500, description="Template description")
     symbol: str = Field(
         ..., min_length=1, max_length=5, pattern=r"^[A-Z]{1,5}$", description="Stock symbol"
     )
@@ -402,7 +398,7 @@ class OrderTemplateCreate(BaseModel):
     order_type: str = Field(
         default="market", pattern=r"^(market|limit|stop|stop_limit)$", description="Order type"
     )
-    limit_price: Optional[float] = Field(None, gt=0, le=1000000, description="Limit price")
+    limit_price: float | None = Field(None, gt=0, le=1000000, description="Limit price")
 
     @validator("symbol")
     def validate_symbol_format(cls, v):
@@ -429,13 +425,13 @@ class OrderTemplateCreate(BaseModel):
 class OrderTemplateUpdate(BaseModel):
     """Update order template with validation"""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=500)
-    symbol: Optional[str] = Field(None, min_length=1, max_length=5, pattern=r"^[A-Z]{1,5}$")
-    side: Optional[str] = Field(None, pattern=r"^(buy|sell)$")
-    quantity: Optional[float] = Field(None, gt=0, le=10000)
-    order_type: Optional[str] = Field(None, pattern=r"^(market|limit|stop|stop_limit)$")
-    limit_price: Optional[float] = Field(None, gt=0, le=1000000)
+    name: str | None = Field(None, min_length=1, max_length=100)
+    description: str | None = Field(None, max_length=500)
+    symbol: str | None = Field(None, min_length=1, max_length=5, pattern=r"^[A-Z]{1,5}$")
+    side: str | None = Field(None, pattern=r"^(buy|sell)$")
+    quantity: float | None = Field(None, gt=0, le=10000)
+    order_type: str | None = Field(None, pattern=r"^(market|limit|stop|stop_limit)$")
+    limit_price: float | None = Field(None, gt=0, le=1000000)
 
     @validator("symbol")
     def validate_symbol_format(cls, v):
@@ -464,17 +460,17 @@ class OrderTemplateUpdate(BaseModel):
 
 class OrderTemplateResponse(BaseModel):
     id: int
-    user_id: Optional[int]
+    user_id: int | None
     name: str
-    description: Optional[str]
+    description: str | None
     symbol: str
     side: str
     quantity: float
     order_type: str
-    limit_price: Optional[float]
+    limit_price: float | None
     created_at: datetime
     updated_at: datetime
-    last_used_at: Optional[datetime]
+    last_used_at: datetime | None
 
     class Config:
         from_attributes = True
@@ -504,7 +500,7 @@ def create_order_template(
     return db_template
 
 
-@router.get("/order-templates", response_model=List[OrderTemplateResponse])
+@router.get("/order-templates", response_model=list[OrderTemplateResponse])
 def list_order_templates(
     skip: int = 0, limit: int = 100, db: Session = Depends(get_db), _=Depends(require_bearer)
 ):

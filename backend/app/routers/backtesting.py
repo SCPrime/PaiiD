@@ -5,14 +5,15 @@ Endpoints for running strategy backtests and retrieving results.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from ..core.auth import require_bearer
-from ..services.backtesting_engine import BacktestingEngine, BacktestResult, StrategyRules
+from ..services.backtesting_engine import BacktestingEngine, StrategyRules
 from ..services.historical_data import HistoricalDataService
+
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +29,8 @@ class BacktestRequest(BaseModel):
     initial_capital: float = Field(10000.0, ge=1000, le=1000000, description="Initial capital")
 
     # Strategy rules
-    entry_rules: List[Dict[str, Any]] = Field(..., description="Entry conditions")
-    exit_rules: List[Dict[str, Any]] = Field(..., description="Exit conditions")
+    entry_rules: list[dict[str, Any]] = Field(..., description="Entry conditions")
+    exit_rules: list[dict[str, Any]] = Field(..., description="Exit conditions")
     position_size_percent: float = Field(
         10.0, ge=1, le=100, description="Position size % of portfolio"
     )
@@ -57,8 +58,8 @@ class BacktestResponse(BaseModel):
     """Response model for backtest results"""
 
     success: bool
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
+    result: dict[str, Any] | None = None
+    error: str | None = None
 
 
 @router.post("/run", response_model=BacktestResponse, dependencies=[Depends(require_bearer)])
@@ -165,11 +166,11 @@ async def run_backtest(request: BacktestRequest):
         return BacktestResponse(success=True, result=result_dict)
 
     except ValueError as e:
-        logger.error(f"Validation error: {str(e)}")
+        logger.error(f"Validation error: {e!s}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Backtest execution error: {str(e)}", exc_info=True)
-        return BacktestResponse(success=False, error=f"Backtest failed: {str(e)}")
+        logger.error(f"Backtest execution error: {e!s}", exc_info=True)
+        return BacktestResponse(success=False, error=f"Backtest failed: {e!s}")
 
 
 @router.get("/quick-test", dependencies=[Depends(require_bearer)])
@@ -203,7 +204,7 @@ async def quick_backtest(
         return await run_backtest(request)
 
     except Exception as e:
-        logger.error(f"Quick backtest error: {str(e)}")
+        logger.error(f"Quick backtest error: {e!s}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -5,15 +5,14 @@ REST endpoints for managing scheduled trading tasks
 
 import json
 import uuid
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import List, Optional
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from ..core.auth import require_bearer
 from ..scheduler import APPROVALS_DIR, EXECUTIONS_DIR, SCHEDULES_DIR, get_scheduler
+
 
 router = APIRouter(prefix="/scheduler", tags=["scheduler"])
 
@@ -33,11 +32,11 @@ class ScheduleCreate(BaseModel):
 
 
 class ScheduleUpdate(BaseModel):
-    name: Optional[str] = None
-    cron_expression: Optional[str] = None
-    timezone: Optional[str] = None
-    requires_approval: Optional[bool] = None
-    enabled: Optional[bool] = None
+    name: str | None = None
+    cron_expression: str | None = None
+    timezone: str | None = None
+    requires_approval: bool | None = None
+    enabled: bool | None = None
 
 
 class ScheduleResponse(BaseModel):
@@ -48,8 +47,8 @@ class ScheduleResponse(BaseModel):
     cron_expression: str
     timezone: str
     requires_approval: bool
-    last_run: Optional[str]
-    next_run: Optional[str]
+    last_run: str | None
+    next_run: str | None
     status: str
     created_at: str
 
@@ -62,10 +61,10 @@ class ExecutionResponse(BaseModel):
     schedule_id: str
     schedule_name: str
     started_at: str
-    completed_at: Optional[str]
+    completed_at: str | None
     status: str
-    result: Optional[str]
-    error: Optional[str]
+    result: str | None
+    error: str | None
 
     class Config:
         from_attributes = True
@@ -83,7 +82,7 @@ class ApprovalResponse(BaseModel):
     reason: str
     risk_score: int
     ai_confidence: float
-    supporting_data: Optional[dict]
+    supporting_data: dict | None
     created_at: str
     expires_at: str
 
@@ -92,7 +91,7 @@ class ApprovalResponse(BaseModel):
 
 
 class ApprovalDecision(BaseModel):
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 # ========================
@@ -100,11 +99,11 @@ class ApprovalDecision(BaseModel):
 # ========================
 
 
-def _load_schedule(schedule_id: str) -> Optional[dict]:
+def _load_schedule(schedule_id: str) -> dict | None:
     """Load schedule from file"""
     schedule_file = SCHEDULES_DIR / f"{schedule_id}.json"
     if schedule_file.exists():
-        with open(schedule_file, "r") as f:
+        with open(schedule_file) as f:
             return json.load(f)
     return None
 
@@ -123,20 +122,20 @@ def _delete_schedule_file(schedule_id: str):
         schedule_file.unlink()
 
 
-def _load_all_schedules() -> List[dict]:
+def _load_all_schedules() -> list[dict]:
     """Load all schedules from files"""
     schedules = []
     for schedule_file in SCHEDULES_DIR.glob("*.json"):
-        with open(schedule_file, "r") as f:
+        with open(schedule_file) as f:
             schedules.append(json.load(f))
     return sorted(schedules, key=lambda x: x.get("created_at", ""), reverse=True)
 
 
-def _load_executions(limit: int = 20, schedule_id: Optional[str] = None) -> List[dict]:
+def _load_executions(limit: int = 20, schedule_id: str | None = None) -> list[dict]:
     """Load execution history from files"""
     executions = []
     for exec_file in EXECUTIONS_DIR.glob("*.json"):
-        with open(exec_file, "r") as f:
+        with open(exec_file) as f:
             execution = json.load(f)
             if schedule_id is None or execution["schedule_id"] == schedule_id:
                 executions.append(execution)
@@ -146,13 +145,13 @@ def _load_executions(limit: int = 20, schedule_id: Optional[str] = None) -> List
     return executions[:limit]
 
 
-def _load_pending_approvals() -> List[dict]:
+def _load_pending_approvals() -> list[dict]:
     """Load pending approvals from files"""
     approvals = []
     now = datetime.utcnow()
 
     for approval_file in APPROVALS_DIR.glob("*.json"):
-        with open(approval_file, "r") as f:
+        with open(approval_file) as f:
             approval = json.load(f)
             # Only include pending and not expired
             if approval["status"] == "pending":
@@ -167,7 +166,7 @@ def _update_approval(approval_id: str, updates: dict):
     """Update approval file"""
     approval_file = APPROVALS_DIR / f"{approval_id}.json"
     if approval_file.exists():
-        with open(approval_file, "r") as f:
+        with open(approval_file) as f:
             approval = json.load(f)
         approval.update(updates)
         with open(approval_file, "w") as f:
@@ -179,7 +178,7 @@ def _update_approval(approval_id: str, updates: dict):
 # ========================
 
 
-@router.get("/schedules", response_model=List[ScheduleResponse])
+@router.get("/schedules", response_model=list[ScheduleResponse])
 async def list_schedules(_=Depends(require_bearer)):
     """Get all schedules for the current user"""
     schedules = _load_all_schedules()
@@ -251,7 +250,7 @@ async def create_schedule(schedule_data: ScheduleCreate, _=Depends(require_beare
             _delete_schedule_file(schedule_id)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Failed to create schedule: {str(e)}",
+                detail=f"Failed to create schedule: {e!s}",
             )
 
     return schedule
@@ -360,9 +359,9 @@ async def resume_all_schedules(_=Depends(require_bearer)):
 # ========================
 
 
-@router.get("/executions", response_model=List[ExecutionResponse])
+@router.get("/executions", response_model=list[ExecutionResponse])
 async def list_executions(
-    limit: int = 20, schedule_id: Optional[str] = None, _=Depends(require_bearer)
+    limit: int = 20, schedule_id: str | None = None, _=Depends(require_bearer)
 ):
     """Get execution history"""
     executions = _load_executions(limit, schedule_id)
@@ -374,7 +373,7 @@ async def list_executions(
 # ========================
 
 
-@router.get("/pending-approvals", response_model=List[ApprovalResponse])
+@router.get("/pending-approvals", response_model=list[ApprovalResponse])
 async def list_pending_approvals(_=Depends(require_bearer)):
     """Get all pending trade approvals"""
     approvals = _load_pending_approvals()
@@ -389,7 +388,7 @@ async def approve_trade(approval_id: str, _=Depends(require_bearer)):
     if not approval_file.exists():
         raise HTTPException(status_code=404, detail="Approval not found")
 
-    with open(approval_file, "r") as f:
+    with open(approval_file) as f:
         approval = json.load(f)
 
     if approval["status"] != "pending":
@@ -418,7 +417,7 @@ async def reject_trade(approval_id: str, decision: ApprovalDecision, _=Depends(r
     if not approval_file.exists():
         raise HTTPException(status_code=404, detail="Approval not found")
 
-    with open(approval_file, "r") as f:
+    with open(approval_file) as f:
         approval = json.load(f)
 
     if approval["status"] != "pending":

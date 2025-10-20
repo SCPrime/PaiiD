@@ -8,13 +8,14 @@ and risk analytics for the P&L Dashboard.
 import logging
 import math
 from datetime import datetime, timedelta
-from typing import List, Literal, Optional
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from ..core.auth import require_bearer
 from ..services.tradier_client import get_tradier_client
+
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +35,8 @@ class PortfolioSummary(BaseModel):
     num_positions: int
     num_winning: int
     num_losing: int
-    largest_winner: Optional[dict] = None
-    largest_loser: Optional[dict] = None
+    largest_winner: dict | None = None
+    largest_loser: dict | None = None
 
 
 class EquityPoint(BaseModel):
@@ -164,8 +165,8 @@ async def get_portfolio_summary() -> PortfolioSummary:
         )
 
     except Exception as e:
-        logger.error(f"❌ Failed to get portfolio summary: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to get portfolio summary: {str(e)}")
+        logger.error(f"❌ Failed to get portfolio summary: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to get portfolio summary: {e!s}")
 
 
 @router.get("/portfolio/history", dependencies=[Depends(require_bearer)])
@@ -257,8 +258,8 @@ async def get_portfolio_history(
         }
 
     except Exception as e:
-        logger.error(f"❌ Failed to get portfolio history: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to get portfolio history: {str(e)}")
+        logger.error(f"❌ Failed to get portfolio history: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to get portfolio history: {e!s}")
 
 
 @router.get("/analytics/performance", dependencies=[Depends(require_bearer)])
@@ -447,5 +448,5 @@ async def get_performance_metrics(
         )
 
     except Exception as e:
-        logger.error(f"❌ Failed to get performance metrics: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to get performance metrics: {str(e)}")
+        logger.error(f"❌ Failed to get performance metrics: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to get performance metrics: {e!s}")

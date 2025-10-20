@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timedelta
-from typing import List
 
 import finnhub
 
@@ -15,7 +14,7 @@ class FinnhubProvider(BaseNewsProvider):
         self.client = finnhub.Client(api_key=api_key)
         self.provider_name = "finnhub"
 
-    def get_company_news(self, symbol: str, days_back: int = 7) -> List[NewsArticle]:
+    def get_company_news(self, symbol: str, days_back: int = 7) -> list[NewsArticle]:
         to_date = datetime.now().strftime("%Y-%m-%d")
         from_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
 
@@ -26,7 +25,7 @@ class FinnhubProvider(BaseNewsProvider):
             print(f"[ERROR] Finnhub error: {e}")
             return []
 
-    def get_market_news(self, category: str = "general") -> List[NewsArticle]:
+    def get_market_news(self, category: str = "general") -> list[NewsArticle]:
         try:
             news = self.client.general_news(category, min_id=0)
             return [self._transform_article(article) for article in news[:50]]

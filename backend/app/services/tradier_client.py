@@ -5,10 +5,9 @@ Handles: Account, Positions, Orders, Market Data, Options
 
 import logging
 import os
-from datetime import datetime
-from typing import Dict, List, Optional
 
 import requests
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +31,7 @@ class TradierClient:
 
         logger.info(f"Tradier client initialized for account {self.account_id}")
 
-    def _request(self, method: str, endpoint: str, **kwargs) -> Dict:
+    def _request(self, method: str, endpoint: str, **kwargs) -> dict:
         """Make authenticated request to Tradier API with compression and timeouts"""
         url = f"{self.base_url}{endpoint}"
 
@@ -50,16 +49,16 @@ class TradierClient:
             raise Exception(f"Tradier API error: {e.response.text}")
 
         except Exception as e:
-            logger.error(f"Tradier request failed: {str(e)}")
+            logger.error(f"Tradier request failed: {e!s}")
             raise
 
     # ==================== ACCOUNT ====================
 
-    def get_profile(self) -> Dict:
+    def get_profile(self) -> dict:
         """Get user profile"""
         return self._request("GET", "/user/profile")
 
-    def get_account(self) -> Dict:
+    def get_account(self) -> dict:
         """Get account balances"""
         result = self._request("GET", f"/accounts/{self.account_id}/balances")
         if "balances" in result:
@@ -76,7 +75,7 @@ class TradierClient:
             }
         return result
 
-    def get_positions(self) -> List[Dict]:
+    def get_positions(self) -> list[dict]:
         """Get all positions"""
         response = self._request("GET", f"/accounts/{self.account_id}/positions")
 
@@ -91,7 +90,7 @@ class TradierClient:
 
         return []
 
-    def _normalize_position(self, pos: Dict) -> Dict:
+    def _normalize_position(self, pos: dict) -> dict:
         """Convert Tradier position to standard format"""
         quantity = float(pos.get("quantity", 0))
         cost_basis = float(pos.get("cost_basis", 0))
@@ -112,7 +111,7 @@ class TradierClient:
 
     # ==================== ORDERS ====================
 
-    def get_orders(self) -> List[Dict]:
+    def get_orders(self) -> list[dict]:
         """Get all orders"""
         response = self._request("GET", f"/accounts/{self.account_id}/orders")
 
@@ -131,9 +130,9 @@ class TradierClient:
         quantity: int,
         order_type: str = "market",
         duration: str = "day",
-        price: Optional[float] = None,
-        stop: Optional[float] = None,
-    ) -> Dict:
+        price: float | None = None,
+        stop: float | None = None,
+    ) -> dict:
         """
         Place an order
 
@@ -164,18 +163,18 @@ class TradierClient:
         logger.info(f"Placing order: {data}")
         return self._request("POST", f"/accounts/{self.account_id}/orders", data=data)
 
-    def cancel_order(self, order_id: str) -> Dict:
+    def cancel_order(self, order_id: str) -> dict:
         """Cancel an order"""
         return self._request("DELETE", f"/accounts/{self.account_id}/orders/{order_id}")
 
     # ==================== MARKET DATA ====================
 
-    def get_quotes(self, symbols: List[str]) -> Dict:
+    def get_quotes(self, symbols: list[str]) -> dict:
         """Get real-time quotes"""
         params = {"symbols": ",".join(symbols), "greeks": "false"}
         return self._request("GET", "/markets/quotes", params=params)
 
-    def get_quote(self, symbol: str) -> Dict:
+    def get_quote(self, symbol: str) -> dict:
         """Get single quote"""
         response = self.get_quotes([symbol])
         if "quotes" in response and "quote" in response["quotes"]:
@@ -183,7 +182,7 @@ class TradierClient:
             return quotes if isinstance(quotes, dict) else quotes[0]
         return {}
 
-    def get_market_clock(self) -> Dict:
+    def get_market_clock(self) -> dict:
         """Get market status"""
         return self._request("GET", "/markets/clock")
 
@@ -198,9 +197,9 @@ class TradierClient:
         self,
         symbol: str,
         interval: str = "daily",
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-    ) -> List[Dict]:
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> list[dict]:
         """
         Get historical OHLCV data from Tradier
 
@@ -270,14 +269,14 @@ class TradierClient:
 
     # ==================== OPTIONS ====================
 
-    def get_option_chains(self, symbol: str, expiration: Optional[str] = None) -> Dict:
+    def get_option_chains(self, symbol: str, expiration: str | None = None) -> dict:
         """Get option chains"""
         params = {"symbol": symbol, "greeks": "true"}
         if expiration:
             params["expiration"] = expiration
         return self._request("GET", "/markets/options/chains", params=params)
 
-    def get_option_expirations(self, symbol: str) -> Dict:
+    def get_option_expirations(self, symbol: str) -> dict:
         """Get option expiration dates"""
         params = {"symbol": symbol}
         return self._request("GET", "/markets/options/expirations", params=params)

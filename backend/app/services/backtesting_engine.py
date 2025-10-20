@@ -8,8 +8,9 @@ Calculates key metrics: Sharpe ratio, max drawdown, win rate, profit factor.
 import logging
 import math
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +20,13 @@ class Trade:
     """Represents a single trade"""
 
     entry_date: str
-    exit_date: Optional[str]
+    exit_date: str | None
     entry_price: float
-    exit_price: Optional[float]
+    exit_price: float | None
     quantity: int
     side: str  # 'long' or 'short'
-    pnl: Optional[float] = None
-    pnl_percent: Optional[float] = None
+    pnl: float | None = None
+    pnl_percent: float | None = None
     status: str = "open"  # 'open', 'closed'
 
 
@@ -33,9 +34,9 @@ class Trade:
 class StrategyRules:
     """Defines strategy entry/exit rules"""
 
-    entry_rules: List[Dict[str, Any]]  # e.g., [{"indicator": "RSI", "operator": "<", "value": 30}]
-    exit_rules: List[
-        Dict[str, Any]
+    entry_rules: list[dict[str, Any]]  # e.g., [{"indicator": "RSI", "operator": "<", "value": 30}]
+    exit_rules: list[
+        dict[str, Any]
     ]  # e.g., [{"type": "take_profit", "value": 5}, {"type": "stop_loss", "value": 2}]
     position_size_percent: float = 10.0  # % of portfolio per trade
     max_positions: int = 1  # Max concurrent positions
@@ -64,8 +65,8 @@ class BacktestResult:
     profit_factor: float
 
     # Time series data
-    equity_curve: List[Dict[str, Any]]  # [{date, value, drawdown}]
-    trade_history: List[Dict[str, Any]]
+    equity_curve: list[dict[str, Any]]  # [{date, value, drawdown}]
+    trade_history: list[dict[str, Any]]
 
     # Configuration
     initial_capital: float
@@ -81,13 +82,13 @@ class BacktestingEngine:
     def __init__(self, initial_capital: float = 10000.0):
         self.initial_capital = initial_capital
         self.capital = initial_capital
-        self.positions: List[Trade] = []
-        self.closed_trades: List[Trade] = []
-        self.equity_curve: List[Dict[str, Any]] = []
+        self.positions: list[Trade] = []
+        self.closed_trades: list[Trade] = []
+        self.equity_curve: list[dict[str, Any]] = []
         self.peak_capital = initial_capital
 
     @staticmethod
-    def calculate_rsi(prices: List[float], period: int = 14) -> float:
+    def calculate_rsi(prices: list[float], period: int = 14) -> float:
         """Calculate RSI for strategy signals"""
         if len(prices) < period + 1:
             return 50.0
@@ -107,7 +108,7 @@ class BacktestingEngine:
         return rsi
 
     @staticmethod
-    def calculate_sma(prices: List[float], period: int) -> Optional[float]:
+    def calculate_sma(prices: list[float], period: int) -> float | None:
         """Calculate Simple Moving Average"""
         if len(prices) < period:
             return None
@@ -115,8 +116,8 @@ class BacktestingEngine:
 
     def check_entry_signal(
         self,
-        rules: List[Dict[str, Any]],
-        prices: List[float],
+        rules: list[dict[str, Any]],
+        prices: list[float],
         current_price: float,
         rsi_period: int = 14,
     ) -> bool:
@@ -165,8 +166,8 @@ class BacktestingEngine:
         return True
 
     def check_exit_signal(
-        self, trade: Trade, current_price: float, exit_rules: List[Dict[str, Any]]
-    ) -> Tuple[bool, str]:
+        self, trade: Trade, current_price: float, exit_rules: list[dict[str, Any]]
+    ) -> tuple[bool, str]:
         """
         Check if exit conditions are met
 
@@ -199,7 +200,7 @@ class BacktestingEngine:
     def execute_backtest(
         self,
         symbol: str,
-        prices: List[Dict[str, Any]],  # [{date, open, high, low, close, volume}]
+        prices: list[dict[str, Any]],  # [{date, open, high, low, close, volume}]
         strategy: StrategyRules,
     ) -> BacktestResult:
         """

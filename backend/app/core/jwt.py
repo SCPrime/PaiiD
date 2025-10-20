@@ -7,7 +7,7 @@ for multi-user authentication system.
 
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from ..db.session import get_db
 from ..models.database import User, UserSession
 from .config import settings
+
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -53,7 +54,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     """
     Create a JWT access token
 
@@ -87,7 +88,7 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     return encoded_jwt
 
 
-def create_refresh_token(data: Dict[str, Any]) -> str:
+def create_refresh_token(data: dict[str, Any]) -> str:
     """
     Create a JWT refresh token (longer expiration)
 
@@ -112,7 +113,7 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     return encoded_jwt
 
 
-def decode_token(token: str) -> Dict[str, Any]:
+def decode_token(token: str) -> dict[str, Any]:
     """
     Decode and validate a JWT token
 
@@ -131,7 +132,7 @@ def decode_token(token: str) -> Dict[str, Any]:
     except JWTError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid token: {str(e)}",
+            detail=f"Invalid token: {e!s}",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -226,8 +227,8 @@ def require_owner(current_user: User = Depends(get_current_user)) -> User:
 
 
 def create_token_pair(
-    user: User, db: Session, ip_address: Optional[str] = None, user_agent: Optional[str] = None
-) -> Dict[str, str]:
+    user: User, db: Session, ip_address: str | None = None, user_agent: str | None = None
+) -> dict[str, str]:
     """
     Create access + refresh token pair and store session
 

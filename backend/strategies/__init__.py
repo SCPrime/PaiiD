@@ -8,4 +8,5 @@ from .under4_multileg import (
     create_under4_multileg_strategy,
 )
 
-__all__ = ["Under4MultilegStrategy", "Under4MultilegConfig", "create_under4_multileg_strategy"]
+
+__all__ = ["Under4MultilegConfig", "Under4MultilegStrategy", "create_under4_multileg_strategy"]

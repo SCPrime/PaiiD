@@ -6,11 +6,13 @@ Run this to verify all API keys are properly loaded from .env
 Usage:
     python verify_config.py
 """
+
 import os
 import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
+
 
 # Load .env file
 env_path = Path(__file__).parent / ".env"
@@ -79,7 +81,7 @@ def verify_config():
                 all_good = False
 
     # Optional configuration
-    print(f"\n[+] Optional Configuration")
+    print("\n[+] Optional Configuration")
     print("-" * 60)
     optional_checks = [
         ("ALPHA_VANTAGE_API_KEY", os.getenv("ALPHA_VANTAGE_API_KEY")),

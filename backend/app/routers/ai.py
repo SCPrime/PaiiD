@@ -6,7 +6,7 @@ Provides AI-generated trading recommendations based on market analysis
 import logging
 import random
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -16,6 +16,7 @@ from ..core.auth import require_bearer
 from ..db.session import get_db
 from ..services.technical_indicators import TechnicalIndicators
 from ..services.tradier_client import get_tradier_client
+
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +30,9 @@ class TradeData(BaseModel):
     side: Literal["buy", "sell"]
     quantity: int
     orderType: Literal["market", "limit"] = "limit"
-    entryPrice: Optional[float] = None
-    stopLoss: Optional[float] = None
-    takeProfit: Optional[float] = None
+    entryPrice: float | None = None
+    stopLoss: float | None = None
+    takeProfit: float | None = None
 
 
 class Recommendation(BaseModel):
@@ -44,18 +45,18 @@ class Recommendation(BaseModel):
     currentPrice: float
     timeframe: str = "1-3 months"
     risk: Literal["Low", "Medium", "High"] = "Medium"
-    entryPrice: Optional[float] = None
-    stopLoss: Optional[float] = None
-    takeProfit: Optional[float] = None
-    riskRewardRatio: Optional[float] = None
-    indicators: Optional[dict] = None
-    tradeData: Optional[TradeData] = None  # 1-click execution data
-    portfolioFit: Optional[str] = None  # How this fits user's portfolio
-    momentum: Optional[dict] = None  # Momentum analysis (price vs SMAs, volume)
-    volatility: Optional[dict] = None  # Volatility analysis (ATR, BB width, classification)
-    sector: Optional[str] = None  # Sector assignment (e.g., "Technology", "Healthcare")
-    sectorPerformance: Optional[dict] = None  # Sector performance data
-    explanation: Optional[str] = None  # Detailed "Why this recommendation?" explanation
+    entryPrice: float | None = None
+    stopLoss: float | None = None
+    takeProfit: float | None = None
+    riskRewardRatio: float | None = None
+    indicators: dict | None = None
+    tradeData: TradeData | None = None  # 1-click execution data
+    portfolioFit: str | None = None  # How this fits user's portfolio
+    momentum: dict | None = None  # Momentum analysis (price vs SMAs, volume)
+    volatility: dict | None = None  # Volatility analysis (ATR, BB width, classification)
+    sector: str | None = None  # Sector assignment (e.g., "Technology", "Healthcare")
+    sectorPerformance: dict | None = None  # Sector performance data
+    explanation: str | None = None  # Detailed "Why this recommendation?" explanation
 
 
 class PortfolioAnalysis(BaseModel):
@@ -63,15 +64,15 @@ class PortfolioAnalysis(BaseModel):
 
     totalPositions: int
     totalValue: float
-    topSectors: List[dict]
+    topSectors: list[dict]
     riskScore: float  # 1-10 (10 = highest risk)
     diversificationScore: float  # 1-10 (10 = best diversified)
-    recommendations: List[str]  # Portfolio-level suggestions
+    recommendations: list[str]  # Portfolio-level suggestions
 
 
 class RecommendationsResponse(BaseModel):
-    recommendations: List[Recommendation]
-    portfolioAnalysis: Optional[PortfolioAnalysis] = None
+    recommendations: list[Recommendation]
+    portfolioAnalysis: PortfolioAnalysis | None = None
     generated_at: str
     model_version: str = "v1.0.0"
 
@@ -245,8 +246,8 @@ async def get_recommendations():
         )
 
     except Exception as e:
-        logger.error(f"❌ Failed to generate recommendations: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {str(e)}")
+        logger.error(f"❌ Failed to generate recommendations: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {e!s}")
 
 
 @router.get("/recommendations/{symbol}", response_model=Recommendation)
@@ -292,15 +293,15 @@ async def get_symbol_recommendation(symbol: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to generate recommendation for {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate recommendation: {str(e)}")
+        logger.error(f"❌ Failed to generate recommendation for {symbol}: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate recommendation: {e!s}")
 
 
 @router.get(
     "/signals", response_model=RecommendationsResponse, dependencies=[Depends(require_bearer)]
 )
 async def get_ml_signals(
-    symbols: Optional[str] = Query(default=None, description="Comma-separated list of symbols"),
+    symbols: str | None = Query(default=None, description="Comma-separated list of symbols"),
     min_confidence: float = Query(default=60.0, ge=0, le=100),
     use_technical: bool = Query(default=True, description="Use real technical indicators"),
 ):
@@ -343,7 +344,7 @@ async def get_ml_signals(
                     pass
 
             except Exception as e:
-                logger.error(f"Error generating signal for {symbol}: {str(e)}")
+                logger.error(f"Error generating signal for {symbol}: {e!s}")
                 continue
 
         # Return empty recommendations if none met criteria (no mock fallback)
@@ -361,11 +362,11 @@ async def get_ml_signals(
         )
 
     except Exception as e:
-        logger.error(f"Error generating signals: {str(e)}")
+        logger.error(f"Error generating signals: {e!s}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def _generate_technical_signal(symbol: str) -> Optional[Recommendation]:
+async def _generate_technical_signal(symbol: str) -> Recommendation | None:
     """
     Generate signal using real technical analysis from Tradier historical data
 
@@ -434,7 +435,7 @@ async def _generate_technical_signal(symbol: str) -> Optional[Recommendation]:
         return recommendation
 
     except Exception as e:
-        logger.error(f"Error generating technical signal for {symbol}: {str(e)}")
+        logger.error(f"Error generating technical signal for {symbol}: {e!s}")
         return None
 
 
@@ -577,17 +578,17 @@ async def analyze_symbol(symbol: str):
         reasons = signal_data["reasons"]
         analysis_parts = [
             f"**Current Status**: {symbol} is trading at ${current_price:.2f}, showing {momentum.lower()} momentum with {trend.lower()} characteristics.",
-            f"",
-            f"**Technical Analysis**:",
+            "",
+            "**Technical Analysis**:",
             f"- RSI: {rsi:.1f} ({momentum})",
             f"- MACD: {indicators.get('macd_histogram', 0):.4f} ({'Bullish' if indicators.get('macd_histogram', 0) > 0 else 'Bearish'} crossover)",
             f"- Trend: {trend}",
             f"- Support: ${support_level:.2f}",
             f"- Resistance: ${resistance_level:.2f}",
-            f"",
+            "",
             f"**AI Signal**: {action} with {confidence:.1f}% confidence",
-            f"",
-            f"**Key Observations**:",
+            "",
+            "**Key Observations**:",
         ]
 
         for reason in reasons:
@@ -633,8 +634,8 @@ async def analyze_symbol(symbol: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to analyze {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        logger.error(f"❌ Failed to analyze {symbol}: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {e!s}")
 
 
 # ====== PORTFOLIO-AWARE HELPER FUNCTIONS ======
@@ -768,7 +769,7 @@ def _calculate_position_size(current_price: float, portfolio_data: dict, risk: s
 
 
 def _generate_portfolio_analysis(
-    portfolio_data: dict, recommendations: List[Recommendation]
+    portfolio_data: dict, recommendations: list[Recommendation]
 ) -> PortfolioAnalysis:
     """Generate portfolio-level analysis"""
     positions = portfolio_data.get("positions", [])
@@ -963,7 +964,7 @@ async def _calculate_momentum_analysis(
         }
 
     except Exception as e:
-        logger.error(f"❌ Momentum analysis error for {symbol}: {str(e)}")
+        logger.error(f"❌ Momentum analysis error for {symbol}: {e!s}")
         # Return neutral data on error
         return {
             "sma_20": current_price,
@@ -1122,7 +1123,7 @@ async def _fetch_sector_performance() -> dict:
             return {"sectors": [], "leader": "Unknown", "laggard": "Unknown"}
 
     except Exception as e:
-        logger.error(f"❌ Failed to fetch sector performance: {str(e)}")
+        logger.error(f"❌ Failed to fetch sector performance: {e!s}")
         return {"sectors": [], "leader": "Unknown", "laggard": "Unknown"}
 
 
@@ -1206,7 +1207,7 @@ async def _calculate_volatility_analysis(symbol: str, current_price: float) -> d
         }
 
     except Exception as e:
-        logger.error(f"❌ Volatility analysis error for {symbol}: {str(e)}")
+        logger.error(f"❌ Volatility analysis error for {symbol}: {e!s}")
         # Return neutral data on error
         return {
             "atr": 0.0,
@@ -1554,17 +1555,17 @@ async def get_recommended_templates(db: Session = Depends(get_db)):
             if market_volatility == "High":
                 if template.strategy_type in ["momentum", "volatility_breakout"]:
                     rationale_parts.append(
-                        f"✅ Excellent for current high volatility market conditions"
+                        "✅ Excellent for current high volatility market conditions"
                     )
                 elif template.strategy_type == "mean_reversion":
-                    rationale_parts.append(f"⚠️ Mean reversion may struggle in high volatility")
+                    rationale_parts.append("⚠️ Mean reversion may struggle in high volatility")
             elif market_volatility == "Low":
                 if template.strategy_type == "mean_reversion":
-                    rationale_parts.append(f"✅ Perfect for current low volatility environment")
+                    rationale_parts.append("✅ Perfect for current low volatility environment")
                 elif template.strategy_type in ["momentum", "volatility_breakout"]:
-                    rationale_parts.append(f"⚠️ Limited opportunities in low volatility")
+                    rationale_parts.append("⚠️ Limited opportunities in low volatility")
             else:
-                rationale_parts.append(f"✅ Good fit for current market conditions")
+                rationale_parts.append("✅ Good fit for current market conditions")
 
             # Performance highlights
             rationale_parts.append(f"📈 Historical win rate: {template.expected_win_rate:.0f}%")
@@ -1605,9 +1606,9 @@ async def get_recommended_templates(db: Session = Depends(get_db)):
         }
 
     except Exception as e:
-        logger.error(f"❌ Failed to generate template recommendations: {str(e)}")
+        logger.error(f"❌ Failed to generate template recommendations: {e!s}")
         raise HTTPException(
-            status_code=500, detail=f"Failed to generate template recommendations: {str(e)}"
+            status_code=500, detail=f"Failed to generate template recommendations: {e!s}"
         )
 
 
@@ -1621,12 +1622,12 @@ class SaveRecommendationRequest(BaseModel):
     recommendation_type: Literal["buy", "sell", "hold"]
     confidence_score: float
     analysis_data: dict = {}
-    suggested_entry_price: Optional[float] = None
-    suggested_stop_loss: Optional[float] = None
-    suggested_take_profit: Optional[float] = None
-    suggested_position_size: Optional[float] = None
-    reasoning: Optional[str] = None
-    market_context: Optional[str] = None
+    suggested_entry_price: float | None = None
+    suggested_stop_loss: float | None = None
+    suggested_take_profit: float | None = None
+    suggested_position_size: float | None = None
+    reasoning: str | None = None
+    market_context: str | None = None
 
 
 class RecommendationHistoryResponse(BaseModel):
@@ -1637,19 +1638,19 @@ class RecommendationHistoryResponse(BaseModel):
     recommendation_type: str
     confidence_score: float
     analysis_data: dict
-    suggested_entry_price: Optional[float]
-    suggested_stop_loss: Optional[float]
-    suggested_take_profit: Optional[float]
-    reasoning: Optional[str]
-    market_context: Optional[str]
+    suggested_entry_price: float | None
+    suggested_stop_loss: float | None
+    suggested_take_profit: float | None
+    reasoning: str | None
+    market_context: str | None
     status: str
     created_at: str
-    expires_at: Optional[str]
+    expires_at: str | None
     # Performance tracking (if executed)
-    executed_at: Optional[str]
-    execution_price: Optional[float]
-    actual_pnl: Optional[float]
-    actual_pnl_percent: Optional[float]
+    executed_at: str | None
+    execution_price: float | None
+    actual_pnl: float | None
+    actual_pnl_percent: float | None
 
     class Config:
         from_attributes = True
@@ -1707,18 +1708,18 @@ async def save_recommendation(request: SaveRecommendationRequest, db: Session = 
         }
 
     except Exception as e:
-        logger.error(f"❌ Failed to save recommendation: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to save recommendation: {str(e)}")
+        logger.error(f"❌ Failed to save recommendation: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to save recommendation: {e!s}")
 
 
 @router.get(
     "/recommendations/history",
-    response_model=List[RecommendationHistoryResponse],
+    response_model=list[RecommendationHistoryResponse],
     dependencies=[Depends(require_bearer)],
 )
 async def get_recommendation_history(
-    symbol: Optional[str] = Query(None, description="Filter by symbol"),
-    status: Optional[str] = Query(
+    symbol: str | None = Query(None, description="Filter by symbol"),
+    status: str | None = Query(
         None, description="Filter by status (pending, executed, ignored, expired)"
     ),
     limit: int = Query(50, ge=1, le=200, description="Maximum number of recommendations to return"),
@@ -1789,7 +1790,7 @@ async def get_recommendation_history(
         return result
 
     except Exception as e:
-        logger.error(f"❌ Failed to retrieve recommendation history: {str(e)}")
+        logger.error(f"❌ Failed to retrieve recommendation history: {e!s}")
         raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve recommendation history: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve recommendation history: {e!s}"
         )

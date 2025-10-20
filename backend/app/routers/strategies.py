@@ -4,10 +4,9 @@ Endpoints for managing trading strategies
 """
 
 import json
-import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, validator
@@ -24,11 +23,13 @@ from ..services.strategy_templates import (
     get_template_compatibility_score,
 )
 
+
 # Add backend root to path for strategies import
 backend_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_root))
 
 from strategies.under4_multileg import Under4MultilegConfig, create_under4_multileg_strategy
+
 
 router = APIRouter()
 
@@ -48,7 +49,7 @@ class StrategyConfigRequest(BaseModel):
         description="Strategy type identifier (lowercase, alphanumeric + hyphens)",
         examples=["under4-multileg", "trend-following", "custom"],
     )
-    config: Dict = Field(..., description="Strategy configuration parameters")
+    config: dict = Field(..., description="Strategy configuration parameters")
 
     @validator("strategy_type")
     def validate_strategy_type(cls, v):
@@ -157,7 +158,7 @@ async def load_strategy(strategy_type: str, _=Depends(require_bearer)):
             raise HTTPException(status_code=404, detail=f"Strategy '{strategy_type}' not found")
 
     try:
-        with open(strategy_file, "r") as f:
+        with open(strategy_file) as f:
             data = json.load(f)
 
         return {**data, "is_default": False}
@@ -180,7 +181,7 @@ async def list_strategies(_=Depends(require_bearer)):
     # Check for saved strategies
     for strategy_file in STRATEGIES_DIR.glob(f"{user_id}_*.json"):
         try:
-            with open(strategy_file, "r") as f:
+            with open(strategy_file) as f:
                 data = json.load(f)
             strategies.append({"strategy_type": data["strategy_type"], "has_config": True})
         except:
@@ -213,7 +214,7 @@ async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
         strategy_file = STRATEGIES_DIR / f"{user_id}_{request.strategy_type}.json"
 
         if strategy_file.exists():
-            with open(strategy_file, "r") as f:
+            with open(strategy_file) as f:
                 data = json.load(f)
                 config_dict = data["config"]
         else:
@@ -293,7 +294,7 @@ async def delete_strategy(strategy_type: str, _=Depends(require_bearer)):
 
 @router.get("/strategies/templates")
 async def get_strategy_templates(
-    filter_by_risk: Optional[bool] = True, _=Depends(require_bearer), db: Session = Depends(get_db)
+    filter_by_risk: bool | None = True, _=Depends(require_bearer), db: Session = Depends(get_db)
 ):
     """
     Get all available strategy templates
@@ -353,13 +354,13 @@ async def get_strategy_templates(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch strategy templates: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch strategy templates: {e!s}")
 
 
 @router.get("/strategies/templates/{template_id}")
 async def get_strategy_template(
     template_id: str,
-    customize: Optional[bool] = True,
+    customize: bool | None = True,
     _=Depends(require_bearer),
     db: Session = Depends(get_db),
 ):
@@ -400,22 +401,22 @@ async def get_strategy_template(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch template: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch template: {e!s}")
 
 
 class CloneTemplateRequest(BaseModel):
     """Request model for cloning a template with validation"""
 
-    custom_name: Optional[str] = Field(
+    custom_name: str | None = Field(
         None,
         min_length=1,
         max_length=100,
         description="Custom name for the cloned strategy (1-100 characters)",
     )
-    customize_config: Optional[bool] = Field(
+    customize_config: bool | None = Field(
         True, description="Customize based on risk tolerance (default: true)"
     )
-    config_overrides: Optional[Dict[str, Any]] = Field(
+    config_overrides: dict[str, Any] | None = Field(
         None, description="Manual config overrides (key-value pairs)"
     )
 
@@ -510,4 +511,4 @@ async def clone_strategy_template(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to clone template: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to clone template: {e!s}")

@@ -7,7 +7,6 @@ Supports owner and beta tester registration with invite codes.
 
 import logging
 from datetime import datetime
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field, validator
@@ -23,6 +22,7 @@ from ..core.jwt import (
 from ..db.session import get_db
 from ..models.database import ActivityLog, User, UserSession
 
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["auth"])
@@ -36,8 +36,8 @@ class UserRegister(BaseModel):
 
     email: EmailStr
     password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
-    full_name: Optional[str] = None
-    invite_code: Optional[str] = Field(None, description="Required for beta tester registration")
+    full_name: str | None = None
+    invite_code: str | None = Field(None, description="Required for beta tester registration")
 
     @validator("password")
     def validate_password_strength(cls, v):
@@ -77,11 +77,11 @@ class UserProfile(BaseModel):
 
     id: int
     email: str
-    full_name: Optional[str]
+    full_name: str | None
     role: str
     is_active: bool
     created_at: datetime
-    last_login_at: Optional[datetime]
+    last_login_at: datetime | None
     preferences: dict
 
     class Config:

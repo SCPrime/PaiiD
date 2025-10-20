@@ -5,6 +5,7 @@ from typing import Optional
 
 from .config import settings
 
+
 try:
     from redis import Redis
 except ImportError:

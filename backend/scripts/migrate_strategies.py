@@ -18,6 +18,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+
 # Fix Windows console encoding for emoji support
 if sys.platform == "win32":
     os.environ["PYTHONIOENCODING"] = "utf-8"
@@ -56,7 +57,7 @@ def migrate_strategies_from_directory():
 
         for strategy_file in strategy_files:
             try:
-                with open(strategy_file, "r") as f:
+                with open(strategy_file) as f:
                     strategy_data = json.load(f)
 
                 # Extract strategy metadata
@@ -154,7 +155,7 @@ def main():
         print("📈 Migration Summary:")
         print(f"   ✅ Migrated: {migrated}")
         print(f"   ❌ Failed:   {failed}")
-        print(f"   ⏭️  Skipped:  (duplicates not counted)")
+        print("   ⏭️  Skipped:  (duplicates not counted)")
         print("=" * 80 + "\n")
 
         if failed > 0:

@@ -1,13 +1,13 @@
 import logging
-from typing import Literal, Optional
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ..core.auth import require_bearer
-from ..core.config import settings
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class AlpacaAccount(BaseModel):
     maintenance_margin: str
     last_maintenance_margin: str
     daytrade_count: int
-    daytrading_buying_power: Optional[str] = None
+    daytrading_buying_power: str | None = None
     pattern_day_trader: bool = False
     trading_blocked: bool = False
     transfers_blocked: bool = False
@@ -41,8 +41,8 @@ class AlpacaAccount(BaseModel):
     trade_suspended_by_user: bool = False
     multiplier: str
     shorting_enabled: bool = True
-    long_market_value_change: Optional[str] = None
-    short_market_value_change: Optional[str] = None
+    long_market_value_change: str | None = None
+    short_market_value_change: str | None = None
 
 
 @router.get("/account")
@@ -58,8 +58,8 @@ def get_account(_=Depends(require_bearer)):
         return account_data
 
     except Exception as e:
-        logger.error(f"❌ Tradier account request failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier account: {str(e)}")
+        logger.error(f"❌ Tradier account request failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier account: {e!s}")
 
 
 @router.get("/positions")
@@ -82,8 +82,8 @@ def get_positions(_=Depends(require_bearer), cache: CacheService = Depends(get_c
         return positions
 
     except Exception as e:
-        logger.error(f"❌ Tradier positions request failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier positions: {str(e)}")
+        logger.error(f"❌ Tradier positions request failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier positions: {e!s}")
 
 
 @router.get("/positions/{symbol}")
@@ -103,7 +103,5 @@ def get_position(symbol: str, _=Depends(require_bearer)):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to fetch position for {symbol}: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to fetch position for {symbol}: {str(e)}"
-        )
+        logger.error(f"❌ Failed to fetch position for {symbol}: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch position for {symbol}: {e!s}")

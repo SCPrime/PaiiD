@@ -60,3 +60,94 @@ python_files = [
     "test_*.py",
     "*_test.py",
 ]
+
+# ====================================
+# RUFF CONFIGURATION (Modern Python Linter + Formatter)
+# ====================================
+# Ruff replaces Black, isort, Pylint, and Flake8 with one fast tool
+# 10-100x faster than traditional Python linters
+
+[tool.ruff]
+# Same as Black
+line-length = 100
+target-version = "py311"
+
+# Exclude directories (same as Black/isort)
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
+    "venv",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "migrations",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+# Enable linting rules
+# E/W = pycodestyle errors/warnings
+# F = pyflakes (unused imports, undefined names)
+# I = isort (import sorting)
+# B = flake8-bugbear (common bugs)
+# S = flake8-bandit (security)
+# N = pep8-naming (naming conventions)
+# UP = pyupgrade (modern Python syntax)
+# C4 = flake8-comprehensions (better list/dict comprehensions)
+# DTZ = flake8-datetimez (timezone-aware datetimes)
+# RUF = Ruff-specific rules
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "B",     # flake8-bugbear
+    "S",     # flake8-bandit (security)
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "C4",    # flake8-comprehensions
+    "DTZ",   # flake8-datetimez
+    "RUF",   # Ruff-specific rules
+]
+
+# Ignore specific rules
+ignore = [
+    "S101",   # Use of assert (OK in tests)
+    "S104",   # Possible binding to all interfaces (OK for local dev)
+    "B008",   # Function call in default argument (OK for FastAPI Depends)
+    "DTZ005", # Timezone-naive datetime (handled by FastAPI)
+]
+
+# Allow autofix for all enabled rules
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore all security checks in tests
+"tests/**/*.py" = ["S", "B"]
+# Allow print statements in scripts
+"scripts/**/*.py" = ["T201"]
+
+[tool.ruff.lint.isort]
+# Compatible with Black
+known-first-party = ["app"]
+force-single-line = false
+force-sort-within-sections = false
+lines-after-imports = 2
+
+[tool.ruff.lint.mccabe]
+# Maximum cyclomatic complexity
+max-complexity = 10
+
+[tool.ruff.format]
+# Use Black-compatible formatting
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

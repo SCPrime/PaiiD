@@ -16,6 +16,7 @@ from app.core.auth import require_bearer
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
 
+
 logger = logging.getLogger(__name__)
 
 # LOUD LOGGING TO VERIFY NEW CODE IS DEPLOYED
@@ -62,8 +63,8 @@ async def get_quote(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Tradier quote request failed for {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch quote: {str(e)}")
+        logger.error(f"❌ Tradier quote request failed for {symbol}: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch quote: {e!s}")
 
 
 @router.get("/market/quotes")
@@ -88,8 +89,8 @@ async def get_quotes(symbols: str, _=Depends(require_bearer)):
         logger.info(f"✅ Retrieved {len(result)} quotes from Tradier")
         return result
     except Exception as e:
-        logger.error(f"❌ Tradier quotes request failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch quotes: {str(e)}")
+        logger.error(f"❌ Tradier quotes request failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch quotes: {e!s}")
 
 
 @router.get("/market/bars/{symbol}")
@@ -146,8 +147,8 @@ async def get_bars(
         logger.info(f"✅ Retrieved {len(result)} bars for {symbol} from Tradier")
         return {"symbol": symbol.upper(), "bars": result}
     except Exception as e:
-        logger.error(f"❌ Tradier bars request failed for {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch bars: {str(e)}")
+        logger.error(f"❌ Tradier bars request failed for {symbol}: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch bars: {e!s}")
 
 
 @router.get("/market/scanner/under4")
@@ -199,5 +200,5 @@ async def scan_under_4(_=Depends(require_bearer)):
         logger.info(f"✅ Scanner found {len(results)} stocks under $4 from Tradier")
         return {"candidates": results, "count": len(results)}
     except Exception as e:
-        logger.error(f"❌ Tradier scanner request failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to scan stocks: {str(e)}")
+        logger.error(f"❌ Tradier scanner request failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to scan stocks: {e!s}")

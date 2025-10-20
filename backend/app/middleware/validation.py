@@ -8,10 +8,10 @@ Phase 3: Bulletproof Reliability
 
 import re
 from datetime import datetime, time
-from typing import Optional
 
 from fastapi import HTTPException
-from pydantic import Field, validator
+from pydantic import Field
+
 
 # Regex Patterns
 SYMBOL_PATTERN = re.compile(r"^[A-Z]{1,5}$")  # 1-5 uppercase letters
@@ -100,7 +100,7 @@ def validate_order_type(order_type: str) -> str:
     return order_type
 
 
-def validate_limit_price(limit_price: Optional[float], order_type: str) -> Optional[float]:
+def validate_limit_price(limit_price: float | None, order_type: str) -> float | None:
     """
     Validate limit price (required for limit/stop_limit orders).
 
@@ -223,15 +223,15 @@ def price_field(description: str = "Price") -> Field:
 
 
 __all__ = [
-    "validate_symbol",
-    "validate_quantity",
-    "validate_side",
-    "validate_order_type",
-    "validate_limit_price",
-    "validate_request_id",
     "is_market_open",
-    "validate_market_hours",
-    "symbol_field",
-    "quantity_field",
     "price_field",
+    "quantity_field",
+    "symbol_field",
+    "validate_limit_price",
+    "validate_market_hours",
+    "validate_order_type",
+    "validate_quantity",
+    "validate_request_id",
+    "validate_side",
+    "validate_symbol",
 ]

@@ -3,8 +3,6 @@ Under-$4 Multileg Strategy
 Scans for stocks <= $4.00 and executes Buy Call + Sell Put legs
 """
 
-from typing import Dict, List, Optional
-
 from pydantic import BaseModel, Field
 
 
@@ -12,7 +10,7 @@ class Under4MultilegConfig(BaseModel):
     """Configuration for Under-$4 Multileg strategy"""
 
     name: str = "Under-$4 Multileg"
-    universe: List[str] = ["*"]
+    universe: list[str] = ["*"]
     price_ceiling: float = 4.00
     min_last_price: float = 0.75
     min_avg_volume: int = 2_000_000
@@ -78,7 +76,7 @@ class Under4MultilegStrategy:
     def __init__(self, config: Under4MultilegConfig):
         self.config = config
 
-    async def morning_routine(self, alpaca_client) -> Dict:
+    async def morning_routine(self, alpaca_client) -> dict:
         """
         Execute morning routine (07:45-09:45 ET)
 
@@ -113,7 +111,7 @@ class Under4MultilegStrategy:
             "approved_trades": approved_trades[: self.config.max_new_positions_per_day],
         }
 
-    async def _sync_account(self, client) -> Dict:
+    async def _sync_account(self, client) -> dict:
         """Pull account data and calculate risk budget"""
         account = await client.get_account()
         equity = float(account.equity)
@@ -125,7 +123,7 @@ class Under4MultilegStrategy:
             "daily_risk_budget": equity * (self.config.risk.max_daily_loss_pct / 100),
         }
 
-    async def _build_universe(self, client) -> List[str]:
+    async def _build_universe(self, client) -> list[str]:
         """
         Build universe of stocks <= $4.00
 
@@ -138,7 +136,7 @@ class Under4MultilegStrategy:
         # For now, return example list
         return ["SNDL", "NOK", "SOFI", "PLUG"]
 
-    async def _scan_options(self, symbol: str, client) -> List[Dict]:
+    async def _scan_options(self, symbol: str, client) -> list[dict]:
         """
         Scan options chain for symbol
 
@@ -156,7 +154,7 @@ class Under4MultilegStrategy:
 
         return proposals
 
-    async def _check_risk(self, proposal: Dict, account: Dict) -> bool:
+    async def _check_risk(self, proposal: dict, account: dict) -> bool:
         """
         Verify trade passes risk checks
 
@@ -168,7 +166,7 @@ class Under4MultilegStrategy:
         # TODO: Implement actual risk checks
         return True
 
-    async def _calculate_size(self, proposal: Dict, account: Dict) -> Optional[Dict]:
+    async def _calculate_size(self, proposal: dict, account: dict) -> dict | None:
         """
         Calculate position size based on risk parameters
 
@@ -209,7 +207,7 @@ class Under4MultilegStrategy:
 
         return None
 
-    async def execute_trades(self, trades: List[Dict], client) -> List[Dict]:
+    async def execute_trades(self, trades: list[dict], client) -> list[dict]:
         """
         Execute approved trades with GTC orders
 
@@ -230,12 +228,12 @@ class Under4MultilegStrategy:
 
         return results
 
-    async def _submit_entry_order(self, trade: Dict, client):
+    async def _submit_entry_order(self, trade: dict, client):
         """Submit entry order to broker"""
         # TODO: Implement actual order submission
         pass
 
-    async def manage_positions(self, client) -> Dict:
+    async def manage_positions(self, client) -> dict:
         """
         Intraday position management
 
@@ -247,7 +245,7 @@ class Under4MultilegStrategy:
         pass
 
 
-def create_under4_multileg_strategy(config_dict: Optional[Dict] = None) -> Under4MultilegStrategy:
+def create_under4_multileg_strategy(config_dict: dict | None = None) -> Under4MultilegStrategy:
     """
     Create Under-$4 Multileg strategy instance
 

@@ -6,7 +6,7 @@ This module uses Tradier API for ALL market data.
 Alpaca is ONLY used for paper trading execution.
 """
 
-from typing import List, Literal
+from typing import Literal
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException
@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from ..core.auth import require_bearer
 from ..core.config import settings
 from ..services.cache import CacheService, get_cache
+
 
 # LOUD LOGGING TO VERIFY NEW CODE IS DEPLOYED
 print("=" * 80)
@@ -69,7 +70,7 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
             timeout=5,  # Add timeout for reliability
         )
 
-        conditions: List[MarketCondition] = []
+        conditions: list[MarketCondition] = []
         overall_sentiment = "neutral"
         positive_signals = 0
         total_signals = 0

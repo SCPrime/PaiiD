@@ -5,7 +5,7 @@ Adds custom context and breadcrumbs to Sentry error reports for better debugging
 """
 
 import time
-from typing import Callable
+from collections.abc import Callable
 
 import sentry_sdk
 from fastapi import Request

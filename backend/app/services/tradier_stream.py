@@ -21,13 +21,14 @@ import json
 import logging
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 import httpx
 import websockets
 
 from app.core.config import settings
 from app.services.cache import get_cache
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +46,11 @@ class TradierStreamService:
 
     def __init__(self):
         """Initialize the Tradier streaming service"""
-        self.active_symbols: Set[str] = set()
+        self.active_symbols: set[str] = set()
         self.running = False
-        self.websocket: Optional[Any] = None
-        self.session_id: Optional[str] = None
-        self.session_created_at: Optional[float] = None
+        self.websocket: Any | None = None
+        self.session_id: str | None = None
+        self.session_created_at: float | None = None
         self.reconnect_attempts = 0
         self.max_reconnect_attempts = 10
         self.cache = get_cache()
@@ -58,7 +59,7 @@ class TradierStreamService:
         self.session_error_count = 0
         self.max_session_errors = 5
         self.circuit_breaker_active = False
-        self.circuit_breaker_reset_time: Optional[float] = None
+        self.circuit_breaker_reset_time: float | None = None
 
         # WebSocket endpoint
         self.ws_url = "wss://ws.tradier.com/v1/markets/events"
@@ -67,8 +68,8 @@ class TradierStreamService:
         self.session_url = f"{settings.TRADIER_API_BASE_URL}/markets/events/session"
 
         # Background tasks
-        self._connection_task: Optional[asyncio.Task] = None
-        self._session_renewal_task: Optional[asyncio.Task] = None
+        self._connection_task: asyncio.Task | None = None
+        self._session_renewal_task: asyncio.Task | None = None
 
         logger.info("✅ TradierStreamService initialized")
 
@@ -110,7 +111,7 @@ class TradierStreamService:
             logger.error(f"❌ Error deleting Tradier session: {e}")
             return False
 
-    async def _create_session(self) -> Optional[str]:
+    async def _create_session(self) -> str | None:
         """
         Create a new streaming session via Tradier API
 
@@ -222,7 +223,7 @@ class TradierStreamService:
                 # CRITICAL: Clear old session ID before creating new one
                 # This forces creation of a fresh session and prevents reuse of stale sessions
                 if self.session_id:
-                    logger.info(f"🔄 Clearing old session ID before reconnection")
+                    logger.info("🔄 Clearing old session ID before reconnection")
                     old_session = self.session_id
                     self.session_id = None
                     # Attempt to delete old session (best effort)
@@ -282,7 +283,7 @@ class TradierStreamService:
                 else:
                     break
 
-    async def _subscribe_symbols(self, symbols: List[str]):
+    async def _subscribe_symbols(self, symbols: list[str]):
         """
         Subscribe to symbols on WebSocket
 
@@ -332,10 +333,10 @@ class TradierStreamService:
                         self.circuit_breaker_active = True
                         self.circuit_breaker_reset_time = time.time() + 360  # 6 minute timeout
                         logger.error(
-                            f"🔴 CIRCUIT BREAKER ACTIVATED - Too many sessions error. Waiting 6 minutes for session cleanup."
+                            "🔴 CIRCUIT BREAKER ACTIVATED - Too many sessions error. Waiting 6 minutes for session cleanup."
                         )
                         logger.error(
-                            f"🔴 Root cause: Zombie sessions from previous reconnections must expire (Tradier TTL: 5 min)"
+                            "🔴 Root cause: Zombie sessions from previous reconnections must expire (Tradier TTL: 5 min)"
                         )
                         # Close WebSocket to force reconnection with circuit breaker logic
                         if self.websocket:
@@ -476,7 +477,7 @@ class TradierStreamService:
 
         logger.info("✅ Tradier streaming service stopped")
 
-    async def subscribe_quotes(self, symbols: List[str]):
+    async def subscribe_quotes(self, symbols: list[str]):
         """
         Subscribe to real-time quotes for symbols
 
@@ -493,7 +494,7 @@ class TradierStreamService:
 
         logger.info(f"✅ Subscribed to quotes: {symbols} (total: {len(self.active_symbols)})")
 
-    async def unsubscribe_quotes(self, symbols: List[str]):
+    async def unsubscribe_quotes(self, symbols: list[str]):
         """
         Unsubscribe from quotes
 
@@ -514,13 +515,13 @@ class TradierStreamService:
         """Check if streaming is active"""
         return self.running
 
-    def get_active_symbols(self) -> Set[str]:
+    def get_active_symbols(self) -> set[str]:
         """Get currently subscribed symbols"""
         return self.active_symbols.copy()
 
 
 # Singleton instance
-_tradier_stream_service: Optional[TradierStreamService] = None
+_tradier_stream_service: TradierStreamService | None = None
 
 
 def get_tradier_stream() -> TradierStreamService:

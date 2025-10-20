@@ -15,7 +15,7 @@ import asyncio
 import json
 import logging
 import time
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from fastapi import APIRouter, Depends, Query
 from sse_starlette.sse import EventSourceResponse
@@ -23,6 +23,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.core.auth import require_bearer
 from app.services.cache import CacheService, get_cache
 from app.services.tradier_stream import get_tradier_stream
+
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +127,7 @@ async def stream_prices(
                         ),
                     }
                     last_heartbeat_time = current_time
-                    logger.debug(f"💓 Heartbeat sent (prices stream)")
+                    logger.debug("💓 Heartbeat sent (prices stream)")
 
                 # Wait before next data check
                 await asyncio.sleep(DATA_CHECK_INTERVAL)
@@ -198,7 +199,7 @@ async def stream_positions(_=Depends(require_bearer), cache: CacheService = Depe
                         ),
                     }
                     last_heartbeat_time = current_time
-                    logger.debug(f"💓 Heartbeat sent (positions stream)")
+                    logger.debug("💓 Heartbeat sent (positions stream)")
 
                 # Wait 2 seconds before checking again
                 await asyncio.sleep(2)
@@ -325,7 +326,7 @@ async def stream_market_indices(
                         ),
                     }
                     last_heartbeat_time = current_time
-                    logger.debug(f"💓 Heartbeat sent (indices stream)")
+                    logger.debug("💓 Heartbeat sent (indices stream)")
 
                 # Wait before next check
                 await asyncio.sleep(DATA_CHECK_INTERVAL)

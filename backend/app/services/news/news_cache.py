@@ -8,9 +8,10 @@ and improve response times. Uses file-based storage with TTL.
 import hashlib
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +82,7 @@ class NewsCache:
                     logger.info(f"🗑️ LRU evicted: {cache_file.name} (size limit)")
 
         except Exception as e:
-            logger.error(f"❌ Cache limit enforcement error: {str(e)}")
+            logger.error(f"❌ Cache limit enforcement error: {e!s}")
 
     def _get_cache_key(self, cache_type: str, **params) -> str:
         """Generate cache key from request parameters"""
@@ -94,7 +95,7 @@ class NewsCache:
         """Get path to cache file"""
         return self.cache_dir / f"{cache_key}.json"
 
-    def get(self, cache_type: str, **params) -> Optional[List[Dict[str, Any]]]:
+    def get(self, cache_type: str, **params) -> list[dict[str, Any]] | None:
         """
         Get cached news articles
 
@@ -114,7 +115,7 @@ class NewsCache:
                 return None
 
             # Load cache file
-            with open(cache_path, "r") as f:
+            with open(cache_path) as f:
                 cache_data = json.load(f)
 
             # Check TTL
@@ -132,10 +133,10 @@ class NewsCache:
             return cache_data["articles"]
 
         except Exception as e:
-            logger.error(f"❌ Cache read error: {str(e)}")
+            logger.error(f"❌ Cache read error: {e!s}")
             return None
 
-    def set(self, cache_type: str, articles: List[Dict[str, Any]], **params):
+    def set(self, cache_type: str, articles: list[dict[str, Any]], **params):
         """
         Store news articles in cache
 
@@ -164,7 +165,7 @@ class NewsCache:
             self._enforce_cache_limits()
 
         except Exception as e:
-            logger.error(f"❌ Cache write error: {str(e)}")
+            logger.error(f"❌ Cache write error: {e!s}")
 
     def invalidate(self, cache_type: str, **params):
         """
@@ -183,7 +184,7 @@ class NewsCache:
                 logger.info(f"✅ Invalidated cache: {cache_key}")
 
         except Exception as e:
-            logger.error(f"❌ Cache invalidation error: {str(e)}")
+            logger.error(f"❌ Cache invalidation error: {e!s}")
 
     def clear_all(self):
         """Clear all cached news"""
@@ -196,9 +197,9 @@ class NewsCache:
             logger.info(f"✅ Cleared {count} cache files")
 
         except Exception as e:
-            logger.error(f"❌ Cache clear error: {str(e)}")
+            logger.error(f"❌ Cache clear error: {e!s}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics"""
         try:
             cache_files = list(self.cache_dir.glob("*.json"))
@@ -212,7 +213,7 @@ class NewsCache:
             expired = 0
             for cache_file in cache_files:
                 try:
-                    with open(cache_file, "r") as f:
+                    with open(cache_file) as f:
                         cache_data = json.load(f)
                     cached_at = datetime.fromisoformat(cache_data["cached_at"])
                     cache_type = "market" if cache_file.name.startswith("market_") else "company"
@@ -220,7 +221,7 @@ class NewsCache:
                     age = (datetime.utcnow() - cached_at).total_seconds()
                     if age > ttl:
                         expired += 1
-                except (IOError, json.JSONDecodeError, KeyError, ValueError) as e:
+                except (OSError, json.JSONDecodeError, KeyError, ValueError) as e:
                     # Corrupted or malformed cache file
                     expired += 1
                     logger.debug(f"Cache stats: corrupted file {cache_file.name}: {e}")
@@ -235,7 +236,7 @@ class NewsCache:
             }
 
         except Exception as e:
-            logger.error(f"❌ Stats error: {str(e)}")
+            logger.error(f"❌ Stats error: {e!s}")
             return {}
 
 

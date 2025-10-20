@@ -4,14 +4,13 @@ Provides stock lookup, company info, and news endpoints for the StockLookup feat
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from ..core.auth import require_bearer
 from ..services.tradier_client import get_tradier_client
+
 
 logger = logging.getLogger(__name__)
 
@@ -23,15 +22,15 @@ class CompanyInfo(BaseModel):
 
     symbol: str
     name: str
-    description: Optional[str] = None
-    sector: Optional[str] = None
-    industry: Optional[str] = None
-    market_cap: Optional[float] = None
-    pe_ratio: Optional[float] = None
-    dividend_yield: Optional[float] = None
-    week_52_high: Optional[float] = None
-    week_52_low: Optional[float] = None
-    avg_volume: Optional[int] = None
+    description: str | None = None
+    sector: str | None = None
+    industry: str | None = None
+    market_cap: float | None = None
+    pe_ratio: float | None = None
+    dividend_yield: float | None = None
+    week_52_high: float | None = None
+    week_52_low: float | None = None
+    avg_volume: int | None = None
     current_price: float
     change: float
     change_percent: float
@@ -41,11 +40,11 @@ class NewsArticle(BaseModel):
     """News article model"""
 
     title: str
-    summary: Optional[str] = None
+    summary: str | None = None
     url: str
     source: str
     published_at: str
-    sentiment: Optional[str] = None  # "positive", "negative", "neutral"
+    sentiment: str | None = None  # "positive", "negative", "neutral"
 
 
 class StockInfoResponse(BaseModel):
@@ -53,7 +52,7 @@ class StockInfoResponse(BaseModel):
 
     company: CompanyInfo
     technicals: dict
-    news: List[NewsArticle] = []
+    news: list[NewsArticle] = []
 
 
 @router.get("/{symbol}/info", dependencies=[Depends(require_bearer)])
@@ -107,15 +106,15 @@ async def get_stock_info(symbol: str) -> CompanyInfo:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to get stock info for {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to get stock info: {str(e)}")
+        logger.error(f"❌ Failed to get stock info for {symbol}: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to get stock info: {e!s}")
 
 
 @router.get("/{symbol}/news", dependencies=[Depends(require_bearer)])
 async def get_stock_news(
     symbol: str,
     limit: int = Query(default=10, ge=1, le=50, description="Number of news articles to return"),
-) -> List[NewsArticle]:
+) -> list[NewsArticle]:
     """
     Get recent news articles for a specific stock
 
@@ -156,8 +155,8 @@ async def get_stock_news(
         return news_articles
 
     except Exception as e:
-        logger.error(f"❌ Failed to get news for {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to get stock news: {str(e)}")
+        logger.error(f"❌ Failed to get news for {symbol}: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to get stock news: {e!s}")
 
 
 @router.get("/{symbol}/complete", dependencies=[Depends(require_bearer)])
@@ -203,5 +202,5 @@ async def get_complete_stock_info(symbol: str) -> StockInfoResponse:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to get complete stock info for {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to get complete stock info: {str(e)}")
+        logger.error(f"❌ Failed to get complete stock info for {symbol}: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to get complete stock info: {e!s}")

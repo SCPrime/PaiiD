@@ -12,6 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+
 # Set test environment variables
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["REDIS_URL"] = ""  # Disable Redis for tests
@@ -23,7 +24,7 @@ os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
 from app.db.session import Base, get_db
 from app.main import app
-from app.services.cache import CacheService
+
 
 # ===========================================
 # TEST AUTHENTICATION

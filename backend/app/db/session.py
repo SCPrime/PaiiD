@@ -11,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 
 from ..core.config import settings
 
+
 # Create engine based on configuration
 if settings.DATABASE_URL:
     # Production: Use PostgreSQL
@@ -19,7 +20,7 @@ if settings.DATABASE_URL:
         pool_pre_ping=True,  # Verify connections before using
         echo=False,  # Set to True for SQL debugging
     )
-    print(f"[OK] Database engine created: PostgreSQL", flush=True)
+    print("[OK] Database engine created: PostgreSQL", flush=True)
 else:
     # Development fallback: SQLite in memory
     engine = create_engine(
@@ -28,7 +29,7 @@ else:
         poolclass=StaticPool,
         echo=False,
     )
-    print(f"[WARNING] DATABASE_URL not set - using SQLite in-memory fallback", flush=True)
+    print("[WARNING] DATABASE_URL not set - using SQLite in-memory fallback", flush=True)
 
 # Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -59,7 +60,6 @@ def init_db():
     Initialize database tables
     Call this on startup to create all tables
     """
-    from ..models import database  # Import models to register them
 
     Base.metadata.create_all(bind=engine)
-    print(f"[OK] Database tables initialized", flush=True)
+    print("[OK] Database tables initialized", flush=True)

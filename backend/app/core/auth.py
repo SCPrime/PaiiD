@@ -4,6 +4,7 @@ from fastapi import Header, HTTPException, status
 
 from .config import settings
 
+
 # Add logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -12,13 +13,13 @@ logging.basicConfig(level=logging.DEBUG)
 def require_bearer(authorization: str = Header(None)):
     logger.debug("=" * 50)
     logger.debug("AUTH MIDDLEWARE CALLED")
-    print(f"\n{'='*50}", flush=True)
-    print(f"AUTH MIDDLEWARE CALLED", flush=True)
+    print(f"\n{'=' * 50}", flush=True)
+    print("AUTH MIDDLEWARE CALLED", flush=True)
     print(f"Authorization header: {authorization}", flush=True)
 
     if not authorization:
         logger.error("❌ No authorization header provided")
-        print(f"❌ ERROR: No authorization header", flush=True)
+        print("❌ ERROR: No authorization header", flush=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorization header"
         )
@@ -42,15 +43,15 @@ def require_bearer(authorization: str = Header(None)):
 
     if not settings.API_TOKEN:
         logger.error("❌ API_TOKEN not set in environment!")
-        print(f"❌ ERROR: API_TOKEN not configured", flush=True)
+        print("❌ ERROR: API_TOKEN not configured", flush=True)
         raise HTTPException(status_code=500, detail="Server configuration error")
 
     if token != settings.API_TOKEN:
         logger.error("❌ Token mismatch!")
-        print(f"❌ ERROR: Token mismatch", flush=True)
+        print("❌ ERROR: Token mismatch", flush=True)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     logger.debug("✅ Authentication successful")
-    print(f"✅ Authentication successful", flush=True)
-    print(f"{'='*50}\n", flush=True)
+    print("✅ Authentication successful", flush=True)
+    print(f"{'=' * 50}\n", flush=True)
     return token

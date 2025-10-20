@@ -17,6 +17,7 @@ from ..core.config import settings
 from ..services.cache import CacheService, get_cache
 from ..services.options_greeks import calculate_option_greeks
 
+
 router = APIRouter(tags=["options"])
 
 
@@ -163,7 +164,7 @@ async def get_options_chain(
         raise
     except Exception as e:
         print(f"[Options Chain] ❌ Error fetching chain: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch options chain: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch options chain: {e!s}")
 
 
 @router.get("/options/greeks", dependencies=[Depends(require_bearer)])
@@ -241,7 +242,7 @@ async def get_option_greeks(
 
         except Exception as e:
             raise HTTPException(
-                status_code=503, detail=f"Unable to fetch current stock price: {str(e)}"
+                status_code=503, detail=f"Unable to fetch current stock price: {e!s}"
             )
 
         # Step 2: Get options chain data from Tradier (for implied volatility and market price)
@@ -295,7 +296,7 @@ async def get_option_greeks(
             # Use historical volatility estimate (conservative 30% default for equity options)
             # TODO: Enhance this by fetching historical volatility from Tradier historical API
             implied_volatility = 0.30
-            print(f"[Options Greeks] ℹ️ Using default IV estimate: 30%")
+            print("[Options Greeks] ℹ️ Using default IV estimate: 30%")
 
         # Step 4: Calculate Greeks using Black-Scholes-Merton
         greeks = calculate_option_greeks(
@@ -346,4 +347,4 @@ async def get_option_greeks(
         raise
     except Exception as e:
         print(f"[Options Greeks] ❌ Calculation error: {e}")
-        raise HTTPException(status_code=500, detail=f"Greeks calculation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Greeks calculation failed: {e!s}")

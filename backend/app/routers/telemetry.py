@@ -3,18 +3,17 @@ Telemetry Router - Tracks user interactions and system events
 """
 
 import json
-import os
-from collections import defaultdict
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+
 router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
 
 # In-memory storage (replace with database in production)
-telemetry_events: List[Dict[str, Any]] = []
+telemetry_events: list[dict[str, Any]] = []
 
 
 class TelemetryEvent(BaseModel):
@@ -23,12 +22,12 @@ class TelemetryEvent(BaseModel):
     component: str
     action: str
     timestamp: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
     userRole: str
 
 
 class TelemetryBatch(BaseModel):
-    events: List[TelemetryEvent]
+    events: list[TelemetryEvent]
 
 
 @router.post("")

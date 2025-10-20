@@ -1,9 +1,9 @@
 import os
 from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
-from pydantic import AnyHttpUrl, BaseModel
+from pydantic import BaseModel
+
 
 # Load .env file BEFORE reading env vars (works even when imported directly)
 ENV_PATH = Path(__file__).parent.parent.parent / ".env"
@@ -13,7 +13,7 @@ load_dotenv(ENV_PATH)
 class Settings(BaseModel):
     # Read directly from environment variables (loaded above)
     API_TOKEN: str = os.getenv("API_TOKEN", "change-me")
-    ALLOW_ORIGIN: Optional[str] = os.getenv("ALLOW_ORIGIN")
+    ALLOW_ORIGIN: str | None = os.getenv("ALLOW_ORIGIN")
     LIVE_TRADING: bool = os.getenv("LIVE_TRADING", "false").lower() == "true"
     TESTING: bool = os.getenv("TESTING", "false").lower() == "true"
     IDMP_TTL_SECONDS: int = int(os.getenv("IDMP_TTL_SECONDS", "600"))
@@ -32,13 +32,13 @@ class Settings(BaseModel):
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 
     # Database (Phase 2.5)
-    DATABASE_URL: Optional[str] = os.getenv("DATABASE_URL")
+    DATABASE_URL: str | None = os.getenv("DATABASE_URL")
 
     # Redis (Phase 2.5)
-    REDIS_URL: Optional[str] = os.getenv("REDIS_URL")
+    REDIS_URL: str | None = os.getenv("REDIS_URL")
 
     # Sentry Error Tracking (Phase 2.5)
-    SENTRY_DSN: Optional[str] = os.getenv("SENTRY_DSN")
+    SENTRY_DSN: str | None = os.getenv("SENTRY_DSN")
 
     # JWT Authentication (Week 2-4: Multi-User System)
     JWT_SECRET_KEY: str = os.getenv(

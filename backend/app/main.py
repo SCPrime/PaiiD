@@ -3,19 +3,19 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+
 # Load .env file before importing settings
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
 
-print(f"\n===== BACKEND STARTUP =====")
+print("\n===== BACKEND STARTUP =====")
 print(f".env path: {env_path}")
 print(f".env exists: {env_path.exists()}")
 print(f"API_TOKEN from env: {os.getenv('API_TOKEN', 'NOT_SET')}")
 print(f"TRADIER_API_KEY configured: {'YES' if os.getenv('TRADIER_API_KEY') else 'NO'}")
-print(f"Deployed from: main branch - Tradier integration active")
-print(f"===========================\n", flush=True)
+print("Deployed from: main branch - Tradier integration active")
+print("===========================\n", flush=True)
 
-import atexit
 
 import sentry_sdk
 from fastapi import FastAPI
@@ -40,16 +40,15 @@ from .routers import (
     portfolio,
     scheduler,
     screening,
-)
-from .routers import settings as settings_router
-from .routers import (
     stock,
     strategies,
     stream,
     telemetry,
     users,
 )
+from .routers import settings as settings_router
 from .scheduler import init_scheduler
+
 
 # Initialize Sentry if DSN is configured
 if settings.SENTRY_DSN:
@@ -64,7 +63,7 @@ if settings.SENTRY_DSN:
         environment=(
             "production" if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "") else "development"
         ),
-        release=f"paiid-backend@1.0.0",
+        release="paiid-backend@1.0.0",
         send_default_pii=False,  # Don't send personally identifiable info
         before_send=lambda event, hint: (
             event
@@ -85,9 +84,9 @@ if settings.SENTRY_DSN:
 else:
     print("[WARNING] SENTRY_DSN not configured - error tracking disabled", flush=True)
 
-print(f"\n===== SETTINGS LOADED =====")
+print("\n===== SETTINGS LOADED =====")
 print(f"settings.API_TOKEN: {settings.API_TOKEN}")
-print(f"===========================\n", flush=True)
+print("===========================\n", flush=True)
 
 app = FastAPI(
     title="PaiiD Trading API",
@@ -122,7 +121,7 @@ async def startup_event():
 
             init_cache()
     except Exception as e:
-        print(f"[ERROR] Failed to initialize cache: {str(e)}", flush=True)
+        print(f"[ERROR] Failed to initialize cache: {e!s}", flush=True)
 
     # Initialize scheduler
     try:
@@ -130,7 +129,7 @@ async def startup_event():
             scheduler_instance = init_scheduler()
             print("[OK] Scheduler initialized and started", flush=True)
     except Exception as e:
-        print(f"[ERROR] Failed to initialize scheduler: {str(e)}", flush=True)
+        print(f"[ERROR] Failed to initialize scheduler: {e!s}", flush=True)
 
     # ⚠️ ARCHITECTURE NOTE: Tradier provides ALL market data (quotes, streaming, analysis)
     # Alpaca is used ONLY for paper trade execution (orders, positions, account)
@@ -176,7 +175,7 @@ async def shutdown_event():
         scheduler_instance.shutdown()
         print("[OK] Scheduler shut down gracefully", flush=True)
     except Exception as e:
-        print(f"[ERROR] Scheduler shutdown error: {str(e)}", flush=True)
+        print(f"[ERROR] Scheduler shutdown error: {e!s}", flush=True)
 
     # Stop Tradier streaming
     try:
@@ -196,6 +195,7 @@ if settings.SENTRY_DSN:
 
 # Add Cache-Control headers for SWR support (Phase 2: Performance)
 from .middleware.cache_control import CacheControlMiddleware
+
 
 app.add_middleware(CacheControlMiddleware)
 

@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
+
 client = TestClient(app)
 HEADERS = {"Authorization": "Bearer test-token-12345"}
 
@@ -120,7 +121,7 @@ def test_news_invalid_symbol():
             assert isinstance(data["articles"], list)
     except Exception as e:
         # Accept failures gracefully (external API may be down)
-        assert True, f"Test passed with exception: {str(e)}"
+        assert True, f"Test passed with exception: {e!s}"
 
 
 def test_news_providers_aggregation():
@@ -258,4 +259,4 @@ def test_news_concurrent_requests():
             assert response.status_code in [200, 400, 500]
     except Exception as e:
         # Accept failures gracefully (external API may be down)
-        assert True, f"Test passed with exception: {str(e)}"
+        assert True, f"Test passed with exception: {e!s}"

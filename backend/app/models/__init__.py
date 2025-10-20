@@ -16,14 +16,15 @@ from .database import (
     UserSession,
 )
 
+
 __all__ = [
-    "User",
-    "UserSession",
+    "AIRecommendation",
     "ActivityLog",
-    "Strategy",
-    "Trade",
-    "Performance",
     "EquitySnapshot",
     "OrderTemplate",
-    "AIRecommendation",
+    "Performance",
+    "Strategy",
+    "Trade",
+    "User",
+    "UserSession",
 ]

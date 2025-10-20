@@ -10,10 +10,8 @@ Calculates common technical indicators for trading signals:
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
-import requests
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +20,7 @@ class TechnicalIndicators:
     """Calculate technical indicators from price data"""
 
     @staticmethod
-    def calculate_rsi(prices: List[float], period: int = 14) -> float:
+    def calculate_rsi(prices: list[float], period: int = 14) -> float:
         """
         Calculate Relative Strength Index
 
@@ -57,8 +55,8 @@ class TechnicalIndicators:
 
     @staticmethod
     def calculate_macd(
-        prices: List[float], fast_period: int = 12, slow_period: int = 26, signal_period: int = 9
-    ) -> Dict[str, float]:
+        prices: list[float], fast_period: int = 12, slow_period: int = 26, signal_period: int = 9
+    ) -> dict[str, float]:
         """
         Calculate MACD (Moving Average Convergence Divergence)
 
@@ -93,8 +91,8 @@ class TechnicalIndicators:
 
     @staticmethod
     def calculate_bollinger_bands(
-        prices: List[float], period: int = 20, std_dev: float = 2.0
-    ) -> Dict[str, float]:
+        prices: list[float], period: int = 20, std_dev: float = 2.0
+    ) -> dict[str, float]:
         """
         Calculate Bollinger Bands
 
@@ -120,7 +118,7 @@ class TechnicalIndicators:
         return {"upper": round(upper, 2), "middle": round(sma, 2), "lower": round(lower, 2)}
 
     @staticmethod
-    def calculate_bb_width(prices: List[float], period: int = 20, std_dev: float = 2.0) -> float:
+    def calculate_bb_width(prices: list[float], period: int = 20, std_dev: float = 2.0) -> float:
         """
         Calculate Bollinger Band Width as percentage of price
 
@@ -141,7 +139,7 @@ class TechnicalIndicators:
 
     @staticmethod
     def calculate_atr(
-        highs: List[float], lows: List[float], closes: List[float], period: int = 14
+        highs: list[float], lows: list[float], closes: list[float], period: int = 14
     ) -> float:
         """
         Calculate Average True Range (ATR) - volatility indicator
@@ -183,7 +181,7 @@ class TechnicalIndicators:
         return round(atr, 2)
 
     @staticmethod
-    def calculate_moving_averages(prices: List[float]) -> Dict[str, float]:
+    def calculate_moving_averages(prices: list[float]) -> dict[str, float]:
         """
         Calculate key moving averages
 
@@ -207,7 +205,7 @@ class TechnicalIndicators:
         return result
 
     @staticmethod
-    def _calculate_ema(prices: List[float], period: int) -> float:
+    def _calculate_ema(prices: list[float], period: int) -> float:
         """Calculate Exponential Moving Average"""
         if len(prices) < period:
             return sum(prices) / len(prices) if prices else 0.0
@@ -223,7 +221,7 @@ class TechnicalIndicators:
         return ema
 
     @staticmethod
-    def analyze_trend(prices: List[float]) -> Dict[str, Any]:
+    def analyze_trend(prices: list[float]) -> dict[str, Any]:
         """
         Analyze price trend
 
@@ -288,8 +286,8 @@ class TechnicalIndicators:
 
     @staticmethod
     def generate_signal(
-        symbol: str, prices: List[float], volumes: List[float] = None
-    ) -> Dict[str, Any]:
+        symbol: str, prices: list[float], volumes: list[float] = None
+    ) -> dict[str, Any]:
         """
         Generate trading signal based on multiple indicators
 

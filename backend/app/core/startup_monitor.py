@@ -9,7 +9,7 @@ import asyncio
 import logging
 import time
 from contextlib import asynccontextmanager
-from typing import Dict, Optional
+
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +26,8 @@ class StartupMonitor:
     """
 
     def __init__(self):
-        self.phases: Dict[str, float] = {}
-        self.start_time: Optional[float] = None
+        self.phases: dict[str, float] = {}
+        self.start_time: float | None = None
         self.warnings: list = []
 
         # Timeout thresholds (seconds)
@@ -40,7 +40,7 @@ class StartupMonitor:
         logger.info("🚀 [StartupMonitor] Application startup initiated")
 
     @asynccontextmanager
-    async def phase(self, name: str, timeout: Optional[float] = None):
+    async def phase(self, name: str, timeout: float | None = None):
         """
         Context manager to monitor a startup phase with timeout.
 
@@ -69,7 +69,7 @@ class StartupMonitor:
             else:
                 logger.info(f"  ✅ [{name}] completed in {duration:.2f}s")
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             duration = time.time() - phase_start
             error = f"🚨 [{name}] TIMEOUT after {duration:.2f}s"
             self.warnings.append(error)
@@ -77,7 +77,7 @@ class StartupMonitor:
             raise
         except Exception as e:
             duration = time.time() - phase_start
-            error = f"❌ [{name}] failed after {duration:.2f}s: {str(e)}"
+            error = f"❌ [{name}] failed after {duration:.2f}s: {e!s}"
             self.warnings.append(error)
             logger.error(error)
             raise
@@ -126,7 +126,7 @@ class StartupMonitor:
 
 
 # Global singleton instance
-_startup_monitor: Optional[StartupMonitor] = None
+_startup_monitor: StartupMonitor | None = None
 
 
 def get_startup_monitor() -> StartupMonitor:
@@ -151,6 +151,6 @@ async def timeout_wrapper(coro, timeout: float, operation_name: str):
     """
     try:
         return await asyncio.wait_for(coro, timeout=timeout)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.error(f"🚨 [{operation_name}] timed out after {timeout}s")
         raise

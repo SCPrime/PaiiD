@@ -6,7 +6,7 @@ Implements common cache operations with TTL support.
 """
 
 import json
-from typing import Any, Optional
+from typing import Any
 
 import redis
 
@@ -17,7 +17,7 @@ class CacheService:
     """Redis cache service with graceful degradation"""
 
     def __init__(self):
-        self.client: Optional[redis.Redis] = None
+        self.client: redis.Redis | None = None
         self.available = False
         self._initialize()
 
@@ -43,7 +43,7 @@ class CacheService:
             self.client = None
             self.available = False
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """
         Get value from cache
 
@@ -108,7 +108,7 @@ class CacheService:
             print(f"[WARNING] Cache DELETE error for key '{key}': {e}", flush=True)
             return False
 
-    def ttl(self, key: str) -> Optional[int]:
+    def ttl(self, key: str) -> int | None:
         """
         Get remaining TTL for key
 
@@ -152,7 +152,7 @@ class CacheService:
 
 
 # Global cache instance
-_cache_service: Optional[CacheService] = None
+_cache_service: CacheService | None = None
 
 
 def get_cache() -> CacheService:

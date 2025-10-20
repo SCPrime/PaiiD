@@ -4,7 +4,7 @@ Endpoints for managing user preferences including risk tolerance
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, validator
@@ -14,6 +14,7 @@ from ..core.auth import require_bearer
 from ..db.session import get_db
 from ..models.database import User
 
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -22,22 +23,22 @@ router = APIRouter()
 class UserPreferencesResponse(BaseModel):
     """Response model for user preferences"""
 
-    risk_tolerance: Optional[int] = Field(None, ge=0, le=100, description="Risk tolerance (0-100)")
-    default_position_size: Optional[float] = None
-    watchlist: Optional[list] = None
-    notifications_enabled: Optional[bool] = None
-    preferences: Dict[str, Any]  # Full preferences object
+    risk_tolerance: int | None = Field(None, ge=0, le=100, description="Risk tolerance (0-100)")
+    default_position_size: float | None = None
+    watchlist: list | None = None
+    notifications_enabled: bool | None = None
+    preferences: dict[str, Any]  # Full preferences object
 
 
 class UserPreferencesUpdate(BaseModel):
     """Request model for updating user preferences"""
 
-    risk_tolerance: Optional[int] = Field(None, ge=0, le=100, description="Risk tolerance (0-100)")
-    default_position_size: Optional[float] = Field(
+    risk_tolerance: int | None = Field(None, ge=0, le=100, description="Risk tolerance (0-100)")
+    default_position_size: float | None = Field(
         None, gt=0, description="Default position size in dollars"
     )
-    watchlist: Optional[list] = None
-    notifications_enabled: Optional[bool] = None
+    watchlist: list | None = None
+    notifications_enabled: bool | None = None
 
     @validator("risk_tolerance")
     def validate_risk_tolerance(cls, v):
@@ -84,8 +85,8 @@ def get_user_preferences(
         )
 
     except Exception as e:
-        logger.error(f"❌ Failed to fetch user preferences: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch user preferences: {str(e)}")
+        logger.error(f"❌ Failed to fetch user preferences: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch user preferences: {e!s}")
 
 
 @router.patch("/users/preferences")
@@ -153,11 +154,11 @@ def update_user_preferences(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to update user preferences: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to update user preferences: {str(e)}")
+        logger.error(f"❌ Failed to update user preferences: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to update user preferences: {e!s}")
 
 
-def get_risk_limits(risk_tolerance: int) -> Dict[str, Any]:
+def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
     """
     Calculate risk-based trading limits
 
@@ -214,5 +215,5 @@ def get_user_risk_limits(_=Depends(require_bearer), db: Session = Depends(get_db
         return {"risk_tolerance": risk_tolerance, **limits}
 
     except Exception as e:
-        logger.error(f"❌ Failed to calculate risk limits: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to calculate risk limits: {str(e)}")
+        logger.error(f"❌ Failed to calculate risk limits: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to calculate risk limits: {e!s}")

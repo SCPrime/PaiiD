@@ -4,7 +4,7 @@ Pre-built trading strategy templates with risk classifications
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 
 @dataclass
@@ -16,11 +16,11 @@ class StrategyTemplate:
     description: str
     strategy_type: str  # trend_following, mean_reversion, momentum, volatility_breakout
     risk_level: str  # Conservative, Moderate, Aggressive
-    config: Dict[str, Any]  # Strategy configuration (matches StrategyRules format)
+    config: dict[str, Any]  # Strategy configuration (matches StrategyRules format)
     expected_win_rate: float  # 0-100 percentage
     avg_return_percent: float  # Average return per trade
     max_drawdown_percent: float  # Maximum historical drawdown
-    recommended_for: List[str]  # Market conditions this strategy works best in
+    recommended_for: list[str]  # Market conditions this strategy works best in
 
 
 # Pre-built strategy templates
@@ -202,7 +202,7 @@ STRATEGY_TEMPLATES = [
 ]
 
 
-def get_all_templates() -> List[StrategyTemplate]:
+def get_all_templates() -> list[StrategyTemplate]:
     """Get all available strategy templates"""
     return STRATEGY_TEMPLATES
 
@@ -215,7 +215,7 @@ def get_template_by_id(template_id: str) -> StrategyTemplate:
     raise ValueError(f"Template not found: {template_id}")
 
 
-def filter_templates_by_risk(risk_tolerance: int) -> List[StrategyTemplate]:
+def filter_templates_by_risk(risk_tolerance: int) -> list[StrategyTemplate]:
     """
     Filter templates by user's risk tolerance
 
@@ -238,7 +238,7 @@ def filter_templates_by_risk(risk_tolerance: int) -> List[StrategyTemplate]:
     return [t for t in STRATEGY_TEMPLATES if t.risk_level in allowed_levels]
 
 
-def customize_template_for_risk(template: StrategyTemplate, risk_tolerance: int) -> Dict[str, Any]:
+def customize_template_for_risk(template: StrategyTemplate, risk_tolerance: int) -> dict[str, Any]:
     """
     Customize template parameters based on user's risk tolerance
 
