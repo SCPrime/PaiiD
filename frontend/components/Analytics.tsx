@@ -292,6 +292,12 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
 
+  // AI Portfolio Analysis state
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+
   // Mobile responsiveness
   const isMobile = useIsMobile();
 
@@ -315,6 +321,34 @@ export default function Analytics() {
       link.click();
     } catch (error) {
       console.error("Failed to export chart:", error);
+    }
+  };
+
+  // Fetch AI Portfolio Analysis
+  const fetchAIPortfolioAnalysis = async () => {
+    setAiLoading(true);
+    setAiError(null);
+
+    try {
+      const response = await fetch('/api/proxy/api/ai/analyze-portfolio', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setAiAnalysis(data);
+      setShowAiPanel(true);
+    } catch (error: any) {
+      console.error('AI Portfolio Analysis error:', error);
+      setAiError(error.message || 'Failed to fetch AI analysis');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -607,6 +641,210 @@ export default function Analytics() {
 
       {/* Portfolio Summary Card */}
       <PortfolioSummaryCard />
+
+      {/* AI Portfolio Health Check Button */}
+      <div style={{ marginBottom: theme.spacing.lg }}>
+        <button
+          onClick={fetchAIPortfolioAnalysis}
+          disabled={aiLoading}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: aiLoading ? '#4B5563' : '#8B5CF6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: aiLoading ? 'not-allowed' : 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s'
+          }}
+        >
+          <span style={{ fontSize: '20px' }}>🤖</span>
+          {aiLoading ? 'Analyzing Portfolio...' : 'AI Portfolio Health Check'}
+        </button>
+
+        {/* AI Analysis Panel */}
+        {showAiPanel && aiAnalysis && (
+          <div style={{
+            marginTop: '24px',
+            padding: '24px',
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1))',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            borderRadius: '12px',
+            backdropFilter: 'blur(10px)'
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#E2E8F0' }}>
+                🤖 AI Portfolio Health Analysis
+              </h3>
+              <button
+                onClick={() => setShowAiPanel(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94A3B8',
+                  cursor: 'pointer',
+                  fontSize: '24px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Health Score */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginBottom: '24px'
+            }}>
+              <div style={{
+                padding: '16px',
+                background: 'rgba(15, 23, 42, 0.6)',
+                borderRadius: '8px',
+                border: '1px solid rgba(148, 163, 184, 0.2)'
+              }}>
+                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: '8px' }}>
+                  Health Score
+                </div>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#10B981' }}>
+                  {aiAnalysis.health_score}/100
+                </div>
+              </div>
+
+              <div style={{
+                padding: '16px',
+                background: 'rgba(15, 23, 42, 0.6)',
+                borderRadius: '8px',
+                border: '1px solid rgba(148, 163, 184, 0.2)'
+              }}>
+                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: '8px' }}>
+                  Risk Level
+                </div>
+                <div style={{
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  color: aiAnalysis.risk_level === 'Low' ? '#10B981' :
+                         aiAnalysis.risk_level === 'Medium' ? '#F59E0B' : '#EF4444'
+                }}>
+                  {aiAnalysis.risk_level}
+                </div>
+              </div>
+
+              <div style={{
+                padding: '16px',
+                background: 'rgba(15, 23, 42, 0.6)',
+                borderRadius: '8px',
+                border: '1px solid rgba(148, 163, 184, 0.2)'
+              }}>
+                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: '8px' }}>
+                  Diversification
+                </div>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#3B82F6' }}>
+                  {aiAnalysis.diversification_score}/100
+                </div>
+              </div>
+            </div>
+
+            {/* AI Summary */}
+            <div style={{
+              padding: '16px',
+              background: 'rgba(15, 23, 42, 0.6)',
+              borderRadius: '8px',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              marginBottom: '16px'
+            }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#E2E8F0', marginBottom: '8px' }}>
+                📊 AI Summary
+              </div>
+              <div style={{ fontSize: '14px', color: '#CBD5E1', lineHeight: '1.6' }}>
+                {aiAnalysis.ai_summary}
+              </div>
+            </div>
+
+            {/* Recommendations */}
+            <div style={{
+              padding: '16px',
+              background: 'rgba(15, 23, 42, 0.6)',
+              borderRadius: '8px',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              marginBottom: '16px'
+            }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#E2E8F0', marginBottom: '12px' }}>
+                💡 AI Recommendations
+              </div>
+              <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                {aiAnalysis.recommendations.map((rec: string, idx: number) => (
+                  <li key={idx} style={{ fontSize: '14px', color: '#CBD5E1', marginBottom: '8px', lineHeight: '1.6' }}>
+                    {rec}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Risk Factors */}
+            {aiAnalysis.risk_factors.length > 0 && (
+              <div style={{
+                padding: '16px',
+                background: 'rgba(15, 23, 42, 0.6)',
+                borderRadius: '8px',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                marginBottom: '16px'
+              }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#EF4444', marginBottom: '12px' }}>
+                  ⚠️ Risk Factors
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  {aiAnalysis.risk_factors.map((risk: string, idx: number) => (
+                    <li key={idx} style={{ fontSize: '14px', color: '#FCA5A5', marginBottom: '8px', lineHeight: '1.6' }}>
+                      {risk}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Opportunities */}
+            {aiAnalysis.opportunities.length > 0 && (
+              <div style={{
+                padding: '16px',
+                background: 'rgba(15, 23, 42, 0.6)',
+                borderRadius: '8px',
+                border: '1px solid rgba(16, 185, 129, 0.3)'
+              }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#10B981', marginBottom: '12px' }}>
+                  🎯 Opportunities
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  {aiAnalysis.opportunities.map((opp: string, idx: number) => (
+                    <li key={idx} style={{ fontSize: '14px', color: '#6EE7B7', marginBottom: '8px', lineHeight: '1.6' }}>
+                      {opp}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Error Display */}
+        {aiError && (
+          <div style={{
+            marginTop: '16px',
+            padding: '16px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '8px',
+            color: '#FCA5A5'
+          }}>
+            ⚠️ {aiError}
+          </div>
+        )}
+      </div>
 
       {/* Performance Metrics */}
       {metrics && (

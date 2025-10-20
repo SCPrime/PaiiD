@@ -3,12 +3,15 @@ AI Recommendations Router
 Provides AI-generated trading recommendations based on market analysis
 """
 
+import json
 import logging
+import os
 import random
+import re
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -1793,4 +1796,450 @@ async def get_recommendation_history(
         logger.error(f"❌ Failed to retrieve recommendation history: {e!s}")
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve recommendation history: {e!s}"
+        )
+
+
+# =============================================================================
+# PHASE 1A: AI PORTFOLIO ANALYSIS ENDPOINT
+# =============================================================================
+
+
+class PortfolioAnalysisResponse(BaseModel):
+    """AI-powered portfolio analysis response"""
+
+    health_score: float  # 0-100 (100 = excellent health)
+    risk_level: Literal["Low", "Medium", "High", "Very High"]
+    total_value: float
+    cash_balance: float
+    buying_power: float
+    positions_count: int
+    diversification_score: float  # 0-100
+    recommendations: list[str]
+    risk_factors: list[str]
+    opportunities: list[str]
+    ai_summary: str
+    generated_at: str
+
+
+@router.get("/analyze-portfolio", response_model=PortfolioAnalysisResponse, dependencies=[Depends(require_bearer)])
+async def analyze_portfolio():
+    """
+    AI-powered portfolio analysis using Claude API
+
+    Analyzes:
+    - Account health and risk levels
+    - Position diversification
+    - Portfolio allocation
+    - Risk factors and opportunities
+    - AI-generated recommendations
+
+    Returns comprehensive analysis with actionable insights
+    """
+    try:
+        import os
+        from anthropic import Anthropic
+
+        logger.info("🤖 AI Portfolio Analysis - Starting...")
+
+        # Step 1: Get account data from Tradier
+        client = get_tradier_client()
+        account_data = client.get_account()
+
+        if not account_data:
+            raise HTTPException(status_code=500, detail="Failed to fetch account data")
+
+        # Step 2: Get positions
+        positions = client.get_positions()
+        positions_list = positions if isinstance(positions, list) else []
+
+        logger.info(f"📊 Account: ${float(account_data.get('total_equity', 0)):.2f}, Positions: {len(positions_list)}")
+
+        # Step 3: Calculate portfolio metrics
+        total_value = float(account_data.get("total_equity", 0))
+        cash_balance = float(account_data.get("total_cash", 0))
+        buying_power = float(account_data.get("option_buying_power", 0))
+        positions_count = len(positions_list)
+
+        # Calculate diversification score (simple: more positions = better diversification)
+        if positions_count == 0:
+            diversification_score = 0.0
+        elif positions_count == 1:
+            diversification_score = 20.0
+        elif positions_count <= 3:
+            diversification_score = 40.0
+        elif positions_count <= 5:
+            diversification_score = 60.0
+        elif positions_count <= 10:
+            diversification_score = 80.0
+        else:
+            diversification_score = 100.0
+
+        # Step 4: Prepare data for Claude AI
+        portfolio_summary = f"""
+Account Overview:
+- Total Portfolio Value: ${total_value:,.2f}
+- Cash Balance: ${cash_balance:,.2f}
+- Buying Power: ${buying_power:,.2f}
+- Number of Positions: {positions_count}
+- Diversification Score: {diversification_score}/100
+
+Positions:
+"""
+
+        if positions_count > 0:
+            for i, pos in enumerate(positions_list[:10], 1):  # Limit to first 10
+                symbol = pos.get("symbol", "UNKNOWN")
+                quantity = pos.get("quantity", 0)
+                cost_basis = pos.get("cost_basis", 0)
+                market_value = pos.get("close_price", 0) * float(quantity)
+                pnl = market_value - float(cost_basis)
+                pnl_pct = (pnl / float(cost_basis) * 100) if float(cost_basis) > 0 else 0
+
+                portfolio_summary += f"{i}. {symbol}: {quantity} shares, ${market_value:.2f} value, P&L: {pnl_pct:+.1f}%\n"
+        else:
+            portfolio_summary += "No open positions\n"
+
+        # Step 5: Call Claude API for analysis
+        anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not anthropic_api_key:
+            logger.warning("⚠️ ANTHROPIC_API_KEY not set, using rule-based analysis")
+            # Fallback to rule-based analysis
+            return _generate_rule_based_portfolio_analysis(
+                total_value, cash_balance, buying_power, positions_count, diversification_score
+            )
+
+        anthropic = Anthropic(api_key=anthropic_api_key)
+
+        prompt = f"""Analyze this trading portfolio and provide actionable insights.
+
+{portfolio_summary}
+
+Please provide:
+1. Overall health score (0-100)
+2. Risk level (Low/Medium/High/Very High)
+3. Top 3 recommendations for improving the portfolio
+4. Top 3 risk factors to watch
+5. Top 3 opportunities for optimization
+6. A brief AI summary (2-3 sentences)
+
+Format your response as JSON with these exact keys:
+{{
+  "health_score": <number 0-100>,
+  "risk_level": "<Low/Medium/High/Very High>",
+  "recommendations": ["rec1", "rec2", "rec3"],
+  "risk_factors": ["risk1", "risk2", "risk3"],
+  "opportunities": ["opp1", "opp2", "opp3"],
+  "ai_summary": "<2-3 sentence summary>"
+}}"""
+
+        logger.info("🤖 Sending request to Claude API...")
+
+        message = anthropic.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        # Parse Claude's response
+        import json
+        response_text = message.content[0].text
+
+        # Extract JSON from response (Claude might wrap it in markdown)
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].split("```")[0].strip()
+
+        ai_analysis = json.loads(response_text)
+
+        logger.info("✅ Claude API analysis complete")
+
+        # Step 6: Build response
+        return PortfolioAnalysisResponse(
+            health_score=float(ai_analysis.get("health_score", 50)),
+            risk_level=ai_analysis.get("risk_level", "Medium"),
+            total_value=total_value,
+            cash_balance=cash_balance,
+            buying_power=buying_power,
+            positions_count=positions_count,
+            diversification_score=diversification_score,
+            recommendations=ai_analysis.get("recommendations", []),
+            risk_factors=ai_analysis.get("risk_factors", []),
+            opportunities=ai_analysis.get("opportunities", []),
+            ai_summary=ai_analysis.get("ai_summary", "Portfolio analysis complete."),
+            generated_at=datetime.now().isoformat() + "Z"
+        )
+
+    except Exception as e:
+        logger.error(f"❌ Portfolio analysis failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Portfolio analysis failed: {e!s}")
+
+
+def _generate_rule_based_portfolio_analysis(
+    total_value: float,
+    cash_balance: float,
+    buying_power: float,
+    positions_count: int,
+    diversification_score: float
+) -> PortfolioAnalysisResponse:
+    """Fallback rule-based analysis when Claude API is unavailable"""
+
+    # Calculate health score based on simple rules
+    health_score = 50.0  # Base score
+
+    # Adjust based on diversification
+    health_score += (diversification_score / 100) * 20
+
+    # Adjust based on cash position (30-50% cash is ideal)
+    cash_ratio = cash_balance / total_value if total_value > 0 else 0
+    if 0.3 <= cash_ratio <= 0.5:
+        health_score += 15
+    elif 0.1 <= cash_ratio < 0.3 or 0.5 < cash_ratio <= 0.7:
+        health_score += 10
+    else:
+        health_score += 5
+
+    # Determine risk level
+    if positions_count == 0:
+        risk_level = "Low"
+    elif positions_count <= 3:
+        risk_level = "Medium"
+    elif positions_count <= 7:
+        risk_level = "Medium"
+    else:
+        risk_level = "High"
+
+    # Generate recommendations
+    recommendations = []
+    if diversification_score < 50:
+        recommendations.append("Consider diversifying across more positions to reduce concentration risk")
+    if cash_ratio < 0.2:
+        recommendations.append("Increase cash reserves to have dry powder for opportunities")
+    if positions_count == 0:
+        recommendations.append("Start building positions in quality stocks or ETFs")
+    if positions_count > 10:
+        recommendations.append("Consider consolidating positions for easier management")
+
+    # Add default recommendations if none exist
+    if not recommendations:
+        recommendations = [
+            "Maintain current diversification strategy",
+            "Monitor positions regularly for changes",
+            "Consider rebalancing quarterly"
+        ]
+
+    # Ensure we have exactly 3 recommendations
+    while len(recommendations) < 3:
+        recommendations.append("Continue monitoring market conditions")
+    recommendations = recommendations[:3]
+
+    # Generate risk factors
+    risk_factors = []
+    if cash_ratio < 0.1:
+        risk_factors.append("Low cash reserves - limited ability to handle drawdowns")
+    if positions_count > 10:
+        risk_factors.append("Over-diversification may dilute returns")
+    if diversification_score < 40:
+        risk_factors.append("High concentration risk in few positions")
+
+    while len(risk_factors) < 3:
+        risk_factors.append("Monitor market volatility")
+    risk_factors = risk_factors[:3]
+
+    # Generate opportunities
+    opportunities = []
+    if buying_power > total_value * 0.3:
+        opportunities.append("High buying power available for new positions")
+    if diversification_score < 60:
+        opportunities.append("Room to add complementary positions")
+    opportunities.append("Regularly review for tax-loss harvesting opportunities")
+
+    while len(opportunities) < 3:
+        opportunities.append("Continue building long-term positions")
+    opportunities = opportunities[:3]
+
+    return PortfolioAnalysisResponse(
+        health_score=min(health_score, 100.0),
+        risk_level=risk_level,
+        total_value=total_value,
+        cash_balance=cash_balance,
+        buying_power=buying_power,
+        positions_count=positions_count,
+        diversification_score=diversification_score,
+        recommendations=recommendations,
+        risk_factors=risk_factors,
+        opportunities=opportunities,
+        ai_summary=f"Portfolio health score: {health_score:.0f}/100. {recommendations[0] if recommendations else 'Portfolio analysis complete.'}",
+        generated_at=datetime.now().isoformat() + "Z"
+    )
+
+
+@router.post("/analyze-news", dependencies=[Depends(require_bearer)])
+async def analyze_news(
+    article: dict = Body(..., example={
+        "title": "Tech Stocks Rally on Strong Earnings",
+        "content": "Apple and Microsoft report record profits...",
+        "source": "CNBC",
+        "published_at": "2025-10-20T10:30:00Z"
+    })
+):
+    """
+    AI-powered news article analysis
+    Returns sentiment, tickers mentioned, and portfolio impact assessment
+    """
+    try:
+        logger.info("🤖 News Analysis - Starting...")
+
+        # Extract article data
+        title = article.get("title", "")
+        content = article.get("content", "")
+        source = article.get("source", "Unknown")
+
+        if not title and not content:
+            raise HTTPException(
+                status_code=400,
+                detail="Article must have title or content"
+            )
+
+        # Get user's positions for context
+        from ..services.tradier_client import get_tradier_client
+        client = get_tradier_client()
+        positions = client.get_positions()
+        user_tickers = [p.get("symbol") for p in positions if p.get("symbol")]
+
+        logger.info(f"📊 User has {len(user_tickers)} positions")
+
+        # Build Claude prompt
+        prompt = f"""Analyze this news article for trading insights.
+
+Article:
+Title: {title}
+Source: {source}
+Content: {content[:1000]}...
+
+User's Portfolio Positions: {', '.join(user_tickers) if user_tickers else 'None'}
+
+Provide analysis in EXACTLY this JSON format (no other text):
+{{
+    "sentiment": "bullish" or "bearish" or "neutral",
+    "sentiment_score": <float -1.0 to 1.0>,
+    "confidence": <float 0-100>,
+    "tickers_mentioned": ["AAPL", "MSFT"],
+    "portfolio_impact": "high" or "medium" or "low" or "none",
+    "affected_positions": ["AAPL"],
+    "key_points": ["point1", "point2", "point3"],
+    "trading_implications": "Brief description of what this means for traders",
+    "urgency": "critical" or "high" or "medium" or "low",
+    "summary": "2-3 sentence summary of the article and its market impact"
+}}
+
+Base your analysis on:
+- Market sentiment from the article
+- Which stocks are mentioned
+- Whether it affects the user's positions
+- Urgency for action"""
+
+        logger.info("🤖 Sending request to Claude API...")
+
+        from anthropic import Anthropic
+
+        anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not anthropic_api_key:
+            raise HTTPException(
+                status_code=500,
+                detail="ANTHROPIC_API_KEY not configured"
+            )
+
+        anthropic = Anthropic(api_key=anthropic_api_key)
+
+        message = anthropic.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1500,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        ai_text = message.content[0].text
+        logger.info(f"✅ Received AI response: {len(ai_text)} chars")
+
+        # Parse JSON response
+        # Remove markdown code blocks
+        ai_text = re.sub(r'```json\s*', '', ai_text)
+        ai_text = re.sub(r'```\s*', '', ai_text)
+        ai_text = ai_text.strip()
+
+        # Extract JSON
+        json_match = re.search(r'\{.*\}', ai_text, re.DOTALL)
+        if json_match:
+            analysis = json.loads(json_match.group())
+        else:
+            raise ValueError(f"Could not parse AI response: {ai_text}")
+
+        logger.info(f"✅ News analysis complete - Sentiment: {analysis.get('sentiment')}")
+
+        # Return enriched analysis
+        return {
+            "success": True,
+            "article_info": {
+                "title": title,
+                "source": source,
+                "published_at": article.get("published_at")
+            },
+            "ai_analysis": analysis,
+            "user_context": {
+                "has_positions": len(user_tickers) > 0,
+                "position_count": len(user_tickers),
+                "tickers": user_tickers
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ News analysis error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"News analysis failed: {str(e)}"
+        )
+
+
+@router.post("/analyze-news-batch", dependencies=[Depends(require_bearer)])
+async def analyze_news_batch(
+    articles: list = Body(..., example=[
+        {"title": "Article 1", "content": "Tech stocks surge...", "source": "CNBC"},
+        {"title": "Article 2", "content": "Fed announces rate decision...", "source": "Reuters"}
+    ])
+):
+    """
+    Analyze multiple news articles in batch
+    Returns array of analysis results
+    """
+    try:
+        logger.info(f"🤖 Batch News Analysis - Processing {len(articles)} articles...")
+
+        results = []
+
+        for article in articles[:5]:  # Limit to 5 articles
+            try:
+                result = await analyze_news(article)
+                results.append(result)
+            except Exception as e:
+                results.append({
+                    "success": False,
+                    "article_info": {"title": article.get("title", "Unknown")},
+                    "error": str(e)
+                })
+
+        logger.info(f"✅ Batch analysis complete - Analyzed {len(results)} articles")
+
+        return {
+            "success": True,
+            "results": results,
+            "analyzed_count": len(results)
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Batch news analysis error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Batch analysis failed: {str(e)}"
         )
