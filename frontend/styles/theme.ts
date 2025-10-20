@@ -16,6 +16,7 @@ export const theme = {
     secondary: "#00ACC1", // Teal
     accent: "#7E57C2", // Purple
     aiGlow: "#45f0c0", // Bright cyan for AI logo glow
+    success: "#00C851", // Green (for positive values, support levels)
     warning: "#FF8800", // Orange
     danger: "#FF4444", // Red
     info: "#00BCD4", // Cyan

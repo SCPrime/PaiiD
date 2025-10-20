@@ -102,6 +102,11 @@ export default function ExecuteTradeForm() {
   const [availableStrikes, setAvailableStrikes] = useState<number[]>([]);
   const [loadingOptionsChain, setLoadingOptionsChain] = useState(false);
 
+  // AI Analysis state
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
   // Load templates on mount
   useEffect(() => {
     loadTemplates();
@@ -220,6 +225,57 @@ export default function ExecuteTradeForm() {
       fetchStrikes(symbol, expirationDate);
     }
   }, [expirationDate]);
+
+  // Debounced AI analysis when symbol changes
+  useEffect(() => {
+    // Reset AI state if symbol is empty or invalid
+    if (!symbol || symbol.trim() === "" || symbol.trim().length < 1) {
+      setAiAnalysis(null);
+      setAiError(null);
+      return;
+    }
+
+    // Debounce: Wait 800ms after user stops typing
+    const timeoutId = setTimeout(async () => {
+      await fetchAIAnalysis(symbol.trim().toUpperCase());
+    }, 800);
+
+    return () => clearTimeout(timeoutId);
+  }, [symbol]); // Re-run when symbol changes
+
+  const fetchAIAnalysis = async (sym: string) => {
+    setAiLoading(true);
+    setAiError(null);
+
+    try {
+      const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+
+      const response = await fetch(`/api/proxy/api/ai/analyze-symbol/${sym}`, {
+        headers: {
+          'Authorization': `Bearer ${apiToken}`
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`Symbol ${sym} not found`);
+        } else if (response.status === 400) {
+          throw new Error(`Insufficient data for ${sym}`);
+        } else {
+          throw new Error(`${response.status} ${response.statusText}`);
+        }
+      }
+
+      const data = await response.json();
+      setAiAnalysis(data);
+    } catch (err: any) {
+      console.error("AI analysis error:", err);
+      setAiError(err.message || "Failed to load AI analysis");
+      setAiAnalysis(null);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplateId(templateId);
@@ -367,7 +423,7 @@ export default function ExecuteTradeForm() {
     setLastRequestId(requestId);
 
     const body = {
-      dryRun: true, // Always dry-run for now
+      dryRun: false, // Paper trading via Alpaca
       requestId,
       orders: [pendingOrder],
     };
@@ -402,8 +458,8 @@ export default function ExecuteTradeForm() {
         qty: pendingOrder.qty,
         type: pendingOrder.type,
         limitPrice: pendingOrder.limitPrice,
-        status: data.accepted ? "dry-run" : "cancelled",
-        dryRun: true,
+        status: data.accepted ? "executed" : "cancelled",
+        dryRun: false,
       });
     } catch (err: any) {
       setError(err.message);
@@ -436,7 +492,7 @@ export default function ExecuteTradeForm() {
     }
 
     const body = {
-      dryRun: true,
+      dryRun: false, // Paper trading via Alpaca
       requestId: lastRequestId, // Re-use same ID
       orders: [order],
     };
@@ -476,8 +532,44 @@ export default function ExecuteTradeForm() {
     return `${pendingOrder.side.toUpperCase()} ${pendingOrder.qty} shares of ${pendingOrder.symbol}${priceStr}?`;
   };
 
+  const getRiskColor = (score: number) => {
+    if (score >= 80) return { bg: 'rgba(16, 185, 129, 0.2)', border: theme.colors.primary, text: theme.colors.primary };
+    if (score >= 60) return { bg: 'rgba(255, 136, 0, 0.2)', border: theme.colors.warning, text: theme.colors.warning };
+    return { bg: 'rgba(255, 68, 68, 0.2)', border: theme.colors.danger, text: theme.colors.danger };
+  };
+
+  const getMomentumColor = (momentum: string) => {
+    if (momentum.toLowerCase().includes('bullish')) return theme.colors.primary;
+    if (momentum.toLowerCase().includes('bearish')) return theme.colors.danger;
+    return theme.colors.textMuted;
+  };
+
+  const getMomentumIcon = (momentum: string) => {
+    if (momentum.toLowerCase().includes('strong bullish')) return '🚀';
+    if (momentum.toLowerCase().includes('bullish')) return '📈';
+    if (momentum.toLowerCase().includes('bearish')) return '📉';
+    if (momentum.toLowerCase().includes('strong bearish')) return '⬇️';
+    return '➡️';
+  };
+
+  const getTrendIcon = (trend: string) => {
+    if (trend.toLowerCase().includes('uptrend')) return '📊';
+    if (trend.toLowerCase().includes('downtrend')) return '📉';
+    return '➖';
+  };
+
   return (
     <>
+      <style jsx>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
       <ConfirmDialog
         isOpen={showConfirmDialog}
         title="Confirm Order"
@@ -855,6 +947,246 @@ export default function ExecuteTradeForm() {
                   </Button>
                 </div>
               </div>
+
+              {/* AI Analysis Section */}
+              {symbol.trim() && (
+                <div style={{
+                  marginTop: theme.spacing.md,
+                  padding: theme.spacing.lg,
+                  background: aiAnalysis ? theme.background.input : 'rgba(30, 41, 59, 0.3)',
+                  border: `1px solid ${aiAnalysis ? theme.colors.primary : theme.colors.border}`,
+                  borderRadius: theme.borderRadius.lg,
+                  boxShadow: aiAnalysis ? '0 0 15px rgba(69, 240, 192, 0.2)' : 'none',
+                  transition: 'all 0.3s ease',
+                }}>
+                  {/* Loading State */}
+                  {aiLoading && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: theme.spacing.sm,
+                      color: theme.colors.textMuted,
+                      fontSize: '14px'
+                    }}>
+                      <div style={{
+                        animation: 'spin 1s linear infinite',
+                        display: 'inline-block'
+                      }}>⏳</div>
+                      <span>Analyzing {symbol.toUpperCase()} with PaπD AI...</span>
+                    </div>
+                  )}
+
+                  {/* Error State */}
+                  {aiError && !aiLoading && (
+                    <div style={{
+                      color: theme.colors.danger,
+                      fontSize: '13px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: theme.spacing.sm
+                    }}>
+                      <span>⚠️</span>
+                      <span>AI analysis unavailable: {aiError}</span>
+                    </div>
+                  )}
+
+                  {/* AI Analysis Display */}
+                  {aiAnalysis && !aiLoading && (
+                    <div>
+                      {/* Header with Risk Score Badge */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: theme.spacing.md,
+                        flexWrap: isMobile ? 'wrap' : 'nowrap',
+                        gap: theme.spacing.sm
+                      }}>
+                        <h4 style={{
+                          margin: 0,
+                          fontSize: '16px',
+                          fontWeight: '600',
+                          color: theme.colors.text,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <span>🤖</span>
+                          <span>PaπD AI Analysis</span>
+                        </h4>
+
+                        {/* Confidence Score Badge */}
+                        <div style={{
+                          padding: '6px 12px',
+                          background: getRiskColor(aiAnalysis.confidence_score).bg,
+                          border: `2px solid ${getRiskColor(aiAnalysis.confidence_score).border}`,
+                          borderRadius: theme.borderRadius.sm,
+                          fontSize: '13px',
+                          fontWeight: '700',
+                          color: getRiskColor(aiAnalysis.confidence_score).text,
+                          whiteSpace: 'nowrap'
+                        }}>
+                          Confidence: {aiAnalysis.confidence_score.toFixed(1)}%
+                        </div>
+                      </div>
+
+                      {/* Summary Banner */}
+                      <div style={{
+                        padding: theme.spacing.md,
+                        background: theme.background.card,
+                        borderRadius: theme.borderRadius.sm,
+                        marginBottom: theme.spacing.md,
+                        borderLeft: `4px solid ${theme.colors.primary}`,
+                      }}>
+                        <div style={{
+                          fontSize: '13px',
+                          color: theme.colors.text,
+                          lineHeight: '1.5'
+                        }}>
+                          <strong style={{ color: theme.colors.primary }}>Summary:</strong> {aiAnalysis.summary}
+                        </div>
+                      </div>
+
+                      {/* Key Metrics Grid */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                        gap: theme.spacing.sm,
+                        marginBottom: theme.spacing.md
+                      }}>
+
+                        {/* Current Price */}
+                        <div style={{
+                          padding: theme.spacing.sm,
+                          background: theme.background.card,
+                          borderRadius: theme.borderRadius.sm,
+                          border: `1px solid ${theme.colors.border}`
+                        }}>
+                          <div style={{ fontSize: '11px', color: theme.colors.textMuted, marginBottom: '4px' }}>
+                            Current Price
+                          </div>
+                          <div style={{ fontSize: '16px', fontWeight: '600', color: theme.colors.text }}>
+                            ${aiAnalysis.current_price.toFixed(2)}
+                          </div>
+                        </div>
+
+                        {/* Momentum */}
+                        <div style={{
+                          padding: theme.spacing.sm,
+                          background: theme.background.card,
+                          borderRadius: theme.borderRadius.sm,
+                          border: `1px solid ${theme.colors.border}`
+                        }}>
+                          <div style={{ fontSize: '11px', color: theme.colors.textMuted, marginBottom: '4px' }}>
+                            Momentum
+                          </div>
+                          <div style={{
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            color: getMomentumColor(aiAnalysis.momentum),
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <span>{getMomentumIcon(aiAnalysis.momentum)}</span>
+                            <span>{aiAnalysis.momentum}</span>
+                          </div>
+                        </div>
+
+                        {/* Trend */}
+                        <div style={{
+                          padding: theme.spacing.sm,
+                          background: theme.background.card,
+                          borderRadius: theme.borderRadius.sm,
+                          border: `1px solid ${theme.colors.border}`
+                        }}>
+                          <div style={{ fontSize: '11px', color: theme.colors.textMuted, marginBottom: '4px' }}>
+                            Trend
+                          </div>
+                          <div style={{
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            color: theme.colors.text,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <span>{getTrendIcon(aiAnalysis.trend)}</span>
+                            <span>{aiAnalysis.trend}</span>
+                          </div>
+                        </div>
+
+                        {/* Risk Assessment */}
+                        <div style={{
+                          padding: theme.spacing.sm,
+                          background: theme.background.card,
+                          borderRadius: theme.borderRadius.sm,
+                          border: `1px solid ${theme.colors.border}`
+                        }}>
+                          <div style={{ fontSize: '11px', color: theme.colors.textMuted, marginBottom: '4px' }}>
+                            Risk Level
+                          </div>
+                          <div style={{ fontSize: '13px', fontWeight: '600', color: theme.colors.text }}>
+                            {aiAnalysis.risk_assessment.split(' - ')[0]}
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Support & Resistance Levels */}
+                      <div style={{
+                        padding: theme.spacing.md,
+                        background: theme.background.card,
+                        borderRadius: theme.borderRadius.sm,
+                        marginBottom: theme.spacing.md,
+                        border: `1px solid ${theme.colors.border}`
+                      }}>
+                        <div style={{ fontSize: '12px', fontWeight: '600', color: theme.colors.textMuted, marginBottom: theme.spacing.sm }}>
+                          Key Levels
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: theme.spacing.md }}>
+                          <div>
+                            <div style={{ fontSize: '11px', color: theme.colors.textMuted }}>Support</div>
+                            <div style={{ fontSize: '15px', fontWeight: '600', color: theme.colors.success }}>
+                              ${aiAnalysis.support_level.toFixed(2)}
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '11px', color: theme.colors.textMuted }}>Resistance</div>
+                            <div style={{ fontSize: '15px', fontWeight: '600', color: theme.colors.danger }}>
+                              ${aiAnalysis.resistance_level.toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* AI Suggestions */}
+                      <div style={{
+                        padding: theme.spacing.md,
+                        background: theme.background.card,
+                        borderRadius: theme.borderRadius.sm,
+                        fontSize: '12px',
+                        color: theme.colors.textMuted,
+                        lineHeight: '1.6',
+                        borderLeft: `3px solid ${theme.colors.primary}`,
+                      }}>
+                        <div style={{ fontWeight: '600', color: theme.colors.text, marginBottom: '8px' }}>
+                          💡 AI Entry Suggestion
+                        </div>
+                        <div>{aiAnalysis.entry_suggestion}</div>
+
+                        {aiAnalysis.stop_loss_suggestion && (
+                          <div style={{ marginTop: '8px', fontSize: '11px' }}>
+                            <strong>Stop Loss:</strong> ${aiAnalysis.stop_loss_suggestion.toFixed(2)} |
+                            <strong> Take Profit:</strong> ${aiAnalysis.take_profit_suggestion.toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Side */}
               <div>

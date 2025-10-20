@@ -21,7 +21,6 @@ import { theme } from "../styles/theme";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 import { claudeAI, UserPreferences } from "../lib/aiAdapter";
 import { createUser } from "../lib/userManagement";
-import { useChat } from "./ChatContext";
 import dynamic from "next/dynamic";
 import PaiiDLogo from "./PaiiDLogo";
 
@@ -37,7 +36,6 @@ interface UserSetupAIProps {
 }
 
 export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
-  const { openChat } = useChat();
   const [setupMethod, setSetupMethod] = useState<"manual" | "ai" | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
