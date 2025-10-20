@@ -84,7 +84,6 @@ const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
       setIsLoading(false);
     }
   };
-  };
 
   return (
     <div className={className}>

@@ -1,5 +1,54 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Run lint-staged in frontend directory
+# ====================================
+# PAIID PRE-COMMIT VALIDATION PIPELINE
+# ====================================
+# This hook prevents broken code from being committed
+# It runs automatically before every git commit
+
+echo "🔍 Running pre-commit validation..."
+
+# ====================================
+# FRONTEND VALIDATION
+# ====================================
+
+echo "📦 Frontend: Running lint-staged..."
 cd frontend && npx lint-staged
+if [ $? -ne 0 ]; then
+  echo "❌ Frontend lint-staged failed!"
+  exit 1
+fi
+
+echo "🔧 Frontend: Type checking..."
+npm run type-check
+if [ $? -ne 0 ]; then
+  echo "❌ Frontend type-check failed! Fix TypeScript errors before committing."
+  exit 1
+fi
+
+# ====================================
+# BACKEND VALIDATION
+# ====================================
+
+echo "🐍 Backend: Running Ruff linter..."
+cd ../backend
+ruff check . --fix
+if [ $? -ne 0 ]; then
+  echo "❌ Backend Ruff linting failed! Fix Python errors before committing."
+  exit 1
+fi
+
+echo "🎨 Backend: Running Ruff formatter..."
+ruff format .
+if [ $? -ne 0 ]; then
+  echo "❌ Backend Ruff formatting failed!"
+  exit 1
+fi
+
+# ====================================
+# SUCCESS
+# ====================================
+
+echo "✅ All pre-commit checks passed!"
+exit 0

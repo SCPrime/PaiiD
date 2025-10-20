@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, DollarSign, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, RefreshCw, Brain, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
 import { alpaca, formatPosition } from "../lib/alpaca";
 import { useIsMobile } from "../hooks/useBreakpoint";
-import { usePositionUpdates } from "../hooks/usePositionUpdates";
+// import { usePositionUpdates } from "../hooks/usePositionUpdates"; // DISABLED: Using REST API instead
 
 interface Position {
   symbol: string;
@@ -30,6 +30,21 @@ interface PortfolioMetrics {
   positionCount: number;
 }
 
+interface AIPositionAnalysis {
+  symbol: string;
+  recommendation: "HOLD" | "ADD" | "TRIM" | "EXIT";
+  confidence: number;
+  riskScore: "LOW" | "MEDIUM" | "HIGH";
+  sentiment: string;
+  suggestedAction: string;
+  exitStrategy?: {
+    profitTarget: number;
+    stopLoss: number;
+  };
+  currentPrice: number;
+  analysis: string;
+}
+
 export default function ActivePositions() {
   const isMobile = useIsMobile();
   const [positions, setPositions] = useState<Position[]>([]);
@@ -37,37 +52,42 @@ export default function ActivePositions() {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<"symbol" | "pl" | "plPercent" | "value">("symbol");
 
-  // Real-time position updates via SSE
-  const {
-    positions: streamedPositions,
-    connected,
-    connecting,
-    error: _streamError,
-    reconnect: _reconnect,
-  } = usePositionUpdates({
-    autoReconnect: true,
-    maxReconnectAttempts: 5,
-    debug: false,
-  });
+  // AI Analysis state
+  const [aiAnalysisMap, setAiAnalysisMap] = useState<Record<string, AIPositionAnalysis>>({});
+  const [aiLoadingMap, setAiLoadingMap] = useState<Record<string, boolean>>({});
+  const [aiErrorMap, setAiErrorMap] = useState<Record<string, string>>({});
+  const [expandedPositions, setExpandedPositions] = useState<Set<string>>(new Set());
 
-  // Use streamed positions when available
-  useEffect(() => {
-    if (streamedPositions.length > 0) {
-      setPositions(streamedPositions);
-      calculateMetrics(streamedPositions);
-    }
-  }, [streamedPositions]);
+  // DISABLED: Real-time position updates via SSE (not working reliably)
+  // Switched to REST API polling instead
+  // const {
+  //   positions: streamedPositions,
+  //   connected,
+  //   connecting,
+  //   error: _streamError,
+  //   reconnect: _reconnect,
+  // } = usePositionUpdates({
+  //   autoReconnect: true,
+  //   maxReconnectAttempts: 5,
+  //   debug: false,
+  // });
 
-  // Initial load and fallback polling (only if SSE not connected)
+  // // Use streamed positions when available
+  // useEffect(() => {
+  //   if (streamedPositions.length > 0) {
+  //     setPositions(streamedPositions);
+  //     calculateMetrics(streamedPositions);
+  //   }
+  // }, [streamedPositions]);
+
+  // Initial load and polling via REST API
   useEffect(() => {
     loadPositions();
-    // Only poll if SSE is not connected
-    if (!connected && !connecting) {
-      const interval = setInterval(loadPositions, 10000); // Slower polling as fallback
-      return () => clearInterval(interval);
-    }
+    // Poll every 5 seconds for position updates
+    const interval = setInterval(loadPositions, 5000);
+    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, connecting]);
+  }, []);
 
   // Calculate portfolio metrics from positions
   const calculateMetrics = async (positionsList: Position[]) => {
@@ -132,6 +152,110 @@ export default function ActivePositions() {
       }
     });
   };
+
+  // Fetch AI analysis for a position
+  const fetchAIAnalysis = async (symbol: string) => {
+    setAiLoadingMap((prev) => ({ ...prev, [symbol]: true }));
+    setAiErrorMap((prev) => ({ ...prev, [symbol]: "" }));
+
+    try {
+      const response = await fetch(`/api/proxy/api/ai/analyze-symbol/${symbol}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch AI analysis: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Transform the analyze-symbol response to position analysis format
+      const analysis: AIPositionAnalysis = {
+        symbol: data.symbol,
+        recommendation: data.momentum?.toLowerCase().includes('bullish') ? 'ADD' :
+                       data.momentum?.toLowerCase().includes('bearish') ? 'TRIM' : 'HOLD',
+        confidence: data.confidence_score || 0,
+        riskScore: data.risk_assessment?.toLowerCase().includes('low') ? 'LOW' :
+                  data.risk_assessment?.toLowerCase().includes('high') ? 'HIGH' : 'MEDIUM',
+        sentiment: data.momentum || 'Neutral',
+        suggestedAction: data.entry_suggestion || data.summary || '',
+        exitStrategy: data.take_profit_suggestion ? {
+          profitTarget: data.take_profit_suggestion,
+          stopLoss: data.stop_loss_suggestion
+        } : undefined,
+        currentPrice: data.current_price,
+        analysis: data.analysis || data.summary || ''
+      };
+
+      setAiAnalysisMap((prev) => ({ ...prev, [symbol]: analysis }));
+    } catch (error: any) {
+      console.error(`AI analysis error for ${symbol}:`, error);
+      setAiErrorMap((prev) => ({ ...prev, [symbol]: error.message }));
+    } finally {
+      setAiLoadingMap((prev) => ({ ...prev, [symbol]: false }));
+    }
+  };
+
+  // Toggle AI analysis panel for a position
+  const toggleAIAnalysis = (symbol: string) => {
+    const newExpanded = new Set(expandedPositions);
+
+    if (newExpanded.has(symbol)) {
+      newExpanded.delete(symbol);
+    } else {
+      newExpanded.add(symbol);
+      // Fetch AI analysis if not already loaded
+      if (!aiAnalysisMap[symbol] && !aiLoadingMap[symbol]) {
+        fetchAIAnalysis(symbol);
+      }
+    }
+
+    setExpandedPositions(newExpanded);
+  };
+
+  // Get color for recommendation badge
+  const getRecommendationColor = (recommendation: string) => {
+    switch (recommendation) {
+      case "HOLD":
+        return { bg: "rgba(59, 130, 246, 0.2)", border: "#3B82F6", text: "#3B82F6" };
+      case "ADD":
+        return { bg: "rgba(16, 185, 129, 0.2)", border: theme.colors.primary, text: theme.colors.primary };
+      case "TRIM":
+        return { bg: "rgba(245, 158, 11, 0.2)", border: "#F59E0B", text: "#F59E0B" };
+      case "EXIT":
+        return { bg: "rgba(239, 68, 68, 0.2)", border: theme.colors.danger, text: theme.colors.danger };
+      default:
+        return { bg: "rgba(100, 116, 139, 0.2)", border: theme.colors.textMuted, text: theme.colors.textMuted };
+    }
+  };
+
+  // Get color for risk score badge
+  const getRiskColor = (risk: string) => {
+    switch (risk) {
+      case "LOW":
+        return { bg: "rgba(16, 185, 129, 0.2)", border: theme.colors.primary, text: theme.colors.primary };
+      case "MEDIUM":
+        return { bg: "rgba(245, 158, 11, 0.2)", border: "#F59E0B", text: "#F59E0B" };
+      case "HIGH":
+        return { bg: "rgba(239, 68, 68, 0.2)", border: theme.colors.danger, text: theme.colors.danger };
+      default:
+        return { bg: "rgba(100, 116, 139, 0.2)", border: theme.colors.textMuted, text: theme.colors.textMuted };
+    }
+  };
+
+  // Add keyframes animation to document head (only once)
+  useEffect(() => {
+    const styleId = 'spinner-keyframes';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   return (
     <div style={{ padding: isMobile ? theme.spacing.md : theme.spacing.lg }}>
@@ -209,31 +333,7 @@ export default function ActivePositions() {
             width: isMobile ? "100%" : "auto",
           }}
         >
-          {/* Connection Status Indicator */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: theme.spacing.xs,
-              padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
-              background: connected
-                ? "rgba(16, 185, 129, 0.1)"
-                : connecting
-                  ? "rgba(251, 191, 36, 0.1)"
-                  : "rgba(239, 68, 68, 0.1)",
-              border: `1px solid ${connected ? "rgba(16, 185, 129, 0.3)" : connecting ? "rgba(251, 191, 36, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
-              borderRadius: theme.borderRadius.sm,
-            }}
-          >
-            {connected ? (
-              <Wifi size={14} color={theme.colors.primary} />
-            ) : (
-              <WifiOff size={14} color={theme.colors.danger} />
-            )}
-            <span style={{ fontSize: "12px", color: theme.colors.textMuted }}>
-              {connecting ? "Connecting..." : connected ? "Live" : "Offline"}
-            </span>
-          </div>
+          {/* Connection Status Indicator - REMOVED: Now using REST API polling instead of SSE */}
 
           <Button
             variant="secondary"
@@ -504,6 +604,337 @@ export default function ActivePositions() {
                       </p>
                     </div>
                   </div>
+
+                  {/* AI Insights Button */}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    style={{
+                      marginTop: theme.spacing.md,
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: theme.spacing.xs,
+                    }}
+                    onClick={() => toggleAIAnalysis(position.symbol)}
+                  >
+                    <Brain size={18} />
+                    <span>
+                      {expandedPositions.has(position.symbol) ? "Hide" : "Show"} AI Insights
+                    </span>
+                    {expandedPositions.has(position.symbol) ? (
+                      <ChevronUp size={16} />
+                    ) : (
+                      <ChevronDown size={16} />
+                    )}
+                  </Button>
+
+                  {/* AI Analysis Panel */}
+                  {expandedPositions.has(position.symbol) && (
+                    <div
+                      style={{
+                        marginTop: theme.spacing.md,
+                        padding: theme.spacing.lg,
+                        background: aiAnalysisMap[position.symbol]
+                          ? theme.background.input
+                          : "rgba(30, 41, 59, 0.3)",
+                        border: `1px solid ${aiAnalysisMap[position.symbol] ? theme.colors.primary : theme.colors.border}`,
+                        borderRadius: theme.borderRadius.lg,
+                        boxShadow: aiAnalysisMap[position.symbol]
+                          ? "0 0 15px rgba(69, 240, 192, 0.2)"
+                          : "none",
+                        transition: "all 0.3s ease",
+                      }}
+                    >
+                      {/* Loading State */}
+                      {aiLoadingMap[position.symbol] && (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: theme.spacing.sm,
+                            color: theme.colors.textMuted,
+                            fontSize: "13px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "16px",
+                              height: "16px",
+                              border: `2px solid ${theme.colors.border}`,
+                              borderTop: `2px solid ${theme.colors.primary}`,
+                              borderRadius: "50%",
+                              animation: "spin 1s linear infinite",
+                            }}
+                          />
+                          <span>Analyzing {position.symbol}...</span>
+                        </div>
+                      )}
+
+                      {/* Error State */}
+                      {aiErrorMap[position.symbol] && !aiLoadingMap[position.symbol] && (
+                        <div
+                          style={{
+                            color: theme.colors.danger,
+                            fontSize: "13px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: theme.spacing.sm,
+                          }}
+                        >
+                          <span>⚠️</span>
+                          <span>AI analysis unavailable: {aiErrorMap[position.symbol]}</span>
+                        </div>
+                      )}
+
+                      {/* AI Analysis Display */}
+                      {aiAnalysisMap[position.symbol] && !aiLoadingMap[position.symbol] && (
+                        <div>
+                          {/* Header with Recommendation and Confidence */}
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              marginBottom: theme.spacing.md,
+                              flexWrap: isMobile ? "wrap" : "nowrap",
+                              gap: theme.spacing.sm,
+                            }}
+                          >
+                            <h4
+                              style={{
+                                margin: 0,
+                                fontSize: "16px",
+                                fontWeight: "600",
+                                color: theme.colors.text,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                            >
+                              <span>🤖</span>
+                              <span>PaπD AI Analysis</span>
+                            </h4>
+
+                            {/* Recommendation Badge */}
+                            <div
+                              style={{
+                                padding: "6px 12px",
+                                background: getRecommendationColor(
+                                  aiAnalysisMap[position.symbol].recommendation
+                                ).bg,
+                                border: `2px solid ${getRecommendationColor(aiAnalysisMap[position.symbol].recommendation).border}`,
+                                borderRadius: theme.borderRadius.sm,
+                                fontSize: "13px",
+                                fontWeight: "700",
+                                color: getRecommendationColor(
+                                  aiAnalysisMap[position.symbol].recommendation
+                                ).text,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {aiAnalysisMap[position.symbol].recommendation}
+                            </div>
+                          </div>
+
+                          {/* Metrics Grid */}
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+                              gap: theme.spacing.sm,
+                              marginBottom: theme.spacing.md,
+                            }}
+                          >
+                            {/* Confidence Score */}
+                            <div
+                              style={{
+                                padding: theme.spacing.sm,
+                                background: theme.background.card,
+                                borderRadius: theme.borderRadius.sm,
+                                border: `1px solid ${theme.colors.border}`,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  color: theme.colors.textMuted,
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                Confidence Score
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "16px",
+                                  fontWeight: "600",
+                                  color: theme.colors.primary,
+                                }}
+                              >
+                                {aiAnalysisMap[position.symbol].confidence.toFixed(1)}%
+                              </div>
+                            </div>
+
+                            {/* Risk Score */}
+                            <div
+                              style={{
+                                padding: theme.spacing.sm,
+                                background: theme.background.card,
+                                borderRadius: theme.borderRadius.sm,
+                                border: `1px solid ${theme.colors.border}`,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  color: theme.colors.textMuted,
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                Risk Level
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "14px",
+                                  fontWeight: "600",
+                                  padding: "4px 8px",
+                                  background: getRiskColor(aiAnalysisMap[position.symbol].riskScore)
+                                    .bg,
+                                  border: `1px solid ${getRiskColor(aiAnalysisMap[position.symbol].riskScore).border}`,
+                                  borderRadius: theme.borderRadius.sm,
+                                  color: getRiskColor(aiAnalysisMap[position.symbol].riskScore)
+                                    .text,
+                                  display: "inline-block",
+                                }}
+                              >
+                                {aiAnalysisMap[position.symbol].riskScore}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Sentiment */}
+                          <div
+                            style={{
+                              padding: theme.spacing.md,
+                              background: theme.background.card,
+                              borderRadius: theme.borderRadius.sm,
+                              marginBottom: theme.spacing.md,
+                              borderLeft: `4px solid ${theme.colors.primary}`,
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: "13px",
+                                color: theme.colors.text,
+                                lineHeight: "1.5",
+                              }}
+                            >
+                              <strong style={{ color: theme.colors.primary }}>Sentiment:</strong>{" "}
+                              {aiAnalysisMap[position.symbol].sentiment}
+                            </div>
+                          </div>
+
+                          {/* Suggested Action */}
+                          <div
+                            style={{
+                              padding: theme.spacing.md,
+                              background: theme.background.card,
+                              borderRadius: theme.borderRadius.sm,
+                              fontSize: "12px",
+                              color: theme.colors.textMuted,
+                              lineHeight: "1.6",
+                              borderLeft: `3px solid ${theme.colors.primary}`,
+                              marginBottom:
+                                aiAnalysisMap[position.symbol].exitStrategy
+                                  ? theme.spacing.md
+                                  : 0,
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontWeight: "600",
+                                color: theme.colors.text,
+                                marginBottom: "8px",
+                              }}
+                            >
+                              💡 AI Suggestion
+                            </div>
+                            <div>{aiAnalysisMap[position.symbol].suggestedAction}</div>
+                          </div>
+
+                          {/* Exit Strategy */}
+                          {aiAnalysisMap[position.symbol].exitStrategy && (
+                            <div
+                              style={{
+                                padding: theme.spacing.md,
+                                background: theme.background.card,
+                                borderRadius: theme.borderRadius.sm,
+                                border: `1px solid ${theme.colors.border}`,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "12px",
+                                  fontWeight: "600",
+                                  color: theme.colors.textMuted,
+                                  marginBottom: theme.spacing.sm,
+                                }}
+                              >
+                                Exit Strategy
+                              </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  gap: theme.spacing.md,
+                                }}
+                              >
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: "11px",
+                                      color: theme.colors.textMuted,
+                                    }}
+                                  >
+                                    Profit Target
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: "15px",
+                                      fontWeight: "600",
+                                      color: theme.colors.primary,
+                                    }}
+                                  >
+                                    ${aiAnalysisMap[position.symbol].exitStrategy!.profitTarget.toFixed(2)}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: "11px",
+                                      color: theme.colors.textMuted,
+                                    }}
+                                  >
+                                    Stop Loss
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: "15px",
+                                      fontWeight: "600",
+                                      color: theme.colors.danger,
+                                    }}
+                                  >
+                                    ${aiAnalysisMap[position.symbol].exitStrategy!.stopLoss.toFixed(2)}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <Button
                     variant="danger"

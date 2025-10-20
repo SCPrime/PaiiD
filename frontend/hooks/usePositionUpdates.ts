@@ -117,7 +117,7 @@ export function usePositionUpdates(
 
     try {
       // Build SSE URL
-      const url = `/api/proxy/api/stream/positions`;
+      const url = `/api/proxy/stream/positions`;
 
       // Create EventSource
       const eventSource = new EventSource(url);

@@ -22,6 +22,7 @@ const ALLOW_GET = new Set<string>([
   "portfolio/positions",
   "ai/recommendations",
   "ai/signals",
+  "ai/analyze-symbol",
   "market/historical",
   "screening/opportunities",
   "screening/strategies",
@@ -68,6 +69,7 @@ const ALLOW_GET = new Set<string>([
   "strategies/templates",
   // SSE streaming endpoints
   "stream/market-indices",
+  "stream/positions",
 ]);
 
 const ALLOW_POST = new Set<string>([
