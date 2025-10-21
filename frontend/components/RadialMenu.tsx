@@ -4,7 +4,7 @@ import * as d3 from "d3";
 import { throttle } from "lodash";
 import { useWindowDimensions, useIsMobile } from "../hooks/useBreakpoint";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
-import PaiiDLogo from "./PaiiDLogo";
+import CompletePaiiDLogo from "./CompletePaiiDLogo";
 
 export interface Workflow {
   id: string;

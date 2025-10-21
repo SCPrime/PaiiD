@@ -22,7 +22,7 @@ import { initializeSession } from "../lib/userManagement";
 import AIChat from "../components/AIChat";
 import KeyboardShortcuts from "../components/KeyboardShortcuts";
 import { useIsMobile } from "../hooks/useBreakpoint";
-import PaiiDLogo from "../components/PaiiDLogo";
+import CompletePaiiDLogo from "../components/CompletePaiiDLogo";
 
 export default function Dashboard() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>("");

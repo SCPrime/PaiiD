@@ -22,7 +22,7 @@ import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 import { claudeAI, UserPreferences } from "../lib/aiAdapter";
 import { createUser } from "../lib/userManagement";
 import dynamic from "next/dynamic";
-import PaiiDLogo from "./PaiiDLogo";
+import CompletePaiiDLogo from "./CompletePaiiDLogo";
 
 const UserSetup = dynamic(() => import("./UserSetup"), { ssr: false });
 
