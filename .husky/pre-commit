@@ -4,16 +4,55 @@
 # ====================================
 # PAIID PRE-COMMIT VALIDATION PIPELINE
 # ====================================
-# This hook prevents broken code from being committed
+# This hook validates code quality AND protects reference files
 # It runs automatically before every git commit
 
 echo "🔍 Running pre-commit validation..."
 
 # ====================================
-# FRONTEND VALIDATION
+# PHASE 1: LOCKED FINAL FILE PROTECTION
 # ====================================
 
-echo "📦 Frontend: Running lint-staged..."
+echo "🔒 Phase 1: Checking for LOCKED FINAL file modifications..."
+
+# Check if any LOCKED FINAL files are staged for commit
+LOCKED_FILES=$(git diff --cached --name-only | grep -E "LOCKED FINAL|Locked\.tsx|Locked\.svg|CompletePaiiDLogo|PaiiDChatBoxLocked|iPi-Symbol-Locked")
+
+if [ -n "$LOCKED_FILES" ]; then
+  echo ""
+  echo "❌ ==================== COMMIT BLOCKED ===================="
+  echo "🔒 **ERROR:** You are attempting to commit PROTECTED REFERENCE FILES"
+  echo ""
+  echo "📁 Protected files detected:"
+  echo "$LOCKED_FILES" | sed 's/^/   /'
+  echo ""
+  echo "🚫 **RULES - NO EXCEPTIONS:**"
+  echo "   1. These files are READ-ONLY REFERENCES"
+  echo "   2. DO NOT MODIFY, REFACTOR, or \"IMPROVE\""
+  echo "   3. COPY ONLY - Never edit the original"
+  echo "   4. NO REFORMATTING - Keep exact spacing/styling"
+  echo ""
+  echo "💡 **To proceed (NOT recommended):**"
+  echo "   git commit --no-verify -m \"your message\""
+  echo ""
+  echo "✅ **Recommended action:**"
+  echo "   1. Unstage the protected files: git reset HEAD <file>"
+  echo "   2. Revert changes: git checkout -- <file>"
+  echo "   3. Copy the file to a new location instead"
+  echo ""
+  echo "**Status:** IMMUTABLE | **Approved By:** Dr. SC Prime ✅"
+  echo "========================================================"
+  echo ""
+  exit 1
+fi
+
+echo "✅ No LOCKED FINAL files modified."
+
+# ====================================
+# PHASE 2: FRONTEND VALIDATION
+# ====================================
+
+echo "📦 Phase 2: Frontend validation..."
 cd frontend && npx lint-staged
 if [ $? -ne 0 ]; then
   echo "❌ Frontend lint-staged failed!"
@@ -28,10 +67,10 @@ if [ $? -ne 0 ]; then
 fi
 
 # ====================================
-# BACKEND VALIDATION
+# PHASE 3: BACKEND VALIDATION
 # ====================================
 
-echo "🐍 Backend: Running Ruff linter..."
+echo "🐍 Phase 3: Backend validation..."
 cd ../backend
 ruff check . --fix
 if [ $? -ne 0 ]; then

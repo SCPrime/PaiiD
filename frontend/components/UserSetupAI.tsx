@@ -307,8 +307,8 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               position: "relative",
             }}
           >
-            {/* Compact PaiiD Logo */}
-            <PaiiDLogo size="large" showSubtitle={true} />
+            {/* Compact PaiiD Logo - Click π to launch v46 capabilities interface */}
+            <PaiiDLogo size="small" showSubtitle={true} />
 
             {/* Instruction box */}
             <div

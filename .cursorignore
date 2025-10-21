@@ -1,0 +1,15 @@
+# 🔒 Phase 4: .cursorignore - Hide LOCKED FINAL files from AI context
+# This file tells Cursor IDE to exclude these files from AI assistant context
+
+# LOCKED FINAL reference folder (complete exclusion)
+LOCKED FINAL iPi Wrapped Logo and PaiiD Chat Box/
+
+# Individual locked file patterns (defense in depth)
+*-Locked.tsx
+*-Locked.svg
+*CompletePaiiDLogo-Locked.tsx
+*PaiiDChatBoxLocked.tsx
+*iPi-Symbol-Locked.svg
+
+# README-CRITICAL.md should also be excluded from casual browsing
+**/README-CRITICAL.md

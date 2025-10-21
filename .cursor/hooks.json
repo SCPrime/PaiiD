@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeReadFile": [
+      {
+        "command": ".cursor/hooks/protect-files.sh",
+        "description": "Protect LOCKED FINAL reference files from unauthorized access"
+      }
+    ]
+  }
+}

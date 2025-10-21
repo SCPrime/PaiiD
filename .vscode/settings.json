@@ -1,0 +1,81 @@
+{
+  // Disable SonarLint and SonarQube extensions (PaiiD uses TypeScript/Python, not Java)
+  "sonarlint.disableTelemetry": true,
+  "sonarlint.rules": {},
+  "sonarlint.pathToNodeExecutable": "",
+
+  // Recommended extensions for PaiiD project
+  "files.associations": {
+    "*.tsx": "typescriptreact",
+    "*.ts": "typescript",
+    "*.py": "python"
+  },
+
+  // Python settings for backend (using Ruff - faster alternative to Black + Flake8)
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "strict",
+  "python.analysis.autoImportCompletions": true,
+  "ruff.nativeServer": "auto",
+
+  // TypeScript/JavaScript settings for frontend
+  "typescript.tsdk": "frontend/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+
+  // Exclude patterns
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/node_modules": true,
+    "**/.next": true
+  },
+
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/.venv": true,
+    "**/__pycache__": true
+  },
+
+  // 🔒 Phase 2: Reader Mode Extension - Visual protection for LOCKED FINAL files
+  // Install extension: https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-reader-mode
+  "reader-mode.auto.glob": [
+    "**/LOCKED FINAL iPi Wrapped Logo and PaiiD Chat Box/**",
+    "**/*-Locked.tsx",
+    "**/*-Locked.svg",
+    "**/CompletePaiiDLogo-Locked.tsx",
+    "**/PaiiDChatBoxLocked.tsx",
+    "**/iPi-Symbol-Locked.svg"
+  ],
+  "reader-mode.readOnly": true,
+  "reader-mode.showDecorations": true
+}

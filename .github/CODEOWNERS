@@ -1,0 +1,24 @@
+# 🔒 Phase 5: CODEOWNERS - Require user approval for LOCKED FINAL files on GitHub
+# This file defines code ownership rules for GitHub pull requests
+
+# IMPORTANT: Replace @YOUR_GITHUB_USERNAME with your actual GitHub username
+# Example: @scprime or @drscprime
+
+# LOCKED FINAL reference folder - Requires explicit approval
+/LOCKED\ FINAL\ iPi\ Wrapped\ Logo\ and\ PaiiD\ Chat\ Box/ @YOUR_GITHUB_USERNAME
+
+# Individual locked file patterns
+*-Locked.tsx @YOUR_GITHUB_USERNAME
+*-Locked.svg @YOUR_GITHUB_USERNAME
+*CompletePaiiDLogo-Locked.tsx @YOUR_GITHUB_USERNAME
+*PaiiDChatBoxLocked.tsx @YOUR_GITHUB_USERNAME
+*iPi-Symbol-Locked.svg @YOUR_GITHUB_USERNAME
+
+# README-CRITICAL.md also requires approval
+**/README-CRITICAL.md @YOUR_GITHUB_USERNAME
+
+# How this works:
+# - Any PR that modifies these files requires approval from @YOUR_GITHUB_USERNAME
+# - GitHub will automatically request review from the owner
+# - PRs cannot be merged until approved
+# - Provides final layer of protection against accidental modifications

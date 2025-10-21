@@ -106,6 +106,8 @@ const ALLOW_DELETE = new Set<string>([
 const ALLOWED_ORIGINS = new Set<string>([
   "http://localhost:3000",
   "http://localhost:3003", // Alternative dev server port
+  "http://localhost:3004", // Alternative dev server port
+  "http://localhost:3005", // Alternative dev server port
   "https://paiid-frontend.onrender.com",
 ]);
 

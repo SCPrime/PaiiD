@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- 🔒 LOCKED iPi SYMBOL - DO NOT MODIFY -->
+  <!-- This is the definitive π symbol with 2 dots -->
+
+  <!-- Left dot -->
+  <circle cx="25" cy="48.3" r="6" fill="#45f0c0">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Pi symbol (π) -->
+  <text x="50" y="75" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="60" font-weight="bold" fill="#45f0c0" text-anchor="middle">π</text>
+
+  <!-- Right dot -->
+  <circle cx="75" cy="48.3" r="6" fill="#45f0c0">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Glow effect (animated) -->
+  <filter id="glow">
+    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+    <feMerge>
+      <feMergeNode in="coloredBlur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+
+  <g filter="url(#glow)">
+    <circle cx="25" cy="48.3" r="6" fill="#45f0c0" opacity="0.5"/>
+    <circle cx="75" cy="48.3" r="6" fill="#45f0c0" opacity="0.5"/>
+  </g>
+</svg>
