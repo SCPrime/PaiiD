@@ -308,7 +308,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             }}
           >
             {/* Compact PaiiD Logo - Click π to launch v46 capabilities interface */}
-            <PaiiDLogo size="small" showSubtitle={true} />
+            <CompletePaiiDLogo size="small" showSubtitle={true} />
 
             {/* Instruction box */}
             <div

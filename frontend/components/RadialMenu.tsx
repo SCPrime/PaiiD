@@ -97,7 +97,7 @@ export const workflows: Workflow[] = [
 // Memoized logo component - prevents re-renders from parent state changes
 const MemoizedCenterLogo = memo(
   ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => (
-    <PaiiDLogo
+    <CompletePaiiDLogo
       size={isMobile ? "xs" : "small"}
       showSubtitle={false}
       onClick={() => setShowAIChat(true)}
@@ -108,7 +108,7 @@ MemoizedCenterLogo.displayName = "MemoizedCenterLogo";
 
 const MemoizedHeaderLogo = memo(
   ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => (
-    <PaiiDLogo
+    <CompletePaiiDLogo
       size={isMobile ? "medium" : "large"}
       showSubtitle={true}
       onClick={() => setShowAIChat(true)}

@@ -475,7 +475,7 @@ export default function Dashboard() {
                 paddingBottom: "10px",
               }}
             >
-              <PaiiDLogo size="medium" showSubtitle={true} />
+              <CompletePaiiDLogo size="medium" showSubtitle={true} />
             </div>
 
             {/* Radial Menu */}
