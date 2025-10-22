@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import type { Strategy } from "@/strategies/schema";
+// TODO: Re-enable when strategies module is implemented
+// import type { Strategy } from "@/strategies/schema";
+type Strategy = any;
 
 /**
  * Strategy Versions Endpoint

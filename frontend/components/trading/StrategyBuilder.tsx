@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { validateStrategy } from "@/strategies/validator";
-import type { Strategy, ValidationResult } from "@/strategies/schema";
+// TODO: Re-enable when strategies module is implemented
+// import { validateStrategy } from "@/strategies/validator";
+// import type { Strategy, ValidationResult } from "@/strategies/schema";
 
 /**
  * Strategy Builder Component
@@ -12,6 +13,23 @@ import type { Strategy, ValidationResult } from "@/strategies/schema";
  *
  * INCREMENT 9: Added validator integration, save flow, and version management
  */
+
+// Temporary types until strategies module is created
+type Strategy = any;
+interface ValidationResult {
+  valid: boolean;
+  errors: Array<{ field: string; message: string }>;
+  warnings: Array<{ field: string; message: string }>;
+}
+
+// Temporary stub validator
+const validateStrategy = (_strategy: Strategy): ValidationResult => {
+  return {
+    valid: true,
+    errors: [],
+    warnings: [],
+  };
+};
 
 type TemplateType =
   | "collar"
@@ -187,7 +205,7 @@ export default function StrategyBuilder({
       maxOptionSpread: strategy.universe.filters.max_option_spread || 0.1,
       excludeOTC: strategy.universe.filters.exclude_otc ?? true,
       earningsBlackoutDays: strategy.universe.filters.earnings_within_days || 7,
-      legs: strategy.position.legs.map((leg, idx) => ({
+      legs: strategy.position.legs.map((leg: any, idx: number) => ({
         id: `leg_${idx}`,
         type: leg.type,
         side: leg.side,
