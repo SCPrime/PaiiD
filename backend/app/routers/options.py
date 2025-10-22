@@ -22,6 +22,7 @@ from cachetools import TTLCache
 
 from ..core.config import settings
 from ..core.auth import require_bearer
+from ..services.tradier_client import get_tradier_client
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -32,76 +33,12 @@ options_cache = TTLCache(maxsize=100, ttl=300)  # 300 seconds = 5 minutes
 
 
 # ============================================================================
-# TRADIER CLIENT
+# TRADIER CLIENT HELPER
 # ============================================================================
 
-
-class TradierClient:
-    """Handles all Tradier market data operations"""
-
-    def __init__(self, api_key: str, api_url: str):
-        self.api_key = api_key
-        self.api_url = api_url
-
-    def get_option_chain(self, symbol: str, expiration: str):
-        """Get options chain with Greeks from Tradier"""
-        import logging
-        logger = logging.getLogger(__name__)
-
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Accept": "application/json"
-        }
-        params = {
-            "symbol": symbol,
-            "expiration": expiration,
-            "greeks": "true"  # CRITICAL for options trading
-        }
-
-        logger.info(f"Making Tradier API request: symbol={symbol}, expiration={expiration}")
-
-        response = requests.get(
-            f"{self.api_url}/markets/options/chains",
-            headers=headers,
-            params=params,
-            timeout=10
-        )
-
-        logger.info(f"Tradier API response status: {response.status_code}")
-        logger.info(f"Tradier API response content length: {len(response.content)}")
-
-        response.raise_for_status()
-
-        # Parse JSON and log response structure
-        try:
-            json_data = response.json()
-            logger.info(f"Successfully parsed JSON, type: {type(json_data)}")
-            logger.info(f"Tradier chain API response keys: {list(json_data.keys()) if isinstance(json_data, dict) else 'not a dict'}")
-
-            # Log first 500 chars of response for debugging
-            import json
-            logger.info(f"Response preview: {json.dumps(json_data, indent=2)[:500]}")
-
-            return json_data
-        except Exception as e:
-            logger.error(f"JSON parsing failed: {e}")
-            logger.error(f"Response content preview: {response.text[:500]}")
-            raise
-
-    def get_expirations(self, symbol: str):
-        """Get available expiration dates for a symbol"""
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Accept": "application/json"
-        }
-        response = requests.get(
-            f"{self.api_url}/markets/options/expirations",
-            headers=headers,
-            params={"symbol": symbol},
-            timeout=10
-        )
-        response.raise_for_status()
-        return response.json()
+def _get_tradier_client():
+    """Get Tradier client instance"""
+    return get_tradier_client()
 
 
 # ============================================================================
@@ -311,17 +248,11 @@ def get_expiration_dates(symbol: str, authorization: str = Depends(require_beare
     Uses Tradier API for real-time expiration data.
     """
     try:
-        tradier_key = settings.TRADIER_API_KEY
-        tradier_url = settings.TRADIER_API_BASE_URL
+        # Get Tradier client instance
+        client = _get_tradier_client()
 
-        if not tradier_key or not tradier_url:
-            raise HTTPException(
-                status_code=500,
-                detail="Tradier API credentials not configured"
-            )
-
-        client = TradierClient(tradier_key, tradier_url)
-        exp_data = client.get_expirations(symbol)
+        # Fetch expiration dates from Tradier
+        exp_data = client.get_option_expirations(symbol)
 
         expirations = exp_data.get("expirations", {}).get("date", [])
         if not expirations:
