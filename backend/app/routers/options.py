@@ -302,50 +302,34 @@ async def get_options_chain(
         )
 
 
-@router.get("/expirations/{symbol}")  # Removed auth temporarily for debugging
-async def get_expiration_dates(symbol: str):
+@router.get("/expirations/{symbol}", response_model=List[ExpirationDate])
+def get_expiration_dates(symbol: str, authorization: str = Depends(require_bearer)):
     """
     Get available expiration dates for a symbol
 
     Returns list of available option expiration dates with days until expiry.
     Uses Tradier API for real-time expiration data.
     """
-    print(f"\n{'='*60}", flush=True)
-    print(f"DEBUG: get_expiration_dates called for symbol={symbol}", flush=True)
-    print(f"{'='*60}\n", flush=True)
-
     try:
-        print(f"DEBUG: Getting Tradier credentials...", flush=True)
         tradier_key = settings.TRADIER_API_KEY
         tradier_url = settings.TRADIER_API_BASE_URL
-        print(f"DEBUG: tradier_key={tradier_key[:10] if tradier_key else 'None'}...", flush=True)
-        print(f"DEBUG: tradier_url={tradier_url}", flush=True)
 
         if not tradier_key or not tradier_url:
-            print(f"ERROR: Tradier credentials not configured!", flush=True)
             raise HTTPException(
                 status_code=500,
                 detail="Tradier API credentials not configured"
             )
 
-        print(f"DEBUG: Creating TradierClient...", flush=True)
         client = TradierClient(tradier_key, tradier_url)
-        print(f"DEBUG: Client created successfully", flush=True)
-
-        print(f"DEBUG: Calling client.get_expirations...", flush=True)
-        exp_data = await asyncio.to_thread(client.get_expirations, symbol)
-        print(f"DEBUG: Got expiration data: {exp_data}", flush=True)
+        exp_data = client.get_expirations(symbol)
 
         expirations = exp_data.get("expirations", {}).get("date", [])
         if not expirations:
-            print(f"DEBUG: No expirations found, returning empty list", flush=True)
             return []
 
         # Ensure expirations is a list
         if not isinstance(expirations, list):
             expirations = [expirations]
-
-        print(f"DEBUG: Processing {len(expirations)} expirations...", flush=True)
 
         # Calculate days to expiry for each
         result = []
@@ -360,22 +344,16 @@ async def get_expiration_dates(symbol: str):
                 days_to_expiry=days_to_expiry
             ))
 
-        print(f"DEBUG: Returning {len(result)} expiration dates", flush=True)
         return result
 
     except requests.exceptions.HTTPError as e:
-        print(f"ERROR: Tradier HTTP error: {e}", flush=True)
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Tradier HTTP error: {e}")
         raise HTTPException(
             status_code=e.response.status_code,
             detail=f"Tradier API error: {str(e)}"
         )
     except Exception as e:
-        print(f"ERROR: Exception type: {type(e).__name__}", flush=True)
-        print(f"ERROR: Exception message: {str(e)}", flush=True)
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Error fetching expirations: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Error fetching expirations: {str(e)}"
