@@ -1,0 +1,61 @@
+name: Claude Fix CI Failures
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Which job to fix'
+        required: true
+        type: choice
+        options:
+          - test-backend
+          - test-frontend
+          - both
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  claude-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install anthropic requests
+
+      - name: Analyze and Fix CI Failures
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          JOB_TO_FIX: ${{ inputs.job }}
+        run: |
+          python .github/scripts/claude_fix_ci.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'fix: CI failures for ${{ inputs.job }}'
+          title: 'fix: CI failures - ${{ inputs.job }}'
+          body: |
+            ## Automated CI Fix by Claude
+
+            Fixed failing tests in: **${{ inputs.job }}**
+
+            ### Changes Made
+            - Analyzed test failure logs
+            - Applied automated fixes
+            - Ready for review
+          branch: fix/ci-${{ inputs.job }}-${{ github.run_number }}
+          delete-branch: true
