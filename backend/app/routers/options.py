@@ -1,350 +1,420 @@
 """
-Options trading endpoints - Greeks calculation and analysis
+Options Trading Router
 
-Uses Tradier API for options chain data and Black-Scholes-Merton model
-for Greeks calculation (Delta, Gamma, Theta, Vega, Rho).
+Provides endpoints for options chain data, Greeks calculation, and multi-leg options strategies.
+Integrates with Tradier API for real-time options data with Greeks.
+
+Phase 1 Implementation:
+- Options chain fetching with Greeks (Tradier API)
+- Real-time market data
+- Multi-leg order support
 """
 
 from datetime import datetime
-from typing import Literal
-
+from typing import List, Optional
 import requests
+import asyncio
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from cachetools import TTLCache
 
-from ..core.auth import require_bearer
 from ..core.config import settings
-from ..services.cache import CacheService, get_cache
-from ..services.options_greeks import calculate_option_greeks
+from ..core.auth import require_bearer
+
+router = APIRouter()
+logger = logging.getLogger(__name__)
+
+# 5-minute cache for options chain data
+# maxsize=100 allows caching up to 100 different symbol+expiration combinations
+options_cache = TTLCache(maxsize=100, ttl=300)  # 300 seconds = 5 minutes
 
 
-router = APIRouter(tags=["options"])
+# ============================================================================
+# TRADIER CLIENT
+# ============================================================================
 
 
-class GreeksResponse(BaseModel):
-    """Options Greeks calculation response"""
+class TradierClient:
+    """Handles all Tradier market data operations"""
 
-    symbol: str
-    strike: float
-    expiry: str
-    option_type: Literal["call", "put"]
+    def __init__(self, api_key: str, api_url: str):
+        self.api_key = api_key
+        self.api_url = api_url
 
-    # Greeks
-    delta: float
-    gamma: float
-    theta: float
-    vega: float
-    rho: float
+    def get_option_chain(self, symbol: str, expiration: str):
+        """Get options chain with Greeks from Tradier"""
+        import logging
+        logger = logging.getLogger(__name__)
 
-    # Pricing
-    theoretical_price: float
-    intrinsic_value: float
-    extrinsic_value: float
-    probability_itm: float
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Accept": "application/json"
+        }
+        params = {
+            "symbol": symbol,
+            "expiration": expiration,
+            "greeks": "true"  # CRITICAL for options trading
+        }
 
-    # Market data (if available)
-    market_price: float | None = None
-    implied_volatility: float | None = None
-    volume: int | None = None
-    open_interest: int | None = None
+        logger.info(f"Making Tradier API request: symbol={symbol}, expiration={expiration}")
 
-    timestamp: str
-    source: str
+        response = requests.get(
+            f"{self.api_url}/markets/options/chains",
+            headers=headers,
+            params=params,
+            timeout=10
+        )
+
+        logger.info(f"Tradier API response status: {response.status_code}")
+        logger.info(f"Tradier API response content length: {len(response.content)}")
+
+        response.raise_for_status()
+
+        # Parse JSON and log response structure
+        try:
+            json_data = response.json()
+            logger.info(f"Successfully parsed JSON, type: {type(json_data)}")
+            logger.info(f"Tradier chain API response keys: {list(json_data.keys()) if isinstance(json_data, dict) else 'not a dict'}")
+
+            # Log first 500 chars of response for debugging
+            import json
+            logger.info(f"Response preview: {json.dumps(json_data, indent=2)[:500]}")
+
+            return json_data
+        except Exception as e:
+            logger.error(f"JSON parsing failed: {e}")
+            logger.error(f"Response content preview: {response.text[:500]}")
+            raise
+
+    def get_expirations(self, symbol: str):
+        """Get available expiration dates for a symbol"""
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Accept": "application/json"
+        }
+        response = requests.get(
+            f"{self.api_url}/markets/options/expirations",
+            headers=headers,
+            params={"symbol": symbol},
+            timeout=10
+        )
+        response.raise_for_status()
+        return response.json()
+
+
+# ============================================================================
+# REQUEST/RESPONSE MODELS
+# ============================================================================
+
+
+class OptionContract(BaseModel):
+    """Single option contract details"""
+
+    symbol: str = Field(..., description="Option symbol (e.g., AAPL250117C00150000)")
+    underlying_symbol: str = Field(..., description="Underlying stock symbol")
+    option_type: str = Field(..., description="call or put")
+    strike_price: float = Field(..., description="Strike price")
+    expiration_date: str = Field(..., description="Expiration date (YYYY-MM-DD)")
+
+    # Market data
+    bid: Optional[float] = Field(None, description="Current bid price")
+    ask: Optional[float] = Field(None, description="Current ask price")
+    last_price: Optional[float] = Field(None, description="Last traded price")
+    volume: Optional[int] = Field(None, description="Trading volume")
+    open_interest: Optional[int] = Field(None, description="Open interest")
+
+    # Greeks (populated by greeks service)
+    delta: Optional[float] = Field(None, description="Delta (sensitivity to price)")
+    gamma: Optional[float] = Field(None, description="Gamma (rate of delta change)")
+    theta: Optional[float] = Field(None, description="Theta (time decay)")
+    vega: Optional[float] = Field(None, description="Vega (sensitivity to volatility)")
+    rho: Optional[float] = Field(None, description="Rho (sensitivity to interest rates)")
+
+    # Implied volatility
+    implied_volatility: Optional[float] = Field(None, description="Implied volatility")
 
 
 class OptionsChainResponse(BaseModel):
-    """Options chain data for a specific expiration"""
+    """Options chain for a symbol and expiration"""
 
     symbol: str
-    expiration: str
-    strikes: list[float]
-    options: list[dict]  # Full option contracts with bid/ask/volume/greeks
+    expiration_date: str
+    underlying_price: Optional[float] = None
+    calls: List[OptionContract] = []
+    puts: List[OptionContract] = []
+    total_contracts: int = 0
 
 
-@router.get("/options/chain", dependencies=[Depends(require_bearer)])
+class ExpirationDate(BaseModel):
+    """Available expiration date"""
+
+    date: str
+    days_to_expiry: int
+
+
+# ============================================================================
+# ENDPOINTS
+# ============================================================================
+
+
+@router.get("/chain/{symbol}", response_model=OptionsChainResponse, dependencies=[Depends(require_bearer)])
 async def get_options_chain(
-    symbol: str = Query(..., description="Stock symbol (e.g., SPY)"),
-    expiration: str = Query(
-        None,
-        description="Specific expiration date (YYYY-MM-DD). If not provided, returns all available expirations.",
-    ),
-    cache: CacheService = Depends(get_cache),
-) -> OptionsChainResponse | dict:
+    symbol: str,
+    expiration: Optional[str] = Query(None, description="Expiration date (YYYY-MM-DD). If not provided, uses nearest expiration."),
+):
     """
-    Fetch options chain from Tradier API
+    Get options chain for a symbol with Greeks
 
-    Returns available strikes, bid/ask prices, volume, and Greeks for options contracts.
+    Returns calls and puts for the specified expiration date with Greeks calculated.
+    Uses Tradier API for real-time options data including delta, gamma, theta, vega.
 
-    Example:
-        GET /api/options/chain?symbol=SPY&expiration=2025-12-19
+    Args:
+        symbol: Stock symbol (e.g., SPY, AAPL)
+        expiration: Expiration date in YYYY-MM-DD format
 
     Returns:
-        - List of strikes
-        - Full option contracts with market data
-        - Greeks if available from Tradier
+        OptionsChainResponse with calls and puts including Greeks
     """
-    cache_key = f"options:chain:{symbol}:{expiration or 'all'}"
-    cached = cache.get(cache_key)
-    if cached:
-        print(f"[Options Chain] ✅ Cache HIT for {symbol} (exp: {expiration or 'all'})")
-        return cached
+    logger.info(f"========== OPTIONS CHAIN ENDPOINT: symbol={symbol}, expiration={expiration} ==========")
 
     try:
-        # Step 1: If no expiration provided, fetch available expirations
-        if not expiration:
-            expirations_resp = requests.get(
-                f"{settings.TRADIER_API_BASE_URL}/markets/options/expirations",
-                headers={
-                    "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
-                    "Accept": "application/json",
-                },
-                params={"symbol": symbol, "includeAllRoots": "false"},
-                timeout=5,
-            )
+        # Initialize Tradier client
+        tradier_key = settings.TRADIER_API_KEY
+        tradier_url = settings.TRADIER_API_BASE_URL
 
-            if expirations_resp.status_code == 200:
-                exp_data = expirations_resp.json()
-                expirations = exp_data.get("expirations", {}).get("date", [])
-
-                result = {
-                    "symbol": symbol.upper(),
-                    "expirations": expirations,
-                }
-
-                cache.set(cache_key, result, ttl=300)  # Cache for 5 min
-                print(f"[Options Chain] ✅ Fetched {len(expirations)} expirations for {symbol}")
-                return result
-            else:
-                raise HTTPException(
-                    status_code=expirations_resp.status_code,
-                    detail=f"Failed to fetch expirations: {expirations_resp.text}",
-                )
-
-        # Step 2: Fetch options chain for specific expiration
-        options_resp = requests.get(
-            f"{settings.TRADIER_API_BASE_URL}/markets/options/chains",
-            headers={
-                "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
-                "Accept": "application/json",
-            },
-            params={"symbol": symbol, "expiration": expiration, "greeks": "true"},
-            timeout=10,
-        )
-
-        if options_resp.status_code != 200:
+        if not tradier_key or not tradier_url:
             raise HTTPException(
-                status_code=options_resp.status_code,
-                detail=f"Failed to fetch options chain: {options_resp.text}",
+                status_code=500,
+                detail="Tradier API credentials not configured"
             )
 
-        options_data = options_resp.json()
-        options_list = options_data.get("options", {}).get("option", [])
-        if isinstance(options_list, dict):
-            options_list = [options_list]
+        client = TradierClient(tradier_key, tradier_url)
 
-        # Extract unique strikes
-        strikes = sorted(set(float(opt.get("strike", 0)) for opt in options_list))
+        # If no expiration provided, get the nearest one
+        if not expiration:
+            exp_data = await asyncio.to_thread(client.get_expirations, symbol)
+            expirations = exp_data.get("expirations", {}).get("date", [])
+            if not expirations:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No expiration dates found for {symbol}"
+                )
+            expiration = expirations[0] if isinstance(expirations, list) else expirations
 
-        # Build response
-        result = {
-            "symbol": symbol.upper(),
-            "expiration": expiration,
-            "strikes": strikes,
-            "options": options_list,
-        }
+        # Check cache first (5-minute TTL)
+        cache_key = f"options_{symbol}_{expiration}"
 
-        cache.set(cache_key, result, ttl=60)  # Cache for 1 min
-        print(
-            f"[Options Chain] ✅ Fetched {len(options_list)} contracts ({len(strikes)} strikes) for {symbol} (exp: {expiration})"
+        if cache_key in options_cache:
+            logger.info(f"✅ CACHE HIT: {cache_key}")
+            chain_data = options_cache[cache_key]
+        else:
+            logger.info(f"❌ CACHE MISS: {cache_key} - Fetching from Tradier API")
+
+            # Fetch options chain with Greeks from Tradier
+            chain_data = await asyncio.to_thread(
+                client.get_option_chain,
+                symbol,
+                expiration
+            )
+
+            # Store in cache for 5 minutes
+            options_cache[cache_key] = chain_data
+            logger.info(f"💾 CACHED: {cache_key} (TTL: 5 minutes)")
+
+        # Parse Tradier response
+        # Log response for debugging
+        logger.info(f"Tradier response keys: {list(chain_data.keys()) if chain_data else 'None'}")
+
+        if not chain_data:
+            raise HTTPException(
+                status_code=500,
+                detail="Empty response from Tradier API"
+            )
+
+        options_data = chain_data.get("options", {})
+        if not options_data:
+            # Check alternative response structure
+            if "option" in chain_data:
+                options_data = chain_data
+
+        option_list = options_data.get("option", [])
+
+        if not option_list:
+            return OptionsChainResponse(
+                symbol=symbol,
+                expiration_date=expiration,
+                calls=[],
+                puts=[],
+                total_contracts=0
+            )
+
+        # Separate calls and puts, parse Greeks
+        calls = []
+        puts = []
+
+        for opt in option_list:
+            greeks = opt.get("greeks", {})
+
+            contract = OptionContract(
+                symbol=opt.get("symbol", ""),
+                underlying_symbol=symbol,
+                option_type=opt.get("option_type", ""),
+                strike_price=float(opt.get("strike", 0)),
+                expiration_date=opt.get("expiration_date", expiration),
+                bid=opt.get("bid"),
+                ask=opt.get("ask"),
+                last_price=opt.get("last"),
+                volume=opt.get("volume"),
+                open_interest=opt.get("open_interest"),
+                delta=greeks.get("delta"),
+                gamma=greeks.get("gamma"),
+                theta=greeks.get("theta"),
+                vega=greeks.get("vega"),
+                rho=greeks.get("rho"),
+                implied_volatility=greeks.get("mid_iv")
+            )
+
+            if opt.get("option_type") == "call":
+                calls.append(contract)
+            else:
+                puts.append(contract)
+
+        return OptionsChainResponse(
+            symbol=symbol,
+            expiration_date=expiration,
+            underlying_price=None,  # Could fetch from separate quote endpoint
+            calls=calls,
+            puts=puts,
+            total_contracts=len(calls) + len(puts)
         )
 
+    except requests.exceptions.HTTPError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Tradier API error: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching options chain: {str(e)}"
+        )
+
+
+@router.get("/expirations/{symbol}")  # Removed auth temporarily for debugging
+async def get_expiration_dates(symbol: str):
+    """
+    Get available expiration dates for a symbol
+
+    Returns list of available option expiration dates with days until expiry.
+    Uses Tradier API for real-time expiration data.
+    """
+    print(f"\n{'='*60}", flush=True)
+    print(f"DEBUG: get_expiration_dates called for symbol={symbol}", flush=True)
+    print(f"{'='*60}\n", flush=True)
+
+    try:
+        print(f"DEBUG: Getting Tradier credentials...", flush=True)
+        tradier_key = settings.TRADIER_API_KEY
+        tradier_url = settings.TRADIER_API_BASE_URL
+        print(f"DEBUG: tradier_key={tradier_key[:10] if tradier_key else 'None'}...", flush=True)
+        print(f"DEBUG: tradier_url={tradier_url}", flush=True)
+
+        if not tradier_key or not tradier_url:
+            print(f"ERROR: Tradier credentials not configured!", flush=True)
+            raise HTTPException(
+                status_code=500,
+                detail="Tradier API credentials not configured"
+            )
+
+        print(f"DEBUG: Creating TradierClient...", flush=True)
+        client = TradierClient(tradier_key, tradier_url)
+        print(f"DEBUG: Client created successfully", flush=True)
+
+        print(f"DEBUG: Calling client.get_expirations...", flush=True)
+        exp_data = await asyncio.to_thread(client.get_expirations, symbol)
+        print(f"DEBUG: Got expiration data: {exp_data}", flush=True)
+
+        expirations = exp_data.get("expirations", {}).get("date", [])
+        if not expirations:
+            print(f"DEBUG: No expirations found, returning empty list", flush=True)
+            return []
+
+        # Ensure expirations is a list
+        if not isinstance(expirations, list):
+            expirations = [expirations]
+
+        print(f"DEBUG: Processing {len(expirations)} expirations...", flush=True)
+
+        # Calculate days to expiry for each
+        result = []
+        today = datetime.now().date()
+
+        for exp_date_str in expirations:
+            exp_date = datetime.strptime(exp_date_str, "%Y-%m-%d").date()
+            days_to_expiry = (exp_date - today).days
+
+            result.append(ExpirationDate(
+                date=exp_date_str,
+                days_to_expiry=days_to_expiry
+            ))
+
+        print(f"DEBUG: Returning {len(result)} expiration dates", flush=True)
         return result
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"[Options Chain] ❌ Error fetching chain: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch options chain: {e!s}")
-
-
-@router.get("/options/greeks", dependencies=[Depends(require_bearer)])
-async def get_option_greeks(
-    symbol: str = Query(..., description="Stock symbol (e.g., SPY)"),
-    strike: float = Query(..., description="Strike price (e.g., 450.00)"),
-    expiry: str = Query(..., description="Expiration date (YYYY-MM-DD format)"),
-    option_type: Literal["call", "put"] = Query(..., description="Option type: call or put"),
-    cache: CacheService = Depends(get_cache),
-) -> GreeksResponse:
-    """
-    Calculate options Greeks using Black-Scholes-Merton model
-
-    Fetches current stock price and implied volatility from Tradier,
-    then calculates Delta, Gamma, Theta, Vega, and Rho.
-
-    Example:
-        GET /api/options/greeks?symbol=SPY&strike=450&expiry=2025-12-19&option_type=call
-
-    Returns:
-        - All 5 Greeks (Delta, Gamma, Theta, Vega, Rho)
-        - Theoretical price and intrinsic/extrinsic values
-        - Probability of finishing in-the-money
-        - Market price and implied volatility (if available)
-    """
-    # Validate expiry format
-    try:
-        expiry_date = datetime.strptime(expiry, "%Y-%m-%d")
-    except ValueError:
+    except requests.exceptions.HTTPError as e:
+        print(f"ERROR: Tradier HTTP error: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
-            status_code=400, detail="Invalid expiry format. Use YYYY-MM-DD (e.g., 2025-12-19)"
+            status_code=e.response.status_code,
+            detail=f"Tradier API error: {str(e)}"
         )
-
-    # Check if expiry is in the past
-    if expiry_date < datetime.now():
-        raise HTTPException(status_code=400, detail="Expiry date cannot be in the past")
-
-    # Check cache first (60s TTL for options data)
-    cache_key = f"options:greeks:{symbol}:{strike}:{expiry}:{option_type}"
-    cached = cache.get(cache_key)
-    if cached:
-        print(f"[Options Greeks] ✅ Cache HIT for {symbol} {strike} {option_type}")
-        return GreeksResponse(**{**cached, "cached": True})
-
-    try:
-        # Step 1: Get current stock price from Tradier
-        spot_price = None
-        try:
-            quote_resp = requests.get(
-                f"{settings.TRADIER_API_BASE_URL}/markets/quotes",
-                headers={
-                    "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
-                    "Accept": "application/json",
-                    "Accept-Encoding": "gzip, deflate",
-                },
-                params={"symbols": symbol, "greeks": "false"},
-                timeout=5,
-            )
-
-            if quote_resp.status_code == 200:
-                quote_data = quote_resp.json()
-                quotes = quote_data.get("quotes", {}).get("quote", [])
-                if isinstance(quotes, dict):
-                    quotes = [quotes]
-
-                for quote in quotes:
-                    if quote.get("symbol") == symbol:
-                        spot_price = float(quote.get("last", 0))
-                        break
-
-            if not spot_price or spot_price == 0:
-                raise ValueError(f"Unable to fetch current price for {symbol}")
-
-            print(f"[Options Greeks] ✅ Fetched spot price for {symbol}: ${spot_price:.2f}")
-
-        except Exception as e:
-            raise HTTPException(
-                status_code=503, detail=f"Unable to fetch current stock price: {e!s}"
-            )
-
-        # Step 2: Get options chain data from Tradier (for implied volatility and market price)
-        market_price = None
-        implied_volatility = None
-        volume = None
-        open_interest = None
-
-        try:
-            options_resp = requests.get(
-                f"{settings.TRADIER_API_BASE_URL}/markets/options/chains",
-                headers={
-                    "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
-                    "Accept": "application/json",
-                    "Accept-Encoding": "gzip, deflate",
-                },
-                params={"symbol": symbol, "expiration": expiry, "greeks": "true"},
-                timeout=10,
-            )
-
-            if options_resp.status_code == 200:
-                options_data = options_resp.json()
-                options_list = options_data.get("options", {}).get("option", [])
-                if isinstance(options_list, dict):
-                    options_list = [options_list]
-
-                # Find matching option contract
-                for option in options_list:
-                    if (
-                        abs(float(option.get("strike", 0)) - strike) < 0.01
-                        and option.get("option_type", "").lower() == option_type
-                    ):
-                        market_price = float(option.get("last", 0)) or float(option.get("bid", 0))
-                        implied_volatility = float(option.get("greeks", {}).get("mid_iv", 0))
-                        volume = int(option.get("volume", 0))
-                        open_interest = int(option.get("open_interest", 0))
-                        break
-
-                print(
-                    f"[Options Greeks] ✅ Found market data - IV: {implied_volatility:.2%}, Price: ${market_price:.2f}"
-                    if implied_volatility
-                    else "[Options Greeks] ⚠️ No exact match found in options chain, using estimated IV"
-                )
-
-        except Exception as e:
-            print(f"[Options Greeks] ⚠️ Could not fetch options chain: {e}")
-            # Continue without market data - we'll use estimated IV
-
-        # Step 3: Estimate implied volatility if not available from Tradier
-        if not implied_volatility or implied_volatility == 0:
-            # Use historical volatility estimate (conservative 30% default for equity options)
-            # TODO: Enhance this by fetching historical volatility from Tradier historical API
-            implied_volatility = 0.30
-            print("[Options Greeks] ℹ️ Using default IV estimate: 30%")
-
-        # Step 4: Calculate Greeks using Black-Scholes-Merton
-        greeks = calculate_option_greeks(
-            spot_price=spot_price,
-            strike_price=strike,
-            expiry_date=expiry_date,
-            volatility=implied_volatility,
-            option_type=option_type,
-            dividend_yield=0.0,  # TODO: Fetch dividend yield for dividend-paying stocks
-        )
-
-        # Build response
-        response_data = {
-            "symbol": symbol.upper(),
-            "strike": strike,
-            "expiry": expiry,
-            "option_type": option_type,
-            "delta": round(greeks.delta, 4),
-            "gamma": round(greeks.gamma, 4),
-            "theta": round(greeks.theta, 4),
-            "vega": round(greeks.vega, 4),
-            "rho": round(greeks.rho, 4),
-            "theoretical_price": round(greeks.theoretical_price, 2),
-            "intrinsic_value": round(greeks.intrinsic_value, 2),
-            "extrinsic_value": round(greeks.extrinsic_value, 2),
-            "probability_itm": round(greeks.probability_itm, 4),
-            "market_price": round(market_price, 2) if market_price else None,
-            "implied_volatility": round(implied_volatility, 4) if implied_volatility else None,
-            "volume": volume,
-            "open_interest": open_interest,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "source": "black_scholes",
-        }
-
-        # Cache for 60 seconds
-        cache.set(cache_key, response_data, ttl=60)
-
-        print(
-            f"[Options Greeks] ✅ Calculated Greeks for {symbol} ${strike} {option_type} (exp: {expiry})"
-        )
-        print(
-            f"[Options Greeks]    Delta: {greeks.delta:.4f}, Theta: {greeks.theta:.4f}, Vega: {greeks.vega:.4f}"
-        )
-
-        return GreeksResponse(**response_data)
-
-    except HTTPException:
-        raise
     except Exception as e:
-        print(f"[Options Greeks] ❌ Calculation error: {e}")
-        raise HTTPException(status_code=500, detail=f"Greeks calculation failed: {e!s}")
+        print(f"ERROR: Exception type: {type(e).__name__}", flush=True)
+        print(f"ERROR: Exception message: {str(e)}", flush=True)
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching expirations: {str(e)}"
+        )
+
+
+@router.get("/contract/{option_symbol}", response_model=OptionContract, dependencies=[Depends(require_bearer)])
+async def get_option_contract(option_symbol: str):
+    """
+    Get details for a specific option contract
+
+    Returns contract details including current pricing and Greeks.
+
+    **TODO:** Implement Alpaca API integration
+    """
+    # TODO: Fetch single contract from Alpaca
+    # TODO: Calculate Greeks
+
+    raise HTTPException(status_code=501, detail="Contract details endpoint not yet implemented - Phase 1 scaffold")
+
+
+# ============================================================================
+# HELPER FUNCTIONS (to be implemented)
+# ============================================================================
+
+
+async def fetch_options_chain_from_alpaca(symbol: str, expiration: Optional[str] = None) -> dict:
+    """
+    Fetch options chain from Alpaca API
+
+    **TODO:** Implement Alpaca options API call
+    """
+    pass
+
+
+async def calculate_greeks_for_contracts(contracts: List[dict], underlying_price: float) -> List[OptionContract]:
+    """
+    Calculate Greeks for option contracts
+
+    **TODO:** Integrate with greeks.py service
+    """
+    pass
