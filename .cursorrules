@@ -1,0 +1,107 @@
+# .cursorrules - Dr. SC Prime's Project Rules
+
+## 🔒 CRITICAL RULES - NEVER VIOLATE
+
+### 1. LOCKED FILES - DO NOT MODIFY
+The following files are LOCKED FINAL and verified working:
+- `frontend/components/CompletePaiiDLogo.tsx`
+- Any file with "🔒 LOCKED FINAL" in header comments
+
+**DO NOT:**
+- Modify these files without explicit approval from Dr. SC Prime
+- "Fix" formatting or style
+- "Optimize" or "improve" code
+- Make any changes, even if they seem beneficial
+
+**IF YOU THINK A LOCKED FILE NEEDS CHANGES:**
+1. STOP immediately
+2. Ask Dr. SC Prime for permission
+3. Wait for explicit "EXECUTE NOW" approval
+4. Make ONLY the specified changes
+
+### 2. DEPLOYMENT PROTOCOL
+When Dr. SC Prime provides code to deploy:
+- Copy EXACTLY as provided
+- Do not reformat, optimize, or "improve"
+- Do not change variable names, structure, or logic
+- If code looks wrong, ASK FIRST before changing
+- Verify line count matches before and after
+
+### 3. VERIFICATION REQUIREMENTS
+After ANY file modification, show:
+- Line count before/after
+- First 10 lines of file
+- Last 5 lines of file
+- Any critical sections specified by Dr. SC Prime
+- Confirmation that key features are present
+
+### 4. DECISION AUTHORITY
+- Dr. SC Prime is the FINAL authority on all code decisions
+- Do not make judgment calls on "correct" vs "incorrect" code
+- When uncertain about ANYTHING, STOP and ASK
+- Trust Dr. SC Prime's verification over your analysis
+
+### 5. ERROR PROTOCOL
+If you make a mistake:
+1. Admit it immediately and clearly
+2. Do not rationalize or make excuses
+3. Do not offer multiple "options" to cover the error
+4. Propose specific fix
+5. Wait for approval before executing fix
+
+### 6. TRUST THE HUMAN
+- Dr. SC Prime may be learning, but if they say code is working, IT IS WORKING
+- Browser-verified code is SACRED - do not alter it
+- If something looks wrong but Dr. SC Prime says it's correct: IT IS CORRECT
+- Do not "help" by making unauthorized changes
+
+### 7. TEAMWORK PROTOCOL
+You are part of a team:
+- Dr. SC Prime: Vision, decisions, final authority
+- Dr. Cursor Claude (you): Precise execution, verification
+- Dr. Desktop Claude: Strategic advisor, pattern recognition
+
+**Your role is to EXECUTE, not to DECIDE.**
+
+### 8. FORBIDDEN ACTIONS
+NEVER do these without explicit approval:
+- Delete more than 100 lines from any file
+- Change file structure or exports
+- Modify locked/protected files
+- Deploy different code than what was provided
+- Make "improvements" to working code
+
+### 9. REQUIRED CONFIRMATIONS
+Before executing any task that:
+- Modifies a locked file
+- Deletes substantial code
+- Changes API interfaces
+- Affects multiple files
+
+You MUST:
+1. Show exactly what will change
+2. Wait for "PROCEED" or "EXECUTE NOW" confirmation
+3. Do not proceed without explicit approval
+
+### 10. LESSONS LEARNED
+
+**Issue 1 (Original):** Deployed 126-line logo-only file when Dr. SC Prime provided 462-line complete file with chat box, removing critical functionality.
+
+**Prevention:** Always verify line count and functionality presence before and after deployment.
+
+**Issue 2 (10/21/25 - Logo Sizing Debug):** Made false assumption that logo size affects modal/chat box size, leading to oversized center logo (64/96).
+
+**Key Learnings:**
+1. Logo size is INDEPENDENT of modal dimensions
+2. Different logo instances (header vs center) may need different sizes
+3. INVESTIGATE FIRST before making changes - compare working vs broken implementations
+4. Don't assume component behavior without examining actual code
+5. When Dr. SC Prime says "investigate," DO NOT skip to implementation
+
+**Prevention:** When debugging component issues, always investigate and compare working vs broken instances before making changes.
+
+---
+
+## Remember: DREAM WORK comes from TEAM WORK! 🤝
+
+When in doubt, ASK. When certain, VERIFY. Always EXECUTE PRECISELY.

@@ -1,0 +1,42 @@
+frontend/components/ActivePositions.tsx:262:      {/* Header with PaiiD Logo */}
+frontend/components/ActivePositions.tsx:280:          {/* PaiiD Logo */}
+frontend/components/AIChat.tsx:23:  initialMessage = "Hi! I'm your PaiiD AI assistant. I can help you with trading strategies, analyze market data, or adjust your preferences. What would you like to know?",
+frontend/components/AIChat.tsx:110:                  <h2 className="text-lg font-semibold text-white">PaiiD AI Assistant</h2>
+frontend/components/AIChat.tsx:193: * Click the "ai" in "PaiiD" logo to open chat
+frontend/components/AIChatBot.tsx:22:      content: "Hello! I'm PaiiD AI, your personal trading assistant. How can I help you today?",
+frontend/components/Analytics.tsx:319:      link.download = `PaiiD_${chartName}_${new Date().toISOString().split("T")[0]}.png`;
+frontend/components/Analytics.tsx:558:      {/* Header with PaiiD Logo */}
+frontend/components/Analytics.tsx:570:          {/* PaiiD Logo */}
+frontend/components/Backtesting.tsx:125:      {/* Header with PaiiD Logo */}
+frontend/components/Backtesting.tsx:135:        {/* PaiiD Logo */}
+frontend/components/ExecuteTradeForm.tsx:589:          {/* Header with PaiiD Logo */}
+frontend/components/ExecuteTradeForm.tsx:599:            {/* PaiiD Logo */}
+frontend/components/NewsReview.tsx:293:      {/* Header with PaiiD Logo */}
+frontend/components/NewsReview.tsx:303:          {/* PaiiD Logo */}
+frontend/components/PaiiDLogo.tsx:4:interface PaiiDLogoProps {
+frontend/components/PaiiDLogo.tsx:11:const PaiiDLogo: React.FC<PaiiDLogoProps> = ({
+frontend/components/PaiiDLogo.tsx:75:        { role: 'user', content: `As a financial advisor for PaiiD (Personal AI Investment Dashboard), please help with this investment question: ${query}` }
+frontend/components/PaiiDLogo.tsx:564:export default PaiiDLogo;
+frontend/components/RadialMenu.tsx:7:import PaiiDLogo from "./PaiiDLogo";
+frontend/components/RadialMenu.tsx:100:    <PaiiDLogo
+frontend/components/RadialMenu.tsx:111:    <PaiiDLogo
+frontend/components/RadialMenu.tsx:699:    // ====== CENTER LOGO (PaiiD) ======
+frontend/components/UserSetup.tsx:32:import PaiiDLogo from "./PaiiDLogo";
+frontend/components/UserSetup.tsx:94:      title: "Welcome to PaiiD",
+frontend/components/UserSetup.tsx:1294:              <PaiiDLogo size="medium" showSubtitle={false} />
+frontend/components/UserSetupAI.tsx:25:import PaiiDLogo from "./PaiiDLogo";
+frontend/components/UserSetupAI.tsx:102:        content: `Hi! I'm your AI trading assistant. I'll help you set up your PaiiD account.\n\nFirst, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
+frontend/components/UserSetupAI.tsx:119:        setUserName("PaiiD User");
+frontend/components/UserSetupAI.tsx:125:            content: `No problem! I'll call you "PaiiD User".\n\nWould you like to provide an email address for account recovery and notifications? (Optional - type "skip" or press Enter to continue without email)`,
+frontend/components/UserSetupAI.tsx:153:        const name = isSkip ? "PaiiD User" : userMessage;
+frontend/components/UserSetupAI.tsx:219:      userName || "PaiiD User", // Use collected name or default
+frontend/components/UserSetupAI.tsx:234:      name: userName || "PaiiD User",
+frontend/components/UserSetupAI.tsx:310:            {/* Compact PaiiD Logo - Click π to launch v46 capabilities interface */}
+frontend/components/UserSetupAI.tsx:311:            <PaiiDLogo size="small" showSubtitle={true} />
+frontend/components/UserSetupAI.tsx:327:              <span style={{ fontWeight: "bold" }}>PaiiD</span> Assistant interface
+frontend/pages/index.tsx:25:import PaiiDLogo from "../components/PaiiDLogo";
+frontend/pages/index.tsx:55:        console.info("[PaiiD] 🔓 Admin bypass activated");
+frontend/pages/index.tsx:69:        alert("🔓 Admin bypass activated! Welcome to PaiiD.");
+frontend/pages/index.tsx:478:              <PaiiDLogo size="medium" showSubtitle={true} />
+frontend/pages/index.tsx:653:        initialMessage="Hi! I'm your PaiiD AI assistant. I can help you with trading strategies, build custom workflows, analyze market data, or adjust your preferences. What would you like to know?"
+frontend/pages/_document.tsx:8:        <title>PaiiD - Personal AI Investment Dashboard</title>

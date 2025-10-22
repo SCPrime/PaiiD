@@ -29,7 +29,7 @@ import { createUser } from "../lib/userManagement";
 import { GlassCard, GlassButton, GlassInput } from "./GlassmorphicComponents";
 import { theme } from "../styles/theme";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
-import PaiiDLogo from "./PaiiDLogo";
+import CompletePaiiDLogo from "./CompletePaiiDLogo";
 
 interface UserSetupProps {
   onComplete: () => void;
@@ -1291,7 +1291,7 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
           {/* Header */}
           {currentPage === 0 && (
             <div style={{ textAlign: "center", marginBottom: "48px" }}>
-              <PaiiDLogo size="medium" showSubtitle={false} />
+              <CompletePaiiDLogo size={60} />
             </div>
           )}
 

@@ -40,5 +40,12 @@
     "cash": 0.0,
     "positions_value": 0.0,
     "num_positions": 0
+  },
+  {
+    "timestamp": "2025-10-21T20:15:01.086291",
+    "equity": 0.0,
+    "cash": 0.0,
+    "positions_value": 0.0,
+    "num_positions": 0
   }
 ]

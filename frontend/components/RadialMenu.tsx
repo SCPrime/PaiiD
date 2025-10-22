@@ -96,23 +96,17 @@ export const workflows: Workflow[] = [
 
 // Memoized logo component - prevents re-renders from parent state changes
 const MemoizedCenterLogo = memo(
-  ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => (
-    <CompletePaiiDLogo
-      size={isMobile ? "xs" : "small"}
-      showSubtitle={false}
-      onClick={() => setShowAIChat(true)}
-    />
+  ({ isMobile }: { isMobile: boolean }) => (
+    <CompletePaiiDLogo size={isMobile ? 38 : 58} enableModal={true} />
   )
 );
 MemoizedCenterLogo.displayName = "MemoizedCenterLogo";
 
 const MemoizedHeaderLogo = memo(
   ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => (
-    <CompletePaiiDLogo
-      size={isMobile ? "medium" : "large"}
-      showSubtitle={true}
-      onClick={() => setShowAIChat(true)}
-    />
+    <div onClick={() => setShowAIChat(true)} style={{ cursor: 'pointer' }}>
+      <CompletePaiiDLogo size={isMobile ? 64 : 96} />
+    </div>
   )
 );
 MemoizedHeaderLogo.displayName = "MemoizedHeaderLogo";
@@ -147,44 +141,44 @@ function RadialMenuComponent({
   // Memoize responsive menu size - only recalculate when dependencies change
   const menuSize = useMemo(() => {
     if (isMobile) {
-      // Mobile: 90% of viewport width, max 500px
-      return Math.min(viewportWidth * 0.9, 500);
+      // Mobile: 90% of viewport width, max 675px (35% increase from 500)
+      return Math.min(viewportWidth * 0.9, 675);
     }
 
     // Desktop: Responsive to viewport width for split-screen mode
-    // When viewport < 1400px (typical split screen), scale down proportionally
-    if (viewportWidth < 1400) {
-      return Math.min(viewportWidth * 0.85, 700);
+    // When viewport < 1900px (typical split screen), scale down proportionally
+    if (viewportWidth < 1900) {
+      return Math.min(viewportWidth * 0.85, 945);
     }
 
-    // Desktop full screen: Standard 700px
-    return 700;
+    // Desktop full screen: Standard 945px (35% increase from 700)
+    return 945;
   }, [isMobile, viewportWidth]);
 
   // Memoize responsive font sizes - only recalculate when isMobile changes
   const fontSizes = useMemo(() => {
     if (isMobile) {
       return {
-        headerLogo: "48px",
-        headerSubtitle1: "16px",
-        headerSubtitle2: "14px",
-        segmentText: "16px",
-        centerLogo: "20px",
-        marketLabel: "7px", // Reduced from 9px for better fit
-        marketValue: "12px", // Reduced from 16px for better fit
-        marketChange: "8px", // Reduced from 11px for better fit
+        headerLogo: "65px", // 48 × 1.35
+        headerSubtitle1: "22px", // 16 × 1.35
+        headerSubtitle2: "19px", // 14 × 1.35
+        segmentText: "22px", // 16 × 1.35
+        centerLogo: "27px", // 20 × 1.35
+        marketLabel: "9px", // 7 × 1.35 ≈ 9
+        marketValue: "16px", // 12 × 1.35 ≈ 16
+        marketChange: "11px", // 8 × 1.35 ≈ 11
       };
     }
-    // Desktop sizes - reduced by ~25% for cleaner center circle
+    // Desktop sizes - scaled up 35% for better readability
     return {
-      headerLogo: "96px",
-      headerSubtitle1: "22px",
-      headerSubtitle2: "18px",
-      segmentText: "22px",
-      centerLogo: "32px",
-      marketLabel: "9px", // Reduced from 11px
-      marketValue: "16px", // Reduced from 22px
-      marketChange: "10px", // Reduced from 13px
+      headerLogo: "130px", // 96 × 1.35
+      headerSubtitle1: "30px", // 22 × 1.35
+      headerSubtitle2: "24px", // 18 × 1.35
+      segmentText: "30px", // 22 × 1.35
+      centerLogo: "43px", // 32 × 1.35
+      marketLabel: "12px", // 9 × 1.35
+      marketValue: "22px", // 16 × 1.35
+      marketChange: "14px", // 10 × 1.35
     };
   }, [isMobile]);
 
@@ -951,7 +945,7 @@ function RadialMenuComponent({
             pointerEvents: "auto",
           }}
         >
-          <MemoizedCenterLogo isMobile={isMobile} setShowAIChat={setShowAIChat} />
+          <MemoizedCenterLogo isMobile={isMobile} />
         </div>
 
         {/* Market Status Badge */}

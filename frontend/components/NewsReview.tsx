@@ -43,7 +43,7 @@ const NewsReview: React.FC = () => {
   const ARTICLES_PER_PAGE = 20;
 
   // AI Analysis State
-  const [selectedArticle, setSelectedArticle] = useState<any>(null);
+  const [_selectedArticle, setSelectedArticle] = useState<any>(null);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);

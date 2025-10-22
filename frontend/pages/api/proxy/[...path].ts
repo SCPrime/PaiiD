@@ -109,6 +109,10 @@ const ALLOWED_ORIGINS = new Set<string>([
   "http://localhost:3004", // Alternative dev server port
   "http://localhost:3005", // Alternative dev server port
   "http://localhost:3006", // Alternative dev server port
+  "http://localhost:3007", // Alternative dev server port
+  "http://localhost:3008", // Alternative dev server port
+  "http://localhost:3009", // Alternative dev server port
+  "http://localhost:3010", // Alternative dev server port
   "https://paiid-frontend.onrender.com",
 ]);
 

@@ -1,0 +1,31 @@
+﻿### PaiiD Backend API Tests
+### Use the "Send Request" link above each request to test
+
+@baseUrl = http://127.0.0.1:8001
+@token = tuGlKvrYEoiJcv7r7oIy7zXM9pqVnaxN_74obFz6lVo
+
+### Health Check
+GET {{baseUrl}}/api/health
+
+### Portfolio Analysis (NEW!)
+GET {{baseUrl}}/api/ai/analyze-portfolio
+Authorization: Bearer {{token}}
+
+### Account Info
+GET {{baseUrl}}/api/account
+Authorization: Bearer {{token}}
+
+### Active Positions
+GET {{baseUrl}}/api/positions
+Authorization: Bearer {{token}}
+
+### AI Recommendations
+GET {{baseUrl}}/api/ai/recommendations
+Authorization: Bearer {{token}}
+
+### Market Indices (SPY, QQQ, DIA)
+GET {{baseUrl}}/api/market/indices
+
+### Get Quote for Symbol
+GET {{baseUrl}}/api/market/quote/AAPL
+Authorization: Bearer {{token}}

@@ -25,6 +25,9 @@ import { useIsMobile } from "../hooks/useBreakpoint";
 import CompletePaiiDLogo from "../components/CompletePaiiDLogo";
 
 export default function Dashboard() {
+  // Development bypass: Skip onboarding in development mode
+  const ENABLE_DEV_BYPASS = process.env.NODE_ENV === 'development';
+
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>("");
   const [hoveredWorkflow, setHoveredWorkflow] = useState<Workflow | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -85,8 +88,8 @@ export default function Dashboard() {
     return null;
   }
 
-  // Show user setup modal if not set up
-  if (!isUserSetup) {
+  // Show user setup modal if not set up (unless development bypass is enabled)
+  if (!ENABLE_DEV_BYPASS && !isUserSetup) {
     return <UserSetupAI onComplete={handleUserSetupComplete} />;
   }
 
@@ -211,6 +214,28 @@ export default function Dashboard() {
 
   return (
     <>
+      {/* Development Mode Banner */}
+      {ENABLE_DEV_BYPASS && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            background: "linear-gradient(90deg, #f59e0b 0%, #ef4444 100%)",
+            color: "#fff",
+            padding: "8px 16px",
+            textAlign: "center",
+            fontSize: "13px",
+            fontWeight: "600",
+            zIndex: 9999,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+          }}
+        >
+          🔧 DEVELOPMENT MODE | Onboarding Bypass Active | Press Ctrl+Shift+A for Manual Toggle
+        </div>
+      )}
+
       {!selectedWorkflow ? (
         // Full screen view when no workflow selected
         <div
@@ -226,6 +251,7 @@ export default function Dashboard() {
             padding: 0,
             margin: 0,
             position: "relative",
+            paddingTop: ENABLE_DEV_BYPASS ? "40px" : "0",
           }}
         >
           {/* Radial Menu Container - centered and scaled to fit */}
@@ -475,7 +501,7 @@ export default function Dashboard() {
                 paddingBottom: "10px",
               }}
             >
-              <CompletePaiiDLogo size="medium" showSubtitle={true} />
+              <CompletePaiiDLogo size={64} />
             </div>
 
             {/* Radial Menu */}
