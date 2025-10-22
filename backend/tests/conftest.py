@@ -4,13 +4,38 @@ Pytest Configuration and Fixtures
 Provides test fixtures for database, API client, and mocked services.
 """
 
+import math
 import os
+import sys
+import types
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+
+# Provide a lightweight fallback for scipy when the dependency is unavailable.
+if "scipy" not in sys.modules:
+    stats_module = types.ModuleType("scipy.stats")
+
+    class _Norm:
+        @staticmethod
+        def cdf(x: float) -> float:
+            return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+
+        @staticmethod
+        def pdf(x: float) -> float:
+            return (1 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * x * x)
+
+    stats_module.norm = _Norm()
+
+    scipy_module = types.ModuleType("scipy")
+    scipy_module.stats = stats_module
+
+    sys.modules["scipy"] = scipy_module
+    sys.modules["scipy.stats"] = stats_module
 
 
 # Set test environment variables
