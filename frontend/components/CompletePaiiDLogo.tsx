@@ -487,6 +487,8 @@ const CompletePaiiDLogo: React.FC<CompletePaiiDLogoProps> = ({ size = 80, enable
 const PaiiDChatBoxWithLogo = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [query, setQuery] = useState('');
+  const [response, setResponse] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const capabilitiesLeft = [
     'Morning Routine',
