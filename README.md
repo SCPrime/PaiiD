@@ -203,7 +203,13 @@ PaiiD/
 
 ## 📚 Documentation
 
-- [Development Roadmap](./ROADMAP.md) - Detailed specs for 5 remaining workflows
+**Active Roadmaps:**
+- [LAUNCH_READINESS.md](./LAUNCH_READINESS.md) - 5 MVP tasks (1-2 days) - **IMMEDIATE**
+- [PHASE_0_AUDIT_REPORT.md](./PHASE_0_AUDIT_REPORT.md) - Phases 1-4 (24-32 hours) - **SHORT-TERM**
+- [ROADMAP.md](./ROADMAP.md) - 5 workflow enhancements (80 days) - **LONG-TERM**
+- [WORKFLOW_AUDIT_RESULTS.md](./WORKFLOW_AUDIT_RESULTS.md) - Complete execution order
+
+**Technical Documentation:**
 - [Component Architecture](./COMPONENT_ARCHITECTURE.md) - Technical implementation guide
 - [API Documentation](./API_DOCUMENTATION.md) - Complete endpoint reference
 
@@ -216,8 +222,22 @@ PaiiD/
 
 ## 🎯 Next Steps
 
-See [ROADMAP.md](./ROADMAP.md) for detailed implementation plans for:
+**Current Phase:** Phase 0 Preparation (94% MVP → Phase 1)
 
+**Immediate (1-2 days):** Complete 5 MVP tasks from [LAUNCH_READINESS.md](./LAUNCH_READINESS.md)
+1. Verify SSE in production
+2. Test chart export on mobile
+3. Mobile device testing
+4. Sentry DSN configuration
+5. Recommendation history tracking
+
+**Short-term (24-32 hours):** Execute [PHASE_0_AUDIT_REPORT.md](./PHASE_0_AUDIT_REPORT.md)
+1. Phase 1: Options Trading Implementation (6-8h)
+2. Phase 2: ML Strategy Engine (4-6h)
+3. Phase 3: UI/UX Polish (6-8h)
+4. Phase 4: Code Quality Cleanup (8-10h)
+
+**Long-term (80 days):** Execute [ROADMAP.md](./ROADMAP.md) enhancements
 1. P&L Dashboard with historical charts
 2. News Review with sentiment analysis
 3. AI Recommendations with ML signals

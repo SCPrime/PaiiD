@@ -1,5 +1,23 @@
 # PaiiD Trading Platform - Development Roadmap
 
+## ⚠️ LONG-TERM REFERENCE DOCUMENT
+
+**Status:** Long-term Enhancement Plan (NOT current active roadmap)
+**Timeline:** 80 days (Post Phase 0-4)
+**Current Active Roadmap:** See [PHASE_0_AUDIT_REPORT.md](./PHASE_0_AUDIT_REPORT.md)
+
+This document describes comprehensive feature enhancements to be implemented
+AFTER Phase 0-4 completion (24-32 hours of foundation work).
+
+**Priority Order:**
+1. Complete [LAUNCH_READINESS.md](./LAUNCH_READINESS.md) (5 MVP tasks, 1-2 days)
+2. Complete [PHASE_0_AUDIT_REPORT.md](./PHASE_0_AUDIT_REPORT.md) (Phases 1-4, 24-32 hours)
+3. Execute this ROADMAP (5 workflows, 80 days)
+
+**See:** [WORKFLOW_AUDIT_RESULTS.md](./WORKFLOW_AUDIT_RESULTS.md) for complete execution order and priority resolution.
+
+---
+
 This roadmap details the implementation specifications for the 5 remaining workflow components. Each workflow is a standalone React component that integrates with the existing D3.js radial menu navigation.
 
 ## 🎯 Implementation Priority
