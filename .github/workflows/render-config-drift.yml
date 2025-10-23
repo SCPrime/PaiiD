@@ -1,0 +1,29 @@
+name: Render configuration drift
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  render-config-drift:
+    name: Validate Render services
+    runs-on: ubuntu-latest
+    env:
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Render CLI
+        run: |
+          curl -fsSL https://render.com/static/cli/install.sh | bash
+          echo "$HOME/.render/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Render CLI installation
+        run: render --version
+
+      - name: Check for Render configuration drift
+        run: ./scripts/check-render-config.sh
