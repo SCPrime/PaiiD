@@ -38,6 +38,7 @@ from .routers import (
     options,
     orders,
     portfolio,
+    proposals,
     scheduler,
     screening,
     stock,
@@ -222,6 +223,7 @@ app.include_router(market.router, prefix="/api")
 app.include_router(market_data.router, prefix="/api", tags=["market-data"])
 app.include_router(news.router, prefix="/api", tags=["news"])
 app.include_router(options.router, prefix="/api")  # Options Greeks calculator
+app.include_router(proposals.router)  # Options trade proposals
 app.include_router(ai.router, prefix="/api")
 app.include_router(claude.router, prefix="/api")
 app.include_router(stock.router, prefix="/api")
