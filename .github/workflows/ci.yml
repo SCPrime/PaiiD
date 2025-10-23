@@ -7,6 +7,15 @@ on:
     branches: [ main ]
 
 jobs:
+  backend-port-guard:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Ensure no duplicate backend uvicorn listeners
+      run: backend/scripts/check-uvicorn-ports.sh
+
   test-backend:
     runs-on: ubuntu-latest
 

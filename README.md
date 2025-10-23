@@ -125,10 +125,14 @@ Frontend runs at http://localhost:3000
 ```bash
 cd backend
 pip install -r requirements.txt
-python -m uvicorn main:app --reload --port 8000
+# Ensure no stale uvicorn instances are bound to the dev ports
+./scripts/kill-uvicorn.sh
+
+# Start the FastAPI development server
+python -m uvicorn app.main:app --reload --port 8001
 ```
 
-Backend runs at http://localhost:8000
+Backend runs at http://localhost:8001
 
 ### Environment Variables
 
