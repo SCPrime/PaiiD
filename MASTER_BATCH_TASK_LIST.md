@@ -8,48 +8,65 @@
 ---
 
 ## ✅ Master Batch Sequence (Version 3 — Unified Workflow)
-Each stage is sequential and assumes the previous stage has been completed. Status markers (`[ ]` pending, `[~]` in progress, `[x]` done) should be updated as you execute.
+Each batch is ordered for execution. Complete a batch before advancing to the next so environment state and evidence capture stay synchronized. Status markers (`[ ]` pending, `[~]` in progress, `[x]` done) should be updated at the batch level and for each task.
 
-1. **[ ] Workspace & Dependency Refresh**
-   - Pull latest `work` branch, prune stale venv/node installs, and reinstall backend requirements to ensure `psutil` is available for monitoring hooks.【F:backend/requirements.txt†L1-L47】
-   - Confirm `.env` and `.env.local` files exist per configuration checklist (see Stage 3 for verification).【F:API_CONFIGURATION_COMPLETE.md†L8-L129】
+### 🟡 Batch 0 — Preflight Sync & Safety Net
+- **[ ] Refresh workspace dependencies**
+  - Pull the latest `work` branch, remove stale virtualenv/node modules, and reinstall backend requirements to ensure `psutil` and monitoring dependencies are available.【F:backend/requirements.txt†L1-L47】
+- **[ ] Validate secret files are present**
+  - Confirm `.env` / `.env.local` align with the configuration checklist prior to starting the services.【F:API_CONFIGURATION_COMPLETE.md†L8-L129】
 
-2. **[ ] Kill Residual Uvicorn Processes & Reset Ports**
-   - Use Task Manager/`Get-Process`/`lsof` to terminate any listeners on ports 8001-8002 (zombie processes were the confirmed root cause for the intermittent 500s).【F:CLEANUP_AUDIT_REPORT.md†L170-L184】
-   - Document the reset in an ops log entry (include PID list) before moving forward.
+### 🔴 Batch 1 — Environment Reset & Port Hygiene
+- **[ ] Kill residual Uvicorn processes**
+  - Use Task Manager/`Get-Process`/`lsof` to terminate listeners on ports 8001-8002 (duplicate listeners were the confirmed root cause for the intermittent 500s).【F:CLEANUP_AUDIT_REPORT.md†L170-L214】
+- **[ ] Log the cleanup**
+  - Record PID, timestamp, and operator in the ops journal to preserve traceability for the audit trail.
 
-3. **[ ] Verify Configuration & Secrets**
-   - From `backend/`, run `python verify_config.py` and resolve any `[FAIL]` entries before proceeding.【F:backend/verify_config.py†L34-L111】
-   - Capture the masked output and store it in the day’s audit notes (`PRODUCTION_DEPLOYMENT_GUIDE.md` or launch tracker).
+### 🟠 Batch 2 — Configuration Assurance
+- **[ ] Run `verify_config.py`**
+  - From `backend/`, execute `python verify_config.py`; remediate any `[FAIL]` entries before proceeding.【F:backend/verify_config.py†L34-L111】
+- **[ ] Archive verification output**
+  - Mask sensitive fields and attach the results to the day’s deployment notes (`PRODUCTION_DEPLOYMENT_GUIDE.md` or launch tracker).
 
-4. **[ ] Launch Backend Cleanly**
-   - Start FastAPI on port 8001 using `uvicorn app.main:app --reload --port 8001`, ensuring only a single PID binds to the port (log PID + timestamp).【F:API_CONFIGURATION_COMPLETE.md†L61-L108】【F:CLEANUP_AUDIT_REPORT.md†L186-L214】
-   - Tail logs to confirm the options router is registered and no immediate errors surface.
+### 🟢 Batch 3 — Backend Launch & Live Validation
+- **[ ] Start FastAPI cleanly**
+  - Launch with `uvicorn app.main:app --reload --port 8001`, ensuring only a single PID binds to the port and capturing PID + timestamp in the log.【F:API_CONFIGURATION_COMPLETE.md†L61-L108】【F:CLEANUP_AUDIT_REPORT.md†L186-L214】
+- **[ ] Tail startup logs**
+  - Confirm router registration and absence of immediate stack traces while services warm up.
+- **[ ] Smoke-test options endpoints**
+  - Run curl checks for expirations, chain, and Greeks; confirm the 500 regression is gone and Greeks/IV/open-interest data are populated.【F:OPTIONS_TRADING_COMPLETE.md†L11-L189】
+- **[ ] Archive API responses**
+  - Store raw outputs for SPY + OPTT in `TEST_RESULTS.md` so evidence persists with the launch package.【F:TEST_RESULTS.md†L1-L58】
 
-5. **[ ] Smoke-Test Critical Options Endpoints**
-   - Run the canonical curl checks for expirations, chain, and Greeks to validate that the 500 regression is gone and data quality (Greeks, IV, open interest) matches expectations.【F:OPTIONS_TRADING_COMPLETE.md†L11-L189】
-   - Archive raw responses for SPY + OPTT into `TEST_RESULTS.md` for traceability.
+### 🔵 Batch 4 — Frontend Proxy & UX Confirmation
+- **[ ] Reconfirm proxy routes**
+  - Verify Vite proxy/`ALLOW_GET` entries include `/api/options/chain` and `/api/options/expirations` to match the backend routes.【F:OPTIONS_TRADING_COMPLETE.md†L35-L198】
+- **[ ] Manual UI walkthrough**
+  - Exercise the Options Trading wedge, checking dropdowns, filters, and Greeks rendering on desktop and mobile breakpoints; log observations for follow-up tickets.
 
-6. **[ ] Frontend Proxy & UI Verification**
-   - Confirm proxy routes and ALLOW_GET lists still include the options endpoints, then open the Options Trading wedge to validate dropdowns, filters, and Greeks rendering.【F:OPTIONS_TRADING_COMPLETE.md†L35-L198】
-   - Note any UI regressions (especially mobile/responsive quirks) for later UX passes.
+### 🟣 Batch 5 — Automated Test Battery
+- **[ ] Backend targeted pytest**
+  - Run `pytest backend/tests/test_api_endpoints.py::TestOptions` (and adjacent suites if time) to validate service-level contracts.
+- **[ ] Playwright regression run**
+  - Execute `npx playwright test` and re-run any flaky specs with trace viewer; success criteria come from the MCP automation checklist.【F:MCP_SETUP_COMPLETE.md†L36-L88】
+- **[ ] Thunder Client/API client validation**
+  - Trigger saved requests for expirations/chain via proxy and direct FastAPI endpoints to confirm manual coverage stays in sync.【F:MCP_SETUP_COMPLETE.md†L69-L88】
 
-7. **[ ] Automated Test Execution**
-   - Backend: execute targeted pytest suite (`pytest backend/tests/test_api_endpoints.py::TestOptions` etc.) if time permits.
-   - Frontend: run `npx playwright test` (headless) and rerun flaky specs with trace viewer as needed; Playwright coverage enumerated in `MCP_SETUP_COMPLETE.md` sets the required assertions.【F:MCP_SETUP_COMPLETE.md†L36-L88】
-   - Thunder Client: fire the prepared requests (expirations/chain via proxy and direct) to double-check manual test coverage.【F:MCP_SETUP_COMPLETE.md†L69-L88】
+### 🟤 Batch 6 — Monitoring & Logging Hardening
+- **[ ] Wire psutil/system metrics**
+  - Add `psutil`-based health checks or port guard scripts so multi-PID listeners raise alerts automatically.【F:backend/requirements.txt†L1-L47】【F:DEPLOYMENT_VERIFICATION.md†L60-L104】
+- **[ ] Schedule recurring hygiene checks**
+  - Configure cron/task scheduler jobs to run port scans and notify the ops channel when conflicts appear.
+- **[ ] Improve log retention**
+  - Ensure backend logs rotate and remain accessible for failure correlation during future incident reviews.
 
-8. **[ ] Monitoring & Logging Hardening**
-   - Hook `psutil` metrics into the startup monitor or health endpoint (if not already) to prevent silent regressions, aligning with the zombie-process lessons learned.【F:backend/requirements.txt†L1-L47】【F:DEPLOYMENT_VERIFICATION.md†L60-L104】
-   - Schedule recurring checks (cron/task scheduler) to alert on multi-PID port listeners.
-
-9. **[ ] Documentation & Knowledge Capture**
-   - Update `TEST_RESULTS.md`, `LAUNCH_READINESS.md`, and `PAIID_APP_STATE.md` with the day’s outcomes and any newly closed blockers.【F:TODO.md†L1-L114】【F:PAIID_APP_STATE.md†L1-L24】
-   - Ensure `BUG_REPORT_OPTIONS_500.md` and `KNOWN_ISSUES.md` reflect the resolution, leaving breadcrumbs for future incident reviews.【F:BUG_REPORT_OPTIONS_500.md†L1-L117】【F:KNOWN_ISSUES.md†L3-L53】
-
-10. **[ ] Launch Readiness Gate**
-    - Reconcile remaining MVP blockers (mobile testing & chart export) and mark owners/timelines so the launch decision is data-backed.【F:TODO.md†L21-L69】
-    - Capture final sign-off in `PAIID_APP_STATE.md` and `LAUNCH_READINESS.md`.
+### ⚫ Batch 7 — Documentation, Communication & Launch Gate
+- **[ ] Update operational records**
+  - Sync `TEST_RESULTS.md`, `LAUNCH_READINESS.md`, and `PAIID_APP_STATE.md` with the day’s findings and any blockers closed.【F:TEST_RESULTS.md†L1-L58】【F:PAIID_APP_STATE.md†L1-L24】
+- **[ ] Close out incident narrative**
+  - Reflect the resolution in `BUG_REPORT_OPTIONS_500.md` and `KNOWN_ISSUES.md`, leaving breadcrumbs for future audits.【F:BUG_REPORT_OPTIONS_500.md†L1-L117】【F:KNOWN_ISSUES.md†L3-L53】
+- **[ ] Launch readiness checkpoint**
+  - Reconcile remaining MVP blockers (mobile testing, chart export, etc.), assign owners/timelines, and record the sign-off decision in `PAIID_APP_STATE.md` and `LAUNCH_READINESS.md`.【F:TODO.md†L21-L69】【F:PAIID_APP_STATE.md†L1-L24】
 
 ---
 
@@ -75,11 +92,11 @@ These references capture the two prior batches you started so progress can be tr
 ---
 
 ## 🔍 Comparison Matrix
-| Plan | Primary Focus | Strengths | Gaps Addressed by V3 | Launch Impact |
-|------|---------------|-----------|----------------------|---------------|
-| **Version 1** | Rapid recovery & validation | Fast to execute; ensured backend restarts weren’t hitting zombie PIDs. | Lacked monitoring, documentation updates, and linkage to launch trackers. | Short-term stability only. |
-| **Version 2** | Process hardening & monitoring | Added monitoring/log rotation and proxy verification routines. | Still omitted config verification, explicit documentation closure, and MVP blocker tracking. | Improved reliability but didn’t tie directly to launch checklist. |
-| **Version 3 (Current)** | End-to-end execution (tech + ops) | Integrates environment cleanup, config checks, automated tests, monitoring, and documentation updates in one run. | — | Positions PaiiD for launch readiness sign-off with traceable evidence. |
+| Plan | Primary Focus | Benefits (+) | Limitations (−) | Launch Impact |
+|------|---------------|--------------|-----------------|---------------|
+| **Version 1** | Rapid recovery & validation | Fastest path to prove options endpoint stability after restarts. | No monitoring, limited documentation, no linkage to launch trackers. | Short-term stability only; recurring regressions likely. |
+| **Version 2** | Process hardening & monitoring | Introduced monitoring/log rotation and proxy verification routines. | Still missing config verification, evidence capture, and MVP blocker alignment. | Better reliability but still disconnected from launch governance. |
+| **Version 3 (Current)** | End-to-end execution (tech + ops) | Unifies cleanup, configuration checks, automated tests, monitoring, and documentation in one batched flow. | Requires disciplined execution time (~90–120 min) and cross-team coordination. | Positions PaiiD for launch readiness sign-off with auditable evidence. |
 
 ---
 
