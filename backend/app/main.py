@@ -26,6 +26,7 @@ from slowapi.errors import RateLimitExceeded
 
 from .core.config import settings
 from .routers import (
+    alpaca_passthrough,
     ai,
     analytics,
     auth,
@@ -236,6 +237,7 @@ app.include_router(auth.router, prefix="/api")  # Authentication endpoints
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(portfolio.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
+app.include_router(alpaca_passthrough.router, prefix="/api")
 app.include_router(positions.router)  # Position management
 app.include_router(stream.router, prefix="/api")
 app.include_router(screening.router, prefix="/api")

@@ -6,11 +6,18 @@ Market Data comes from Tradier API
 
 import logging
 import os
+from datetime import date
 from typing import Dict, List, Optional
 
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.requests import (
+    CreateWatchlistRequest,
+    GetAssetsRequest,
+    GetCalendarRequest,
+    LimitOrderRequest,
+    MarketOrderRequest,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -230,6 +237,119 @@ class AlpacaClient:
         except Exception as e:
             logger.error(f"❌ Alpaca cancel_order failed: {str(e)}")
             raise Exception(f"Failed to cancel order: {str(e)}")
+
+    def list_assets(
+        self, status: str | None = None, asset_class: str | None = None
+    ) -> List[Dict]:
+        """List tradable assets"""
+
+        try:
+            request = None
+            if status or asset_class:
+                request = GetAssetsRequest(status=status, asset_class=asset_class)
+
+            assets = self.client.get_all_assets(request)
+            return [asset.model_dump() for asset in assets]
+        except Exception as e:
+            logger.error(f"❌ Alpaca list_assets failed: {str(e)}")
+            raise Exception(f"Failed to fetch assets: {str(e)}")
+
+    def get_asset(self, symbol: str) -> Dict:
+        """Get asset details by symbol"""
+
+        try:
+            asset = self.client.get_asset(symbol)
+            return asset.model_dump()
+        except Exception as e:
+            logger.error(f"❌ Alpaca get_asset failed for {symbol}: {str(e)}")
+            raise Exception(f"Failed to fetch asset {symbol}: {str(e)}")
+
+    def get_clock(self) -> Dict:
+        """Get current market clock"""
+
+        try:
+            clock = self.client.get_clock()
+            clock_data = clock.model_dump()
+            # Normalize datetime fields for JSON serialization
+            if clock.timestamp:
+                clock_data["timestamp"] = clock.timestamp.isoformat()
+            if clock.next_open:
+                clock_data["next_open"] = clock.next_open.isoformat()
+            if clock.next_close:
+                clock_data["next_close"] = clock.next_close.isoformat()
+            return clock_data
+        except Exception as e:
+            logger.error(f"❌ Alpaca get_clock failed: {str(e)}")
+            raise Exception(f"Failed to fetch market clock: {str(e)}")
+
+    def get_calendar(
+        self, start: str | None = None, end: str | None = None
+    ) -> List[Dict]:
+        """Get market calendar entries"""
+
+        try:
+            request = None
+            if start or end:
+                request = GetCalendarRequest(
+                    start=date.fromisoformat(start) if start else None,
+                    end=date.fromisoformat(end) if end else None,
+                )
+
+            calendar_days = self.client.get_calendar(request)
+            results: List[Dict] = []
+            for day in calendar_days:
+                day_data = day.model_dump()
+                day_data["date"] = str(day.date)
+                day_data["open"] = day.open.isoformat() if day.open else None
+                day_data["close"] = day.close.isoformat() if day.close else None
+                results.append(day_data)
+            return results
+        except ValueError as e:
+            logger.error(f"❌ Alpaca get_calendar invalid date: {str(e)}")
+            raise Exception(f"Invalid calendar date filter: {str(e)}")
+        except Exception as e:
+            logger.error(f"❌ Alpaca get_calendar failed: {str(e)}")
+            raise Exception(f"Failed to fetch market calendar: {str(e)}")
+
+    def get_watchlists(self) -> List[Dict]:
+        """Retrieve all watchlists"""
+
+        try:
+            watchlists = self.client.get_watchlists()
+            result = []
+            for watchlist in watchlists:
+                data = watchlist.model_dump()
+                data["assets"] = [asset.model_dump() for asset in watchlist.assets]
+                result.append(data)
+            logger.info(f"✅ Retrieved {len(result)} Alpaca watchlists")
+            return result
+        except Exception as e:
+            logger.error(f"❌ Alpaca get_watchlists failed: {str(e)}")
+            raise Exception(f"Failed to fetch watchlists: {str(e)}")
+
+    def create_watchlist(self, name: str, symbols: List[str]) -> Dict:
+        """Create a new watchlist"""
+
+        try:
+            request = CreateWatchlistRequest(name=name, symbols=symbols)
+            watchlist = self.client.create_watchlist(request)
+            data = watchlist.model_dump()
+            data["assets"] = [asset.model_dump() for asset in watchlist.assets]
+            logger.info(f"✅ Created Alpaca watchlist '{name}' with {len(symbols)} symbols")
+            return data
+        except Exception as e:
+            logger.error(f"❌ Alpaca create_watchlist failed: {str(e)}")
+            raise Exception(f"Failed to create watchlist: {str(e)}")
+
+    def delete_watchlist(self, watchlist_id: str) -> None:
+        """Delete watchlist by ID"""
+
+        try:
+            self.client.delete_watchlist_by_id(watchlist_id)
+            logger.info(f"✅ Deleted Alpaca watchlist {watchlist_id}")
+        except Exception as e:
+            logger.error(f"❌ Alpaca delete_watchlist failed: {str(e)}")
+            raise Exception(f"Failed to delete watchlist: {str(e)}")
 
 
 # Singleton instance
