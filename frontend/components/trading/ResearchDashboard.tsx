@@ -1163,7 +1163,7 @@ Proposal system coming in INCREMENT 9`);
 
           {showOptionsChain && (
             <div className="animate-slideDown">
-              <OptionsChain symbol={stockData.symbol} onStrikeSelect={handleStrikeSelect} />
+              <OptionsChain symbol={stockData.symbol} onClose={() => setShowOptionsChain(false)} />
             </div>
           )}
         </div>
