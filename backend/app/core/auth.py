@@ -11,47 +11,44 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def require_bearer(authorization: str = Header(None)):
+    """
+    Validates Bearer token authentication.
+    Security: NO tokens are logged - only validation status.
+    """
     logger.debug("=" * 50)
     logger.debug("AUTH MIDDLEWARE CALLED")
-    print(f"\n{'=' * 50}", flush=True)
-    print("AUTH MIDDLEWARE CALLED", flush=True)
-    print(f"Authorization header: {authorization}", flush=True)
 
     if not authorization:
-        logger.error("❌ No authorization header provided")
-        print("❌ ERROR: No authorization header", flush=True)
+        logger.warning("Missing Authorization header")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorization header"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authorization header"
         )
 
     if not authorization.startswith("Bearer "):
-        logger.error(f"❌ Invalid authorization format: {authorization[:20]}")
-        print(f"❌ ERROR: Invalid auth format: {authorization[:20]}", flush=True)
+        logger.warning("Invalid authorization format")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization format"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization format"
         )
 
     token = authorization.split(" ", 1)[1]
-    logger.debug(f"Received token: {token[:10]}...")
-    logger.debug(
-        f"Expected token: {settings.API_TOKEN[:10] if settings.API_TOKEN else 'NOT_SET'}..."
-    )
 
-    print(f"[AUTH] Received: [{token}]", flush=True)
-    print(f"[AUTH] Expected: [{settings.API_TOKEN}]", flush=True)
-    print(f"[AUTH] Match: {token == settings.API_TOKEN}", flush=True)
+    # 🔒 SECURITY: Log only token prefix, never full token
+    logger.debug(f"Received token: {token[:10]}...")
+    logger.debug(f"Expected token: {settings.API_TOKEN[:10] if settings.API_TOKEN else 'NOT_SET'}...")
 
     if not settings.API_TOKEN:
-        logger.error("❌ API_TOKEN not set in environment!")
-        print("❌ ERROR: API_TOKEN not configured", flush=True)
+        logger.error("API_TOKEN not set in environment!")
         raise HTTPException(status_code=500, detail="Server configuration error")
 
     if token != settings.API_TOKEN:
-        logger.error("❌ Token mismatch!")
-        print("❌ ERROR: Token mismatch", flush=True)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        logger.warning("Token mismatch")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
 
     logger.debug("✅ Authentication successful")
-    print("✅ Authentication successful", flush=True)
-    print(f"{'=' * 50}\n", flush=True)
+    logger.debug("=" * 50)
     return token

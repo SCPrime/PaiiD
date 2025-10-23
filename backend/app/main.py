@@ -11,7 +11,7 @@ load_dotenv(env_path)
 print("\n===== BACKEND STARTUP =====")
 print(f".env path: {env_path}")
 print(f".env exists: {env_path.exists()}")
-print(f"API_TOKEN from env: {os.getenv('API_TOKEN', 'NOT_SET')}")
+print(f"API_TOKEN configured: {'YES' if os.getenv('API_TOKEN') else 'NO'}")
 print(f"TRADIER_API_KEY configured: {'YES' if os.getenv('TRADIER_API_KEY') else 'NO'}")
 print("Deployed from: main branch - Tradier integration active")
 print("===========================\n", flush=True)
@@ -85,7 +85,7 @@ else:
     print("[WARNING] SENTRY_DSN not configured - error tracking disabled", flush=True)
 
 print("\n===== SETTINGS LOADED =====")
-print(f"settings.API_TOKEN: {settings.API_TOKEN}")
+print(f"settings.API_TOKEN: {'*' * 10 if settings.API_TOKEN else 'NOT_SET'}")
 print("===========================\n", flush=True)
 
 app = FastAPI(

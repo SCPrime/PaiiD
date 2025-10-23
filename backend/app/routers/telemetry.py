@@ -6,8 +6,10 @@ import json
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+
+from app.core.auth import require_bearer
 
 
 router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
@@ -30,7 +32,7 @@ class TelemetryBatch(BaseModel):
     events: list[TelemetryEvent]
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(require_bearer)])
 async def log_telemetry(batch: TelemetryBatch):
     """
     Receive and store telemetry events
