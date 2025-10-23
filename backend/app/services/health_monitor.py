@@ -4,9 +4,10 @@ Production Health Monitoring Service
 import logging
 import time
 from datetime import datetime
-from typing import Dict, List
+
 import psutil
 import requests
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,15 +18,15 @@ class HealthMonitor:
         self.request_count = 0
         self.error_count = 0
         self.response_times: list[float] = []
-        
+
     def get_system_health(self) -> dict:
         """Get comprehensive system health metrics"""
-        
+
         # CPU and Memory
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
-        
+
         # Application metrics
         uptime = (datetime.now() - self.start_time).total_seconds()
         avg_response_time = (
@@ -58,11 +59,11 @@ class HealthMonitor:
             },
             "dependencies": self._check_dependencies()
         }
-    
+
     def _check_dependencies(self) -> dict:
         """Check health of external dependencies"""
         dependencies = {}
-        
+
         # Check Tradier API
         try:
             start = time.time()
@@ -78,7 +79,7 @@ class HealthMonitor:
                 "error": str(e),
                 "last_checked": datetime.now().isoformat()
             }
-        
+
         # Check Alpaca API
         try:
             start = time.time()
@@ -96,7 +97,7 @@ class HealthMonitor:
             }
 
         return dependencies
-    
+
     def record_request(self, response_time: float, is_error: bool = False):
         """Record request metrics"""
         self.request_count += 1

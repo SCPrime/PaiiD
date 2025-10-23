@@ -10,19 +10,18 @@ Phase 1 Implementation:
 - Multi-leg order support
 """
 
-from datetime import datetime
-from typing import List, Optional
-import requests
 import asyncio
 import logging
+from datetime import datetime
 
+import requests
+from cachetools import TTLCache
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
 
-from ..core.config import settings
 from ..core.auth import require_bearer
 from ..services.tradier_client import get_tradier_client
+
 
 router = APIRouter(prefix="/options", tags=["options"])
 logger = logging.getLogger(__name__)
@@ -56,21 +55,21 @@ class OptionContract(BaseModel):
     expiration_date: str = Field(..., description="Expiration date (YYYY-MM-DD)")
 
     # Market data
-    bid: Optional[float] = Field(None, description="Current bid price")
-    ask: Optional[float] = Field(None, description="Current ask price")
-    last_price: Optional[float] = Field(None, description="Last traded price")
-    volume: Optional[int] = Field(None, description="Trading volume")
-    open_interest: Optional[int] = Field(None, description="Open interest")
+    bid: float | None = Field(None, description="Current bid price")
+    ask: float | None = Field(None, description="Current ask price")
+    last_price: float | None = Field(None, description="Last traded price")
+    volume: int | None = Field(None, description="Trading volume")
+    open_interest: int | None = Field(None, description="Open interest")
 
     # Greeks (populated by greeks service)
-    delta: Optional[float] = Field(None, description="Delta (sensitivity to price)")
-    gamma: Optional[float] = Field(None, description="Gamma (rate of delta change)")
-    theta: Optional[float] = Field(None, description="Theta (time decay)")
-    vega: Optional[float] = Field(None, description="Vega (sensitivity to volatility)")
-    rho: Optional[float] = Field(None, description="Rho (sensitivity to interest rates)")
+    delta: float | None = Field(None, description="Delta (sensitivity to price)")
+    gamma: float | None = Field(None, description="Gamma (rate of delta change)")
+    theta: float | None = Field(None, description="Theta (time decay)")
+    vega: float | None = Field(None, description="Vega (sensitivity to volatility)")
+    rho: float | None = Field(None, description="Rho (sensitivity to interest rates)")
 
     # Implied volatility
-    implied_volatility: Optional[float] = Field(None, description="Implied volatility")
+    implied_volatility: float | None = Field(None, description="Implied volatility")
 
 
 class OptionsChainResponse(BaseModel):
@@ -78,9 +77,9 @@ class OptionsChainResponse(BaseModel):
 
     symbol: str
     expiration_date: str
-    underlying_price: Optional[float] = None
-    calls: List[OptionContract] = []
-    puts: List[OptionContract] = []
+    underlying_price: float | None = None
+    calls: list[OptionContract] = []
+    puts: list[OptionContract] = []
     total_contracts: int = 0
 
 
@@ -99,7 +98,7 @@ class ExpirationDate(BaseModel):
 @router.get("/chain/{symbol}", response_model=OptionsChainResponse, dependencies=[Depends(require_bearer)])
 async def get_options_chain(
     symbol: str,
-    expiration: Optional[str] = Query(None, description="Expiration date (YYYY-MM-DD). If not provided, uses nearest expiration."),
+    expiration: str | None = Query(None, description="Expiration date (YYYY-MM-DD). If not provided, uses nearest expiration."),
 ):
     """
     Get options chain for a symbol with Greeks
@@ -221,16 +220,16 @@ async def get_options_chain(
     except requests.exceptions.HTTPError as e:
         raise HTTPException(
             status_code=e.response.status_code,
-            detail=f"Tradier API error: {str(e)}"
+            detail=f"Tradier API error: {e!s}"
         )
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error fetching options chain: {str(e)}"
+            detail=f"Error fetching options chain: {e!s}"
         )
 
 
-@router.get("/expirations/{symbol}", response_model=List[ExpirationDate])
+@router.get("/expirations/{symbol}", response_model=list[ExpirationDate])
 def get_expiration_dates(symbol: str, authorization: str = Depends(require_bearer)):
     """
     Get available expiration dates for a symbol
@@ -272,13 +271,13 @@ def get_expiration_dates(symbol: str, authorization: str = Depends(require_beare
         logger.error(f"Tradier HTTP error: {e}")
         raise HTTPException(
             status_code=e.response.status_code,
-            detail=f"Tradier API error: {str(e)}"
+            detail=f"Tradier API error: {e!s}"
         )
     except Exception as e:
         logger.error(f"Error fetching expirations: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error fetching expirations: {str(e)}"
+            detail=f"Error fetching expirations: {e!s}"
         )
 
 
@@ -302,7 +301,7 @@ async def get_option_contract(option_symbol: str):
 # ============================================================================
 
 
-async def fetch_options_chain_from_alpaca(symbol: str, expiration: Optional[str] = None) -> dict:
+async def fetch_options_chain_from_alpaca(symbol: str, expiration: str | None = None) -> dict:
     """
     Fetch options chain from Alpaca API
 
@@ -311,7 +310,7 @@ async def fetch_options_chain_from_alpaca(symbol: str, expiration: Optional[str]
     pass
 
 
-async def calculate_greeks_for_contracts(contracts: List[dict], underlying_price: float) -> List[OptionContract]:
+async def calculate_greeks_for_contracts(contracts: list[dict], underlying_price: float) -> list[OptionContract]:
     """
     Calculate Greeks for option contracts
 

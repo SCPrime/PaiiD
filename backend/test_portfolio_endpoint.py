@@ -3,11 +3,15 @@ Test script for the /api/ai/analyze-portfolio endpoint
 """
 
 import sys
+
+
 sys.path.insert(0, '.')
 
 # Test by directly importing and calling the function
-from app.routers.ai import analyze_portfolio
 import asyncio
+
+from app.routers.ai import analyze_portfolio
+
 
 async def test_portfolio_endpoint():
     """Test the portfolio analysis endpoint"""
@@ -20,10 +24,10 @@ async def test_portfolio_endpoint():
     print(f"   Docstring: {analyze_portfolio.__doc__[:100]}...")
 
     print("\n[INFO] ENDPOINT DETAILS:")
-    print(f"   - Route: /ai/analyze-portfolio")
-    print(f"   - Method: GET")
-    print(f"   - Authentication: Bearer token required")
-    print(f"   - Returns: PortfolioAnalysisResponse")
+    print("   - Route: /ai/analyze-portfolio")
+    print("   - Method: GET")
+    print("   - Authentication: Bearer token required")
+    print("   - Returns: PortfolioAnalysisResponse")
 
     print("\n" + "="*80)
     print("[SUCCESS] ENDPOINT VERIFICATION COMPLETE")
