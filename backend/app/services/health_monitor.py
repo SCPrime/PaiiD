@@ -5,10 +5,18 @@ import logging
 import time
 from datetime import datetime
 from typing import Dict, List
-import psutil
 import requests
 
 logger = logging.getLogger(__name__)
+
+try:
+    import psutil  # type: ignore[import-untyped]
+except ModuleNotFoundError:  # pragma: no cover - exercised indirectly via tests
+    from . import _psutil_stub as psutil  # type: ignore[import-not-callable]
+
+    logger.warning(
+        "psutil is not installed; using lightweight fallback metrics from app.services._psutil_stub"
+    )
 
 
 class HealthMonitor:
