@@ -19,6 +19,7 @@ import { useIsMobile } from "../hooks/useBreakpoint";
 import { useWorkflow } from "../contexts/WorkflowContext";
 import StockLookup from "./StockLookup";
 import OptionsGreeksDisplay from "./OptionsGreeksDisplay";
+import RiskCalculator from "./trading/RiskCalculator";
 
 interface Order {
   symbol: string;
@@ -1478,6 +1479,26 @@ export default function ExecuteTradeForm() {
                   strike={parseFloat(strikePrice)}
                   expiry={expirationDate}
                   optionType={optionType}
+                />
+              </div>
+            )}
+
+            {/* Risk Analysis & Proposal System (conditional) */}
+            {assetClass === "option" && symbol.trim() && (
+              <div
+                style={{
+                  marginTop: theme.spacing.lg,
+                }}
+              >
+                <RiskCalculator
+                  onCreateProposal={(proposal) => {
+                    console.log("Proposal created:", proposal);
+                    showSuccess("Trade proposal created with risk analysis");
+                  }}
+                  onExecuteProposal={(proposal, limitPrice) => {
+                    console.log("Executing proposal:", proposal, "at price:", limitPrice);
+                    showSuccess(`Order submitted for ${proposal.option_symbol}`);
+                  }}
                 />
               </div>
             )}
