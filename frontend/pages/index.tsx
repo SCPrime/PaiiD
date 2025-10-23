@@ -16,6 +16,7 @@ import ActivePositions from "../components/ActivePositions";
 import StrategyBuilderAI from "../components/StrategyBuilderAI";
 import Backtesting from "../components/Backtesting";
 import Analytics from "../components/Analytics";
+import PositionManager from "../components/trading/PositionManager";
 
 import MarketScanner from "../components/MarketScanner";
 import RiskCalculator from "../components/trading/RiskCalculator";
@@ -109,7 +110,7 @@ export default function Dashboard() {
           return <MorningRoutineAI />;
 
         case "active-positions":
-          return <ActivePositions />;
+          return <PositionManager />;
 
         case "execute":
           return <ExecuteTradeForm />;
