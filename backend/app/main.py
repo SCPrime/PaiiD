@@ -63,7 +63,9 @@ if settings.SENTRY_DSN:
         traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
         profiles_sample_rate=0.1,  # 10% profiling
         environment=(
-            "production" if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "") else "development"
+            "production"
+            if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "")
+            else "development"
         ),
         release="paiid-backend@1.0.0",
         send_default_pii=False,  # Don't send personally identifiable info
@@ -136,18 +138,27 @@ async def startup_event():
     # ⚠️ ARCHITECTURE NOTE: Tradier provides ALL market data (quotes, streaming, analysis)
     # Alpaca is used ONLY for paper trade execution (orders, positions, account)
     # Future: Tradier will also handle live trading post-MVP
-    print("[INFO] Market data: Tradier API | Trade execution: Alpaca Paper Trading", flush=True)
+    print(
+        "[INFO] Market data: Tradier API | Trade execution: Alpaca Paper Trading",
+        flush=True,
+    )
 
     # Start Tradier streaming service (non-blocking background task)
     # The streaming service runs independently and should NOT block application startup
     # If circuit breaker is active, it will wait in the background without blocking HTTP requests
     try:
         async with monitor.phase("tradier_stream_init", timeout=10.0):
-            from .services.tradier_stream import get_tradier_stream, start_tradier_stream
+            from .services.tradier_stream import (
+                get_tradier_stream,
+                start_tradier_stream,
+            )
 
             # Start returns immediately - WebSocket connection happens in background
             await start_tradier_stream()
-            print("[OK] Tradier streaming service started (running in background)", flush=True)
+            print(
+                "[OK] Tradier streaming service started (running in background)",
+                flush=True,
+            )
 
             # Queue subscription request (non-blocking) - will be sent when WebSocket connects
             stream = get_tradier_stream()
@@ -159,8 +170,13 @@ async def startup_event():
                     flush=True,
                 )
     except Exception as e:
-        print(f"[WARNING] Tradier stream startup failed (non-blocking): {e}", flush=True)
-        print("[INFO] Application will continue - streaming will retry automatically", flush=True)
+        print(
+            f"[WARNING] Tradier stream startup failed (non-blocking): {e}", flush=True
+        )
+        print(
+            "[INFO] Application will continue - streaming will retry automatically",
+            flush=True,
+        )
 
     # Finish monitoring and log summary
     monitor.finish()

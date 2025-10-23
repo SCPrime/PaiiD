@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
 
 interface PositionGreeks {
   delta: number;
@@ -43,22 +43,22 @@ export default function PositionManager() {
   useEffect(() => {
     fetchPositions();
     fetchPortfolioGreeks();
-    
+
     const interval = setInterval(() => {
       fetchPositions();
       fetchPortfolioGreeks();
     }, refreshInterval);
-    
+
     return () => clearInterval(interval);
   }, [refreshInterval]);
 
   const fetchPositions = async () => {
     try {
-      const res = await fetch('/api/proxy/positions');
+      const res = await fetch("/api/proxy/positions");
       const data = await res.json();
       setPositions(data);
     } catch (error) {
-      console.error('Failed to fetch positions:', error);
+      console.error("Failed to fetch positions:", error);
     } finally {
       setLoading(false);
     }
@@ -66,37 +66,37 @@ export default function PositionManager() {
 
   const fetchPortfolioGreeks = async () => {
     try {
-      const res = await fetch('/api/proxy/positions/greeks');
+      const res = await fetch("/api/proxy/positions/greeks");
       const data = await res.json();
       setPortfolioGreeks(data);
     } catch (error) {
-      console.error('Failed to fetch portfolio Greeks:', error);
+      console.error("Failed to fetch portfolio Greeks:", error);
     }
   };
 
   const handleClosePosition = async (positionId: string) => {
-    if (!confirm('Are you sure you want to close this position?')) return;
-    
+    if (!confirm("Are you sure you want to close this position?")) return;
+
     try {
       await fetch(`/api/proxy/positions/${positionId}/close`, {
-        method: 'POST'
+        method: "POST",
       });
       fetchPositions();
     } catch (error) {
-      console.error('Failed to close position:', error);
-      alert('Failed to close position');
+      console.error("Failed to close position:", error);
+      alert("Failed to close position");
     }
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
     }).format(value);
   };
 
   const formatPercent = (value: number) => {
-    return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
+    return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
   };
 
   if (loading) {
@@ -148,9 +148,7 @@ export default function PositionManager() {
 
       {/* Positions Table */}
       {positions.length === 0 ? (
-        <div className="text-center text-gray-400 py-12">
-          No open positions
-        </div>
+        <div className="text-center text-gray-400 py-12">No open positions</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -177,14 +175,18 @@ export default function PositionManager() {
                   <td className="text-right p-3">{position.qty}</td>
                   <td className="text-right p-3">{formatCurrency(position.avg_entry_price)}</td>
                   <td className="text-right p-3">{formatCurrency(position.current_price)}</td>
-                  <td className={`text-right p-3 font-semibold ${position.unrealized_pl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  <td
+                    className={`text-right p-3 font-semibold ${position.unrealized_pl >= 0 ? "text-green-400" : "text-red-400"}`}
+                  >
                     <div>{formatCurrency(position.unrealized_pl)}</div>
                     <div className="text-xs">{formatPercent(position.unrealized_pl_percent)}</div>
                   </td>
                   <td className="text-right p-3">{position.greeks.delta.toFixed(3)}</td>
                   <td className="text-right p-3">{position.greeks.theta.toFixed(2)}</td>
                   <td className="text-right p-3">
-                    <span className={position.days_to_expiry < 7 ? 'text-red-400 font-semibold' : ''}>
+                    <span
+                      className={position.days_to_expiry < 7 ? "text-red-400 font-semibold" : ""}
+                    >
                       {position.days_to_expiry}d
                     </span>
                   </td>
