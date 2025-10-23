@@ -1,6 +1,6 @@
 /**
- * TypeScript interface for options contract data
- * Includes symbol, pricing, expiration, type, and Greeks
+ * Options Contract Interface
+ * Defines the structure for options contract data
  */
 
 export interface Greeks {
@@ -18,12 +18,16 @@ export interface OptionsContract {
   greeks: Greeks;
 }
 
-// Optional: Extended interface with additional common fields
-export interface ExtendedOptionsContract extends OptionsContract {
-  bid?: number;
-  ask?: number;
-  last_price?: number;
-  volume?: number;
-  open_interest?: number;
-  implied_volatility?: number;
-}
+// Example usage:
+// const aaplCall: OptionsContract = {
+//   symbol: "AAPL",
+//   strike_price: 150.00,
+//   expiration_date: "2024-01-19",
+//   option_type: "call",
+//   greeks: {
+//     delta: 0.65,
+//     gamma: 0.02,
+//     theta: -0.15,
+//     vega: 0.25
+//   }
+// };
