@@ -1,6 +1,5 @@
 /**
  * TypeScript interface for options contract data
- * Includes symbol, pricing, expiration, type, and Greeks
  */
 
 export interface Greeks {
@@ -16,14 +15,4 @@ export interface OptionsContract {
   expiration_date: string;
   option_type: "call" | "put";
   greeks: Greeks;
-}
-
-// Optional: Extended interface with additional common fields
-export interface ExtendedOptionsContract extends OptionsContract {
-  bid?: number;
-  ask?: number;
-  last_price?: number;
-  volume?: number;
-  open_interest?: number;
-  implied_volatility?: number;
 }
