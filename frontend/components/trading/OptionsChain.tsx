@@ -1,403 +1,508 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 /**
- * Options Chain Viewer
+ * Options Chain Component
  *
- * Displays options chain with calls/puts, greeks, and IV
- * Features: Strike selection, expiration picker, ITM/ATM/OTM filtering
+ * Displays options chain with calls/puts, strikes, Greeks, and execution interface.
+ * Phase 1 Implementation:
+ * - Fetch options chain from backend with Greeks
+ * - Display calls and puts side-by-side
+ * - Show Greeks with color coding
+ * - Filter by call/put/both
+ * - Expiration selector
  */
 
-interface OptionQuote {
-  strike: number;
-  expiration: string;
-  type: "call" | "put";
-  last: number;
-  bid: number;
-  ask: number;
-  volume: number;
-  openInterest: number;
-  delta: number;
-  gamma: number;
-  theta: number;
-  vega: number;
-  impliedVolatility: number;
+interface OptionContract {
+  symbol: string;
+  underlying_symbol: string;
+  option_type: "call" | "put";
+  strike_price: number;
+  expiration_date: string;
+
+  // Market data
+  bid?: number;
+  ask?: number;
+  last_price?: number;
+  volume?: number;
+  open_interest?: number;
+
+  // Greeks
+  delta?: number;
+  gamma?: number;
+  theta?: number;
+  vega?: number;
+  rho?: number;
+
+  // Implied volatility
+  implied_volatility?: number;
 }
 
 interface OptionsChainData {
   symbol: string;
-  underlyingPrice: number;
-  expirations: string[];
-  chains: {
-    strike: number;
-    call: OptionQuote | null;
-    put: OptionQuote | null;
-  }[];
+  expiration_date: string;
+  underlying_price?: number;
+  calls: OptionContract[];
+  puts: OptionContract[];
+  total_contracts: number;
+}
+
+interface ExpirationDate {
+  date: string;
+  days_to_expiry: number;
 }
 
 interface OptionsChainProps {
   symbol: string;
-  onStrikeSelect?: (strike: number, type: "call" | "put") => void;
+  onClose?: () => void;
 }
 
-type MoneyFilter = "all" | "itm" | "atm" | "otm";
-type SortBy = "strike" | "volume" | "oi" | "iv" | "delta";
+type FilterType = "all" | "calls" | "puts";
 
-export default function OptionsChain({ symbol, onStrikeSelect }: OptionsChainProps) {
-  const [loading, setLoading] = useState(false);
+export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
   const [chainData, setChainData] = useState<OptionsChainData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedExpiration, setSelectedExpiration] = useState<string>("");
-  const [selectedStrike, setSelectedStrike] = useState<{
-    strike: number;
-    type: "call" | "put";
-  } | null>(null);
-  const [moneyFilter, setMoneyFilter] = useState<MoneyFilter>("all");
-  const [sortBy, setSortBy] = useState<SortBy>("strike");
-  const [minOI, setMinOI] = useState(100);
-  const [maxSpreadPct, setMaxSpreadPct] = useState(10);
+  const [expirations, setExpirations] = useState<ExpirationDate[]>([]);
+  const [filter, setFilter] = useState<FilterType>("all");
 
+  // Fetch available expirations
   useEffect(() => {
     if (symbol) {
-      fetchOptionsChain(symbol, selectedExpiration);
+      fetchExpirations();
+    }
+  }, [symbol]);
+
+  // Fetch options chain when expiration selected
+  useEffect(() => {
+    if (symbol && selectedExpiration) {
+      fetchOptionsChain();
     }
   }, [symbol, selectedExpiration]);
 
-  const fetchOptionsChain = async (sym: string, exp?: string) => {
-    setLoading(true);
+  const fetchExpirations = async () => {
     try {
-      const url = `/api/market/options-chain?symbol=${sym}${exp ? `&expiration=${exp}` : ""}`;
-      const response = await fetch(url);
+      const token = process.env.NEXT_PUBLIC_API_TOKEN;
+
+      const response = await fetch(`/api/proxy/options/expirations/${symbol}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch expirations: ${response.statusText}`);
+      }
+
+      const data: ExpirationDate[] = await response.json();
+      setExpirations(data);
+
+      // Auto-select first expiration
+      if (data.length > 0) {
+        setSelectedExpiration(data[0].date);
+      }
+    } catch (err) {
+      console.error("Error fetching expirations:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch expirations");
+    }
+  };
+
+  const fetchOptionsChain = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = process.env.NEXT_PUBLIC_API_TOKEN;
+
+      const response = await fetch(
+        `/api/proxy/options/chain/${symbol}?expiration=${selectedExpiration}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`Failed to fetch options chain: ${response.statusText}`);
       }
+
       const data: OptionsChainData = await response.json();
       setChainData(data);
-
-      // Auto-select first expiration if not set
-      if (!selectedExpiration && data.expirations.length > 0) {
-        setSelectedExpiration(data.expirations[2] || data.expirations[0]);
-      }
-    } catch (error) {
-      console.error("Options chain fetch error:", error);
+    } catch (err) {
+      console.error("Error fetching options chain:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch options chain");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStrikeClick = (strike: number, type: "call" | "put") => {
-    setSelectedStrike({ strike, type });
-    onStrikeSelect?.(strike, type);
+  // TODO: Implement trade execution
+  // const handleExecuteTrade = (contract: OptionContract, side: "buy" | "sell") => {
+  //   console.log("Execute", side, "for", contract.symbol);
+  // };
+
+  // Format Greeks with color coding
+  const formatGreek = (value: number | undefined, type: string) => {
+    if (value === undefined || value === null) return "—";
+
+    let color = "#94a3b8";
+    if (type === "delta") {
+      color = value > 0 ? "#10b981" : "#ef4444";
+    } else if (type === "theta") {
+      color = value < 0 ? "#ef4444" : "#10b981";
+    }
+
+    return <span style={{ color }}>{value.toFixed(4)}</span>;
   };
 
-  const getMoneyness = (strike: number): "itm" | "atm" | "otm" => {
-    if (!chainData) return "otm";
-    const diff = Math.abs(strike - chainData.underlyingPrice);
-    if (diff < 2.5) return "atm";
-    if (strike < chainData.underlyingPrice) return "itm"; // Call ITM
-    return "otm";
+  // Group calls and puts by strike
+  const getStrikeMap = () => {
+    if (!chainData) return new Map();
+
+    const strikeMap = new Map<number, { call?: OptionContract; put?: OptionContract }>();
+
+    chainData.calls.forEach((call) => {
+      const existing = strikeMap.get(call.strike_price) || {};
+      strikeMap.set(call.strike_price, { ...existing, call });
+    });
+
+    chainData.puts.forEach((put) => {
+      const existing = strikeMap.get(put.strike_price) || {};
+      strikeMap.set(put.strike_price, { ...existing, put });
+    });
+
+    return new Map(Array.from(strikeMap.entries()).sort((a, b) => a[0] - b[0]));
   };
 
-  const getSpreadPct = (bid: number, ask: number): number => {
-    const mid = (bid + ask) / 2;
-    if (mid === 0) return 0;
-    return ((ask - bid) / mid) * 100;
-  };
+  const strikeMap = getStrikeMap();
 
-  const filteredChains =
-    chainData?.chains
-      .filter((chain) => {
-        // Filter by OI
-        const callOI = chain.call?.openInterest || 0;
-        const putOI = chain.put?.openInterest || 0;
-        if (callOI < minOI && putOI < minOI) return false;
-
-        // Filter by spread
-        const callSpread = chain.call ? getSpreadPct(chain.call.bid, chain.call.ask) : 0;
-        const putSpread = chain.put ? getSpreadPct(chain.put.bid, chain.put.ask) : 0;
-        if (callSpread > maxSpreadPct && putSpread > maxSpreadPct) return false;
-
-        // Filter by moneyness
-        if (moneyFilter !== "all") {
-          const moneyness = getMoneyness(chain.strike);
-          if (moneyness !== moneyFilter) return false;
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        switch (sortBy) {
-          case "volume":
-            return (
-              (b.call?.volume || 0) +
-              (b.put?.volume || 0) -
-              (a.call?.volume || 0) -
-              (a.put?.volume || 0)
-            );
-          case "oi":
-            return (
-              (b.call?.openInterest || 0) +
-              (b.put?.openInterest || 0) -
-              (a.call?.openInterest || 0) -
-              (a.put?.openInterest || 0)
-            );
-          case "iv":
-            return (b.call?.impliedVolatility || 0) - (a.call?.impliedVolatility || 0);
-          case "delta":
-            return Math.abs(b.call?.delta || 0) - Math.abs(a.call?.delta || 0);
-          case "strike":
-          default:
-            return a.strike - b.strike;
-        }
-      }) || [];
-
-  if (!chainData) {
-    return (
-      <div className="bg-slate-900/60 border border-white/10 rounded-xl p-6 text-center">
-        <div className="text-slate-400 text-sm">
-          {loading ? "Loading options chain..." : "Enter a symbol to view options chain"}
-        </div>
-      </div>
-    );
-  }
+  // Filter strikes based on filter type
+  const filteredStrikes = Array.from(strikeMap.entries()).filter(([_, contracts]) => {
+    if (filter === "calls") return contracts.call !== undefined;
+    if (filter === "puts") return contracts.put !== undefined;
+    return true;
+  });
 
   return (
-    <div className="bg-slate-900/60 border border-white/10 rounded-xl overflow-hidden">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-white/10 bg-slate-800/50">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-lg font-semibold text-slate-200">Options Chain</h4>
-          <div className="text-sm text-slate-400">
-            Underlying:{" "}
-            <span className="text-cyan-400 font-bold">${chainData.underlyingPrice.toFixed(2)}</span>
-          </div>
-        </div>
-
-        {/* Expiration Selector */}
-        <div className="flex gap-2 mb-3">
-          <select
-            value={selectedExpiration}
-            onChange={(e) => setSelectedExpiration(e.target.value)}
-            className="flex-1 px-3 py-2 bg-slate-700/50 border border-white/20 rounded-lg text-slate-100 text-sm outline-none focus:border-cyan-400"
-          >
-            {chainData.expirations.map((exp) => (
-              <option key={exp} value={exp}>
-                {exp}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Filters */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: "rgba(15, 23, 42, 0.95)",
+        backdropFilter: "blur(10px)",
+        zIndex: 9999,
+        overflowY: "auto",
+        padding: "40px 20px",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1600px",
+          margin: "0 auto",
+          background: "rgba(30, 41, 59, 0.8)",
+          borderRadius: "16px",
+          padding: "32px",
+          border: "1px solid rgba(148, 163, 184, 0.1)",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "24px",
+          }}
+        >
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">Moneyness</label>
-            <div className="flex gap-1">
-              {(["all", "itm", "atm", "otm"] as MoneyFilter[]).map((filter) => (
+            <h2 style={{ color: "white", fontSize: "28px", fontWeight: "bold", margin: 0 }}>
+              Options Chain: {symbol}
+            </h2>
+            {chainData?.underlying_price && (
+              <p style={{ color: "#94a3b8", fontSize: "16px", marginTop: "8px" }}>
+                Underlying Price: ${chainData.underlying_price.toFixed(2)}
+              </p>
+            )}
+            {chainData && (
+              <p style={{ color: "#64748b", fontSize: "14px", marginTop: "4px" }}>
+                {chainData.total_contracts} contracts • Expiration: {chainData.expiration_date}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "rgba(239, 68, 68, 0.2)",
+              color: "#fca5a5",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              padding: "10px 20px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "500",
+            }}
+          >
+            Close
+          </button>
+        </div>
+
+        {/* Controls Row */}
+        <div style={{ display: "flex", gap: "16px", marginBottom: "24px", flexWrap: "wrap" }}>
+          {/* Expiration Selector */}
+          <div style={{ flex: "1", minWidth: "250px" }}>
+            <label
+              style={{ color: "#cbd5e1", fontSize: "14px", display: "block", marginBottom: "8px" }}
+            >
+              Expiration Date:
+            </label>
+            <select
+              value={selectedExpiration}
+              onChange={(e) => setSelectedExpiration(e.target.value)}
+              style={{
+                background: "rgba(15, 23, 42, 0.6)",
+                color: "white",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                width: "100%",
+              }}
+            >
+              <option value="">Select Expiration</option>
+              {expirations.map((exp) => (
+                <option key={exp.date} value={exp.date}>
+                  {exp.date} ({exp.days_to_expiry} days)
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filter Toggle */}
+          <div style={{ flex: "1", minWidth: "250px" }}>
+            <label
+              style={{ color: "#cbd5e1", fontSize: "14px", display: "block", marginBottom: "8px" }}
+            >
+              Filter:
+            </label>
+            <div style={{ display: "flex", gap: "8px" }}>
+              {(["all", "calls", "puts"] as FilterType[]).map((filterType) => (
                 <button
-                  key={filter}
-                  onClick={() => setMoneyFilter(filter)}
-                  className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                    moneyFilter === filter
-                      ? "bg-cyan-500 text-white"
-                      : "bg-slate-700/50 text-slate-300 hover:bg-slate-700"
-                  }`}
+                  key={filterType}
+                  onClick={() => setFilter(filterType)}
+                  style={{
+                    flex: 1,
+                    background:
+                      filter === filterType ? "rgba(16, 185, 129, 0.2)" : "rgba(15, 23, 42, 0.6)",
+                    color: filter === filterType ? "#10b981" : "#94a3b8",
+                    border: `1px solid ${filter === filterType ? "rgba(16, 185, 129, 0.3)" : "rgba(148, 163, 184, 0.2)"}`,
+                    padding: "12px 16px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    textTransform: "capitalize",
+                  }}
                 >
-                  {filter.toUpperCase()}
+                  {filterType}
                 </button>
               ))}
             </div>
           </div>
-
-          <div>
-            <label className="text-xs text-slate-400 mb-1 block">Sort By</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortBy)}
-              className="w-full px-2 py-1 bg-slate-700/50 border border-white/20 rounded text-slate-100 text-xs outline-none focus:border-cyan-400"
-            >
-              <option value="strike">Strike</option>
-              <option value="volume">Volume</option>
-              <option value="oi">Open Interest</option>
-              <option value="iv">IV</option>
-              <option value="delta">Delta</option>
-            </select>
-          </div>
         </div>
 
-        {/* Min OI / Max Spread */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-xs text-slate-400 mb-1 block">Min OI</label>
-            <input
-              type="number"
-              value={minOI}
-              onChange={(e) => setMinOI(parseInt(e.target.value) || 0)}
-              className="w-full px-2 py-1 bg-slate-700/50 border border-white/20 rounded text-slate-100 text-xs outline-none focus:border-cyan-400"
-            />
+        {/* Loading State */}
+        {loading && (
+          <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+            <p>Loading options chain...</p>
           </div>
-          <div>
-            <label className="text-xs text-slate-400 mb-1 block">Max Spread %</label>
-            <input
-              type="number"
-              value={maxSpreadPct}
-              onChange={(e) => setMaxSpreadPct(parseInt(e.target.value) || 0)}
-              className="w-full px-2 py-1 bg-slate-700/50 border border-white/20 rounded text-slate-100 text-xs outline-none focus:border-cyan-400"
-            />
-          </div>
-        </div>
-      </div>
+        )}
 
-      {/* Options Table */}
-      <div className="overflow-auto max-h-96">
-        <table className="w-full text-xs">
-          <thead className="bg-slate-800/80 sticky top-0 z-10">
-            <tr>
-              <th
-                colSpan={7}
-                className="px-2 py-2 text-left text-green-400 border-r border-white/10"
-              >
-                CALLS
-              </th>
-              <th className="px-2 py-2 text-center font-bold text-slate-200 bg-slate-700/50">
-                Strike
-              </th>
-              <th
-                colSpan={7}
-                className="px-2 py-2 text-right text-red-400 border-l border-white/10"
-              >
-                PUTS
-              </th>
-            </tr>
-            <tr className="text-slate-400 border-b border-white/10">
-              <th className="px-2 py-1 text-right">Last</th>
-              <th className="px-2 py-1 text-right">Bid/Ask</th>
-              <th className="px-2 py-1 text-right">Vol</th>
-              <th className="px-2 py-1 text-right">OI</th>
-              <th className="px-2 py-1 text-right">Delta</th>
-              <th className="px-2 py-1 text-right">IV</th>
-              <th className="px-2 py-1 text-right border-r border-white/10">Theta</th>
-              <th className="px-2 py-1 text-center font-bold bg-slate-700/50">$</th>
-              <th className="px-2 py-1 text-left border-l border-white/10">Theta</th>
-              <th className="px-2 py-1 text-left">IV</th>
-              <th className="px-2 py-1 text-left">Delta</th>
-              <th className="px-2 py-1 text-left">OI</th>
-              <th className="px-2 py-1 text-left">Vol</th>
-              <th className="px-2 py-1 text-left">Bid/Ask</th>
-              <th className="px-2 py-1 text-left">Last</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredChains.map((chain) => {
-              const moneyness = getMoneyness(chain.strike);
-              const isSelected = selectedStrike?.strike === chain.strike;
-
-              let rowBg = "hover:bg-slate-800/50";
-              if (moneyness === "atm") rowBg = "bg-yellow-500/10 hover:bg-yellow-500/20";
-              else if (moneyness === "itm") rowBg = "bg-green-500/5 hover:bg-green-500/10";
-
-              if (isSelected) rowBg += " ring-2 ring-cyan-400";
-
-              const callSpread = chain.call ? getSpreadPct(chain.call.bid, chain.call.ask) : 0;
-              const putSpread = chain.put ? getSpreadPct(chain.put.bid, chain.put.ask) : 0;
-
-              return (
-                <tr
-                  key={chain.strike}
-                  className={`border-b border-white/5 ${rowBg} transition-colors`}
-                >
-                  {/* CALL DATA */}
-                  <td
-                    className="px-2 py-2 text-right text-slate-200 cursor-pointer hover:text-green-400"
-                    onClick={() => chain.call && handleStrikeClick(chain.strike, "call")}
-                  >
-                    {chain.call ? `$${chain.call.last.toFixed(2)}` : "-"}
-                  </td>
-                  <td
-                    className={`px-2 py-2 text-right text-xs ${callSpread > 10 ? "text-red-400" : "text-slate-400"}`}
-                  >
-                    {chain.call ? `${chain.call.bid.toFixed(2)}/${chain.call.ask.toFixed(2)}` : "-"}
-                  </td>
-                  <td
-                    className={`px-2 py-2 text-right ${chain.call && chain.call.volume > 1000 ? "font-bold text-slate-100" : "text-slate-400"}`}
-                  >
-                    {chain.call ? chain.call.volume.toLocaleString() : "-"}
-                  </td>
-                  <td className="px-2 py-2 text-right text-slate-400">
-                    {chain.call ? chain.call.openInterest.toLocaleString() : "-"}
-                  </td>
-                  <td className="px-2 py-2 text-right text-green-400 font-medium">
-                    {chain.call ? chain.call.delta.toFixed(2) : "-"}
-                  </td>
-                  <td className="px-2 py-2 text-right text-slate-300">
-                    {chain.call ? (chain.call.impliedVolatility * 100).toFixed(1) + "%" : "-"}
-                  </td>
-                  <td className="px-2 py-2 text-right text-slate-400 border-r border-white/10">
-                    {chain.call ? chain.call.theta.toFixed(3) : "-"}
-                  </td>
-
-                  {/* STRIKE */}
-                  <td className="px-2 py-2 text-center font-bold text-slate-100 bg-slate-700/50">
-                    ${chain.strike.toFixed(2)}
-                  </td>
-
-                  {/* PUT DATA */}
-                  <td className="px-2 py-2 text-left text-slate-400 border-l border-white/10">
-                    {chain.put ? chain.put.theta.toFixed(3) : "-"}
-                  </td>
-                  <td className="px-2 py-2 text-left text-slate-300">
-                    {chain.put ? (chain.put.impliedVolatility * 100).toFixed(1) + "%" : "-"}
-                  </td>
-                  <td className="px-2 py-2 text-left text-red-400 font-medium">
-                    {chain.put ? chain.put.delta.toFixed(2) : "-"}
-                  </td>
-                  <td className="px-2 py-2 text-left text-slate-400">
-                    {chain.put ? chain.put.openInterest.toLocaleString() : "-"}
-                  </td>
-                  <td
-                    className={`px-2 py-2 text-left ${chain.put && chain.put.volume > 1000 ? "font-bold text-slate-100" : "text-slate-400"}`}
-                  >
-                    {chain.put ? chain.put.volume.toLocaleString() : "-"}
-                  </td>
-                  <td
-                    className={`px-2 py-2 text-left text-xs ${putSpread > 10 ? "text-red-400" : "text-slate-400"}`}
-                  >
-                    {chain.put ? `${chain.put.bid.toFixed(2)}/${chain.put.ask.toFixed(2)}` : "-"}
-                  </td>
-                  <td
-                    className="px-2 py-2 text-left text-slate-200 cursor-pointer hover:text-red-400"
-                    onClick={() => chain.put && handleStrikeClick(chain.strike, "put")}
-                  >
-                    {chain.put ? `$${chain.put.last.toFixed(2)}` : "-"}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Selected Strike Info */}
-      {selectedStrike && (
-        <div className="px-4 py-3 border-t border-white/10 bg-cyan-500/10">
-          <div className="text-xs text-slate-300">
-            <strong className="text-cyan-400">Selected:</strong> ${selectedStrike.strike.toFixed(2)}{" "}
-            {selectedStrike.type.toUpperCase()}
-          </div>
-          <button
-            onClick={() =>
-              alert(`Build Strategy with ${selectedStrike.type} @ $${selectedStrike.strike}`)
-            }
-            className="mt-2 w-full px-3 py-2 bg-cyan-500 hover:bg-cyan-600 text-white text-sm font-semibold rounded-lg transition-all"
+        {/* Error State */}
+        {error && (
+          <div
+            style={{
+              background: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              padding: "16px",
+              color: "#fca5a5",
+              marginBottom: "24px",
+            }}
           >
-            Build Strategy with Selected Strike
-          </button>
-        </div>
-      )}
+            <strong>Error:</strong> {error}
+          </div>
+        )}
 
-      {/* Footer Stats */}
-      <div className="px-4 py-2 border-t border-white/10 bg-slate-800/30 text-xs text-slate-400">
-        Showing {filteredChains.length} strikes • Min OI: {minOI} • Max Spread: {maxSpreadPct}%
+        {/* Options Chain Table */}
+        {chainData && !loading && filteredStrikes.length > 0 && (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>
+                  <th
+                    colSpan={6}
+                    style={{
+                      padding: "12px 8px",
+                      color: "#10b981",
+                      textAlign: "center",
+                      background: "rgba(16, 185, 129, 0.05)",
+                    }}
+                  >
+                    CALLS
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 8px",
+                      color: "#cbd5e1",
+                      textAlign: "center",
+                      background: "rgba(148, 163, 184, 0.05)",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    STRIKE
+                  </th>
+                  <th
+                    colSpan={6}
+                    style={{
+                      padding: "12px 8px",
+                      color: "#ef4444",
+                      textAlign: "center",
+                      background: "rgba(239, 68, 68, 0.05)",
+                    }}
+                  >
+                    PUTS
+                  </th>
+                </tr>
+                <tr
+                  style={{
+                    borderBottom: "1px solid rgba(148, 163, 184, 0.2)",
+                    color: "#94a3b8",
+                    fontSize: "12px",
+                  }}
+                >
+                  <th style={{ padding: "8px 4px", textAlign: "right" }}>Bid</th>
+                  <th style={{ padding: "8px 4px", textAlign: "right" }}>Ask</th>
+                  <th style={{ padding: "8px 4px", textAlign: "right" }}>Delta</th>
+                  <th style={{ padding: "8px 4px", textAlign: "right" }}>Gamma</th>
+                  <th style={{ padding: "8px 4px", textAlign: "right" }}>Theta</th>
+                  <th style={{ padding: "8px 4px", textAlign: "right" }}>Vega</th>
+                  <th style={{ padding: "8px 8px", textAlign: "center" }}>Price</th>
+                  <th style={{ padding: "8px 4px", textAlign: "left" }}>Bid</th>
+                  <th style={{ padding: "8px 4px", textAlign: "left" }}>Ask</th>
+                  <th style={{ padding: "8px 4px", textAlign: "left" }}>Delta</th>
+                  <th style={{ padding: "8px 4px", textAlign: "left" }}>Gamma</th>
+                  <th style={{ padding: "8px 4px", textAlign: "left" }}>Theta</th>
+                  <th style={{ padding: "8px 4px", textAlign: "left" }}>Vega</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStrikes.map(([strike, { call, put }]) => (
+                  <tr
+                    key={strike}
+                    style={{
+                      borderBottom: "1px solid rgba(148, 163, 184, 0.1)",
+                      transition: "background 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(148, 163, 184, 0.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                  >
+                    {/* Call Side */}
+                    <td
+                      style={{
+                        padding: "8px 4px",
+                        textAlign: "right",
+                        color: call ? "#cbd5e1" : "#64748b",
+                      }}
+                    >
+                      {call?.bid?.toFixed(2) || "—"}
+                    </td>
+                    <td
+                      style={{
+                        padding: "8px 4px",
+                        textAlign: "right",
+                        color: call ? "#cbd5e1" : "#64748b",
+                      }}
+                    >
+                      {call?.ask?.toFixed(2) || "—"}
+                    </td>
+                    <td style={{ padding: "8px 4px", textAlign: "right" }}>
+                      {formatGreek(call?.delta, "delta")}
+                    </td>
+                    <td style={{ padding: "8px 4px", textAlign: "right" }}>
+                      {formatGreek(call?.gamma, "gamma")}
+                    </td>
+                    <td style={{ padding: "8px 4px", textAlign: "right" }}>
+                      {formatGreek(call?.theta, "theta")}
+                    </td>
+                    <td style={{ padding: "8px 4px", textAlign: "right" }}>
+                      {formatGreek(call?.vega, "vega")}
+                    </td>
+
+                    {/* Strike */}
+                    <td
+                      style={{
+                        padding: "8px 8px",
+                        textAlign: "center",
+                        color: "white",
+                        fontWeight: "bold",
+                        fontSize: "14px",
+                      }}
+                    >
+                      ${strike.toFixed(2)}
+                    </td>
+
+                    {/* Put Side */}
+                    <td
+                      style={{
+                        padding: "8px 4px",
+                        textAlign: "left",
+                        color: put ? "#cbd5e1" : "#64748b",
+                      }}
+                    >
+                      {put?.bid?.toFixed(2) || "—"}
+                    </td>
+                    <td
+                      style={{
+                        padding: "8px 4px",
+                        textAlign: "left",
+                        color: put ? "#cbd5e1" : "#64748b",
+                      }}
+                    >
+                      {put?.ask?.toFixed(2) || "—"}
+                    </td>
+                    <td style={{ padding: "8px 4px", textAlign: "left" }}>
+                      {formatGreek(put?.delta, "delta")}
+                    </td>
+                    <td style={{ padding: "8px 4px", textAlign: "left" }}>
+                      {formatGreek(put?.gamma, "gamma")}
+                    </td>
+                    <td style={{ padding: "8px 4px", textAlign: "left" }}>
+                      {formatGreek(put?.theta, "theta")}
+                    </td>
+                    <td style={{ padding: "8px 4px", textAlign: "left" }}>
+                      {formatGreek(put?.vega, "vega")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* No Data State */}
+        {chainData && !loading && filteredStrikes.length === 0 && (
+          <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+            <p>No {filter !== "all" ? filter : "options"} available for this expiration.</p>
+          </div>
+        )}
       </div>
     </div>
   );

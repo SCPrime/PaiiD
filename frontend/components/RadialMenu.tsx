@@ -79,11 +79,11 @@ export const workflows: Workflow[] = [
     description: "Execute trades with pre-filled orders and real-time confirmation.",
   },
   {
-    id: "research",
-    name: "RESEARCH",
-    color: "#F97316",
-    icon: "🔍",
-    description: "Market scanner, technical analysis, charts, and trading opportunities.",
+    id: "options-trading",
+    name: "OPTIONS\nTRADING",
+    color: "#8B5CF6",
+    icon: "📈",
+    description: "Options chain viewer with Greeks, multi-leg strategies, and execution.",
   },
   {
     id: "settings",

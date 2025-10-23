@@ -24,7 +24,7 @@ from ..core.config import settings
 from ..core.auth import require_bearer
 from ..services.tradier_client import get_tradier_client
 
-router = APIRouter()
+router = APIRouter(prefix="/options", tags=["options"])
 logger = logging.getLogger(__name__)
 
 # 5-minute cache for options chain data
@@ -118,20 +118,11 @@ async def get_options_chain(
 
     try:
         # Initialize Tradier client
-        tradier_key = settings.TRADIER_API_KEY
-        tradier_url = settings.TRADIER_API_BASE_URL
-
-        if not tradier_key or not tradier_url:
-            raise HTTPException(
-                status_code=500,
-                detail="Tradier API credentials not configured"
-            )
-
-        client = TradierClient(tradier_key, tradier_url)
+        client = _get_tradier_client()
 
         # If no expiration provided, get the nearest one
         if not expiration:
-            exp_data = await asyncio.to_thread(client.get_expirations, symbol)
+            exp_data = await asyncio.to_thread(client.get_option_expirations, symbol)
             expirations = exp_data.get("expirations", {}).get("date", [])
             if not expirations:
                 raise HTTPException(
@@ -151,7 +142,7 @@ async def get_options_chain(
 
             # Fetch options chain with Greeks from Tradier
             chain_data = await asyncio.to_thread(
-                client.get_option_chain,
+                client.get_option_chains,
                 symbol,
                 expiration
             )
