@@ -96,7 +96,7 @@ class ExpirationDate(BaseModel):
 # ============================================================================
 
 
-@router.get("/chain/{symbol}", response_model=OptionsChainResponse, dependencies=[Depends(require_bearer)])
+@router.get("/chains/{symbol}", response_model=OptionsChainResponse, dependencies=[Depends(require_bearer)])
 async def get_options_chain(
     symbol: str,
     expiration: Optional[str] = Query(None, description="Expiration date (YYYY-MM-DD). If not provided, uses nearest expiration."),
@@ -280,6 +280,26 @@ def get_expiration_dates(symbol: str, authorization: str = Depends(require_beare
             status_code=500,
             detail=f"Error fetching expirations: {str(e)}"
         )
+
+
+@router.post("/greeks", dependencies=[Depends(require_bearer)])
+async def calculate_greeks(
+    symbol: str = Query(..., description="Option symbol"),
+    underlying_price: float = Query(..., description="Current price of underlying asset"),
+    strike: float = Query(..., description="Strike price"),
+    expiration: str = Query(..., description="Expiration date (YYYY-MM-DD)"),
+    option_type: str = Query(..., description="call or put"),
+):
+    """
+    Calculate Greeks for a specific option contract
+
+    Returns delta, gamma, theta, vega, and rho for the given option parameters.
+    Uses Black-Scholes model for calculation.
+
+    **TODO:** Implement full Greeks calculation engine
+    """
+    # Placeholder implementation
+    raise HTTPException(status_code=501, detail="Greeks calculation endpoint not yet implemented - Phase 1 scaffold")
 
 
 @router.get("/contract/{option_symbol}", response_model=OptionContract, dependencies=[Depends(require_bearer)])

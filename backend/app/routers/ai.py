@@ -80,7 +80,7 @@ class RecommendationsResponse(BaseModel):
     model_version: str = "v1.0.0"
 
 
-@router.get("/recommendations", response_model=RecommendationsResponse)
+@router.get("/recommendations", response_model=RecommendationsResponse, dependencies=[Depends(require_bearer)])
 async def get_recommendations():
     """
     Generate AI-powered trading recommendations using real market data
