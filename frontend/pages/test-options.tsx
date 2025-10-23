@@ -88,7 +88,7 @@ export default function TestOptionsPage() {
             <br />
             1. Enter a symbol (SPY, AAPL, TSLA, etc.)
             <br />
-            2. Click "Load Options Chain"
+            2. Click &quot;Load Options Chain&quot;
             <br />
             3. Component will fetch live data from backend
             <br />
