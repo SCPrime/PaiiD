@@ -10,7 +10,7 @@ from typing import Any, Optional
 from pydantic import BaseModel
 
 from app.services.alpaca_client import get_alpaca_client
-from app.services.greeks import calculate_greeks
+from app.services.greeks import GreeksCalculator
 from app.services.tradier_client import get_tradier_client
 
 
@@ -82,13 +82,14 @@ class OrderExecutionService:
             premium = self._get_premium(chain_data, order_type)
 
             # Calculate Greeks
-            greeks = calculate_greeks(
+            calculator = GreeksCalculator(risk_free_rate=0.05)
+            days_to_expiry = int(self._calculate_dte(expiration) * 365)
+            greeks = calculator.calculate_greeks(
                 option_type=contract_type,
                 underlying_price=underlying_price,
                 strike_price=strike,
-                time_to_expiry=self._calculate_dte(expiration),
-                risk_free_rate=0.05,  # TODO: Get from Fed API
-                volatility=chain_data.get("greeks", {}).get("mid_iv", 0.3),
+                days_to_expiry=days_to_expiry,
+                implied_volatility=chain_data.get("greeks", {}).get("mid_iv", 0.3),
             )
 
             # Calculate risk metrics

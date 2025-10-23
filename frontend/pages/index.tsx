@@ -18,6 +18,7 @@ import Backtesting from "../components/Backtesting";
 import Analytics from "../components/Analytics";
 
 import MarketScanner from "../components/MarketScanner";
+import RiskCalculator from "../components/trading/RiskCalculator";
 import { initializeSession } from "../lib/userManagement";
 import AIChat from "../components/AIChat";
 import KeyboardShortcuts from "../components/KeyboardShortcuts";
@@ -112,6 +113,9 @@ export default function Dashboard() {
 
         case "execute":
           return <ExecuteTradeForm />;
+
+        case "proposal-review":
+          return <RiskCalculator onCreateProposal={() => {}} onExecuteProposal={() => {}} />;
 
         case "research":
           return <MarketScanner />;
