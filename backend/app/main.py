@@ -213,9 +213,11 @@ if settings.SENTRY_DSN:
 
 # Add Cache-Control headers for SWR support (Phase 2: Performance)
 from .middleware.cache_control import CacheControlMiddleware
+from .middleware.metrics import metrics_middleware
 
 
 app.add_middleware(CacheControlMiddleware)
+app.middleware("http")(metrics_middleware)
 
 app.add_middleware(
     CORSMiddleware,

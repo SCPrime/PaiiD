@@ -1,65 +1,43 @@
-from datetime import UTC, datetime
-from time import perf_counter
+"""
+Enhanced health check endpoints with metrics
+"""
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException
 
-import sentry_sdk
-from fastapi import APIRouter
+from app.core.auth import require_bearer
+from app.services.health_monitor import health_monitor
 
-from ..core.idempotency import get_redis
-
-
-router = APIRouter()
+router = APIRouter(prefix="/api/health", tags=["health"])
 
 
-@router.get("/health")
-def health():
-    info = {"status": "ok", "time": datetime.now(UTC).isoformat()}
+@router.get("")
+async def health_check():
+    """Basic health check - public"""
+    return {
+        "status": "ok",
+        "timestamp": datetime.now().isoformat()
+    }
 
-    # Check Redis connection
-    r = get_redis()
-    if r:
-        t0 = perf_counter()
-        try:
-            r.ping()
-            ms = int((perf_counter() - t0) * 1000)
-            info["redis"] = {"connected": True, "latency_ms": ms}
-        except Exception:
-            info["redis"] = {"connected": False}
+
+@router.get("/detailed", dependencies=[Depends(require_bearer)])
+async def detailed_health():
+    """Detailed health metrics - requires auth"""
+    return health_monitor.get_system_health()
+
+
+@router.get("/readiness")
+async def readiness_check():
+    """Kubernetes-style readiness probe"""
+    health = health_monitor.get_system_health()
+    
+    if health["status"] == "healthy":
+        return {"ready": True}
     else:
-        info["redis"] = {"connected": False}
-
-    # Include startup performance metrics
-    try:
-        from ..core.startup_monitor import get_startup_monitor
-
-        startup_metrics = get_startup_monitor().get_metrics()
-        info["startup"] = startup_metrics
-    except Exception:
-        pass  # Startup monitor not initialized yet
-
-    return info
+        raise HTTPException(status_code=503, detail={"ready": False, "reason": "System degraded"})
 
 
-@router.get("/ready")
-def ready():
-    return {"ready": True}
 
-
-@router.get("/sentry-test")
-def sentry_test():
-    """
-    Test endpoint to verify Sentry error tracking is working.
-
-    This endpoint intentionally raises a Python exception to test Sentry integration.
-    Visit: https://paiid-backend.onrender.com/api/sentry-test
-
-    Expected: Error appears in Sentry dashboard within 30 seconds.
-    """
-    # First, send a test message to Sentry
-    sentry_sdk.capture_message(
-        "🧪 SENTRY TEST: Test message sent from /api/sentry-test", level="info"
-    )
-
-    # Then, raise an unhandled exception (guaranteed to be captured)
-    raise Exception(
-        "🧪 SENTRY TEST: This is an intentional error to verify error tracking is working! If you see this in Sentry, error tracking is operational."
-    )
+@router.get("/liveness")
+async def liveness_check():
+    """Kubernetes-style liveness probe"""
+    return {"alive": True}
