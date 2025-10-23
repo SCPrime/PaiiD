@@ -24,6 +24,17 @@
 
 ---
 
+## ✅ Options Endpoint Incident Remediation (Phases 1–6)
+
+- [x] **Phase 1 – Route correction:** Confirmed the OptionsChain component now calls `/api/proxy/options/expirations` and `/api/proxy/options/chain`, aligning with the FastAPI router’s `/api/options/*` endpoints and restoring end-to-end data flow.【F:frontend/components/trading/OptionsChain.tsx†L87-L124】【F:backend/app/routers/options.py†L18-L115】
+- [x] **Phase 2 – Proxy allow-list:** Documented the tightened allow-list and origin checks so dynamic `/options/*` calls and preflight requests succeed without reopening the debug proxy wildcard state.【F:frontend/pages/api/proxy/[...path].ts†L18-L145】
+- [x] **Phase 3 – Playwright selector updates:** Verified selectors now use semantic locators for headings, tables, and filters, preventing regressions when markup shifts.【F:frontend/tests/options-chain.spec.ts†L1-L132】
+- [x] **Phase 4 – Error `<div>` handling:** Ensured automated tests assert the surfaced error container so backend failures present user feedback instead of silent hangs.【F:frontend/tests/options-chain.spec.ts†L147-L188】
+- [x] **Phase 5 – Playwright config enhancements:** Captured the resilient Playwright configuration (HTML reporter, retry, screenshot/video retention, dev-server bootstrap) as part of the master checklist.【F:frontend/playwright.config.ts†L1-L57】
+- [x] **Phase 6 – Root-cause documentation:** Archived the full debug report and evidence bundle for retrospective reviews (`archive/incidents/OPTIONS_ENDPOINT_DEBUG_REPORT.md`, `knowledge-base/incidents/options-endpoint-incident-evidence.md`).【F:archive/incidents/OPTIONS_ENDPOINT_DEBUG_REPORT.md†L1-L55】【F:knowledge-base/incidents/options-endpoint-incident-evidence.md†L1-L34】
+
+---
+
 ## 📊 EXECUTIVE SUMMARY
 
 This checklist combines:
