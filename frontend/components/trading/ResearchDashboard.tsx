@@ -95,7 +95,7 @@ export default function ResearchDashboard() {
 
   // Options chain state
   const [showOptionsChain, setShowOptionsChain] = useState(false);
-  const [selectedStrike, setSelectedStrike] = useState<{
+  const [selectedStrike, _setSelectedStrike] = useState<{
     strike: number;
     type: "call" | "put";
   } | null>(null);
@@ -181,11 +181,6 @@ export default function ResearchDashboard() {
         prev.map((ind) => (ind.id === id ? { ...ind, enabled: !ind.enabled } : ind))
       );
     }, 200);
-  }, []);
-
-  // Handle strike selection from options chain
-  const handleStrikeSelect = useCallback((strike: number, type: "call" | "put") => {
-    setSelectedStrike({ strike, type });
   }, []);
 
   // AI Strategy Handlers
@@ -1163,7 +1158,7 @@ Proposal system coming in INCREMENT 9`);
 
           {showOptionsChain && (
             <div className="animate-slideDown">
-              <OptionsChain symbol={stockData.symbol} onStrikeSelect={handleStrikeSelect} />
+              <OptionsChain symbol={stockData.symbol} onClose={() => setShowOptionsChain(false)} />
             </div>
           )}
         </div>

@@ -1,32 +1,33 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Split from "react-split";
-import RadialMenu, { workflows, Workflow } from "../components/RadialMenu";
+import RadialMenu, { Workflow, workflows } from "../components/RadialMenu";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 
-import MorningRoutineAI from "../components/MorningRoutineAI";
 import ExecuteTradeForm from "../components/ExecuteTradeForm";
+import MorningRoutineAI from "../components/MorningRoutineAI";
 
 import AIRecommendations from "../components/AIRecommendations";
 
 import Settings from "../components/Settings";
 
-import UserSetupAI from "../components/UserSetupAI";
-import NewsReview from "../components/NewsReview";
-import ActivePositions from "../components/ActivePositions";
-import StrategyBuilderAI from "../components/StrategyBuilderAI";
-import Backtesting from "../components/Backtesting";
 import Analytics from "../components/Analytics";
+import Backtesting from "../components/Backtesting";
+import NewsReview from "../components/NewsReview";
+import StrategyBuilderAI from "../components/StrategyBuilderAI";
+import PositionManager from "../components/trading/PositionManager";
+import UserSetupAI from "../components/UserSetupAI";
 
-import MarketScanner from "../components/MarketScanner";
-import { initializeSession } from "../lib/userManagement";
 import AIChat from "../components/AIChat";
-import KeyboardShortcuts from "../components/KeyboardShortcuts";
-import { useIsMobile } from "../hooks/useBreakpoint";
 import CompletePaiiDLogo from "../components/CompletePaiiDLogo";
+import KeyboardShortcuts from "../components/KeyboardShortcuts";
+import MarketScanner from "../components/MarketScanner";
+import RiskCalculator from "../components/trading/RiskCalculator";
+import { useIsMobile } from "../hooks/useBreakpoint";
+import { initializeSession } from "../lib/userManagement";
 
 export default function Dashboard() {
   // Development bypass: Skip onboarding in development mode
-  const ENABLE_DEV_BYPASS = process.env.NODE_ENV === 'development';
+  const ENABLE_DEV_BYPASS = process.env.NODE_ENV === "development";
 
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>("");
   const [hoveredWorkflow, setHoveredWorkflow] = useState<Workflow | null>(null);
@@ -108,10 +109,13 @@ export default function Dashboard() {
           return <MorningRoutineAI />;
 
         case "active-positions":
-          return <ActivePositions />;
+          return <PositionManager />;
 
         case "execute":
           return <ExecuteTradeForm />;
+
+        case "proposal-review":
+          return <RiskCalculator onCreateProposal={() => {}} onExecuteProposal={() => {}} />;
 
         case "research":
           return <MarketScanner />;
