@@ -94,41 +94,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-
-# ============================================================================
-# GLOBAL EXCEPTION HANDLER (Debug Mode)
-# ============================================================================
-from fastapi import Request, HTTPException
-from fastapi.responses import JSONResponse
-import traceback
-
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Catch ALL unhandled exceptions and log them"""
-    print("\n" + "="*80, flush=True)
-    print("🚨 GLOBAL EXCEPTION HANDLER TRIGGERED", flush=True)
-    print("="*80, flush=True)
-    print(f"Request URL: {request.url}", flush=True)
-    print(f"Request method: {request.method}", flush=True)
-    print(f"Exception type: {type(exc).__name__}", flush=True)
-    print(f"Exception message: {str(exc)}", flush=True)
-    print("\nFull traceback:", flush=True)
-    traceback.print_exc()
-    print("="*80 + "\n", flush=True)
-
-    # Return detailed error in development
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": "Internal server error",
-            "type": type(exc).__name__,
-            "message": str(exc),
-            "traceback": traceback.format_exc()
-        }
-    )
-
-
 # Configure rate limiting (Phase 3: Bulletproof Reliability)
 # Skip rate limiting in test environment to avoid middleware conflicts with TestClient
 if not settings.TESTING:
