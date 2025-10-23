@@ -10,9 +10,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
 from ..db.session import get_db
 from ..models.database import User
+from .error_utils import log_and_sanitize_exceptions
 
 
 logger = logging.getLogger(__name__)
@@ -48,50 +49,57 @@ class UserPreferencesUpdate(BaseModel):
 
 
 @router.get("/users/preferences")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to fetch user preferences",
+    log_message="Unable to load user preferences",
+)
 def get_user_preferences(
-    _=Depends(require_bearer), db: Session = Depends(get_db)
+    _current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> UserPreferencesResponse:
     """
     Get user preferences including risk tolerance
 
     Returns current user preferences or default values if not set.
     """
-    try:
-        # For now, use a default user (user_id=1) until auth is fully implemented
-        # TODO: Get actual user_id from JWT token in require_bearer
-        user = db.query(User).filter(User.id == 1).first()
+    # For now, use a default user (user_id=1) until auth is fully implemented
+    user = db.query(User).filter(User.id == 1).first()
 
-        if not user:
-            # Create default user if doesn't exist
-            user = User(
-                id=1,
-                email="default@paiid.com",
-                alpaca_account_id=None,
-                preferences={"risk_tolerance": 50},  # Default to moderate risk
-            )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            logger.info("✅ Created default user with preferences")
-
-        preferences = user.preferences or {}
-
-        return UserPreferencesResponse(
-            risk_tolerance=preferences.get("risk_tolerance", 50),
-            default_position_size=preferences.get("default_position_size"),
-            watchlist=preferences.get("watchlist", []),
-            notifications_enabled=preferences.get("notifications_enabled", True),
-            preferences=preferences,
+    if not user:
+        # Create default user if doesn't exist
+        user = User(
+            id=1,
+            email="default@paiid.com",
+            alpaca_account_id=None,
+            preferences={"risk_tolerance": 50},  # Default to moderate risk
         )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        logger.info("✅ Created default user with preferences")
 
-    except Exception as e:
-        logger.error(f"❌ Failed to fetch user preferences: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch user preferences: {e!s}")
+    preferences = user.preferences or {}
+
+    return UserPreferencesResponse(
+        risk_tolerance=preferences.get("risk_tolerance", 50),
+        default_position_size=preferences.get("default_position_size"),
+        watchlist=preferences.get("watchlist", []),
+        notifications_enabled=preferences.get("notifications_enabled", True),
+        preferences=preferences,
+    )
 
 
 @router.patch("/users/preferences")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to update user preferences",
+    log_message="Unable to update user preferences",
+)
 def update_user_preferences(
-    updates: UserPreferencesUpdate, _=Depends(require_bearer), db: Session = Depends(get_db)
+    updates: UserPreferencesUpdate,
+    _current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> UserPreferencesResponse:
     """
     Update user preferences
@@ -99,63 +107,57 @@ def update_user_preferences(
     Updates only the fields provided in the request body.
     Validates risk_tolerance is between 0-100.
     """
-    try:
-        # Get or create default user
-        user = db.query(User).filter(User.id == 1).first()
+    # Get or create default user
+    user = db.query(User).filter(User.id == 1).first()
 
-        if not user:
-            user = User(id=1, email="default@paiid.com", alpaca_account_id=None, preferences={})
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-
-        # Get current preferences
-        preferences = user.preferences or {}
-
-        # Update only provided fields
-        update_data = updates.dict(exclude_unset=True)
-
-        # Apply backend safeguards for risk_tolerance
-        if "risk_tolerance" in update_data:
-            risk_value = update_data["risk_tolerance"]
-
-            # Safeguard: Warn if ultra-aggressive (>90)
-            if risk_value > 90:
-                logger.warning(f"⚠️ User setting very high risk tolerance: {risk_value}")
-
-            # Safeguard: Ensure value is in valid range
-            if risk_value < 0 or risk_value > 100:
-                raise HTTPException(
-                    status_code=400, detail="risk_tolerance must be between 0 and 100"
-                )
-
-            preferences["risk_tolerance"] = risk_value
-
-        # Update other preferences
-        for key, value in update_data.items():
-            if key != "risk_tolerance":
-                preferences[key] = value
-
-        # Save to database
-        user.preferences = preferences
+    if not user:
+        user = User(id=1, email="default@paiid.com", alpaca_account_id=None, preferences={})
+        db.add(user)
         db.commit()
         db.refresh(user)
 
-        logger.info(f"✅ Updated user preferences: {update_data}")
+    # Get current preferences
+    preferences = user.preferences or {}
 
-        return UserPreferencesResponse(
-            risk_tolerance=preferences.get("risk_tolerance", 50),
-            default_position_size=preferences.get("default_position_size"),
-            watchlist=preferences.get("watchlist", []),
-            notifications_enabled=preferences.get("notifications_enabled", True),
-            preferences=preferences,
-        )
+    # Update only provided fields
+    update_data = updates.dict(exclude_unset=True)
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Failed to update user preferences: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to update user preferences: {e!s}")
+    # Apply backend safeguards for risk_tolerance
+    if "risk_tolerance" in update_data:
+        risk_value = update_data["risk_tolerance"]
+
+        # Safeguard: Warn if ultra-aggressive (>90)
+        if risk_value is not None and risk_value > 90:
+            logger.warning("⚠️ User setting very high risk tolerance: %s", risk_value)
+
+        # Safeguard: Ensure value is in valid range
+        if risk_value is not None and (risk_value < 0 or risk_value > 100):
+            raise HTTPException(
+                status_code=400, detail="risk_tolerance must be between 0 and 100"
+            )
+
+        if risk_value is not None:
+            preferences["risk_tolerance"] = risk_value
+
+    # Update other preferences
+    for key, value in update_data.items():
+        if key != "risk_tolerance":
+            preferences[key] = value
+
+    # Save to database
+    user.preferences = preferences
+    db.commit()
+    db.refresh(user)
+
+    logger.info("✅ Updated user preferences: %s", update_data)
+
+    return UserPreferencesResponse(
+        risk_tolerance=preferences.get("risk_tolerance", 50),
+        default_position_size=preferences.get("default_position_size"),
+        watchlist=preferences.get("watchlist", []),
+        notifications_enabled=preferences.get("notifications_enabled", True),
+        preferences=preferences,
+    )
 
 
 def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
@@ -195,25 +197,28 @@ def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
 
 
 @router.get("/users/risk-limits")
-def get_user_risk_limits(_=Depends(require_bearer), db: Session = Depends(get_db)):
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to fetch user risk limits",
+    log_message="Unable to calculate user risk limits",
+)
+def get_user_risk_limits(
+    _current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """
     Get calculated risk limits based on user's risk tolerance
 
     Returns position sizing limits and maximum concurrent positions.
     """
-    try:
-        user = db.query(User).filter(User.id == 1).first()
+    user = db.query(User).filter(User.id == 1).first()
 
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-        preferences = user.preferences or {}
-        risk_tolerance = preferences.get("risk_tolerance", 50)
+    preferences = user.preferences or {}
+    risk_tolerance = preferences.get("risk_tolerance", 50)
 
-        limits = get_risk_limits(risk_tolerance)
+    limits = get_risk_limits(risk_tolerance)
 
-        return {"risk_tolerance": risk_tolerance, **limits}
-
-    except Exception as e:
-        logger.error(f"❌ Failed to calculate risk limits: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to calculate risk limits: {e!s}")
+    return {"risk_tolerance": risk_tolerance, **limits}

@@ -3,12 +3,13 @@ Options Proposals Router - Create and execute options trade proposals
 """
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.core.auth import require_bearer
+from app.core.jwt import get_current_user
+from app.models.database import User
+from app.routers.error_utils import log_and_sanitize_exceptions
 from app.services.order_execution import OptionsProposal, get_order_execution_service
 
 
@@ -30,11 +31,18 @@ class ExecuteProposalRequest(BaseModel):
     """Request to execute an approved proposal"""
 
     proposal: OptionsProposal
-    limit_price: Optional[float] = None
+    limit_price: float | None = None
 
 
-@router.post("/create", dependencies=[Depends(require_bearer)])
-async def create_proposal(request: CreateProposalRequest):
+@router.post("/create")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to create proposal",
+    log_message="Unable to generate options proposal",
+)
+async def create_proposal(
+    request: CreateProposalRequest, _current_user: User = Depends(get_current_user)
+):
     """
     Create a detailed options trade proposal with risk analysis
 
@@ -88,23 +96,26 @@ async def create_proposal(request: CreateProposalRequest):
             quantity=request.quantity,
             order_type=request.order_type,
         )
+    except ValueError as exc:
+        logger.warning("Invalid proposal request: %s", exc)
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-        return {
-            "success": True,
-            "proposal": proposal.dict(),
-            "message": f"Proposal created for {request.quantity} contract(s) of {request.option_symbol}",
-        }
-
-    except ValueError as e:
-        logger.warning(f"Invalid proposal request: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Failed to create proposal: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create proposal")
+    return {
+        "success": True,
+        "proposal": proposal.dict(),
+        "message": f"Proposal created for {request.quantity} contract(s) of {request.option_symbol}",
+    }
 
 
-@router.post("/execute", dependencies=[Depends(require_bearer)])
-async def execute_proposal(request: ExecuteProposalRequest):
+@router.post("/execute")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to execute proposal",
+    log_message="Unable to execute options proposal",
+)
+async def execute_proposal(
+    request: ExecuteProposalRequest, _current_user: User = Depends(get_current_user)
+):
     """
     Execute an approved options trade proposal
 
@@ -139,30 +150,32 @@ async def execute_proposal(request: ExecuteProposalRequest):
     }
     ```
     """
+    service = get_order_execution_service()
     try:
-        service = get_order_execution_service()
         result = await service.execute_proposal(
             proposal=request.proposal,
             limit_price=request.limit_price,
         )
+    except ValueError as exc:
+        logger.warning("Invalid proposal execution request: %s", exc)
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-        if not result.get("success"):
-            raise HTTPException(
-                status_code=400,
-                detail=result.get("error", "Order execution failed"),
-            )
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=400,
+            detail=result.get("error", "Order execution failed"),
+        )
 
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to execute proposal: {e}")
-        raise HTTPException(status_code=500, detail="Failed to execute order")
+    return result
 
 
-@router.get("/history", dependencies=[Depends(require_bearer)])
-async def get_proposal_history():
+@router.get("/history")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to fetch proposal history",
+    log_message="Unable to fetch proposal history",
+)
+async def get_proposal_history(_current_user: User = Depends(get_current_user)):
     """
     Get history of created proposals
 

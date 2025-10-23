@@ -3,14 +3,14 @@ Order Execution Service - Handles options trade proposal and execution
 """
 
 import logging
+from dataclasses import asdict
 from datetime import datetime
-from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
 from app.services.alpaca_client import get_alpaca_client
-from app.services.greeks import GreeksCalculator
+from app.services.options_greeks import GreeksCalculator
 from app.services.tradier_client import get_tradier_client
 
 
@@ -33,7 +33,7 @@ class OptionsProposal(BaseModel):
     max_profit: float
     breakeven: float
     probability_of_profit: float
-    iv_rank: Optional[float] = None
+    iv_rank: float | None = None
     risk_reward_ratio: float
     margin_requirement: float
 
@@ -83,14 +83,15 @@ class OrderExecutionService:
 
             # Calculate Greeks
             calculator = GreeksCalculator(risk_free_rate=0.05)
-            days_to_expiry = int(self._calculate_dte(expiration) * 365)
+            time_to_expiry = self._calculate_dte(expiration)
             greeks = calculator.calculate_greeks(
-                option_type=contract_type,
-                underlying_price=underlying_price,
+                spot_price=underlying_price,
                 strike_price=strike,
-                days_to_expiry=days_to_expiry,
-                implied_volatility=chain_data.get("greeks", {}).get("mid_iv", 0.3),
+                time_to_expiry=time_to_expiry,
+                volatility=chain_data.get("greeks", {}).get("mid_iv", 0.3),
+                option_type=contract_type,
             )
+            greeks_dict = asdict(greeks)
 
             # Calculate risk metrics
             risk_metrics = self._calculate_risk_metrics(
@@ -99,7 +100,7 @@ class OrderExecutionService:
                 premium=premium,
                 quantity=quantity,
                 underlying_price=underlying_price,
-                greeks=greeks,
+                greeks=greeks_dict,
             )
 
             return OptionsProposal(
@@ -111,7 +112,7 @@ class OrderExecutionService:
                 premium=premium,
                 quantity=quantity,
                 underlying_price=underlying_price,
-                greeks=greeks,
+                greeks=greeks_dict,
                 **risk_metrics,
             )
 
@@ -122,7 +123,7 @@ class OrderExecutionService:
     async def execute_proposal(
         self,
         proposal: OptionsProposal,
-        limit_price: Optional[float] = None,
+        limit_price: float | None = None,
     ) -> dict[str, Any]:
         """
         Execute an approved options trade proposal
@@ -286,7 +287,7 @@ class OrderExecutionService:
 
 
 # Singleton instance
-_order_execution_service: Optional[OrderExecutionService] = None
+_order_execution_service: OrderExecutionService | None = None
 
 
 def get_order_execution_service() -> OrderExecutionService:

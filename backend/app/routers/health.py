@@ -1,11 +1,16 @@
-"""
-Enhanced health check endpoints with metrics
-"""
+"""Enhanced health check endpoints with metrics."""
+import logging
 from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.auth import require_bearer
+from app.core.jwt import get_current_user
+from app.models.database import User
+from app.routers.error_utils import log_and_sanitize_exceptions
 from app.services.health_monitor import health_monitor
+
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/health", tags=["health"])
 
@@ -19,17 +24,27 @@ async def health_check():
     }
 
 
-@router.get("/detailed", dependencies=[Depends(require_bearer)])
-async def detailed_health():
+@router.get("/detailed")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to fetch detailed health status",
+    log_message="Unable to fetch detailed health status",
+)
+async def detailed_health(_current_user: User = Depends(get_current_user)):
     """Detailed health metrics - requires auth"""
     return health_monitor.get_system_health()
 
 
 @router.get("/readiness")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Readiness probe failed",
+    log_message="Readiness probe failed",
+)
 async def readiness_check():
     """Kubernetes-style readiness probe"""
     health = health_monitor.get_system_health()
-    
+
     if health["status"] == "healthy":
         return {"ready": True}
     else:
@@ -38,6 +53,11 @@ async def readiness_check():
 
 
 @router.get("/liveness")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Liveness probe failed",
+    log_message="Liveness probe failed",
+)
 async def liveness_check():
     """Kubernetes-style liveness probe"""
     return {"alive": True}

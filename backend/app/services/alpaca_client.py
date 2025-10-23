@@ -6,11 +6,11 @@ Market Data comes from Tradier API
 
 import logging
 import os
-from typing import Dict, List, Optional
 
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
+
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class AlpacaClient:
 
         logger.info("Alpaca Paper Trading client initialized")
 
-    def get_account(self) -> Dict:
+    def get_account(self) -> dict:
         """Get Alpaca paper trading account information"""
         try:
             account = self.client.get_account()
@@ -65,10 +65,10 @@ class AlpacaClient:
             }
 
         except Exception as e:
-            logger.error(f"❌ Alpaca get_account failed: {str(e)}")
-            raise Exception(f"Alpaca account request failed: {str(e)}")
+            logger.error(f"❌ Alpaca get_account failed: {e!s}")
+            raise Exception(f"Alpaca account request failed: {e!s}")
 
-    def get_positions(self) -> List[Dict]:
+    def get_positions(self) -> list[dict]:
         """Get all open positions from Alpaca paper trading account"""
         try:
             positions = self.client.get_all_positions()
@@ -97,10 +97,10 @@ class AlpacaClient:
             return positions_data
 
         except Exception as e:
-            logger.error(f"❌ Alpaca get_positions failed: {str(e)}")
-            raise Exception(f"Alpaca positions request failed: {str(e)}")
+            logger.error(f"❌ Alpaca get_positions failed: {e!s}")
+            raise Exception(f"Alpaca positions request failed: {e!s}")
 
-    def place_market_order(self, symbol: str, qty: float, side: str) -> Dict:
+    def place_market_order(self, symbol: str, qty: float, side: str) -> dict:
         """Place a market order on Alpaca paper trading account"""
         try:
             order_side = OrderSide.BUY if side.upper() == "BUY" else OrderSide.SELL
@@ -130,10 +130,10 @@ class AlpacaClient:
             }
 
         except Exception as e:
-            logger.error(f"❌ Alpaca place_market_order failed: {str(e)}")
-            raise Exception(f"Failed to place market order: {str(e)}")
+            logger.error(f"❌ Alpaca place_market_order failed: {e!s}")
+            raise Exception(f"Failed to place market order: {e!s}")
 
-    def place_limit_order(self, symbol: str, qty: float, side: str, limit_price: float) -> Dict:
+    def place_limit_order(self, symbol: str, qty: float, side: str, limit_price: float) -> dict:
         """Place a limit order on Alpaca paper trading account"""
         try:
             order_side = OrderSide.BUY if side.upper() == "BUY" else OrderSide.SELL
@@ -165,14 +165,14 @@ class AlpacaClient:
             }
 
         except Exception as e:
-            logger.error(f"❌ Alpaca place_limit_order failed: {str(e)}")
-            raise Exception(f"Failed to place limit order: {str(e)}")
+            logger.error(f"❌ Alpaca place_limit_order failed: {e!s}")
+            raise Exception(f"Failed to place limit order: {e!s}")
 
-    def get_orders(self, status: Optional[str] = None, limit: int = 100) -> List[Dict]:
+    def get_orders(self, status: str | None = None, limit: int = 100) -> list[dict]:
         """Get orders from Alpaca paper trading account"""
         try:
-            from alpaca.trading.requests import GetOrdersRequest
             from alpaca.trading.enums import QueryOrderStatus
+            from alpaca.trading.requests import GetOrdersRequest
 
             # Map status string to enum
             status_filter = None
@@ -217,10 +217,10 @@ class AlpacaClient:
             return orders_data
 
         except Exception as e:
-            logger.error(f"❌ Alpaca get_orders failed: {str(e)}")
-            raise Exception(f"Failed to get orders: {str(e)}")
+            logger.error(f"❌ Alpaca get_orders failed: {e!s}")
+            raise Exception(f"Failed to get orders: {e!s}")
 
-    def cancel_order(self, order_id: str) -> Dict:
+    def cancel_order(self, order_id: str) -> dict:
         """Cancel an order by ID"""
         try:
             self.client.cancel_order_by_id(order_id)
@@ -228,8 +228,8 @@ class AlpacaClient:
             return {"status": "cancelled", "order_id": order_id}
 
         except Exception as e:
-            logger.error(f"❌ Alpaca cancel_order failed: {str(e)}")
-            raise Exception(f"Failed to cancel order: {str(e)}")
+            logger.error(f"❌ Alpaca cancel_order failed: {e!s}")
+            raise Exception(f"Failed to cancel order: {e!s}")
 
 
 # Singleton instance
