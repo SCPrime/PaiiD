@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"],
+      "env": {
+        "BROWSER_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+      }
+    },
+    "console-ninja": {
+      "command": "node",
+      "args": ["C:\\Users\\SSaint-Cyr\\.console-ninja\\mcp\\index.js"],
+      "disabled": false
+    }
+  }
+}
