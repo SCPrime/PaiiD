@@ -2,8 +2,9 @@
 Test script for the new /api/ai/analyze-positions endpoint
 """
 
+
 import requests
-import json
+
 
 # Backend URL
 BASE_URL = "http://127.0.0.1:8001"
@@ -43,14 +44,14 @@ def test_analyze_positions():
         if response.status_code == 200:
             data = response.json()
             print("\n[SUCCESS] Response received:")
-            print(f"\nPortfolio Summary:")
+            print("\nPortfolio Summary:")
             print(f"  - Total Positions: {data['portfolio_summary']['total_positions']}")
             print(f"  - Total Value: ${data['portfolio_summary']['total_value']:,.2f}")
             print(f"  - Total P/L: ${data['portfolio_summary'].get('total_unrealized_pl', 0):,.2f}")
             print(f"  - Risk Score: {data['overall_risk_score']}/10")
             print(f"  - Diversification Score: {data['diversification_score']}/10")
 
-            print(f"\nPortfolio Recommendations:")
+            print("\nPortfolio Recommendations:")
             for rec in data['portfolio_recommendations']:
                 print(f"  - {rec}")
 
@@ -66,7 +67,7 @@ def test_analyze_positions():
             if len(data['positions']) > 3:
                 print(f"\n  ... and {len(data['positions']) - 3} more positions")
 
-            print(f"\n[OK] Test PASSED")
+            print("\n[OK] Test PASSED")
             return True
 
         else:
@@ -75,7 +76,7 @@ def test_analyze_positions():
             return False
 
     except Exception as e:
-        print(f"\n[ERROR] EXCEPTION: {str(e)}")
+        print(f"\n[ERROR] EXCEPTION: {e!s}")
         return False
 
 
@@ -98,7 +99,7 @@ def test_endpoint_exists():
             return False
 
     except Exception as e:
-        print(f"\n[ERROR] Cannot connect to backend: {str(e)}")
+        print(f"\n[ERROR] Cannot connect to backend: {e!s}")
         return False
 
 

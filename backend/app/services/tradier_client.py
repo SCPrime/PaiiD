@@ -169,14 +169,17 @@ class TradierClient:
 
     # ==================== MARKET DATA ====================
 
-    def get_quotes(self, symbols: list[str]) -> dict:
+    def get_quotes(self, symbols: list[str], *, include_greeks: bool = False) -> dict:
         """Get real-time quotes"""
-        params = {"symbols": ",".join(symbols), "greeks": "false"}
+        params = {
+            "symbols": ",".join(symbols),
+            "greeks": "true" if include_greeks else "false",
+        }
         return self._request("GET", "/markets/quotes", params=params)
 
-    def get_quote(self, symbol: str) -> dict:
+    def get_quote(self, symbol: str, *, include_greeks: bool = False) -> dict:
         """Get single quote"""
-        response = self.get_quotes([symbol])
+        response = self.get_quotes([symbol], include_greeks=include_greeks)
         if "quotes" in response and "quote" in response["quotes"]:
             quotes = response["quotes"]["quote"]
             return quotes if isinstance(quotes, dict) else quotes[0]

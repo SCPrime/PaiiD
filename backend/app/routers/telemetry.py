@@ -1,19 +1,23 @@
-"""
-Telemetry Router - Tracks user interactions and system events
-"""
+"""Telemetry Router - Tracks user interactions and system events."""
 
 import json
+import logging
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
+
+from app.routers.error_utils import log_and_sanitize_exceptions
 
 
 router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
 
 # In-memory storage (replace with database in production)
 telemetry_events: list[dict[str, Any]] = []
+
+
+logger = logging.getLogger(__name__)
 
 
 class TelemetryEvent(BaseModel):
@@ -31,32 +35,39 @@ class TelemetryBatch(BaseModel):
 
 
 @router.post("")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to record telemetry events",
+    log_message="Unable to record telemetry batch",
+)
 async def log_telemetry(batch: TelemetryBatch):
     """
     Receive and store telemetry events
     """
-    try:
-        # Store events
+    # Store events
+    for event in batch.events:
+        event_dict = event.dict()
+        telemetry_events.append(event_dict)
+
+    # Optional: Write to file for persistence
+    log_file = "telemetry_events.jsonl"
+    with open(log_file, "a", encoding="utf-8") as file_handle:
         for event in batch.events:
-            event_dict = event.dict()
-            telemetry_events.append(event_dict)
+            file_handle.write(json.dumps(event.dict()) + "\n")
 
-        # Optional: Write to file for persistence
-        log_file = "telemetry_events.jsonl"
-        with open(log_file, "a") as f:
-            for event in batch.events:
-                f.write(json.dumps(event.dict()) + "\n")
-
-        return {
-            "success": True,
-            "received": len(batch.events),
-            "message": f"Logged {len(batch.events)} telemetry events",
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "success": True,
+        "received": len(batch.events),
+        "message": f"Logged {len(batch.events)} telemetry events",
+    }
 
 
 @router.get("/events")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to fetch telemetry events",
+    log_message="Unable to retrieve telemetry events",
+)
 async def get_telemetry_events(
     limit: int = 100,
     user_id: str = None,
@@ -86,6 +97,11 @@ async def get_telemetry_events(
 
 
 @router.get("/stats")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to calculate telemetry statistics",
+    log_message="Unable to generate telemetry statistics",
+)
 async def get_telemetry_stats():
     """
     Get aggregate statistics from telemetry data
@@ -136,6 +152,11 @@ async def get_telemetry_stats():
 
 
 @router.delete("/events")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to clear telemetry events",
+    log_message="Unable to clear telemetry events",
+)
 async def clear_telemetry_events():
     """
     Clear all telemetry events (admin only)
@@ -148,6 +169,11 @@ async def clear_telemetry_events():
 
 
 @router.get("/export")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to export telemetry",
+    log_message="Unable to export telemetry events",
+)
 async def export_telemetry():
     """
     Export all telemetry events as JSON

@@ -8,7 +8,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from app.services.alpaca_client import get_alpaca_client
-from app.services.greeks import GreeksCalculator
+from app.services.options_greeks import GreeksCalculator
 from app.services.tradier_client import get_tradier_client
 
 
@@ -66,13 +66,26 @@ class PositionTrackerService:
                     continue
 
                 # Get current market data from Tradier
-                quote = self.tradier.get_option_quote(pos.symbol)
+                option_quote = self.tradier.get_quote(pos.symbol, include_greeks=True)
+                underlying_symbol = self._parse_underlying(pos.symbol)
+                underlying_quote = self.tradier.get_quote(underlying_symbol)
+
+                underlying_price = float(
+                    option_quote.get("underlying_price")
+                    or underlying_quote.get("last")
+                    or underlying_quote.get("close")
+                    or 0
+                )
 
                 # Calculate Greeks
-                greeks = self._calculate_position_greeks(pos, quote)
+                greeks = self._calculate_position_greeks(
+                    pos,
+                    option_quote,
+                    underlying_price,
+                )
 
                 # Calculate P&L
-                current_price = quote.get("last", pos.current_price)
+                current_price = float(option_quote.get("last") or pos.current_price or 0)
                 unrealized_pl = (current_price - pos.avg_entry_price) * pos.qty * 100
                 cost_basis = pos.avg_entry_price * pos.qty * 100
                 unrealized_pl_percent = (
@@ -162,28 +175,36 @@ class PositionTrackerService:
             logger.error(f"Failed to close position: {e}")
             raise
 
-    def _calculate_position_greeks(self, position, quote) -> PositionGreeks:
+    def _calculate_position_greeks(
+        self, position, option_quote: dict, underlying_price: float
+    ) -> PositionGreeks:
         """Calculate Greeks for a position"""
         try:
             # Parse option symbol
-            option_type, strike, expiration = self._parse_option_symbol(position.symbol)
+            option_type, strike, _ = self._parse_option_symbol(position.symbol)
 
-            # Get underlying price
-            underlying_price = quote.get("underlying_price", 0)
+            days_to_expiry = max(self._calculate_dte(position.symbol), 0)
+            if days_to_expiry <= 0 or underlying_price <= 0:
+                return PositionGreeks(delta=0, gamma=0, theta=0, vega=0)
 
-            # Calculate Greeks
-            days_to_expiry = self._calculate_dte(position.symbol)
-            iv = quote.get("greeks", {}).get("mid_iv", 0.3)
+            time_to_expiry = days_to_expiry / 365.0
+            greeks_data = option_quote.get("greeks", {}) or {}
+            iv = float(greeks_data.get("mid_iv") or greeks_data.get("iv") or 0.3)
 
             greeks = self.greeks_calc.calculate_greeks(
-                option_type=option_type,
-                underlying_price=underlying_price,
+                spot_price=underlying_price,
                 strike_price=strike,
-                days_to_expiry=days_to_expiry,
-                implied_volatility=iv,
+                time_to_expiry=time_to_expiry,
+                volatility=iv,
+                option_type=option_type,
             )
 
-            return PositionGreeks(**greeks)
+            return PositionGreeks(
+                delta=greeks.delta,
+                gamma=greeks.gamma,
+                theta=greeks.theta,
+                vega=greeks.vega,
+            )
 
         except Exception as e:
             logger.warning(f"Failed to calculate Greeks: {e}")
