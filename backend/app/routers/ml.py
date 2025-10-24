@@ -10,9 +10,10 @@ Endpoints for ML-powered features:
 import logging
 from typing import Any
 
+import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 
-from ..ml import get_regime_detector
+from ..ml import get_regime_detector, get_strategy_selector
 
 
 logger = logging.getLogger(__name__)
@@ -150,3 +151,113 @@ async def ml_health_check() -> dict[str, Any]:
             "status": "unhealthy",
             "error": str(e),
         }
+
+
+@router.get("/recommend-strategy")
+async def recommend_strategy(
+    symbol: str = Query("SPY", description="Stock symbol to analyze"),
+    lookback_days: int = Query(90, ge=30, le=365, description="Days of history to analyze"),
+    top_n: int = Query(3, ge=1, le=5, description="Number of recommendations"),
+) -> dict[str, Any]:
+    """
+    Recommend optimal trading strategies based on ML predictions
+
+    Uses Random Forest to predict which strategies will perform best
+    given current market conditions.
+
+    Returns:
+        - symbol: Stock symbol analyzed
+        - market_regime: Current market state
+        - recommendations: List of strategy recommendations with probabilities
+        - timestamp: When analysis was performed
+
+    Example:
+        GET /api/ml/recommend-strategy?symbol=AAPL&top_n=3
+    """
+    try:
+        logger.info(f"Strategy recommendation requested for {symbol}")
+
+        selector = get_strategy_selector()
+
+        # Get recommendations
+        recommendations = selector.recommend(symbol, lookback_days, top_n)
+
+        if not recommendations:
+            # Fallback to regime-based recommendations if ML fails
+            logger.warning(f"ML recommendation failed for {symbol}, using regime-based fallback")
+            detector = get_regime_detector()
+            regime_result = detector.predict(symbol, lookback_days)
+            regime = regime_result.get("regime", "unknown")
+
+            fallback_strategies = detector.get_recommended_strategies(regime)
+            recommendations = [
+                {"strategy_id": s, "probability": 0.5, "confidence": 0.5}
+                for s in fallback_strategies[:top_n]
+            ]
+
+        # Get current market regime for context
+        detector = get_regime_detector()
+        regime_result = detector.predict(symbol, lookback_days)
+
+        return {
+            "symbol": symbol,
+            "market_regime": regime_result.get("regime", "unknown"),
+            "regime_confidence": regime_result.get("confidence", 0.0),
+            "recommendations": recommendations,
+            "lookback_days": lookback_days,
+            "timestamp": pd.Timestamp.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Strategy recommendation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Strategy recommendation failed: {e!s}") from e
+
+
+@router.post("/train-strategy-selector")
+async def train_strategy_selector(
+    symbols: list[str] = Query(["SPY", "QQQ", "IWM", "DIA"], description="Symbols to train on"),
+    lookback_days: int = Query(365, ge=180, le=730, description="Days of training data per symbol"),
+) -> dict[str, Any]:
+    """
+    Train or retrain the strategy selector model
+
+    This is a long-running operation that:
+    1. Runs backtests on multiple symbols and time windows
+    2. Learns which strategies perform best in which conditions
+    3. Trains a Random Forest classifier
+
+    Args:
+        symbols: List of symbols to backtest (default: major indices)
+        lookback_days: Days of history per symbol
+
+    Returns:
+        Training results including accuracy metrics
+
+    Example:
+        POST /api/ml/train-strategy-selector?symbols=SPY&symbols=QQQ
+    """
+    try:
+        logger.info(f"Training strategy selector on {symbols} ({lookback_days} days)...")
+
+        selector = get_strategy_selector()
+
+        # Train model
+        result = selector.train(symbols, lookback_days)
+
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=500,
+                detail=result.get("error", "Training failed - check logs"),
+            )
+
+        return {
+            "success": True,
+            "message": f"Strategy selector trained on {len(symbols)} symbols",
+            **result,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Training failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Training failed: {e!s}") from e
