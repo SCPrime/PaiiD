@@ -35,7 +35,9 @@ import KillSwitchToggle from "./KillSwitchToggle";
 import MLAnalyticsDashboard from "./MLAnalyticsDashboard";
 import MLModelManagement from "./MLModelManagement";
 import MLTrainingDashboard from "./MLTrainingDashboard";
+import { MonitorDashboard } from "./MonitorDashboard";
 import PatternBacktestDashboard from "./PatternBacktestDashboard";
+import PerformanceDashboard from "./admin/PerformanceDashboard";
 import PortfolioOptimizer from "./PortfolioOptimizer";
 import RiskDashboard from "./RiskDashboard";
 import SchedulerSettings from "./SchedulerSettings";
@@ -493,6 +495,8 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     { id: "permissions", label: "Permissions", icon: Lock, adminOnly: true },
     { id: "telemetry", label: "Telemetry", icon: Database, adminOnly: true },
     { id: "trading", label: "Trading Control", icon: Activity, adminOnly: true },
+    { id: "performance", label: "Performance Monitor", icon: Activity, adminOnly: true },
+    { id: "github-monitor", label: "GitHub Monitor", icon: Activity, adminOnly: true },
   ].filter((tab) => tab.alwaysShow || (tab.adminOnly && isAdmin));
 
   return (
@@ -1225,6 +1229,10 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
               onToggleTradingMode={toggleTradingMode}
             />
           )}
+
+          {activeTab === "performance" && isAdmin && <PerformanceDashboard />}
+
+          {activeTab === "github-monitor" && isAdmin && <MonitorDashboard />}
         </div>
 
         {/* Footer */}
