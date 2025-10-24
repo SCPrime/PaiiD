@@ -1,4 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+
+import "@/pages/api/_startup";
 // TODO: Re-enable when strategies module is implemented
 // import type { Strategy, ValidationResult } from "@/strategies/schema";
 // import { validateStrategy } from "@/strategies/validator";

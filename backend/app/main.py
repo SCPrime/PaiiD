@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -8,14 +7,6 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
 
-print("\n===== BACKEND STARTUP =====")
-print(f".env path: {env_path}")
-print(f".env exists: {env_path.exists()}")
-print(f"API_TOKEN from env: {os.getenv('API_TOKEN', 'NOT_SET')}")
-print(f"TRADIER_API_KEY configured: {'YES' if os.getenv('TRADIER_API_KEY') else 'NO'}")
-print("Deployed from: main branch - Tradier integration active")
-print("===========================\n", flush=True)
-
 
 import sentry_sdk
 from fastapi import FastAPI
@@ -24,6 +15,7 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 from slowapi.errors import RateLimitExceeded
 
+from .core.bootstrap import emit_startup_summary
 from .core.config import settings
 from .routers import (
     ai,
@@ -52,6 +44,11 @@ from .routers import settings as settings_router
 from .scheduler import init_scheduler
 
 
+_validation_report = emit_startup_summary(
+    settings=settings, application="paiid-backend", env_path=env_path
+)
+
+
 # Initialize Sentry if DSN is configured
 if settings.SENTRY_DSN:
     sentry_sdk.init(
@@ -62,12 +59,8 @@ if settings.SENTRY_DSN:
         ],
         traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
         profiles_sample_rate=0.1,  # 10% profiling
-        environment=(
-            "production"
-            if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "")
-            else "development"
-        ),
-        release="paiid-backend@1.0.0",
+        environment=settings.environment_label,
+        release=settings.RELEASE_VERSION or "paiid-backend@1.0.0",
         send_default_pii=False,  # Don't send personally identifiable info
         before_send=lambda event, hint: (
             event
@@ -88,9 +81,7 @@ if settings.SENTRY_DSN:
 else:
     print("[WARNING] SENTRY_DSN not configured - error tracking disabled", flush=True)
 
-print("\n===== SETTINGS LOADED =====")
-print(f"settings.API_TOKEN: {settings.API_TOKEN}")
-print("===========================\n", flush=True)
+
 
 app = FastAPI(
     title="PaiiD Trading API",

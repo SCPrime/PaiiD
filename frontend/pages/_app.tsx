@@ -9,6 +9,21 @@ import AIChatBot from "../components/AIChatBot";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { GlowStyleProvider } from "../contexts/GlowStyleContext";
 import { initSentry, setUser } from "../lib/sentry";
+import { logClientStartup } from "../lib/frontendClientStartup";
+
+type ServerStartupModule = typeof import("../lib/frontendServerStartup");
+
+if (typeof window === "undefined") {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const serverStartup: ServerStartupModule = require("../lib/frontendServerStartup");
+  try {
+    serverStartup.ensureServerEnvironment();
+    serverStartup.logServerStartup();
+  } catch (error) {
+    console.error("[Startup] Frontend prelaunch validation failed:", error);
+    throw error;
+  }
+}
 import "../styles/globals.css";
 
 interface AppPropsExtended {
@@ -80,6 +95,10 @@ export default function App({ Component, pageProps }: AppProps) {
     if (typeof window !== "undefined") {
       initSentry();
     }
+  }, []);
+
+  useEffect(() => {
+    logClientStartup();
   }, []);
 
   // Get user info from localStorage (or generate unique ID)

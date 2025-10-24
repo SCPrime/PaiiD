@@ -1,5 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
+import "@/pages/api/_startup";
+import { maskSecret } from "@/utils/envValidation";
+
+
 // NOTE: API routes run server-side and use NON-PREFIXED env vars
 // NEXT_PUBLIC_* is for client-side code only!
 const BACKEND =
@@ -12,7 +16,7 @@ if (!API_TOKEN) {
   console.error("[PROXY] ⚠️ API_TOKEN not configured in environment variables");
   console.error("[PROXY] ⚠️ Checked: process.env.API_TOKEN and process.env.NEXT_PUBLIC_API_TOKEN");
 } else {
-  console.info(`[PROXY] ✅ API_TOKEN loaded: ${API_TOKEN.substring(0, 10)}...`);
+  console.info(`[PROXY] ✅ API_TOKEN loaded: ${maskSecret(API_TOKEN)}`);
 }
 
 // Exact endpoints our UI uses (paths without /api prefix - added in URL construction)

@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
+import "@/pages/api/_startup";
+
 /**
  * Claude chat endpoint - proxies to backend
  * Routes frontend requests to backend Claude API
