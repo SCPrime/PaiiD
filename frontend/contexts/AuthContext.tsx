@@ -13,6 +13,7 @@ interface AuthContextValue {
   user: authApi.UserProfile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  accessToken: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (data: authApi.RegisterData) => Promise<void>;
   logout: () => Promise<void>;
@@ -24,6 +25,7 @@ export const AuthContext = createContext<AuthContextValue | undefined>(undefined
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<authApi.UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   /**
@@ -34,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const tokens = authApi.getStoredTokens();
 
       if (!tokens) {
+        setAccessToken(null);
         setIsLoading(false);
         return;
       }
@@ -46,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           // Refresh failed, clear session
           authApi.clearTokens();
+          setAccessToken(null);
           setIsLoading(false);
         }
         return;
@@ -53,12 +57,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Token is valid, fetch user profile
       try {
+        setAccessToken(tokens.accessToken);
         const profile = await authApi.getCurrentUser(tokens.accessToken);
         setUser(profile);
         startRefreshTimer();
       } catch (error) {
         // Token invalid, clear it
         authApi.clearTokens();
+        setAccessToken(null);
       } finally {
         setIsLoading(false);
       }
@@ -106,6 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const newTokens = await authApi.refreshToken(tokens.refreshToken);
     authApi.saveTokens(newTokens);
+    setAccessToken(newTokens.access_token);
 
     // Update user profile
     const profile = await authApi.getCurrentUser(newTokens.access_token);
@@ -122,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       toast.error("Session refresh failed. Please login again.");
       authApi.clearTokens();
+      setAccessToken(null);
       setUser(null);
     }
   }, [startRefreshTimer]);
@@ -134,6 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const tokens = await authApi.login({ email, password });
         authApi.saveTokens(tokens);
+        setAccessToken(tokens.access_token);
 
         // Fetch user profile
         const profile = await authApi.getCurrentUser(tokens.access_token);
@@ -163,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const tokens = await authApi.register(data);
         authApi.saveTokens(tokens);
+        setAccessToken(tokens.access_token);
 
         // Fetch user profile
         const profile = await authApi.getCurrentUser(tokens.access_token);
@@ -190,6 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Clear local state first (optimistic)
     setUser(null);
+    setAccessToken(null);
     authApi.clearTokens();
 
     if (refreshTimerRef.current) {
@@ -213,6 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     isAuthenticated: !!user,
     isLoading,
+    accessToken,
     login,
     register,
     logout,

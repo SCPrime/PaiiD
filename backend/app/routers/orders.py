@@ -1,6 +1,8 @@
 import logging
+import logging
 import os
 from datetime import datetime
+from typing import Any, Dict
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -17,7 +19,8 @@ from tenacity import (
 from ..core.auth import require_bearer
 from ..core.config import settings
 from ..core.idempotency import check_and_store
-from ..core.kill_switch import is_killed, set_kill
+from ..core.jwt import require_admin
+from ..core.kill_switch import get_status, is_killed, set_kill
 from ..db.session import get_db
 from ..middleware.validation import (
     validate_limit_price,
@@ -27,7 +30,7 @@ from ..middleware.validation import (
     validate_side,
     validate_symbol,
 )
-from ..models.database import OrderTemplate
+from ..models.database import ActivityLog, OrderTemplate
 
 
 logger = logging.getLogger(__name__)
@@ -38,6 +41,29 @@ router = APIRouter()
 ALPACA_API_KEY = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
 ALPACA_BASE_URL = "https://paper-api.alpaca.markets"  # Paper trading
+
+
+class KillSwitchUpdate(BaseModel):
+    """Request payload to toggle the emergency kill switch."""
+
+    halt: bool = Field(..., description="Set to true to halt all trading activity")
+    reason: str | None = Field(
+        None,
+        max_length=280,
+        description="Optional reason for audit and operator visibility",
+    )
+
+
+def _serialize_kill_status(status: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize kill-switch status for API responses."""
+
+    updated_at = status.get("updated_at")
+    return {
+        "tradingHalted": bool(status.get("trading_halted", False)),
+        "updatedAt": updated_at.isoformat() if isinstance(updated_at, datetime) else None,
+        "updatedBy": status.get("updated_by"),
+        "reason": status.get("reason"),
+    }
 
 
 def get_alpaca_headers():
@@ -378,10 +404,51 @@ async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer))
         raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}")
 
 
+@router.get("/admin/kill")
+def get_kill_switch_status(current_user=Depends(require_admin)):
+    """Return the current kill-switch state. Admin access required."""
+
+    status = get_status()
+    return _serialize_kill_status(status)
+
+
 @router.post("/admin/kill")
-def kill(state: bool, _=Depends(require_bearer)):
-    set_kill(state)
-    return {"tradingHalted": state}
+def toggle_kill_switch(
+    payload: KillSwitchUpdate,
+    request: Request,
+    current_user=Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Toggle the kill switch and record an audit trail entry."""
+
+    previous_status = get_status()
+    updated_status = set_kill(
+        payload.halt,
+        actor={
+            "id": current_user.id,
+            "email": current_user.email,
+            "role": current_user.role,
+        },
+        reason=payload.reason,
+    )
+
+    log_entry = ActivityLog(
+        user_id=current_user.id,
+        action_type="kill_switch_toggle",
+        resource_type="system",
+        resource_id=None,
+        details={
+            "halted": payload.halt,
+            "previous": previous_status.get("trading_halted", False),
+            "reason": payload.reason,
+        },
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.add(log_entry)
+    db.commit()
+
+    return _serialize_kill_status(updated_status)
 
 
 # Order Template Models with Validation
