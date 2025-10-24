@@ -62,14 +62,14 @@ curl -X POST https://paiid-backend.onrender.com/api/auth/login \
 ### Base URL
 
 ```
-https://paiid-backend.onrender.com/api/ml
+https://paiid-backend.onrender.com/api/sentiment
 ```
 
 ---
 
 ### 1. Get Sentiment Analysis
 
-**Endpoint**: `GET /ml/sentiment/{symbol}`
+**Endpoint**: `GET /sentiment/sentiment/{symbol}`
 
 Analyzes recent news sentiment for a stock using AI.
 
@@ -269,21 +269,21 @@ Check ML service status (no authentication required).
 ### Example 1: Get Sentiment for AAPL
 
 ```bash
-curl -X GET "https://paiid-backend.onrender.com/api/ml/sentiment/AAPL?include_news=true&lookback_days=7" \
+curl -X GET "https://paiid-backend.onrender.com/api/sentiment/sentiment/AAPL?include_news=true&lookback_days=7" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 ### Example 2: Get Trade Signal for TSLA
 
 ```bash
-curl -X GET "https://paiid-backend.onrender.com/api/ml/signals/TSLA?include_sentiment=true&lookback_days=30" \
+curl -X GET "https://paiid-backend.onrender.com/api/sentiment/signals/TSLA?include_sentiment=true&lookback_days=30" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 ### Example 3: Batch Analysis
 
 ```bash
-curl -X POST "https://paiid-backend.onrender.com/api/ml/signals/batch" \
+curl -X POST "https://paiid-backend.onrender.com/api/sentiment/signals/batch" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -298,7 +298,7 @@ curl -X POST "https://paiid-backend.onrender.com/api/ml/signals/batch" \
 ```python
 import requests
 
-BASE_URL = "https://paiid-backend.onrender.com/api/ml"
+BASE_URL = "https://paiid-backend.onrender.com/api/sentiment"
 TOKEN = "your_jwt_token_here"
 
 headers = {
