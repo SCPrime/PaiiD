@@ -7,7 +7,7 @@ Stores equity snapshots in JSON files for P&L Dashboard.
 
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from ..services.tradier_client import get_tradier_client
@@ -54,7 +54,7 @@ class EquityTracker:
 
             # Create snapshot
             snapshot = {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "equity": round(equity, 2),
                 "cash": round(cash, 2),
                 "positions_value": round(positions_value, 2),
@@ -156,9 +156,11 @@ class EquityTracker:
             }
 
         # Get snapshots within period
-        cutoff_date = datetime.utcnow().timestamp() - (period_days * 86400)
+        cutoff_date = datetime.now(UTC).timestamp() - (period_days * 86400)
         recent_snapshots = [
-            s for s in history if datetime.fromisoformat(s["timestamp"]).timestamp() >= cutoff_date
+            s
+            for s in history
+            if datetime.fromisoformat(s["timestamp"]).timestamp() >= cutoff_date
         ]
 
         if len(recent_snapshots) < 2:
@@ -174,7 +176,9 @@ class EquityTracker:
         start_equity = recent_snapshots[0]["equity"]
         end_equity = recent_snapshots[-1]["equity"]
         total_return = end_equity - start_equity
-        total_return_pct = (total_return / start_equity * 100) if start_equity > 0 else 0
+        total_return_pct = (
+            (total_return / start_equity * 100) if start_equity > 0 else 0
+        )
 
         # Calculate max drawdown
         peak = start_equity
@@ -204,13 +208,17 @@ class EquityTracker:
         for i in range(1, len(recent_snapshots)):
             prev_equity = recent_snapshots[i - 1]["equity"]
             curr_equity = recent_snapshots[i]["equity"]
-            daily_return = (curr_equity - prev_equity) / prev_equity if prev_equity > 0 else 0
+            daily_return = (
+                (curr_equity - prev_equity) / prev_equity if prev_equity > 0 else 0
+            )
             daily_returns.append(daily_return)
 
         if daily_returns:
             avg_return = sum(daily_returns) / len(daily_returns)
             # Standard deviation
-            variance = sum((r - avg_return) ** 2 for r in daily_returns) / len(daily_returns)
+            variance = sum((r - avg_return) ** 2 for r in daily_returns) / len(
+                daily_returns
+            )
             std_dev = variance**0.5
 
             # Sharpe ratio (assuming 0% risk-free rate)

@@ -4,7 +4,7 @@ Manages all monitoring counters with Redis backend for real-time tracking
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from ..core.config import get_settings
@@ -38,7 +38,7 @@ class CounterManager:
             new_value = await self.redis.incrby(key, amount)
 
             # Also track in time-series for trending
-            timestamp = datetime.utcnow().timestamp()
+            timestamp = datetime.now(UTC).timestamp()
             await self.redis.zadd(
                 f"{self.prefix}timeseries:{counter_name}", {str(timestamp): amount}
             )
@@ -176,7 +176,7 @@ class CounterManager:
         """
         try:
             key = f"{self.prefix}timeseries:{counter_name}"
-            since = (datetime.utcnow() - timedelta(hours=hours)).timestamp()
+            since = (datetime.now(UTC) - timedelta(hours=hours)).timestamp()
 
             # Get all entries since timestamp
             data = await self.redis.zrangebyscore(key, since, "+inf", withscores=True)
@@ -203,7 +203,7 @@ class CounterManager:
         try:
             pattern = f"{self.prefix}timeseries:*"
             keys = await self.redis.keys(pattern)
-            cutoff = (datetime.utcnow() - timedelta(days=days)).timestamp()
+            cutoff = (datetime.now(UTC) - timedelta(days=days)).timestamp()
 
             total_removed = 0
             for key in keys:

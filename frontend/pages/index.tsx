@@ -1,21 +1,41 @@
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import Split from "react-split";
 import RadialMenu, { Workflow, workflows } from "../components/RadialMenu";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 
 import ExecuteTradeForm from "../components/ExecuteTradeForm";
-import MorningRoutineAI from "../components/MorningRoutineAI";
-
-import AIRecommendations from "../components/AIRecommendations";
-
 import Settings from "../components/Settings";
-
-import Analytics from "../components/Analytics";
-import Backtesting from "../components/Backtesting";
-import NewsReview from "../components/NewsReview";
-import StrategyBuilderAI from "../components/StrategyBuilderAI";
-import PositionManager from "../components/trading/PositionManager";
 import UserSetupAI from "../components/UserSetupAI";
+
+// Dynamic imports for code splitting (loads only when needed)
+const MorningRoutineAI = dynamic(() => import("../components/MorningRoutineAI"), {
+  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+});
+const AIRecommendations = dynamic(() => import("../components/AIRecommendations"), {
+  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+});
+const MonitorDashboard = dynamic(
+  () => import("../components/MonitorDashboard").then((mod) => ({ default: mod.MonitorDashboard })),
+  {
+    loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+  }
+);
+const Analytics = dynamic(() => import("../components/Analytics"), {
+  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+});
+const Backtesting = dynamic(() => import("../components/Backtesting"), {
+  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+});
+const NewsReview = dynamic(() => import("../components/NewsReview"), {
+  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+});
+const StrategyBuilderAI = dynamic(() => import("../components/StrategyBuilderAI"), {
+  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+});
+const PositionManager = dynamic(() => import("../components/trading/PositionManager"), {
+  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+});
 
 import AIChat from "../components/AIChat";
 import CompletePaiiDLogo from "../components/CompletePaiiDLogo";
@@ -137,6 +157,9 @@ export default function Dashboard() {
 
         case "backtesting":
           return <Backtesting />;
+
+        case "monitor":
+          return <MonitorDashboard />;
 
         default:
           return null;

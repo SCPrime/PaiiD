@@ -1,16 +1,20 @@
 """
 ML Sentiment & Signals API Router
 Real sentiment analysis and trade signal endpoints
+WITH REDIS CACHING for performance
 """
 
+import hashlib
+import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from ..core.auth import get_current_user
 from ..core.config import get_settings
+from ..core.redis_client import get_redis
 from ..ml.data_pipeline import DataPipeline
 from ..ml.sentiment_analyzer import get_sentiment_analyzer
 from ..ml.signal_generator import SignalType, get_signal_generator
@@ -20,6 +24,18 @@ from ..models.user import User
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/sentiment", tags=["ML Sentiment & Signals"])
 settings = get_settings()
+
+# Cache configuration
+SENTIMENT_CACHE_TTL = 900  # 15 minutes
+SIGNAL_CACHE_TTL = 300  # 5 minutes
+
+
+def generate_cache_key(prefix: str, **kwargs) -> str:
+    """Generate a cache key from parameters"""
+    # Sort kwargs for consistent key generation
+    params_str = json.dumps(kwargs, sort_keys=True)
+    hash_digest = hashlib.md5(params_str.encode()).hexdigest()[:8]
+    return f"{prefix}:{hash_digest}"
 
 
 # Response Models
@@ -64,14 +80,31 @@ async def get_sentiment(
     Get sentiment analysis for a symbol
 
     Analyzes recent news and market sentiment using AI.
+    Cached for 15 minutes to optimize API usage.
     """
     try:
+        # Check cache first
+        cache_key = generate_cache_key(
+            "sentiment",
+            symbol=symbol,
+            include_news=include_news,
+            lookback_days=lookback_days,
+        )
+        redis = get_redis()
+
+        cached = await redis.get(cache_key)
+        if cached:
+            logger.info(f"Cache HIT for sentiment: {symbol}")
+            cached_data = json.loads(cached)
+            return SentimentResponse(**cached_data)
+
+        logger.info(f"Cache MISS for sentiment: {symbol}")
         sentiment_analyzer = get_sentiment_analyzer()
         data_pipeline = DataPipeline()
 
         if include_news:
             # Fetch recent news
-            end_date = datetime.utcnow()
+            end_date = datetime.now(UTC)
             start_date = end_date - timedelta(days=lookback_days)
 
             news_articles = await data_pipeline.fetch_news(
@@ -93,7 +126,7 @@ async def get_sentiment(
                     score=0.0,
                     confidence=0.0,
                     reasoning="No recent news articles found",
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     source="news",
                 )
         else:
@@ -106,11 +139,11 @@ async def get_sentiment(
                 score=0.0,
                 confidence=0.0,
                 reasoning="News analysis disabled",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 source="manual",
             )
 
-        return SentimentResponse(
+        response = SentimentResponse(
             symbol=sentiment.symbol,
             sentiment=sentiment.sentiment,
             score=sentiment.score,
@@ -119,6 +152,16 @@ async def get_sentiment(
             timestamp=sentiment.timestamp,
             source=sentiment.source,
         )
+
+        # Cache the result for 15 minutes
+        await redis.setex(
+            cache_key,
+            SENTIMENT_CACHE_TTL,
+            json.dumps(response.model_dump(), default=str),
+        )
+        logger.info(f"Cached sentiment for {symbol} (TTL: {SENTIMENT_CACHE_TTL}s)")
+
+        return response
 
     except Exception as e:
         logger.error(f"Error getting sentiment for {symbol}: {e}")
@@ -138,13 +181,30 @@ async def get_trade_signal(
     Get AI-generated trade signal for a symbol
 
     Combines technical analysis with sentiment to generate BUY/SELL/HOLD signals.
+    Cached for 5 minutes to balance freshness with performance.
     """
     try:
+        # Check cache first
+        cache_key = generate_cache_key(
+            "signal",
+            symbol=symbol,
+            include_sentiment=include_sentiment,
+            lookback_days=lookback_days,
+        )
+        redis = get_redis()
+
+        cached = await redis.get(cache_key)
+        if cached:
+            logger.info(f"Cache HIT for signal: {symbol}")
+            cached_data = json.loads(cached)
+            return SignalResponse(**cached_data)
+
+        logger.info(f"Cache MISS for signal: {symbol}")
         signal_generator = get_signal_generator()
         data_pipeline = DataPipeline()
 
         # Fetch price data
-        end_date = datetime.utcnow()
+        end_date = datetime.now(UTC)
         start_date = end_date - timedelta(days=lookback_days)
 
         price_data = await data_pipeline.fetch_market_data(
@@ -174,7 +234,7 @@ async def get_trade_signal(
             symbol=symbol, price_data=price_data, news_articles=news_articles
         )
 
-        return SignalResponse(
+        response = SignalResponse(
             symbol=signal.symbol,
             signal=signal.signal,
             strength=signal.strength.value,
@@ -188,6 +248,14 @@ async def get_trade_signal(
             combined_score=signal.combined_score,
             timestamp=signal.timestamp,
         )
+
+        # Cache the result for 5 minutes
+        await redis.setex(
+            cache_key, SIGNAL_CACHE_TTL, json.dumps(response.model_dump(), default=str)
+        )
+        logger.info(f"Cached signal for {symbol} (TTL: {SIGNAL_CACHE_TTL}s)")
+
+        return response
 
     except HTTPException:
         raise
@@ -219,7 +287,7 @@ async def get_batch_signals(
 
     signal_generator = get_signal_generator()
     data_pipeline = DataPipeline()
-    end_date = datetime.utcnow()
+    end_date = datetime.now(UTC)
     start_date = end_date - timedelta(days=lookback_days)
 
     results = []
@@ -298,21 +366,23 @@ async def ml_sentiment_health_check():
                 "signal_generator": "ready",
                 "anthropic_configured": bool(settings.ANTHROPIC_API_KEY),
             },
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception as e:
         logger.error(f"ML health check failed: {e}")
         return {
             "status": "unhealthy",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 
 @router.get("/analyze")
 async def analyze_sentiment(
     symbol: str = Query(..., description="Stock symbol to analyze"),
-    lookback_hours: int = Query(24, ge=6, le=168, description="Hours of news to analyze (6-168)"),
+    lookback_hours: int = Query(
+        24, ge=6, le=168, description="Hours of news to analyze (6-168)"
+    ),
 ) -> dict:
     """
     Analyze sentiment from recent news articles
@@ -331,6 +401,7 @@ async def analyze_sentiment(
     """
     try:
         import random
+
         from ..services.news_aggregator import get_news_aggregator
 
         logger.info(f"Sentiment analysis requested for {symbol} ({lookback_hours}h)")
@@ -342,9 +413,7 @@ async def analyze_sentiment(
 
         try:
             articles = await news_aggregator.get_cached_news(
-                symbol=symbol,
-                start_date=start_time,
-                end_date=end_time
+                symbol=symbol, start_date=start_time, end_date=end_time
             )
         except Exception as e:
             logger.warning(f"Failed to fetch news: {e}")
@@ -398,23 +467,34 @@ async def analyze_sentiment(
 
             # Simulate key topics extraction
             topics = random.sample(
-                ["earnings", "revenue", "growth", "competition", "innovation", "regulation", "market", "forecast"],
-                k=random.randint(1, 3)
+                [
+                    "earnings",
+                    "revenue",
+                    "growth",
+                    "competition",
+                    "innovation",
+                    "regulation",
+                    "market",
+                    "forecast",
+                ],
+                k=random.randint(1, 3),
             )
             all_topics.extend(topics)
 
-            sentiment_articles.append({
-                "article_id": article.get("id", str(random.randint(1000, 9999))),
-                "title": article.get("title", "No title"),
-                "source": article.get("source", "Unknown"),
-                "published_at": article.get("date", datetime.now().isoformat()),
-                "url": article.get("url", "#"),
-                "sentiment": sentiment,
-                "sentiment_score": sentiment_score,
-                "confidence": confidence,
-                "key_topics": topics,
-                "impact_score": impact_score,
-            })
+            sentiment_articles.append(
+                {
+                    "article_id": article.get("id", str(random.randint(1000, 9999))),
+                    "title": article.get("title", "No title"),
+                    "source": article.get("source", "Unknown"),
+                    "published_at": article.get("date", datetime.now().isoformat()),
+                    "url": article.get("url", "#"),
+                    "sentiment": sentiment,
+                    "sentiment_score": sentiment_score,
+                    "confidence": confidence,
+                    "key_topics": topics,
+                    "impact_score": impact_score,
+                }
+            )
 
             sentiment_scores.append(sentiment_score)
 
@@ -434,14 +514,21 @@ async def analyze_sentiment(
                 overall_sentiment = "neutral"
 
             # Confidence based on consistency of sentiment
-            score_variance = sum((s - overall_score) ** 2 for s in sentiment_scores) / total_articles
+            score_variance = (
+                sum((s - overall_score) ** 2 for s in sentiment_scores) / total_articles
+            )
             overall_confidence = max(0.5, 1.0 - score_variance)
 
         # Calculate average impact
-        avg_impact = sum(a["impact_score"] for a in sentiment_articles) / total_articles if total_articles > 0 else 0.0
+        avg_impact = (
+            sum(a["impact_score"] for a in sentiment_articles) / total_articles
+            if total_articles > 0
+            else 0.0
+        )
 
         # Get top 5 trending topics
         from collections import Counter
+
         topic_counts = Counter(all_topics)
         top_topics = [topic for topic, count in topic_counts.most_common(5)]
 
@@ -467,4 +554,6 @@ async def analyze_sentiment(
 
     except Exception as e:
         logger.error(f"Sentiment analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Sentiment analysis failed: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Sentiment analysis failed: {e!s}"
+        ) from e

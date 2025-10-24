@@ -4,7 +4,7 @@ Analyzes market news and social media sentiment for trading insights
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 import anthropic
 from pydantic import BaseModel
@@ -35,7 +35,9 @@ class SentimentAnalyzer:
         self.client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
         self.model = "claude-3-5-sonnet-20241022"
 
-    async def analyze_text(self, symbol: str, text: str, source: str = "news") -> SentimentScore:
+    async def analyze_text(
+        self, symbol: str, text: str, source: str = "news"
+    ) -> SentimentScore:
         """
         Analyze sentiment from text (news article, social media post, etc.)
 
@@ -69,11 +71,13 @@ class SentimentAnalyzer:
                 score=0.0,
                 confidence=0.0,
                 reasoning=f"Analysis failed: {e!s}",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 source=source,
             )
 
-    async def analyze_news_batch(self, symbol: str, news_articles: list[dict]) -> SentimentScore:
+    async def analyze_news_batch(
+        self, symbol: str, news_articles: list[dict]
+    ) -> SentimentScore:
         """
         Analyze multiple news articles and aggregate sentiment
 
@@ -91,7 +95,7 @@ class SentimentAnalyzer:
                 score=0.0,
                 confidence=0.0,
                 reasoning="No news articles available",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 source="news",
             )
 
@@ -118,7 +122,7 @@ class SentimentAnalyzer:
                 score=0.0,
                 confidence=0.0,
                 reasoning=f"Batch analysis failed: {e!s}",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 source="news",
             )
 
@@ -162,7 +166,9 @@ REASONING: [your synthesized analysis here]
 
 Focus on the most recent and impactful information."""
 
-    def _parse_sentiment_response(self, symbol: str, response: str, source: str) -> SentimentScore:
+    def _parse_sentiment_response(
+        self, symbol: str, response: str, source: str
+    ) -> SentimentScore:
         """Parse Claude's structured response"""
         try:
             lines = response.strip().split("\n")
@@ -203,7 +209,7 @@ Focus on the most recent and impactful information."""
                 score=score,
                 confidence=confidence,
                 reasoning=reasoning,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 source=source,
             )
 
@@ -216,7 +222,7 @@ Focus on the most recent and impactful information."""
                 score=0.0,
                 confidence=0.0,
                 reasoning=f"Parse error: {e!s}",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 source=source,
             )
 

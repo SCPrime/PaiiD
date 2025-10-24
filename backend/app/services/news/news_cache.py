@@ -8,7 +8,7 @@ and improve response times. Uses file-based storage with TTL.
 import hashlib
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -121,10 +121,12 @@ class NewsCache:
             # Check TTL
             cached_at = datetime.fromisoformat(cache_data["cached_at"])
             ttl = MARKET_NEWS_TTL if cache_type == "market" else COMPANY_NEWS_TTL
-            age_seconds = (datetime.utcnow() - cached_at).total_seconds()
+            age_seconds = (datetime.now(UTC) - cached_at).total_seconds()
 
             if age_seconds > ttl:
-                logger.debug(f"Cache expired: {cache_key} (age: {age_seconds:.0f}s, TTL: {ttl}s)")
+                logger.debug(
+                    f"Cache expired: {cache_key} (age: {age_seconds:.0f}s, TTL: {ttl}s)"
+                )
                 # Delete expired cache
                 cache_path.unlink()
                 return None
@@ -150,7 +152,7 @@ class NewsCache:
             cache_path = self._get_cache_path(cache_key)
 
             cache_data = {
-                "cached_at": datetime.utcnow().isoformat(),
+                "cached_at": datetime.now(UTC).isoformat(),
                 "params": params,
                 "count": len(articles),
                 "articles": articles,
@@ -207,7 +209,9 @@ class NewsCache:
 
             # Count by type
             market_count = len([f for f in cache_files if f.name.startswith("market_")])
-            company_count = len([f for f in cache_files if f.name.startswith("company_")])
+            company_count = len(
+                [f for f in cache_files if f.name.startswith("company_")]
+            )
 
             # Check expired
             expired = 0
@@ -216,9 +220,13 @@ class NewsCache:
                     with open(cache_file) as f:
                         cache_data = json.load(f)
                     cached_at = datetime.fromisoformat(cache_data["cached_at"])
-                    cache_type = "market" if cache_file.name.startswith("market_") else "company"
-                    ttl = MARKET_NEWS_TTL if cache_type == "market" else COMPANY_NEWS_TTL
-                    age = (datetime.utcnow() - cached_at).total_seconds()
+                    cache_type = (
+                        "market" if cache_file.name.startswith("market_") else "company"
+                    )
+                    ttl = (
+                        MARKET_NEWS_TTL if cache_type == "market" else COMPANY_NEWS_TTL
+                    )
+                    age = (datetime.now(UTC) - cached_at).total_seconds()
                     if age > ttl:
                         expired += 1
                 except (OSError, json.JSONDecodeError, KeyError, ValueError) as e:

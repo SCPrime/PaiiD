@@ -6,7 +6,7 @@ Handles GitHub webhook events and tracks repository activity
 import hashlib
 import hmac
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from ..core.config import get_settings
@@ -85,7 +85,7 @@ class GitHubWebhookHandler:
                 "branch": branch,
                 "pusher": pusher,
                 "commit_count": len(commits),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             if sensitive_files:
@@ -130,7 +130,7 @@ class GitHubWebhookHandler:
                 "pr_number": pr_number,
                 "title": title,
                 "author": author,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             # Check for conflicts
@@ -180,7 +180,7 @@ class GitHubWebhookHandler:
                 "title": title,
                 "author": author,
                 "labels": labels,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             # Check for critical issues
@@ -219,7 +219,7 @@ class GitHubWebhookHandler:
                 "status": status,
                 "conclusion": conclusion,
                 "branch": branch,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             # Track failures
@@ -260,7 +260,7 @@ class GitHubWebhookHandler:
                 "event": "deployment",
                 "environment": environment,
                 "ref": ref,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             logger.info(f"Deployment event: {ref} to {environment}")
@@ -289,7 +289,7 @@ class GitHubWebhookHandler:
                 "event": "deployment_status",
                 "state": state,
                 "environment": environment,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             if state == "failure":
@@ -324,7 +324,7 @@ class GitHubWebhookHandler:
                 "action": action,
                 "tag_name": tag_name,
                 "name": name,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             logger.info(f"Release event: {action} - {tag_name}")

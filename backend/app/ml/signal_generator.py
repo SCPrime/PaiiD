@@ -4,7 +4,7 @@ Combines technical indicators with sentiment analysis to generate trade signals
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 import pandas as pd
@@ -105,7 +105,8 @@ class SignalGenerator:
 
             # 3. Combine scores
             combined_score = (
-                technical_score * self.technical_weight + sentiment_score * self.sentiment_weight
+                technical_score * self.technical_weight
+                + sentiment_score * self.sentiment_weight
             )
 
             # 4. Generate signal
@@ -140,7 +141,7 @@ class SignalGenerator:
                 technical_score=technical_score,
                 sentiment_score=sentiment_score,
                 combined_score=combined_score,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 indicators=indicators,
             )
 
@@ -149,7 +150,9 @@ class SignalGenerator:
             # Return HOLD signal on error
             return self._create_hold_signal(symbol, str(e))
 
-    def _calculate_technical_score(self, df: pd.DataFrame) -> tuple[float, dict[str, float]]:
+    def _calculate_technical_score(
+        self, df: pd.DataFrame
+    ) -> tuple[float, dict[str, float]]:
         """
         Calculate technical analysis score
 
@@ -166,10 +169,14 @@ class SignalGenerator:
             "rsi": float(latest.get("rsi_14", 50)),
             "macd": float(latest.get("macd", 0)),
             "macd_signal": float(latest.get("macd_signal", 0)),
-            "bb_position": float(latest.get("bb_position", 0)),  # Position within Bollinger Bands
+            "bb_position": float(
+                latest.get("bb_position", 0)
+            ),  # Position within Bollinger Bands
             "sma_20": float(latest.get("sma_20", latest["close"])),
             "sma_50": float(latest.get("sma_50", latest["close"])),
-            "volume_ratio": float(latest.get("volume_ratio", 1)),  # Current vs average volume
+            "volume_ratio": float(
+                latest.get("volume_ratio", 1)
+            ),  # Current vs average volume
         }
 
         # Calculate composite technical score
@@ -346,7 +353,7 @@ class SignalGenerator:
             technical_score=0.0,
             sentiment_score=0.0,
             combined_score=0.0,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             indicators={},
         )
 

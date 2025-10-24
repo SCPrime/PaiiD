@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends
 
@@ -68,6 +68,6 @@ def get_config(current_user: User = Depends(get_current_user)):
             "external_services": external_services_status,
         },
         "startup_metrics": startup_metrics,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "version": "1.0.0",
     }

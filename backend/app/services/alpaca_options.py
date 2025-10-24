@@ -6,7 +6,7 @@ Integrates with Greeks calculation for enriched options data
 
 import logging
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 
 from alpaca.data.historical import OptionHistoricalDataClient
 from alpaca.data.requests import OptionChainRequest, OptionSnapshotRequest
@@ -26,7 +26,9 @@ class AlpacaOptionsClient:
         self.secret_key = os.getenv("ALPACA_PAPER_SECRET_KEY")
 
         if not self.api_key or not self.secret_key:
-            raise ValueError("ALPACA_PAPER_API_KEY and ALPACA_PAPER_SECRET_KEY must be set in .env")
+            raise ValueError(
+                "ALPACA_PAPER_API_KEY and ALPACA_PAPER_SECRET_KEY must be set in .env"
+            )
 
         # Initialize Alpaca Options Data Client
         self.data_client = OptionHistoricalDataClient(
@@ -105,7 +107,9 @@ class AlpacaOptionsClient:
 
                 # Calculate Greeks
                 days_to_expiry = self._days_to_expiration(parsed["expiration"])
-                implied_vol = contract_data.get("implied_volatility", 0.3) or 0.3  # Default 30%
+                implied_vol = (
+                    contract_data.get("implied_volatility", 0.3) or 0.3
+                )  # Default 30%
 
                 greeks = self.greeks_calculator.calculate_greeks(
                     option_type=parsed["type"],
@@ -147,14 +151,16 @@ class AlpacaOptionsClient:
             calls.sort(key=lambda x: x["strike_price"])
             puts.sort(key=lambda x: x["strike_price"])
 
-            logger.info(f"✅ Options chain retrieved: {len(calls)} calls, {len(puts)} puts")
+            logger.info(
+                f"✅ Options chain retrieved: {len(calls)} calls, {len(puts)} puts"
+            )
 
             return {
                 "symbol": symbol,
                 "underlying_price": underlying_price,
                 "calls": calls,
                 "puts": puts,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": datetime.now(UTC).isoformat() + "Z",
             }
 
         except Exception as e:
@@ -218,16 +224,20 @@ class AlpacaOptionsClient:
                 "gamma": greeks["gamma"],
                 "theta": greeks["theta"],
                 "vega": greeks["vega"],
-                "in_the_money": self._is_itm(parsed["type"], underlying_price, parsed["strike"]),
+                "in_the_money": self._is_itm(
+                    parsed["type"], underlying_price, parsed["strike"]
+                ),
                 "days_to_expiration": days_to_expiry,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": datetime.now(UTC).isoformat() + "Z",
             }
 
             logger.info(f"✅ Contract details retrieved for {option_symbol}")
             return details
 
         except Exception as e:
-            logger.error(f"❌ Failed to fetch contract details for {option_symbol}: {e!s}")
+            logger.error(
+                f"❌ Failed to fetch contract details for {option_symbol}: {e!s}"
+            )
             raise
 
     async def get_expirations(self, symbol: str) -> list[str]:
@@ -313,7 +323,7 @@ class AlpacaOptionsClient:
         """Calculate days remaining until expiration"""
         try:
             exp_date = datetime.strptime(expiration_date, "%Y-%m-%d")
-            today = datetime.utcnow()
+            today = datetime.now(UTC)
             days = (exp_date - today).days
             return max(0, days)  # Never return negative
         except Exception:

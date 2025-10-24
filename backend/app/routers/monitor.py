@@ -4,7 +4,7 @@ Provides endpoints for monitoring dashboard and counters
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -124,7 +124,7 @@ async def get_dashboard(current_user: User = Depends(get_current_user)):
 
         return DashboardResponse(
             event_counters=counters,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             status="healthy",
         )
 
@@ -246,7 +246,7 @@ async def reset_weekly_counters(current_user: User = Depends(get_current_user)):
         return {
             "status": "success",
             "reset_count": reset_count,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
@@ -272,7 +272,7 @@ async def monitor_health_check():
                 "webhook_handler": "ready",
                 "redis": "connected",
             },
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
@@ -280,5 +280,5 @@ async def monitor_health_check():
         return {
             "status": "unhealthy",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }

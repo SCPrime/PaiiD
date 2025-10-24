@@ -7,7 +7,7 @@ import asyncio
 import json
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -171,7 +171,9 @@ class TradingScheduler:
                 return {
                     "id": job.id,
                     "name": job.name,
-                    "next_run": job.next_run_time.isoformat() if job.next_run_time else None,
+                    "next_run": job.next_run_time.isoformat()
+                    if job.next_run_time
+                    else None,
                     "trigger": str(job.trigger),
                 }
             return None
@@ -230,7 +232,9 @@ class TradingScheduler:
 
     async def _execute_morning_routine(self, schedule_id: str, requires_approval: bool):
         """Execute morning routine workflow"""
-        execution_id = await self._create_execution_record(schedule_id, "morning_routine")
+        execution_id = await self._create_execution_record(
+            schedule_id, "morning_routine"
+        )
 
         try:
             logger.info(f"Executing morning routine for schedule {schedule_id}")
@@ -255,8 +259,12 @@ class TradingScheduler:
             ]
 
             if requires_approval and recommendations:
-                await self._create_approval_requests(execution_id, recommendations, schedule_id)
-                result = f"Generated {len(recommendations)} recommendations pending approval"
+                await self._create_approval_requests(
+                    execution_id, recommendations, schedule_id
+                )
+                result = (
+                    f"Generated {len(recommendations)} recommendations pending approval"
+                )
             else:
                 result = f"Executed {len(recommendations)} trades automatically"
 
@@ -289,7 +297,9 @@ class TradingScheduler:
             logger.error(f"News review failed for schedule {schedule_id}: {e!s}")
             await self._complete_execution(execution_id, "failed", None, str(e))
 
-    async def _execute_ai_recommendations(self, schedule_id: str, requires_approval: bool):
+    async def _execute_ai_recommendations(
+        self, schedule_id: str, requires_approval: bool
+    ):
         """Execute AI recommendations check"""
         execution_id = await self._create_execution_record(schedule_id, "ai_recs")
 
@@ -300,7 +310,9 @@ class TradingScheduler:
             recommendations = []
 
             if requires_approval and recommendations:
-                await self._create_approval_requests(execution_id, recommendations, schedule_id)
+                await self._create_approval_requests(
+                    execution_id, recommendations, schedule_id
+                )
                 result = f"Generated {len(recommendations)} high-confidence recs pending approval"
             else:
                 result = "No high-confidence recommendations at this time"
@@ -328,7 +340,9 @@ class TradingScheduler:
     # Helper Functions
     # ========================
 
-    async def _create_execution_record(self, schedule_id: str, execution_type: str) -> str:
+    async def _create_execution_record(
+        self, schedule_id: str, execution_type: str
+    ) -> str:
         """Create execution record in file storage"""
         execution_id = str(uuid.uuid4())
 
@@ -346,7 +360,7 @@ class TradingScheduler:
             "schedule_name": schedule_name,
             "execution_type": execution_type,
             "status": "running",
-            "started_at": datetime.utcnow().isoformat(),
+            "started_at": datetime.now(UTC).isoformat(),
             "completed_at": None,
             "result": None,
             "error": None,
@@ -358,7 +372,11 @@ class TradingScheduler:
         return execution_id
 
     async def _complete_execution(
-        self, execution_id: str, status: str, result: str | None, error: str | None = None
+        self,
+        execution_id: str,
+        status: str,
+        result: str | None,
+        error: str | None = None,
     ):
         """Update execution record with completion status"""
         execution_file = EXECUTIONS_DIR / f"{execution_id}.json"
@@ -370,7 +388,7 @@ class TradingScheduler:
             execution.update(
                 {
                     "status": status,
-                    "completed_at": datetime.utcnow().isoformat(),
+                    "completed_at": datetime.now(UTC).isoformat(),
                     "result": result,
                     "error": error,
                 }
@@ -408,8 +426,8 @@ class TradingScheduler:
                 "ai_confidence": rec.get("confidence", 0.5) * 100,
                 "supporting_data": rec.get("supporting_data", {}),
                 "status": "pending",
-                "created_at": datetime.utcnow().isoformat(),
-                "expires_at": (datetime.utcnow() + timedelta(hours=4)).isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
+                "expires_at": (datetime.now(UTC) + timedelta(hours=4)).isoformat(),
                 "approved_at": None,
                 "approved_by": None,
                 "rejection_reason": None,

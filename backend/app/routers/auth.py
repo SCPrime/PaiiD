@@ -6,7 +6,7 @@ Supports owner and beta tester registration with invite codes.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -35,9 +35,13 @@ class UserRegister(BaseModel):
     """User registration request"""
 
     email: EmailStr
-    password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
+    password: str = Field(
+        ..., min_length=8, description="Password must be at least 8 characters"
+    )
     full_name: str | None = None
-    invite_code: str | None = Field(None, description="Required for beta tester registration")
+    invite_code: str | None = Field(
+        None, description="Required for beta tester registration"
+    )
 
     @field_validator("password")
     @classmethod
@@ -89,8 +93,12 @@ class UserProfile(BaseModel):
         from_attributes = True
 
 
-@router.post("/auth/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserRegister, request: Request, db: Session = Depends(get_db)):
+@router.post(
+    "/auth/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
+)
+async def register(
+    user_data: UserRegister, request: Request, db: Session = Depends(get_db)
+):
     """
     Register a new user
 
@@ -164,7 +172,9 @@ async def register(user_data: UserRegister, request: Request, db: Session = Depe
 
 
 @router.post("/auth/login", response_model=TokenResponse)
-async def login(credentials: UserLogin, request: Request, db: Session = Depends(get_db)):
+async def login(
+    credentials: UserLogin, request: Request, db: Session = Depends(get_db)
+):
     """
     Authenticate user and return JWT tokens
 
@@ -183,12 +193,15 @@ async def login(credentials: UserLogin, request: Request, db: Session = Depends(
         # Log failed attempt
         logger.warning(f"⚠️ Failed login attempt for: {credentials.email}")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
         )
 
     # Check if user is active
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled"
+        )
 
     logger.info(f"✅ User logged in: {user.email} (role: {user.role})")
 
@@ -217,7 +230,9 @@ async def login(credentials: UserLogin, request: Request, db: Session = Depends(
 
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def logout(
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
     """
     Logout user and invalidate all sessions
 
@@ -234,7 +249,7 @@ async def logout(current_user: User = Depends(get_current_user), db: Session = D
         resource_type="session",
         resource_id=current_user.id,
         details={"email": current_user.email},
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
     )
     db.add(activity)
     db.commit()
@@ -246,7 +261,9 @@ async def logout(current_user: User = Depends(get_current_user), db: Session = D
 
 @router.post("/auth/refresh", response_model=TokenResponse)
 async def refresh_token(
-    refresh_request: RefreshTokenRequest, request: Request, db: Session = Depends(get_db)
+    refresh_request: RefreshTokenRequest,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
     """
     Exchange refresh token for new access + refresh token pair
@@ -282,10 +299,14 @@ async def refresh_token(
     user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+        )
 
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled"
+        )
 
     # Verify session exists
     refresh_jti = payload.get("jti")
@@ -294,14 +315,15 @@ async def refresh_token(
         .filter(
             UserSession.user_id == user_id,
             UserSession.refresh_token_jti == refresh_jti,
-            UserSession.expires_at > datetime.utcnow(),
+            UserSession.expires_at > datetime.now(UTC),
         )
         .first()
     )
 
     if not session:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired or invalid"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session expired or invalid",
         )
 
     # Delete old session

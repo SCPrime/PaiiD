@@ -10,7 +10,7 @@ Sends alerts via:
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -68,7 +68,9 @@ class AlertManager:
         }
 
         if severity_order[severity] < severity_order[self.alert_threshold]:
-            logger.debug(f"Alert filtered by threshold: {severity} < {self.alert_threshold}")
+            logger.debug(
+                f"Alert filtered by threshold: {severity} < {self.alert_threshold}"
+            )
             return
 
         alert = {
@@ -77,7 +79,7 @@ class AlertManager:
             "message": message,
             "context": context or {},
             "tags": tags or [],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         # Store alert in database for dashboard
@@ -169,13 +171,17 @@ class AlertManager:
             "description": alert["message"],
             "color": color_map[alert["severity"]],
             "timestamp": alert["timestamp"],
-            "fields": [{"name": "Severity", "value": alert["severity"].upper(), "inline": True}],
+            "fields": [
+                {"name": "Severity", "value": alert["severity"].upper(), "inline": True}
+            ],
         }
 
         # Add context fields
         if alert["context"]:
             for key, value in alert["context"].items():
-                embed["fields"].append({"name": key, "value": str(value), "inline": True})
+                embed["fields"].append(
+                    {"name": key, "value": str(value), "inline": True}
+                )
 
         payload = {"embeds": [embed]}
 

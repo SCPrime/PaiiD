@@ -112,12 +112,17 @@ app = FastAPI(
 )
 
 # Add Request ID middleware early for correlation
+from starlette.middleware.gzip import GZIPMiddleware
+
 from .middleware.kill_switch import KillSwitchMiddleware
 from .middleware.request_id import RequestIDMiddleware
 
 
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(KillSwitchMiddleware)
+# Add GZIP compression for responses >1KB (reduces bandwidth by ~70%)
+app.add_middleware(GZIPMiddleware, minimum_size=1000)
+print("[OK] GZIP compression enabled for responses >1KB", flush=True)
 
 # Configure rate limiting (Phase 3: Bulletproof Reliability)
 # Skip rate limiting in test environment to avoid middleware conflicts with TestClient

@@ -87,15 +87,19 @@ export function MonitorDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center p-8" role="status" aria-live="polite">
+        <div
+          className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"
+          aria-label="Loading monitor data"
+        ></div>
+        <span className="sr-only">Loading monitor data, please wait...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <Card className="p-6">
+      <Card className="p-6" role="alert" aria-live="assertive">
         <div className="text-red-500">
           <h3 className="text-lg font-semibold mb-2">Error Loading Monitor Data</h3>
           <p>{error}</p>
@@ -107,14 +111,14 @@ export function MonitorDashboard() {
   const counters = dashboardData?.event_counters;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="main" aria-label="Repository Monitor Dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">🔍 Repository Monitor</h1>
           <p className="text-muted-foreground mt-1">Real-time GitHub activity tracking</p>
         </div>
-        <div className="text-right">
+        <div className="text-right" aria-live="polite" aria-atomic="true">
           <div className="text-sm text-muted-foreground">Last Update</div>
           <div className="text-sm font-medium">{lastUpdate.toLocaleTimeString()}</div>
         </div>

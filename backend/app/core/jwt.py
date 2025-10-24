@@ -6,7 +6,7 @@ for multi-user authentication system.
 """
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi import Depends, HTTPException, status
@@ -54,7 +54,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
+def create_access_token(
+    data: dict[str, Any], expires_delta: timedelta | None = None
+) -> str:
     """
     Create a JWT access token
 
@@ -69,22 +71,26 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
 
     # Set expiration
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(UTC) + timedelta(
+            minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        )
 
     # Add standard JWT claims
     to_encode.update(
         {
             "exp": expire,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(UTC),
             "jti": str(uuid.uuid4()),  # Unique token ID for tracking
             "type": "access",
         }
     )
 
     # Encode token
-    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    )
     return encoded_jwt
 
 
@@ -101,15 +107,22 @@ def create_refresh_token(data: dict[str, Any]) -> str:
     to_encode = data.copy()
 
     # Set expiration
-    expire = datetime.utcnow() + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now(UTC) + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
 
     # Add standard JWT claims
     to_encode.update(
-        {"exp": expire, "iat": datetime.utcnow(), "jti": str(uuid.uuid4()), "type": "refresh"}
+        {
+            "exp": expire,
+            "iat": datetime.now(UTC),
+            "jti": str(uuid.uuid4()),
+            "type": "refresh",
+        }
     )
 
     # Encode token
-    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    )
     return encoded_jwt
 
 
@@ -127,7 +140,9 @@ def decode_token(token: str) -> dict[str, Any]:
         HTTPException: If token is invalid, expired, or malformed
     """
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(
+            token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
+        )
         return payload
     except JWTError as e:
         raise HTTPException(
@@ -138,7 +153,8 @@ def decode_token(token: str) -> dict[str, Any]:
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
 ) -> User:
     """
     FastAPI dependency to get current authenticated user from JWT token
@@ -169,13 +185,16 @@ def get_current_user(
     user_id: int = payload.get("sub")
     if user_id is None:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token missing user identifier"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token missing user identifier",
         )
 
     # Fetch user from database
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+        )
 
     # Check if user is active
     if not user.is_active:
@@ -191,18 +210,19 @@ def get_current_user(
             .filter(
                 UserSession.user_id == user_id,
                 UserSession.access_token_jti == jti,
-                UserSession.expires_at > datetime.utcnow(),
+                UserSession.expires_at > datetime.now(UTC),
             )
             .first()
         )
 
         if not session:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired or invalid"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Session expired or invalid",
             )
 
         # Update last activity
-        session.last_activity_at = datetime.utcnow()
+        session.last_activity_at = datetime.now(UTC)
         db.commit()
 
     return user
@@ -222,12 +242,17 @@ def require_owner(current_user: User = Depends(get_current_user)) -> User:
         HTTPException: If user is not owner
     """
     if current_user.role != "owner":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Owner access required")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Owner access required"
+        )
     return current_user
 
 
 def create_token_pair(
-    user: User, db: Session, ip_address: str | None = None, user_agent: str | None = None
+    user: User,
+    db: Session,
+    ip_address: str | None = None,
+    user_agent: str | None = None,
 ) -> dict[str, str]:
     """
     Create access + refresh token pair and store session
@@ -259,15 +284,19 @@ def create_token_pair(
         access_token_jti=access_decoded["jti"],
         refresh_token_jti=refresh_decoded["jti"],
         expires_at=datetime.fromtimestamp(refresh_decoded["exp"]),
-        last_activity_at=datetime.utcnow(),
+        last_activity_at=datetime.now(UTC),
         ip_address=ip_address,
         user_agent=user_agent,
     )
     db.add(session)
 
     # Update user's last login
-    user.last_login_at = datetime.utcnow()
+    user.last_login_at = datetime.now(UTC)
 
     db.commit()
 
-    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+    }

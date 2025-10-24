@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-import { useEffect, useRef, useState, useMemo, memo, useCallback } from "react";
 import * as d3 from "d3";
 import { throttle } from "lodash";
-import { useWindowDimensions, useIsMobile } from "../hooks/useBreakpoint";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useIsMobile, useWindowDimensions } from "../hooks/useBreakpoint";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 import CompletePaiiDLogo from "./CompletePaiiDLogo";
 
@@ -84,6 +84,13 @@ export const workflows: Workflow[] = [
     color: "#8B5CF6",
     icon: "📈",
     description: "Options chain viewer with Greeks, multi-leg strategies, and execution.",
+  },
+  {
+    id: "monitor",
+    name: "REPO\nMONITOR",
+    color: "#10B981",
+    icon: "🔍",
+    description: "GitHub repository monitoring with real-time activity tracking and metrics.",
   },
   {
     id: "settings",
