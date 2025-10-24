@@ -95,7 +95,13 @@ print(f"settings.API_TOKEN: {settings.API_TOKEN}")
 print("===========================\n", flush=True)
 
 # Register signal handlers for graceful shutdown BEFORE creating app
-from .core.signals import setup_shutdown_handlers
+try:  # pragma: no cover - optional dependency in minimal test envs
+    from .core.signals import setup_shutdown_handlers
+except ImportError:  # pragma: no cover - fall back to no-op when signals module missing
+    def setup_shutdown_handlers() -> None:
+        """No-op fallback when signal handlers are not available."""
+
+        print("[WARNING] Signal handlers unavailable - using no-op fallback", flush=True)
 
 
 setup_shutdown_handlers()
