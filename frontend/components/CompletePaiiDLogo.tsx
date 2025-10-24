@@ -90,9 +90,10 @@ const CompletePaiiDLogo: React.FC<CompletePaiiDLogoProps> = ({ size = 80, enable
         logger.info("AI Response received", { responseLength: data.response?.length || 0 });
         setResponse(data.response || data.content || JSON.stringify(data));
         setLoading(false);
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error("Chat submission error", error);
-        setResponse(`Error: ${error.message || "Failed to submit chat message"}`);
+        const errorMessage = error instanceof Error ? error.message : "Failed to submit chat message";
+        setResponse(`Error: ${errorMessage}`);
         setLoading(false);
       }
     }
@@ -578,9 +579,10 @@ const PaiiDChatBoxWithLogo = () => {
         logger.info("AI Response received", { responseLength: data.response?.length || 0 });
         setResponse(data.response || data.content || JSON.stringify(data));
         setLoading(false);
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error("Chat submission error", error);
-        setResponse(`Error: ${error.message || "Failed to submit chat message"}`);
+        const errorMessage = error instanceof Error ? error.message : "Failed to submit chat message";
+        setResponse(`Error: ${errorMessage}`);
         setLoading(false);
       }
     }

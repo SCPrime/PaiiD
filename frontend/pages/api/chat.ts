@@ -49,11 +49,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.info("[Claude Chat API] ✅ Response received from backend");
 
     return res.status(200).json(data);
-  } catch (error: any) {
-    console.error("[Claude Chat API] Error:", error.message);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("[Claude Chat API] Error:", errorMessage);
     return res.status(500).json({
       error: "Proxy error",
-      detail: error.message,
+      detail: errorMessage,
     });
   }
 }
