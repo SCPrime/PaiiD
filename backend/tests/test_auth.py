@@ -1,86 +1,67 @@
-"""
-Test authentication and authorization
-Tests Bearer token validation, missing tokens, invalid formats
-"""
+import pytest
 
-from fastapi.testclient import TestClient
-
-from app.main import app
+from app.models.database import UserSession
 
 
-client = TestClient(app)
-
-# Valid token from config (matches conftest.py line 18)
-VALID_TOKEN = "test-token-12345"
-INVALID_TOKEN = "wrong-token-123"
+@pytest.fixture
+def login_payload(sample_user):
+    return {"email": sample_user.email, "password": "TestPassword123!"}
 
 
-def test_valid_bearer_token():
-    """Test that valid Bearer token is accepted"""
-    headers = {"Authorization": f"Bearer {VALID_TOKEN}"}
-    response = client.get("/api/account", headers=headers)
-    # Should succeed or return Alpaca error, not 401
-    assert response.status_code != 401
+def test_login_returns_token_pair(client, test_db, sample_user, login_payload):
+    response = client.post("/api/auth/login", json=login_payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert "refresh_token" in data
+    assert data["token_type"] == "bearer"
+
+    # Ensure session persisted
+    sessions = test_db.query(UserSession).filter(UserSession.user_id == sample_user.id).all()
+    assert len(sessions) == 1
 
 
-def test_missing_authorization_header():
-    """Test that missing Authorization header returns 401"""
-    response = client.get("/api/account")
-    assert response.status_code == 401
-    assert "Missing authorization header" in response.json()["detail"]
-
-
-def test_invalid_bearer_token():
-    """Test that invalid Bearer token returns 401"""
-    headers = {"Authorization": f"Bearer {INVALID_TOKEN}"}
-    response = client.get("/api/account", headers=headers)
+def test_login_rejects_invalid_password(client, sample_user):
+    payload = {"email": sample_user.email, "password": "WrongPassword!"}
+    response = client.post("/api/auth/login", json=payload)
     assert response.status_code == 401
 
 
-def test_malformed_authorization_header():
-    """Test that malformed Authorization header returns 401"""
-    # Missing "Bearer" prefix
-    headers = {"Authorization": VALID_TOKEN}
-    response = client.get("/api/account", headers=headers)
+def test_refresh_token_rotates_session(client, test_db, sample_user, login_payload):
+    login_response = client.post("/api/auth/login", json=login_payload)
+    tokens = login_response.json()
+
+    refresh_response = client.post(
+        "/api/auth/refresh",
+        json={"refresh_token": tokens["refresh_token"]},
+        headers={"Authorization": f"Bearer {tokens['access_token']}"},
+    )
+    assert refresh_response.status_code == 200
+    refreshed = refresh_response.json()
+
+    assert refreshed["access_token"] != tokens["access_token"]
+    assert refreshed["refresh_token"] != tokens["refresh_token"]
+
+    # Old session should be removed and replaced
+    sessions = test_db.query(UserSession).filter(UserSession.user_id == sample_user.id).all()
+    assert len(sessions) == 1
+    assert sessions[0].refresh_token_jti is not None
+
+
+def test_refresh_rejects_invalid_token(client, auth_headers):
+    response = client.post(
+        "/api/auth/refresh",
+        json={"refresh_token": "invalid-token"},
+        headers=auth_headers,
+    )
     assert response.status_code == 401
 
 
-def test_empty_bearer_token():
-    """Test that empty Bearer token returns 401"""
-    headers = {"Authorization": "Bearer "}
-    response = client.get("/api/account", headers=headers)
-    assert response.status_code == 401
+def test_protected_route_requires_auth(client):
+    response = client.get("/api/users/preferences")
+    assert response.status_code in (401, 403)
 
 
-def test_auth_on_protected_endpoints():
-    """Test authentication is required on all protected endpoints"""
-    protected_endpoints = [
-        "/api/account",
-        "/api/positions",
-        "/api/order-templates",
-        "/api/portfolio/summary",
-        "/api/strategies/list",
-    ]
-
-    for endpoint in protected_endpoints:
-        response = client.get(endpoint)
-        assert response.status_code == 401, f"Endpoint {endpoint} should require auth"
-
-
-def test_public_endpoints_no_auth():
-    """Test that public endpoints don't require authentication"""
-    public_endpoints = [
-        "/api/health",
-    ]
-
-    for endpoint in public_endpoints:
-        response = client.get(endpoint)
-        assert response.status_code == 200, f"Endpoint {endpoint} should be public"
-
-
-def test_case_sensitive_bearer_prefix():
-    """Test that Bearer prefix is case-sensitive"""
-    # Lowercase "bearer" should be rejected
-    headers = {"Authorization": f"bearer {VALID_TOKEN}"}
-    response = client.get("/api/account", headers=headers)
-    assert response.status_code == 401
+def test_protected_route_with_valid_token(client, auth_headers):
+    response = client.get("/api/users/preferences", headers=auth_headers)
+    assert response.status_code == 200

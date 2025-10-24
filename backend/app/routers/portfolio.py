@@ -4,14 +4,14 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.auth import CurrentUser, require_current_user
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
 
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_current_user)])
 
 
 class AlpacaAccount(BaseModel):
@@ -46,7 +46,7 @@ class AlpacaAccount(BaseModel):
 
 
 @router.get("/account")
-def get_account(_=Depends(require_bearer)):
+def get_account(current_user: CurrentUser):
     """Get Tradier account information"""
     logger.info("🎯 ACCOUNT ENDPOINT - Tradier Production")
 
@@ -55,7 +55,7 @@ def get_account(_=Depends(require_bearer)):
         account_data = client.get_account()
 
         logger.info("✅ Tradier account data retrieved successfully")
-        return account_data
+        return {**account_data, "source": "tradier", "user_id": current_user.id}
 
     except Exception as e:
         logger.error(f"❌ Tradier account request failed: {e!s}")
@@ -63,14 +63,20 @@ def get_account(_=Depends(require_bearer)):
 
 
 @router.get("/positions")
-def get_positions(_=Depends(require_bearer), cache: CacheService = Depends(get_cache)):
+def get_positions(
+    current_user: CurrentUser, cache: CacheService = Depends(get_cache)
+):
     """Get Tradier positions (cached for 30s)"""
     # Check cache first
     cache_key = "portfolio:positions"
     cached_positions = cache.get(cache_key)
     if cached_positions:
         logger.info("✅ Cache HIT for positions")
-        return cached_positions
+        if isinstance(cached_positions, dict):
+            cached_positions.setdefault("source", "cache")
+            cached_positions.setdefault("user_id", current_user.id)
+            return cached_positions
+        return {"positions": cached_positions, "source": "cache", "user_id": current_user.id}
 
     try:
         client = get_tradier_client()
@@ -78,8 +84,9 @@ def get_positions(_=Depends(require_bearer), cache: CacheService = Depends(get_c
         logger.info(f"✅ Retrieved {len(positions)} positions from Tradier")
 
         # Cache for 30 seconds
-        cache.set(cache_key, positions, ttl=30)
-        return positions
+        payload = {"positions": positions, "source": "tradier", "user_id": current_user.id}
+        cache.set(cache_key, payload, ttl=30)
+        return payload
 
     except Exception as e:
         logger.error(f"❌ Tradier positions request failed: {e!s}")
@@ -87,7 +94,7 @@ def get_positions(_=Depends(require_bearer), cache: CacheService = Depends(get_c
 
 
 @router.get("/positions/{symbol}")
-def get_position(symbol: str, _=Depends(require_bearer)):
+def get_position(symbol: str, current_user: CurrentUser):
     """Get a specific position by symbol"""
     try:
         client = get_tradier_client()
@@ -96,7 +103,7 @@ def get_position(symbol: str, _=Depends(require_bearer)):
         # Find position by symbol
         for position in positions:
             if position.get("symbol") == symbol.upper():
-                return position
+                return {"position": position, "source": "tradier", "user_id": current_user.id}
 
         raise HTTPException(status_code=404, detail=f"No position found for {symbol}")
 

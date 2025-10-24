@@ -18,7 +18,7 @@ class TestHealthEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "ok"
-        assert "time" in data
+        assert "timestamp" in data or "time" in data
 
     def test_ready_endpoint(self, client):
         """Test /api/ready returns 200"""
@@ -141,8 +141,10 @@ class TestPortfolioEndpoints:
         assert response.status_code in [200, 500]
         if response.status_code == 200:
             data = response.json()
-            if isinstance(data, list) and len(data) > 0:
-                assert data[0]["symbol"] == "AAPL"
+            positions = data.get("positions", data)
+            if isinstance(positions, list) and positions:
+                assert positions[0]["symbol"] == "AAPL"
+            assert data.get("source") in {"tradier", "cache"}
 
     @patch("app.services.tradier_client.get_tradier_client")
     def test_get_positions_empty(self, mock_client, client, auth_headers):
@@ -156,7 +158,8 @@ class TestPortfolioEndpoints:
         assert response.status_code in [200, 500]
         if response.status_code == 200:
             data = response.json()
-            assert isinstance(data, list)
+            positions = data.get("positions", data)
+            assert isinstance(positions, list)
 
     @patch("app.services.tradier_client.get_tradier_client")
     def test_get_account_success(self, mock_client, client, auth_headers):
@@ -176,6 +179,8 @@ class TestPortfolioEndpoints:
         if response.status_code == 200:
             data = response.json()
             assert "account_number" in data or "buying_power" in data
+            assert data.get("source") == "tradier"
+            assert "user_id" in data
 
 
 class TestMarketDataEndpoints:
@@ -201,7 +206,8 @@ class TestMarketDataEndpoints:
         assert response.status_code in [200, 404, 500]
         if response.status_code == 200:
             data = response.json()
-            assert "symbol" in data
+            assert data.get("symbol") == "AAPL"
+            assert data.get("source") in {"tradier", "cache"}
 
     @patch("app.services.tradier_client.get_tradier_client")
     def test_get_quote_not_found(self, mock_client, client, auth_headers):
@@ -229,7 +235,10 @@ class TestMarketDataEndpoints:
         assert response.status_code in [200, 500]
         if response.status_code == 200:
             data = response.json()
-            assert isinstance(data, dict)
+            assert data.get("source") == "tradier"
+            quotes = data.get("quotes", {})
+            assert "AAPL" in quotes
+            assert quotes["AAPL"].get("source") == "tradier"
 
 
 class TestCacheIntegration:
@@ -238,7 +247,7 @@ class TestCacheIntegration:
     def test_positions_cache_hit(self, client, auth_headers, mock_cache):
         """Test positions endpoint cache hit"""
         # Pre-populate cache
-        cached_positions = [{"symbol": "AAPL", "quantity": 10, "market_value": 1754.30}]
+        cached_positions = {"positions": [{"symbol": "AAPL", "quantity": 10, "market_value": 1754.30}]}
         mock_cache.set("portfolio:positions", cached_positions)
 
         with patch("app.routers.portfolio.get_cache", return_value=mock_cache):
@@ -247,7 +256,9 @@ class TestCacheIntegration:
             assert response.status_code in [200, 500]
             if response.status_code == 200:
                 data = response.json()
-                assert isinstance(data, list)
+                positions = data.get("positions", [])
+                assert isinstance(positions, list)
+                assert data.get("source") in {"cache", "tradier"}
 
     def test_quote_cache_miss_then_set(self, client, auth_headers, mock_cache):
         """Test quote endpoint cache miss, then sets cache"""
@@ -273,7 +284,8 @@ class TestCacheIntegration:
                 if response.status_code == 200:
                     cached_quote = mock_cache.get("quote:TSLA")
                     if cached_quote:
-                        assert "symbol" in cached_quote or "last" in cached_quote
+                        assert cached_quote.get("symbol") == "TSLA"
+                        assert cached_quote.get("source") == "tradier"
 
 
 class TestErrorHandling:

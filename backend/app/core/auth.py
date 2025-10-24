@@ -1,57 +1,52 @@
-import logging
+"""Authentication helpers shared across API routers."""
 
-from fastapi import Header, HTTPException, status
+from __future__ import annotations
 
-from .config import settings
+from typing import Annotated
+
+from fastapi import Depends, HTTPException, status
+
+from ..models.database import User
+from .jwt import get_current_user as _get_current_user
 
 
-# Add logging
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+# ---------------------------------------------------------------------------
+# Shared dependency helpers
+# ---------------------------------------------------------------------------
+
+# typing.Annotated allows us to attach dependencies to type hints so handlers can
+# simply declare ``current_user: CurrentUser`` to receive the authenticated user.
+CurrentUser = Annotated[User, Depends(_get_current_user)]
 
 
-def require_bearer(authorization: str = Header(None)):
-    logger.debug("=" * 50)
-    logger.debug("AUTH MIDDLEWARE CALLED")
-    print(f"\n{'=' * 50}", flush=True)
-    print("AUTH MIDDLEWARE CALLED", flush=True)
-    print(f"Authorization header: {authorization}", flush=True)
+def require_current_user(current_user: CurrentUser) -> User:
+    """Return the authenticated user for a request."""
 
-    if not authorization:
-        logger.error("❌ No authorization header provided")
-        print("❌ ERROR: No authorization header", flush=True)
+    return current_user
+
+
+def require_active_user(current_user: CurrentUser) -> User:
+    """Ensure the authenticated user account is active."""
+
+    if not current_user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorization header"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is disabled",
         )
+    return current_user
 
-    if not authorization.startswith("Bearer "):
-        logger.error(f"❌ Invalid authorization format: {authorization[:20]}")
-        print(f"❌ ERROR: Invalid auth format: {authorization[:20]}", flush=True)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization format"
-        )
 
-    token = authorization.split(" ", 1)[1]
-    logger.debug(f"Received token: {token[:10]}...")
-    logger.debug(
-        f"Expected token: {settings.API_TOKEN[:10] if settings.API_TOKEN else 'NOT_SET'}..."
-    )
+# ---------------------------------------------------------------------------
+# Backwards compatibility
+# ---------------------------------------------------------------------------
+#
+# Older routers still import ``require_bearer`` from the legacy API token guard.
+# Re-export it so imports continue to work while routing through the JWT flow.
+require_bearer = require_current_user
 
-    print(f"[AUTH] Received: [{token}]", flush=True)
-    print(f"[AUTH] Expected: [{settings.API_TOKEN}]", flush=True)
-    print(f"[AUTH] Match: {token == settings.API_TOKEN}", flush=True)
-
-    if not settings.API_TOKEN:
-        logger.error("❌ API_TOKEN not set in environment!")
-        print("❌ ERROR: API_TOKEN not configured", flush=True)
-        raise HTTPException(status_code=500, detail="Server configuration error")
-
-    if token != settings.API_TOKEN:
-        logger.error("❌ Token mismatch!")
-        print("❌ ERROR: Token mismatch", flush=True)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
-    logger.debug("✅ Authentication successful")
-    print("✅ Authentication successful", flush=True)
-    print(f"{'=' * 50}\n", flush=True)
-    return token
+__all__ = [
+    "CurrentUser",
+    "require_active_user",
+    "require_current_user",
+    "require_bearer",
+]

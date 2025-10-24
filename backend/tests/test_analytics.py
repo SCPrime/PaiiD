@@ -5,18 +5,10 @@ Tests P&L calculation, risk metrics, portfolio summary
 
 from unittest.mock import MagicMock, patch
 
-from fastapi.testclient import TestClient
 
-from app.main import app
-
-
-client = TestClient(app)
-HEADERS = {"Authorization": "Bearer test-token-12345"}
-
-
-def test_portfolio_summary_endpoint():
+def test_portfolio_summary_endpoint(client, auth_headers):
     """Test portfolio summary endpoint returns correct structure"""
-    response = client.get("/api/portfolio/summary", headers=HEADERS)
+    response = client.get("/api/portfolio/summary", headers=auth_headers)
 
     # Should return 200 or Alpaca error, not auth error
     if response.status_code == 200:
@@ -28,15 +20,15 @@ def test_portfolio_summary_endpoint():
         assert "dayPLPercent" in data
 
 
-def test_portfolio_summary_requires_auth():
+def test_portfolio_summary_requires_auth(client):
     """Test portfolio summary requires authentication"""
     response = client.get("/api/portfolio/summary")
     assert response.status_code == 401
 
 
-def test_portfolio_history_endpoint():
+def test_portfolio_history_endpoint(client, auth_headers):
     """Test portfolio history endpoint"""
-    response = client.get("/api/portfolio/history?days=30", headers=HEADERS)
+    response = client.get("/api/portfolio/history?days=30", headers=auth_headers)
 
     if response.status_code == 200:
         data = response.json()
@@ -46,19 +38,19 @@ def test_portfolio_history_endpoint():
         assert isinstance(data["values"], list)
 
 
-def test_portfolio_history_different_periods():
+def test_portfolio_history_different_periods(client, auth_headers):
     """Test portfolio history with different time periods"""
     periods = [7, 30, 90, 365]
 
     for days in periods:
-        response = client.get(f"/api/portfolio/history?days={days}", headers=HEADERS)
+        response = client.get(f"/api/portfolio/history?days={days}", headers=auth_headers)
         # Should succeed or return Alpaca error
         assert response.status_code in [200, 500], f"Failed for {days} days"
 
 
-def test_performance_metrics_endpoint():
+def test_performance_metrics_endpoint(client, auth_headers):
     """Test performance metrics calculation"""
-    response = client.get("/api/analytics/performance", headers=HEADERS)
+    response = client.get("/api/analytics/performance", headers=auth_headers)
 
     if response.status_code == 200:
         data = response.json()
@@ -69,7 +61,7 @@ def test_performance_metrics_endpoint():
 
 
 @patch("app.services.tradier_client.get_tradier_client")
-def test_pl_calculation_with_mock_data(mock_client):
+def test_pl_calculation_with_mock_data(mock_client, client, auth_headers):
     """Test P&L calculation logic with mocked Alpaca data"""
     # Mock account data
     mock_account = MagicMock()
@@ -91,7 +83,7 @@ def test_pl_calculation_with_mock_data(mock_client):
     mock_client.get_account.return_value = mock_account
     mock_client.get_all_positions.return_value = [mock_position]
 
-    response = client.get("/api/portfolio/summary", headers=HEADERS)
+    response = client.get("/api/portfolio/summary", headers=auth_headers)
 
     if response.status_code == 200:
         data = response.json()
@@ -100,7 +92,7 @@ def test_pl_calculation_with_mock_data(mock_client):
         assert "totalPL" in data
 
 
-def test_zero_positions_portfolio():
+def test_zero_positions_portfolio(client, auth_headers):
     """Test portfolio summary with no positions"""
     with patch("app.services.tradier_client.get_tradier_client") as mock_client:
         mock_account = MagicMock()
@@ -112,7 +104,7 @@ def test_zero_positions_portfolio():
         mock_client.get_account.return_value = mock_account
         mock_client.get_all_positions.return_value = []
 
-        response = client.get("/api/portfolio/summary", headers=HEADERS)
+        response = client.get("/api/portfolio/summary", headers=auth_headers)
 
         if response.status_code == 200:
             data = response.json()
@@ -120,7 +112,7 @@ def test_zero_positions_portfolio():
             assert float(data["totalPL"]) == 0.00
 
 
-def test_negative_pl_calculation():
+def test_negative_pl_calculation(client, auth_headers):
     """Test that negative P&L is calculated correctly"""
     with patch("app.services.tradier_client.get_tradier_client") as mock_client:
         mock_account = MagicMock()
@@ -138,16 +130,16 @@ def test_negative_pl_calculation():
         mock_client.get_account.return_value = mock_account
         mock_client.get_all_positions.return_value = [mock_position]
 
-        response = client.get("/api/portfolio/summary", headers=HEADERS)
+        response = client.get("/api/portfolio/summary", headers=auth_headers)
 
         if response.status_code == 200:
             data = response.json()
             assert float(data["totalPL"]) < 0
 
 
-def test_performance_metrics_risk_calculations():
+def test_performance_metrics_risk_calculations(client, auth_headers):
     """Test risk metric calculations (Sharpe, max drawdown)"""
-    response = client.get("/api/analytics/performance", headers=HEADERS)
+    response = client.get("/api/analytics/performance", headers=auth_headers)
 
     if response.status_code == 200:
         data = response.json()

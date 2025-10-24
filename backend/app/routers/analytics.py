@@ -13,7 +13,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.auth import require_current_user
 from ..services.tradier_client import get_tradier_client
 
 
@@ -68,7 +68,7 @@ class PerformanceMetrics(BaseModel):
     worst_day: float
 
 
-@router.get("/portfolio/summary", dependencies=[Depends(require_bearer)])
+@router.get("/portfolio/summary", dependencies=[Depends(require_current_user)])
 async def get_portfolio_summary() -> PortfolioSummary:
     """
     Get real-time portfolio summary with P&L metrics
@@ -169,7 +169,7 @@ async def get_portfolio_summary() -> PortfolioSummary:
         raise HTTPException(status_code=500, detail=f"Failed to get portfolio summary: {e!s}")
 
 
-@router.get("/portfolio/history", dependencies=[Depends(require_bearer)])
+@router.get("/portfolio/history", dependencies=[Depends(require_current_user)])
 async def get_portfolio_history(
     period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M"),
 ) -> dict:
@@ -262,7 +262,7 @@ async def get_portfolio_history(
         raise HTTPException(status_code=500, detail=f"Failed to get portfolio history: {e!s}")
 
 
-@router.get("/analytics/performance", dependencies=[Depends(require_bearer)])
+@router.get("/analytics/performance", dependencies=[Depends(require_current_user)])
 async def get_performance_metrics(
     period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M"),
 ) -> PerformanceMetrics:

@@ -18,7 +18,7 @@ print("===========================\n", flush=True)
 
 
 import sentry_sdk
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
@@ -50,6 +50,7 @@ from .routers import (
 )
 from .routers import settings as settings_router
 from .scheduler import init_scheduler
+from .services.health_monitor import health_monitor
 
 
 # Initialize Sentry if DSN is configured
@@ -231,7 +232,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(health.router, prefix="/api")
+
+@app.get("/api/ready", include_in_schema=False)
+async def ready_probe() -> dict:
+    """Legacy readiness probe alias for backward compatibility."""
+    health = health_monitor.get_system_health()
+    if health.get("status") == "healthy":
+        return {"ready": True}
+    raise HTTPException(status_code=503, detail={"ready": False, "reason": "System degraded"})
+
+
+@app.get("/api/sentry-test", include_in_schema=False)
+async def sentry_test_endpoint() -> None:
+    """Endpoint used to verify Sentry error capture."""
+    raise RuntimeError("SENTRY TEST: intentional exception for monitoring")
+
+
+app.include_router(health.router)
 app.include_router(auth.router, prefix="/api")  # Authentication endpoints
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(portfolio.router, prefix="/api")

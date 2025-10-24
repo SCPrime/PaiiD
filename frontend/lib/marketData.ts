@@ -6,6 +6,8 @@ export interface Quote {
   change?: number;
   changePct?: number;
   timestamp: string;
+  source?: string;
+  cached?: boolean;
 }
 
 export interface IndexData {
@@ -28,14 +30,16 @@ export interface ScannerResult {
 export async function fetchQuote(symbol: string): Promise<Quote> {
   const res = await fetch(`/api/proxy/api/market/quote/${symbol}`);
   if (!res.ok) throw new Error(`Failed to fetch quote for ${symbol}`);
-  return await res.json();
+  const data = await res.json();
+  return data.quote ?? data;
 }
 
 export async function fetchQuotes(symbols: string[]): Promise<Record<string, Quote>> {
   const symbolsStr = symbols.join(",");
   const res = await fetch(`/api/proxy/api/market/quotes?symbols=${symbolsStr}`);
   if (!res.ok) throw new Error("Failed to fetch quotes");
-  return await res.json();
+  const data = await res.json();
+  return data.quotes ?? data;
 }
 
 export async function fetchIndices(): Promise<IndexData> {
@@ -50,7 +54,11 @@ export async function fetchUnder4Scanner(): Promise<{
 }> {
   const res = await fetch("/api/proxy/api/market/scanner/under4");
   if (!res.ok) throw new Error("Failed to fetch scanner results");
-  return await res.json();
+  const data = await res.json();
+  return {
+    candidates: data.candidates ?? [],
+    count: data.count ?? 0,
+  };
 }
 
 export async function fetchBars(
