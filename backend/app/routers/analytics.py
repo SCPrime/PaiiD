@@ -293,7 +293,12 @@ async def get_performance_metrics(
         current_equity = float(account.get("portfolio_value", 100000))
 
         # Simulate performance metrics based on current positions
-        # TODO: Replace with actual calculations from historical data
+        # PHASE 2 ENHANCEMENT: Replace with actual calculations from historical data
+        # Requirements:
+        #   - Store historical position snapshots in TimescaleDB
+        #   - Calculate rolling Sharpe ratio from daily returns
+        #   - Track win rate from closed positions history
+        # Current: Estimates from current unrealized P&L (temporary)
 
         # Calculate from current positions
         total_pl = sum(float(p.get("unrealized_pl", 0)) for p in positions)

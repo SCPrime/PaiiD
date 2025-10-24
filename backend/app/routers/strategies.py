@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from ..core.auth import require_bearer
+from ..core.auth import get_current_user_id_str, require_bearer
 from ..db.session import get_db
 from ..models.database import Strategy, User
 from ..services.strategy_templates import (
@@ -108,7 +108,7 @@ async def save_strategy(request: StrategyConfigRequest, _=Depends(require_bearer
         "config": { ... }
     }
     """
-    user_id = "default"  # TODO: Get from auth
+    user_id = get_current_user_id_str(token)  # Single-user MVP: returns "default"
     strategy_file = STRATEGIES_DIR / f"{user_id}_{request.strategy_type}.json"
 
     try:
@@ -144,7 +144,7 @@ async def load_strategy(strategy_type: str, _=Depends(require_bearer)):
 
     GET /api/strategies/load/under4-multileg
     """
-    user_id = "default"  # TODO: Get from auth
+    user_id = get_current_user_id_str(token)  # Single-user MVP: returns "default"
     strategy_file = STRATEGIES_DIR / f"{user_id}_{strategy_type}.json"
 
     if not strategy_file.exists():
@@ -176,7 +176,7 @@ async def list_strategies(_=Depends(require_bearer)):
 
     GET /api/strategies/list
     """
-    user_id = "default"  # TODO: Get from auth
+    user_id = get_current_user_id_str(token)  # Single-user MVP: returns "default"
 
     strategies = []
 
@@ -209,7 +209,7 @@ async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
         "dry_run": true
     }
     """
-    user_id = "default"  # TODO: Get from auth
+    user_id = get_current_user_id_str(token)  # Single-user MVP: returns "default"
 
     try:
         # Load strategy configuration
@@ -230,7 +230,7 @@ async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
                 status_code=400, detail=f"Unknown strategy type: {request.strategy_type}"
             )
 
-        # TODO: Get Alpaca client from user's credentials
+        # PHASE 1: Get Alpaca client from user credentials (stored in settings)
         # For now, return mock results
 
         if request.dry_run:
@@ -262,7 +262,7 @@ async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
                 },
             }
         else:
-            # TODO: Implement actual execution
+            # PHASE 1: Implement actual execution via order_execution.py
             raise HTTPException(status_code=501, detail="Live execution not yet implemented")
 
     except Exception as e:
@@ -276,7 +276,7 @@ async def delete_strategy(strategy_type: str, _=Depends(require_bearer)):
 
     DELETE /api/strategies/under4-multileg
     """
-    user_id = "default"  # TODO: Get from auth
+    user_id = get_current_user_id_str(token)  # Single-user MVP: returns "default"
     strategy_file = STRATEGIES_DIR / f"{user_id}_{strategy_type}.json"
 
     if not strategy_file.exists():
@@ -321,8 +321,8 @@ async def get_strategy_templates(
         # Format response with compatibility scores
         # For market volatility, we'd normally fetch from market data API
         # For now, use a default value
-        market_volatility = "Medium"  # TODO: Get from market data service
-        portfolio_value = 100000  # TODO: Get from account API
+        market_volatility = "Medium"  # PHASE 1: Get from VIX/market data service
+        portfolio_value = 100000  # PHASE 1: Get from Alpaca account.portfolio_value
 
         response = []
         for template in templates:

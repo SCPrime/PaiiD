@@ -131,8 +131,12 @@ async def get_stock_news(
     try:
         symbol = symbol.upper()
 
-        # TODO: Integrate with real news API (NewsAPI, Alpha Vantage, Benzinga, etc.)
-        # For now, return placeholder structure with real data indication
+        # PHASE 2 INTEGRATION: Real-time news API integration pending
+        # Options under evaluation:
+        #   - Benzinga News API (preferred - financial focus, real-time)
+        #   - NewsAPI.org (general news, slower updates)
+        #   - Alpha Vantage (free tier, rate limited)
+        # Current: Returns empty array with warning log (news feature disabled until Phase 2)
 
         # Mock news structure - in production, replace with API call
         logger.warning(f"⚠️ News API not yet integrated. Returning empty news feed for {symbol}")

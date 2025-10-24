@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from ..core.auth import require_bearer
+from ..core.auth import get_current_user_id, require_bearer
 from ..db.session import get_db
 from ..models.database import User
 
@@ -58,9 +58,10 @@ def get_user_preferences(
     Returns current user preferences or default values if not set.
     """
     try:
-        # For now, use a default user (user_id=1) until auth is fully implemented
-        # TODO: Get actual user_id from JWT token in require_bearer
-        user = db.query(User).filter(User.id == 1).first()
+        # MULTI-USER FUTURE: Extract user_id from JWT token in require_bearer
+        # Current: Single-user MVP always returns user_id=1
+        user_id = get_current_user_id(token)
+        user = db.query(User).filter(User.id == user_id).first()
 
         if not user:
             # Create default user if doesn't exist

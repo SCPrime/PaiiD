@@ -15,7 +15,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..core.auth import require_bearer
+from ..core.auth import get_current_user_id, require_bearer
 from ..db.session import get_db
 from ..services.technical_indicators import TechnicalIndicators
 from ..services.tradier_client import get_tradier_client
@@ -101,8 +101,9 @@ async def get_recommendations():
         # Fetch sector performance data (shared across all recommendations)
         sector_performance_data = await _fetch_sector_performance()
 
-        # TODO: Get user's watchlist from database (Phase 2.5 prerequisite)
-        # For now, use configurable default watchlist from environment
+        # PHASE 2.5: Get user's watchlist from database
+        # Current: Use configurable default watchlist from environment
+        # Future: Fetch from user preferences: db.query(User).filter(User.id == get_current_user_id(token)).first().watchlist
         import os
 
         default_watchlist = os.getenv(
@@ -1681,7 +1682,7 @@ async def save_recommendation(request: SaveRecommendationRequest, db: Session = 
 
         # Create recommendation record
         recommendation = AIRecommendation(
-            user_id=1,  # TODO: Get from auth once multi-user support added
+            user_id=get_current_user_id(token),  # Single-user MVP: returns 1
             symbol=request.symbol.upper(),
             recommendation_type=request.recommendation_type.lower(),
             confidence_score=request.confidence_score,
@@ -1745,8 +1746,8 @@ async def get_recommendation_history(
 
         # Build query
         query = db.query(AIRecommendation).filter(
-            AIRecommendation.user_id == 1
-        )  # TODO: Multi-user support
+            AIRecommendation.user_id == get_current_user_id(token)  # Single-user MVP
+        )
 
         # Apply filters
         if symbol:

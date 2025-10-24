@@ -212,10 +212,12 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
                 "Wait for directional confirmation",
             ]
 
-        # TODO: Additional market conditions (requires more data sources):
-        # - Market Breadth (advance/decline ratio) - not available from Tradier basic API
-        # - Volume analysis - requires historical comparison
-        # - Put/Call ratio - requires options data subscription
+        # PHASE 3 ENHANCEMENT: Additional market conditions (requires more data sources)
+        # Planned integrations:
+        #   - Market Breadth (advance/decline ratio) → Tradier Market Data API upgrade
+        #   - Volume analysis → Requires historical OHLCV storage + comparison logic
+        #   - Put/Call ratio → Tradier Options Market Data subscription
+        # Current: Basic SPY/QQQ price momentum + VIX sentiment (sufficient for MVP)
 
         result = {
             "conditions": [cond.model_dump() for cond in conditions],
