@@ -1,6 +1,6 @@
 # Documentation Index
-**Generated**: 2025-10-24 17:00:07  
-**Total Active Documents**: 7
+**Generated**: 2025-10-24 18:29:19  
+**Total Active Documents**: 6
 
 This index provides a comprehensive overview of all active documentation in the PaiiD project. Documents are organized by category for easy navigation.
 
@@ -10,7 +10,6 @@ This index provides a comprehensive overview of all active documentation in the 
 
 - [Operations & Deployment](#operations-and-deployment) (3 docs)
 - [Development Guides](#development-guides) (1 docs)
-- [Troubleshooting](#troubleshooting) (1 docs)
 - [Other](#other) (2 docs)
 
 ---
@@ -67,21 +66,6 @@ This index provides a comprehensive overview of all active documentation in the 
 
 ---
 
-## Troubleshooting {#troubleshooting}
-
-### [ISSUE_TRACKER.md](ISSUE_TRACKER.md)
-**Title**: 🐛 ISSUE TRACKER - GitHub-Ready Issues
-
-**Description**: **Total Issues:** 65 **Critical (P0):** 12 **High Priority (P1):** 27...
-
-**Metadata**: Last Modified: 2025-10-23 | Size: 19705 bytes | Lines: 754
-
-**Sections**: 🔴 CRITICAL (P0) - Must Fix Before Production, 🟡 HIGH PRIORITY (P1) - Fix Soon, 🟢 MEDIUM PRIORITY (P2) - Technical Debt, 📊 SUMMARY BY LABEL, 🎯 RECOMMENDED SPRINT PLANNING
-
-**Features**: Internal Links | Referenced (2 times)
-
----
-
 ## Other {#other}
 
 ### [CLAUDE.md](CLAUDE.md)
@@ -106,7 +90,7 @@ This index provides a comprehensive overview of all active documentation in the 
 
 **Sections**: ✅ COMPLETED, ⏳ IN PROGRESS, 🎯 NEXT (Week 1-3), 🔧 PARALLEL TRACK (Can Run Alongside), 📅 LONG-TERM (Post Phase 0-4) (and 5 more)
 
-**Features**: Internal Links | Referenced (3 times)
+**Features**: Internal Links | Referenced (2 times)
 
 ---
 
@@ -114,11 +98,10 @@ This index provides a comprehensive overview of all active documentation in the 
 
 | Category | Documents | Total Size |
 |----------|-----------|------------|
-| Operations & Deployment | 3 | 25.0 KB |
-| Development Guides | 1 | 6.1 KB |
-| Troubleshooting | 1 | 19.2 KB |
-| Other | 2 | 17.2 KB |
-| **Total** | **7** | **67.5 KB** |
+| Operations & Deployment | 3 | 24.1 KB |
+| Development Guides | 1 | 6.2 KB |
+| Other | 2 | 19.5 KB |
+| **Total** | **6** | **49.8 KB** |
 
 ## Maintenance Notes
 

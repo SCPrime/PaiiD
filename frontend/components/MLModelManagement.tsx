@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, Button } from "./ui";
-import { theme } from "../styles/theme";
-import { showError, showSuccess } from "../lib/toast";
-import { Database, RefreshCw, CheckCircle, AlertTriangle, TrendingUp, Calendar, Activity } from "lucide-react";
+import { Activity, AlertTriangle, Calendar, CheckCircle, Database, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { showError, showSuccess } from "../lib/toast";
+import { theme } from "../styles/theme";
+import { Button, Card } from "./ui";
 
 interface ModelMetrics {
   model_id: string;
@@ -17,7 +17,7 @@ interface ModelMetrics {
   training_duration_seconds: number;
   status: "active" | "training" | "stale" | "error";
   features_count: number;
-  hyperparameters: Record<string, any>;
+  hyperparameters: Record<string, unknown>;
 }
 
 interface ModelHealth {
@@ -71,7 +71,7 @@ export default function MLModelManagement() {
         method: "POST",
       });
       if (!res.ok) throw new Error("Retraining failed");
-      const result = await res.json();
+      const _result = await res.json();
       showSuccess(`Model ${modelId} retrained successfully!`);
       await loadModelStatus(); // Refresh data
     } catch (err: unknown) {
@@ -243,7 +243,13 @@ export default function MLModelManagement() {
       {/* System Status */}
       {data && (
         <Card
-          glow={data.system_status === "healthy" ? "green" : data.system_status === "degraded" ? "yellow" : "red"}
+          glow={
+            data.system_status === "healthy"
+              ? "green"
+              : data.system_status === "degraded"
+                ? "yellow"
+                : "red"
+          }
           style={{ marginBottom: theme.spacing.lg }}
         >
           <div
@@ -425,7 +431,9 @@ export default function MLModelManagement() {
                       borderRadius: theme.borderRadius.sm,
                     }}
                   >
-                    <div style={{ fontSize: "11px", color: theme.colors.textMuted }}>TRAINING TIME</div>
+                    <div style={{ fontSize: "11px", color: theme.colors.textMuted }}>
+                      TRAINING TIME
+                    </div>
                     <div
                       style={{
                         fontSize: "20px",
@@ -456,7 +464,9 @@ export default function MLModelManagement() {
                         marginBottom: theme.spacing.sm,
                       }}
                     >
-                      <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>Health Score</span>
+                      <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>
+                        Health Score
+                      </span>
                       <span
                         style={{
                           fontSize: "20px",
@@ -623,8 +633,12 @@ export default function MLModelManagement() {
               color: theme.colors.textMuted,
             }}
           >
-            <Database size={48} color={theme.colors.textMuted} style={{ marginBottom: theme.spacing.md }} />
-            <p>Click "Refresh Status" to load model information</p>
+            <Database
+              size={48}
+              color={theme.colors.textMuted}
+              style={{ marginBottom: theme.spacing.md }}
+            />
+            <p>Click &quot;Refresh Status&quot; to load model information</p>
           </div>
         </Card>
       )}

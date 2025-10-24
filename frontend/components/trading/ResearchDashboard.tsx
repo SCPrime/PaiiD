@@ -1,34 +1,34 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import type {
+  PLComparison,
+  PLViewMode,
+  PositionLeg,
+  PositionTracking,
+  TheoreticalPayoff,
+} from "@/types/pnl";
 import {
-  createChart,
-  IChartApi,
-  ISeriesApi,
-  CandlestickData,
-  LineData,
-  HistogramData,
-} from "lightweight-charts";
-import {
-  calculateSMA,
-  calculateRSI,
-  calculateMACD,
   calculateBollingerBands,
   calculateIchimoku,
+  calculateMACD,
+  calculateRSI,
+  calculateSMA,
   type BarData,
 } from "@/utils/indicators";
+import {
+  CandlestickData,
+  createChart,
+  HistogramData,
+  IChartApi,
+  ISeriesApi,
+  LineData,
+} from "lightweight-charts";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import OptionsChain from "./OptionsChain";
-import StrategySuggestionsModal from "./StrategySuggestionsModal";
 import PLComparisonChart from "./PLComparisonChart";
 import PLSummaryDashboard from "./PLSummaryDashboard";
 import StrategyBuilder from "./StrategyBuilder";
-import type {
-  PLViewMode,
-  TheoreticalPayoff,
-  PositionTracking,
-  PLComparison,
-  PositionLeg,
-} from "@/types/pnl";
+import StrategySuggestionsModal from "./StrategySuggestionsModal";
 
 /**
  * Research Dashboard - Stock Analysis & Charting

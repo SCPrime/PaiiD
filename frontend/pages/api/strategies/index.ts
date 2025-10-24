@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 // TODO: Re-enable when strategies module is implemented
 // import type { Strategy, ValidationResult } from "@/strategies/schema";
 // import { validateStrategy } from "@/strategies/validator";
-type Strategy = any;
+type Strategy = unknown;
 interface ValidationResult {
   valid: boolean;
   errors: Array<{ field: string; message: string }>;

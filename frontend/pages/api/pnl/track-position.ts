@@ -168,7 +168,15 @@ async function updateRealTimePL(position: PositionTracking): Promise<PositionTra
 /**
  * Calculate current greeks based on leg prices (simplified)
  */
-function calculateCurrentGreeks(legs: any[]): Greeks {
+type OptionLeg = {
+  type: "CALL" | "PUT";
+  side: "BUY" | "SELL";
+  qty: number;
+  actualPrice: number;
+  currentPrice: number;
+};
+
+function calculateCurrentGreeks(legs: OptionLeg[]): Greeks {
   // Mock calculation - in production, fetch actual greeks
   let delta = 0;
   let gamma = 0;
@@ -197,7 +205,7 @@ function calculateCurrentGreeks(legs: any[]): Greeks {
 /**
  * Estimate greeks for a single leg
  */
-function estimateLegGreeks(leg: any): Greeks {
+function estimateLegGreeks(leg: OptionLeg): Greeks {
   // Simplified - in production, use Black-Scholes or fetch from API
   if (leg.type === "CALL") {
     return {

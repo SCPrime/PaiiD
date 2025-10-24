@@ -236,13 +236,13 @@ export function removeWatchlist(profile: UserProfile, watchlistId: string): User
 }
 
 // Export type guards
-export function isValidProfile(obj: any): obj is UserProfile {
+export function isValidProfile(obj: unknown): obj is UserProfile {
   return (
-    obj &&
+    obj !== null &&
     typeof obj === "object" &&
-    "id" in obj &&
-    "investmentSettings" in obj &&
-    "tradingPreferences" in obj &&
-    "portfolio" in obj
+    "id" in (obj as Record<string, unknown>) &&
+    "investmentSettings" in (obj as Record<string, unknown>) &&
+    "tradingPreferences" in (obj as Record<string, unknown>) &&
+    "portfolio" in (obj as Record<string, unknown>)
   );
 }

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
 import { logger } from "@/lib/logger";
+import React, { useState } from "react";
 
 /**
  * 🔒 LOCKED FINAL PaiiD CHAT BOX 🔒
@@ -92,7 +92,8 @@ const CompletePaiiDLogo: React.FC<CompletePaiiDLogoProps> = ({ size = 80, enable
         setLoading(false);
       } catch (error: unknown) {
         logger.error("Chat submission error", error);
-        const errorMessage = error instanceof Error ? error.message : "Failed to submit chat message";
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to submit chat message";
         setResponse(`Error: ${errorMessage}`);
         setLoading(false);
       }
@@ -581,7 +582,8 @@ const PaiiDChatBoxWithLogo = () => {
         setLoading(false);
       } catch (error: unknown) {
         logger.error("Chat submission error", error);
-        const errorMessage = error instanceof Error ? error.message : "Failed to submit chat message";
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to submit chat message";
         setResponse(`Error: ${errorMessage}`);
         setLoading(false);
       }

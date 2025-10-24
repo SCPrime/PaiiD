@@ -1,84 +1,36 @@
 path,category,extension,size,status,references,notes
-backup-database.sh,Code,.sh,1044,redundant,0,Matches redundancy pattern; No references found - may be entry point
-powershell-health-report-20251023-155635.json,Code,.json,40330,redundant,0,Matches redundancy pattern; No references found - may be entry point
-API_CONFIGURATION_COMPLETE.md,Documentation,.md,6620,redundant,0,Matches redundancy pattern
-AUDIT_FIXES_SUMMARY.md,Documentation,.md,16244,redundant,0,Matches redundancy pattern
-AUDIT_REPORT.md,Documentation,.md,28727,redundant,0,Matches redundancy pattern
-AUDIT_SUMMARY.md,Documentation,.md,9142,redundant,0,Matches redundancy pattern
-AUDIT_SUMMARY_2025-10-13.md,Documentation,.md,4876,redundant,0,Matches redundancy pattern
-AUTHENTICATION_COMPLETE.md,Documentation,.md,8010,redundant,0,Matches redundancy pattern
-AUTO_STARTUP_COMPLETE.md,Documentation,.md,10603,redundant,0,Matches redundancy pattern
-BATCH_5D_DEPLOYMENT_COMPLETE.md,Documentation,.md,4695,redundant,0,Matches redundancy pattern
-BATCH_6_DEPLOYMENT_AUTOMATION_COMPLETE.md,Documentation,.md,10105,redundant,0,Matches redundancy pattern
-BATCH_7_PRODUCTION_MONITORING_COMPLETE.md,Documentation,.md,5530,redundant,0,Matches redundancy pattern
-BUG_REPORT_OPTIONS_500.md,Documentation,.md,8713,redundant,0,Matches redundancy pattern
-CHROME_AUTO_LAUNCH_COMPLETE.md,Documentation,.md,5706,redundant,0,Matches redundancy pattern
-CLAUDE_AGENT_IMPLEMENTATION_SUMMARY.md,Documentation,.md,9707,redundant,0,Matches redundancy pattern
-CLEANUP_AUDIT_REPORT.md,Documentation,.md,26593,redundant,0,Matches redundancy pattern
-COMPLETE_DUAL_AI_SETUP_SUMMARY.md,Documentation,.md,13380,redundant,0,Matches redundancy pattern
-COMPLETE_SETUP_SUMMARY.md,Documentation,.md,11102,redundant,0,Matches redundancy pattern
-COMPREHENSIVE_AUDIT_REPORT.md,Documentation,.md,26449,redundant,0,Matches redundancy pattern
-COMPREHENSIVE_AUDIT_REPORT_2025-10-13.md,Documentation,.md,22080,redundant,0,Matches redundancy pattern
-COMPREHENSIVE_AUDIT_REPORT_2025-10-23.md,Documentation,.md,15874,redundant,0,Matches redundancy pattern
-COMPREHENSIVE_FIX_REPORT.md,Documentation,.md,13630,redundant,0,Matches redundancy pattern
-CUsersSSaint-CyrDocumentssourceai-TraderDEPLOYMENT_CHECKLIST.md,Documentation,.md,6,redundant,0,Matches redundancy pattern
-DEPLOYMENT_CHECKLIST.md,Documentation,.md,3934,redundant,0,Matches redundancy pattern
-DEPLOYMENT_EXECUTION_GUIDE.md,Documentation,.md,10039,redundant,0,Matches redundancy pattern
-DEPLOYMENT_FIXES.md,Documentation,.md,4944,redundant,0,Matches redundancy pattern
-DEPLOYMENT_GUIDE.md,Documentation,.md,6910,redundant,0,Matches redundancy pattern
-DEPLOYMENT_PARITY_VERIFICATION.md,Documentation,.md,13307,redundant,0,Matches redundancy pattern
-DEPLOYMENT_SCRIPTS_README.md,Documentation,.md,10587,redundant,0,Matches redundancy pattern
-DEPLOYMENT_SCRIPT_PARITY.md,Documentation,.md,8848,redundant,0,Matches redundancy pattern
-DEPLOYMENT_STATUS_CHECK.md,Documentation,.md,5635,redundant,0,Matches redundancy pattern
-DEPLOYMENT_STATUS_FINAL.md,Documentation,.md,6304,redundant,0,Matches redundancy pattern
-DEPLOYMENT_SUCCESS_REPORT.md,Documentation,.md,16000,redundant,0,Matches redundancy pattern
-DEPLOYMENT_SUMMARY.md,Documentation,.md,9112,redundant,0,Matches redundancy pattern
-DEPLOYMENT_VERIFICATION.md,Documentation,.md,3911,redundant,0,Matches redundancy pattern
-DEPLOYMENT_VERIFICATION_CHECKLIST.md,Documentation,.md,10976,redundant,0,Matches redundancy pattern
-DEPLOYMENT_VERIFICATION_RESULTS.md,Documentation,.md,6872,redundant,0,Matches redundancy pattern
-DEPLOYMENT_WAITING_ROOM.md,Documentation,.md,8365,redundant,0,Matches redundancy pattern
-EXECUTIVE_REPORT_LOGO_AND_ROADMAP.md,Documentation,.md,5843,redundant,0,Matches redundancy pattern
-FINAL_DEPLOYMENT_REPORT.md,Documentation,.md,12001,redundant,0,Matches redundancy pattern
-FINAL_DEPLOYMENT_SUMMARY.md,Documentation,.md,6218,redundant,0,Matches redundancy pattern
-FIXES_APPLIED_SUMMARY.md,Documentation,.md,7587,redundant,0,Matches redundancy pattern
-FIXES_COMPLETED_REPORT.md,Documentation,.md,13998,redundant,0,Matches redundancy pattern
-FIX_IMPLEMENTATION_PLAN_2025-10-13.md,Documentation,.md,21766,redundant,0,Matches redundancy pattern
-FULL_DEPLOYMENT_VERIFICATION_REPORT.md,Documentation,.md,25522,redundant,0,Matches redundancy pattern
-IMPLEMENTATION_STATUS.md,Documentation,.md,5253,redundant,0,Matches redundancy pattern
-IMPLEMENTATION_STATUS_OPTIONS_FIX.md,Documentation,.md,10276,redundant,0,Matches redundancy pattern
-INCIDENT_REPORT_2e048fe.md,Documentation,.md,11443,redundant,0,Matches redundancy pattern
-INFRASTRUCTURE_SURGERY_COMPLETE.md,Documentation,.md,18698,redundant,0,Matches redundancy pattern
-LAUNCH_STATUS_FINAL.md,Documentation,.md,8142,redundant,0,Matches redundancy pattern
-MARKET_DATA_OPTIMIZATION_COMPLETE.md,Documentation,.md,11523,redundant,0,Matches redundancy pattern
-MCP_SETUP_COMPLETE.md,Documentation,.md,12870,redundant,0,Matches redundancy pattern
-MCP_VERIFICATION_REPORT.md,Documentation,.md,12642,redundant,0,Matches redundancy pattern
-MOBILE_AUDIT_REPORT.md,Documentation,.md,10319,redundant,0,Matches redundancy pattern
-OLD_JAVASCRIPT_EXCISION_REPORT.md,Documentation,.md,10385,redundant,0,Matches redundancy pattern
-OPTIONS_ENDPOINT_DEBUG_REPORT.md,Documentation,.md,5101,redundant,0,Matches redundancy pattern
-OPTIONS_ENDPOINT_FIX_SUMMARY.md,Documentation,.md,12825,redundant,0,Matches redundancy pattern
-OPTIONS_TRADING_COMPLETE.md,Documentation,.md,13228,redundant,0,Matches redundancy pattern
-PARASITE_DEPENDENCY_SCAN_REPORT.md,Documentation,.md,14601,redundant,0,Matches redundancy pattern
-PHASE1_VERIFICATION_REPORT.md,Documentation,.md,14136,redundant,0,Matches redundancy pattern
-PHASE_0_AUDIT_REPORT.md,Documentation,.md,13513,redundant,0,Matches redundancy pattern
-PHASE_STATUS_2025-10-13.md,Documentation,.md,8017,redundant,0,Matches redundancy pattern
-POWERSHELL_DEPLOYMENT_REPAIR_PLAN.md,Documentation,.md,7666,redundant,0,Matches redundancy pattern
-POWERSHELL_REPAIR_RESOLUTION_REPORT.md,Documentation,.md,6693,redundant,0,Matches redundancy pattern
-PRODUCTION_DEPLOYMENT_GUIDE.md,Documentation,.md,4814,redundant,0,Matches redundancy pattern
-PR_FAILURE_ANALYSIS_REPORT_72H.md,Documentation,.md,16419,redundant,0,Matches redundancy pattern
-RENDER_DEPLOYMENT_CHECKLIST.md,Documentation,.md,1839,redundant,0,Matches redundancy pattern
-RENDER_DEPLOYMENT_DIAGNOSIS.md,Documentation,.md,9100,redundant,0,Matches redundancy pattern
-RENDER_DEPLOYMENT_GUIDE.md,Documentation,.md,2317,redundant,0,Matches redundancy pattern
-SCHEDULER_DEPLOYMENT_GUIDE.md,Documentation,.md,15484,redundant,0,Matches redundancy pattern
-SESSION_SUMMARY_2025-10-24.md,Documentation,.md,13000,redundant,0,Matches redundancy pattern
-STATE_OF_AFFAIRS_REPORT.md,Documentation,.md,22337,redundant,0,Matches redundancy pattern
-TRADIER_DEPLOYMENT_STATUS.md,Documentation,.md,9311,redundant,0,Matches redundancy pattern
-VERIFICATION_CHECKLIST.md,Documentation,.md,6557,redundant,0,Matches redundancy pattern
-deployment-report-20251023-154113.md,Documentation,.md,3508,redundant,0,Matches redundancy pattern
-frontend/components/DEPRECATED_COMPONENTS.md,Documentation,.md,1569,redundant,0,Matches redundancy pattern
-health-report-20251023-154129.md,Documentation,.md,497,redundant,0,Matches redundancy pattern
-test-report-20251023-134322.md,Documentation,.md,1673,redundant,0,Matches redundancy pattern
-test-report-20251023-140252.md,Documentation,.md,1673,redundant,0,Matches redundancy pattern
-test-report-20251023-154119.md,Documentation,.md,1673,redundant,0,Matches redundancy pattern
+AUTH_FIX_REPORT.md,Documentation,.md,9325,redundant,0,Matches redundancy pattern
+BATCH_8_CLEANUP_EXECUTION_REPORT.md,Documentation,.md,11376,redundant,0,Matches redundancy pattern
+BATCH_9_VERIFICATION_EXECUTION_REPORT.md,Documentation,.md,10407,redundant,0,Matches redundancy pattern
+CI_FIX_REPORT.md,Documentation,.md,5357,redundant,0,Matches redundancy pattern
+CI_PROGRESS_REPORT.md,Documentation,.md,4863,redundant,0,Matches redundancy pattern
+CODEBASE_INVENTORY_REPORT.md,Documentation,.md,7426,redundant,0,Matches redundancy pattern
+DEPLOYMENT_COMPLETE_2025-10-24.md,Documentation,.md,9884,redundant,0,Matches redundancy pattern
+DEPLOYMENT_STATUS_2025-10-24.md,Documentation,.md,5174,redundant,0,Matches redundancy pattern
+DEPLOYMENT_STATUS_REPORT.md,Documentation,.md,13081,redundant,0,Matches redundancy pattern
+DEPLOYMENT_SUCCESS_PHASE_1.md,Documentation,.md,9699,redundant,0,Matches redundancy pattern
+FINAL_FIX_SUMMARY.md,Documentation,.md,5191,redundant,0,Matches redundancy pattern
+GITHUB_MONITOR_FOUNDATION_COMPLETE.md,Documentation,.md,11786,redundant,0,Matches redundancy pattern
+ML_IMPLEMENTATION_COMPLETE.md,Documentation,.md,12553,redundant,0,Matches redundancy pattern
+ML_SENTIMENT_DEPLOYMENT_FIX.md,Documentation,.md,5924,redundant,0,Matches redundancy pattern
+MOBILE_CHART_EXPORT_IMPLEMENTATION_SUMMARY.md,Documentation,.md,11915,redundant,0,Matches redundancy pattern
+OCTOBER_24_VICTORY_REPORT.md,Documentation,.md,9715,redundant,0,Matches redundancy pattern
+PERFECTION_QUEST_STATUS.md,Documentation,.md,5230,redundant,0,Matches redundancy pattern
+PHASE_1_OPTIONS_COMPLETE.md,Documentation,.md,14249,redundant,0,Matches redundancy pattern
+PHASE_2_ML_COMPLETE.md,Documentation,.md,15740,redundant,0,Matches redundancy pattern
+PHASE_3_1_ACCESSIBILITY_COMPLETE.md,Documentation,.md,5900,redundant,0,Matches redundancy pattern
+PHASE_3_2_MOBILE_POLISH_COMPLETE.md,Documentation,.md,6755,redundant,0,Matches redundancy pattern
+PHASE_3_3_LOADING_STATES_COMPLETE.md,Documentation,.md,7118,redundant,0,Matches redundancy pattern
+PHASE_3_4_ERROR_MESSAGES_COMPLETE.md,Documentation,.md,8754,redundant,0,Matches redundancy pattern
+PHASE_3_COMPLETE.md,Documentation,.md,4762,redundant,0,Matches redundancy pattern
+PHASE_3_VICTORY_REPORT.md,Documentation,.md,6562,redundant,0,Matches redundancy pattern
+PHASE_4_PROGRESS_REPORT.md,Documentation,.md,5118,redundant,0,Matches redundancy pattern
+README_INTEGRATION_COMPLETE.md,Documentation,.md,7024,redundant,0,Matches redundancy pattern
+SCHEDULER_BUG_FIX_COMPLETE.md,Documentation,.md,4388,redundant,0,Matches redundancy pattern
+STEP_1_STATUS_REPORT.md,Documentation,.md,10190,redundant,0,Matches redundancy pattern
+TEAM_STAR_ML_ENGINE_COMPLETE.md,Documentation,.md,9863,redundant,0,Matches redundancy pattern
+VERCEL_PURGE_COMPLETE.md,Documentation,.md,8838,redundant,0,Matches redundancy pattern
+VICTORY_REPORT.md,Documentation,.md,5964,redundant,0,Matches redundancy pattern
 CLEAN_BUILD.ps1,Code,.ps1,5514,needs verification,0,No references found - may be entry point
 CLEAN_BUILD.sh,Code,.sh,3427,needs verification,0,No references found - may be entry point
 EXECUTE-BATCH-7.ps1,Code,.ps1,1798,needs verification,0,No references found - may be entry point
@@ -87,7 +39,9 @@ backend/alembic/versions/037b216f2ed1_add_auth_schema_user_sessions_activity_.py
 backend/alembic/versions/0952a611cdfb_initial_schema_users_strategies_trades_.py,Code,.py,8939,needs verification,0,No references found - may be entry point
 backend/alembic/versions/ad76030fa92e_add_order_templates_table.py,Code,.py,1978,needs verification,0,No references found - may be entry point
 backend/alembic/versions/c8e4f9b52d31_add_ai_recommendations_table.py,Code,.py,3232,needs verification,0,No references found - may be entry point
-backend/app/ml/signal_generator.py,Code,.py,11982,needs verification,0,No references found - may be entry point
+backend/app/middleware/usage_tracking.py,Code,.py,8605,needs verification,0,No references found - may be entry point
+backend/app/services/alert_manager.py,Code,.py,9114,needs verification,0,No references found - may be entry point
+backend/app/services/model_persistence.py,Code,.py,7629,needs verification,0,No references found - may be entry point
 backend/approutersai.py,Code,.py,0,needs verification,0,No references found - may be entry point
 backend/data/news_cache/market_1f7d9aceaaafc81c5b04637f6f1ddb5d.json,Code,.json,33679,needs verification,0,No references found - may be entry point
 backend/data/news_cache/market_276377cf6851a53a6bbe48b2082036ac.json,Code,.json,9095,needs verification,0,No references found - may be entry point
@@ -96,17 +50,17 @@ backend/data/news_cache/market_e02059e950e4ae6ded2258d7528cc487.json,Code,.json,
 backend/railway.json,Code,.json,278,needs verification,0,No references found - may be entry point
 backend/scripts/migrate_strategies.py,Code,.py,5678,needs verification,0,No references found - may be entry point
 backend/test_alpaca_data.py,Code,.py,4691,needs verification,0,No references found - may be entry point
-backend/test_portfolio_endpoint.py,Code,.py,1266,needs verification,0,No references found - may be entry point
-backend/test_positions_endpoint.py,Code,.py,4192,needs verification,0,No references found - may be entry point
+backend/test_portfolio_endpoint.py,Code,.py,1296,needs verification,0,No references found - may be entry point
+backend/test_positions_endpoint.py,Code,.py,4173,needs verification,0,No references found - may be entry point
 backend/tests/test_analytics.py,Code,.py,5800,needs verification,0,No references found - may be entry point
-backend/tests/test_api_endpoints.py,Code,.py,14294,needs verification,0,No references found - may be entry point
-backend/tests/test_auth.py,Code,.py,3768,needs verification,0,No references found - may be entry point
-backend/tests/test_backtest.py,Code,.py,7634,needs verification,0,No references found - may be entry point
-backend/tests/test_database.py,Code,.py,14392,needs verification,0,No references found - may be entry point
+backend/tests/test_api_endpoints.py,Code,.py,14422,needs verification,0,No references found - may be entry point
+backend/tests/test_auth.py,Code,.py,3750,needs verification,0,No references found - may be entry point
+backend/tests/test_backtest.py,Code,.py,7870,needs verification,0,No references found - may be entry point
+backend/tests/test_database.py,Code,.py,14316,needs verification,0,No references found - may be entry point
 backend/tests/test_imports.py,Code,.py,8107,needs verification,0,No references found - may be entry point
-backend/tests/test_news.py,Code,.py,9411,needs verification,0,No references found - may be entry point
-backend/tests/test_orders.py,Code,.py,572,needs verification,0,No references found - may be entry point
-backend/tests/test_strategies.py,Code,.py,8543,needs verification,0,No references found - may be entry point
+backend/tests/test_news.py,Code,.py,9434,needs verification,0,No references found - may be entry point
+backend/tests/test_orders.py,Code,.py,618,needs verification,0,No references found - may be entry point
+backend/tests/test_strategies.py,Code,.py,8717,needs verification,0,No references found - may be entry point
 backend/verify_config.py,Code,.py,3672,needs verification,0,No references found - may be entry point
 check-chrome-extensions.ps1,Code,.ps1,3274,needs verification,0,No references found - may be entry point
 comprehensive-health-check.ps1,Code,.ps1,16850,needs verification,0,No references found - may be entry point
@@ -117,33 +71,32 @@ docker-compose.yml,Code,.yml,1872,needs verification,0,No references found - may
 dual-ai-orchestrator.ps1,Code,.ps1,13609,needs verification,0,No references found - may be entry point
 enable-auto-startup-global.ps1,Code,.ps1,18911,needs verification,0,No references found - may be entry point
 enable-startup-simple.ps1,Code,.ps1,4560,needs verification,0,No references found - may be entry point
-frontend/.lintstagedrc.json,Code,.json,128,needs verification,0,No references found - may be entry point
-frontend/.prettierrc.json,Code,.json,270,needs verification,0,No references found - may be entry point
-frontend/__tests__/services/telemetry.test.ts,Code,.ts,2211,needs verification,0,No references found - may be entry point
-frontend/components/CompanyHeader.tsx,Code,.tsx,5449,needs verification,0,No references found - may be entry point
-frontend/components/IndicatorPanel.tsx,Code,.tsx,9674,needs verification,0,No references found - may be entry point
-frontend/components/MonitorDashboard.tsx,Code,.tsx,17462,needs verification,0,No references found - may be entry point
-frontend/components/NewsArticleList.tsx,Code,.tsx,7713,needs verification,0,No references found - may be entry point
-frontend/components/RadialMenuNav.tsx,Code,.tsx,1282,needs verification,0,No references found - may be entry point
-frontend/components/StatusBar.tsx,Code,.tsx,3076,needs verification,0,No references found - may be entry point
-frontend/components/UserProfileDropdown.tsx,Code,.tsx,7146,needs verification,0,No references found - may be entry point
-frontend/components/WatchlistManager.tsx,Code,.tsx,26652,needs verification,0,No references found - may be entry point
-frontend/components/WatchlistPanel.tsx,Code,.tsx,18764,needs verification,0,No references found - may be entry point
-frontend/components/admin/PerformanceDashboard.tsx,Code,.tsx,6005,needs verification,0,No references found - may be entry point
-frontend/components/auth/ProtectedRoute.tsx,Code,.tsx,3339,needs verification,0,No references found - may be entry point
-frontend/fix-lint-errors.js,Code,.js,5977,needs verification,0,No references found - may be entry point
-frontend/fix-remaining-errors.js,Code,.js,4856,needs verification,0,No references found - may be entry point
-frontend/hooks/useSWR.ts,Code,.ts,6350,needs verification,0,No references found - may be entry point
-frontend/jest.setup.js,Code,.js,574,needs verification,0,No references found - may be entry point
-frontend/lib/apiClient.ts,Code,.ts,5751,needs verification,0,No references found - may be entry point
+frontend/.lintstagedrc.json,Code,.json,124,needs verification,0,No references found - may be entry point
+frontend/.prettierrc.json,Code,.json,257,needs verification,0,No references found - may be entry point
+frontend/__tests__/services/telemetry.test.ts,Code,.ts,2133,needs verification,0,No references found - may be entry point
+frontend/components/CompanyHeader.tsx,Code,.tsx,5263,needs verification,0,No references found - may be entry point
+frontend/components/IndicatorPanel.tsx,Code,.tsx,9381,needs verification,0,No references found - may be entry point
+frontend/components/NewsArticleList.tsx,Code,.tsx,7445,needs verification,0,No references found - may be entry point
+frontend/components/RadialMenuNav.tsx,Code,.tsx,1243,needs verification,0,No references found - may be entry point
+frontend/components/StatusBar.tsx,Code,.tsx,2990,needs verification,0,No references found - may be entry point
+frontend/components/UserProfileDropdown.tsx,Code,.tsx,6918,needs verification,0,No references found - may be entry point
+frontend/components/WatchlistManager.tsx,Code,.tsx,26047,needs verification,0,No references found - may be entry point
+frontend/components/WatchlistPanel.tsx,Code,.tsx,18368,needs verification,0,No references found - may be entry point
+frontend/components/admin/PerformanceDashboard.tsx,Code,.tsx,5836,needs verification,0,No references found - may be entry point
+frontend/components/auth/ProtectedRoute.tsx,Code,.tsx,3222,needs verification,0,No references found - may be entry point
+frontend/fix-lint-errors.js,Code,.js,5741,needs verification,0,No references found - may be entry point
+frontend/fix-remaining-errors.js,Code,.js,4731,needs verification,0,No references found - may be entry point
+frontend/hooks/useSWR.ts,Code,.ts,6129,needs verification,0,No references found - may be entry point
+frontend/jest.setup.js,Code,.js,549,needs verification,0,No references found - may be entry point
+frontend/lib/apiClient.ts,Code,.ts,5571,needs verification,0,No references found - may be entry point
 frontend/next.config.js,Code,.js,2556,needs verification,0,No references found - may be entry point
 frontend/package-lock.json,Code,.json,594748,needs verification,0,No references found - may be entry point
-frontend/pages/_document.tsx,Code,.tsx,546,needs verification,0,No references found - may be entry point
+frontend/pages/_document.tsx,Code,.tsx,529,needs verification,0,No references found - may be entry point
 frontend/playwright.config.ts,Code,.ts,2194,needs verification,0,No references found - may be entry point
-frontend/tests/market-data.spec.ts,Code,.ts,4428,needs verification,0,No references found - may be entry point
-frontend/tests/options-chain.spec.ts,Code,.ts,10467,needs verification,0,No references found - may be entry point
-frontend/types/OptionsContract.ts,Code,.ts,328,needs verification,0,No references found - may be entry point
-frontend/types/lightweight-charts.d.ts,Code,.ts,276,needs verification,0,No references found - may be entry point
+frontend/tests/market-data.spec.ts,Code,.ts,4314,needs verification,0,No references found - may be entry point
+frontend/tests/options-chain.spec.ts,Code,.ts,10204,needs verification,0,No references found - may be entry point
+frontend/types/OptionsContract.ts,Code,.ts,310,needs verification,0,No references found - may be entry point
+frontend/types/lightweight-charts.d.ts,Code,.ts,266,needs verification,0,No references found - may be entry point
 health-check.sh,Code,.sh,4969,needs verification,0,No references found - may be entry point
 install-dual-ai-extensions.ps1,Code,.ps1,10649,needs verification,0,No references found - may be entry point
 install-extensions-simple.ps1,Code,.ps1,1859,needs verification,0,No references found - may be entry point
@@ -169,6 +122,9 @@ test-production.ps1,Code,.ps1,16765,needs verification,0,No references found - m
 test-proxy-flow.ps1,Code,.ps1,5420,needs verification,0,No references found - may be entry point
 test_options_endpoint.py,Code,.py,1859,needs verification,0,No references found - may be entry point
 test_phase1.py,Code,.py,4978,needs verification,0,No references found - may be entry point
+verification-decisions-2025-10-24-170036.json,Code,.json,3710,needs verification,0,No references found - may be entry point
+verification-decisions-2025-10-24-171307.json,Code,.json,161323,needs verification,0,No references found - may be entry point
+ALPHA_VICTORY_ROADMAP.md,Documentation,.md,6141,needs verification,0,
 API_DOCUMENTATION.md,Documentation,.md,24522,needs verification,0,
 API_KEY_GUIDE.md,Documentation,.md,9373,needs verification,0,
 ARCHITECTURE_CLEAN.md,Documentation,.md,9053,needs verification,0,
@@ -187,29 +143,37 @@ CONNECTION_VERIFIED.md,Documentation,.md,5768,needs verification,0,
 CONNECTIVITY_TEST_RESULTS.md,Documentation,.md,11708,needs verification,0,
 CONTRIBUTING.md,Documentation,.md,15483,needs verification,0,
 CRITICAL_NEXT_STEP.md,Documentation,.md,6935,needs verification,0,
-CURSOR_MIGRATION_GUIDE.md,Documentation,.md,9570,needs verification,0,
+CURSOR_MIGRATION_GUIDE.md,Documentation,.md,8679,needs verification,0,
 DATA_SOURCES.md,Documentation,.md,4661,needs verification,0,
 DEBUGGING_SETUP.md,Documentation,.md,11766,needs verification,0,
-DEPLOY_INSTRUCTIONS.md,Documentation,.md,6413,needs verification,0,
+DEPLOY_INSTRUCTIONS.md,Documentation,.md,7111,needs verification,0,
 DEPLOY_RUNBOOK.md,Documentation,.md,3684,needs verification,0,
 DEVELOPER_SETUP.md,Documentation,.md,21297,needs verification,0,
+DOCUMENTATION_INDEX.md,Documentation,.md,4962,needs verification,0,
 DUAL_AI_EXTENSIONS_GUIDE.md,Documentation,.md,15935,needs verification,0,
 DUAL_AI_MONITORING_WORKFLOW.md,Documentation,.md,13269,needs verification,0,
 EXECUTE_DEPLOY_NOW.md,Documentation,.md,12626,needs verification,0,
+FILE_NAMING_CONVENTIONS.md,Documentation,.md,9699,needs verification,0,
 FORCE_CLEAN_REBUILD_INSTRUCTIONS.md,Documentation,.md,7497,needs verification,0,
 FULL_CHECKLIST.md,Documentation,.md,82196,needs verification,0,
 GITHUB_MONITOR_PLAN.md,Documentation,.md,44337,needs verification,0,
 GITHUB_PAGES_UPDATE.md,Documentation,.md,1945,needs verification,0,
 GIT_HISTORY_BEFORE_RESET.txt,Documentation,.txt,97,needs verification,0,
 HOW_TO_EXECUTE_CHATGPT_SOLUTIONS.md,Documentation,.md,13735,needs verification,0,
+ISSUE_TRACKER.md,Documentation,.md,19705,needs verification,0,
+JWT_MIGRATION_CHECKPOINT.md,Documentation,.md,2079,needs verification,0,
 JWT_MIGRATION_PROGRESS.md,Documentation,.md,7743,needs verification,0,
 KNOWN_ISSUES.md,Documentation,.md,2743,needs verification,0,
 LAUNCH_READINESS.md,Documentation,.md,19013,needs verification,0,
 LOGO_ABSOLUTE_PROTECTION.md,Documentation,.md,4035,needs verification,0,
 MANUAL_DEPLOYMENT_REQUIRED.txt,Documentation,.txt,1087,needs verification,0,
 MASTER_SURGEON_INSPECTION.md,Documentation,.md,19107,needs verification,0,
+ML_API_DOCUMENTATION.md,Documentation,.md,12294,needs verification,0,
+ML_QUICKSTART.md,Documentation,.md,11145,needs verification,0,
+MOBILE_DEVICE_TESTING_GUIDE.md,Documentation,.md,15937,needs verification,0,
 MOBILE_ENHANCEMENT_PLAN.md,Documentation,.md,6369,needs verification,0,
 MOBILE_TESTING_CHECKLIST.md,Documentation,.md,14156,needs verification,0,
+MONITOR_COMPLETE_GUIDE.md,Documentation,.md,13968,needs verification,0,
 MONITOR_IMPLEMENTATION_LOG.md,Documentation,.md,11184,needs verification,0,
 NEW_API_TOKEN_GENERATED.md,Documentation,.md,4853,needs verification,0,
 ONBOARDING_CHANGES.md,Documentation,.md,5974,needs verification,0,
@@ -221,6 +185,7 @@ PAIID_MIGRATION_STAGES.md,Documentation,.md,26600,needs verification,0,
 PHASE1_PRODUCTION_READY.md,Documentation,.md,5083,needs verification,0,
 PHASE_2.5_AUTH_INTEGRATION_PLAN.md,Documentation,.md,9730,needs verification,0,
 PHASE_2.5_USER_ACTIONS.md,Documentation,.md,6412,needs verification,0,
+PHASE_2_ML_STRATEGY_PLAN.md,Documentation,.md,12427,needs verification,0,
 PRELAUNCH_VALIDATION_GUIDE.md,Documentation,.md,14196,needs verification,0,
 PRODUCTION_SMOKE_TEST.md,Documentation,.md,5430,needs verification,0,
 PROXY_TROUBLESHOOTING.md,Documentation,.md,6129,needs verification,0,
@@ -230,18 +195,22 @@ QUICK_DEPLOY_REFERENCE.md,Documentation,.md,3098,needs verification,0,
 QUICK_FIXES.md,Documentation,.md,21321,needs verification,0,
 QUICK_REFERENCE_AUTOMATED_WORKFLOW.md,Documentation,.md,5604,needs verification,0,
 QUICK_START.md,Documentation,.md,5575,needs verification,0,
+QUICK_TEST_FIX_GUIDE.md,Documentation,.md,2384,needs verification,0,
 RADIAL_MENU_FIXES_DEPLOYED.md,Documentation,.md,9501,needs verification,0,
-README.md,Documentation,.md,9776,needs verification,0,
+README.md,Documentation,.md,14271,needs verification,0,
 READY_TO_DEPLOY.md,Documentation,.md,5322,needs verification,0,
 REAL_ROOT_CAUSE_OCTOBER_12.md,Documentation,.md,3082,needs verification,0,
 RENDER_SETUP_GUIDE.md,Documentation,.md,4254,needs verification,0,
 ROADMAP.md,Documentation,.md,31203,needs verification,0,
+SCHEDULER_QUICKSTART.md,Documentation,.md,8908,needs verification,0,
 SECURITY_SETUP.md,Documentation,.md,8141,needs verification,0,
 SENTRY_SETUP_GUIDE.md,Documentation,.md,7165,needs verification,0,
 SMOKING_GUN_FINAL_FIX.md,Documentation,.md,9597,needs verification,0,
 SONARCLOUD_SETUP.md,Documentation,.md,7354,needs verification,0,
+STRATEGIC_CONFIG_IMPLEMENTATION.md,Documentation,.md,9228,needs verification,0,
 TASK_ASSIGNMENT_WORKFLOW.md,Documentation,.md,14960,needs verification,0,
 TASK_TEMPLATE.md,Documentation,.md,2873,needs verification,0,
+TEST_FIX_PROGRESS.md,Documentation,.md,3801,needs verification,0,
 TEST_RESULTS.md,Documentation,.md,2816,needs verification,0,
 TRADIER_FIX_INSTRUCTIONS.md,Documentation,.md,7167,needs verification,0,
 TRADIER_INTEGRATION_DEPLOYED.md,Documentation,.md,11659,needs verification,0,
@@ -250,6 +219,7 @@ VERCEL_DECOMMISSIONED.md,Documentation,.md,9182,needs verification,0,
 VSCODE_INTEGRATION_GUIDE.md,Documentation,.md,19114,needs verification,0,
 WARNINGS_CLEANUP_PLAN.md,Documentation,.md,5818,needs verification,0,
 WORKFLOW_AUDIT_RESULTS.md,Documentation,.md,17098,needs verification,0,
+YOUR_NEXT_STEPS.md,Documentation,.md,4478,needs verification,0,
 backend/ACTIVEPOSITIONS_AI_ENDPOINT.md,Documentation,.md,12113,needs verification,0,
 backend/DATABASE_SETUP.md,Documentation,.md,754,needs verification,0,
 backend/FORCE_REBUILD_TRADIER.txt,Documentation,.txt,568,needs verification,0,
@@ -262,17 +232,19 @@ backend/TRADIER_STREAMING_TODO.md,Documentation,.md,13198,needs verification,0,
 backend/docs/README.md,Documentation,.md,3067,needs verification,0,
 backend/docs/STREAMING_ARCHITECTURE.md,Documentation,.md,28299,needs verification,0,
 backend/docs/TRADIER_IMPLEMENTATION.md,Documentation,.md,29616,needs verification,0,
-frontend/README_FRONTEND.md,Documentation,.md,1111,needs verification,0,
-frontend/components/USERSETUPAI_UPDATE_INSTRUCTIONS.md,Documentation,.md,5935,needs verification,0,
+frontend/README_FRONTEND.md,Documentation,.md,1065,needs verification,0,
+frontend/components/USERSETUPAI_UPDATE_INSTRUCTIONS.md,Documentation,.md,5690,needs verification,0,
 frontend/lint-output.txt,Documentation,.txt,39550,needs verification,0,
 logo-audit.txt,Documentation,.txt,4277,needs verification,0,
+.claudeignore,Other,,1653,needs verification,0,
 .cursorignore,Other,,515,needs verification,0,
 .cursorrules,Other,,4495,needs verification,0,
-.cursorrules-checks,Other,,10335,needs verification,0,
+.cursorrules-checks,Other,,10926,needs verification,0,
 .editorconfig,Other,,461,needs verification,0,
 .env.example,Other,.example,1568,needs verification,3,
 .gitignore,Other,,2540,needs verification,0,
 .prettierrc,Other,,267,needs verification,0,
+.render-deploy-trigger,Other,,79,needs verification,0,
 api-tests.http,Other,.http,781,needs verification,0,
 backend/.bandit,Other,,142,needs verification,0,
 backend/.deployment-marker,Other,,54,needs verification,0,
@@ -280,7 +252,27 @@ backend/.env,Other,,1533,needs verification,4,
 backend/.gitignore,Other,,871,needs verification,0,
 backend/.logs/.gitkeep,Other,,150,needs verification,0,
 backend/.ruff_cache/.gitignore,Other,,35,needs verification,0,
-backend/.ruff_cache/0.14.1/13411017444273498385,Other,,411,needs verification,0,
+backend/.ruff_cache/0.14.1/11413924242618080109,Other,,102,needs verification,0,
+backend/.ruff_cache/0.14.1/13411017444273498385,Other,,3811,needs verification,0,
+backend/.ruff_cache/0.14.1/13599115745104870083,Other,,348,needs verification,0,
+backend/.ruff_cache/0.14.1/14491819381873941723,Other,,134,needs verification,0,
+backend/.ruff_cache/0.14.1/15239532661577974571,Other,,3811,needs verification,0,
+backend/.ruff_cache/0.14.1/15748791591735339146,Other,,522,needs verification,0,
+backend/.ruff_cache/0.14.1/1775298024471635375,Other,,87,needs verification,0,
+backend/.ruff_cache/0.14.1/18099050352026875149,Other,,3811,needs verification,0,
+backend/.ruff_cache/0.14.1/18136064626580709406,Other,,87,needs verification,0,
+backend/.ruff_cache/0.14.1/277449697191909722,Other,,102,needs verification,0,
+backend/.ruff_cache/0.14.1/3010725065016169547,Other,,259,needs verification,0,
+backend/.ruff_cache/0.14.1/3085096654165074449,Other,,348,needs verification,0,
+backend/.ruff_cache/0.14.1/3291687062490325383,Other,,87,needs verification,0,
+backend/.ruff_cache/0.14.1/3452353452193887564,Other,,102,needs verification,0,
+backend/.ruff_cache/0.14.1/5271936481574922584,Other,,522,needs verification,0,
+backend/.ruff_cache/0.14.1/5375239630823462053,Other,,134,needs verification,0,
+backend/.ruff_cache/0.14.1/5918857209125889465,Other,,134,needs verification,0,
+backend/.ruff_cache/0.14.1/7154363056616015238,Other,,259,needs verification,0,
+backend/.ruff_cache/0.14.1/7238442084988529388,Other,,259,needs verification,0,
+backend/.ruff_cache/0.14.1/7464544681450025410,Other,,522,needs verification,0,
+backend/.ruff_cache/0.14.1/9239942642759699184,Other,,348,needs verification,0,
 backend/.ruff_cache/CACHEDIR.TAG,Other,.TAG,43,needs verification,0,
 backend/.run/.gitkeep,Other,,191,needs verification,0,
 backend/Dockerfile,Other,,783,needs verification,2,
@@ -292,6 +284,7 @@ backend/backend.log,Other,.log,1082024,needs verification,2,
 backend/pyproject.toml,Other,.toml,3532,needs verification,0,
 backend/sonar-project.properties,Other,.properties,1560,needs verification,0,
 backend/telemetry_events.jsonl,Other,.jsonl,106622,needs verification,2,
+codebase-inventory.csv,Other,.csv,41094,needs verification,0,
 frontend/.deployment-trigger,Other,,106,needs verification,0,
 frontend/.env.local,Other,.local,700,needs verification,2,
 frontend/.eslintignore,Other,,175,needs verification,0,
@@ -306,8 +299,8 @@ frontend/public/favicon.ico,Other,.ico,11,needs verification,2,
 frontend/public/radial-ui.html,Other,.html,8613,needs verification,2,
 frontend/public/test-endpoints.html,Other,.html,10022,needs verification,0,
 frontend/sonar-project.properties,Other,.properties,1358,needs verification,0,
-frontend/styles/globals.css,Other,.css,1188,needs verification,2,
-frontend/tsconfig.tsbuildinfo,Other,.tsbuildinfo,196015,needs verification,1,
+frontend/styles/globals.css,Other,.css,1522,needs verification,2,
+frontend/tsconfig.tsbuildinfo,Other,.tsbuildinfo,209416,needs verification,1,
 powershell-repair-20251023-155629.log,Other,.log,932,needs verification,0,Matches redundancy pattern
 sonar-project.properties,Other,.properties,1413,needs verification,0,
 test-svg.svg,Other,.svg,189,needs verification,0,
@@ -315,90 +308,97 @@ test-svg.svg,Other,.svg,189,needs verification,0,
 backend/alembic/env.py,Code,.py,2492,current,6,
 backend/app/__init__.py,Code,.py,0,current,2,
 backend/app/core/__init__.py,Code,.py,0,current,2,
-backend/app/core/auth.py,Code,.py,3508,current,6,
-backend/app/core/config.py,Code,.py,2339,current,6,
+backend/app/core/auth.py,Code,.py,3522,current,6,
+backend/app/core/config.py,Code,.py,2457,current,6,
 backend/app/core/idempotency.py,Code,.py,1606,current,2,
-backend/app/core/jwt.py,Code,.py,7781,current,3,
+backend/app/core/jwt.py,Code,.py,8075,current,3,
 backend/app/core/kill_switch.py,Code,.py,224,current,2,
-backend/app/core/prelaunch.py,Code,.py,15565,current,3,
-backend/app/core/signals.py,Code,.py,5390,current,3,
+backend/app/core/prelaunch.py,Code,.py,15491,current,3,
+backend/app/core/redis_client.py,Code,.py,6826,current,2,
+backend/app/core/signals.py,Code,.py,5353,current,3,
 backend/app/core/startup_monitor.py,Code,.py,5223,current,3,
 backend/app/core/store.py,Code,.py,1710,current,6,
-backend/app/core/unified_auth.py,Code,.py,7574,current,2,
+backend/app/core/unified_auth.py,Code,.py,7550,current,2,
 backend/app/db/__init__.py,Code,.py,20,current,2,
 backend/app/db/session.py,Code,.py,1693,current,6,
-backend/app/main.py,Code,.py,15747,current,6,
+backend/app/main.py,Code,.py,16288,current,6,
 backend/app/middleware/__init__.py,Code,.py,358,current,2,
 backend/app/middleware/cache_control.py,Code,.py,2465,current,2,
 backend/app/middleware/kill_switch.py,Code,.py,881,current,2,
 backend/app/middleware/metrics.py,Code,.py,815,current,5,
-backend/app/middleware/rate_limit.py,Code,.py,3104,current,3,
+backend/app/middleware/rate_limit.py,Code,.py,3086,current,3,
 backend/app/middleware/request_id.py,Code,.py,925,current,2,
-backend/app/middleware/security_headers.py,Code,.py,1387,current,2,
-backend/app/middleware/sentry.py,Code,.py,4968,current,6,
+backend/app/middleware/security_headers.py,Code,.py,1363,current,2,
+backend/app/middleware/sentry.py,Code,.py,4989,current,6,
 backend/app/middleware/validation.py,Code,.py,6298,current,6,
-backend/app/ml/__init__.py,Code,.py,680,current,2,
+backend/app/ml/__init__.py,Code,.py,805,current,2,
 backend/app/ml/data_pipeline.py,Code,.py,10613,current,3,
 backend/app/ml/feature_engineering.py,Code,.py,10004,current,2,
-backend/app/ml/market_regime.py,Code,.py,14613,current,2,
-backend/app/ml/sentiment_analyzer.py,Code,.py,8976,current,2,
-backend/app/ml/strategy_selector.py,Code,.py,17711,current,3,
-backend/app/models/__init__.py,Code,.py,476,current,2,
-backend/app/models/database.py,Code,.py,14079,current,4,
+backend/app/ml/market_regime.py,Code,.py,14613,current,3,
+backend/app/ml/pattern_recognition.py,Code,.py,24289,current,2,
+backend/app/ml/sentiment_analyzer.py,Code,.py,8981,current,3,
+backend/app/ml/signal_generator.py,Code,.py,11987,current,3,
+backend/app/ml/strategy_selector.py,Code,.py,17801,current,4,
+backend/app/models/__init__.py,Code,.py,964,current,2,
+backend/app/models/database.py,Code,.py,14079,current,5,
+backend/app/models/ml_analytics.py,Code,.py,12271,current,2,
+backend/app/models/subscription.py,Code,.py,10942,current,6,
 backend/app/routers/__init__.py,Code,.py,0,current,2,
-backend/app/routers/ai.py,Code,.py,87313,current,7,
-backend/app/routers/analytics.py,Code,.py,17097,current,4,
-backend/app/routers/auth.py,Code,.py,10023,current,6,
-backend/app/routers/backtesting.py,Code,.py,10030,current,5,
-backend/app/routers/claude.py,Code,.py,3642,current,5,
-backend/app/routers/health.py,Code,.py,1772,current,4,
-backend/app/routers/market.py,Code,.py,23196,current,6,
-backend/app/routers/market_data.py,Code,.py,9784,current,1,
-backend/app/routers/ml.py,Code,.py,9058,current,6,
-backend/app/routers/monitor.py,Code,.py,11316,current,4,
-backend/app/routers/news.py,Code,.py,10635,current,6,
-backend/app/routers/options.py,Code,.py,19127,current,6,
-backend/app/routers/orders.py,Code,.py,22387,current,6,
-backend/app/routers/portfolio.py,Code,.py,3593,current,6,
+backend/app/routers/ai.py,Code,.py,87286,current,7,
+backend/app/routers/analytics.py,Code,.py,16430,current,5,
+backend/app/routers/auth.py,Code,.py,10203,current,6,
+backend/app/routers/backtesting.py,Code,.py,9910,current,5,
+backend/app/routers/claude.py,Code,.py,3618,current,5,
+backend/app/routers/health.py,Code,.py,1724,current,4,
+backend/app/routers/market.py,Code,.py,23044,current,6,
+backend/app/routers/market_data.py,Code,.py,9744,current,1,
+backend/app/routers/ml.py,Code,.py,45202,current,6,
+backend/app/routers/ml_sentiment.py,Code,.py,18941,current,1,
+backend/app/routers/monitor.py,Code,.py,9205,current,6,
+backend/app/routers/news.py,Code,.py,10402,current,5,
+backend/app/routers/options.py,Code,.py,18717,current,6,
+backend/app/routers/orders.py,Code,.py,22133,current,6,
+backend/app/routers/portfolio.py,Code,.py,3521,current,6,
 backend/app/routers/positions.py,Code,.py,3328,current,6,
 backend/app/routers/proposals.py,Code,.py,5035,current,2,
 backend/app/routers/scheduler.py,Code,.py,16566,current,6,
-backend/app/routers/screening.py,Code,.py,13787,current,2,
-backend/app/routers/settings.py,Code,.py,2279,current,6,
-backend/app/routers/stock.py,Code,.py,7645,current,7,
-backend/app/routers/strategies.py,Code,.py,18147,current,8,
-backend/app/routers/stream.py,Code,.py,14750,current,6,
-backend/app/routers/telemetry.py,Code,.py,5695,current,4,
-backend/app/routers/users.py,Code,.py,7685,current,7,
-backend/app/scheduler.py,Code,.py,16917,current,6,
+backend/app/routers/screening.py,Code,.py,13466,current,2,
+backend/app/routers/settings.py,Code,.py,2284,current,6,
+backend/app/routers/stock.py,Code,.py,7471,current,7,
+backend/app/routers/strategies.py,Code,.py,17946,current,8,
+backend/app/routers/stream.py,Code,.py,14668,current,6,
+backend/app/routers/subscription.py,Code,.py,13880,current,5,
+backend/app/routers/telemetry.py,Code,.py,5605,current,4,
+backend/app/routers/users.py,Code,.py,7581,current,7,
+backend/app/scheduler.py,Code,.py,17179,current,6,
 backend/app/services/__init__.py,Code,.py,220,current,2,
-backend/app/services/alert_manager.py,Code,.py,9109,current,3,
-backend/app/services/alerts.py,Code,.py,3035,current,6,
-backend/app/services/alpaca_client.py,Code,.py,10913,current,3,
-backend/app/services/alpaca_options.py,Code,.py,13282,current,3,
-backend/app/services/backtesting_engine.py,Code,.py,16432,current,2,
-backend/app/services/cache.py,Code,.py,5351,current,4,
-backend/app/services/counter_manager.py,Code,.py,12283,current,3,
-backend/app/services/equity_tracker.py,Code,.py,7647,current,3,
-backend/app/services/fixture_loader.py,Code,.py,16384,current,3,
-backend/app/services/github_monitor.py,Code,.py,16363,current,2,
+backend/app/services/alerts.py,Code,.py,3035,current,4,
+backend/app/services/alpaca_client.py,Code,.py,11141,current,3,
+backend/app/services/alpaca_options.py,Code,.py,13242,current,3,
+backend/app/services/backtesting_engine.py,Code,.py,16433,current,2,
+backend/app/services/cache.py,Code,.py,5319,current,4,
+backend/app/services/counter_manager.py,Code,.py,6633,current,4,
+backend/app/services/equity_tracker.py,Code,.py,7770,current,3,
+backend/app/services/fixture_loader.py,Code,.py,16395,current,3,
+backend/app/services/github_monitor.py,Code,.py,11767,current,2,
 backend/app/services/greeks.py,Code,.py,3067,current,7,
-backend/app/services/health_monitor.py,Code,.py,4635,current,3,
+backend/app/services/health_monitor.py,Code,.py,4491,current,3,
 backend/app/services/historical_data.py,Code,.py,3795,current,2,
 backend/app/services/news/__init__.py,Code,.py,29,current,2,
-backend/app/services/news/alpha_vantage_provider.py,Code,.py,3203,current,2,
+backend/app/services/news/alpha_vantage_provider.py,Code,.py,3210,current,2,
 backend/app/services/news/base_provider.py,Code,.py,1708,current,2,
-backend/app/services/news/finnhub_provider.py,Code,.py,2413,current,2,
-backend/app/services/news/news_aggregator.py,Code,.py,15591,current,2,
-backend/app/services/news/news_cache.py,Code,.py,9022,current,3,
-backend/app/services/news/polygon_provider.py,Code,.py,2590,current,2,
+backend/app/services/news/finnhub_provider.py,Code,.py,2420,current,2,
+backend/app/services/news/news_aggregator.py,Code,.py,15618,current,3,
+backend/app/services/news/news_cache.py,Code,.py,9199,current,3,
+backend/app/services/news/polygon_provider.py,Code,.py,2597,current,2,
 backend/app/services/options_greeks.py,Code,.py,11965,current,2,
-backend/app/services/order_execution.py,Code,.py,10439,current,4,
-backend/app/services/position_tracker.py,Code,.py,7961,current,2,
-backend/app/services/strategy_templates.py,Code,.py,13197,current,4,
-backend/app/services/technical_indicators.py,Code,.py,14581,current,2,
-backend/app/services/tradier_client.py,Code,.py,12263,current,3,
-backend/app/services/tradier_stream.py,Code,.py,21256,current,3,
+backend/app/services/order_execution.py,Code,.py,10426,current,4,
+backend/app/services/position_tracker.py,Code,.py,7880,current,2,
+backend/app/services/strategy_templates.py,Code,.py,13993,current,4,
+backend/app/services/stripe_service.py,Code,.py,13457,current,3,
+backend/app/services/technical_indicators.py,Code,.py,14602,current,2,
+backend/app/services/tradier_client.py,Code,.py,12232,current,3,
+backend/app/services/tradier_stream.py,Code,.py,21260,current,3,
 backend/data/equity/equity_history.json,Code,.json,2103,current,2,
 backend/render.yaml,Code,.yaml,2041,current,2,
 backend/scripts/cleanup.sh,Code,.sh,11045,current,3,
@@ -410,130 +410,135 @@ backend/strategies/under4_multileg.py,Code,.py,8688,current,2,
 backend/tests/__init__.py,Code,.py,0,current,2,
 backend/tests/conftest.py,Code,.py,9702,current,3,
 backend/tests/test_health.py,Code,.py,182,current,1,
-backend/tests/test_market.py,Code,.py,10072,current,1,
+backend/tests/test_market.py,Code,.py,10133,current,1,
 db/schemas/strategies.sql,Code,.sql,9598,current,2,
-deploy.ps1,Code,.ps1,13388,current,2,
+deploy.ps1,Code,.ps1,5821,current,2,
 deploy.sh,Code,.sh,13273,current,2,
-frontend/.eslintrc.json,Code,.json,1772,current,1,
+frontend/.eslintrc.json,Code,.json,1703,current,1,
+frontend/app/monitor/page.tsx,Code,.tsx,490,current,2,
 frontend/commitlint.config.js,Code,.js,809,current,1,
-frontend/components/AIAnalysisModal.tsx,Code,.tsx,34526,current,3,
-frontend/components/AIChat.tsx,Code,.tsx,7915,current,3,
-frontend/components/AIChatBot.tsx,Code,.tsx,8164,current,3,
-frontend/components/AIRecommendations.tsx,Code,.tsx,44703,current,3,
-frontend/components/ActivePositions.tsx,Code,.tsx,41265,current,2,
-frontend/components/Analytics.tsx,Code,.tsx,41247,current,4,
-frontend/components/ApprovalQueue.tsx,Code,.tsx,15163,current,3,
-frontend/components/Backtesting.tsx,Code,.tsx,20729,current,4,
-frontend/components/ChatContext.tsx,Code,.tsx,947,current,3,
-frontend/components/CompletePaiiDLogo.tsx,Code,.tsx,28017,current,3,
-frontend/components/ConfirmDialog.tsx,Code,.tsx,5211,current,3,
-frontend/components/ErrorBoundary.tsx,Code,.tsx,7211,current,3,
-frontend/components/ExecuteTradeForm.tsx,Code,.tsx,66274,current,3,
-frontend/components/GlassmorphicComponents.tsx,Code,.tsx,5949,current,3,
-frontend/components/KeyboardShortcuts.tsx,Code,.tsx,8763,current,3,
-frontend/components/KillSwitchToggle.tsx,Code,.tsx,9166,current,3,
-frontend/components/MarketScanner.tsx,Code,.tsx,22377,current,3,
-frontend/components/MorningRoutineAI.tsx,Code,.tsx,55913,current,3,
-frontend/components/NewsReview.tsx,Code,.tsx,41731,current,3,
-frontend/components/OptionsGreeksDisplay.tsx,Code,.tsx,11866,current,3,
-frontend/components/OrderHistory.tsx,Code,.tsx,10257,current,3,
-frontend/components/PositionsTable.tsx,Code,.tsx,18114,current,3,
-frontend/components/RadialMenu.tsx,Code,.tsx,35148,current,5,
-frontend/components/ResearchDashboardSimple.tsx,Code,.tsx,12411,current,3,
-frontend/components/RiskDashboard.tsx,Code,.tsx,22990,current,3,
-frontend/components/SchedulerSettings.tsx,Code,.tsx,21495,current,3,
-frontend/components/Settings.tsx,Code,.tsx,57016,current,4,
-frontend/components/StockLookup.tsx,Code,.tsx,17522,current,4,
-frontend/components/StrategyBuilderAI.tsx,Code,.tsx,48334,current,4,
-frontend/components/TelemetryProvider.tsx,Code,.tsx,2864,current,3,
-frontend/components/TemplateCustomizationModal.tsx,Code,.tsx,19856,current,4,
-frontend/components/TradingJournal.tsx,Code,.tsx,18213,current,4,
-frontend/components/TradingViewChart.tsx,Code,.tsx,10500,current,3,
-frontend/components/UserSetup.tsx,Code,.tsx,58764,current,5,
-frontend/components/UserSetupAI.tsx,Code,.tsx,42152,current,4,
-frontend/components/auth/AuthModal.tsx,Code,.tsx,4863,current,3,
-frontend/components/auth/LoginForm.tsx,Code,.tsx,5105,current,3,
-frontend/components/auth/RegisterForm.tsx,Code,.tsx,10555,current,3,
-frontend/components/trading/OptionsChain.tsx,Code,.tsx,17142,current,4,
-frontend/components/trading/PLComparisonChart.tsx,Code,.tsx,15074,current,4,
-frontend/components/trading/PLSummaryDashboard.tsx,Code,.tsx,11465,current,4,
-frontend/components/trading/PositionManager.tsx,Code,.tsx,7602,current,3,
-frontend/components/trading/ProposalReview.tsx,Code,.tsx,20139,current,4,
-frontend/components/trading/ResearchDashboard.tsx,Code,.tsx,44211,current,3,
-frontend/components/trading/RiskCalculator.tsx,Code,.tsx,13207,current,3,
-frontend/components/trading/StrategyBuilder.tsx,Code,.tsx,47858,current,4,
-frontend/components/trading/StrategySuggestionsModal.tsx,Code,.tsx,9626,current,4,
-frontend/components/ui/Button.tsx,Code,.tsx,2133,current,2,
-frontend/components/ui/Card.tsx,Code,.tsx,785,current,6,
-frontend/components/ui/Input.tsx,Code,.tsx,1760,current,3,
-frontend/components/ui/Select.tsx,Code,.tsx,2020,current,4,
-frontend/components/ui/Skeleton.tsx,Code,.tsx,967,current,3,
-frontend/components/ui/index.ts,Code,.ts,138,current,7,
-frontend/components/workflows/MorningRoutine/MarketAlerts.tsx,Code,.tsx,10077,current,3,
-frontend/components/workflows/MorningRoutine/MarketStatus.tsx,Code,.tsx,6355,current,4,
-frontend/components/workflows/MorningRoutine/PortfolioSummary.tsx,Code,.tsx,6141,current,4,
-frontend/components/workflows/MorningRoutine/PreMarketMovers.tsx,Code,.tsx,9645,current,3,
-frontend/components/workflows/MorningRoutine/TodaySchedule.tsx,Code,.tsx,8305,current,4,
-frontend/components/workflows/MorningRoutine/index.tsx,Code,.tsx,4695,current,7,
-frontend/contexts/AuthContext.tsx,Code,.tsx,6315,current,3,
-frontend/contexts/GlowStyleContext.tsx,Code,.tsx,1286,current,3,
-frontend/contexts/WorkflowContext.tsx,Code,.tsx,3519,current,3,
-frontend/hooks/useAuth.ts,Code,.ts,397,current,3,
-frontend/hooks/useBreakpoint.ts,Code,.ts,2824,current,3,
-frontend/hooks/useMarketStream.ts,Code,.ts,10290,current,3,
-frontend/hooks/usePositionUpdates.ts,Code,.ts,9267,current,3,
+frontend/components/AIAnalysisModal.tsx,Code,.tsx,33470,current,3,
+frontend/components/AIChat.tsx,Code,.tsx,7696,current,3,
+frontend/components/AIChatBot.tsx,Code,.tsx,7897,current,3,
+frontend/components/AIRecommendations.tsx,Code,.tsx,55371,current,3,
+frontend/components/ActivePositions.tsx,Code,.tsx,40768,current,2,
+frontend/components/Analytics.tsx,Code,.tsx,44720,current,4,
+frontend/components/ApprovalQueue.tsx,Code,.tsx,14789,current,3,
+frontend/components/Backtesting.tsx,Code,.tsx,20103,current,4,
+frontend/components/ChatContext.tsx,Code,.tsx,913,current,3,
+frontend/components/ClaudeAIChat.tsx,Code,.tsx,15455,current,3,
+frontend/components/CompletePaiiDLogo.tsx,Code,.tsx,29660,current,3,
+frontend/components/ConfirmDialog.tsx,Code,.tsx,5024,current,3,
+frontend/components/ErrorBoundary.tsx,Code,.tsx,6983,current,3,
+frontend/components/ExecuteTradeForm.tsx,Code,.tsx,67961,current,3,
+frontend/components/GlassmorphicComponents.tsx,Code,.tsx,5716,current,3,
+frontend/components/KeyboardShortcuts.tsx,Code,.tsx,8484,current,3,
+frontend/components/KillSwitchToggle.tsx,Code,.tsx,8922,current,3,
+frontend/components/MLTrainingDashboard.tsx,Code,.tsx,22086,current,3,
+frontend/components/MarketScanner.tsx,Code,.tsx,21705,current,3,
+frontend/components/MonitorDashboard.tsx,Code,.tsx,10043,current,3,
+frontend/components/MorningRoutineAI.tsx,Code,.tsx,54354,current,3,
+frontend/components/NewsReview.tsx,Code,.tsx,42660,current,3,
+frontend/components/OptionsGreeksDisplay.tsx,Code,.tsx,11467,current,3,
+frontend/components/OrderHistory.tsx,Code,.tsx,9952,current,3,
+frontend/components/PatternBacktestDashboard.tsx,Code,.tsx,22930,current,3,
+frontend/components/PositionsTable.tsx,Code,.tsx,17584,current,3,
+frontend/components/RadialMenu.tsx,Code,.tsx,34332,current,5,
+frontend/components/ResearchDashboardSimple.tsx,Code,.tsx,12009,current,3,
+frontend/components/RiskDashboard.tsx,Code,.tsx,22293,current,3,
+frontend/components/SchedulerSettings.tsx,Code,.tsx,21928,current,3,
+frontend/components/SentimentDashboard.tsx,Code,.tsx,23439,current,3,
+frontend/components/Settings.tsx,Code,.tsx,56938,current,4,
+frontend/components/StockLookup.tsx,Code,.tsx,17028,current,4,
+frontend/components/StrategyBuilderAI.tsx,Code,.tsx,47074,current,3,
+frontend/components/TelemetryProvider.tsx,Code,.tsx,2766,current,3,
+frontend/components/TemplateCustomizationModal.tsx,Code,.tsx,19253,current,4,
+frontend/components/TradingJournal.tsx,Code,.tsx,17691,current,4,
+frontend/components/TradingViewChart.tsx,Code,.tsx,10244,current,3,
+frontend/components/UserSetup.tsx,Code,.tsx,57171,current,5,
+frontend/components/UserSetupAI.tsx,Code,.tsx,41023,current,4,
+frontend/components/auth/AuthModal.tsx,Code,.tsx,4702,current,3,
+frontend/components/auth/LoginForm.tsx,Code,.tsx,4931,current,3,
+frontend/components/auth/RegisterForm.tsx,Code,.tsx,10215,current,3,
+frontend/components/trading/OptionsChain.tsx,Code,.tsx,17262,current,4,
+frontend/components/trading/PLComparisonChart.tsx,Code,.tsx,14761,current,4,
+frontend/components/trading/PLSummaryDashboard.tsx,Code,.tsx,11173,current,4,
+frontend/components/trading/PositionManager.tsx,Code,.tsx,7393,current,2,
+frontend/components/trading/ProposalReview.tsx,Code,.tsx,19545,current,4,
+frontend/components/trading/ResearchDashboard.tsx,Code,.tsx,42995,current,3,
+frontend/components/trading/RiskCalculator.tsx,Code,.tsx,13050,current,3,
+frontend/components/trading/StrategyBuilder.tsx,Code,.tsx,46577,current,4,
+frontend/components/trading/StrategySuggestionsModal.tsx,Code,.tsx,9386,current,4,
+frontend/components/ui/Button.tsx,Code,.tsx,2046,current,2,
+frontend/components/ui/Card.tsx,Code,.tsx,756,current,7,
+frontend/components/ui/Input.tsx,Code,.tsx,1697,current,3,
+frontend/components/ui/Select.tsx,Code,.tsx,1949,current,4,
+frontend/components/ui/Skeleton.tsx,Code,.tsx,922,current,3,
+frontend/components/ui/index.ts,Code,.ts,134,current,7,
+frontend/components/workflows/MorningRoutine/MarketAlerts.tsx,Code,.tsx,9777,current,3,
+frontend/components/workflows/MorningRoutine/MarketStatus.tsx,Code,.tsx,6151,current,4,
+frontend/components/workflows/MorningRoutine/PortfolioSummary.tsx,Code,.tsx,5905,current,4,
+frontend/components/workflows/MorningRoutine/PreMarketMovers.tsx,Code,.tsx,9338,current,3,
+frontend/components/workflows/MorningRoutine/TodaySchedule.tsx,Code,.tsx,8047,current,4,
+frontend/components/workflows/MorningRoutine/index.tsx,Code,.tsx,4547,current,7,
+frontend/contexts/AuthContext.tsx,Code,.tsx,6169,current,3,
+frontend/contexts/GlowStyleContext.tsx,Code,.tsx,1242,current,3,
+frontend/contexts/WorkflowContext.tsx,Code,.tsx,3401,current,3,
+frontend/hooks/useAuth.ts,Code,.ts,379,current,3,
+frontend/hooks/useBreakpoint.ts,Code,.ts,2712,current,3,
+frontend/hooks/useMarketStream.ts,Code,.ts,10038,current,3,
+frontend/hooks/usePositionUpdates.ts,Code,.ts,8988,current,3,
 frontend/jest.config.js,Code,.js,699,current,2,
-frontend/lib/aiAdapter.ts,Code,.ts,9761,current,3,
-frontend/lib/alpaca.ts,Code,.ts,12497,current,4,
-frontend/lib/api.ts,Code,.ts,1379,current,7,
-frontend/lib/authApi.ts,Code,.ts,4501,current,3,
-frontend/lib/logger.ts,Code,.ts,2397,current,4,
-frontend/lib/marketData.ts,Code,.ts,1861,current,4,
-frontend/lib/sentry.ts,Code,.ts,4692,current,5,
-frontend/lib/toast.ts,Code,.ts,1900,current,3,
-frontend/lib/tradeHistory.ts,Code,.ts,8172,current,1,
-frontend/lib/userManagement.ts,Code,.ts,9556,current,3,
-frontend/middleware.ts,Code,.ts,1467,current,1,
-frontend/next-env.d.ts,Code,.ts,235,current,2,
+frontend/lib/aiAdapter.ts,Code,.ts,9462,current,3,
+frontend/lib/alpaca.ts,Code,.ts,12034,current,4,
+frontend/lib/api.ts,Code,.ts,1333,current,8,
+frontend/lib/authApi.ts,Code,.ts,4323,current,3,
+frontend/lib/logger.ts,Code,.ts,2307,current,4,
+frontend/lib/marketData.ts,Code,.ts,1799,current,4,
+frontend/lib/sentry.ts,Code,.ts,4524,current,5,
+frontend/lib/toast.ts,Code,.ts,1825,current,3,
+frontend/lib/tradeHistory.ts,Code,.ts,7903,current,1,
+frontend/lib/userManagement.ts,Code,.ts,9160,current,3,
+frontend/middleware.ts,Code,.ts,1418,current,1,
+frontend/next-env.d.ts,Code,.ts,230,current,2,
 frontend/package.json,Code,.json,2718,current,2,
-frontend/pages/_app.tsx,Code,.tsx,4071,current,3,
-frontend/pages/api/ai/recommendations.ts,Code,.ts,1159,current,4,
-frontend/pages/api/ai/suggest-strategy.ts,Code,.ts,11996,current,1,
-frontend/pages/api/chat.ts,Code,.ts,1892,current,6,
-frontend/pages/api/market/historical.ts,Code,.ts,6036,current,2,
-frontend/pages/api/market/options-chain.ts,Code,.ts,7833,current,1,
-frontend/pages/api/pnl/calculate-theoretical.ts,Code,.ts,7673,current,1,
-frontend/pages/api/pnl/comparison/[positionId].ts,Code,.ts,3202,current,12,
-frontend/pages/api/pnl/track-position.ts,Code,.ts,5721,current,1,
-frontend/pages/api/proposals/[id]/approve.ts,Code,.ts,1461,current,2,
-frontend/pages/api/proposals/[id]/reject.ts,Code,.ts,1317,current,2,
-frontend/pages/api/proposals/[id]/reprice.ts,Code,.ts,1726,current,1,
-frontend/pages/api/proposals/index.ts,Code,.ts,3140,current,7,
-frontend/pages/api/proxy/[...path].ts,Code,.ts,10194,current,11,
-frontend/pages/api/strategies/[strategyId]/versions.ts,Code,.ts,2998,current,3,
-frontend/pages/api/strategies/index.ts,Code,.ts,5461,current,7,
-frontend/pages/index.tsx,Code,.tsx,21576,current,7,
+frontend/pages/_app.tsx,Code,.tsx,3933,current,3,
+frontend/pages/api/ai/recommendations.ts,Code,.ts,1118,current,3,
+frontend/pages/api/ai/suggest-strategy.ts,Code,.ts,11620,current,1,
+frontend/pages/api/chat.ts,Code,.ts,1833,current,6,
+frontend/pages/api/market/historical.ts,Code,.ts,5849,current,2,
+frontend/pages/api/market/options-chain.ts,Code,.ts,7580,current,1,
+frontend/pages/api/pnl/calculate-theoretical.ts,Code,.ts,7416,current,1,
+frontend/pages/api/pnl/comparison/[positionId].ts,Code,.ts,3078,current,12,
+frontend/pages/api/pnl/track-position.ts,Code,.ts,5504,current,1,
+frontend/pages/api/proposals/[id]/approve.ts,Code,.ts,1407,current,2,
+frontend/pages/api/proposals/[id]/reject.ts,Code,.ts,1265,current,2,
+frontend/pages/api/proposals/[id]/reprice.ts,Code,.ts,1668,current,1,
+frontend/pages/api/proposals/index.ts,Code,.ts,3027,current,7,
+frontend/pages/api/proxy/[...path].ts,Code,.ts,9882,current,11,
+frontend/pages/api/strategies/[strategyId]/versions.ts,Code,.ts,2893,current,3,
+frontend/pages/api/strategies/index.ts,Code,.ts,5274,current,7,
+frontend/pages/index.tsx,Code,.tsx,22070,current,7,
 frontend/render.yaml,Code,.yaml,645,current,2,
 frontend/scripts/start-server.sh,Code,.sh,2098,current,2,
-frontend/services/telemetry.ts,Code,.ts,6432,current,4,
-frontend/styles/logoConstants.ts,Code,.ts,3883,current,3,
-frontend/styles/paiid-theme.ts,Code,.ts,1963,current,3,
-frontend/styles/theme.ts,Code,.ts,2471,current,3,
-frontend/tests/fixtures/options.ts,Code,.ts,6051,current,4,
-frontend/tests/global-setup.ts,Code,.ts,3432,current,2,
-frontend/tests/global-teardown.ts,Code,.ts,2969,current,2,
-frontend/tsconfig.json,Code,.json,677,current,1,
-frontend/types/pnl.ts,Code,.ts,3138,current,4,
-frontend/types/profile.ts,Code,.ts,7356,current,4,
-frontend/utils/indicators.ts,Code,.ts,7937,current,3,
+frontend/services/telemetry.ts,Code,.ts,6174,current,4,
+frontend/styles/logoConstants.ts,Code,.ts,3739,current,3,
+frontend/styles/paiid-theme.ts,Code,.ts,1873,current,3,
+frontend/styles/theme.ts,Code,.ts,2395,current,4,
+frontend/tests/fixtures/options.ts,Code,.ts,5845,current,4,
+frontend/tests/global-setup.ts,Code,.ts,3265,current,2,
+frontend/tests/global-teardown.ts,Code,.ts,2842,current,2,
+frontend/tsconfig.json,Code,.json,651,current,1,
+frontend/types/pnl.ts,Code,.ts,3002,current,4,
+frontend/types/profile.ts,Code,.ts,7108,current,4,
+frontend/utils/indicators.ts,Code,.ts,7684,current,3,
 package.json,Code,.json,104,current,2,
 render.yaml,Code,.yaml,3172,current,2,
 CLAUDE.md,Documentation,.md,12124,current,2,
 DEPLOYMENT_STATUS.md,Documentation,.md,11263,current,1,Matches redundancy pattern
-ISSUE_TRACKER.md,Documentation,.md,19705,current,2,
-OPERATIONS.md,Documentation,.md,8423,current,1,
+OPERATIONS.md,Documentation,.md,7436,current,1,
 SECURITY.md,Documentation,.md,5942,current,2,
-TODO.md,Documentation,.md,5468,current,3,
-backend/requirements.txt,Documentation,.txt,1469,current,2,
+TODO.md,Documentation,.md,7811,current,2,
+backend/requirements.txt,Documentation,.txt,1585,current,2,
 extensions.txt,Documentation,.txt,3184,current,1,
-frontend/DEVELOPMENT.md,Documentation,.md,6205,current,2,
+frontend/DEVELOPMENT.md,Documentation,.md,6380,current,2,

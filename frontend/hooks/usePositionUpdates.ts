@@ -12,7 +12,7 @@
  * Phase 5.B.2 - Real-Time UI Updates
  */
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface Position {
   symbol: string;

@@ -7,7 +7,7 @@ interface TelemetryEvent {
   component: string;
   action: string;
   timestamp: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   userRole: "admin" | "beta" | "alpha" | "user" | "owner";
 }
 
@@ -66,10 +66,10 @@ class TelemetryService {
   /**
    * Track page view
    */
-  trackPageView(userId: string, userRole: string, component: string) {
+  trackPageView(userId: string, userRole: TelemetryEvent["userRole"] | string, component: string) {
     this.track({
       userId,
-      userRole: userRole as any,
+      userRole: (userRole as TelemetryEvent["userRole"]) || "user",
       component,
       action: "page_view",
       metadata: {
@@ -83,10 +83,10 @@ class TelemetryService {
   /**
    * Track button click
    */
-  trackClick(userId: string, userRole: string, component: string, buttonName: string) {
+  trackClick(userId: string, userRole: TelemetryEvent["userRole"] | string, component: string, buttonName: string) {
     this.track({
       userId,
-      userRole: userRole as any,
+      userRole: (userRole as TelemetryEvent["userRole"]) || "user",
       component,
       action: "button_click",
       metadata: { buttonName },
@@ -96,10 +96,15 @@ class TelemetryService {
   /**
    * Track form submission
    */
-  trackFormSubmit(userId: string, userRole: string, component: string, formData: any) {
+  trackFormSubmit(
+    userId: string,
+    userRole: TelemetryEvent["userRole"] | string,
+    component: string,
+    formData: Record<string, unknown>
+  ) {
     this.track({
       userId,
-      userRole: userRole as any,
+      userRole: (userRole as TelemetryEvent["userRole"]) || "user",
       component,
       action: "form_submit",
       metadata: formData,
@@ -109,10 +114,15 @@ class TelemetryService {
   /**
    * Track error
    */
-  trackError(userId: string, userRole: string, component: string, error: Error | string) {
+  trackError(
+    userId: string,
+    userRole: TelemetryEvent["userRole"] | string,
+    component: string,
+    error: Error | string
+  ) {
     this.track({
       userId,
-      userRole: userRole as any,
+      userRole: (userRole as TelemetryEvent["userRole"]) || "user",
       component,
       action: "error",
       metadata: {
@@ -126,10 +136,15 @@ class TelemetryService {
   /**
    * Track feature usage
    */
-  trackFeature(userId: string, userRole: string, feature: string, metadata?: any) {
+  trackFeature(
+    userId: string,
+    userRole: TelemetryEvent["userRole"] | string,
+    feature: string,
+    metadata?: Record<string, unknown>
+  ) {
     this.track({
       userId,
-      userRole: userRole as any,
+      userRole: (userRole as TelemetryEvent["userRole"]) || "user",
       component: "App",
       action: "feature_used",
       metadata: {

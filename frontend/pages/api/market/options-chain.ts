@@ -101,14 +101,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 /**
  * Transform Alpaca options data to our format
  */
-function transformAlpacaOptions(alpacaData: any, symbol: string): OptionsChainResponse {
+function transformAlpacaOptions(
+  alpacaData: {
+    snapshots?: Record<
+      string,
+      {
+        latestQuote?: { ap?: number; bp?: number };
+        greeks?: {
+          delta?: number;
+          gamma?: number;
+          theta?: number;
+          vega?: number;
+          impliedVolatility?: number;
+        };
+        dailyVolume?: number;
+        openInterest?: number;
+      }
+    >;
+  },
+  symbol: string
+): OptionsChainResponse {
   // Parse Alpaca response and transform to our schema
   // This is a placeholder - actual Alpaca response format may vary
   const snapshots = alpacaData.snapshots || {};
   const chains = new Map<number, { call: OptionQuote | null; put: OptionQuote | null }>();
   const expirations = new Set<string>();
 
-  Object.entries(snapshots).forEach(([optionSymbol, snapshot]: [string, any]) => {
+  Object.entries(snapshots).forEach(
+    ([optionSymbol, snapshot]: [string, { latestQuote?: { ap?: number; bp?: number }; greeks?: Record<string, number>; dailyVolume?: number; openInterest?: number }]) => {
     const quote = snapshot.latestQuote || {};
     const greeks = snapshot.greeks || {};
 
@@ -148,7 +168,8 @@ function transformAlpacaOptions(alpacaData: any, symbol: string): OptionsChainRe
     } else {
       chain.put = optionQuote;
     }
-  });
+    }
+  );
 
   return {
     symbol,

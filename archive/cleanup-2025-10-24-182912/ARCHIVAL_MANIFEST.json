@@ -1,0 +1,237 @@
+{
+  "timestamp": "2025-10-24-182912",
+  "dry_run": false,
+  "statistics": {
+    "files_archived": 32,
+    "bytes_archived": 270131,
+    "size_mb": 0.26,
+    "errors_count": 0
+  },
+  "files": [
+    {
+      "original_path": "AUTH_FIX_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\AUTH_FIX_REPORT.md",
+      "size": 9325,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "BATCH_8_CLEANUP_EXECUTION_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\BATCH_8_CLEANUP_EXECUTION_REPORT.md",
+      "size": 11376,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "BATCH_9_VERIFICATION_EXECUTION_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\BATCH_9_VERIFICATION_EXECUTION_REPORT.md",
+      "size": 10407,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "CI_FIX_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\CI_FIX_REPORT.md",
+      "size": 5357,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "CI_PROGRESS_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\CI_PROGRESS_REPORT.md",
+      "size": 4863,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "CODEBASE_INVENTORY_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\CODEBASE_INVENTORY_REPORT.md",
+      "size": 7426,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_COMPLETE_2025-10-24.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\DEPLOYMENT_COMPLETE_2025-10-24.md",
+      "size": 9884,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_STATUS_2025-10-24.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\DEPLOYMENT_STATUS_2025-10-24.md",
+      "size": 5174,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_STATUS_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\DEPLOYMENT_STATUS_REPORT.md",
+      "size": 13081,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_SUCCESS_PHASE_1.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\DEPLOYMENT_SUCCESS_PHASE_1.md",
+      "size": 9699,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "FINAL_FIX_SUMMARY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\FINAL_FIX_SUMMARY.md",
+      "size": 5191,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "GITHUB_MONITOR_FOUNDATION_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\GITHUB_MONITOR_FOUNDATION_COMPLETE.md",
+      "size": 11786,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "ML_IMPLEMENTATION_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\ML_IMPLEMENTATION_COMPLETE.md",
+      "size": 12553,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "ML_SENTIMENT_DEPLOYMENT_FIX.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\ML_SENTIMENT_DEPLOYMENT_FIX.md",
+      "size": 5924,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "MOBILE_CHART_EXPORT_IMPLEMENTATION_SUMMARY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\MOBILE_CHART_EXPORT_IMPLEMENTATION_SUMMARY.md",
+      "size": 11915,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "OCTOBER_24_VICTORY_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\OCTOBER_24_VICTORY_REPORT.md",
+      "size": 9715,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PERFECTION_QUEST_STATUS.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\PERFECTION_QUEST_STATUS.md",
+      "size": 5230,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE_1_OPTIONS_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\PHASE_1_OPTIONS_COMPLETE.md",
+      "size": 14249,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE_2_ML_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\PHASE_2_ML_COMPLETE.md",
+      "size": 15740,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE_3_1_ACCESSIBILITY_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\PHASE_3_1_ACCESSIBILITY_COMPLETE.md",
+      "size": 5900,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE_3_2_MOBILE_POLISH_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\PHASE_3_2_MOBILE_POLISH_COMPLETE.md",
+      "size": 6755,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE_3_3_LOADING_STATES_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\PHASE_3_3_LOADING_STATES_COMPLETE.md",
+      "size": 7118,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE_3_4_ERROR_MESSAGES_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\PHASE_3_4_ERROR_MESSAGES_COMPLETE.md",
+      "size": 8754,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE_3_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\PHASE_3_COMPLETE.md",
+      "size": 4762,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE_3_VICTORY_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\PHASE_3_VICTORY_REPORT.md",
+      "size": 6562,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE_4_PROGRESS_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\PHASE_4_PROGRESS_REPORT.md",
+      "size": 5118,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "README_INTEGRATION_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\README_INTEGRATION_COMPLETE.md",
+      "size": 7024,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "SCHEDULER_BUG_FIX_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\SCHEDULER_BUG_FIX_COMPLETE.md",
+      "size": 4388,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "STEP_1_STATUS_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\STEP_1_STATUS_REPORT.md",
+      "size": 10190,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "TEAM_STAR_ML_ENGINE_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\TEAM_STAR_ML_ENGINE_COMPLETE.md",
+      "size": 9863,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "VERCEL_PURGE_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\VERCEL_PURGE_COMPLETE.md",
+      "size": 8838,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "VICTORY_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-182912\\VICTORY_REPORT.md",
+      "size": 5964,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    }
+  ],
+  "errors": []
+}

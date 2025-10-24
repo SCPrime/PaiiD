@@ -1,13 +1,13 @@
 "use client";
 
+import { AlertTriangle, PieChart, Shield, Sparkles, Target, TrendingUp } from "lucide-react";
 import { useState } from "react";
-import { Card, Button } from "./ui";
-import { theme } from "../styles/theme";
-import { showError, showSuccess } from "../lib/toast";
-import { Target, TrendingUp, Shield, PieChart, AlertTriangle, Sparkles, DollarSign } from "lucide-react";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { showError, showSuccess } from "../lib/toast";
+import { theme } from "../styles/theme";
+import { Button, Card } from "./ui";
 
-interface Position {
+interface _Position {
   symbol: string;
   shares: number;
   current_price: number;
@@ -48,7 +48,9 @@ interface OptimizationResult {
 
 export default function PortfolioOptimizer() {
   const isMobile = useIsMobile();
-  const [riskTolerance, setRiskTolerance] = useState<"conservative" | "moderate" | "aggressive">("moderate");
+  const [riskTolerance, setRiskTolerance] = useState<"conservative" | "moderate" | "aggressive">(
+    "moderate"
+  );
   const [targetReturn, setTargetReturn] = useState(12);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [result, setResult] = useState<OptimizationResult | null>(null);
@@ -310,31 +312,45 @@ export default function PortfolioOptimizer() {
 
                 <div style={{ display: "grid", gap: theme.spacing.sm }}>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>Total Value</span>
+                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>
+                      Total Value
+                    </span>
                     <span style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.text }}>
                       ${result.current_portfolio.total_value.toLocaleString()}
                     </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>Expected Return</span>
+                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>
+                      Expected Return
+                    </span>
                     <span style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.text }}>
                       {result.current_portfolio.expected_return.toFixed(2)}%
                     </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>Volatility</span>
-                    <span style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.warning }}>
+                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>
+                      Volatility
+                    </span>
+                    <span
+                      style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.warning }}
+                    >
                       {result.current_portfolio.volatility.toFixed(2)}%
                     </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>Sharpe Ratio</span>
-                    <span style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.secondary }}>
+                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>
+                      Sharpe Ratio
+                    </span>
+                    <span
+                      style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.secondary }}
+                    >
                       {result.current_portfolio.sharpe_ratio.toFixed(2)}
                     </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>Diversification</span>
+                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>
+                      Diversification
+                    </span>
                     <span
                       style={{
                         fontSize: "16px",
@@ -372,45 +388,85 @@ export default function PortfolioOptimizer() {
 
                 <div style={{ display: "grid", gap: theme.spacing.sm }}>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>Total Value</span>
+                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>
+                      Total Value
+                    </span>
                     <span style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.text }}>
                       ${result.optimized_portfolio.total_value.toLocaleString()}
                     </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>Expected Return</span>
-                    <span style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.success }}>
+                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>
+                      Expected Return
+                    </span>
+                    <span
+                      style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.success }}
+                    >
                       {result.optimized_portfolio.expected_return.toFixed(2)}%{" "}
                       <span style={{ fontSize: "12px" }}>
-                        (+{(result.optimized_portfolio.expected_return - result.current_portfolio.expected_return).toFixed(2)}%)
+                        (+
+                        {(
+                          result.optimized_portfolio.expected_return -
+                          result.current_portfolio.expected_return
+                        ).toFixed(2)}
+                        %)
                       </span>
                     </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>Volatility</span>
-                    <span style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.success }}>
+                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>
+                      Volatility
+                    </span>
+                    <span
+                      style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.success }}
+                    >
                       {result.optimized_portfolio.volatility.toFixed(2)}%{" "}
                       <span style={{ fontSize: "12px" }}>
-                        ({result.optimized_portfolio.volatility < result.current_portfolio.volatility ? "-" : "+"}
-                        {Math.abs(result.optimized_portfolio.volatility - result.current_portfolio.volatility).toFixed(2)}%)
+                        (
+                        {result.optimized_portfolio.volatility < result.current_portfolio.volatility
+                          ? "-"
+                          : "+"}
+                        {Math.abs(
+                          result.optimized_portfolio.volatility -
+                            result.current_portfolio.volatility
+                        ).toFixed(2)}
+                        %)
                       </span>
                     </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>Sharpe Ratio</span>
-                    <span style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.success }}>
+                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>
+                      Sharpe Ratio
+                    </span>
+                    <span
+                      style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.success }}
+                    >
                       {result.optimized_portfolio.sharpe_ratio.toFixed(2)}{" "}
                       <span style={{ fontSize: "12px" }}>
-                        (+{(result.optimized_portfolio.sharpe_ratio - result.current_portfolio.sharpe_ratio).toFixed(2)})
+                        (+
+                        {(
+                          result.optimized_portfolio.sharpe_ratio -
+                          result.current_portfolio.sharpe_ratio
+                        ).toFixed(2)}
+                        )
                       </span>
                     </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>Diversification</span>
-                    <span style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.success }}>
+                    <span style={{ fontSize: "13px", color: theme.colors.textMuted }}>
+                      Diversification
+                    </span>
+                    <span
+                      style={{ fontSize: "16px", fontWeight: "700", color: theme.colors.success }}
+                    >
                       {result.optimized_portfolio.diversification_score.toFixed(0)}%{" "}
                       <span style={{ fontSize: "12px" }}>
-                        (+{(result.optimized_portfolio.diversification_score - result.current_portfolio.diversification_score).toFixed(0)}%)
+                        (+
+                        {(
+                          result.optimized_portfolio.diversification_score -
+                          result.current_portfolio.diversification_score
+                        ).toFixed(0)}
+                        %)
                       </span>
                     </span>
                   </div>
@@ -429,7 +485,13 @@ export default function PortfolioOptimizer() {
                 textAlign: "center",
               }}
             >
-              <div style={{ fontSize: "13px", color: theme.colors.textMuted, marginBottom: theme.spacing.xs }}>
+              <div
+                style={{
+                  fontSize: "13px",
+                  color: theme.colors.textMuted,
+                  marginBottom: theme.spacing.xs,
+                }}
+              >
                 Estimated Improvement
               </div>
               <div
@@ -441,7 +503,13 @@ export default function PortfolioOptimizer() {
               >
                 +{result.estimated_improvement.toFixed(1)}%
               </div>
-              <div style={{ fontSize: "12px", color: theme.colors.textMuted, marginTop: theme.spacing.xs }}>
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: theme.colors.textMuted,
+                  marginTop: theme.spacing.xs,
+                }}
+              >
                 Risk-adjusted annual return improvement
               </div>
             </div>
@@ -532,7 +600,10 @@ export default function PortfolioOptimizer() {
                         style={{
                           fontSize: "16px",
                           fontWeight: "700",
-                          color: suggestion.shares_delta >= 0 ? theme.colors.success : theme.colors.error,
+                          color:
+                            suggestion.shares_delta >= 0
+                              ? theme.colors.success
+                              : theme.colors.error,
                         }}
                       >
                         {suggestion.shares_delta >= 0 ? "+" : ""}
@@ -580,7 +651,18 @@ export default function PortfolioOptimizer() {
                     </div>
                     <div>
                       <span style={{ color: theme.colors.textMuted }}>Risk Score: </span>
-                      <span style={{ color: getRiskColor(suggestion.risk_score > 0.7 ? "high" : suggestion.risk_score > 0.4 ? "moderate" : "low"), fontWeight: "600" }}>
+                      <span
+                        style={{
+                          color: getRiskColor(
+                            suggestion.risk_score > 0.7
+                              ? "high"
+                              : suggestion.risk_score > 0.4
+                                ? "moderate"
+                                : "low"
+                          ),
+                          fontWeight: "600",
+                        }}
+                      >
                         {(suggestion.risk_score * 100).toFixed(0)}
                       </span>
                     </div>

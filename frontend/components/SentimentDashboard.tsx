@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, Button } from "./ui";
-import { theme } from "../styles/theme";
-import { showError, showSuccess } from "../lib/toast";
-import { Newspaper, TrendingUp, TrendingDown, Minus, RefreshCw, Sparkles } from "lucide-react";
+import { Minus, Newspaper, RefreshCw, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { showError, showSuccess } from "../lib/toast";
+import { theme } from "../styles/theme";
+import { Button, Card } from "./ui";
 
 interface NewsSentiment {
   article_id: string;
@@ -47,14 +47,17 @@ export default function SentimentDashboard() {
   useEffect(() => {
     if (!autoRefresh || !result) return;
 
-    const interval = setInterval(() => {
-      analyzeSentiment();
-    }, 5 * 60 * 1000); // 5 minutes
+    const interval = setInterval(
+      () => {
+        analyzeSentiment();
+      },
+      5 * 60 * 1000
+    ); // 5 minutes
 
     return () => clearInterval(interval);
-  }, [autoRefresh, result]);
+  }, [autoRefresh, result, analyzeSentiment]);
 
-  const analyzeSentiment = async () => {
+  const analyzeSentiment = useCallback(async () => {
     if (!symbol.trim()) {
       showError("Please enter a symbol");
       return;
@@ -80,7 +83,7 @@ export default function SentimentDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [symbol, lookbackHours]);
 
   const getSentimentColor = (sentiment: string): string => {
     switch (sentiment) {

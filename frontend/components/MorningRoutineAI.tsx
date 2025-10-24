@@ -429,7 +429,7 @@ export default function MorningRoutineAI() {
       // Extract step types from AI routine
       if (routine.steps && Array.isArray(routine.steps)) {
         const stepTypes = routine.steps
-          .map((step: unknown) => step.type)
+          .map((step: { type: string }) => step.type)
           .filter((type: string) => availableSteps.some((s) => s.id === type));
         console.info("[MorningRoutine] Setting step types:", stepTypes);
         if (stepTypes.length > 0) {
@@ -443,7 +443,7 @@ export default function MorningRoutineAI() {
       console.info("[MorningRoutine] ✅ Routine generated successfully");
     } catch (err: unknown) {
       console.error("[MorningRoutine] Error generating routine:", err);
-      setError(err.message || "Failed to generate routine. Please try again.");
+      setError(err instanceof Error ? err.message : "Failed to generate routine. Please try again.");
     } finally {
       setIsGenerating(false);
     }
@@ -487,14 +487,19 @@ Keep it brief and actionable for a day trader.`;
       addLog("🔴 Fetching LIVE market data from backend API...");
 
       // Fetch REAL market data
-      const liveData = await fetchLiveMarketData();
+      type LiveCandidate = { symbol: string; price: number; bid: number; ask: number };
+      const liveData = (await fetchLiveMarketData()) as {
+        count: number;
+        timestamp: string;
+        candidates: LiveCandidate[];
+      } | null;
 
       if (liveData && liveData.count > 0) {
         addLog(`✅ Retrieved ${liveData.count} stocks with real-time prices`);
         addLog(`Prices as of: ${new Date(liveData.timestamp).toLocaleTimeString()}`);
 
         // Extract stock symbols for AI analysis
-        const stockSymbols = liveData.candidates.map((s: unknown) => s.symbol);
+        const stockSymbols = liveData.candidates.map((s: LiveCandidate) => s.symbol);
         addLog(`📋 Symbols found: ${stockSymbols.join(", ")}`);
 
         // **CRITICAL FIX:** Pass stock data to AI for actionable analysis
@@ -504,7 +509,7 @@ Keep it brief and actionable for a day trader.`;
 
 ${liveData.candidates
   .map(
-    (stock: unknown) => `
+    (stock: LiveCandidate) => `
 **${stock.symbol}** - $${stock.price.toFixed(2)}
 - Bid: $${stock.bid.toFixed(2)} | Ask: $${stock.ask.toFixed(2)}
 - Spread: $${(stock.ask - stock.bid).toFixed(3)} (${(((stock.ask - stock.bid) / stock.ask) * 100).toFixed(2)}%)
@@ -570,7 +575,7 @@ Provide:
       addLog("🎉 Morning Routine Complete!");
       addLog("Ready to trade. Good luck today! 🚀");
     } catch (err: unknown) {
-      addLog(`❌ Error: ${err.message}`);
+      addLog(`❌ Error: ${err instanceof Error ? err.message : String(err)}`);
       addLog("Routine execution failed. Please try again.");
     } finally {
       setIsRunning(false);
@@ -893,7 +898,9 @@ Provide:
                   >
                     Top Candidates:
                   </p>
-                  {liveDataPreview.candidates.slice(0, 3).map((stock: unknown, idx: number) => (
+                  {liveDataPreview.candidates
+                    .slice(0, 3)
+                    .map((stock: { symbol: string; bid: number; ask: number; price: number }, idx: number) => (
                     <div
                       key={idx}
                       style={{

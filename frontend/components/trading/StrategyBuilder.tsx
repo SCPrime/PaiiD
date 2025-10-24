@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 // TODO: Re-enable when strategies module is implemented
 // import { validateStrategy } from "@/strategies/validator";
 // import type { Strategy, ValidationResult } from "@/strategies/schema";

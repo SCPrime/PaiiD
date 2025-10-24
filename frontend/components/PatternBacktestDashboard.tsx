@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, Button } from "./ui";
-import { theme } from "../styles/theme";
-import { showError, showSuccess } from "../lib/toast";
-import { TrendingUp, TrendingDown, BarChart3, Target, DollarSign, Calendar } from "lucide-react";
+import { BarChart3 } from "lucide-react";
+import { useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { showError, showSuccess } from "../lib/toast";
+import { theme } from "../styles/theme";
+import { Button, Card } from "./ui";
 
 interface PatternPerformance {
   pattern_type: string;
@@ -402,8 +402,7 @@ export default function PatternBacktestDashboard() {
                   }}
                 >
                   {new Date(result.start_date).toLocaleDateString()}
-                  <br />→{" "}
-                  {new Date(result.end_date).toLocaleDateString()}
+                  <br />→ {new Date(result.end_date).toLocaleDateString()}
                 </div>
               </div>
             </div>
