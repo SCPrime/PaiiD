@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { recordStreamEvent, StreamLogLevel } from "../utils/streamMonitoring";
 
 export interface PriceData {
   price: number;
@@ -68,6 +69,8 @@ export function useMarketStream(
     debug = false,
   } = options;
 
+  const symbolKey = symbols.join(",");
+
   const [state, setState] = useState<MarketStreamState>({
     prices: {},
     connected: false,
@@ -82,11 +85,24 @@ export function useMarketStream(
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const log = useCallback(
-    (...args: any[]) => {
-      if (debug) {
-        console.info("[useMarketStream]", ...args);
-      }
+  const updateCountRef = useRef(0);
+  const heartbeatCountRef = useRef(0);
+
+  const emitStreamEvent = useCallback(
+    (
+      event: string,
+      message: string,
+      level: StreamLogLevel = "info",
+      context: Record<string, unknown> = {}
+    ) => {
+      recordStreamEvent({
+        stream: "market-prices",
+        event,
+        message,
+        level,
+        context,
+        debug,
+      });
     },
     [debug]
   );
@@ -112,12 +128,14 @@ export function useMarketStream(
 
     // Don't connect if no symbols
     if (symbols.length === 0) {
-      log("No symbols to subscribe to");
+      emitStreamEvent("no_symbols", "No symbols to subscribe to", "info", {
+        symbols,
+      });
       return;
     }
 
     setState((prev) => ({ ...prev, connecting: true, error: null }));
-    log("Connecting to price stream:", symbols);
+    emitStreamEvent("connect_start", "Connecting to price stream", "info", { symbols });
 
     try {
       // Build SSE URL
@@ -130,7 +148,12 @@ export function useMarketStream(
 
       // Handle connection open
       eventSource.onopen = () => {
-        log("✅ Connected to price stream");
+        emitStreamEvent("connected", "Connected to price stream", "info", {
+          reconnectAttempts: reconnectAttemptsRef.current,
+          symbols,
+        });
+        updateCountRef.current = 0;
+        heartbeatCountRef.current = 0;
         const now = new Date();
         setState((prev) => ({
           ...prev,
@@ -151,7 +174,11 @@ export function useMarketStream(
             const timeSinceHeartbeat = (Date.now() - currentState.lastHeartbeat.getTime()) / 1000;
 
             if (timeSinceHeartbeat > heartbeatTimeout) {
-              log(`⚠️ Heartbeat timeout (${timeSinceHeartbeat.toFixed(0)}s since last heartbeat)`);
+              emitStreamEvent("heartbeat_timeout", "Heartbeat timeout detected", "warning", {
+                secondsSinceLastHeartbeat: timeSinceHeartbeat,
+                timeoutThreshold: heartbeatTimeout,
+                symbols,
+              });
 
               // Trigger reconnect
               if (eventSourceRef.current) {
@@ -161,8 +188,15 @@ export function useMarketStream(
 
               if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
                 reconnectAttemptsRef.current++;
-                log(
-                  `🔄 Reconnecting due to heartbeat timeout (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
+                emitStreamEvent(
+                  "heartbeat_reconnect",
+                  "Scheduling reconnect due to heartbeat timeout",
+                  "warning",
+                  {
+                    attempt: reconnectAttemptsRef.current,
+                    maxReconnectAttempts,
+                    symbols,
+                  }
                 );
                 connect();
               }
@@ -183,7 +217,14 @@ export function useMarketStream(
       eventSource.addEventListener("price_update", (event) => {
         try {
           const newPrices = JSON.parse(event.data) as Record<string, PriceData>;
-          log("📈 Price update:", Object.keys(newPrices).length, "symbols");
+          updateCountRef.current += 1;
+
+          if (updateCountRef.current === 1 || updateCountRef.current % 10 === 0) {
+            emitStreamEvent("price_update", "Received streamed price payload", "info", {
+              symbols: Object.keys(newPrices),
+              updateSequence: updateCountRef.current,
+            });
+          }
 
           setState((prev) => ({
             ...prev,
@@ -191,14 +232,24 @@ export function useMarketStream(
             lastUpdate: new Date(),
           }));
         } catch (error) {
-          console.error("[useMarketStream] Error parsing price update:", error);
+          emitStreamEvent("parse_error", "Error parsing price update", "error", {
+            rawData: event.data,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
       });
 
       // Handle heartbeat (keep-alive and timeout detection)
       eventSource.addEventListener("heartbeat", (_event) => {
         const now = new Date();
-        log("💓 Heartbeat received");
+        heartbeatCountRef.current += 1;
+
+        if (heartbeatCountRef.current === 1 || heartbeatCountRef.current % 12 === 0) {
+          emitStreamEvent("heartbeat", "Heartbeat received", "info", {
+            heartbeatSequence: heartbeatCountRef.current,
+            symbols,
+          });
+        }
         setState((prev) => ({
           ...prev,
           lastHeartbeat: now,
@@ -209,7 +260,10 @@ export function useMarketStream(
       eventSource.addEventListener("error", (event) => {
         try {
           const errorData = JSON.parse((event as MessageEvent).data);
-          console.error("[useMarketStream] Server error:", errorData.error);
+          emitStreamEvent("server_error", "Market stream returned error", "error", {
+            error: errorData.error,
+            symbols,
+          });
           setState((prev) => ({
             ...prev,
             error: errorData.error,
@@ -217,13 +271,17 @@ export function useMarketStream(
           }));
         } catch {
           // Not a formatted error event, just log it
-          log("Error event (likely connection issue)");
+          emitStreamEvent("generic_error", "Received unformatted error event", "warning", {
+            symbols,
+          });
         }
       });
 
       // Handle connection errors/close
       eventSource.onerror = (_error) => {
-        log("❌ Connection error or closed");
+        emitStreamEvent("connection_error", "Connection error or closed", "warning", {
+          symbols,
+        });
 
         setState((prev) => ({
           ...prev,
@@ -241,14 +299,21 @@ export function useMarketStream(
           reconnectAttemptsRef.current++;
           const backoffTime = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Max 30s
 
-          log(
-            `⏳ Reconnecting in ${backoffTime / 1000}s (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
-          );
+          emitStreamEvent("reconnect_scheduled", "Scheduling reconnect attempt", "warning", {
+            delayMs: backoffTime,
+            attempt: reconnectAttemptsRef.current,
+            maxReconnectAttempts,
+            symbols,
+          });
 
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, backoffTime);
         } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+          emitStreamEvent("reconnect_limit", "Max reconnect attempts reached", "error", {
+            maxReconnectAttempts,
+            symbols,
+          });
           setState((prev) => ({
             ...prev,
             error: "Max reconnect attempts reached. Please refresh the page.",
@@ -256,7 +321,10 @@ export function useMarketStream(
         }
       };
     } catch (error: any) {
-      console.error("[useMarketStream] Connection error:", error);
+      emitStreamEvent("connection_exception", "Connection exception thrown", "error", {
+        error: error?.message || String(error),
+        symbols,
+      });
       setState((prev) => ({
         ...prev,
         connected: false,
@@ -264,14 +332,16 @@ export function useMarketStream(
         error: error.message || "Failed to connect",
       }));
     }
-  }, [symbols, autoReconnect, maxReconnectAttempts, log]);
+  }, [symbols, autoReconnect, emitStreamEvent, heartbeatTimeout, maxReconnectAttempts]);
 
   // Manual reconnect method
   const reconnect = useCallback(() => {
-    log("🔄 Manual reconnect triggered");
+    emitStreamEvent("manual_reconnect", "Manual reconnect triggered", "info", {
+      symbols,
+    });
     reconnectAttemptsRef.current = 0; // Reset counter on manual reconnect
     connect();
-  }, [connect, log]);
+  }, [connect, emitStreamEvent, symbols]);
 
   // Connect on mount or when symbols change
   useEffect(() => {
@@ -281,7 +351,9 @@ export function useMarketStream(
 
     // Cleanup on unmount
     return () => {
-      log("🧹 Cleaning up market stream");
+      emitStreamEvent("cleanup", "Cleaning up market stream", "info", {
+        symbols,
+      });
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
@@ -295,7 +367,7 @@ export function useMarketStream(
         heartbeatCheckIntervalRef.current = null;
       }
     };
-  }, [symbols.join(","), connect, log]); // Re-connect when symbols change
+  }, [symbolKey, connect, emitStreamEvent]); // Re-connect when symbols change
 
   return {
     ...state,
