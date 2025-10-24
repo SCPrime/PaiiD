@@ -7,6 +7,10 @@
 .env.backup*
 *.env
 
+# Allow .env.example files (templates without real secrets)
+!.env.example
+!*/.env.example
+
 # Python bytecode
 __pycache__/
 *.py[cod]
