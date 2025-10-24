@@ -1,4 +1,11 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type TouchEvent,
+} from "react";
 import Split from "react-split";
 import RadialMenu, { Workflow, workflows } from "../components/RadialMenu";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
@@ -38,6 +45,89 @@ export default function Dashboard() {
 
   // Detect mobile viewport
   const isMobile = useIsMobile();
+
+  // Swipe tracking for mobile workflow navigation
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+
+  const workflowIds = useMemo(() => workflows.map((w) => w.id), []);
+
+  const navigateToWorkflow = useCallback(
+    (workflowId: string | null) => {
+      if (!workflowId) {
+        setSelectedWorkflow("");
+        setHoveredWorkflow(null);
+        return;
+      }
+
+      setSelectedWorkflow(workflowId);
+      setHoveredWorkflow(null);
+    },
+    []
+  );
+
+  const getAdjacentWorkflowId = useCallback(
+    (direction: "next" | "prev") => {
+      if (!selectedWorkflow) return null;
+      const currentIndex = workflowIds.indexOf(selectedWorkflow);
+      if (currentIndex === -1) return null;
+
+      const offset = direction === "next" ? 1 : -1;
+      const nextIndex = currentIndex + offset;
+
+      if (nextIndex < 0) {
+        return null;
+      }
+
+      if (nextIndex >= workflowIds.length) {
+        return null;
+      }
+
+      return workflowIds[nextIndex];
+    },
+    [selectedWorkflow, workflowIds]
+  );
+
+  const handleTouchStart = useCallback((event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now(),
+    };
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (event: TouchEvent<HTMLDivElement>) => {
+      const start = touchStartRef.current;
+      if (!start) return;
+
+      const touch = event.changedTouches[0];
+      const dx = touch.clientX - start.x;
+      const dy = touch.clientY - start.y;
+      const dt = Date.now() - start.time;
+
+      const horizontalSwipe = Math.abs(dx) > 60 && Math.abs(dy) < 80 && dt < 600;
+
+      if (horizontalSwipe) {
+        if (dx < 0) {
+          const nextId = getAdjacentWorkflowId("next");
+          if (nextId) {
+            navigateToWorkflow(nextId);
+          }
+        } else {
+          const prevId = getAdjacentWorkflowId("prev");
+          if (prevId) {
+            navigateToWorkflow(prevId);
+          } else {
+            navigateToWorkflow(null);
+          }
+        }
+      }
+
+      touchStartRef.current = null;
+    },
+    [getAdjacentWorkflowId, navigateToWorkflow]
+  );
 
   // Check if user is set up on mount
   useEffect(() => {
@@ -124,7 +214,7 @@ export default function Dashboard() {
           return <AIRecommendations />;
 
         case "settings":
-          return <Settings isOpen={true} onClose={() => setSelectedWorkflow("")} />;
+          return <Settings isOpen={true} onClose={() => navigateToWorkflow(null)} />;
 
         case "pnl-dashboard":
           return <Analytics />;
@@ -279,7 +369,7 @@ export default function Dashboard() {
               }}
             >
               <RadialMenu
-                onWorkflowSelect={setSelectedWorkflow}
+                onWorkflowSelect={(id) => navigateToWorkflow(id)}
                 onWorkflowHover={setHoveredWorkflow}
               />
             </div>
@@ -427,7 +517,7 @@ export default function Dashboard() {
           >
             {/* Back Button */}
             <button
-              onClick={() => setSelectedWorkflow("")}
+              onClick={() => navigateToWorkflow(null)}
               style={{
                 background: "rgba(16, 185, 129, 0.1)",
                 border: "1px solid rgba(16, 185, 129, 0.3)",
@@ -469,6 +559,8 @@ export default function Dashboard() {
               padding: "16px",
               color: "#e2e8f0",
             }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
             {renderWorkflowContent()}
           </div>
@@ -523,12 +615,12 @@ export default function Dashboard() {
                   transformOrigin: "center center",
                 }}
               >
-                <RadialMenu
-                  onWorkflowSelect={setSelectedWorkflow}
-                  onWorkflowHover={setHoveredWorkflow}
-                  selectedWorkflow={selectedWorkflow}
-                  compact={true}
-                />
+              <RadialMenu
+                onWorkflowSelect={(id) => navigateToWorkflow(id)}
+                onWorkflowHover={setHoveredWorkflow}
+                selectedWorkflow={selectedWorkflow}
+                compact={true}
+              />
               </div>
             </div>
           </div>
@@ -685,10 +777,10 @@ export default function Dashboard() {
 
       {/* Keyboard Shortcuts */}
       <KeyboardShortcuts
-        onOpenTrade={() => setSelectedWorkflow("execute")}
-        onQuickBuy={() => setSelectedWorkflow("execute")}
-        onQuickSell={() => setSelectedWorkflow("execute")}
-        onCloseModal={() => setSelectedWorkflow("")}
+        onOpenTrade={() => navigateToWorkflow("execute")}
+        onQuickBuy={() => navigateToWorkflow("execute")}
+        onQuickSell={() => navigateToWorkflow("execute")}
+        onCloseModal={() => navigateToWorkflow(null)}
       />
     </>
   );
