@@ -5,6 +5,23 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 
 
+def _coerce_sample_rate(raw_value: str | float | None, default: float) -> float:
+    """Convert an environment value into a valid sample rate."""
+
+    if raw_value is None:
+        return default
+
+    try:
+        value = float(raw_value)
+    except (TypeError, ValueError):
+        return default
+
+    if 0.0 <= value <= 1.0:
+        return value
+
+    return default
+
+
 # Load .env file BEFORE reading env vars (works even when imported directly)
 ENV_PATH = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(ENV_PATH)
@@ -39,6 +56,19 @@ class Settings(BaseModel):
 
     # Sentry Error Tracking (Phase 2.5)
     SENTRY_DSN: str | None = os.getenv("SENTRY_DSN")
+    SENTRY_RELEASE: str | None = os.getenv("SENTRY_RELEASE")
+    SENTRY_ENVIRONMENT: str = os.getenv(
+        "SENTRY_ENVIRONMENT",
+        "production" if os.getenv("RENDER_EXTERNAL_URL") else "development",
+    )
+    SENTRY_TRACES_SAMPLE_RATE: float = _coerce_sample_rate(
+        os.getenv("SENTRY_TRACES_SAMPLE_RATE"),
+        0.1,
+    )
+    SENTRY_PROFILES_SAMPLE_RATE: float = _coerce_sample_rate(
+        os.getenv("SENTRY_PROFILES_SAMPLE_RATE"),
+        0.1,
+    )
 
     # JWT Authentication (Week 2-4: Multi-User System)
     JWT_SECRET_KEY: str = os.getenv(

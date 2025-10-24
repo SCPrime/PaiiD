@@ -1,10 +1,8 @@
-"""
-Pytest Configuration and Fixtures
-
-Provides test fixtures for database, API client, and mocked services.
-"""
+"""Pytest configuration and fixtures used across backend tests."""
 
 import os
+import sys
+from types import ModuleType, SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -21,6 +19,19 @@ os.environ["TESTING"] = "true"  # Disable rate limiting for tests
 os.environ["API_TOKEN"] = "test-token-12345"
 os.environ["TRADIER_API_KEY"] = "test-tradier-key"
 os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
+
+try:  # pragma: no cover - import guard for optional dependency used in routers
+    import cachetools  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - executed only in test envs without cachetools
+    class _TTLCache(dict):
+        def __init__(self, *_args, **_kwargs):
+            super().__init__()
+
+    sys.modules["cachetools"] = SimpleNamespace(TTLCache=_TTLCache)
+
+signals_module = ModuleType("app.core.signals")
+signals_module.setup_shutdown_handlers = lambda: None
+sys.modules.setdefault("app.core.signals", signals_module)
 
 from app.db.session import Base, get_db
 from app.main import app
