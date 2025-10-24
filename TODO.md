@@ -97,10 +97,10 @@
 - [x] SchedulerSettings + ApprovalQueue components deployed
 - [x] Backend API endpoints functional
 - [x] Documentation created (SCHEDULER_QUICKSTART.md)
-- [ ] Fix schedule creation 500 error (minor bug)
+- [x] Fix schedule creation 500 error ✅ (Oct 24 - Error handling + validation added)
 - [ ] Create example schedules for users
 
-**Status:** ✅ DEPLOYED (Backend running, UI integrated)
+**Status:** ✅ DEPLOYED (Backend running, UI integrated, bug fixed)
 **Production:** https://paiid-backend.onrender.com/api/scheduler
 **Location:** Settings → Automation Tab
 

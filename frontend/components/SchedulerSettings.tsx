@@ -110,12 +110,29 @@ export default function SchedulerSettings() {
   };
 
   const createSchedule = async () => {
+    // Validation
+    if (!newSchedule.name.trim()) {
+      alert("❌ Please enter a schedule name");
+      return;
+    }
+
+    if (!newSchedule.cron_expression.trim()) {
+      alert("❌ Please enter a cron expression");
+      return;
+    }
+
     try {
-      await fetch("/api/proxy/scheduler/schedules", {
+      const response = await fetch("/api/proxy/scheduler/schedules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newSchedule),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: "Unknown error" }));
+        throw new Error(errorData.detail || `HTTP ${response.status}`);
+      }
+
       setShowCreateModal(false);
       setNewSchedule({
         name: "",
@@ -126,8 +143,12 @@ export default function SchedulerSettings() {
         enabled: true,
       });
       fetchSchedules();
+      alert("✅ Schedule created successfully!");
     } catch (error) {
       console.error("Failed to create schedule:", error);
+      alert(
+        `❌ Failed to create schedule: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   };
 

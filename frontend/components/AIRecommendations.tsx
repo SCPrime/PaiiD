@@ -167,7 +167,9 @@ export default function AIRecommendations() {
       // Fetch market regime, patterns, and strategy recommendations in parallel
       const [regimeRes, patternsRes, strategiesRes] = await Promise.all([
         fetch(`/api/proxy/api/ml/market-regime?symbol=${symbol}&lookback_days=90`),
-        fetch(`/api/proxy/api/ml/detect-patterns?symbol=${symbol}&lookback_days=90&min_confidence=0.7`),
+        fetch(
+          `/api/proxy/api/ml/detect-patterns?symbol=${symbol}&lookback_days=90&min_confidence=0.7`
+        ),
         fetch(`/api/proxy/api/ml/recommend-strategy?symbol=${symbol}&lookback_days=90&top_n=3`),
       ]);
 
@@ -634,7 +636,9 @@ export default function AIRecommendations() {
                   marginTop: "4px",
                 }}
               >
-                Confidence: {(mlRegime.confidence * 100).toFixed(0)}% • RSI: {mlRegime.features.rsi.toFixed(1)} • Volatility: {(mlRegime.features.volatility * 100).toFixed(1)}%
+                Confidence: {(mlRegime.confidence * 100).toFixed(0)}% • RSI:{" "}
+                {mlRegime.features.rsi.toFixed(1)} • Volatility:{" "}
+                {(mlRegime.features.volatility * 100).toFixed(1)}%
               </div>
             </div>
           </div>
@@ -711,7 +715,8 @@ export default function AIRecommendations() {
                       marginTop: "2px",
                     }}
                   >
-                    {pattern.signal.toUpperCase()} • {(pattern.confidence * 100).toFixed(0)}% confidence
+                    {pattern.signal.toUpperCase()} • {(pattern.confidence * 100).toFixed(0)}%
+                    confidence
                   </div>
                 </div>
 

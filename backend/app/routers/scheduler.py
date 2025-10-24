@@ -151,7 +151,7 @@ def _load_executions(limit: int = 20, schedule_id: str | None = None) -> list[di
 def _load_pending_approvals() -> list[dict]:
     """Load pending approvals from files"""
     approvals = []
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     for approval_file in APPROVALS_DIR.glob("*.json"):
         with open(approval_file) as f:
