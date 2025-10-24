@@ -7,7 +7,7 @@ import json
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
 from ..core.auth import require_bearer
@@ -68,6 +68,16 @@ class ExecutionResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ExecutionHistoryResponse(BaseModel):
+    """Paginated execution history response payload."""
+
+    items: list[ExecutionResponse]
+    total: int
+    page: int
+    page_size: int
+    has_more: bool
 
 
 class ApprovalResponse(BaseModel):
@@ -131,18 +141,18 @@ def _load_all_schedules() -> list[dict]:
     return sorted(schedules, key=lambda x: x.get("created_at", ""), reverse=True)
 
 
-def _load_executions(limit: int = 20, schedule_id: str | None = None) -> list[dict]:
-    """Load execution history from files"""
-    executions = []
+def _load_executions(schedule_id: str | None = None) -> list[dict]:
+    """Load execution history from files."""
+
+    executions: list[dict] = []
     for exec_file in EXECUTIONS_DIR.glob("*.json"):
         with open(exec_file) as f:
             execution = json.load(f)
-            if schedule_id is None or execution["schedule_id"] == schedule_id:
+            if schedule_id is None or execution.get("schedule_id") == schedule_id:
                 executions.append(execution)
 
     # Sort by started_at descending
-    executions = sorted(executions, key=lambda x: x.get("started_at", ""), reverse=True)
-    return executions[:limit]
+    return sorted(executions, key=lambda x: x.get("started_at", ""), reverse=True)
 
 
 def _load_pending_approvals() -> list[dict]:
@@ -359,13 +369,28 @@ async def resume_all_schedules(_=Depends(require_bearer)):
 # ========================
 
 
-@router.get("/executions", response_model=list[ExecutionResponse])
+@router.get("/executions", response_model=ExecutionHistoryResponse)
 async def list_executions(
-    limit: int = 20, schedule_id: str | None = None, _=Depends(require_bearer)
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    schedule_id: str | None = None,
+    _=Depends(require_bearer),
 ):
-    """Get execution history"""
-    executions = _load_executions(limit, schedule_id)
-    return executions
+    """Get paginated execution history."""
+
+    executions = _load_executions(schedule_id)
+    total = len(executions)
+    start = (page - 1) * page_size
+    end = start + page_size
+    items = executions[start:end]
+
+    return ExecutionHistoryResponse(
+        items=[ExecutionResponse(**item) for item in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+        has_more=end < total,
+    )
 
 
 # ========================

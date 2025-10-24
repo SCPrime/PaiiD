@@ -8,11 +8,19 @@ const BACKEND =
   "https://paiid-backend.onrender.com";
 const API_TOKEN = process.env.API_TOKEN || process.env.NEXT_PUBLIC_API_TOKEN || "";
 
+const isVerboseLogging = process.env.NODE_ENV !== "production";
+
+const logVerbose = (...args: unknown[]) => {
+  if (isVerboseLogging) {
+    console.info(...args);
+  }
+};
+
 if (!API_TOKEN) {
   console.error("[PROXY] ⚠️ API_TOKEN not configured in environment variables");
   console.error("[PROXY] ⚠️ Checked: process.env.API_TOKEN and process.env.NEXT_PUBLIC_API_TOKEN");
 } else {
-  console.info(`[PROXY] ✅ API_TOKEN loaded: ${API_TOKEN.substring(0, 10)}...`);
+  logVerbose(`[PROXY] ✅ API_TOKEN loaded: ${API_TOKEN.substring(0, 10)}...`);
 }
 
 // Exact endpoints our UI uses (paths without /api prefix - added in URL construction)
@@ -61,6 +69,9 @@ const ALLOW_GET = new Set<string>([
   "portfolio/summary",
   "portfolio/history",
   "analytics/performance",
+  // Scheduler endpoints
+  "scheduler/schedules",
+  "scheduler/executions",
   // Backtesting endpoints
   "backtesting/run",
   "backtesting/quick-test",
@@ -91,6 +102,10 @@ const ALLOW_POST = new Set<string>([
   "news/cache/clear",
   // Backtesting endpoints
   "backtesting/run",
+  // Scheduler endpoints
+  "scheduler/schedules",
+  "scheduler/pause-all",
+  "scheduler/resume-all",
 ]);
 
 const ALLOW_DELETE = new Set<string>([
@@ -100,6 +115,13 @@ const ALLOW_DELETE = new Set<string>([
   "watchlists",
   // Order templates
   "order-templates",
+  // Scheduler endpoints
+  "scheduler/schedules",
+]);
+
+const ALLOW_PATCH = new Set<string>([
+  // Scheduler endpoints
+  "scheduler/schedules",
 ]);
 
 // Allowed origins for CORS (production and development only)
@@ -123,7 +145,7 @@ function isAllowedOrigin(req: NextApiRequest): boolean {
 
   // Check if origin is in allowed list
   if (origin && ALLOWED_ORIGINS.has(origin)) {
-    console.info(`[PROXY] ✅ Origin allowed: ${origin}`);
+    logVerbose(`[PROXY] ✅ Origin allowed: ${origin}`);
     return true;
   }
 
@@ -133,7 +155,7 @@ function isAllowedOrigin(req: NextApiRequest): boolean {
       const refererUrl = new URL(referer);
       const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`;
       if (ALLOWED_ORIGINS.has(refererOrigin)) {
-        console.info(`[PROXY] ✅ Referer allowed: ${refererOrigin}`);
+        logVerbose(`[PROXY] ✅ Referer allowed: ${refererOrigin}`);
         return true;
       }
     } catch (e) {
@@ -149,20 +171,20 @@ function isAllowedOrigin(req: NextApiRequest): boolean {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Log EVERY request for debugging
-  console.info(`\n[PROXY] ====== NEW REQUEST ======`);
-  console.info(`[PROXY] Method: ${req.method}`);
-  console.info(`[PROXY] URL: ${req.url}`);
-  console.info(`[PROXY] Origin: ${req.headers.origin || "NONE"}`);
+  logVerbose(`\n[PROXY] ====== NEW REQUEST ======`);
+  logVerbose(`[PROXY] Method: ${req.method}`);
+  logVerbose(`[PROXY] URL: ${req.url}`);
+  logVerbose(`[PROXY] Origin: ${req.headers.origin || "NONE"}`);
 
   // CORS preflight - Validate origin first
   if (req.method === "OPTIONS") {
-    console.info(`[PROXY] Handling OPTIONS preflight`);
+    logVerbose(`[PROXY] Handling OPTIONS preflight`);
     const origin = req.headers.origin;
 
     // Only allow preflight from authorized origins
     if (origin && isAllowedOrigin(req)) {
       res.setHeader("access-control-allow-origin", origin);
-      res.setHeader("access-control-allow-methods", "GET,POST,DELETE,OPTIONS");
+      res.setHeader("access-control-allow-methods", "GET,POST,DELETE,PATCH,OPTIONS");
       res.setHeader("access-control-allow-headers", "content-type,x-request-id,authorization");
       res.setHeader("access-control-allow-credentials", "true");
       res.status(204).end();
@@ -176,7 +198,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const originAllowed = isAllowedOrigin(req);
-  console.info(`[PROXY] Origin check result: ${originAllowed ? "ALLOWED" : "BLOCKED"}`);
+  logVerbose(`[PROXY] Origin check result: ${originAllowed ? "ALLOWED" : "BLOCKED"}`);
 
   if (!originAllowed) {
     console.error(`[PROXY] ⛔ REJECTING REQUEST WITH 403`);
@@ -193,7 +215,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader("access-control-allow-credentials", "true");
   }
 
-  console.info(`[PROXY] ✅ Origin check passed, proceeding with request`);
+  logVerbose(`[PROXY] ✅ Origin check passed, proceeding with request`);
 
   const parts = (req.query.path as string[]) || [];
   let path = parts.join("/");
@@ -230,6 +252,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(405).json({ error: "Not allowed" });
     }
   }
+  if (req.method === "PATCH" && !ALLOW_PATCH.has(path)) {
+    const isAllowedPattern = Array.from(ALLOW_PATCH).some(
+      (allowed) => path.startsWith(allowed + "/") || path === allowed
+    );
+    if (!isAllowedPattern) {
+      return res.status(405).json({ error: "Not allowed" });
+    }
+  }
 
   // Preserve query parameters from original request
   const queryString = req.url?.split("?")[1] || "";
@@ -245,15 +275,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (rid) headers["x-request-id"] = rid;
 
   // Enhanced debug logging
-  console.info(`\n[PROXY] ====== New Request ======`);
-  console.info(`[PROXY] Method: ${req.method}`);
-  console.info(`[PROXY] Original URL: ${req.url}`);
-  console.info(`[PROXY] Extracted path: "${path}"`);
-  console.info(`[PROXY] Constructed URL: ${url}`);
-  console.info(`[PROXY] Auth header: Bearer ${API_TOKEN?.substring(0, 8)}...`);
-  console.info(`[PROXY] Backend: ${BACKEND}`);
-  if (req.method === "POST") {
-    console.info(`[PROXY] Body:`, JSON.stringify(req.body, null, 2));
+  logVerbose(`\n[PROXY] ====== New Request ======`);
+  logVerbose(`[PROXY] Method: ${req.method}`);
+  logVerbose(`[PROXY] Original URL: ${req.url}`);
+  logVerbose(`[PROXY] Extracted path: "${path}"`);
+  logVerbose(`[PROXY] Constructed URL: ${url}`);
+  logVerbose(`[PROXY] Auth header: Bearer ${API_TOKEN?.substring(0, 8)}...`);
+  logVerbose(`[PROXY] Backend: ${BACKEND}`);
+  if (req.method === "POST" || req.method === "PATCH") {
+    logVerbose(`[PROXY] Body:`, JSON.stringify(req.body, null, 2));
   }
 
   try {
@@ -261,7 +291,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       method: req.method,
       headers,
       body:
-        req.method === "POST" || req.method === "DELETE"
+        req.method === "POST" || req.method === "DELETE" || req.method === "PATCH"
           ? JSON.stringify(req.body ?? {})
           : undefined,
       // avoid any CDN caching at the edge
@@ -269,11 +299,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const text = await upstream.text();
-    console.info(`[PROXY] Response status: ${upstream.status}`);
-    console.info(
-      `[PROXY] Response body: ${text.substring(0, 200)}${text.length > 200 ? "..." : ""}`
-    );
-    console.info(`[PROXY] ====== End Request ======\n`);
+    logVerbose(`[PROXY] Response status: ${upstream.status}`);
+    if (isVerboseLogging) {
+      const preview = text.substring(0, 200);
+      logVerbose(`[PROXY] Response body: ${preview}${text.length > 200 ? "..." : ""}`);
+      logVerbose(`[PROXY] ====== End Request ======\n`);
+    }
 
     res
       .status(upstream.status)
@@ -283,7 +314,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (err) {
     console.error(`[PROXY] ERROR: ${err}`);
     console.error(`[PROXY] Error details:`, err);
-    console.info(`[PROXY] ====== End Request (ERROR) ======\n`);
+    logVerbose(`[PROXY] ====== End Request (ERROR) ======\n`);
     res.status(502).json({ error: "Upstream error", detail: String(err) });
   }
 }
