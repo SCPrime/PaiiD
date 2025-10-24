@@ -1,8 +1,5 @@
-"""
-API Endpoint Tests
+"""API endpoint regression tests covering authentication and options routing."""
 
-Tests for critical API endpoints: health, portfolio, orders, market data
-"""
 
 from unittest.mock import MagicMock, patch
 
@@ -46,14 +43,14 @@ class TestAuthenticationProtection:
         response = client.get("/api/positions")
         assert response.status_code == 401  # Unauthorized without auth
 
-    def test_positions_with_valid_auth(self, client, auth_headers):
+    def test_positions_with_valid_auth(self, authorized_client):
         """Test /api/positions with valid auth (may fail on Tradier call)"""
         with patch("app.services.tradier_client.get_tradier_client") as mock_client:
             mock_instance = MagicMock()
             mock_instance.get_positions.return_value = []
             mock_client.return_value = mock_instance
 
-            response = client.get("/api/positions", headers=auth_headers)
+            response = authorized_client.get("/api/positions")
             # Accept 200 or 500 (API may fail with fake credentials)
             assert response.status_code in [200, 500]
 
@@ -67,7 +64,9 @@ class TestMarketEndpoints:
     """Test market data endpoints"""
 
     @patch("app.routers.market.requests.get")
-    def test_market_indices_success(self, mock_get, client, auth_headers, mock_market_indices):
+    def test_market_indices_success(
+        self, mock_get, authorized_client, mock_market_indices
+    ):
         """Test /api/market/indices with mocked Tradier response"""
         # Mock Tradier API response
         mock_response = MagicMock()
@@ -92,14 +91,14 @@ class TestMarketEndpoints:
         }
         mock_get.return_value = mock_response
 
-        response = client.get("/api/market/indices", headers=auth_headers)
+        response = authorized_client.get("/api/market/indices")
         assert response.status_code == 200
         data = response.json()
         assert "dow" in data
         assert "nasdaq" in data
         assert data["source"] == "tradier"
 
-    def test_market_indices_caching(self, client, auth_headers, mock_cache):
+    def test_market_indices_caching(self, authorized_client, mock_cache):
         """Test market indices endpoint uses cache"""
         # Pre-populate cache
         mock_cache.set(
@@ -113,7 +112,7 @@ class TestMarketEndpoints:
 
         with patch("app.routers.market.get_cache", return_value=mock_cache):
             try:
-                response = client.get("/api/market/indices", headers=auth_headers)
+                response = authorized_client.get("/api/market/indices")
                 # Accept 200 or 500 (API may fail with fake credentials)
                 assert response.status_code in [200, 500]
                 if response.status_code == 200:
@@ -128,7 +127,7 @@ class TestPortfolioEndpoints:
     """Test portfolio and positions endpoints"""
 
     @patch("app.services.tradier_client.get_tradier_client")
-    def test_get_positions_success(self, mock_client, client, auth_headers):
+    def test_get_positions_success(self, mock_client, authorized_client):
         """Test /api/positions returns position data"""
         mock_instance = MagicMock()
         mock_instance.get_positions.return_value = [
@@ -136,7 +135,7 @@ class TestPortfolioEndpoints:
         ]
         mock_client.return_value = mock_instance
 
-        response = client.get("/api/positions", headers=auth_headers)
+        response = authorized_client.get("/api/positions")
         # Accept 200 or 500 (API may fail with fake credentials)
         assert response.status_code in [200, 500]
         if response.status_code == 200:
@@ -145,13 +144,13 @@ class TestPortfolioEndpoints:
                 assert data[0]["symbol"] == "AAPL"
 
     @patch("app.services.tradier_client.get_tradier_client")
-    def test_get_positions_empty(self, mock_client, client, auth_headers):
+    def test_get_positions_empty(self, mock_client, authorized_client):
         """Test /api/positions with no positions"""
         mock_instance = MagicMock()
         mock_instance.get_positions.return_value = []
         mock_client.return_value = mock_instance
 
-        response = client.get("/api/positions", headers=auth_headers)
+        response = authorized_client.get("/api/positions")
         # Accept 200 or 500 (API may fail with fake credentials)
         assert response.status_code in [200, 500]
         if response.status_code == 200:
@@ -159,7 +158,7 @@ class TestPortfolioEndpoints:
             assert isinstance(data, list)
 
     @patch("app.services.tradier_client.get_tradier_client")
-    def test_get_account_success(self, mock_client, client, auth_headers):
+    def test_get_account_success(self, mock_client, authorized_client):
         """Test /api/account returns account data"""
         mock_instance = MagicMock()
         mock_instance.get_account.return_value = {
@@ -170,7 +169,7 @@ class TestPortfolioEndpoints:
         }
         mock_client.return_value = mock_instance
 
-        response = client.get("/api/account", headers=auth_headers)
+        response = authorized_client.get("/api/account")
         # Accept 200 or 500 (API may fail with fake credentials)
         assert response.status_code in [200, 500]
         if response.status_code == 200:
@@ -182,7 +181,7 @@ class TestMarketDataEndpoints:
     """Test market data quote endpoints"""
 
     @patch("app.services.tradier_client.get_tradier_client")
-    def test_get_quote_success(self, mock_client, client, auth_headers):
+    def test_get_quote_success(self, mock_client, authorized_client):
         """Test /api/market/quote/{symbol}"""
         mock_instance = MagicMock()
         mock_instance.get_quotes.return_value = {
@@ -196,7 +195,7 @@ class TestMarketDataEndpoints:
         }
         mock_client.return_value = mock_instance
 
-        response = client.get("/api/market/quote/AAPL", headers=auth_headers)
+        response = authorized_client.get("/api/market/quote/AAPL")
         # Accept 200, 404, or 500 (API may fail with fake credentials)
         assert response.status_code in [200, 404, 500]
         if response.status_code == 200:
@@ -204,18 +203,18 @@ class TestMarketDataEndpoints:
             assert "symbol" in data
 
     @patch("app.services.tradier_client.get_tradier_client")
-    def test_get_quote_not_found(self, mock_client, client, auth_headers):
+    def test_get_quote_not_found(self, mock_client, authorized_client):
         """Test /api/market/quote/{symbol} with invalid symbol"""
         mock_instance = MagicMock()
         mock_instance.get_quotes.return_value = {}
         mock_client.return_value = mock_instance
 
-        response = client.get("/api/market/quote/INVALID", headers=auth_headers)
+        response = authorized_client.get("/api/market/quote/INVALID")
         # Accept 404 or 500 (API may fail with fake credentials)
         assert response.status_code in [404, 500]
 
     @patch("app.services.tradier_client.get_tradier_client")
-    def test_get_multiple_quotes(self, mock_client, client, auth_headers):
+    def test_get_multiple_quotes(self, mock_client, authorized_client):
         """Test /api/market/quotes with multiple symbols"""
         mock_instance = MagicMock()
         mock_instance.get_quotes.return_value = {
@@ -224,7 +223,7 @@ class TestMarketDataEndpoints:
         }
         mock_client.return_value = mock_instance
 
-        response = client.get("/api/market/quotes?symbols=AAPL,MSFT", headers=auth_headers)
+        response = authorized_client.get("/api/market/quotes?symbols=AAPL,MSFT")
         # Accept 200 or 500 (API may fail with fake credentials)
         assert response.status_code in [200, 500]
         if response.status_code == 200:
@@ -235,21 +234,21 @@ class TestMarketDataEndpoints:
 class TestCacheIntegration:
     """Test cache integration in endpoints"""
 
-    def test_positions_cache_hit(self, client, auth_headers, mock_cache):
+    def test_positions_cache_hit(self, authorized_client, mock_cache):
         """Test positions endpoint cache hit"""
         # Pre-populate cache
         cached_positions = [{"symbol": "AAPL", "quantity": 10, "market_value": 1754.30}]
         mock_cache.set("portfolio:positions", cached_positions)
 
         with patch("app.routers.portfolio.get_cache", return_value=mock_cache):
-            response = client.get("/api/positions", headers=auth_headers)
+            response = authorized_client.get("/api/positions")
             # Accept 200 or 500 (API may fail with fake credentials)
             assert response.status_code in [200, 500]
             if response.status_code == 200:
                 data = response.json()
                 assert isinstance(data, list)
 
-    def test_quote_cache_miss_then_set(self, client, auth_headers, mock_cache):
+    def test_quote_cache_miss_then_set(self, authorized_client, mock_cache):
         """Test quote endpoint cache miss, then sets cache"""
         with patch("app.services.tradier_client.get_tradier_client") as mock_client:
             with patch("app.routers.market_data.get_cache", return_value=mock_cache):
@@ -265,7 +264,7 @@ class TestCacheIntegration:
                 }
                 mock_client.return_value = mock_instance
 
-                response = client.get("/api/market/quote/TSLA", headers=auth_headers)
+                response = authorized_client.get("/api/market/quote/TSLA")
                 # Accept 200, 404, or 500 (API may fail with fake credentials)
                 assert response.status_code in [200, 404, 500]
 
@@ -280,19 +279,19 @@ class TestErrorHandling:
     """Test error handling in endpoints"""
 
     @patch("app.services.tradier_client.get_tradier_client")
-    def test_positions_tradier_error(self, mock_client, client, auth_headers):
+    def test_positions_tradier_error(self, mock_client, authorized_client):
         """Test /api/positions when Tradier API fails"""
         mock_instance = MagicMock()
         mock_instance.get_positions.side_effect = Exception("Tradier API error")
         mock_client.return_value = mock_instance
 
-        response = client.get("/api/positions", headers=auth_headers)
+        response = authorized_client.get("/api/positions")
         assert response.status_code == 500
         data = response.json()
         assert "Failed to fetch" in data["detail"]
 
     @patch("app.routers.market.requests.get")
-    def test_market_indices_fallback_to_claude(self, mock_get, client, auth_headers):
+    def test_market_indices_fallback_to_claude(self, mock_get, authorized_client):
         """Test market indices falls back to Claude AI when Tradier fails"""
         # Mock Tradier failure
         mock_get.side_effect = Exception("Tradier down")
@@ -310,7 +309,7 @@ class TestErrorHandling:
             mock_anthropic.return_value = mock_client
 
             try:
-                response = client.get("/api/market/indices", headers=auth_headers)
+                response = authorized_client.get("/api/market/indices")
                 # Accept 200 or 500 (Claude fallback may also fail)
                 assert response.status_code in [200, 500]
                 if response.status_code == 200:

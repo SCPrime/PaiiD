@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
 
 
 router = APIRouter()
@@ -14,6 +14,6 @@ def get_settings():
 
 
 @router.post("/settings")
-def set_settings(payload: dict, _=Depends(require_bearer)):
+def set_settings(payload: dict, _=Depends(get_current_user)):
     _settings.update({k: float(payload.get(k, v)) for k, v in _settings.items()})
     return _settings

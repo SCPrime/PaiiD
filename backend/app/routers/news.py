@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.core.auth import require_bearer
+from app.core.jwt import get_current_user
 
 
 router = APIRouter()
@@ -28,7 +28,7 @@ async def get_company_news(
     sentiment: str | None = Query(default=None, regex="^(bullish|bearish|neutral)$"),
     provider: str | None = None,
     use_cache: bool = Query(default=True),
-    _: str = Depends(require_bearer),
+    _: str = Depends(get_current_user),
 ):
     """
     Get aggregated news for specific company
@@ -98,7 +98,7 @@ async def get_market_news(
     sentiment: str | None = Query(default=None, regex="^(bullish|bearish|neutral)$"),
     provider: str | None = None,
     use_cache: bool = Query(default=True),
-    _: str = Depends(require_bearer),
+    _: str = Depends(get_current_user),
 ):
     """
     Get aggregated market news
@@ -158,7 +158,7 @@ async def get_market_news(
 
 
 @router.get("/news/providers")
-async def get_news_providers(_: str = Depends(require_bearer)):
+async def get_news_providers(_: str = Depends(get_current_user)):
     """List active news providers"""
     if not news_aggregator:
         return {"providers": [], "status": "unavailable"}
@@ -172,7 +172,7 @@ async def get_news_providers(_: str = Depends(require_bearer)):
 
 
 @router.get("/news/health")
-async def get_news_health(_: str = Depends(require_bearer)):
+async def get_news_health(_: str = Depends(get_current_user)):
     """
     Get health status of all news providers including circuit breaker states.
 
@@ -198,7 +198,7 @@ async def get_news_health(_: str = Depends(require_bearer)):
 async def get_market_sentiment(
     category: str = Query(default="general"),
     days_back: int = Query(default=7, ge=1, le=30),
-    _: str = Depends(require_bearer),
+    _: str = Depends(get_current_user),
 ):
     """
     Get aggregated market sentiment analytics
@@ -257,7 +257,7 @@ async def get_market_sentiment(
 
 
 @router.get("/news/cache/stats")
-async def get_cache_stats(_: str = Depends(require_bearer)):
+async def get_cache_stats(_: str = Depends(get_current_user)):
     """Get news cache statistics"""
     if not news_cache:
         return {"status": "unavailable"}
@@ -266,7 +266,7 @@ async def get_cache_stats(_: str = Depends(require_bearer)):
 
 
 @router.post("/news/cache/clear")
-async def clear_news_cache(_: str = Depends(require_bearer)):
+async def clear_news_cache(_: str = Depends(get_current_user)):
     """Clear all cached news"""
     if not news_cache:
         raise HTTPException(status_code=503, detail="Cache unavailable")

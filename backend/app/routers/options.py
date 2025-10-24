@@ -18,13 +18,28 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+try:
+    from cachetools import TTLCache
+except ImportError:  # pragma: no cover - simple fallback for tests without cachetools
+    class TTLCache(dict):  # type: ignore[misc]
+        """Minimal TTLCache fallback when cachetools is unavailable."""
 
-from ..core.config import settings
-from ..core.auth import require_bearer
+        def __init__(self, maxsize: int, ttl: int):
+            super().__init__()
+            self.maxsize = maxsize
+            self.ttl = ttl
+
+        def __setitem__(self, key, value):  # type: ignore[override]
+            if len(self) >= self.maxsize:
+                first_key = next(iter(self))
+                super().__delitem__(first_key)
+            super().__setitem__(key, value)
+
+from ..core.jwt import get_current_user
+from ..models.database import User
 from ..services.tradier_client import get_tradier_client
 
-router = APIRouter(prefix="/options", tags=["options"])
+router = APIRouter(tags=["options"])
 logger = logging.getLogger(__name__)
 
 # 5-minute cache for options chain data
@@ -79,9 +94,13 @@ class OptionsChainResponse(BaseModel):
     symbol: str
     expiration_date: str
     underlying_price: Optional[float] = None
-    calls: List[OptionContract] = []
-    puts: List[OptionContract] = []
+    calls: List[OptionContract] = Field(default_factory=list)
+    puts: List[OptionContract] = Field(default_factory=list)
     total_contracts: int = 0
+    source: str = Field(
+        default="tradier",
+        description="Data source identifier (tradier or cache)",
+    )
 
 
 class ExpirationDate(BaseModel):
@@ -96,10 +115,22 @@ class ExpirationDate(BaseModel):
 # ============================================================================
 
 
-@router.get("/chains/{symbol}", response_model=OptionsChainResponse, dependencies=[Depends(require_bearer)])
+@router.get(
+    "/options/chain/{symbol}",
+    response_model=OptionsChainResponse,
+)
+@router.get(
+    "/options/chains/{symbol}",
+    response_model=OptionsChainResponse,
+)
+@router.get(
+    "/chain/{symbol}",
+    response_model=OptionsChainResponse,
+)
 async def get_options_chain(
     symbol: str,
     expiration: Optional[str] = Query(None, description="Expiration date (YYYY-MM-DD). If not provided, uses nearest expiration."),
+    _current_user: User = Depends(get_current_user),
 ):
     """
     Get options chain for a symbol with Greeks
@@ -134,9 +165,11 @@ async def get_options_chain(
         # Check cache first (5-minute TTL)
         cache_key = f"options_{symbol}_{expiration}"
 
+        cache_source = "tradier"
         if cache_key in options_cache:
             logger.info(f"✅ CACHE HIT: {cache_key}")
             chain_data = options_cache[cache_key]
+            cache_source = "cache"
         else:
             logger.info(f"❌ CACHE MISS: {cache_key} - Fetching from Tradier API")
 
@@ -175,7 +208,8 @@ async def get_options_chain(
                 expiration_date=expiration,
                 calls=[],
                 puts=[],
-                total_contracts=0
+                total_contracts=0,
+                source=cache_source,
             )
 
         # Separate calls and puts, parse Greeks
@@ -215,7 +249,8 @@ async def get_options_chain(
             underlying_price=None,  # Could fetch from separate quote endpoint
             calls=calls,
             puts=puts,
-            total_contracts=len(calls) + len(puts)
+            total_contracts=len(calls) + len(puts),
+            source=cache_source,
         )
 
     except requests.exceptions.HTTPError as e:
@@ -230,8 +265,9 @@ async def get_options_chain(
         )
 
 
+@router.get("/options/expirations/{symbol}", response_model=List[ExpirationDate])
 @router.get("/expirations/{symbol}", response_model=List[ExpirationDate])
-def get_expiration_dates(symbol: str, authorization: str = Depends(require_bearer)):
+def get_expiration_dates(symbol: str, _current_user: User = Depends(get_current_user)):
     """
     Get available expiration dates for a symbol
 
@@ -282,7 +318,7 @@ def get_expiration_dates(symbol: str, authorization: str = Depends(require_beare
         )
 
 
-@router.post("/greeks", dependencies=[Depends(require_bearer)])
+@router.post("/options/greeks", dependencies=[Depends(get_current_user)])
 async def calculate_greeks(
     symbol: str = Query(..., description="Option symbol"),
     underlying_price: float = Query(..., description="Current price of underlying asset"),
@@ -302,7 +338,11 @@ async def calculate_greeks(
     raise HTTPException(status_code=501, detail="Greeks calculation endpoint not yet implemented - Phase 1 scaffold")
 
 
-@router.get("/contract/{option_symbol}", response_model=OptionContract, dependencies=[Depends(require_bearer)])
+@router.get(
+    "/options/contract/{option_symbol}",
+    response_model=OptionContract,
+    dependencies=[Depends(get_current_user)],
+)
 async def get_option_contract(option_symbol: str):
     """
     Get details for a specific option contract
