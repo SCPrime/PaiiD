@@ -27,9 +27,7 @@ class BacktestRequest(BaseModel):
     symbol: str = Field(..., description="Stock symbol to backtest")
     start_date: str = Field(..., description="Start date (YYYY-MM-DD)")
     end_date: str = Field(..., description="End date (YYYY-MM-DD)")
-    initial_capital: float = Field(
-        10000.0, ge=1000, le=1000000, description="Initial capital"
-    )
+    initial_capital: float = Field(10000.0, ge=1000, le=1000000, description="Initial capital")
 
     # Strategy rules
     entry_rules: list[dict[str, Any]] = Field(..., description="Entry conditions")
@@ -103,9 +101,7 @@ async def run_backtest(
     try:
         # Validate dates
         historical_service = HistoricalDataService()
-        if not historical_service.validate_date_range(
-            request.start_date, request.end_date
-        ):
+        if not historical_service.validate_date_range(request.start_date, request.end_date):
             raise HTTPException(
                 status_code=400,
                 detail="Invalid date range. Ensure start_date < end_date and range <= 5 years",
@@ -136,9 +132,7 @@ async def run_backtest(
         # Run backtest
         logger.info(f"Running backtest for {request.symbol} with {len(prices)} bars")
         engine = BacktestingEngine(initial_capital=request.initial_capital)
-        result = engine.execute_backtest(
-            symbol=request.symbol, prices=prices, strategy=strategy
-        )
+        result = engine.execute_backtest(symbol=request.symbol, prices=prices, strategy=strategy)
 
         # Convert dataclass to dict
         result_dict = {
@@ -169,9 +163,7 @@ async def run_backtest(
                 "end_date": result.end_date,
             },
             "equity_curve": result.equity_curve,
-            "trade_history": result.trade_history[
-                :100
-            ],  # Limit to 100 most recent trades
+            "trade_history": result.trade_history[:100],  # Limit to 100 most recent trades
         }
 
         logger.info(
@@ -204,9 +196,7 @@ async def quick_backtest(
         from datetime import datetime, timedelta
 
         end_date = datetime.now().strftime("%Y-%m-%d")
-        start_date = (datetime.now() - timedelta(days=months_back * 30)).strftime(
-            "%Y-%m-%d"
-        )
+        start_date = (datetime.now() - timedelta(days=months_back * 30)).strftime("%Y-%m-%d")
 
         request = BacktestRequest(
             symbol=symbol,

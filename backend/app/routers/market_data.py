@@ -7,7 +7,7 @@ Alpaca is ONLY used for paper trading execution (see orders.py).
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -20,10 +20,8 @@ from ..services.tradier_client import get_tradier_client
 
 logger = logging.getLogger(__name__)
 
-# LOUD LOGGING TO VERIFY NEW CODE IS DEPLOYED
-print("=" * 80)
-print("🚨 TRADIER INTEGRATION CODE LOADED - market_data.py")
-print("=" * 80, flush=True)
+# Runtime notice (kept minimal)
+logger.info("market_data router loaded (Tradier integration)")
 
 router = APIRouter()
 
@@ -61,7 +59,7 @@ async def get_quote(
             "ask": float(quote.get("ask", 0)),
             "last": float(quote.get("last", 0)),
             "volume": int(quote.get("volume", 0)),
-            "timestamp": quote.get("timestamp", datetime.now().isoformat()),
+            "timestamp": quote.get("timestamp", datetime.now(UTC).isoformat()),
             "test_fixture": True,  # Mark as fixture data
         }
 
@@ -127,7 +125,7 @@ async def get_quotes(symbols: str, current_user: User = Depends(get_current_user
                     "bid": float(q.get("bid", 0)),
                     "ask": float(q.get("ask", 0)),
                     "last": float(q.get("last", 0)),
-                    "timestamp": q.get("timestamp", datetime.now().isoformat()),
+                    "timestamp": q.get("timestamp", datetime.now(UTC).isoformat()),
                     "test_fixture": True,  # Mark as fixture data
                 }
 
@@ -147,7 +145,7 @@ async def get_quotes(symbols: str, current_user: User = Depends(get_current_user
                     "bid": float(q.get("bid", 0)),
                     "ask": float(q.get("ask", 0)),
                     "last": float(q.get("last", 0)),
-                    "timestamp": q.get("trade_date", datetime.now().isoformat()),
+                    "timestamp": q.get("trade_date", datetime.now(UTC).isoformat()),
                 }
 
         logger.info(f"✅ Retrieved {len(result)} quotes from Tradier")
@@ -183,7 +181,7 @@ async def get_bars(
         interval = interval_map.get(timeframe, "daily")
 
         # Calculate date range based on limit
-        end_date = datetime.now()
+        end_date = datetime.now(UTC)
         if interval in ["1min", "5min", "15min"]:
             start_date = end_date - timedelta(
                 days=min(limit // 78, 30)
@@ -260,7 +258,7 @@ async def scan_under_4(current_user: User = Depends(get_current_user)):
                             "ask": ask_price,
                             "volume": int(q.get("volume", 0)),
                             "timestamp": q.get(
-                                "trade_date", datetime.now().isoformat()
+                                "trade_date", datetime.now(UTC).isoformat()
                             ),
                         }
                     )

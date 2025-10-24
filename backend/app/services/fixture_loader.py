@@ -7,7 +7,7 @@ This ensures consistent test results regardless of external API availability.
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -98,7 +98,7 @@ class FixtureLoader:
                     ],
                 }
             ],
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "test_fixture": True,
         }
 
@@ -110,13 +110,13 @@ class FixtureLoader:
     def _create_spy_fixture(self, file_path: Path):
         """Create SPY option chain fixture"""
         # Generate multiple expiration dates
-        base_date = datetime.now() + timedelta(days=7)
+        base_date = datetime.now(UTC) + timedelta(days=7)
         expirations = []
 
         for i in range(3):  # 3 expiration dates
             exp_date = base_date + timedelta(days=i * 7)
             exp_date_str = exp_date.strftime("%Y-%m-%d")
-            days_to_expiry = (exp_date - datetime.now()).days
+            days_to_expiry = (exp_date - datetime.now(UTC)).days
 
             # Generate calls and puts around current price (assume SPY at $450)
             current_price = 450.0
@@ -185,7 +185,7 @@ class FixtureLoader:
             "symbol": "SPY",
             "underlying_price": 450.0,
             "expiration_dates": expirations,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "test_fixture": True,
         }
 
@@ -215,7 +215,7 @@ class FixtureLoader:
             },
             "test_symbols": ["OPTT", "SPY"],
             "test_expirations": ["2025-11-15", "2025-11-22", "2025-11-29"],
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "version": "1.0.0",
         }
 
@@ -378,28 +378,28 @@ class FixtureLoader:
                 "ask": 450.1,
                 "last": 450.05,
                 "volume": 50000000,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
             "QQQ": {
                 "bid": 380.0,
                 "ask": 380.1,
                 "last": 380.05,
                 "volume": 30000000,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
             "AAPL": {
                 "bid": 175.0,
                 "ask": 175.1,
                 "last": 175.05,
                 "volume": 40000000,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
             "MSFT": {
                 "bid": 350.0,
                 "ask": 350.1,
                 "last": 350.05,
                 "volume": 25000000,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         }
 
@@ -455,7 +455,7 @@ class FixtureLoader:
             "regt_buying_power": 50000.0,
             "daytrading_buying_power": 100000.0,
             "non_marginable_buying_power": 25000.0,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         with open(file_path, "w") as f:

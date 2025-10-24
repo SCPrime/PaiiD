@@ -61,10 +61,10 @@ async def log_telemetry(batch: TelemetryBatch):
 @router.get("/events")
 async def get_telemetry_events(
     limit: int = 100,
-    user_id: str = None,
-    component: str = None,
-    action: str = None,
-    user_role: str = None,
+    user_id: str | None = None,
+    component: str | None = None,
+    action: str | None = None,
+    user_role: str | None = None,
 ):
     """
     Retrieve telemetry events with optional filters
@@ -75,15 +75,11 @@ async def get_telemetry_events(
         if user_id:
             filtered_events = [e for e in filtered_events if e.get("userId") == user_id]
         if component:
-            filtered_events = [
-                e for e in filtered_events if e.get("component") == component
-            ]
+            filtered_events = [e for e in filtered_events if e.get("component") == component]
         if action:
             filtered_events = [e for e in filtered_events if e.get("action") == action]
         if user_role:
-            filtered_events = [
-                e for e in filtered_events if e.get("userRole") == user_role
-            ]
+            filtered_events = [e for e in filtered_events if e.get("userRole") == user_role]
 
         filtered_events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
         return {"total": len(filtered_events), "events": filtered_events[:limit]}
@@ -108,8 +104,8 @@ async def get_telemetry_stats():
                 "users_by_role": {},
             }
 
-        unique_users = set(e.get("userId") for e in telemetry_events)
-        unique_sessions = set(e.get("sessionId") for e in telemetry_events)
+        unique_users = {e.get("userId") for e in telemetry_events}
+        unique_sessions = {e.get("sessionId") for e in telemetry_events}
 
         component_counts = {}
         for event in telemetry_events:
@@ -126,12 +122,8 @@ async def get_telemetry_stats():
             role = event.get("userRole", "unknown")
             role_counts[role] = role_counts.get(role, 0) + 1
 
-        top_components = sorted(
-            component_counts.items(), key=lambda x: x[1], reverse=True
-        )[:10]
-        top_actions = sorted(action_counts.items(), key=lambda x: x[1], reverse=True)[
-            :10
-        ]
+        top_components = sorted(component_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        top_actions = sorted(action_counts.items(), key=lambda x: x[1], reverse=True)[:10]
 
         return {
             "total_events": len(telemetry_events),

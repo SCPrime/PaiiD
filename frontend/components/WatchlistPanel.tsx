@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { ChevronDown, ChevronUp, RefreshCw, Star, TrendingDown, TrendingUp } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { UserProfile, Watchlist, getOrCreateProfile } from "../types/profile";
-import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, RefreshCw, Star } from "lucide-react";
 
 interface WatchlistPanelProps {
   onSymbolClick?: (symbol: string) => void;
@@ -80,7 +80,8 @@ const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
     return () => {
       window.removeEventListener("profile-updated", handleProfileUpdate as EventListener);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWatchlistId]);
 
   useEffect(() => {
     // Fetch quotes for selected watchlist
@@ -91,6 +92,7 @@ const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
       const intervalId = setInterval(fetchQuotes, refreshInterval);
       return () => clearInterval(intervalId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedWatchlistId, refreshInterval]);
 
   const fetchQuotes = async () => {

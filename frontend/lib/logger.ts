@@ -14,7 +14,7 @@ const isDevelopment = process.env.NODE_ENV === "development";
 const isTest = process.env.NODE_ENV === "test";
 
 interface LogData {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 class Logger {
@@ -45,7 +45,7 @@ class Logger {
   /**
    * Log error messages (always logged)
    */
-  error(message: string, error?: Error | any, data?: LogData): void {
+  error(message: string, error?: Error | unknown, data?: LogData): void {
     const errorData =
       error instanceof Error
         ? { message: error.message, stack: error.stack, ...data }

@@ -33,7 +33,7 @@ class FinnhubProvider(BaseNewsProvider):
             print(f"[ERROR] Finnhub market news error: {e}")
             return []
 
-    def _transform_article(self, article: dict, symbol: str = None) -> NewsArticle:
+    def _transform_article(self, article: dict, symbol: str | None = None) -> NewsArticle:
         return NewsArticle(
             id=f"finnhub_{article.get('id', hash(article['url']))}",
             title=article["headline"],

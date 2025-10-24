@@ -56,9 +56,7 @@ async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExc
 
     # Extract retry-after from exception
     retry_after = (
-        exc.detail.split("Retry after ")[1]
-        if "Retry after" in exc.detail
-        else "60 seconds"
+        exc.detail.split("Retry after ")[1] if "Retry after" in exc.detail else "60 seconds"
     )
 
     return JSONResponse(

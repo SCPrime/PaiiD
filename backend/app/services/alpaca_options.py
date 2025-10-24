@@ -7,13 +7,13 @@ Integrates with Greeks calculation for enriched options data
 import logging
 import os
 from datetime import datetime
-from typing import Optional
 
 from alpaca.data.historical import OptionHistoricalDataClient
 from alpaca.data.requests import OptionChainRequest, OptionSnapshotRequest
 from alpaca.trading.client import TradingClient
 
 from .greeks import GreeksCalculator
+
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,7 @@ class AlpacaOptionsClient:
         self.secret_key = os.getenv("ALPACA_PAPER_SECRET_KEY")
 
         if not self.api_key or not self.secret_key:
-            raise ValueError(
-                "ALPACA_PAPER_API_KEY and ALPACA_PAPER_SECRET_KEY must be set in .env"
-            )
+            raise ValueError("ALPACA_PAPER_API_KEY and ALPACA_PAPER_SECRET_KEY must be set in .env")
 
         # Initialize Alpaca Options Data Client
         self.data_client = OptionHistoricalDataClient(
@@ -48,8 +46,8 @@ class AlpacaOptionsClient:
     async def get_options_chain(
         self,
         symbol: str,
-        expiration_date: Optional[str] = None,
-        option_type: Optional[str] = None,
+        expiration_date: str | None = None,
+        option_type: str | None = None,
     ) -> dict:
         """
         Get options chain for a symbol with Greeks calculation
@@ -107,9 +105,7 @@ class AlpacaOptionsClient:
 
                 # Calculate Greeks
                 days_to_expiry = self._days_to_expiration(parsed["expiration"])
-                implied_vol = (
-                    contract_data.get("implied_volatility", 0.3) or 0.3
-                )  # Default 30%
+                implied_vol = contract_data.get("implied_volatility", 0.3) or 0.3  # Default 30%
 
                 greeks = self.greeks_calculator.calculate_greeks(
                     option_type=parsed["type"],
@@ -151,9 +147,7 @@ class AlpacaOptionsClient:
             calls.sort(key=lambda x: x["strike_price"])
             puts.sort(key=lambda x: x["strike_price"])
 
-            logger.info(
-                f"✅ Options chain retrieved: {len(calls)} calls, {len(puts)} puts"
-            )
+            logger.info(f"✅ Options chain retrieved: {len(calls)} calls, {len(puts)} puts")
 
             return {
                 "symbol": symbol,
@@ -224,9 +218,7 @@ class AlpacaOptionsClient:
                 "gamma": greeks["gamma"],
                 "theta": greeks["theta"],
                 "vega": greeks["vega"],
-                "in_the_money": self._is_itm(
-                    parsed["type"], underlying_price, parsed["strike"]
-                ),
+                "in_the_money": self._is_itm(parsed["type"], underlying_price, parsed["strike"]),
                 "days_to_expiration": days_to_expiry,
                 "timestamp": datetime.utcnow().isoformat() + "Z",
             }
@@ -235,9 +227,7 @@ class AlpacaOptionsClient:
             return details
 
         except Exception as e:
-            logger.error(
-                f"❌ Failed to fetch contract details for {option_symbol}: {e!s}"
-            )
+            logger.error(f"❌ Failed to fetch contract details for {option_symbol}: {e!s}")
             raise
 
     async def get_expirations(self, symbol: str) -> list[str]:
@@ -260,7 +250,7 @@ class AlpacaOptionsClient:
             for contract in chain["calls"] + chain["puts"]:
                 expirations.add(contract["expiration_date"])
 
-            expiration_list = sorted(list(expirations))
+            expiration_list = sorted(expirations)
 
             logger.info(f"✅ Found {len(expiration_list)} expirations for {symbol}")
             return expiration_list
@@ -269,7 +259,7 @@ class AlpacaOptionsClient:
             logger.error(f"❌ Failed to fetch expirations for {symbol}: {e!s}")
             raise
 
-    def _parse_option_symbol(self, option_symbol: str) -> Optional[dict]:
+    def _parse_option_symbol(self, option_symbol: str) -> dict | None:
         """
         Parse Alpaca option symbol format
 
@@ -338,7 +328,7 @@ class AlpacaOptionsClient:
 
 
 # Singleton instance
-_alpaca_options_client: Optional[AlpacaOptionsClient] = None
+_alpaca_options_client: AlpacaOptionsClient | None = None
 
 
 def get_alpaca_options_client() -> AlpacaOptionsClient:

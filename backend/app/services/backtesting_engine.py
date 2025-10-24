@@ -228,7 +228,7 @@ class BacktestingEngine:
         price_history = []
 
         # Iterate through each bar
-        for i, bar in enumerate(prices):
+        for _i, bar in enumerate(prices):
             date = bar["date"]
             close_price = bar["close"]
             price_history.append(close_price)

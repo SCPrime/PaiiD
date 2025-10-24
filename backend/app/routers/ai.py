@@ -58,9 +58,7 @@ class Recommendation(BaseModel):
     tradeData: TradeData | None = None  # 1-click execution data
     portfolioFit: str | None = None  # How this fits user's portfolio
     momentum: dict | None = None  # Momentum analysis (price vs SMAs, volume)
-    volatility: dict | None = (
-        None  # Volatility analysis (ATR, BB width, classification)
-    )
+    volatility: dict | None = None  # Volatility analysis (ATR, BB width, classification)
     sector: str | None = None  # Sector assignment (e.g., "Technology", "Healthcare")
     sectorPerformance: dict | None = None  # Sector performance data
     explanation: str | None = None  # Detailed "Why this recommendation?" explanation
@@ -154,9 +152,7 @@ async def get_recommendations(current_user: User = Depends(get_current_user)):
                 )
 
                 # Calculate volatility analysis (ATR, BB width)
-                volatility_data = await _calculate_volatility_analysis(
-                    symbol, current_price
-                )
+                volatility_data = await _calculate_volatility_analysis(symbol, current_price)
 
                 # Map symbol to sector and find sector performance
                 symbol_sector = _map_symbol_to_sector(symbol)
@@ -169,10 +165,8 @@ async def get_recommendations(current_user: User = Depends(get_current_user)):
                                 "name": sec["name"],
                                 "changePercent": sec.get("changePercent", 0),
                                 "rank": sec.get("rank", 0),
-                                "isLeader": sec["name"]
-                                == sector_performance_data.get("leader"),
-                                "isLaggard": sec["name"]
-                                == sector_performance_data.get("laggard"),
+                                "isLeader": sec["name"] == sector_performance_data.get("leader"),
+                                "isLaggard": sec["name"] == sector_performance_data.get("laggard"),
                             }
                             break
 
@@ -182,15 +176,13 @@ async def get_recommendations(current_user: User = Depends(get_current_user)):
                 take_profit = round(current_price * 1.10, 2)  # 10% target
 
                 # Generate action based on momentum analysis + price movement
-                action, confidence, target_price, risk, reason = (
-                    _generate_signal_from_momentum(
-                        symbol,
-                        current_price,
-                        change_percent,
-                        momentum_data,
-                        entry_price,
-                        take_profit,
-                    )
+                action, confidence, target_price, risk, reason = _generate_signal_from_momentum(
+                    symbol,
+                    current_price,
+                    change_percent,
+                    momentum_data,
+                    entry_price,
+                    take_profit,
                 )
 
                 # Adjust stop loss and take profit for SELL signals
@@ -199,9 +191,7 @@ async def get_recommendations(current_user: User = Depends(get_current_user)):
                     take_profit = round(current_price * 0.90, 2)
 
                 # Calculate AI score (1-10) based on confidence, risk, momentum, and volume
-                score = _calculate_enhanced_score(
-                    confidence, risk, change_percent, momentum_data
-                )
+                score = _calculate_enhanced_score(confidence, risk, change_percent, momentum_data)
 
                 # Generate detailed explanation
                 explanation = _generate_recommendation_explanation(
@@ -218,9 +208,7 @@ async def get_recommendations(current_user: User = Depends(get_current_user)):
                 portfolio_fit = _analyze_portfolio_fit(symbol, action, portfolio_data)
 
                 # Calculate suggested position size (% of portfolio)
-                suggested_qty = _calculate_position_size(
-                    current_price, portfolio_data, risk
-                )
+                suggested_qty = _calculate_position_size(current_price, portfolio_data, risk)
 
                 # Create trade data for 1-click execution
                 trade_data = None
@@ -263,13 +251,9 @@ async def get_recommendations(current_user: User = Depends(get_current_user)):
         recommendations.sort(key=lambda x: x.score, reverse=True)
 
         # Generate portfolio analysis
-        portfolio_analysis = _generate_portfolio_analysis(
-            portfolio_data, recommendations
-        )
+        portfolio_analysis = _generate_portfolio_analysis(portfolio_data, recommendations)
 
-        logger.info(
-            f"✅ Generated {len(recommendations)} portfolio-aware recommendations"
-        )
+        logger.info(f"✅ Generated {len(recommendations)} portfolio-aware recommendations")
 
         return RecommendationsResponse(
             recommendations=recommendations,
@@ -280,9 +264,7 @@ async def get_recommendations(current_user: User = Depends(get_current_user)):
 
     except Exception as e:
         logger.error(f"❌ Failed to generate recommendations: {e!s}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate recommendations: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {e!s}")
 
 
 @router.get("/recommendations/{symbol}", response_model=Recommendation)
@@ -298,9 +280,7 @@ async def get_symbol_recommendation(symbol: str):
         quote = client.get_quote(symbol)
 
         if not quote or "last" not in quote:
-            raise HTTPException(
-                status_code=404, detail=f"No price data available for {symbol}"
-            )
+            raise HTTPException(status_code=404, detail=f"No price data available for {symbol}")
 
         current_price = float(quote["last"])
 
@@ -331,9 +311,7 @@ async def get_symbol_recommendation(symbol: str):
         raise
     except Exception as e:
         logger.error(f"❌ Failed to generate recommendation for {symbol}: {e!s}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate recommendation: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to generate recommendation: {e!s}")
 
 
 @router.get(
@@ -342,13 +320,9 @@ async def get_symbol_recommendation(symbol: str):
     dependencies=[Depends(require_bearer)],
 )
 async def get_ml_signals(
-    symbols: str | None = Query(
-        default=None, description="Comma-separated list of symbols"
-    ),
+    symbols: str | None = Query(default=None, description="Comma-separated list of symbols"),
     min_confidence: float = Query(default=60.0, ge=0, le=100),
-    use_technical: bool = Query(
-        default=True, description="Use real technical indicators"
-    ),
+    use_technical: bool = Query(default=True, description="Use real technical indicators"),
 ):
     """
     Generate ML-based trading signals with technical analysis
@@ -374,9 +348,7 @@ async def get_ml_signals(
                 "$DJI.IX,$COMP.IX,AAPL,MSFT,GOOGL,META,NVDA,AMZN,TSLA",
             )
 
-        symbol_list = [s.strip().upper() for s in symbols.split(",")][
-            :10
-        ]  # Limit to 10
+        symbol_list = [s.strip().upper() for s in symbols.split(",")][:10]  # Limit to 10
 
         recommendations = []
 
@@ -438,9 +410,7 @@ async def _generate_technical_signal(symbol: str) -> Recommendation | None:
         )
 
         if not bars or len(bars) < 50:
-            logger.warning(
-                f"Insufficient historical data for {symbol} (got {len(bars)} bars)"
-            )
+            logger.warning(f"Insufficient historical data for {symbol} (got {len(bars)} bars)")
             return None
 
         # Extract closing prices for technical analysis
@@ -534,9 +504,7 @@ async def analyze_symbol(symbol: str, current_user: User = Depends(get_current_u
         quote = client.get_quote(symbol)
 
         if not quote or "last" not in quote:
-            raise HTTPException(
-                status_code=404, detail=f"No price data available for {symbol}"
-            )
+            raise HTTPException(status_code=404, detail=f"No price data available for {symbol}")
 
         current_price = float(quote["last"])
 
@@ -716,9 +684,7 @@ async def _fetch_portfolio_data() -> dict:
                     "qty": float(pos.qty),
                     "market_value": float(pos.market_value),
                     "pct_of_portfolio": (
-                        (float(pos.market_value) / total_value * 100)
-                        if total_value > 0
-                        else 0
+                        (float(pos.market_value) / total_value * 100) if total_value > 0 else 0
                     ),
                     "unrealized_pl": float(pos.unrealized_pl),
                     "unrealized_plpc": float(pos.unrealized_plpc) * 100,
@@ -743,9 +709,7 @@ async def _fetch_portfolio_data() -> dict:
         }
 
 
-def _calculate_recommendation_score(
-    confidence: float, risk: str, change_percent: float
-) -> float:
+def _calculate_recommendation_score(confidence: float, risk: str, change_percent: float) -> float:
     """
     Calculate 1-10 recommendation score
 
@@ -774,7 +738,7 @@ def _calculate_recommendation_score(
 def _analyze_portfolio_fit(symbol: str, action: str, portfolio_data: dict) -> str:
     """Analyze how this recommendation fits the user's portfolio"""
     positions = portfolio_data.get("positions", [])
-    total_value = portfolio_data.get("total_value", 100000)
+    portfolio_data.get("total_value", 100000)
 
     # Check if symbol already in portfolio
     existing_position = next((p for p in positions if p["symbol"] == symbol), None)
@@ -799,9 +763,7 @@ def _analyze_portfolio_fit(symbol: str, action: str, portfolio_data: dict) -> st
     return "✅ Good fit"
 
 
-def _calculate_position_size(
-    current_price: float, portfolio_data: dict, risk: str
-) -> int:
+def _calculate_position_size(current_price: float, portfolio_data: dict, risk: str) -> int:
     """
     Calculate suggested position size based on portfolio and risk
 
@@ -891,9 +853,7 @@ def _generate_portfolio_analysis(
     buy_recs = [r for r in recommendations if r.action == "BUY"]
     if buy_recs and num_positions > 0:
         new_symbols = [
-            r.symbol
-            for r in buy_recs
-            if r.symbol not in [p["symbol"] for p in positions]
+            r.symbol for r in buy_recs if r.symbol not in [p["symbol"] for p in positions]
         ]
         if new_symbols:
             portfolio_recommendations.append(
@@ -977,25 +937,15 @@ async def _calculate_momentum_analysis(
         sma_200 = sum(prices) / len(prices) if len(prices) >= 200 else current_price
 
         # Calculate percentage distance from SMAs
-        price_vs_sma_20 = (
-            round(((current_price / sma_20) - 1) * 100, 2) if sma_20 > 0 else 0
-        )
-        price_vs_sma_50 = (
-            round(((current_price / sma_50) - 1) * 100, 2) if sma_50 > 0 else 0
-        )
-        price_vs_sma_200 = (
-            round(((current_price / sma_200) - 1) * 100, 2) if sma_200 > 0 else 0
-        )
+        price_vs_sma_20 = round(((current_price / sma_20) - 1) * 100, 2) if sma_20 > 0 else 0
+        price_vs_sma_50 = round(((current_price / sma_50) - 1) * 100, 2) if sma_50 > 0 else 0
+        price_vs_sma_200 = round(((current_price / sma_200) - 1) * 100, 2) if sma_200 > 0 else 0
 
         # Calculate 20-day average volume
-        avg_volume_20d = (
-            int(sum(volumes[-20:]) / 20) if len(volumes) >= 20 else current_volume
-        )
+        avg_volume_20d = int(sum(volumes[-20:]) / 20) if len(volumes) >= 20 else current_volume
 
         # Volume strength analysis
-        volume_ratio = (
-            round(current_volume / avg_volume_20d, 2) if avg_volume_20d > 0 else 1.0
-        )
+        volume_ratio = round(current_volume / avg_volume_20d, 2) if avg_volume_20d > 0 else 1.0
         if volume_ratio > 1.5:
             volume_strength = "High"
         elif volume_ratio < 0.7:
@@ -1188,9 +1138,7 @@ async def _fetch_sector_performance() -> dict:
             )
             return data
         else:
-            logger.warning(
-                f"⚠️ Sector performance endpoint returned {response.status_code}"
-            )
+            logger.warning(f"⚠️ Sector performance endpoint returned {response.status_code}")
             return {"sectors": [], "leader": "Unknown", "laggard": "Unknown"}
 
     except Exception as e:
@@ -1247,9 +1195,7 @@ async def _calculate_volatility_analysis(symbol: str, current_price: float) -> d
         atr_percent = round((atr / current_price) * 100, 2) if current_price > 0 else 0
 
         # Calculate Bollinger Band width
-        bb_width = TechnicalIndicators.calculate_bb_width(
-            closes, period=20, std_dev=2.0
-        )
+        bb_width = TechnicalIndicators.calculate_bb_width(closes, period=20, std_dev=2.0)
 
         # Classify volatility based on BB width (primary) and ATR percent (secondary)
         # BB Width thresholds: <3% = Low, 3-5% = Medium, >5% = High
@@ -1306,7 +1252,7 @@ def _generate_signal_from_momentum(
     """
     trend = momentum["trend_alignment"]
     price_vs_sma_20 = momentum["price_vs_sma_20"]
-    price_vs_sma_50 = momentum["price_vs_sma_50"]
+    momentum["price_vs_sma_50"]
     volume_strength = momentum["volume_strength"]
 
     # Strong BUY signals
@@ -1461,17 +1407,11 @@ def _generate_recommendation_explanation(
 
     # Action header
     if action == "BUY":
-        explanation_parts.append(
-            f"**BUY Recommendation** ({confidence:.0f}% confidence)"
-        )
+        explanation_parts.append(f"**BUY Recommendation** ({confidence:.0f}% confidence)")
     elif action == "SELL":
-        explanation_parts.append(
-            f"**SELL Recommendation** ({confidence:.0f}% confidence)"
-        )
+        explanation_parts.append(f"**SELL Recommendation** ({confidence:.0f}% confidence)")
     else:
-        explanation_parts.append(
-            f"**HOLD Recommendation** ({confidence:.0f}% confidence)"
-        )
+        explanation_parts.append(f"**HOLD Recommendation** ({confidence:.0f}% confidence)")
 
     explanation_parts.append("")
 
@@ -1499,9 +1439,7 @@ def _generate_recommendation_explanation(
     if volume_strength == "High":
         explanation_parts.append("- ✅ High volume confirms price movement strength")
     elif volume_strength == "Low":
-        explanation_parts.append(
-            "- ⚠️ Low volume suggests weak conviction in price move"
-        )
+        explanation_parts.append("- ⚠️ Low volume suggests weak conviction in price move")
     else:
         explanation_parts.append("- 📊 Normal volume - no unusual activity")
     explanation_parts.append("")
@@ -1518,9 +1456,7 @@ def _generate_recommendation_explanation(
             "- ⚠️ All moving averages aligned bearish (SMA-20 < SMA-50 < SMA-200)"
         )
     elif "Mixed" in trend:
-        explanation_parts.append(
-            "- ⚠️ Mixed signals - some bullish, some bearish indicators"
-        )
+        explanation_parts.append("- ⚠️ Mixed signals - some bullish, some bearish indicators")
     explanation_parts.append("")
 
     # Risk assessment
@@ -1529,13 +1465,9 @@ def _generate_recommendation_explanation(
     if risk == "Low":
         explanation_parts.append("- ✅ Strong signals with high confidence")
     elif risk == "Medium":
-        explanation_parts.append(
-            "- ⚠️ Moderate risk - proceed with caution and proper stop loss"
-        )
+        explanation_parts.append("- ⚠️ Moderate risk - proceed with caution and proper stop loss")
     else:
-        explanation_parts.append(
-            "- 🔴 High risk - weak signals, consider waiting for better setup"
-        )
+        explanation_parts.append("- 🔴 High risk - weak signals, consider waiting for better setup")
 
     return "\n".join(explanation_parts)
 
@@ -1591,9 +1523,7 @@ async def get_recommended_templates(db: Session = Depends(get_db)):
 
             if bars and len(bars) >= 20:
                 closes = [float(bar["close"]) for bar in bars[-20:]]
-                bb_width = TechnicalIndicators.calculate_bb_width(
-                    closes, period=20, std_dev=2.0
-                )
+                bb_width = TechnicalIndicators.calculate_bb_width(closes, period=20, std_dev=2.0)
 
                 if bb_width < 3.0:
                     market_volatility = "Low"
@@ -1647,29 +1577,19 @@ async def get_recommended_templates(db: Session = Depends(get_db)):
                         "✅ Excellent for current high volatility market conditions"
                     )
                 elif template.strategy_type == "mean_reversion":
-                    rationale_parts.append(
-                        "⚠️ Mean reversion may struggle in high volatility"
-                    )
+                    rationale_parts.append("⚠️ Mean reversion may struggle in high volatility")
             elif market_volatility == "Low":
                 if template.strategy_type == "mean_reversion":
-                    rationale_parts.append(
-                        "✅ Perfect for current low volatility environment"
-                    )
+                    rationale_parts.append("✅ Perfect for current low volatility environment")
                 elif template.strategy_type in ["momentum", "volatility_breakout"]:
                     rationale_parts.append("⚠️ Limited opportunities in low volatility")
             else:
                 rationale_parts.append("✅ Good fit for current market conditions")
 
             # Performance highlights
-            rationale_parts.append(
-                f"📈 Historical win rate: {template.expected_win_rate:.0f}%"
-            )
-            rationale_parts.append(
-                f"💰 Avg return per trade: {template.avg_return_percent:.1f}%"
-            )
-            rationale_parts.append(
-                f"📉 Max drawdown: {template.max_drawdown_percent:.1f}%"
-            )
+            rationale_parts.append(f"📈 Historical win rate: {template.expected_win_rate:.0f}%")
+            rationale_parts.append(f"💰 Avg return per trade: {template.avg_return_percent:.1f}%")
+            rationale_parts.append(f"📉 Max drawdown: {template.max_drawdown_percent:.1f}%")
 
             recommended_templates.append(
                 {
@@ -1813,9 +1733,7 @@ async def save_recommendation(
 
     except Exception as e:
         logger.error(f"❌ Failed to save recommendation: {e!s}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to save recommendation: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to save recommendation: {e!s}")
 
 
 @router.get(
@@ -1827,9 +1745,7 @@ async def get_recommendation_history(
     status: str | None = Query(
         None, description="Filter by status (pending, executed, ignored, expired)"
     ),
-    limit: int = Query(
-        50, ge=1, le=200, description="Maximum number of recommendations to return"
-    ),
+    limit: int = Query(50, ge=1, le=200, description="Maximum number of recommendations to return"),
     offset: int = Query(0, ge=0, description="Number of recommendations to skip"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -1850,8 +1766,7 @@ async def get_recommendation_history(
 
         # Build query
         query = db.query(AIRecommendation).filter(
-            AIRecommendation.user_id
-            == current_user.id  # Use authenticated user ID from JWT
+            AIRecommendation.user_id == current_user.id  # Use authenticated user ID from JWT
         )
 
         # Apply filters
@@ -1883,15 +1798,9 @@ async def get_recommendation_history(
                     reasoning=rec.reasoning,
                     market_context=rec.market_context,
                     status=rec.status,
-                    created_at=rec.created_at.isoformat() + "Z"
-                    if rec.created_at
-                    else None,
-                    expires_at=rec.expires_at.isoformat() + "Z"
-                    if rec.expires_at
-                    else None,
-                    executed_at=rec.executed_at.isoformat() + "Z"
-                    if rec.executed_at
-                    else None,
+                    created_at=rec.created_at.isoformat() + "Z" if rec.created_at else None,
+                    expires_at=rec.expires_at.isoformat() + "Z" if rec.expires_at else None,
+                    executed_at=rec.executed_at.isoformat() + "Z" if rec.executed_at else None,
                     execution_price=rec.execution_price,
                     actual_pnl=rec.actual_pnl,
                     actual_pnl_percent=rec.actual_pnl_percent,
@@ -2008,9 +1917,7 @@ Positions:
                 cost_basis = pos.get("cost_basis", 0)
                 market_value = pos.get("close_price", 0) * float(quantity)
                 pnl = market_value - float(cost_basis)
-                pnl_pct = (
-                    (pnl / float(cost_basis) * 100) if float(cost_basis) > 0 else 0
-                )
+                pnl_pct = (pnl / float(cost_basis) * 100) if float(cost_basis) > 0 else 0
 
                 portfolio_summary += f"{i}. {symbol}: {quantity} shares, ${market_value:.2f} value, P&L: {pnl_pct:+.1f}%\n"
         else:
@@ -2138,9 +2045,7 @@ def _generate_rule_based_portfolio_analysis(
             "Consider diversifying across more positions to reduce concentration risk"
         )
     if cash_ratio < 0.2:
-        recommendations.append(
-            "Increase cash reserves to have dry powder for opportunities"
-        )
+        recommendations.append("Increase cash reserves to have dry powder for opportunities")
     if positions_count == 0:
         recommendations.append("Start building positions in quality stocks or ETFs")
     if positions_count > 10:
@@ -2226,9 +2131,7 @@ async def analyze_news(
         source = article.get("source", "Unknown")
 
         if not title and not content:
-            raise HTTPException(
-                status_code=400, detail="Article must have title or content"
-            )
+            raise HTTPException(status_code=400, detail="Article must have title or content")
 
         # Get user's positions for context
         from ..services.tradier_client import get_tradier_client
@@ -2275,9 +2178,7 @@ Base your analysis on:
 
         anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
         if not anthropic_api_key:
-            raise HTTPException(
-                status_code=500, detail="ANTHROPIC_API_KEY not configured"
-            )
+            raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not configured")
 
         anthropic = Anthropic(api_key=anthropic_api_key)
 
@@ -2303,9 +2204,7 @@ Base your analysis on:
         else:
             raise ValueError(f"Could not parse AI response: {ai_text}")
 
-        logger.info(
-            f"✅ News analysis complete - Sentiment: {analysis.get('sentiment')}"
-        )
+        logger.info(f"✅ News analysis complete - Sentiment: {analysis.get('sentiment')}")
 
         # Return enriched analysis
         return {

@@ -42,9 +42,10 @@ class ArchivalTool:
         source_path = self.base_dir / file_info["path"]
 
         if not source_path.exists():
-            error = f"File not found: {file_info['path']}"
+            safe_path = file_info["path"].encode("ascii", "replace").decode("ascii")
+            error = f"File not found: {safe_path}"
             self.stats["errors"].append(error)
-            print(f"  ⚠️  {error}")
+            print(f"  [WARNING] {error}")
             return False
 
         # Preserve directory structure in archive
@@ -52,16 +53,23 @@ class ArchivalTool:
         target_path = self.archive_dir / rel_path
 
         try:
+            # Safe print with encoding handling
+            safe_path = file_info["path"].encode("ascii", "replace").decode("ascii")
+
             if self.dry_run:
-                print(f"  [DRY RUN] Would move: {file_info['path']}")
-                print(f"            Target: {target_path.relative_to(self.base_dir)}")
+                print(f"  [DRY RUN] Would move: {safe_path}")
+                try:
+                    target_rel = str(target_path.relative_to(self.base_dir))
+                    print(f"            Target: {target_rel}")
+                except:
+                    pass
             else:
                 # Create target directory
                 target_path.parent.mkdir(parents=True, exist_ok=True)
 
                 # Move the file
                 shutil.move(str(source_path), str(target_path))
-                print(f"  ✓ Archived: {file_info['path']}")
+                print(f"  [OK] Archived: {safe_path}")
 
             # Record in manifest
             self.manifest.append(
@@ -80,9 +88,10 @@ class ArchivalTool:
             return True
 
         except Exception as e:
-            error = f"Error archiving {file_info['path']}: {str(e)}"
+            safe_path = file_info["path"].encode("ascii", "replace").decode("ascii")
+            error = f"Error archiving {safe_path}: {str(e)}"
             self.stats["errors"].append(error)
-            print(f"  ❌ {error}")
+            print(f"  [ERROR] {error}")
             return False
 
     def generate_manifest(self):
@@ -106,9 +115,11 @@ class ArchivalTool:
             self.archive_dir.mkdir(parents=True, exist_ok=True)
             with open(manifest_path, "w", encoding="utf-8") as f:
                 json.dump(manifest_data, f, indent=2)
-            print(f"\n📋 Manifest saved: {manifest_path.relative_to(self.base_dir)}")
+            print(f"\n[MANIFEST] Saved: {manifest_path.relative_to(self.base_dir)}")
         else:
-            print(f"\n📋 [DRY RUN] Manifest would be saved to: {manifest_path.relative_to(self.base_dir)}")
+            print(
+                f"\n[DRY RUN] Manifest would be saved to: {manifest_path.relative_to(self.base_dir)}"
+            )
 
         return manifest_data
 
@@ -140,21 +151,21 @@ class ArchivalTool:
                 [
                     f"# Restore: {original_rel}",
                     f'if (Test-Path "{archive_rel}") {{',
-                    f'    try {{',
+                    "    try {",
                     f'        $targetDir = Split-Path "{original_rel}" -Parent',
-                    f'        if ($targetDir -and !(Test-Path $targetDir)) {{',
-                    f'            New-Item -ItemType Directory -Path $targetDir -Force | Out-Null',
-                    f'        }}',
+                    "        if ($targetDir -and !(Test-Path $targetDir)) {",
+                    "            New-Item -ItemType Directory -Path $targetDir -Force | Out-Null",
+                    "        }",
                     f'        Move-Item -Path "{archive_rel}" -Destination "{original_rel}" -Force',
                     f'        Write-Host "✓ Restored: {original_rel}"',
-                    f"        $restoredCount++",
-                    f"    }} catch {{",
+                    "        $restoredCount++",
+                    "    } catch {",
                     f'        Write-Host "❌ Error restoring {original_rel}: $_" -ForegroundColor Red',
-                    f"        $errorCount++",
-                    f"    }}",
-                    f"}} else {{",
+                    "        $errorCount++",
+                    "    }",
+                    "} else {",
                     f'    Write-Host "⚠️  Not found in archive: {archive_rel}" -ForegroundColor Yellow',
-                    f"}}",
+                    "}",
                     "",
                 ]
             )
@@ -173,9 +184,13 @@ class ArchivalTool:
             self.archive_dir.mkdir(parents=True, exist_ok=True)
             with open(rollback_path, "w", encoding="utf-8") as f:
                 f.write("\n".join(script_lines))
-            print(f"🔄 Rollback script saved: {rollback_path.relative_to(self.base_dir)}")
+            print(
+                f"[ROLLBACK] Script saved: {rollback_path.relative_to(self.base_dir)}"
+            )
         else:
-            print(f"🔄 [DRY RUN] Rollback script would be saved to: {rollback_path.relative_to(self.base_dir)}")
+            print(
+                f"[DRY RUN] Rollback script would be saved to: {rollback_path.relative_to(self.base_dir)}"
+            )
 
     def run(self, inventory_csv: Path):
         """Execute the archival process."""
@@ -203,16 +218,14 @@ class ArchivalTool:
 
         # Summary
         print("\n" + "=" * 70)
-        print("📊 ARCHIVAL SUMMARY")
+        print("ARCHIVAL SUMMARY")
         print("=" * 70)
         print(f"Files Archived: {self.stats['files_archived']}")
-        print(
-            f"Space Reclaimed: {self.stats['bytes_archived'] / 1024 / 1024:.2f} MB"
-        )
+        print(f"Space Reclaimed: {self.stats['bytes_archived'] / 1024 / 1024:.2f} MB")
         print(f"Errors: {len(self.stats['errors'])}")
 
         if self.stats["errors"]:
-            print("\n⚠️  Errors encountered:")
+            print("\n[WARNING] Errors encountered:")
             for error in self.stats["errors"][:10]:
                 print(f"  - {error}")
             if len(self.stats["errors"]) > 10:
@@ -220,14 +233,16 @@ class ArchivalTool:
 
         if self.dry_run:
             print("\n" + "=" * 70)
-            print("✅ DRY RUN COMPLETE - No files were moved")
+            print("[SUCCESS] DRY RUN COMPLETE - No files were moved")
             print("   Run with --execute to perform actual archival")
             print("=" * 70)
         else:
             print("\n" + "=" * 70)
-            print("✅ ARCHIVAL COMPLETE")
+            print("[SUCCESS] ARCHIVAL COMPLETE")
             print(f"   Archive Location: {self.archive_dir.relative_to(self.base_dir)}")
-            print(f"   To rollback, run: {self.archive_dir.relative_to(self.base_dir)}/ROLLBACK.ps1")
+            print(
+                f"   To rollback, run: {self.archive_dir.relative_to(self.base_dir)}/ROLLBACK.ps1"
+            )
             print("=" * 70)
 
         return manifest_data
@@ -256,7 +271,7 @@ def main():
     inventory_path = base_dir / args.inventory
 
     if not inventory_path.exists():
-        print(f"❌ Error: Inventory file not found: {inventory_path}")
+        print(f"[ERROR] Inventory file not found: {inventory_path}")
         return 1
 
     # Run archival tool
@@ -268,4 +283,3 @@ def main():
 
 if __name__ == "__main__":
     exit(main())
-

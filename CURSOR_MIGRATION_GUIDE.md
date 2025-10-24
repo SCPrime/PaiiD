@@ -175,19 +175,19 @@ total = price * quantity  # ❌ precision loss
 ## 💰 Cost Comparison
 
 ### GitHub Claude (Current)
-| Scenario | Tokens | Cost |
-|----------|--------|------|
-| Small PR (1-2 files) | ~2,000 | $0.06 |
-| Medium PR (5-10 files) | ~5,000 | $0.15 |
-| Large PR (20+ files) | ~10,000 | $0.30 |
-| **Monthly Total** | ~50,000 | **$5-10** |
+| Scenario               | Tokens  | Cost      |
+| ---------------------- | ------- | --------- |
+| Small PR (1-2 files)   | ~2,000  | $0.06     |
+| Medium PR (5-10 files) | ~5,000  | $0.15     |
+| Large PR (20+ files)   | ~10,000 | $0.30     |
+| **Monthly Total**      | ~50,000 | **$5-10** |
 
 ### Cursor (Target)
-| Scenario | Tokens | Cost |
-|----------|--------|------|
-| Every commit check | Unlimited | $0 |
-| Full codebase scan | Unlimited | $0 |
-| **Monthly Total** | Unlimited | **$0** |
+| Scenario           | Tokens    | Cost   |
+| ------------------ | --------- | ------ |
+| Every commit check | Unlimited | $0     |
+| Full codebase scan | Unlimited | $0     |
+| **Monthly Total**  | Unlimited | **$0** |
 
 **Annual Savings**: ~$60-120  
 **Bonus**: Instant feedback, no CI wait

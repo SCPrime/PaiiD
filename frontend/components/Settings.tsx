@@ -3,6 +3,7 @@
 import {
   Activity,
   AlertTriangle,
+  BarChart3,
   Bell,
   BookOpen,
   Brain,
@@ -29,6 +30,7 @@ import ApprovalQueue from "./ApprovalQueue";
 import ClaudeAIChat from "./ClaudeAIChat";
 import KillSwitchToggle from "./KillSwitchToggle";
 import MLTrainingDashboard from "./MLTrainingDashboard";
+import PatternBacktestDashboard from "./PatternBacktestDashboard";
 import RiskDashboard from "./RiskDashboard";
 import SchedulerSettings from "./SchedulerSettings";
 import TradingJournal from "./TradingJournal";
@@ -468,6 +470,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     { id: "journal", label: "Trading Journal", icon: BookOpen, alwaysShow: true },
     { id: "risk", label: "Risk Control", icon: Shield, alwaysShow: true },
     { id: "ml-training", label: "ML Training", icon: Brain, alwaysShow: true },
+    { id: "pattern-backtest", label: "Pattern Backtest", icon: BarChart3, alwaysShow: true },
     { id: "ai-chat", label: "AI Chat", icon: MessageSquare, alwaysShow: true },
     { id: "automation", label: "Automation", icon: Clock, alwaysShow: true },
     { id: "approvals", label: "Approvals", icon: CheckCircle2, alwaysShow: true },
@@ -1029,6 +1032,11 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
           {activeTab === "ml-training" && (
             <div className="min-h-[500px]">
               <MLTrainingDashboard />
+            </div>
+          )}
+          {activeTab === "pattern-backtest" && (
+            <div className="min-h-[500px]">
+              <PatternBacktestDashboard />
             </div>
           )}
           {activeTab === "ai-chat" && (

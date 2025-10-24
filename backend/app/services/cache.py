@@ -40,9 +40,7 @@ class CacheService:
             self.available = True
             print("[OK] Redis cache connected", flush=True)
         except Exception as e:
-            print(
-                f"[WARNING] Redis connection failed: {e} - caching disabled", flush=True
-            )
+            print(f"[WARNING] Redis connection failed: {e} - caching disabled", flush=True)
             self.client = None
             self.available = False
 

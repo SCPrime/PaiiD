@@ -20,11 +20,9 @@ from pathlib import Path
 
 import httpx
 from rich.console import Console
-from rich.live import Live
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
-
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -286,9 +284,7 @@ Examples:
         """,
     )
 
-    parser.add_argument(
-        "--counters", action="store_true", help="Show counters only"
-    )
+    parser.add_argument("--counters", action="store_true", help="Show counters only")
     parser.add_argument("--health", action="store_true", help="Show health status only")
     parser.add_argument(
         "--trend", type=str, metavar="COUNTER", help="Show trend for counter"
@@ -337,4 +333,3 @@ Examples:
 
 if __name__ == "__main__":
     asyncio.run(main())
-

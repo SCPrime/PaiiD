@@ -182,9 +182,7 @@ async def get_options_chain(
                 raise HTTPException(
                     status_code=404, detail=f"No expiration dates found for {symbol}"
                 )
-            expiration = (
-                expirations[0] if isinstance(expirations, list) else expirations
-            )
+            expiration = expirations[0] if isinstance(expirations, list) else expirations
 
         # Check cache first (5-minute TTL)
         cache_key = f"options:{symbol}:{expiration}"
@@ -193,22 +191,16 @@ async def get_options_chain(
             logger.info(f"✅ CACHE HIT: {cache_key}")
         else:
             logger.info(f"❌ CACHE MISS: {cache_key} - Fetching from Tradier API")
-            chain_data = await asyncio.to_thread(
-                client.get_option_chains, symbol, expiration
-            )
+            chain_data = await asyncio.to_thread(client.get_option_chains, symbol, expiration)
             cache.set(cache_key, chain_data, ttl=300)
             logger.info(f"💾 CACHED: {cache_key} (TTL: 5 minutes)")
 
         # Parse Tradier response
         # Log response for debugging
-        logger.info(
-            f"Tradier response keys: {list(chain_data.keys()) if chain_data else 'None'}"
-        )
+        logger.info(f"Tradier response keys: {list(chain_data.keys()) if chain_data else 'None'}")
 
         if not chain_data:
-            raise HTTPException(
-                status_code=500, detail="Empty response from Tradier API"
-            )
+            raise HTTPException(status_code=500, detail="Empty response from Tradier API")
 
         options_data = chain_data.get("options", {})
         if not options_data:
@@ -264,9 +256,7 @@ async def get_options_chain(
             quote = client.get_quote(symbol)
             if quote and "last" in quote:
                 underlying_price = float(quote["last"])
-                logger.info(
-                    f"📈 Underlying price for {symbol}: ${underlying_price:.2f}"
-                )
+                logger.info(f"📈 Underlying price for {symbol}: ${underlying_price:.2f}")
         except Exception as e:
             logger.warning(f"⚠️ Failed to fetch underlying price for {symbol}: {e}")
 
@@ -280,19 +270,13 @@ async def get_options_chain(
         )
 
     except requests.exceptions.HTTPError as e:
-        raise HTTPException(
-            status_code=e.response.status_code, detail=f"Tradier API error: {e!s}"
-        )
+        raise HTTPException(status_code=e.response.status_code, detail=f"Tradier API error: {e!s}")
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error fetching options chain: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error fetching options chain: {e!s}")
 
 
 @router.get("/expirations/{symbol}", response_model=list[ExpirationDate])
-def get_expiration_dates(
-    symbol: str, current_user: User = Depends(get_current_user_unified)
-):
+def get_expiration_dates(symbol: str, current_user: User = Depends(get_current_user_unified)):
     """
     Get available expiration dates for a symbol
 
@@ -356,36 +340,26 @@ def get_expiration_dates(
             exp_date = datetime.strptime(exp_date_str, "%Y-%m-%d").date()
             days_to_expiry = (exp_date - today).days
 
-            result.append(
-                ExpirationDate(date=exp_date_str, days_to_expiry=days_to_expiry)
-            )
+            result.append(ExpirationDate(date=exp_date_str, days_to_expiry=days_to_expiry))
 
         return result
 
     except requests.exceptions.HTTPError as e:
         logger.error(f"Tradier HTTP error: {e}")
-        raise HTTPException(
-            status_code=e.response.status_code, detail=f"Tradier API error: {e!s}"
-        )
+        raise HTTPException(status_code=e.response.status_code, detail=f"Tradier API error: {e!s}")
     except Exception as e:
         logger.error(f"Error fetching expirations: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Error fetching expirations: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error fetching expirations: {e!s}")
 
 
 @router.post("/greeks")
 async def calculate_greeks(
     symbol: str = Query(..., description="Option symbol"),
-    underlying_price: float = Query(
-        ..., description="Current price of underlying asset"
-    ),
+    underlying_price: float = Query(..., description="Current price of underlying asset"),
     strike: float = Query(..., description="Strike price"),
     expiration: str = Query(..., description="Expiration date (YYYY-MM-DD)"),
     option_type: str = Query(..., description="call or put"),
-    implied_volatility: float = Query(
-        0.3, description="Implied volatility (default 30%)"
-    ),
+    implied_volatility: float = Query(0.3, description="Implied volatility (default 30%)"),
     current_user: User = Depends(get_current_user_unified),
 ):
     """
@@ -414,9 +388,7 @@ async def calculate_greeks(
         days_to_expiry = (exp_date - today).days
 
         if days_to_expiry < 0:
-            raise HTTPException(
-                status_code=400, detail="Expiration date must be in the future"
-            )
+            raise HTTPException(status_code=400, detail="Expiration date must be in the future")
 
         # Initialize Greeks calculator
         greeks_calc = GreeksCalculator(risk_free_rate=0.05)
@@ -450,9 +422,7 @@ async def calculate_greeks(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"❌ Failed to calculate Greeks: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to calculate Greeks: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to calculate Greeks: {e!s}")
 
 
 @router.get(
@@ -511,9 +481,7 @@ async def get_option_contract(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"❌ Failed to fetch contract details: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to fetch contract details: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch contract details: {e!s}")
 
 
 # ============================================================================

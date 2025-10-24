@@ -43,7 +43,9 @@ class CounterManager:
                 f"{self.prefix}timeseries:{counter_name}", {str(timestamp): amount}
             )
 
-            logger.debug(f"Incremented counter {counter_name} by {amount} to {new_value}")
+            logger.debug(
+                f"Incremented counter {counter_name} by {amount} to {new_value}"
+            )
             return new_value
 
         except Exception as e:
@@ -177,9 +179,7 @@ class CounterManager:
             since = (datetime.utcnow() - timedelta(hours=hours)).timestamp()
 
             # Get all entries since timestamp
-            data = await self.redis.zrangebyscore(
-                key, since, "+inf", withscores=True
-            )
+            data = await self.redis.zrangebyscore(key, since, "+inf", withscores=True)
 
             return [
                 {"timestamp": float(score), "value": int(float(value))}

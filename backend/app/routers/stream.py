@@ -37,9 +37,7 @@ DATA_CHECK_INTERVAL = 1  # Check for new data every 1 second
 
 @router.get("/stream/prices")
 async def stream_prices(
-    symbols: str = Query(
-        ..., description="Comma-separated list of symbols (e.g., AAPL,MSFT,TSLA)"
-    ),
+    symbols: str = Query(..., description="Comma-separated list of symbols (e.g., AAPL,MSFT,TSLA)"),
     current_user: User = Depends(get_current_user),
     cache: CacheService = Depends(get_cache),
 ):
@@ -203,9 +201,7 @@ async def stream_positions(
                             {
                                 "timestamp": current_time,
                                 "stream_type": "positions",
-                                "position_count": len(positions_data)
-                                if positions_data
-                                else 0,
+                                "position_count": len(positions_data) if positions_data else 0,
                             }
                         ),
                     }

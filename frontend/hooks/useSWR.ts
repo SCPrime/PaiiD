@@ -12,8 +12,8 @@
  * Phase 2: Performance Optimization
  */
 
-import useSWR from "swr";
 import type { SWRConfiguration } from "swr";
+import useSWR from "swr";
 
 // Global SWR configuration
 const defaultConfig: SWRConfiguration = {
@@ -47,7 +47,7 @@ console.info("[Extension Verification] ✅ SWR data fetching library loaded succ
 });
 
 // Generic fetcher with auth header
-async function fetcher<T = any>(url: string): Promise<T> {
+async function fetcher<T = unknown>(url: string): Promise<T> {
   const token = process.env.NEXT_PUBLIC_API_TOKEN;
 
   const response = await fetch(url, {

@@ -33,7 +33,7 @@ export interface UserProfile {
   is_active: boolean;
   created_at: string;
   last_login_at: string | null;
-  preferences: Record<string, any>;
+  preferences: Record<string, unknown>;
 }
 
 export class AuthError extends Error {

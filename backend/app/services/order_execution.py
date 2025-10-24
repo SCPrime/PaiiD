@@ -4,8 +4,7 @@ Order Execution Service - Handles options trade proposal and execution
 
 import logging
 from datetime import datetime
-from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -33,7 +32,7 @@ class OptionsProposal(BaseModel):
     max_profit: float
     breakeven: float
     probability_of_profit: float
-    iv_rank: Optional[float] = None
+    iv_rank: float | None = None
     risk_reward_ratio: float
     margin_requirement: float
 
@@ -122,7 +121,7 @@ class OrderExecutionService:
     async def execute_proposal(
         self,
         proposal: OptionsProposal,
-        limit_price: Optional[float] = None,
+        limit_price: float | None = None,
     ) -> dict[str, Any]:
         """
         Execute an approved options trade proposal
@@ -139,7 +138,9 @@ class OrderExecutionService:
             order_data = {
                 "symbol": proposal.option_symbol,
                 "qty": proposal.quantity,
-                "side": proposal.side if hasattr(proposal, "side") else "buy",  # PHASE 1: Support sell orders
+                "side": proposal.side
+                if hasattr(proposal, "side")
+                else "buy",  # PHASE 1: Support sell orders
                 "type": "limit" if limit_price else "market",
                 "time_in_force": "day",
                 "order_class": "simple",
@@ -209,7 +210,7 @@ class OrderExecutionService:
         if not match:
             raise ValueError(f"Invalid option symbol format: {option_symbol}")
 
-        ticker, exp_date, contract_type, strike_str = match.groups()
+        _ticker, exp_date, contract_type, strike_str = match.groups()
 
         # Parse expiration
         exp_year = f"20{exp_date[:2]}"
@@ -286,7 +287,7 @@ class OrderExecutionService:
 
 
 # Singleton instance
-_order_execution_service: Optional[OrderExecutionService] = None
+_order_execution_service: OrderExecutionService | None = None
 
 
 def get_order_execution_service() -> OrderExecutionService:

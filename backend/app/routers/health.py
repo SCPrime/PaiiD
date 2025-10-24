@@ -34,9 +34,7 @@ async def readiness_check():
     if health["status"] == "healthy":
         return {"ready": True}
     else:
-        raise HTTPException(
-            status_code=503, detail={"ready": False, "reason": "System degraded"}
-        )
+        raise HTTPException(status_code=503, detail={"ready": False, "reason": "System degraded"})
 
 
 @router.get("/liveness")
@@ -53,9 +51,7 @@ async def ready_check():
     if health["status"] == "healthy":
         return {"ready": True}
     else:
-        raise HTTPException(
-            status_code=503, detail={"ready": False, "reason": "System degraded"}
-        )
+        raise HTTPException(status_code=503, detail={"ready": False, "reason": "System degraded"})
 
 
 @router.get("/sentry-test")

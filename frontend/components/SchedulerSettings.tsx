@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from "react";
 import {
-  Clock,
-  Play,
-  Pause,
-  Trash2,
-  Plus,
   AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Calendar,
   Bell,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Pause,
+  Play,
+  Plus,
+  Trash2,
+  XCircle,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface Schedule {
   id: string;
@@ -457,10 +457,12 @@ export default function SchedulerSettings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                  <label htmlFor="schedule-type" className="block text-sm font-medium text-slate-300 mb-1">
                     Schedule Type
                   </label>
                   <select
+                    id="schedule-type"
+                    aria-label="Schedule Type"
                     value={newSchedule.type}
                     onChange={(e) =>
                       setNewSchedule({ ...newSchedule, type: e.target.value as Schedule["type"] })
@@ -475,10 +477,12 @@ export default function SchedulerSettings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                  <label htmlFor="schedule-cron" className="block text-sm font-medium text-slate-300 mb-1">
                     Schedule (Cron)
                   </label>
                   <select
+                    id="schedule-cron"
+                    aria-label="Schedule Time"
                     value={newSchedule.cron_expression}
                     onChange={(e) =>
                       setNewSchedule({ ...newSchedule, cron_expression: e.target.value })
@@ -495,8 +499,10 @@ export default function SchedulerSettings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Timezone</label>
+                  <label htmlFor="schedule-timezone" className="block text-sm font-medium text-slate-300 mb-1">Timezone</label>
                   <select
+                    id="schedule-timezone"
+                    aria-label="Timezone"
                     value={newSchedule.timezone}
                     onChange={(e) => setNewSchedule({ ...newSchedule, timezone: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white outline-none focus:ring-2 focus:ring-cyan-500/50"

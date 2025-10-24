@@ -1,0 +1,573 @@
+{
+  "timestamp": "2025-10-24-165115",
+  "dry_run": false,
+  "statistics": {
+    "files_archived": 80,
+    "bytes_archived": 836947,
+    "size_mb": 0.8,
+    "errors_count": 0
+  },
+  "files": [
+    {
+      "original_path": "backup-database.sh",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\backup-database.sh",
+      "size": 1044,
+      "category": "Code",
+      "notes": "Matches redundancy pattern; No references found - may be entry point"
+    },
+    {
+      "original_path": "powershell-health-report-20251023-155635.json",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\powershell-health-report-20251023-155635.json",
+      "size": 40330,
+      "category": "Code",
+      "notes": "Matches redundancy pattern; No references found - may be entry point"
+    },
+    {
+      "original_path": "API_CONFIGURATION_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\API_CONFIGURATION_COMPLETE.md",
+      "size": 6620,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "AUDIT_FIXES_SUMMARY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\AUDIT_FIXES_SUMMARY.md",
+      "size": 16244,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "AUDIT_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\AUDIT_REPORT.md",
+      "size": 28727,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "AUDIT_SUMMARY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\AUDIT_SUMMARY.md",
+      "size": 9142,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "AUDIT_SUMMARY_2025-10-13.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\AUDIT_SUMMARY_2025-10-13.md",
+      "size": 4876,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "AUTHENTICATION_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\AUTHENTICATION_COMPLETE.md",
+      "size": 8010,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "AUTO_STARTUP_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\AUTO_STARTUP_COMPLETE.md",
+      "size": 10603,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "BATCH_5D_DEPLOYMENT_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\BATCH_5D_DEPLOYMENT_COMPLETE.md",
+      "size": 4695,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "BATCH_6_DEPLOYMENT_AUTOMATION_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\BATCH_6_DEPLOYMENT_AUTOMATION_COMPLETE.md",
+      "size": 10105,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "BATCH_7_PRODUCTION_MONITORING_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\BATCH_7_PRODUCTION_MONITORING_COMPLETE.md",
+      "size": 5530,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "BUG_REPORT_OPTIONS_500.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\BUG_REPORT_OPTIONS_500.md",
+      "size": 8713,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "CHROME_AUTO_LAUNCH_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\CHROME_AUTO_LAUNCH_COMPLETE.md",
+      "size": 5706,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "CLAUDE_AGENT_IMPLEMENTATION_SUMMARY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\CLAUDE_AGENT_IMPLEMENTATION_SUMMARY.md",
+      "size": 9707,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "CLEANUP_AUDIT_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\CLEANUP_AUDIT_REPORT.md",
+      "size": 26593,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "COMPLETE_DUAL_AI_SETUP_SUMMARY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\COMPLETE_DUAL_AI_SETUP_SUMMARY.md",
+      "size": 13380,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "COMPLETE_SETUP_SUMMARY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\COMPLETE_SETUP_SUMMARY.md",
+      "size": 11102,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "COMPREHENSIVE_AUDIT_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\COMPREHENSIVE_AUDIT_REPORT.md",
+      "size": 26449,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "COMPREHENSIVE_AUDIT_REPORT_2025-10-13.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\COMPREHENSIVE_AUDIT_REPORT_2025-10-13.md",
+      "size": 22080,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "COMPREHENSIVE_AUDIT_REPORT_2025-10-23.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\COMPREHENSIVE_AUDIT_REPORT_2025-10-23.md",
+      "size": 15874,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "COMPREHENSIVE_FIX_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\COMPREHENSIVE_FIX_REPORT.md",
+      "size": 13630,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "C\uf03aUsersSSaint-CyrDocumentssourceai-TraderDEPLOYMENT_CHECKLIST.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\C\uf03aUsersSSaint-CyrDocumentssourceai-TraderDEPLOYMENT_CHECKLIST.md",
+      "size": 6,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_CHECKLIST.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_CHECKLIST.md",
+      "size": 3934,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_EXECUTION_GUIDE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_EXECUTION_GUIDE.md",
+      "size": 10039,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_FIXES.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_FIXES.md",
+      "size": 4944,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_GUIDE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_GUIDE.md",
+      "size": 6910,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_PARITY_VERIFICATION.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_PARITY_VERIFICATION.md",
+      "size": 13307,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_SCRIPTS_README.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_SCRIPTS_README.md",
+      "size": 10587,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_SCRIPT_PARITY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_SCRIPT_PARITY.md",
+      "size": 8848,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_STATUS_CHECK.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_STATUS_CHECK.md",
+      "size": 5635,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_STATUS_FINAL.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_STATUS_FINAL.md",
+      "size": 6304,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_SUCCESS_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_SUCCESS_REPORT.md",
+      "size": 16000,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_SUMMARY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_SUMMARY.md",
+      "size": 9112,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_VERIFICATION.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_VERIFICATION.md",
+      "size": 3911,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_VERIFICATION_CHECKLIST.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_VERIFICATION_CHECKLIST.md",
+      "size": 10976,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_VERIFICATION_RESULTS.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_VERIFICATION_RESULTS.md",
+      "size": 6872,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "DEPLOYMENT_WAITING_ROOM.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\DEPLOYMENT_WAITING_ROOM.md",
+      "size": 8365,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "EXECUTIVE_REPORT_LOGO_AND_ROADMAP.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\EXECUTIVE_REPORT_LOGO_AND_ROADMAP.md",
+      "size": 5843,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "FINAL_DEPLOYMENT_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\FINAL_DEPLOYMENT_REPORT.md",
+      "size": 12001,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "FINAL_DEPLOYMENT_SUMMARY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\FINAL_DEPLOYMENT_SUMMARY.md",
+      "size": 6218,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "FIXES_APPLIED_SUMMARY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\FIXES_APPLIED_SUMMARY.md",
+      "size": 7587,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "FIXES_COMPLETED_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\FIXES_COMPLETED_REPORT.md",
+      "size": 13998,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "FIX_IMPLEMENTATION_PLAN_2025-10-13.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\FIX_IMPLEMENTATION_PLAN_2025-10-13.md",
+      "size": 21766,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "FULL_DEPLOYMENT_VERIFICATION_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\FULL_DEPLOYMENT_VERIFICATION_REPORT.md",
+      "size": 25522,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "IMPLEMENTATION_STATUS.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\IMPLEMENTATION_STATUS.md",
+      "size": 5253,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "IMPLEMENTATION_STATUS_OPTIONS_FIX.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\IMPLEMENTATION_STATUS_OPTIONS_FIX.md",
+      "size": 10276,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "INCIDENT_REPORT_2e048fe.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\INCIDENT_REPORT_2e048fe.md",
+      "size": 11443,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "INFRASTRUCTURE_SURGERY_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\INFRASTRUCTURE_SURGERY_COMPLETE.md",
+      "size": 18698,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "LAUNCH_STATUS_FINAL.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\LAUNCH_STATUS_FINAL.md",
+      "size": 8142,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "MARKET_DATA_OPTIMIZATION_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\MARKET_DATA_OPTIMIZATION_COMPLETE.md",
+      "size": 11523,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "MCP_SETUP_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\MCP_SETUP_COMPLETE.md",
+      "size": 12870,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "MCP_VERIFICATION_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\MCP_VERIFICATION_REPORT.md",
+      "size": 12642,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "MOBILE_AUDIT_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\MOBILE_AUDIT_REPORT.md",
+      "size": 10319,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "OLD_JAVASCRIPT_EXCISION_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\OLD_JAVASCRIPT_EXCISION_REPORT.md",
+      "size": 10385,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "OPTIONS_ENDPOINT_DEBUG_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\OPTIONS_ENDPOINT_DEBUG_REPORT.md",
+      "size": 5101,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "OPTIONS_ENDPOINT_FIX_SUMMARY.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\OPTIONS_ENDPOINT_FIX_SUMMARY.md",
+      "size": 12825,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "OPTIONS_TRADING_COMPLETE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\OPTIONS_TRADING_COMPLETE.md",
+      "size": 13228,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PARASITE_DEPENDENCY_SCAN_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\PARASITE_DEPENDENCY_SCAN_REPORT.md",
+      "size": 14601,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE1_VERIFICATION_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\PHASE1_VERIFICATION_REPORT.md",
+      "size": 14136,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE_0_AUDIT_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\PHASE_0_AUDIT_REPORT.md",
+      "size": 13513,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PHASE_STATUS_2025-10-13.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\PHASE_STATUS_2025-10-13.md",
+      "size": 8017,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "POWERSHELL_DEPLOYMENT_REPAIR_PLAN.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\POWERSHELL_DEPLOYMENT_REPAIR_PLAN.md",
+      "size": 7666,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "POWERSHELL_REPAIR_RESOLUTION_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\POWERSHELL_REPAIR_RESOLUTION_REPORT.md",
+      "size": 6693,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PRODUCTION_DEPLOYMENT_GUIDE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\PRODUCTION_DEPLOYMENT_GUIDE.md",
+      "size": 4814,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "PR_FAILURE_ANALYSIS_REPORT_72H.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\PR_FAILURE_ANALYSIS_REPORT_72H.md",
+      "size": 16419,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "RENDER_DEPLOYMENT_CHECKLIST.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\RENDER_DEPLOYMENT_CHECKLIST.md",
+      "size": 1839,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "RENDER_DEPLOYMENT_DIAGNOSIS.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\RENDER_DEPLOYMENT_DIAGNOSIS.md",
+      "size": 9100,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "RENDER_DEPLOYMENT_GUIDE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\RENDER_DEPLOYMENT_GUIDE.md",
+      "size": 2317,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "SCHEDULER_DEPLOYMENT_GUIDE.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\SCHEDULER_DEPLOYMENT_GUIDE.md",
+      "size": 15484,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "SESSION_SUMMARY_2025-10-24.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\SESSION_SUMMARY_2025-10-24.md",
+      "size": 13000,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "STATE_OF_AFFAIRS_REPORT.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\STATE_OF_AFFAIRS_REPORT.md",
+      "size": 22337,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "TRADIER_DEPLOYMENT_STATUS.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\TRADIER_DEPLOYMENT_STATUS.md",
+      "size": 9311,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "VERIFICATION_CHECKLIST.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\VERIFICATION_CHECKLIST.md",
+      "size": 6557,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "deployment-report-20251023-154113.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\deployment-report-20251023-154113.md",
+      "size": 3508,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "frontend/components/DEPRECATED_COMPONENTS.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\frontend\\components\\DEPRECATED_COMPONENTS.md",
+      "size": 1569,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "health-report-20251023-154129.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\health-report-20251023-154129.md",
+      "size": 497,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "test-report-20251023-134322.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\test-report-20251023-134322.md",
+      "size": 1673,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "test-report-20251023-140252.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\test-report-20251023-140252.md",
+      "size": 1673,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    },
+    {
+      "original_path": "test-report-20251023-154119.md",
+      "archive_path": "archive\\cleanup-2025-10-24-165115\\test-report-20251023-154119.md",
+      "size": 1673,
+      "category": "Documentation",
+      "notes": "Matches redundancy pattern"
+    }
+  ],
+  "errors": []
+}

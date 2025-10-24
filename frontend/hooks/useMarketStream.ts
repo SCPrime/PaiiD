@@ -12,7 +12,7 @@
  * Phase 2.A - Real-Time Data Implementation
  */
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface PriceData {
   price: number;
@@ -264,7 +264,7 @@ export function useMarketStream(
         error: error.message || "Failed to connect",
       }));
     }
-  }, [symbols, autoReconnect, maxReconnectAttempts, log]);
+  }, [symbols, autoReconnect, maxReconnectAttempts, heartbeatTimeout, log]);
 
   // Manual reconnect method
   const reconnect = useCallback(() => {
@@ -295,6 +295,7 @@ export function useMarketStream(
         heartbeatCheckIntervalRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbols.join(","), connect, log]); // Re-connect when symbols change
 
   return {

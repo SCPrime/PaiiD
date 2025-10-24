@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   TrendingUp,
   Check,
@@ -168,7 +168,7 @@ export default function ExecuteTradeForm() {
   };
 
   // Fetch available expiration dates when symbol changes (for options mode)
-  const fetchExpirations = async (sym: string) => {
+  const fetchExpirations = useCallback(async (sym: string) => {
     if (!sym || sym.trim() === "" || assetClass !== "option") return;
 
     setLoadingOptionsChain(true);
@@ -186,10 +186,10 @@ export default function ExecuteTradeForm() {
     } finally {
       setLoadingOptionsChain(false);
     }
-  };
+  }, [assetClass]);
 
   // Fetch available strikes when expiration changes
-  const fetchStrikes = async (sym: string, expiry: string) => {
+  const fetchStrikes = useCallback(async (sym: string, expiry: string) => {
     if (!sym || !expiry || assetClass !== "option") return;
 
     setLoadingOptionsChain(true);
@@ -211,7 +211,7 @@ export default function ExecuteTradeForm() {
     } finally {
       setLoadingOptionsChain(false);
     }
-  };
+  }, [assetClass]);
 
   // Fetch expirations when symbol or asset class changes
   useEffect(() => {

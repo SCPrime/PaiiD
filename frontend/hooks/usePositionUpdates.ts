@@ -259,7 +259,7 @@ export function usePositionUpdates(
         error: error.message || "Failed to connect",
       }));
     }
-  }, [autoReconnect, maxReconnectAttempts, log]);
+  }, [autoReconnect, maxReconnectAttempts, heartbeatTimeout, log]);
 
   // Manual reconnect method
   const reconnect = useCallback(() => {

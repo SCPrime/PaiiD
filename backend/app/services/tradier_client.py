@@ -33,9 +33,7 @@ class TradierClient:
         }
 
         if not self.api_key or not self.account_id:
-            raise ValueError(
-                "TRADIER_API_KEY and TRADIER_ACCOUNT_ID must be set in .env"
-            )
+            raise ValueError("TRADIER_API_KEY and TRADIER_ACCOUNT_ID must be set in .env")
 
         logger.info(f"Tradier client initialized for account {self.account_id}")
 
@@ -49,10 +47,8 @@ class TradierClient:
         if self._state == "CLOSED":
             return True
         if self._state == "OPEN":
-            if (
-                self._last_failure_at
-                and datetime.utcnow() - self._last_failure_at
-                > timedelta(seconds=self._cooldown_seconds)
+            if self._last_failure_at and datetime.utcnow() - self._last_failure_at > timedelta(
+                seconds=self._cooldown_seconds
             ):
                 self._state = "HALF_OPEN"
                 return True
@@ -84,18 +80,14 @@ class TradierClient:
             if not self._is_available():
                 raise Exception("Tradier temporarily unavailable (circuit open)")
 
-            response = self.session.request(
-                method=method, url=url, headers=self.headers, **kwargs
-            )
+            response = self.session.request(method=method, url=url, headers=self.headers, **kwargs)
             response.raise_for_status()
             data = response.json()
             self._record_success()
             return data
 
         except requests.exceptions.HTTPError as e:
-            logger.error(
-                f"Tradier API error: {e.response.status_code} - {e.response.text}"
-            )
+            logger.error(f"Tradier API error: {e.response.status_code} - {e.response.text}")
             self._record_failure()
             raise Exception(f"Tradier API error: {e.response.text}")
 

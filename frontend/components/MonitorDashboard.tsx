@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 
 /**
  * GitHub Repository Monitor Dashboard
- * 
+ *
  * Displays real-time repository activity metrics and event counters
  */
 
@@ -112,9 +112,7 @@ export function MonitorDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">🔍 Repository Monitor</h1>
-          <p className="text-muted-foreground mt-1">
-            Real-time GitHub activity tracking
-          </p>
+          <p className="text-muted-foreground mt-1">Real-time GitHub activity tracking</p>
         </div>
         <div className="text-right">
           <div className="text-sm text-muted-foreground">Last Update</div>
@@ -142,10 +140,7 @@ export function MonitorDashboard() {
               label="Webhook Handler"
               status={healthData.services.webhook_handler || "unknown"}
             />
-            <StatusIndicator
-              label="Redis"
-              status={healthData.services.redis || "unknown"}
-            />
+            <StatusIndicator label="Redis" status={healthData.services.redis || "unknown"} />
           </div>
         </Card>
       )}
@@ -155,32 +150,17 @@ export function MonitorDashboard() {
         <>
           {/* Git Activity */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">📊 This Week's Activity</h2>
+            <h2 className="text-xl font-semibold mb-4">📊 This Week&apos;s Activity</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <MetricCard
-                label="Commits"
-                value={counters.commits}
-                icon="💾"
-                color="blue"
-              />
-              <MetricCard
-                label="Pushes"
-                value={counters.pushes}
-                icon="🚀"
-                color="purple"
-              />
+              <MetricCard label="Commits" value={counters.commits} icon="💾" color="blue" />
+              <MetricCard label="Pushes" value={counters.pushes} icon="🚀" color="purple" />
               <MetricCard
                 label="Deployments"
                 value={counters.deployments}
                 icon="🎯"
                 color="green"
               />
-              <MetricCard
-                label="Hotfixes"
-                value={counters.hotfixes}
-                icon="🔥"
-                color="red"
-              />
+              <MetricCard label="Hotfixes" value={counters.hotfixes} icon="🔥" color="red" />
             </div>
           </Card>
 
@@ -188,24 +168,9 @@ export function MonitorDashboard() {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">🔀 Pull Requests</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <MetricCard
-                label="Opened"
-                value={counters.pulls_opened}
-                icon="📝"
-                color="blue"
-              />
-              <MetricCard
-                label="Merged"
-                value={counters.pulls_merged}
-                icon="✅"
-                color="green"
-              />
-              <MetricCard
-                label="Closed"
-                value={counters.pulls_closed}
-                icon="❌"
-                color="gray"
-              />
+              <MetricCard label="Opened" value={counters.pulls_opened} icon="📝" color="blue" />
+              <MetricCard label="Merged" value={counters.pulls_merged} icon="✅" color="green" />
+              <MetricCard label="Closed" value={counters.pulls_closed} icon="❌" color="gray" />
             </div>
           </Card>
 
@@ -213,27 +178,14 @@ export function MonitorDashboard() {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">🐛 Issues</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <MetricCard
-                label="Opened"
-                value={counters.issues_opened}
-                icon="📋"
-                color="blue"
-              />
-              <MetricCard
-                label="Closed"
-                value={counters.issues_closed}
-                icon="✅"
-                color="green"
-              />
+              <MetricCard label="Opened" value={counters.issues_opened} icon="📋" color="blue" />
+              <MetricCard label="Closed" value={counters.issues_closed} icon="✅" color="green" />
             </div>
             {counters.issues_opened > 0 && (
               <div className="mt-4 p-4 bg-muted rounded-lg">
                 <div className="text-sm font-medium">Resolution Rate</div>
                 <div className="text-2xl font-bold">
-                  {Math.round(
-                    (counters.issues_closed / counters.issues_opened) * 100
-                  )}
-                  %
+                  {Math.round((counters.issues_closed / counters.issues_opened) * 100)}%
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {counters.issues_closed} closed / {counters.issues_opened} opened

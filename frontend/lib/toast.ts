@@ -77,7 +77,7 @@ export const showPromise = <T>(
   messages: {
     loading: string;
     success: string | ((data: T) => string);
-    error: string | ((err: any) => string);
+    error: string | ((err: Error | unknown) => string);
   }
 ) => {
   return toast.promise(promise, messages);

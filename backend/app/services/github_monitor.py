@@ -36,7 +36,9 @@ class GitHubWebhookHandler:
             True if signature is valid
         """
         if not self.webhook_secret:
-            logger.warning("GitHub webhook secret not configured - skipping verification")
+            logger.warning(
+                "GitHub webhook secret not configured - skipping verification"
+            )
             return True
 
         try:
@@ -87,7 +89,9 @@ class GitHubWebhookHandler:
             }
 
             if sensitive_files:
-                result["warning"] = f"Sensitive files detected: {', '.join(sensitive_files)}"
+                result["warning"] = (
+                    f"Sensitive files detected: {', '.join(sensitive_files)}"
+                )
                 logger.warning(
                     f"Sensitive files committed on {branch}: {sensitive_files}"
                 )

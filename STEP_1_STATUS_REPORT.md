@@ -46,15 +46,15 @@ router = APIRouter(prefix="/api/sentiment")  # Was: /api/ml
 
 ### Deployment Timeline
 
-| Time | Event | Status |
-|------|-------|--------|
-| 16:34 | Initial ML commit (`20f8fa7`) | ❌ Route conflict |
-| 20:44 | Issue discovered | 🔍 Diagnosed |
-| 20:45 | Fix committed (`27bec0a`) | ✅ Pushed |
-| 20:48 | Docs updated (`9f40526`) | ✅ Pushed |
-| 20:49 | Render build started | 🔄 Building |
-| 20:55 | **Current time** | ⏳ **Still deploying** |
-| ~21:00 | Expected complete | 🎯 ETA |
+| Time   | Event                         | Status                |
+| ------ | ----------------------------- | --------------------- |
+| 16:34  | Initial ML commit (`20f8fa7`) | ❌ Route conflict      |
+| 20:44  | Issue discovered              | 🔍 Diagnosed           |
+| 20:45  | Fix committed (`27bec0a`)     | ✅ Pushed              |
+| 20:48  | Docs updated (`9f40526`)      | ✅ Pushed              |
+| 20:49  | Render build started          | 🔄 Building            |
+| 20:55  | **Current time**              | ⏳ **Still deploying** |
+| ~21:00 | Expected complete             | 🎯 ETA                 |
 
 ### Why It's Taking Longer
 
@@ -106,23 +106,23 @@ Once deployed, these endpoints will be available:
 
 ### ML Sentiment & Signals (NEW) - `/api/sentiment`
 
-| Endpoint | Method | Path | Auth | Purpose |
-|----------|--------|------|------|---------|
-| **Health** | GET | `/api/sentiment/health` | None | Service status |
-| **Sentiment** | GET | `/api/sentiment/sentiment/{symbol}` | JWT | News sentiment analysis |
-| **Signals** | GET | `/api/sentiment/signals/{symbol}` | JWT | Trade signals (BUY/SELL/HOLD) |
-| **Batch Signals** | POST | `/api/sentiment/signals/batch` | JWT | Multi-symbol analysis |
+| Endpoint          | Method | Path                                | Auth | Purpose                       |
+| ----------------- | ------ | ----------------------------------- | ---- | ----------------------------- |
+| **Health**        | GET    | `/api/sentiment/health`             | None | Service status                |
+| **Sentiment**     | GET    | `/api/sentiment/sentiment/{symbol}` | JWT  | News sentiment analysis       |
+| **Signals**       | GET    | `/api/sentiment/signals/{symbol}`   | JWT  | Trade signals (BUY/SELL/HOLD) |
+| **Batch Signals** | POST   | `/api/sentiment/signals/batch`      | JWT  | Multi-symbol analysis         |
 
 ### ML Analysis (EXISTING) - `/api/ml`
 
-| Endpoint | Method | Path | Auth | Purpose |
-|----------|--------|------|------|---------|
-| **Health** | GET | `/api/ml/health` | None | Service status |
-| **Market Regime** | GET | `/api/ml/market-regime` | JWT | Detect market regime |
-| **Recommend Strategy** | GET | `/api/ml/recommend-strategy` | JWT | Strategy recommendations |
-| **Detect Patterns** | GET | `/api/ml/detect-patterns` | JWT | Pattern recognition |
-| **Train Regime** | POST | `/api/ml/train-regime-detector` | JWT | Model training |
-| **Train Strategy** | POST | `/api/ml/train-strategy-selector` | JWT | Model training |
+| Endpoint               | Method | Path                              | Auth | Purpose                  |
+| ---------------------- | ------ | --------------------------------- | ---- | ------------------------ |
+| **Health**             | GET    | `/api/ml/health`                  | None | Service status           |
+| **Market Regime**      | GET    | `/api/ml/market-regime`           | JWT  | Detect market regime     |
+| **Recommend Strategy** | GET    | `/api/ml/recommend-strategy`      | JWT  | Strategy recommendations |
+| **Detect Patterns**    | GET    | `/api/ml/detect-patterns`         | JWT  | Pattern recognition      |
+| **Train Regime**       | POST   | `/api/ml/train-regime-detector`   | JWT  | Model training           |
+| **Train Strategy**     | POST   | `/api/ml/train-strategy-selector` | JWT  | Model training           |
 
 **No conflicts!** Both routers coexist peacefully.
 

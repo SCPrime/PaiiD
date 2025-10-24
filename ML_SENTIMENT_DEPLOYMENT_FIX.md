@@ -15,10 +15,10 @@
 
 **ROUTE PREFIX CONFLICT** - Both ML routers used the same prefix:
 
-| Router | File | Prefix | Conflict |
-|--------|------|--------|----------|
-| **Old ML Router** | `backend/app/routers/ml.py` | `/api/ml` | ❌ |
-| **New Sentiment Router** | `backend/app/routers/ml_sentiment.py` | `/api/ml` | ❌ |
+| Router                   | File                                  | Prefix    | Conflict |
+| ------------------------ | ------------------------------------- | --------- | -------- |
+| **Old ML Router**        | `backend/app/routers/ml.py`           | `/api/ml` | ❌        |
+| **New Sentiment Router** | `backend/app/routers/ml_sentiment.py` | `/api/ml` | ❌        |
 
 **Duplicate Endpoints**:
 - Both had `@router.get("/health")` 
@@ -51,12 +51,12 @@ router = APIRouter(prefix="/api/sentiment", tags=["ML Sentiment & Signals"])
 
 ### Base URL: `https://paiid-backend.onrender.com`
 
-| Endpoint | Method | Old Path (broken) | New Path (fixed) | Auth |
-|----------|--------|-------------------|------------------|------|
-| **Sentiment Analysis** | GET | ❌ `/api/ml/sentiment/{symbol}` | ✅ `/api/sentiment/sentiment/{symbol}` | JWT |
-| **Trade Signals** | GET | ❌ `/api/ml/signals/{symbol}` | ✅ `/api/sentiment/signals/{symbol}` | JWT |
-| **Batch Signals** | POST | ❌ `/api/ml/signals/batch` | ✅ `/api/sentiment/signals/batch` | JWT |
-| **Health Check** | GET | ❌ `/api/ml/health` | ✅ `/api/sentiment/health` | None |
+| Endpoint               | Method | Old Path (broken)              | New Path (fixed)                      | Auth |
+| ---------------------- | ------ | ------------------------------ | ------------------------------------- | ---- |
+| **Sentiment Analysis** | GET    | ❌ `/api/ml/sentiment/{symbol}` | ✅ `/api/sentiment/sentiment/{symbol}` | JWT  |
+| **Trade Signals**      | GET    | ❌ `/api/ml/signals/{symbol}`   | ✅ `/api/sentiment/signals/{symbol}`   | JWT  |
+| **Batch Signals**      | POST   | ❌ `/api/ml/signals/batch`      | ✅ `/api/sentiment/signals/batch`      | JWT  |
+| **Health Check**       | GET    | ❌ `/api/ml/health`             | ✅ `/api/sentiment/health`             | None |
 
 ---
 
@@ -64,12 +64,12 @@ router = APIRouter(prefix="/api/sentiment", tags=["ML Sentiment & Signals"])
 
 ### Timeline
 
-| Time | Event | Status |
-|------|-------|--------|
+| Time                | Event                                | Status            |
+| ------------------- | ------------------------------------ | ----------------- |
 | 16:34 (4 hours ago) | Initial ML commit pushed (`20f8fa7`) | ❌ Failed silently |
-| 20:44 | Issue discovered during verification | 🔍 Diagnosed |
-| 20:45 | Fix committed and pushed (`27bec0a`) | 🚀 Deploying |
-| ~20:50 | Expected deployment complete | ⏳ Pending |
+| 20:44               | Issue discovered during verification | 🔍 Diagnosed       |
+| 20:45               | Fix committed and pushed (`27bec0a`) | 🚀 Deploying       |
+| ~20:50              | Expected deployment complete         | ⏳ Pending         |
 
 ### Commits
 
@@ -117,14 +117,14 @@ curl -H "Authorization: Bearer YOUR_JWT" \
 
 The old ML router (`/api/ml`) remains **active** with these endpoints:
 
-| Endpoint | Purpose | Status |
-|----------|---------|--------|
-| `/api/ml/market-regime` | Market regime detection | ✅ Active |
-| `/api/ml/recommend-strategy` | Strategy recommendations | ✅ Active |
-| `/api/ml/detect-patterns` | Pattern recognition | ✅ Active |
-| `/api/ml/train-regime-detector` | Model training | ✅ Active |
-| `/api/ml/train-strategy-selector` | Model training | ✅ Active |
-| `/api/ml/health` | Old ML health check | ✅ Active |
+| Endpoint                          | Purpose                  | Status   |
+| --------------------------------- | ------------------------ | -------- |
+| `/api/ml/market-regime`           | Market regime detection  | ✅ Active |
+| `/api/ml/recommend-strategy`      | Strategy recommendations | ✅ Active |
+| `/api/ml/detect-patterns`         | Pattern recognition      | ✅ Active |
+| `/api/ml/train-regime-detector`   | Model training           | ✅ Active |
+| `/api/ml/train-strategy-selector` | Model training           | ✅ Active |
+| `/api/ml/health`                  | Old ML health check      | ✅ Active |
 
 **No conflicts** - Old endpoints remain functional.
 

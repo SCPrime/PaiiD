@@ -110,7 +110,7 @@ export function initSentry(): void {
 /**
  * Capture an exception manually
  */
-export function captureException(error: Error, context?: Record<string, any>): void {
+export function captureException(error: Error, context?: Record<string, unknown>): void {
   if (!sentryInitialized) {
     console.error("[Sentry] Not initialized, logging error:", error);
     return;
@@ -153,7 +153,7 @@ export function setUser(userId: string, role?: string): void {
 /**
  * Add breadcrumb (for debugging context)
  */
-export function addBreadcrumb(message: string, data?: Record<string, any>): void {
+export function addBreadcrumb(message: string, data?: Record<string, unknown>): void {
   if (!sentryInitialized) {
     return;
   }

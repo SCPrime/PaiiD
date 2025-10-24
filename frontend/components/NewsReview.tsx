@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import StockLookup from "./StockLookup";
-import { useIsMobile } from "../hooks/useBreakpoint";
 import { Clock } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import { useIsMobile } from "../hooks/useBreakpoint";
+import StockLookup from "./StockLookup";
 
 interface NewsArticle {
   id: string;
@@ -72,56 +72,59 @@ const NewsReview: React.FC = () => {
     }
   };
 
-  const fetchNews = async (symbol?: string, loadMore: boolean = false) => {
-    if (!loadMore) {
-      setLoading(true);
-      setError(null);
-      setPage(1);
-    }
-
-    try {
-      // Build query parameters
-      const params = new URLSearchParams();
-
-      if (symbol) {
-        params.append("days_back", "14");
-        if (filter !== "all") params.append("sentiment", filter);
-        if (selectedProvider !== "all") params.append("provider", selectedProvider);
-      } else {
-        params.append("category", "general");
-        params.append("limit", String((loadMore ? page + 1 : 1) * ARTICLES_PER_PAGE));
-        if (filter !== "all") params.append("sentiment", filter);
-        if (selectedProvider !== "all") params.append("provider", selectedProvider);
+  const fetchNews = useCallback(
+    async (symbol?: string, loadMore: boolean = false) => {
+      if (!loadMore) {
+        setLoading(true);
+        setError(null);
+        setPage(1);
       }
 
-      const endpoint = symbol
-        ? `/api/proxy/news/company/${symbol}?${params.toString()}`
-        : `/api/proxy/news/market?${params.toString()}`;
+      try {
+        // Build query parameters
+        const params = new URLSearchParams();
 
-      const response = await fetch(endpoint);
+        if (symbol) {
+          params.append("days_back", "14");
+          if (filter !== "all") params.append("sentiment", filter);
+          if (selectedProvider !== "all") params.append("provider", selectedProvider);
+        } else {
+          params.append("category", "general");
+          params.append("limit", String((loadMore ? page + 1 : 1) * ARTICLES_PER_PAGE));
+          if (filter !== "all") params.append("sentiment", filter);
+          if (selectedProvider !== "all") params.append("provider", selectedProvider);
+        }
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch news: ${response.status}`);
+        const endpoint = symbol
+          ? `/api/proxy/news/company/${symbol}?${params.toString()}`
+          : `/api/proxy/news/market?${params.toString()}`;
+
+        const response = await fetch(endpoint);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch news: ${response.status}`);
+        }
+
+        const data: NewsResponse = await response.json();
+
+        if (loadMore) {
+          setNews((prev) => [...prev, ...data.articles]);
+          setPage((prev) => prev + 1);
+        } else {
+          setNews(data.articles);
+        }
+
+        setHasMore(data.articles.length === (loadMore ? page + 1 : 1) * ARTICLES_PER_PAGE);
+        setLastUpdate(new Date());
+      } catch (err: any) {
+        setError(err.message || "Failed to load news");
+        console.error("[NEWS] Fetch error:", err);
+      } finally {
+        setLoading(false);
       }
-
-      const data: NewsResponse = await response.json();
-
-      if (loadMore) {
-        setNews((prev) => [...prev, ...data.articles]);
-        setPage((prev) => prev + 1);
-      } else {
-        setNews(data.articles);
-      }
-
-      setHasMore(data.articles.length === (loadMore ? page + 1 : 1) * ARTICLES_PER_PAGE);
-      setLastUpdate(new Date());
-    } catch (err: any) {
-      setError(err.message || "Failed to load news");
-      console.error("[NEWS] Fetch error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [filter, selectedProvider, page]
+  );
 
   useEffect(() => {
     fetchProviders();
@@ -138,6 +141,7 @@ const NewsReview: React.FC = () => {
     );
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Refetch when filters change
@@ -146,7 +150,7 @@ const NewsReview: React.FC = () => {
       // Only fetch after providers are loaded
       fetchNews(searchSymbol || undefined);
     }
-  }, [filter, selectedProvider, fetchNews, providers.length, searchSymbol]);
+  }, [filter, selectedProvider, searchSymbol, providers.length, fetchNews]);
 
   const handleSearch = () => {
     if (searchSymbol.trim()) {

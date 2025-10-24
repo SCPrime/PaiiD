@@ -91,7 +91,9 @@ async def get_counters(current_user: User = Depends(get_current_user)):
 
     except Exception as e:
         logger.error(f"Error getting counters: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get counters: {e!s}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get counters: {e!s}"
+        ) from e
 
 
 @router.get("/dashboard", response_model=DashboardResponse)

@@ -57,7 +57,7 @@ def require_bearer(authorization: str = Header(None)):
     return token
 
 
-def get_current_user_id(token: str = None) -> int:
+def get_current_user_id(token: str | None = None) -> int:
     """
     Get the current user ID from the authenticated token.
 
@@ -79,7 +79,7 @@ def get_current_user_id(token: str = None) -> int:
     return 1
 
 
-def get_current_user_id_str(token: str = None) -> str:
+def get_current_user_id_str(token: str | None = None) -> str:
     """
     Get the current user ID as a string (for file-based storage keys).
 

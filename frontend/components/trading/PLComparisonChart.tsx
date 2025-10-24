@@ -62,8 +62,10 @@ export default function PLComparisonChart({
     }
 
     return () => {
-      if (chartRef.current) {
-        chartRef.current.remove();
+      // Store ref value before cleanup to avoid stale closure
+      const chart = chartRef.current;
+      if (chart) {
+        chart.remove();
       }
     };
   }, [mode, theoreticalPayoff, positionTracking, comparison]);

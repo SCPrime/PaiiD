@@ -246,7 +246,7 @@ class TechnicalIndicators:
         # Simple linear regression
         sum_x = sum(x_values)
         sum_y = sum(recent)
-        sum_xy = sum(x * y for x, y in zip(x_values, recent))
+        sum_xy = sum(x * y for x, y in zip(x_values, recent, strict=False))
         sum_x2 = sum(x**2 for x in x_values)
 
         # Guard against division by zero (shouldn't happen with sequential x_values, but defensive)
@@ -286,7 +286,7 @@ class TechnicalIndicators:
 
     @staticmethod
     def generate_signal(
-        symbol: str, prices: list[float], volumes: list[float] = None
+        symbol: str, prices: list[float], volumes: list[float] | None = None
     ) -> dict[str, Any]:
         """
         Generate trading signal based on multiple indicators

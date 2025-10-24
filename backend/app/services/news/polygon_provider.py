@@ -47,7 +47,7 @@ class PolygonProvider(BaseNewsProvider):
             print(f"[ERROR] Polygon market news error: {e}")
             return []
 
-    def _transform_article(self, article: dict, symbol: str = None) -> NewsArticle:
+    def _transform_article(self, article: dict, symbol: str | None = None) -> NewsArticle:
         return NewsArticle(
             id=f"polygon_{article['id']}",
             title=article["title"],

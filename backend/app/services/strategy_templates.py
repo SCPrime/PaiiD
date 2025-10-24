@@ -270,9 +270,7 @@ def filter_templates_by_risk(risk_tolerance: int) -> list[StrategyTemplate]:
     return [t for t in STRATEGY_TEMPLATES if t.risk_level in allowed_levels]
 
 
-def customize_template_for_risk(
-    template: StrategyTemplate, risk_tolerance: int
-) -> dict[str, Any]:
+def customize_template_for_risk(template: StrategyTemplate, risk_tolerance: int) -> dict[str, Any]:
     """
     Customize template parameters based on user's risk tolerance
 

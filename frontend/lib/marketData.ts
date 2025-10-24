@@ -57,7 +57,7 @@ export async function fetchBars(
   symbol: string,
   timeframe: "1Min" | "5Min" | "1Hour" | "1Day" = "1Day",
   limit: number = 100
-): Promise<any> {
+): Promise<unknown> {
   const res = await fetch(
     `/api/proxy/api/market/bars/${symbol}?timeframe=${timeframe}&limit=${limit}`
   );

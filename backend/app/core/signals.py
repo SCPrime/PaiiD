@@ -6,11 +6,10 @@ Version: 1.0.0
 
 import asyncio
 import logging
-import os
 import signal
 import sys
 from pathlib import Path
-from typing import Optional
+
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +18,7 @@ _shutdown_in_progress = False
 _shutdown_timeout = 30  # Maximum 30 seconds for graceful shutdown
 
 
-def get_pid_file_path() -> Optional[Path]:
+def get_pid_file_path() -> Path | None:
     """Get the path to this process's PID file"""
     project_root = Path(__file__).parent.parent.parent.parent
     pid_dir = project_root / "backend" / ".run"
@@ -77,6 +76,7 @@ async def graceful_shutdown(sig: signal.Signals) -> None:
         logger.info("[3/6] Shutting down scheduler...")
         try:
             from ..scheduler import get_scheduler
+
             scheduler_instance = get_scheduler()
             if scheduler_instance:
                 scheduler_instance.shutdown(wait=False)
@@ -88,6 +88,7 @@ async def graceful_shutdown(sig: signal.Signals) -> None:
         logger.info("[4/6] Shutting down Tradier stream...")
         try:
             from ..services.tradier_stream import stop_tradier_stream
+
             await stop_tradier_stream()
             logger.info("  Tradier stream shutdown complete")
         except Exception as e:

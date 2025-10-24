@@ -98,9 +98,7 @@ class StrategySelector:
                 logger.info(f"Processing {symbol}...")
 
                 # Fetch historical data
-                features_df = pipeline.prepare_features(
-                    symbol, lookback_days=lookback_days
-                )
+                features_df = pipeline.prepare_features(symbol, lookback_days=lookback_days)
 
                 if features_df is None or len(features_df) < 100:
                     logger.warning(f"Insufficient data for {symbol}, skipping")
@@ -118,9 +116,7 @@ class StrategySelector:
                     window_features = self._extract_window_features(window_data)
 
                     # Detect market regime for this window
-                    regime_result = regime_detector.predict(
-                        symbol, lookback_days=window_size
-                    )
+                    regime_result = regime_detector.predict(symbol, lookback_days=window_size)
                     window_features["regime"] = regime_result.get("regime", "unknown")
 
                     # Backtest each strategy on this window
@@ -149,16 +145,14 @@ class StrategySelector:
                                     "win_rate": win_rate,
                                 }
                         except Exception as e:
-                            logger.debug(
-                                f"Backtest failed for {strategy_id} on {symbol}: {e}"
-                            )
+                            logger.debug(f"Backtest failed for {strategy_id} on {symbol}: {e}")
                             continue
 
                     # Find best performing strategy for this window
                     if strategy_results:
-                        best_strategy = max(
-                            strategy_results.items(), key=lambda x: x[1]["score"]
-                        )[0]
+                        best_strategy = max(strategy_results.items(), key=lambda x: x[1]["score"])[
+                            0
+                        ]
 
                         # Create training sample
                         sample = {
@@ -180,9 +174,7 @@ class StrategySelector:
             logger.info(f"Strategy distribution:\n{strategy_counts}")
 
             # Filter out strategies with too few samples
-            valid_strategies = strategy_counts[
-                strategy_counts >= min_samples_per_strategy
-            ].index
+            valid_strategies = strategy_counts[strategy_counts >= min_samples_per_strategy].index
             df = df[df["best_strategy"].isin(valid_strategies)]
 
             if len(df) == 0:
@@ -191,9 +183,7 @@ class StrategySelector:
 
             # Separate features and target
             feature_cols = [
-                col
-                for col in df.columns
-                if col not in ["best_strategy", "symbol", "regime"]
+                col for col in df.columns if col not in ["best_strategy", "symbol", "regime"]
             ]
 
             # Add regime as categorical feature
@@ -318,9 +308,7 @@ class StrategySelector:
             # Get feature importances
             feature_importance = dict(
                 sorted(
-                    zip(
-                        self.feature_names, self.model.feature_importances_, strict=True
-                    ),
+                    zip(self.feature_names, self.model.feature_importances_, strict=True),
                     key=lambda x: x[1],
                     reverse=True,
                 )
@@ -393,9 +381,7 @@ class StrategySelector:
                 "ranging",
                 "high_volatility",
             ]:
-                regime_features[f"regime_{regime}"] = (
-                    1 if regime == current_regime else 0
-                )
+                regime_features[f"regime_{regime}"] = 1 if regime == current_regime else 0
 
             # Combine features
             all_features = {**window_features, **regime_features}

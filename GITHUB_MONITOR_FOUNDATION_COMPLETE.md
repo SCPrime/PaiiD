@@ -80,14 +80,14 @@ Built the core backend infrastructure for real-time GitHub repository monitoring
 
 **Endpoints**:
 
-| Endpoint | Method | Auth | Purpose |
-|----------|--------|------|---------|
-| `/api/monitor/counters` | GET | JWT | Get all counter values |
-| `/api/monitor/dashboard` | GET | JWT | Get complete dashboard data |
-| `/api/monitor/trend/{counter_name}` | GET | JWT | Get trend data for a counter |
-| `/api/monitor/webhook` | POST | Signature | Receive GitHub webhooks |
-| `/api/monitor/reset-weekly` | POST | JWT | Reset weekly counters |
-| `/api/monitor/health` | GET | None | Service health check |
+| Endpoint                            | Method | Auth      | Purpose                      |
+| ----------------------------------- | ------ | --------- | ---------------------------- |
+| `/api/monitor/counters`             | GET    | JWT       | Get all counter values       |
+| `/api/monitor/dashboard`            | GET    | JWT       | Get complete dashboard data  |
+| `/api/monitor/trend/{counter_name}` | GET    | JWT       | Get trend data for a counter |
+| `/api/monitor/webhook`              | POST   | Signature | Receive GitHub webhooks      |
+| `/api/monitor/reset-weekly`         | POST   | JWT       | Reset weekly counters        |
+| `/api/monitor/health`               | GET    | None      | Service health check         |
 
 ### 4. **Configuration Updates** ✅
 

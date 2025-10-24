@@ -933,7 +933,8 @@ Proposal system coming in INCREMENT 9`);
     if (stockData?.symbol) {
       fetchHistoricalData(stockData.symbol, timeframe);
     }
-  }, [timeframe]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeframe, stockData?.symbol]);
 
   const timeframes: Timeframe[] = ["1D", "5D", "1M", "3M", "6M", "1Y", "5Y"];
   const chartTypes: ChartType[] = ["Line", "Candlestick", "Area"];

@@ -133,7 +133,7 @@ export class ClaudeAI {
     checkNews?: boolean;
     reviewPositions?: boolean;
     aiRecommendations?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
   }): Promise<string> {
     try {
       const prompt = `Create a personalized trading morning routine based on these preferences:

@@ -60,9 +60,7 @@ def get_account(current_user: User = Depends(get_current_user)):
 
     except Exception as e:
         logger.error(f"❌ Tradier account request failed: {e!s}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to fetch Tradier account: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier account: {e!s}")
 
 
 @router.get("/positions")
@@ -89,9 +87,7 @@ def get_positions(
 
     except Exception as e:
         logger.error(f"❌ Tradier positions request failed: {e!s}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to fetch Tradier positions: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier positions: {e!s}")
 
 
 @router.get("/positions/{symbol}")
@@ -112,6 +108,4 @@ def get_position(symbol: str, current_user: User = Depends(get_current_user)):
         raise
     except Exception as e:
         logger.error(f"❌ Failed to fetch position for {symbol}: {e!s}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to fetch position for {symbol}: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch position for {symbol}: {e!s}")

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { Plus, Star, Trash2, TrendingUp, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import {
   UserProfile,
   Watchlist,
-  getOrCreateProfile,
-  saveProfile,
   addWatchlist,
+  getOrCreateProfile,
   removeWatchlist,
+  saveProfile,
 } from "../types/profile";
-import { Trash2, Plus, X, Star, TrendingUp } from "lucide-react";
 
 interface WatchlistManagerProps {
   onSymbolClick?: (symbol: string) => void;
@@ -74,7 +74,8 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
     return () => {
       window.removeEventListener("profile-updated", handleProfileUpdate as EventListener);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWatchlistId]);
 
   useEffect(() => {
     // Fetch prices for symbols in selected watchlist
@@ -84,7 +85,8 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
         fetchPrices(watchlist.symbols);
       }
     }
-  }, [selectedWatchlistId, showPrices]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWatchlistId, showPrices, profile.watchlists]);
 
   const fetchPrices = async (symbols: string[]) => {
     setLoading(true);

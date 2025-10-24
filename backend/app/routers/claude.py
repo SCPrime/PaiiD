@@ -67,9 +67,7 @@ async def claude_chat(
 
     try:
         # Convert Pydantic models to dicts for Anthropic SDK
-        messages = [
-            {"role": msg.role, "content": msg.content} for msg in request.messages
-        ]
+        messages = [{"role": msg.role, "content": msg.content} for msg in request.messages]
 
         # Call Anthropic API
         # Build kwargs to avoid passing None for system

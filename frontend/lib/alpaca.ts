@@ -403,14 +403,14 @@ class AlpacaClient {
   /**
    * Get all watchlists
    */
-  async getWatchlists(): Promise<any[]> {
-    return this.request<any[]>("/api/watchlists");
+  async getWatchlists(): Promise<unknown[]> {
+    return this.request<unknown[]>("/api/watchlists");
   }
 
   /**
    * Create a watchlist
    */
-  async createWatchlist(name: string, symbols: string[]): Promise<any> {
+  async createWatchlist(name: string, symbols: string[]): Promise<unknown> {
     return this.request("/api/watchlists", {
       method: "POST",
       body: JSON.stringify({ name, symbols }),

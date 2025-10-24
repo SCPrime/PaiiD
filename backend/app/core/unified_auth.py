@@ -247,8 +247,6 @@ def require_api_token(authorization: str | None = Header(None)) -> str:
         )
 
     if token != settings.API_TOKEN:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API token"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API token")
 
     return token

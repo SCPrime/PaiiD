@@ -97,9 +97,7 @@ async def get_market_conditions(
                     positive_signals += 1
                 elif vix_value < 20:
                     vix_status = "favorable"
-                    vix_details = (
-                        f"Low volatility ({vix_value:.2f}) - stable market conditions"
-                    )
+                    vix_details = f"Low volatility ({vix_value:.2f}) - stable market conditions"
                     positive_signals += 1
                 elif vix_value < 30:
                     vix_status = "neutral"
@@ -121,7 +119,7 @@ async def get_market_conditions(
             # 2. Dow Jones Industrial Trend
             dji_quote = quote_map.get("$DJI.IX") or quote_map.get("$DJI")
             if dji_quote and "last" in dji_quote:
-                dji_price = float(dji_quote["last"])
+                float(dji_quote["last"])
                 dji_change_pct = float(dji_quote.get("change_percentage", 0))
 
                 if dji_change_pct > 1.0:
@@ -156,7 +154,7 @@ async def get_market_conditions(
             # 3. NASDAQ Composite Trend
             comp_quote = quote_map.get("COMP:GIDS") or quote_map.get("$COMP.IX")
             if comp_quote and "last" in comp_quote:
-                comp_price = float(comp_quote["last"])
+                float(comp_quote["last"])
                 comp_change_pct = float(comp_quote.get("change_percentage", 0))
 
                 if comp_change_pct > 1.0:
@@ -236,9 +234,7 @@ async def get_market_conditions(
         # Cache for 60 seconds
         cache.set(cache_key, result, ttl=60)
 
-        print(
-            f"[Market Conditions] ✅ Fetched {len(conditions)} real conditions from Tradier"
-        )
+        print(f"[Market Conditions] ✅ Fetched {len(conditions)} real conditions from Tradier")
         return result
 
     except Exception as e:
@@ -339,8 +335,7 @@ async def get_major_indices(
                 print("[Market] ✅ Fetched live data from Tradier for Dow/NASDAQ")
                 result = {
                     "dow": dow_data or {"last": 0, "change": 0, "changePercent": 0},
-                    "nasdaq": nasdaq_data
-                    or {"last": 0, "change": 0, "changePercent": 0},
+                    "nasdaq": nasdaq_data or {"last": 0, "change": 0, "changePercent": 0},
                     "source": "tradier",
                 }
                 # Cache for 60 seconds
@@ -498,9 +493,7 @@ async def get_sector_performance(
             # Cache for 60 seconds
             cache.set(cache_key, result, ttl=60)
 
-            print(
-                f"[Sector Performance] ✅ Fetched {len(sectors)} real sector ETFs from Tradier"
-            )
+            print(f"[Sector Performance] ✅ Fetched {len(sectors)} real sector ETFs from Tradier")
             return result
 
         else:

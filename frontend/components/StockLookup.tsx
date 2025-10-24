@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import AIAnalysisModal from "./AIAnalysisModal";
 
@@ -68,7 +68,7 @@ const StockLookup: React.FC<StockLookupProps> = ({
     border: "rgba(148, 163, 184, 0.2)",
   };
 
-  const handleSearch = async (searchSymbol: string) => {
+  const handleSearch = useCallback(async (searchSymbol: string) => {
     if (!searchSymbol.trim()) {
       setError("Please enter a stock symbol");
       return;
@@ -119,7 +119,7 @@ const StockLookup: React.FC<StockLookupProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [showNews, onSymbolSelect]);
 
   useEffect(() => {
     if (initialSymbol) {

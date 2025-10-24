@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { BarChart3, TrendingUp, Activity, RefreshCw } from "lucide-react";
 import { theme } from "../styles/theme";
 
@@ -61,16 +61,16 @@ export default function TradingViewChart({
         script.parentNode.removeChild(script);
       }
     };
-  }, []);
+  }, [initWidget]);
 
   // Reinitialize widget when symbol, interval, or indicators change
   useEffect(() => {
     if (window.TradingView && containerRef.current) {
       initWidget();
     }
-  }, [currentSymbol, interval, showIndicators]);
+  }, [initWidget]);
 
-  const initWidget = () => {
+  const initWidget = useCallback(() => {
     if (!containerRef.current || !window.TradingView) return;
 
     // Clear existing widget
@@ -109,7 +109,7 @@ export default function TradingViewChart({
       height: autoHeight ? "100%" : height,
       width: "100%",
     });
-  };
+  }, [showIndicators, currentSymbol, interval, autoHeight, height]);
 
   const handleSymbolChange = (newSymbol: string) => {
     setCurrentSymbol(newSymbol.toUpperCase());

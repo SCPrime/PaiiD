@@ -60,9 +60,7 @@ async def get_company_news(
                     "symbol": symbol,
                     "articles": cached_filtered,
                     "count": len(cached_filtered),
-                    "sources": [
-                        p.get_provider_name() for p in news_aggregator.providers
-                    ],
+                    "sources": [p.get_provider_name() for p in news_aggregator.providers],
                     "cached": True,
                 }
 
@@ -132,9 +130,7 @@ async def get_market_news(
                     "category": category,
                     "articles": cached_filtered[:limit],
                     "count": len(cached_filtered[:limit]),
-                    "sources": [
-                        p.get_provider_name() for p in news_aggregator.providers
-                    ],
+                    "sources": [p.get_provider_name() for p in news_aggregator.providers],
                     "cached": True,
                 }
 
@@ -174,8 +170,7 @@ async def get_news_providers(current_user: User = Depends(get_current_user)):
 
     return {
         "providers": [
-            {"name": p.get_provider_name(), "status": "active"}
-            for p in news_aggregator.providers
+            {"name": p.get_provider_name(), "status": "active"} for p in news_aggregator.providers
         ],
         "total": len(news_aggregator.providers),
     }
@@ -201,9 +196,7 @@ async def get_news_health(current_user: User = Depends(get_current_user)):
         health = news_aggregator.get_provider_health()
         return health
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get health status: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get health status: {e!s}")
 
 
 @router.get("/news/sentiment/market")
@@ -260,11 +253,7 @@ async def get_market_sentiment(
                 ),
             },
             "overall_sentiment": (
-                "bullish"
-                if avg_score > 0.15
-                else "bearish"
-                if avg_score < -0.15
-                else "neutral"
+                "bullish" if avg_score > 0.15 else "bearish" if avg_score < -0.15 else "neutral"
             ),
         }
 
@@ -292,9 +281,7 @@ async def clear_news_cache(current_user: User = Depends(get_current_user)):
 
 
 # Helper functions
-def _apply_filters(
-    articles: list[dict], sentiment: str | None, provider: str | None
-) -> list[dict]:
+def _apply_filters(articles: list[dict], sentiment: str | None, provider: str | None) -> list[dict]:
     """Apply sentiment and provider filters to articles"""
     filtered = articles
 
@@ -302,8 +289,6 @@ def _apply_filters(
         filtered = [a for a in filtered if a.get("sentiment") == sentiment]
 
     if provider:
-        filtered = [
-            a for a in filtered if provider.lower() in a.get("provider", "").lower()
-        ]
+        filtered = [a for a in filtered if provider.lower() in a.get("provider", "").lower()]
 
     return filtered

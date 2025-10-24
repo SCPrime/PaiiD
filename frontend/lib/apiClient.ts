@@ -16,7 +16,7 @@ import { logger } from "./logger";
 export interface APIError extends Error {
   status?: number;
   statusText?: string;
-  data?: any;
+  data?: unknown;
 }
 
 export class APIClient {
@@ -33,7 +33,7 @@ export class APIClient {
   /**
    * Create an API error with additional context
    */
-  private createError(message: string, response?: Response, data?: any): APIError {
+  private createError(message: string, response?: Response, data?: unknown): APIError {
     const error = new Error(message) as APIError;
     if (response) {
       error.status = response.status;
@@ -48,7 +48,7 @@ export class APIClient {
   /**
    * Make a GET request
    */
-  async get<T = any>(endpoint: string, options?: RequestInit): Promise<T> {
+  async get<T = unknown>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
     logger.debug(`GET ${url}`);
@@ -81,7 +81,7 @@ export class APIClient {
   /**
    * Make a POST request
    */
-  async post<T = any>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+  async post<T = unknown>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
     logger.debug(`POST ${url}`, { body });
@@ -115,7 +115,7 @@ export class APIClient {
   /**
    * Make a PUT request
    */
-  async put<T = any>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+  async put<T = unknown>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
     logger.debug(`PUT ${url}`, { body });
@@ -149,7 +149,7 @@ export class APIClient {
   /**
    * Make a DELETE request
    */
-  async delete<T = any>(endpoint: string, options?: RequestInit): Promise<T> {
+  async delete<T = unknown>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
     logger.debug(`DELETE ${url}`);
@@ -189,21 +189,21 @@ export class APIClient {
   /**
    * Get account information
    */
-  async getAccount(): Promise<any> {
+  async getAccount(): Promise<unknown> {
     return this.get("/account");
   }
 
   /**
    * Get current positions
    */
-  async getPositions(): Promise<any[]> {
+  async getPositions(): Promise<unknown[]> {
     return this.get("/positions");
   }
 
   /**
    * Get market indices (Dow, NASDAQ)
    */
-  async getMarketIndices(): Promise<any> {
+  async getMarketIndices(): Promise<unknown> {
     return this.get("/market/indices");
   }
 
@@ -216,7 +216,7 @@ export class APIClient {
     side: "buy" | "sell";
     type: "market" | "limit";
     limitPrice?: number;
-  }): Promise<any> {
+  }): Promise<unknown> {
     return this.post("/orders", order);
   }
 }

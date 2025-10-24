@@ -37,16 +37,10 @@ class HealthMonitor:
             if self.response_times
             else 0
         )
-        error_rate = (
-            (self.error_count / self.request_count * 100)
-            if self.request_count > 0
-            else 0
-        )
+        error_rate = (self.error_count / self.request_count * 100) if self.request_count > 0 else 0
 
         return {
-            "status": "healthy"
-            if cpu_percent < 80 and memory.percent < 85
-            else "degraded",
+            "status": "healthy" if cpu_percent < 80 and memory.percent < 85 else "degraded",
             "timestamp": datetime.now().isoformat(),
             "uptime_seconds": uptime,
             "system": {
@@ -62,9 +56,7 @@ class HealthMonitor:
                 "total_errors": self.error_count,
                 "error_rate_percent": error_rate,
                 "avg_response_time_ms": avg_response_time * 1000,
-                "requests_per_minute": self.request_count / (uptime / 60)
-                if uptime > 0
-                else 0,
+                "requests_per_minute": self.request_count / (uptime / 60) if uptime > 0 else 0,
                 "cache_hits": self.cache_hits,
                 "cache_misses": self.cache_misses,
                 "cache_hit_rate_percent": (
@@ -99,9 +91,7 @@ class HealthMonitor:
         # Check Alpaca API
         try:
             start = time.time()
-            resp = requests.get(
-                "https://paper-api.alpaca.markets/v2/account", timeout=5
-            )
+            resp = requests.get("https://paper-api.alpaca.markets/v2/account", timeout=5)
             dependencies["alpaca"] = {
                 "status": "up" if resp.status_code < 500 else "down",
                 "response_time_ms": (time.time() - start) * 1000,

@@ -230,15 +230,9 @@ async def get_opportunities(
     ]
 
     # Randomly select opportunities from each category
-    selected_stocks = random.sample(
-        stock_opportunities, min(2, len(stock_opportunities))
-    )
-    selected_options = random.sample(
-        option_opportunities, min(2, len(option_opportunities))
-    )
-    selected_multileg = random.sample(
-        multileg_opportunities, min(2, len(multileg_opportunities))
-    )
+    selected_stocks = random.sample(stock_opportunities, min(2, len(stock_opportunities)))
+    selected_options = random.sample(option_opportunities, min(2, len(option_opportunities)))
+    selected_multileg = random.sample(multileg_opportunities, min(2, len(multileg_opportunities)))
 
     all_opportunities: list[Opportunity] = []
 
@@ -253,13 +247,9 @@ async def get_opportunities(
                 reason=stock["reason"],
                 currentPrice=round(stock["current"] * (1 + price_var), 2),
                 targetPrice=(
-                    round(stock["target"] * (1 + price_var), 2)
-                    if stock["target"]
-                    else None
+                    round(stock["target"] * (1 + price_var), 2) if stock["target"] else None
                 ),
-                confidence=max(
-                    60, min(95, stock["confidence"] + random.randint(-5, 5))
-                ),
+                confidence=max(60, min(95, stock["confidence"] + random.randint(-5, 5))),
                 risk=stock["risk"],
             )
         )
@@ -275,13 +265,9 @@ async def get_opportunities(
                 reason=option["reason"],
                 currentPrice=round(option["current"] * (1 + price_var), 2),
                 targetPrice=(
-                    round(option["target"] * (1 + price_var), 2)
-                    if option["target"]
-                    else None
+                    round(option["target"] * (1 + price_var), 2) if option["target"] else None
                 ),
-                confidence=max(
-                    60, min(95, option["confidence"] + random.randint(-5, 5))
-                ),
+                confidence=max(60, min(95, option["confidence"] + random.randint(-5, 5))),
                 risk=option["risk"],
             )
         )
@@ -297,13 +283,9 @@ async def get_opportunities(
                 reason=multileg["reason"],
                 currentPrice=round(multileg["current"] * (1 + price_var), 2),
                 targetPrice=(
-                    round(multileg["target"] * (1 + price_var), 2)
-                    if multileg["target"]
-                    else None
+                    round(multileg["target"] * (1 + price_var), 2) if multileg["target"] else None
                 ),
-                confidence=max(
-                    60, min(95, multileg["confidence"] + random.randint(-5, 5))
-                ),
+                confidence=max(60, min(95, multileg["confidence"] + random.randint(-5, 5))),
                 risk=multileg["risk"],
             )
         )
@@ -311,9 +293,7 @@ async def get_opportunities(
     # Filter by max price if provided
     opportunities = all_opportunities
     if max_price is not None:
-        opportunities = [
-            opp for opp in all_opportunities if opp.currentPrice <= max_price
-        ]
+        opportunities = [opp for opp in all_opportunities if opp.currentPrice <= max_price]
 
     # Ensure we have diverse investment types in the results
     # Group by type to show variety
@@ -330,7 +310,7 @@ async def get_opportunities(
     return {
         "opportunities": [opp.model_dump() for opp in diverse_opportunities],
         "timestamp": "2025-10-06T00:00:00Z",
-        "strategyCount": len(set(opp.strategy for opp in diverse_opportunities)),
+        "strategyCount": len({opp.strategy for opp in diverse_opportunities}),
         "filteredByPrice": max_price is not None,
         "maxPrice": max_price,
     }

@@ -95,7 +95,7 @@ class SentryContextMiddleware(BaseHTTPMiddleware):
                 raise
 
 
-def capture_trading_event(event_type: str, symbol: str = None, **kwargs):
+def capture_trading_event(event_type: str, symbol: str | None = None, **kwargs):
     """
     Capture custom trading events in Sentry for analytics
 
@@ -109,7 +109,7 @@ def capture_trading_event(event_type: str, symbol: str = None, **kwargs):
     )
 
 
-def capture_market_data_fetch(source: str, endpoint: str, success: bool, duration_ms: float = None):
+def capture_market_data_fetch(source: str, endpoint: str, success: bool, duration_ms: float | None = None):
     """
     Capture market data fetch events for monitoring API health
 
@@ -132,7 +132,7 @@ def capture_market_data_fetch(source: str, endpoint: str, success: bool, duratio
     )
 
 
-def capture_cache_operation(operation: str, key: str, hit: bool = None):
+def capture_cache_operation(operation: str, key: str, hit: bool | None = None):
     """
     Capture cache operations for monitoring cache effectiveness
 

@@ -1,0 +1,105 @@
+{
+  "timestamp": "2025-10-24-170036",
+  "total_files": 232,
+  "decisions_made": 5,
+  "summary": {
+    "keep": 0,
+    "archive": 0,
+    "delete": 0,
+    "review": 5,
+    "skip": 0
+  },
+  "decisions": [
+    {
+      "file": "CLEAN_BUILD.ps1",
+      "action": "review",
+      "recommendation": "KEEP - Utility script",
+      "analysis": {
+        "size": 5514,
+        "lines": 143,
+        "content_preview": "# \ud83d\udd2c Master Surgeon's Build Cleanup Script (PowerShell version)\n# Removes all old JavaScript artifacts and forces fresh build\n\n$ErrorActionPreference = \"Stop\"\n",
+        "hints": [
+          "Contains test-related content",
+          "Contains deployment-related content",
+          "Mentions deprecated/old - likely redundant",
+          "Clean script - likely utility"
+        ],
+        "category": "script"
+      },
+      "timestamp": "2025-10-24T17:00:36.856543"
+    },
+    {
+      "file": "CLEAN_BUILD.sh",
+      "action": "review",
+      "recommendation": "KEEP - Utility script",
+      "analysis": {
+        "size": 3427,
+        "lines": 112,
+        "content_preview": "#!/bin/bash\n# \ud83d\udd2c Master Surgeon's Build Cleanup Script\n# Removes all old JavaScript artifacts and forces fresh build\n\nset -e  # Exit on error",
+        "hints": [
+          "Contains test-related content",
+          "Contains deployment-related content",
+          "Mentions deprecated/old - likely redundant",
+          "Clean script - likely utility"
+        ],
+        "category": "script"
+      },
+      "timestamp": "2025-10-24T17:00:36.857543"
+    },
+    {
+      "file": "EXECUTE-BATCH-7.ps1",
+      "action": "review",
+      "recommendation": "REVIEW - Needs manual inspection",
+      "analysis": {
+        "size": 1798,
+        "lines": 40,
+        "content_preview": "# EXECUTE-BATCH-7.ps1 - Setup production monitoring\n\nWrite-Host \"\ud83d\udcca BATCH 7: PRODUCTION MONITORING SETUP\" -ForegroundColor Cyan\nWrite-Host \"=======================================\" -ForegroundColor Cyan\n",
+        "hints": [],
+        "category": "script"
+      },
+      "timestamp": "2025-10-24T17:00:36.857543"
+    },
+    {
+      "file": "EXECUTE-BATCH-7.sh",
+      "action": "review",
+      "recommendation": "REVIEW - Needs manual inspection",
+      "analysis": {
+        "size": 1740,
+        "lines": 60,
+        "content_preview": "#!/bin/bash\n# EXECUTE-BATCH-7.sh - Setup production monitoring\n\necho \"\ud83d\udcca BATCH 7: PRODUCTION MONITORING SETUP\"\necho \"=======================================\"",
+        "hints": [],
+        "category": "script"
+      },
+      "timestamp": "2025-10-24T17:00:36.857543"
+    },
+    {
+      "file": "backend/alembic/versions/037b216f2ed1_add_auth_schema_user_sessions_activity_.py",
+      "action": "review",
+      "recommendation": "KEEP - Active code detected",
+      "analysis": {
+        "size": 6651,
+        "lines": 152,
+        "content_preview": "\"\"\"add_auth_schema_user_sessions_activity_log\n\nRevision ID: 037b216f2ed1\nRevises: c8e4f9b52d31\nCreate Date: 2025-10-15 22:11:24.035448",
+        "hints": [
+          "Contains imports - likely active code",
+          "Contains functions - likely active code"
+        ],
+        "category": "code"
+      },
+      "timestamp": "2025-10-24T17:00:36.857543"
+    }
+  ],
+  "files_by_action": {
+    "keep": [],
+    "archive": [],
+    "delete": [],
+    "review": [
+      "CLEAN_BUILD.ps1",
+      "CLEAN_BUILD.sh",
+      "EXECUTE-BATCH-7.ps1",
+      "EXECUTE-BATCH-7.sh",
+      "backend/alembic/versions/037b216f2ed1_add_auth_schema_user_sessions_activity_.py"
+    ],
+    "skip": []
+  }
+}

@@ -6,11 +6,11 @@ Market Data comes from Tradier API
 
 import logging
 import os
-from typing import Dict, List, Optional
 
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
+
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +29,12 @@ class AlpacaClient:
         self.client = TradingClient(
             api_key=self.api_key,
             secret_key=self.secret_key,
-            paper=True  # CRITICAL: Paper trading mode
+            paper=True,  # CRITICAL: Paper trading mode
         )
 
         logger.info("Alpaca Paper Trading client initialized")
 
-    def get_account(self) -> Dict:
+    def get_account(self) -> dict:
         """Get Alpaca paper trading account information"""
         try:
             account = self.client.get_account()
@@ -65,10 +65,10 @@ class AlpacaClient:
             }
 
         except Exception as e:
-            logger.error(f"❌ Alpaca get_account failed: {str(e)}")
-            raise Exception(f"Alpaca account request failed: {str(e)}")
+            logger.error(f"❌ Alpaca get_account failed: {e!s}")
+            raise Exception(f"Alpaca account request failed: {e!s}")
 
-    def get_positions(self) -> List[Dict]:
+    def get_positions(self) -> list[dict]:
         """Get all open positions from Alpaca paper trading account"""
         try:
             positions = self.client.get_all_positions()
@@ -77,39 +77,38 @@ class AlpacaClient:
             # Convert to dict format matching frontend expectations
             positions_data = []
             for pos in positions:
-                positions_data.append({
-                    "symbol": pos.symbol,
-                    "qty": float(pos.qty),
-                    "side": pos.side.value,
-                    "market_value": float(pos.market_value),
-                    "cost_basis": float(pos.cost_basis),
-                    "unrealized_pl": float(pos.unrealized_pl),
-                    "unrealized_plpc": float(pos.unrealized_plpc),
-                    "current_price": float(pos.current_price),
-                    "avg_entry_price": float(pos.avg_entry_price),
-                    "lastday_price": float(pos.lastday_price),
-                    "change_today": float(pos.change_today),
-                    "asset_id": str(pos.asset_id),
-                    "exchange": pos.exchange.value if pos.exchange else None,
-                    "asset_class": pos.asset_class.value,
-                })
+                positions_data.append(
+                    {
+                        "symbol": pos.symbol,
+                        "qty": float(pos.qty),
+                        "side": pos.side.value,
+                        "market_value": float(pos.market_value),
+                        "cost_basis": float(pos.cost_basis),
+                        "unrealized_pl": float(pos.unrealized_pl),
+                        "unrealized_plpc": float(pos.unrealized_plpc),
+                        "current_price": float(pos.current_price),
+                        "avg_entry_price": float(pos.avg_entry_price),
+                        "lastday_price": float(pos.lastday_price),
+                        "change_today": float(pos.change_today),
+                        "asset_id": str(pos.asset_id),
+                        "exchange": pos.exchange.value if pos.exchange else None,
+                        "asset_class": pos.asset_class.value,
+                    }
+                )
 
             return positions_data
 
         except Exception as e:
-            logger.error(f"❌ Alpaca get_positions failed: {str(e)}")
-            raise Exception(f"Alpaca positions request failed: {str(e)}")
+            logger.error(f"❌ Alpaca get_positions failed: {e!s}")
+            raise Exception(f"Alpaca positions request failed: {e!s}")
 
-    def place_market_order(self, symbol: str, qty: float, side: str) -> Dict:
+    def place_market_order(self, symbol: str, qty: float, side: str) -> dict:
         """Place a market order on Alpaca paper trading account"""
         try:
             order_side = OrderSide.BUY if side.upper() == "BUY" else OrderSide.SELL
 
             market_order_data = MarketOrderRequest(
-                symbol=symbol,
-                qty=qty,
-                side=order_side,
-                time_in_force=TimeInForce.DAY
+                symbol=symbol, qty=qty, side=order_side, time_in_force=TimeInForce.DAY
             )
 
             order = self.client.submit_order(order_data=market_order_data)
@@ -124,16 +123,18 @@ class AlpacaClient:
                 "type": order.type.value,
                 "status": order.status.value,
                 "filled_qty": float(order.filled_qty) if order.filled_qty else 0,
-                "filled_avg_price": float(order.filled_avg_price) if order.filled_avg_price else None,
+                "filled_avg_price": float(order.filled_avg_price)
+                if order.filled_avg_price
+                else None,
                 "created_at": order.created_at.isoformat() if order.created_at else None,
                 "updated_at": order.updated_at.isoformat() if order.updated_at else None,
             }
 
         except Exception as e:
-            logger.error(f"❌ Alpaca place_market_order failed: {str(e)}")
-            raise Exception(f"Failed to place market order: {str(e)}")
+            logger.error(f"❌ Alpaca place_market_order failed: {e!s}")
+            raise Exception(f"Failed to place market order: {e!s}")
 
-    def place_limit_order(self, symbol: str, qty: float, side: str, limit_price: float) -> Dict:
+    def place_limit_order(self, symbol: str, qty: float, side: str, limit_price: float) -> dict:
         """Place a limit order on Alpaca paper trading account"""
         try:
             order_side = OrderSide.BUY if side.upper() == "BUY" else OrderSide.SELL
@@ -143,11 +144,13 @@ class AlpacaClient:
                 qty=qty,
                 side=order_side,
                 time_in_force=TimeInForce.DAY,
-                limit_price=limit_price
+                limit_price=limit_price,
             )
 
             order = self.client.submit_order(order_data=limit_order_data)
-            logger.info(f"✅ Limit order placed: {order.id} - {side} {qty} {symbol} @ ${limit_price}")
+            logger.info(
+                f"✅ Limit order placed: {order.id} - {side} {qty} {symbol} @ ${limit_price}"
+            )
 
             return {
                 "id": str(order.id),
@@ -159,20 +162,22 @@ class AlpacaClient:
                 "limit_price": float(order.limit_price) if order.limit_price else None,
                 "status": order.status.value,
                 "filled_qty": float(order.filled_qty) if order.filled_qty else 0,
-                "filled_avg_price": float(order.filled_avg_price) if order.filled_avg_price else None,
+                "filled_avg_price": float(order.filled_avg_price)
+                if order.filled_avg_price
+                else None,
                 "created_at": order.created_at.isoformat() if order.created_at else None,
                 "updated_at": order.updated_at.isoformat() if order.updated_at else None,
             }
 
         except Exception as e:
-            logger.error(f"❌ Alpaca place_limit_order failed: {str(e)}")
-            raise Exception(f"Failed to place limit order: {str(e)}")
+            logger.error(f"❌ Alpaca place_limit_order failed: {e!s}")
+            raise Exception(f"Failed to place limit order: {e!s}")
 
-    def get_orders(self, status: Optional[str] = None, limit: int = 100) -> List[Dict]:
+    def get_orders(self, status: str | None = None, limit: int = 100) -> list[dict]:
         """Get orders from Alpaca paper trading account"""
         try:
-            from alpaca.trading.requests import GetOrdersRequest
             from alpaca.trading.enums import QueryOrderStatus
+            from alpaca.trading.requests import GetOrdersRequest
 
             # Map status string to enum
             status_filter = None
@@ -186,41 +191,44 @@ class AlpacaClient:
             else:
                 status_filter = QueryOrderStatus.ALL
 
-            request_params = GetOrdersRequest(
-                status=status_filter,
-                limit=limit
-            )
+            request_params = GetOrdersRequest(status=status_filter, limit=limit)
 
             orders = self.client.get_orders(filter=request_params)
             logger.info(f"✅ Alpaca orders retrieved: {len(orders)} orders")
 
             orders_data = []
             for order in orders:
-                orders_data.append({
-                    "id": str(order.id),
-                    "client_order_id": order.client_order_id,
-                    "symbol": order.symbol,
-                    "qty": float(order.qty),
-                    "side": order.side.value,
-                    "type": order.type.value,
-                    "status": order.status.value,
-                    "filled_qty": float(order.filled_qty) if order.filled_qty else 0,
-                    "filled_avg_price": float(order.filled_avg_price) if order.filled_avg_price else None,
-                    "limit_price": float(order.limit_price) if order.limit_price else None,
-                    "stop_price": float(order.stop_price) if order.stop_price else None,
-                    "created_at": order.created_at.isoformat() if order.created_at else None,
-                    "updated_at": order.updated_at.isoformat() if order.updated_at else None,
-                    "submitted_at": order.submitted_at.isoformat() if order.submitted_at else None,
-                    "filled_at": order.filled_at.isoformat() if order.filled_at else None,
-                })
+                orders_data.append(
+                    {
+                        "id": str(order.id),
+                        "client_order_id": order.client_order_id,
+                        "symbol": order.symbol,
+                        "qty": float(order.qty),
+                        "side": order.side.value,
+                        "type": order.type.value,
+                        "status": order.status.value,
+                        "filled_qty": float(order.filled_qty) if order.filled_qty else 0,
+                        "filled_avg_price": float(order.filled_avg_price)
+                        if order.filled_avg_price
+                        else None,
+                        "limit_price": float(order.limit_price) if order.limit_price else None,
+                        "stop_price": float(order.stop_price) if order.stop_price else None,
+                        "created_at": order.created_at.isoformat() if order.created_at else None,
+                        "updated_at": order.updated_at.isoformat() if order.updated_at else None,
+                        "submitted_at": order.submitted_at.isoformat()
+                        if order.submitted_at
+                        else None,
+                        "filled_at": order.filled_at.isoformat() if order.filled_at else None,
+                    }
+                )
 
             return orders_data
 
         except Exception as e:
-            logger.error(f"❌ Alpaca get_orders failed: {str(e)}")
-            raise Exception(f"Failed to get orders: {str(e)}")
+            logger.error(f"❌ Alpaca get_orders failed: {e!s}")
+            raise Exception(f"Failed to get orders: {e!s}")
 
-    def cancel_order(self, order_id: str) -> Dict:
+    def cancel_order(self, order_id: str) -> dict:
         """Cancel an order by ID"""
         try:
             self.client.cancel_order_by_id(order_id)
@@ -228,8 +236,8 @@ class AlpacaClient:
             return {"status": "cancelled", "order_id": order_id}
 
         except Exception as e:
-            logger.error(f"❌ Alpaca cancel_order failed: {str(e)}")
-            raise Exception(f"Failed to cancel order: {str(e)}")
+            logger.error(f"❌ Alpaca cancel_order failed: {e!s}")
+            raise Exception(f"Failed to cancel order: {e!s}")
 
 
 # Singleton instance

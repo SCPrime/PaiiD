@@ -75,9 +75,7 @@ class PositionTrackerService:
                 current_price = quote.get("last", pos.current_price)
                 unrealized_pl = (current_price - pos.avg_entry_price) * pos.qty * 100
                 cost_basis = pos.avg_entry_price * pos.qty * 100
-                unrealized_pl_percent = (
-                    (unrealized_pl / cost_basis) * 100 if cost_basis else 0
-                )
+                unrealized_pl_percent = (unrealized_pl / cost_basis) * 100 if cost_basis else 0
 
                 position = Position(
                     id=pos.asset_id,
@@ -121,9 +119,7 @@ class PositionTrackerService:
             position_count=len(positions),
         )
 
-    async def close_position(
-        self, position_id: str, limit_price: float | None = None
-    ) -> dict:
+    async def close_position(self, position_id: str, limit_price: float | None = None) -> dict:
         """Close an open position"""
         try:
             # Get position details
@@ -166,7 +162,7 @@ class PositionTrackerService:
         """Calculate Greeks for a position"""
         try:
             # Parse option symbol
-            option_type, strike, expiration = self._parse_option_symbol(position.symbol)
+            option_type, strike, _expiration = self._parse_option_symbol(position.symbol)
 
             # Get underlying price
             underlying_price = quote.get("underlying_price", 0)
@@ -192,9 +188,7 @@ class PositionTrackerService:
     def _parse_underlying(self, option_symbol: str) -> str:
         """Extract underlying symbol from option symbol"""
         # OCC format: SPY250117C00590000
-        return option_symbol[
-            : option_symbol.index(next(c for c in option_symbol if c.isdigit()))
-        ]
+        return option_symbol[: option_symbol.index(next(c for c in option_symbol if c.isdigit()))]
 
     def _parse_expiration(self, option_symbol: str) -> str:
         """Extract expiration date from option symbol"""

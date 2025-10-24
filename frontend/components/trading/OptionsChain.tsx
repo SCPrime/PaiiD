@@ -71,6 +71,7 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
     if (symbol) {
       fetchExpirations();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol]);
 
   // Fetch options chain when expiration selected
@@ -78,6 +79,7 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
     if (symbol && selectedExpiration) {
       fetchOptionsChain();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol, selectedExpiration]);
 
   const fetchExpirations = async () => {

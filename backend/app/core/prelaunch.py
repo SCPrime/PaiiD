@@ -62,7 +62,7 @@ class PrelaunchValidator:
             # Test if we can bind to the port
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(1)
-            result = sock.bind(("127.0.0.1", port))
+            sock.bind(("127.0.0.1", port))
             sock.close()
 
             return ValidationResult(
@@ -181,10 +181,7 @@ class PrelaunchValidator:
                 )
 
             live_trading = os.getenv("LIVE_TRADING", "false").lower() == "true"
-            if (
-                live_trading
-                and os.getenv("LIVE_TRADING_CONFIRMED", "no").lower() != "yes"
-            ):
+            if live_trading and os.getenv("LIVE_TRADING_CONFIRMED", "no").lower() != "yes":
                 security_errors.append(
                     "LIVE_TRADING requires LIVE_TRADING_CONFIRMED=yes in production"
                 )
@@ -409,9 +406,7 @@ async def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="PaiiD Backend Pre-launch Validation")
-    parser.add_argument(
-        "--strict", action="store_true", help="Fail on warnings (production mode)"
-    )
+    parser.add_argument("--strict", action="store_true", help="Fail on warnings (production mode)")
     parser.add_argument(
         "--check-only",
         action="store_true",
@@ -427,7 +422,7 @@ async def main():
     )
 
     validator = PrelaunchValidator(strict_mode=args.strict)
-    success, errors, warnings = await validator.validate_all()
+    success, _errors, _warnings = await validator.validate_all()
 
     if not success:
         logger.error("Pre-launch validation failed!")

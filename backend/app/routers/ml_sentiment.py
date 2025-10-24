@@ -288,8 +288,8 @@ async def ml_sentiment_health_check():
     """Check ML sentiment service health"""
     try:
         # Verify ML services can be instantiated
-        sentiment_analyzer = get_sentiment_analyzer()
-        signal_generator = get_signal_generator()
+        get_sentiment_analyzer()
+        get_signal_generator()
 
         return {
             "status": "healthy",

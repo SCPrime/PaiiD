@@ -156,20 +156,20 @@ export default function MonitorPage() {
 ## 📊 TRACKED METRICS
 
 ### Weekly Counters (Reset Monday 00:00)
-| Counter | Description | Icon |
-|---------|-------------|------|
-| `commits` | Total commits pushed | 💾 |
-| `pushes` | Push events | 🚀 |
-| `pulls_opened` | PRs opened | 📝 |
-| `pulls_merged` | PRs merged | ✅ |
-| `pulls_closed` | PRs closed without merge | ❌ |
-| `issues_opened` | Issues opened | 📋 |
-| `issues_closed` | Issues closed | ✅ |
-| `deployments` | Deployment events | 🎯 |
-| `build_failures` | CI/CD failures | 🚫 |
-| `test_failures` | Test failures | ⚠️ |
-| `conflicts` | Merge conflicts | ⚔️ |
-| `hotfixes` | Hotfix deployments | 🔥 |
+| Counter          | Description              | Icon |
+| ---------------- | ------------------------ | ---- |
+| `commits`        | Total commits pushed     | 💾    |
+| `pushes`         | Push events              | 🚀    |
+| `pulls_opened`   | PRs opened               | 📝    |
+| `pulls_merged`   | PRs merged               | ✅    |
+| `pulls_closed`   | PRs closed without merge | ❌    |
+| `issues_opened`  | Issues opened            | 📋    |
+| `issues_closed`  | Issues closed            | ✅    |
+| `deployments`    | Deployment events        | 🎯    |
+| `build_failures` | CI/CD failures           | 🚫    |
+| `test_failures`  | Test failures            | ⚠️    |
+| `conflicts`      | Merge conflicts          | ⚔️    |
+| `hotfixes`       | Hotfix deployments       | 🔥    |
 
 ### Time-Series Data
 - All counters tracked with timestamps
@@ -426,12 +426,12 @@ curl -H "Authorization: Bearer JWT" \
 
 ## 🚀 DEPLOYMENT STATUS
 
-| Component | Status | URL/Location |
-|-----------|--------|--------------|
-| **Backend API** | 🚀 Deploying | https://paiid-backend.onrender.com/api/monitor/* |
-| **CLI Tool** | ✅ Ready | `scripts/monitor_status.py` |
-| **Dashboard UI** | ✅ Ready | `frontend/components/MonitorDashboard.tsx` |
-| **Documentation** | ✅ Complete | This file |
+| Component         | Status      | URL/Location                                     |
+| ----------------- | ----------- | ------------------------------------------------ |
+| **Backend API**   | 🚀 Deploying | https://paiid-backend.onrender.com/api/monitor/* |
+| **CLI Tool**      | ✅ Ready     | `scripts/monitor_status.py`                      |
+| **Dashboard UI**  | ✅ Ready     | `frontend/components/MonitorDashboard.tsx`       |
+| **Documentation** | ✅ Complete  | This file                                        |
 
 ---
 

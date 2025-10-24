@@ -23,9 +23,7 @@ router = APIRouter()
 class UserPreferencesResponse(BaseModel):
     """Response model for user preferences"""
 
-    risk_tolerance: int | None = Field(
-        None, ge=0, le=100, description="Risk tolerance (0-100)"
-    )
+    risk_tolerance: int | None = Field(None, ge=0, le=100, description="Risk tolerance (0-100)")
     default_position_size: float | None = None
     watchlist: list | None = None
     notifications_enabled: bool | None = None
@@ -35,9 +33,7 @@ class UserPreferencesResponse(BaseModel):
 class UserPreferencesUpdate(BaseModel):
     """Request model for updating user preferences"""
 
-    risk_tolerance: int | None = Field(
-        None, ge=0, le=100, description="Risk tolerance (0-100)"
-    )
+    risk_tolerance: int | None = Field(None, ge=0, le=100, description="Risk tolerance (0-100)")
     default_position_size: float | None = Field(
         None, gt=0, description="Default position size in dollars"
     )
@@ -83,9 +79,7 @@ def get_user_preferences(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to fetch user preferences: {e!s}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to fetch user preferences: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch user preferences: {e!s}")
 
 
 @router.patch("/users/preferences")
@@ -154,9 +148,7 @@ def update_user_preferences(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to update user preferences: {e!s}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update user preferences: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to update user preferences: {e!s}")
 
 
 def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
@@ -220,6 +212,4 @@ def get_user_risk_limits(
 
     except Exception as e:
         logger.error(f"❌ Failed to calculate risk limits: {e!s}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to calculate risk limits: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to calculate risk limits: {e!s}")
