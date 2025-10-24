@@ -10,15 +10,16 @@ Phase 1 Implementation:
 - Multi-leg order support
 """
 
-from datetime import datetime
-from typing import List, Optional
-import requests
 import asyncio
 import logging
+import time
+from collections import OrderedDict
+from datetime import datetime
+from typing import Any, Iterable, List, Optional
 
+import requests
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
 
 from ..core.config import settings
 from ..core.auth import require_bearer
@@ -26,6 +27,56 @@ from ..services.tradier_client import get_tradier_client
 
 router = APIRouter(prefix="/options", tags=["options"])
 logger = logging.getLogger(__name__)
+
+
+class TTLCache:
+    """Simple TTL cache avoiding external dependencies.
+
+    This lightweight implementation mirrors the small subset of behaviour
+    required by the options router: membership checks plus item get/set with
+    automatic eviction after the configured TTL.
+    """
+
+    def __init__(self, maxsize: int, ttl: int) -> None:
+        self.maxsize = maxsize
+        self.ttl = ttl
+        self._data: OrderedDict = OrderedDict()
+
+    def _purge_expired(self) -> None:
+        """Remove expired keys prior to any access."""
+
+        now = time.monotonic()
+        expired: Iterable[Any] = [
+            key for key, (_, expires_at) in self._data.items() if expires_at <= now
+        ]
+        for key in expired:
+            self._data.pop(key, None)
+
+    def __contains__(self, key: Any) -> bool:  # pragma: no cover - exercised indirectly
+        self._purge_expired()
+        return key in self._data
+
+    def __getitem__(self, key: Any) -> Any:
+        self._purge_expired()
+        value, expires_at = self._data[key]
+        if expires_at <= time.monotonic():
+            # Item expired between purge and access
+            self._data.pop(key, None)
+            raise KeyError(key)
+        # Refresh LRU order for simple eviction policy
+        self._data.move_to_end(key)
+        return value
+
+    def __setitem__(self, key: Any, value: Any) -> None:
+        self._purge_expired()
+        self._data[key] = (value, time.monotonic() + self.ttl)
+        self._data.move_to_end(key)
+        if len(self._data) > self.maxsize:
+            self._data.popitem(last=False)
+
+    def clear(self) -> None:
+        self._data.clear()
+
 
 # 5-minute cache for options chain data
 # maxsize=100 allows caching up to 100 different symbol+expiration combinations
@@ -79,8 +130,8 @@ class OptionsChainResponse(BaseModel):
     symbol: str
     expiration_date: str
     underlying_price: Optional[float] = None
-    calls: List[OptionContract] = []
-    puts: List[OptionContract] = []
+    calls: List[OptionContract] = Field(default_factory=list)
+    puts: List[OptionContract] = Field(default_factory=list)
     total_contracts: int = 0
 
 

@@ -7,7 +7,18 @@ Defines schema for users, strategies, trades, performance tracking, and equity s
 
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 from ..db.session import Base
@@ -49,6 +60,7 @@ class User(Base):
     # Relationships
     strategies = relationship("Strategy", back_populates="user", cascade="all, delete-orphan")
     trades = relationship("Trade", back_populates="user", cascade="all, delete-orphan")
+    positions = relationship("Position", back_populates="user", cascade="all, delete-orphan")
     sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
     activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
 
@@ -167,6 +179,55 @@ class Strategy(Base):
         return f"<Strategy(id={self.id}, name='{self.name}', type='{self.strategy_type}')>"
 
 
+class Position(Base):
+    """Open or historical portfolio position"""
+
+    __tablename__ = "positions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+
+    # Instrument identifiers
+    symbol = Column(String(20), nullable=False, index=True)
+    option_symbol = Column(String(50), nullable=True, index=True)
+    asset_class = Column(String(20), nullable=False, default="option", index=True)
+
+    # Quantity and pricing
+    quantity = Column(Float, nullable=False)
+    avg_entry_price = Column(Float, nullable=False)
+    current_price = Column(Float, nullable=True)
+    market_value = Column(Float, nullable=True)
+    cost_basis = Column(Float, nullable=True)
+
+    # Performance metrics
+    unrealized_pl = Column(Float, nullable=True)
+    unrealized_pl_percent = Column(Float, nullable=True)
+
+    # Options specific metadata
+    expiration = Column(Date, nullable=True)
+    days_to_expiry = Column(Integer, nullable=True)
+    greeks = Column(JSON, default=dict, nullable=False)
+
+    status = Column(String(20), default="open", nullable=False, index=True)
+    notes = Column(Text, nullable=True)
+
+    # Timeline
+    opened_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+    closed_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="positions")
+    trades = relationship("Trade", back_populates="position")
+
+    def __repr__(self):
+        return (
+            f"<Position(id={self.id}, symbol='{self.symbol}', qty={self.quantity}, "
+            f"status='{self.status}')>"
+        )
+
+
 class Trade(Base):
     """Trade execution record"""
 
@@ -175,6 +236,7 @@ class Trade(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     strategy_id = Column(Integer, ForeignKey("strategies.id", ondelete="SET NULL"), nullable=True)
+    position_id = Column(Integer, ForeignKey("positions.id", ondelete="SET NULL"), nullable=True)
 
     # Trade details
     symbol = Column(String(20), nullable=False, index=True)
@@ -211,6 +273,7 @@ class Trade(Base):
     # Relationships
     user = relationship("User", back_populates="trades")
     strategy = relationship("Strategy")
+    position = relationship("Position", back_populates="trades")
 
     def __repr__(self):
         return f"<Trade(id={self.id}, symbol='{self.symbol}', side='{self.side}', qty={self.quantity}, status='{self.status}')>"

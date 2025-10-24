@@ -1,7 +1,7 @@
 # Import settings and models
-import sys
 from logging.config import fileConfig
 from pathlib import Path
+import sys
 
 from sqlalchemy import engine_from_config, pool
 

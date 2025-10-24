@@ -20,6 +20,7 @@ os.environ["SENTRY_DSN"] = ""  # Disable Sentry for tests
 os.environ["TESTING"] = "true"  # Disable rate limiting for tests
 os.environ["API_TOKEN"] = "test-token-12345"
 os.environ["TRADIER_API_KEY"] = "test-tradier-key"
+os.environ["TRADIER_ACCOUNT_ID"] = "test-account-id"
 os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
 from app.db.session import Base, get_db
@@ -154,6 +155,19 @@ def mock_cache():
     return MockCacheService()
 
 
+@pytest.fixture(autouse=True)
+def reset_tradier_client():
+    """Ensure Tradier singleton does not leak between tests."""
+
+    from app.services import tradier_client
+
+    tradier_client._tradier_client = None
+    try:
+        yield
+    finally:
+        tradier_client._tradier_client = None
+
+
 # ==================== DATABASE MODEL FIXTURES ====================
 
 
@@ -219,6 +233,30 @@ def sample_trade(test_db, sample_user, sample_strategy):
     test_db.commit()
     test_db.refresh(trade)
     return trade
+
+
+@pytest.fixture
+def sample_position(test_db, sample_user):
+    """Create a sample position for testing"""
+    from app.models.database import Position
+
+    position = Position(
+        user_id=sample_user.id,
+        symbol="AAPL",
+        asset_class="stock",
+        quantity=10,
+        avg_entry_price=150.0,
+        current_price=152.5,
+        market_value=1525.0,
+        cost_basis=1500.0,
+        unrealized_pl=25.0,
+        unrealized_pl_percent=1.67,
+        greeks={},
+    )
+    test_db.add(position)
+    test_db.commit()
+    test_db.refresh(position)
+    return position
 
 
 # ==================== MOCK API RESPONSES ====================
