@@ -229,7 +229,7 @@ class TradierStreamService:
                     # Attempt to delete old session (best effort)
                     try:
                         await self._delete_session(old_session)
-                    except:
+                    except Exception:
                         pass
 
                 # Create fresh session
@@ -485,7 +485,7 @@ class TradierStreamService:
             symbols: List of stock symbols (e.g., ["AAPL", "MSFT", "TSLA"])
         """
         # Add to active symbols set
-        new_symbols = set(s.upper() for s in symbols)
+        new_symbols = {s.upper() for s in symbols}
         self.active_symbols.update(new_symbols)
 
         # Subscribe on WebSocket if connected
@@ -502,7 +502,7 @@ class TradierStreamService:
             symbols: List of stock symbols to unsubscribe from
         """
         # Remove from active symbols
-        symbols_to_remove = set(s.upper() for s in symbols)
+        symbols_to_remove = {s.upper() for s in symbols}
         self.active_symbols -= symbols_to_remove
 
         # Re-subscribe with updated list

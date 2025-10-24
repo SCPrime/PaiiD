@@ -342,7 +342,7 @@ class NewsAggregator:
             url_groups[article.url].append(article)
 
         aggregated = []
-        for url, group in url_groups.items():
+        for _url, group in url_groups.items():
             if len(group) == 1:
                 aggregated.append(group[0])
             else:
@@ -350,7 +350,7 @@ class NewsAggregator:
                 best = max(group, key=lambda x: len(x.summary))
                 best.sentiment_score = avg_score
                 best.sentiment = self._score_to_label(avg_score)
-                best.provider = ", ".join(set(a.provider for a in group))
+                best.provider = ", ".join({a.provider for a in group})
                 aggregated.append(best)
 
         return aggregated
@@ -375,7 +375,7 @@ class NewsAggregator:
                     - datetime.fromisoformat(article.published_at.replace("Z", "+00:00"))
                 ).total_seconds() / 3600
                 score += max(0, 100 - age_hours)
-            except:
+            except (ValueError, AttributeError):
                 pass
 
             score += abs(article.sentiment_score) * 50

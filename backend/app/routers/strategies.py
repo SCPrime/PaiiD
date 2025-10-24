@@ -66,9 +66,7 @@ class StrategyConfigRequest(BaseModel):
             "custom",
         ]
         if v not in allowed_types:
-            raise ValueError(
-                f"Invalid strategy type. Allowed: {', '.join(allowed_types)}"
-            )
+            raise ValueError(f"Invalid strategy type. Allowed: {', '.join(allowed_types)}")
         return v
 
 
@@ -98,9 +96,7 @@ class StrategyRunRequest(BaseModel):
             "custom",
         ]
         if v not in allowed_types:
-            raise ValueError(
-                f"Invalid strategy type. Allowed: {', '.join(allowed_types)}"
-            )
+            raise ValueError(f"Invalid strategy type. Allowed: {', '.join(allowed_types)}")
         return v
 
 
@@ -150,9 +146,7 @@ async def save_strategy(
 
 
 @router.get("/strategies/load/{strategy_type}")
-async def load_strategy(
-    strategy_type: str, current_user: User = Depends(get_current_user)
-):
+async def load_strategy(strategy_type: str, current_user: User = Depends(get_current_user)):
     """
     Load strategy configuration
 
@@ -171,9 +165,7 @@ async def load_strategy(
                 "is_default": True,
             }
         else:
-            raise HTTPException(
-                status_code=404, detail=f"Strategy '{strategy_type}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Strategy '{strategy_type}' not found")
 
     try:
         with open(strategy_file) as f:
@@ -201,10 +193,8 @@ async def list_strategies(current_user: User = Depends(get_current_user)):
         try:
             with open(strategy_file) as f:
                 data = json.load(f)
-            strategies.append(
-                {"strategy_type": data["strategy_type"], "has_config": True}
-            )
-        except:
+            strategies.append({"strategy_type": data["strategy_type"], "has_config": True})
+        except (json.JSONDecodeError, KeyError, OSError):
             continue
 
     # Add available strategies that haven't been configured
@@ -217,9 +207,7 @@ async def list_strategies(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/strategies/run")
-async def run_strategy(
-    request: StrategyRunRequest, current_user: User = Depends(get_current_user)
-):
+async def run_strategy(request: StrategyRunRequest, current_user: User = Depends(get_current_user)):
     """
     Run a strategy (execute morning routine)
 
@@ -244,7 +232,7 @@ async def run_strategy(
 
         # Create strategy instance
         if request.strategy_type == "under4-multileg":
-            strategy = create_under4_multileg_strategy(config_dict)
+            create_under4_multileg_strategy(config_dict)
         else:
             raise HTTPException(
                 status_code=400,
@@ -284,18 +272,14 @@ async def run_strategy(
             }
         else:
             # PHASE 1: Implement actual execution via order_execution.py
-            raise HTTPException(
-                status_code=501, detail="Live execution not yet implemented"
-            )
+            raise HTTPException(status_code=501, detail="Live execution not yet implemented")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/strategies/{strategy_type}")
-async def delete_strategy(
-    strategy_type: str, current_user: User = Depends(get_current_user)
-):
+async def delete_strategy(strategy_type: str, current_user: User = Depends(get_current_user)):
     """
     Delete a saved strategy configuration
 
@@ -305,9 +289,7 @@ async def delete_strategy(
     strategy_file = STRATEGIES_DIR / f"{user_id}_{strategy_type}.json"
 
     if not strategy_file.exists():
-        raise HTTPException(
-            status_code=404, detail=f"Strategy '{strategy_type}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Strategy '{strategy_type}' not found")
 
     try:
         strategy_file.unlink()
@@ -388,9 +370,7 @@ async def get_strategy_templates(
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to fetch strategy templates: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch strategy templates: {e!s}")
 
 
 @router.get("/strategies/templates/{template_id}")
