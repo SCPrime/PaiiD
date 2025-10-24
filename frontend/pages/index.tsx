@@ -16,6 +16,7 @@ import NewsReview from "../components/NewsReview";
 import StrategyBuilderAI from "../components/StrategyBuilderAI";
 import PositionManager from "../components/trading/PositionManager";
 import UserSetupAI from "../components/UserSetupAI";
+import OptionsTradingWorkspace from "../components/trading/OptionsTradingWorkspace";
 
 import AIChat from "../components/AIChat";
 import CompletePaiiDLogo from "../components/CompletePaiiDLogo";
@@ -137,6 +138,9 @@ export default function Dashboard() {
 
         case "backtesting":
           return <Backtesting />;
+
+        case "options-trading":
+          return <OptionsTradingWorkspace />;
 
         default:
           return null;
