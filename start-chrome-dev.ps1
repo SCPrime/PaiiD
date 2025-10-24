@@ -1,6 +1,17 @@
 # Start PaiiD Development with Chrome Auto-Launch
 # Run this script to start both backend + frontend + open Chrome
 
+function Get-PreferredShell {
+    $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($pwsh) {
+        return "pwsh"
+    }
+
+    return "powershell"
+}
+
+$shellExecutable = Get-PreferredShell
+
 Write-Host "🚀 Starting PaiiD Development Environment..." -ForegroundColor Cyan
 Write-Host ""
 
@@ -14,13 +25,13 @@ Write-Host ""
 
 # Start Backend
 Write-Host "🐍 Starting Backend (port 8001)..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\backend'; python -m uvicorn app.main:app --reload --port 8001"
+Start-Process $shellExecutable -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\backend'; python -m uvicorn app.main:app --reload --port 8001"
 
 Start-Sleep -Seconds 3
 
 # Start Frontend
 Write-Host "⚛️  Starting Frontend (port 3000)..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\frontend'; npm run dev"
+Start-Process $shellExecutable -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\frontend'; npm run dev"
 
 Start-Sleep -Seconds 5
 

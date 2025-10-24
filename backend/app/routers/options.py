@@ -231,7 +231,7 @@ async def get_options_chain(
 
 
 @router.get("/expirations/{symbol}", response_model=List[ExpirationDate])
-def get_expiration_dates(symbol: str, authorization: str = Depends(require_bearer)):
+async def get_expiration_dates(symbol: str, authorization: str = Depends(require_bearer)):
     """
     Get available expiration dates for a symbol
 
@@ -242,8 +242,8 @@ def get_expiration_dates(symbol: str, authorization: str = Depends(require_beare
         # Get Tradier client instance
         client = _get_tradier_client()
 
-        # Fetch expiration dates from Tradier
-        exp_data = client.get_option_expirations(symbol)
+        # Fetch expiration dates from Tradier without blocking the event loop
+        exp_data = await asyncio.to_thread(client.get_option_expirations, symbol)
 
         expirations = exp_data.get("expirations", {}).get("date", [])
         if not expirations:

@@ -16,7 +16,7 @@ echo "🔍 Running pre-commit validation..."
 echo "🔒 Phase 1: Checking for LOCKED FINAL file modifications..."
 
 # Check if any LOCKED FINAL files are staged for commit
-LOCKED_FILES=$(git diff --cached --name-only | grep -E "LOCKED FINAL|Locked\.tsx|Locked\.svg|CompletePaiiDLogo|PaiiDChatBoxLocked|iPi-Symbol-Locked")
+LOCKED_FILES=$(git diff --cached --name-only | grep -E "LOCKED FINAL|Locked\.tsx|Locked\.svg|CompletePaiiDLogo|PaiiDChatBoxLocked|iPi-Symbol-Locked" || true)
 
 if [ -n "$LOCKED_FILES" ]; then
   echo ""

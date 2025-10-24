@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+import { mockOptionsEndpoints } from "./helpers/apiMocks";
+import { goto } from "./helpers/navigation";
+
 /**
  * E2E tests for OptionsChain component
  * Tests Phase 1 implementation with OPTT symbol
@@ -7,8 +10,8 @@ import { expect, test } from "@playwright/test";
 
 test.describe("Options Chain - Phase 1", () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to test page
-    await page.goto("http://localhost:3000/test-options");
+    await mockOptionsEndpoints(page);
+    await goto(page, "/test-options");
   });
 
   test("should load test page successfully", async ({ page }) => {
@@ -33,7 +36,7 @@ test.describe("Options Chain - Phase 1", () => {
     const expirationSelect = page.locator("select");
     await expect(expirationSelect).toBeVisible();
 
-    // Check that options are available (OPTT has 4 expirations)
+    // Check that options are available (fixture provides 2 expirations)
     const optionCount = await expirationSelect.locator("option").count();
     expect(optionCount).toBeGreaterThan(1); // At least 1 + default "Select Expiration"
 
@@ -54,8 +57,6 @@ test.describe("Options Chain - Phase 1", () => {
     // Verify contracts are loaded (OPTT has 14 contracts: 7 calls + 7 puts)
     const rows = await page.locator("tbody tr").count();
     expect(rows).toBeGreaterThan(0);
-    console.log(`Loaded ${rows} options contracts`);
-
     // Verify at least one strike price is visible
     await expect(page.locator("tbody td").first()).toBeVisible();
   });
@@ -150,10 +151,7 @@ test.describe("Options Chain - Phase 1", () => {
     await page.waitForTimeout(3000);
 
     // Check if error message appears (component should show error state)
-    const errorDiv = page.locator('div:has-text("Error")');
-    if (await errorDiv.isVisible()) {
-      console.log("Error handling working correctly");
-    }
+    await expect(page.getByText("Failed to fetch", { exact: false })).toBeVisible();
   });
 
   test("should display Greeks with proper formatting", async ({ page }) => {
@@ -171,7 +169,6 @@ test.describe("Options Chain - Phase 1", () => {
 
     // Check if delta value is formatted (should be number with decimals or "—")
     const deltaText = await deltaCell.textContent();
-    console.log(`Sample Delta value: ${deltaText}`);
 
     // Verify it's either a number or dash
     expect(deltaText).toMatch(/^[0-9.\-—]+$/);
@@ -181,6 +178,8 @@ test.describe("Options Chain - Phase 1", () => {
 test.describe("Options Chain - Network & Performance", () => {
   test("should make correct API calls", async ({ page }) => {
     // Listen for API calls
+    await mockOptionsEndpoints(page);
+
     const expirationsRequest = page.waitForRequest((req) =>
       req.url().includes("/api/proxy/options/expirations/OPTT")
     );
@@ -190,19 +189,18 @@ test.describe("Options Chain - Network & Performance", () => {
     );
 
     // Navigate and trigger
-    await page.goto("http://localhost:3000/test-options");
+    await goto(page, "/test-options");
     await page.fill('input[type="text"]', "OPTT");
     await page.click('button:has-text("Load Options Chain")');
 
     // Verify requests were made
     await expirationsRequest;
     await chainRequest;
-
-    console.log("✅ All API calls verified");
   });
 
   test("should load within reasonable time", async ({ page }) => {
-    await page.goto("http://localhost:3000/test-options");
+    await mockOptionsEndpoints(page);
+    await goto(page, "/test-options");
 
     const startTime = Date.now();
 
@@ -211,7 +209,7 @@ test.describe("Options Chain - Network & Performance", () => {
     await expect(page.locator("table")).toBeVisible({ timeout: 15000 });
 
     const loadTime = Date.now() - startTime;
-    console.log(`Options chain loaded in ${loadTime}ms`);
+    // Log messages removed to keep the test output clean
 
     // Should load within 15 seconds
     expect(loadTime).toBeLessThan(15000);
