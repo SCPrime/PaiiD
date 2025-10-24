@@ -8,15 +8,16 @@ import logging
 import os
 import random
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Literal
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..core.auth import require_bearer
 from ..db.session import get_db
+from ..models.database import AIRecommendation, User
 from ..services.technical_indicators import TechnicalIndicators
 from ..services.tradier_client import get_tradier_client
 
@@ -24,6 +25,11 @@ from ..services.tradier_client import get_tradier_client
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
+
+
+DEFAULT_RECOMMENDATION_TTL_DAYS = 7
+DEFAULT_API_USER_EMAIL = "default@paiid.com"
+DEFAULT_API_USER_PASSWORD_PLACEHOLDER = "!"
 
 
 class TradeData(BaseModel):
@@ -80,8 +86,110 @@ class RecommendationsResponse(BaseModel):
     model_version: str = "v1.0.0"
 
 
+def _get_or_create_default_user(db: Session) -> User:
+    """Return a fallback API user record for static token flows."""
+
+    user = db.query(User).filter(User.email == DEFAULT_API_USER_EMAIL).first()
+    if user:
+        return user
+
+    user = User(
+        email=DEFAULT_API_USER_EMAIL,
+        password_hash=DEFAULT_API_USER_PASSWORD_PLACEHOLDER,
+        role="personal_only",
+        preferences={"risk_tolerance": 50},
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def _resolve_request_user(db: Session, x_user_id: int | None = None) -> User:
+    """Resolve the active user for the current request."""
+
+    if x_user_id is not None:
+        user = db.query(User).filter(User.id == x_user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail=f"User {x_user_id} not found")
+        return user
+
+    return _get_or_create_default_user(db)
+
+
+def _persist_recommendation_batch(
+    db: Session,
+    user_id: int,
+    recommendations: list[Recommendation],
+    ttl_days: int = DEFAULT_RECOMMENDATION_TTL_DAYS,
+) -> list[AIRecommendation]:
+    """Persist a batch of recommendation responses for history tracking."""
+
+    if not recommendations:
+        return []
+
+    persisted: list[AIRecommendation] = []
+
+    try:
+        for recommendation in recommendations:
+            expires_at = datetime.utcnow() + timedelta(days=ttl_days)
+            analysis_payload = {
+                "score": recommendation.score,
+                "risk": recommendation.risk,
+                "reason": recommendation.reason,
+                "targetPrice": recommendation.targetPrice,
+                "currentPrice": recommendation.currentPrice,
+                "momentum": recommendation.momentum or {},
+                "volatility": recommendation.volatility or {},
+                "indicators": recommendation.indicators or {},
+                "sector": recommendation.sector,
+                "sectorPerformance": recommendation.sectorPerformance or {},
+                "portfolioFit": recommendation.portfolioFit,
+            }
+
+            if recommendation.explanation:
+                analysis_payload["explanation"] = recommendation.explanation
+
+            if recommendation.tradeData:
+                analysis_payload["tradeData"] = recommendation.tradeData.model_dump()
+
+            record = AIRecommendation(
+                user_id=user_id,
+                symbol=recommendation.symbol.upper(),
+                recommendation_type=recommendation.action.lower(),
+                confidence_score=float(recommendation.confidence),
+                analysis_data=analysis_payload,
+                suggested_entry_price=recommendation.entryPrice,
+                suggested_stop_loss=recommendation.stopLoss,
+                suggested_take_profit=recommendation.takeProfit,
+                suggested_position_size=(
+                    recommendation.tradeData.quantity if recommendation.tradeData else None
+                ),
+                reasoning=recommendation.reason or recommendation.explanation,
+                market_context=None,
+                status="pending",
+                expires_at=expires_at,
+            )
+
+            db.add(record)
+            persisted.append(record)
+
+        db.commit()
+
+        for record in persisted:
+            db.refresh(record)
+
+        return persisted
+    except Exception:
+        db.rollback()
+        raise
+
+
 @router.get("/recommendations", response_model=RecommendationsResponse, dependencies=[Depends(require_bearer)])
-async def get_recommendations():
+async def get_recommendations(
+    x_user_id: int | None = Header(default=None, alias="X-User-Id"),
+    db: Session = Depends(get_db),
+):
     """
     Generate AI-powered trading recommendations using real market data
 
@@ -239,6 +347,17 @@ async def get_recommendations():
         # Generate portfolio analysis
         portfolio_analysis = _generate_portfolio_analysis(portfolio_data, recommendations)
 
+        # Persist generated recommendations for history tracking
+        user = _resolve_request_user(db, x_user_id=x_user_id)
+        try:
+            _persist_recommendation_batch(db, user.id, recommendations)
+        except Exception as persist_error:
+            logger.error(f"❌ Failed to persist generated recommendations: {persist_error!s}")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to persist generated recommendations",
+            ) from persist_error
+
         logger.info(f"✅ Generated {len(recommendations)} portfolio-aware recommendations")
 
         return RecommendationsResponse(
@@ -252,52 +371,6 @@ async def get_recommendations():
         logger.error(f"❌ Failed to generate recommendations: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {e!s}")
 
-
-@router.get("/recommendations/{symbol}", response_model=Recommendation)
-async def get_symbol_recommendation(symbol: str):
-    """
-    Get AI recommendation for a specific symbol using real market data
-    """
-    try:
-        symbol = symbol.upper()
-
-        # Get real price from Tradier
-        client = get_tradier_client()
-        quote = client.get_quote(symbol)
-
-        if not quote or "last" not in quote:
-            raise HTTPException(status_code=404, detail=f"No price data available for {symbol}")
-
-        current_price = float(quote["last"])
-
-        # Simple momentum-based recommendation
-        # In production, this would use technical analysis
-        action = "BUY"  # Default action
-        confidence = 70.0 + random.uniform(0, 20)  # 70-90
-        target_price = round(current_price * 1.10, 2)  # 10% upside
-        risk = "Medium"
-
-        recommendation = Recommendation(
-            symbol=symbol,
-            action=action,
-            confidence=round(confidence, 1),
-            reason=f"AI analysis suggests favorable risk/reward for {symbol}. Technical indicators show potential upside.",
-            targetPrice=target_price,
-            currentPrice=current_price,
-            timeframe="1-2 months",
-            risk=risk,
-        )
-
-        logger.info(
-            f"✅ Generated recommendation for {symbol} using real price: ${current_price:.2f}"
-        )
-        return recommendation
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Failed to generate recommendation for {symbol}: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate recommendation: {e!s}")
 
 
 @router.get(
@@ -1660,7 +1733,11 @@ class RecommendationHistoryResponse(BaseModel):
 
 
 @router.post("/recommendations/save", dependencies=[Depends(require_bearer)])
-async def save_recommendation(request: SaveRecommendationRequest, db: Session = Depends(get_db)):
+async def save_recommendation(
+    request: SaveRecommendationRequest,
+    x_user_id: int | None = Header(default=None, alias="X-User-Id"),
+    db: Session = Depends(get_db),
+):
     """
     Save an AI recommendation to history for tracking and analysis
 
@@ -1672,16 +1749,14 @@ async def save_recommendation(request: SaveRecommendationRequest, db: Session = 
     Phase: Final 6% MVP completion
     """
     try:
-        from datetime import timedelta
-
-        from ..models.database import AIRecommendation
+        user = _resolve_request_user(db, x_user_id=x_user_id)
 
         # Calculate expiry (recommendations expire after 7 days)
-        expires_at = datetime.utcnow() + timedelta(days=7)
+        expires_at = datetime.utcnow() + timedelta(days=DEFAULT_RECOMMENDATION_TTL_DAYS)
 
         # Create recommendation record
         recommendation = AIRecommendation(
-            user_id=1,  # TODO: Get from auth once multi-user support added
+            user_id=user.id,
             symbol=request.symbol.upper(),
             recommendation_type=request.recommendation_type.lower(),
             confidence_score=request.confidence_score,
@@ -1711,6 +1786,7 @@ async def save_recommendation(request: SaveRecommendationRequest, db: Session = 
         }
 
     except Exception as e:
+        db.rollback()
         logger.error(f"❌ Failed to save recommendation: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to save recommendation: {e!s}")
 
@@ -1727,6 +1803,7 @@ async def get_recommendation_history(
     ),
     limit: int = Query(50, ge=1, le=200, description="Maximum number of recommendations to return"),
     offset: int = Query(0, ge=0, description="Number of recommendations to skip"),
+    x_user_id: int | None = Header(default=None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ):
     """
@@ -1741,12 +1818,10 @@ async def get_recommendation_history(
     Phase: Final 6% MVP completion
     """
     try:
-        from ..models.database import AIRecommendation
+        user = _resolve_request_user(db, x_user_id=x_user_id)
 
-        # Build query
-        query = db.query(AIRecommendation).filter(
-            AIRecommendation.user_id == 1
-        )  # TODO: Multi-user support
+        # Build query scoped to current user
+        query = db.query(AIRecommendation).filter(AIRecommendation.user_id == user.id)
 
         # Apply filters
         if symbol:
@@ -1797,6 +1872,50 @@ async def get_recommendation_history(
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve recommendation history: {e!s}"
         )
+
+
+@router.get("/recommendations/{symbol}", response_model=Recommendation)
+async def get_symbol_recommendation(symbol: str):
+    """Get AI recommendation for a specific symbol using real market data."""
+
+    try:
+        symbol = symbol.upper()
+
+        client = get_tradier_client()
+        quote = client.get_quote(symbol)
+
+        if not quote or "last" not in quote:
+            raise HTTPException(status_code=404, detail=f"No price data available for {symbol}")
+
+        current_price = float(quote["last"])
+        action = "BUY"
+        confidence = 70.0 + random.uniform(0, 20)
+        target_price = round(current_price * 1.10, 2)
+
+        recommendation = Recommendation(
+            symbol=symbol,
+            action=action,
+            confidence=round(confidence, 1),
+            reason=(
+                f"AI analysis suggests favorable risk/reward for {symbol}. "
+                "Technical indicators show potential upside."
+            ),
+            targetPrice=target_price,
+            currentPrice=current_price,
+            timeframe="1-2 months",
+            risk="Medium",
+        )
+
+        logger.info(
+            f"✅ Generated recommendation for {symbol} using real price: ${current_price:.2f}"
+        )
+        return recommendation
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to generate recommendation for {symbol}: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate recommendation: {e!s}")
 
 
 # =============================================================================
