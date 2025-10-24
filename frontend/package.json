@@ -3,6 +3,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:managed": "bash ./scripts/start-server.sh",
+    "dev:clean": "bash ../scripts/cleanup-test-ports.sh && npm run dev",
+    "stop": "bash ../backend/scripts/process-manager.sh stop frontend-server",
     "build": "next build",
     "start": "node server.js",
     "start:dev": "next start",
@@ -14,6 +17,10 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "type-check": "tsc --noEmit",
+    "playwright:install": "npx playwright install --with-deps",
+    "playwright:test": "npx playwright test",
+    "playwright:test:ci": "npx playwright test --reporter=github",
+    "playwright:test:headed": "npx playwright test --headed",
     "prepare": "husky"
   },
   "dependencies": {
@@ -66,5 +73,9 @@
     "lint-staged": "^16.2.4",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.4"
+  },
+  "engines": {
+    "node": ">=20.17.0",
+    "npm": ">=10.0.0"
   }
 }
