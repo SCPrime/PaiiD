@@ -11,7 +11,13 @@ echo "======================================"
 
 # Run database migrations
 echo ""
-echo "[1/2] Running database migrations..."
+echo "[1/3] Validating runtime requirements..."
+echo "--------------------------------------"
+
+python -m app.core.prelaunch
+
+echo ""
+echo "[2/3] Running database migrations..."
 echo "--------------------------------------"
 
 if alembic upgrade head; then
@@ -23,7 +29,7 @@ fi
 
 # Start the FastAPI server
 echo ""
-echo "[2/2] Starting FastAPI server..."
+echo "[3/3] Starting FastAPI server..."
 echo "--------------------------------------"
 
 exec uvicorn app.main:app --host 0.0.0.0 --port $PORT

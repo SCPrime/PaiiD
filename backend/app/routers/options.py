@@ -15,10 +15,46 @@ from typing import List, Optional
 import requests
 import asyncio
 import logging
+import time
+from collections import OrderedDict
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+
+try:
+    from cachetools import TTLCache
+except ImportError:  # pragma: no cover - fallback for CI environments
+
+    class TTLCache(OrderedDict):  # type: ignore[misc]
+        """Lightweight TTL cache fallback when cachetools is unavailable."""
+
+        def __init__(self, maxsize: int, ttl: float):
+            super().__init__()
+            self.maxsize = maxsize
+            self.ttl = ttl
+
+        def _purge(self) -> None:
+            now = time.time()
+            expired_keys = [key for key, (_, expiry) in self.items() if expiry <= now]
+            for key in expired_keys:
+                self.pop(key, None)
+
+        def __contains__(self, key: object) -> bool:  # pragma: no cover - trivial wrapper
+            self._purge()
+            return super().__contains__(key)
+
+        def __getitem__(self, key: str):
+            self._purge()
+            value, _ = super().__getitem__(key)
+            return value
+
+        def __setitem__(self, key: str, value) -> None:
+            self._purge()
+            if key in self:
+                super().pop(key)
+            elif self.maxsize and len(self) >= self.maxsize:
+                super().popitem(last=False)
+            super().__setitem__(key, (value, time.time() + self.ttl))
 
 from ..core.config import settings
 from ..core.auth import require_bearer
