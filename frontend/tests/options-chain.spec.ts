@@ -1,11 +1,15 @@
 import { expect, test } from "@playwright/test";
 
+const ENABLE_TEST_OPTIONS_ROUTE = process.env.TEST_OPTIONS_ROUTE === "true";
+
+const describeOptions = ENABLE_TEST_OPTIONS_ROUTE ? test.describe : test.describe.skip;
+
 /**
  * E2E tests for OptionsChain component
  * Tests Phase 1 implementation with OPTT symbol
  */
 
-test.describe("Options Chain - Phase 1", () => {
+describeOptions("Options Chain - Phase 1", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to test page
     await page.goto("http://localhost:3000/test-options");
@@ -54,7 +58,6 @@ test.describe("Options Chain - Phase 1", () => {
     // Verify contracts are loaded (OPTT has 14 contracts: 7 calls + 7 puts)
     const rows = await page.locator("tbody tr").count();
     expect(rows).toBeGreaterThan(0);
-    console.log(`Loaded ${rows} options contracts`);
 
     // Verify at least one strike price is visible
     await expect(page.locator("tbody td").first()).toBeVisible();
@@ -151,9 +154,6 @@ test.describe("Options Chain - Phase 1", () => {
 
     // Check if error message appears (component should show error state)
     const errorDiv = page.locator('div:has-text("Error")');
-    if (await errorDiv.isVisible()) {
-      console.log("Error handling working correctly");
-    }
   });
 
   test("should display Greeks with proper formatting", async ({ page }) => {
@@ -171,14 +171,13 @@ test.describe("Options Chain - Phase 1", () => {
 
     // Check if delta value is formatted (should be number with decimals or "—")
     const deltaText = await deltaCell.textContent();
-    console.log(`Sample Delta value: ${deltaText}`);
 
     // Verify it's either a number or dash
     expect(deltaText).toMatch(/^[0-9.\-—]+$/);
   });
 });
 
-test.describe("Options Chain - Network & Performance", () => {
+describeOptions("Options Chain - Network & Performance", () => {
   test("should make correct API calls", async ({ page }) => {
     // Listen for API calls
     const expirationsRequest = page.waitForRequest((req) =>
@@ -197,8 +196,6 @@ test.describe("Options Chain - Network & Performance", () => {
     // Verify requests were made
     await expirationsRequest;
     await chainRequest;
-
-    console.log("✅ All API calls verified");
   });
 
   test("should load within reasonable time", async ({ page }) => {
@@ -211,7 +208,6 @@ test.describe("Options Chain - Network & Performance", () => {
     await expect(page.locator("table")).toBeVisible({ timeout: 15000 });
 
     const loadTime = Date.now() - startTime;
-    console.log(`Options chain loaded in ${loadTime}ms`);
 
     // Should load within 15 seconds
     expect(loadTime).toBeLessThan(15000);

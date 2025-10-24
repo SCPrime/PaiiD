@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState, useMemo, memo, useCallback } from "react";
 import * as d3 from "d3";
 import { throttle } from "lodash";
@@ -343,13 +343,6 @@ function RadialMenuComponent({
 
   useEffect(() => {
     if (!svgRef.current) return;
-
-    // ✅ EXTENSION VERIFICATION: D3.js
-    console.info("[Extension Verification] ✅ D3.js loaded successfully:", {
-      version: d3.version,
-      modules: ["select", "pie", "arc", "selectAll"],
-      status: "FUNCTIONAL",
-    });
 
     const width = menuSize;
     const height = menuSize;
