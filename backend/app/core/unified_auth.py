@@ -11,16 +11,16 @@ STABILITY: Gibraltar-level - bulletproof error handling and clear auth flow
 """
 
 import logging
-from typing import Optional
 
 from fastapi import Depends, Header, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
 from ..db.session import get_db
 from ..models.database import User
 from .config import settings
-from .jwt import decode_token, get_current_user as get_jwt_user
+from .jwt import decode_token
+
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer()
@@ -51,7 +51,7 @@ def verify_api_token(authorization: str) -> bool:
     return token == settings.API_TOKEN
 
 
-def get_auth_mode(authorization: Optional[str] = Header(None)) -> str:
+def get_auth_mode(authorization: str | None = Header(None)) -> str:
     """
     Determine which authentication mode to use
 
@@ -78,7 +78,7 @@ def get_auth_mode(authorization: Optional[str] = Header(None)) -> str:
 
 
 def get_current_user_unified(
-    authorization: Optional[str] = Header(None), db: Session = Depends(get_db)
+    authorization: str | None = Header(None), db: Session = Depends(get_db)
 ) -> User:
     """
     Unified authentication that handles both API token and JWT
@@ -128,7 +128,8 @@ def get_current_user_unified(
 
         if not authorization:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorization header"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Missing authorization header",
             )
 
         # Extract token and create credentials object
@@ -163,7 +164,8 @@ def get_current_user_unified(
             # Check if user is active
             if not user.is_active:
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="User account is disabled"
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="User account is disabled",
                 )
 
             return user
@@ -173,7 +175,8 @@ def get_current_user_unified(
         except Exception as e:
             logger.error(f"JWT validation error: {e}")
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication token",
             )
 
     # CASE 3: MVP Fallback (no auth header or unrecognized)
@@ -201,11 +204,12 @@ def get_current_user_unified(
 
     # Should never reach here
     raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Authentication system error"
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Authentication system error",
     )
 
 
-def require_api_token(authorization: Optional[str] = Header(None)) -> str:
+def require_api_token(authorization: str | None = Header(None)) -> str:
     """
     Require simple API token authentication (for service endpoints)
 
@@ -223,12 +227,14 @@ def require_api_token(authorization: Optional[str] = Header(None)) -> str:
     """
     if not authorization:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorization header"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authorization header",
         )
 
     if not authorization.startswith("Bearer "):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization format"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization format",
         )
 
     token = authorization.split(" ", 1)[1]
@@ -241,7 +247,8 @@ def require_api_token(authorization: Optional[str] = Header(None)) -> str:
         )
 
     if token != settings.API_TOKEN:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API token"
+        )
 
     return token
-

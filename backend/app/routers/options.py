@@ -290,7 +290,9 @@ async def get_options_chain(
 
 
 @router.get("/expirations/{symbol}", response_model=list[ExpirationDate])
-def get_expiration_dates(symbol: str, current_user: User = Depends(get_current_user_unified)):
+def get_expiration_dates(
+    symbol: str, current_user: User = Depends(get_current_user_unified)
+):
     """
     Get available expiration dates for a symbol
 

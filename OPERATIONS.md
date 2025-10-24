@@ -6,11 +6,11 @@
 
 ## 🌐 Live URLs (Render Only)
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| **Frontend** | https://paiid-frontend.onrender.com | Main UI (Next.js) |
-| **Backend** | https://paiid-backend.onrender.com | FastAPI service |
-| **Backend Health** | https://paiid-backend.onrender.com/api/health | Health check |
+| Service            | URL                                           | Purpose           |
+| ------------------ | --------------------------------------------- | ----------------- |
+| **Frontend**       | https://paiid-frontend.onrender.com           | Main UI (Next.js) |
+| **Backend**        | https://paiid-backend.onrender.com            | FastAPI service   |
+| **Backend Health** | https://paiid-backend.onrender.com/api/health | Health check      |
 
 ---
 
@@ -183,13 +183,13 @@ curl "https://paiid-backend.onrender.com/api/positions" \
 
 ## 🚨 Troubleshooting
 
-| Symptom | Check | Fix |
-|---------|-------|-----|
-| Backend won't start | Render logs | Check environment variables |
-| Frontend 404 | Build logs | Verify build completed successfully |
-| Backend returns 403 | CORS / Origin | Check ALLOW_ORIGIN env var |
-| TypeScript build fails | Dependencies | Ensure TS is in `dependencies` |
-| API returns 401 | Authentication | Verify JWT token is valid |
+| Symptom                | Check          | Fix                                 |
+| ---------------------- | -------------- | ----------------------------------- |
+| Backend won't start    | Render logs    | Check environment variables         |
+| Frontend 404           | Build logs     | Verify build completed successfully |
+| Backend returns 403    | CORS / Origin  | Check ALLOW_ORIGIN env var          |
+| TypeScript build fails | Dependencies   | Ensure TS is in `dependencies`      |
+| API returns 401        | Authentication | Verify JWT token is valid           |
 
 ### Get help fast
 1. **Build logs**: Render → Service → Logs
@@ -200,11 +200,11 @@ curl "https://paiid-backend.onrender.com/api/positions" \
 
 ## 📞 Key Contacts
 
-| Role | Contact | Responsibility |
-|------|---------|----------------|
-| DevOps | Dr. SC Prime | Deployment, infrastructure |
-| Trading Ops | TBD | Live execution approval |
-| Security | TBD | Token rotation, audits |
+| Role        | Contact      | Responsibility             |
+| ----------- | ------------ | -------------------------- |
+| DevOps      | Dr. SC Prime | Deployment, infrastructure |
+| Trading Ops | TBD          | Live execution approval    |
+| Security    | TBD          | Token rotation, audits     |
 
 ---
 
@@ -224,16 +224,16 @@ curl "https://paiid-backend.onrender.com/api/positions" \
 
 ## 🎯 Production Readiness
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Frontend build | ✅ | Next.js 14, TypeScript |
-| Backend API | ✅ | FastAPI, JWT auth, kill-switch |
-| Health checks | ✅ | Automated smoke tests |
-| Kill-switch | ✅ | Tested, operational |
-| CORS security | ✅ | Configured for Render frontend |
-| Secrets management | ✅ | Server-side only, no leaks |
-| Monitoring | ⚠️ | Manual smoke tests (automate via cron/Actions) |
-| JWT Migration | ✅ | All endpoints standardized |
+| Component          | Status | Notes                                          |
+| ------------------ | ------ | ---------------------------------------------- |
+| Frontend build     | ✅      | Next.js 14, TypeScript                         |
+| Backend API        | ✅      | FastAPI, JWT auth, kill-switch                 |
+| Health checks      | ✅      | Automated smoke tests                          |
+| Kill-switch        | ✅      | Tested, operational                            |
+| CORS security      | ✅      | Configured for Render frontend                 |
+| Secrets management | ✅      | Server-side only, no leaks                     |
+| Monitoring         | ⚠️      | Manual smoke tests (automate via cron/Actions) |
+| JWT Migration      | ✅      | All endpoints standardized                     |
 
 ---
 

@@ -205,20 +205,20 @@ Request: (no Authorization header)
 ## 📊 **Impact Analysis**
 
 ### Before Fix
-| Issue | Status | Impact |
-|-------|--------|--------|
-| Missing import | ❌ ERROR | App startup inconsistent |
-| Options endpoint 404 | ❌ BROKEN | Feature unusable |
-| Dual auth systems | ❌ MESSY | Developer confusion |
-| Testing difficulty | ❌ HARD | Can't test with simple token |
+| Issue                | Status   | Impact                       |
+| -------------------- | -------- | ---------------------------- |
+| Missing import       | ❌ ERROR  | App startup inconsistent     |
+| Options endpoint 404 | ❌ BROKEN | Feature unusable             |
+| Dual auth systems    | ❌ MESSY  | Developer confusion          |
+| Testing difficulty   | ❌ HARD   | Can't test with simple token |
 
 ### After Fix
-| Issue | Status | Impact |
-|-------|--------|--------|
-| Missing import | ✅ FIXED | Clean startup |
-| Options endpoint | ✅ WORKS | Feature functional |
-| Auth system | ✅ UNIFIED | Clear & maintainable |
-| Testing | ✅ EASY | Works with API token |
+| Issue            | Status    | Impact               |
+| ---------------- | --------- | -------------------- |
+| Missing import   | ✅ FIXED   | Clean startup        |
+| Options endpoint | ✅ WORKS   | Feature functional   |
+| Auth system      | ✅ UNIFIED | Clear & maintainable |
+| Testing          | ✅ EASY    | Works with API token |
 
 ---
 

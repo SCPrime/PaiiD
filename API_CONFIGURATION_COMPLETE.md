@@ -220,12 +220,12 @@ python verify_config.py
 
 ## 📊 Configuration Summary
 
-| Component | Status | Keys Configured | Next Step |
-|-----------|--------|-----------------|-----------|
-| **Local Backend** | ✅ Ready | 3 (Tradier, Anthropic, Token) | Start with uvicorn |
-| **Local Frontend** | ✅ Ready | 3 (Backend URL, Token, Anthropic) | Start with npm run dev |
-| **Render Backend** | ⏳ Pending | Configure environment variables | Follow RENDER_SETUP_GUIDE.md |
-| **Render Frontend** | ⏳ Pending | Configure environment variables | Follow RENDER_SETUP_GUIDE.md |
+| Component           | Status    | Keys Configured                   | Next Step                    |
+| ------------------- | --------- | --------------------------------- | ---------------------------- |
+| **Local Backend**   | ✅ Ready   | 3 (Tradier, Anthropic, Token)     | Start with uvicorn           |
+| **Local Frontend**  | ✅ Ready   | 3 (Backend URL, Token, Anthropic) | Start with npm run dev       |
+| **Render Backend**  | ⏳ Pending | Configure environment variables   | Follow RENDER_SETUP_GUIDE.md |
+| **Render Frontend** | ⏳ Pending | Configure environment variables   | Follow RENDER_SETUP_GUIDE.md |
 
 ---
 

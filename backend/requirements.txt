@@ -45,3 +45,10 @@ passlib[bcrypt]>=1.7.4
 python-jose[cryptography]>=3.3.0
 python-multipart>=0.0.6
 email-validator>=2.0.0
+
+# Machine Learning & Data Science (Phase 2: ML Strategy Engine)
+scikit-learn>=1.3.0  # ML algorithms (Random Forest, K-Means, etc.)
+pandas>=2.0.0        # Data manipulation and analysis
+numpy>=1.24.0        # Numerical computing
+joblib>=1.3.0        # Model serialization and parallel processing
+ta>=0.11.0           # Technical analysis indicators library
