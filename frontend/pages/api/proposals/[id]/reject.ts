@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
+import "@/pages/api/_startup";
+
 /**
  * Reject Proposal API
  *

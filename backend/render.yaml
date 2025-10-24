@@ -9,6 +9,8 @@ services:
   buildCommand: pip install -r requirements.txt
   startCommand: bash start.sh
   envVars:
+    - key: APP_ENV
+      value: production
     - key: API_TOKEN
       sync: false  # Set via Render dashboard for security
     # Alpaca API - PAPER TRADING EXECUTION ONLY (not for market data)
@@ -39,3 +41,8 @@ services:
     # PostgreSQL Database - Required for auth and data persistence
     - key: DATABASE_URL
       sync: false  # Set via Render dashboard (connect to Render Postgres)
+    - key: SENTRY_DSN
+      sync: false  # Required for production observability
+    - key: RELEASE_VERSION
+      value: 1.0.0
+  healthCheckPath: /api/health

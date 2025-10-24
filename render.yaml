@@ -10,6 +10,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
+      - key: APP_ENV
+        value: production
       - key: API_TOKEN
         sync: false # Set via Render dashboard for security
       # Alpaca API - PAPER TRADING EXECUTION ONLY (not for market data)
@@ -37,6 +39,11 @@ services:
         value: paper
       - key: REDIS_URL
         generateValue: true
+      - key: SENTRY_DSN
+        sync: false # Required for production observability
+      - key: RELEASE_VERSION
+        value: 1.0.0
+    healthCheckPath: /api/health
 
   # Frontend - Next.js Docker service
   - type: web
@@ -54,11 +61,17 @@ services:
         sync: false # Set via Render dashboard - CRITICAL for /api/proxy routes
       - key: NEXT_PUBLIC_API_TOKEN
         sync: false # Set via Render dashboard
+      - key: NEXT_PUBLIC_APP_ENV
+        value: production
       # Backend API configuration
       - key: NEXT_PUBLIC_BACKEND_API_BASE_URL
         value: https://paiid-backend.onrender.com
       - key: NEXT_PUBLIC_ANTHROPIC_API_KEY
         sync: false # Set via Render dashboard
+      - key: NEXT_PUBLIC_SENTRY_DSN
+        sync: false # Mirror backend Sentry DSN for browser logging
+      - key: NEXT_PUBLIC_RELEASE_VERSION
+        value: 1.0.0
       # Next.js configuration
       - key: NODE_ENV
         value: production

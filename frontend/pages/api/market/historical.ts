@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
+import "@/pages/api/_startup";
+
 const ALPACA_API_KEY = process.env.ALPACA_API_KEY!;
 const ALPACA_API_SECRET = process.env.ALPACA_API_SECRET!;
 const ALPACA_BASE_URL = process.env.ALPACA_BASE_URL || "https://data.alpaca.markets";

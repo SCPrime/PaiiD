@@ -1,4 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+
+import "@/pages/api/_startup";
 import type { TheoreticalPayoff, PayoffPoint, Greeks, PositionLeg } from "@/types/pnl";
 
 /**

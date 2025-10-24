@@ -1,16 +1,5 @@
 """
-Migrate Strategies from LocalStorage to PostgreSQL
-
-This script migrates strategy files from the strategies/ directory
-and localStorage JSON backups to the PostgreSQL database.
-
-Usage:
-    python scripts/migrate_strategies.py
-
-Prerequisites:
-    - DATABASE_URL environment variable must be set
-    - Database tables must be created (run alembic upgrade head first)
-"""
+"""Migrate strategy files from disk/localStorage into the PostgreSQL database."""
 
 import json
 import os
@@ -18,17 +7,41 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from dotenv import load_dotenv
 
 # Fix Windows console encoding for emoji support
 if sys.platform == "win32":
     os.environ["PYTHONIOENCODING"] = "utf-8"
     sys.stdout.reconfigure(encoding="utf-8")
 
-# Add parent directory to path
-sys.path.append(str(Path(__file__).parent.parent))
+REPO_ROOT = Path(__file__).resolve().parent.parent
+ENV_PATH = REPO_ROOT / ".env"
 
-from app.db.session import SessionLocal
-from app.models.database import Strategy
+if ENV_PATH.exists():
+    load_dotenv(ENV_PATH)
+
+# Add backend package to PYTHONPATH so the config helpers are discoverable
+sys.path.append(str(REPO_ROOT))
+
+from app.core.bootstrap import emit_startup_summary  # noqa: E402
+from app.core.config import Settings  # noqa: E402
+from app.db.session import SessionLocal  # noqa: E402
+from app.models.database import Strategy  # noqa: E402
+
+
+SETTINGS = Settings()
+VALIDATION_REPORT = emit_startup_summary(
+    settings=SETTINGS,
+    application="strategy-migrator",
+    env_path=ENV_PATH,
+)
+
+if VALIDATION_REPORT.has_errors:
+    print(
+        "❌ Prelaunch validations failed. Fix the configuration before running migrations.",
+        flush=True,
+    )
+    sys.exit(1)
 
 
 def migrate_strategies_from_directory():
@@ -39,7 +52,7 @@ def migrate_strategies_from_directory():
 
     try:
         # Check if strategies directory exists
-        strategies_dir = Path("strategies")
+        strategies_dir = REPO_ROOT / "strategies"
         if not strategies_dir.exists():
             print(f"⚠️  Strategies directory not found: {strategies_dir}")
             return migrated_count, failed_count

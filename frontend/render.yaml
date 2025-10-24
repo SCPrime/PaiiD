@@ -12,10 +12,16 @@ services:
     # Backend API configuration
     - key: NEXT_PUBLIC_API_TOKEN
       sync: false  # Set via Render dashboard
+    - key: NEXT_PUBLIC_APP_ENV
+      value: production
     - key: NEXT_PUBLIC_BACKEND_API_BASE_URL
       value: https://paiid-backend.onrender.com
     - key: NEXT_PUBLIC_ANTHROPIC_API_KEY
       sync: false  # Set via Render dashboard
+    - key: NEXT_PUBLIC_SENTRY_DSN
+      sync: false  # Mirrors backend Sentry DSN
+    - key: NEXT_PUBLIC_RELEASE_VERSION
+      value: 1.0.0
     # Next.js configuration
     - key: NODE_ENV
       value: production

@@ -190,6 +190,23 @@ curl http://127.0.0.1:8001/api/expirations/AAPL
 
 ---
 
+## 🛡️ Prelaunch Validator Remediation Matrix
+
+These are now covered by automated startup validators. Resolve any failing check before redeploying:
+
+| Validator | Failure Mode | Impact on `/api/expirations/{symbol}` | Remediation |
+| --- | --- | --- | --- |
+| `environment-profile` | `APP_ENV` value isn't one of the supported profiles | Misapplied production policies (rate limits, auth) causing unexpected 500s | Set `APP_ENV` to `local`, `development`, `test`, `staging`, `preview`, or `production` in Render. |
+| `api-token` | `API_TOKEN` missing or left as `change-me` | Backend rejects proxy calls with 401, frontend retries until 500 | Generate a secure token and update both backend `API_TOKEN` and frontend `NEXT_PUBLIC_API_TOKEN`. |
+| `tradier-api-key` | `TRADIER_API_KEY` not present | Backend fails upstream call and surfaces 500 | Add the live Tradier token to the backend environment. |
+| `sentry-dsn` | Missing DSN in staging/production | Errors go unreported, slowing triage for options issues | Create a Sentry project and set `SENTRY_DSN`. |
+| `allow-origin` *(warning)* | `ALLOW_ORIGIN` unset in remote deploy | Browser blocks CORS preflight leading to frontend retries/500s | Add the Render/Vercel frontend URL to `ALLOW_ORIGIN`. |
+| `alpaca-paper-credentials` *(warning)* | Alpaca key/secret missing | Paper trade confirmation flow fails after expiration retrieval | Populate `ALPACA_PAPER_API_KEY` and `ALPACA_PAPER_SECRET_KEY`. |
+| `backend-base-url` | `NEXT_PUBLIC_BACKEND_API_BASE_URL` missing | Frontend proxy posts to `undefined`, returning network errors/500s | Set `NEXT_PUBLIC_BACKEND_API_BASE_URL` (or `BACKEND_API_BASE_URL`) to the deployed backend origin. |
+| `git-commit` *(warning)* | Build lacks commit metadata | Hard to correlate Sentry/browser logs with backend release | Expose `VERCEL_GIT_COMMIT_SHA` / `NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA` during deploys. |
+
+---
+
 ## 📚 Related Files
 
 - `backend/app/routers/options.py` (lines 305-382) - Endpoint definition

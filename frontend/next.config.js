@@ -1,3 +1,17 @@
+const { logFrontendStartup, runFrontendValidations } = require("./utils/envValidation");
+
+const frontendValidationReport = runFrontendValidations();
+logFrontendStartup(frontendValidationReport, {
+  application: "paiid-frontend",
+  runtime: process.env.NODE_ENV || "development",
+});
+
+if (frontendValidationReport.hasErrors && !frontendValidationReport.metadata.isLocal) {
+  throw new Error(
+    "Frontend prelaunch validation failed. Resolve the configuration errors logged above."
+  );
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

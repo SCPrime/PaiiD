@@ -1,6 +1,7 @@
 # PaiiD Backend - Render Environment Variables
 # Copy these to Render Dashboard → Environment section
 
+APP_ENV=production
 API_TOKEN=<from-backend-dot-env>
 TRADIER_API_KEY=<from-backend-dot-env>
 TRADIER_ACCOUNT_ID=<from-backend-dot-env>
@@ -10,6 +11,7 @@ ANTHROPIC_API_KEY=<from-backend-dot-env>
 ALLOW_ORIGIN=https://frontend-scprimes-projects.vercel.app
 TRADING_MODE=live
 SUPERVISOR_MODE=suggest
+SENTRY_DSN=<sentry-project-dsn>
 
 # Optional (can use defaults):
 AI_MODEL=claude-3-sonnet-20240229
@@ -29,6 +31,10 @@ REQUIRE_CONFIRMATION=true
 ALPHA_VANTAGE_API_KEY=<from-backend-dot-env>
 POLYGON_API_KEY=<from-backend-dot-env>
 FINNHUB_API_KEY=<from-backend-dot-env>
+
+# Observability & release metadata
+RELEASE_VERSION=<git-tag-or-semver>
+# RENDER_GIT_COMMIT is automatically provided by Render deployments.
 
 # Instructions:
 # 1. Open backend/.env file

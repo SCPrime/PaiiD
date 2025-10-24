@@ -1,11 +1,6 @@
-#!/usr/bin/env python3
-"""
-Configuration Verification Script for PaiiD Backend
-Run this to verify all API keys are properly loaded from .env
+"""Verify PaiiD backend configuration before launching services."""
 
-Usage:
-    python verify_config.py
-"""
+from __future__ import annotations
 
 import os
 import sys
@@ -13,102 +8,81 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+# Ensure project root is on PYTHONPATH so `app` package resolves when invoked from anywhere.
+REPO_ROOT = Path(__file__).resolve().parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.append(str(REPO_ROOT))
 
-# Load .env file
-env_path = Path(__file__).parent / ".env"
-if not env_path.exists():
-    print(f"❌ ERROR: .env file not found at {env_path}")
+ENV_PATH = REPO_ROOT / ".env"
+
+if not ENV_PATH.exists():
+    print(f"❌ ERROR: .env file not found at {ENV_PATH}")
     print("Create one using .env.example as a template")
     sys.exit(1)
 
-load_dotenv(env_path)
+load_dotenv(ENV_PATH)
+
+from app.core.bootstrap import emit_startup_summary  # noqa: E402
+from app.core.config import Settings  # noqa: E402
+from app.core.prelaunch import mask_secret  # noqa: E402
 
 
-def mask_key(key: str) -> str:
-    """Mask API key for safe display"""
-    if not key or len(key) < 12:
-        return "NOT SET"
-    return f"{key[:8]}...{key[-4:]}"
-
-
-def verify_config():
-    """Verify all required configuration is set"""
-    print("[*] PaiiD Configuration Verification")
-    print("=" * 60)
-    print(f"Environment file: {env_path}")
-    print("=" * 60)
-    print()
-
-    # Required configuration
-    required_checks = {
-        "Trading Configuration": [
-            ("TRADING_MODE", os.getenv("TRADING_MODE")),
-            ("LIVE_TRADING", os.getenv("LIVE_TRADING")),
-        ],
-        "Tradier Broker": [
-            ("TRADIER_API_KEY", os.getenv("TRADIER_API_KEY")),
-            ("TRADIER_ACCOUNT_ID", os.getenv("TRADIER_ACCOUNT_ID")),
-            ("TRADIER_API_BASE_URL", os.getenv("TRADIER_API_BASE_URL")),
-        ],
-        "Anthropic Claude AI": [
-            ("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY")),
-            ("AI_MODEL", os.getenv("AI_MODEL")),
-        ],
-        "API Security": [
-            ("API_TOKEN", os.getenv("API_TOKEN")),
-            ("API_PORT", os.getenv("API_PORT")),
-        ],
-        "CORS": [
-            ("ALLOW_ORIGIN", os.getenv("ALLOW_ORIGIN")),
-        ],
-    }
-
-    all_good = True
-
-    for category, checks in required_checks.items():
-        print(f"\n[+] {category}")
-        print("-" * 60)
-        for name, value in checks:
-            if value:
-                # Mask sensitive values
-                if "KEY" in name or "TOKEN" in name or "SECRET" in name:
-                    display_value = mask_key(value)
-                else:
-                    display_value = value
-                print(f"  [OK] {name:25} = {display_value}")
-            else:
-                print(f"  [FAIL] {name:25} = NOT SET")
-                all_good = False
-
-    # Optional configuration
-    print("\n[+] Optional Configuration")
-    print("-" * 60)
-    optional_checks = [
-        ("ALPHA_VANTAGE_API_KEY", os.getenv("ALPHA_VANTAGE_API_KEY")),
-        ("POLYGON_API_KEY", os.getenv("POLYGON_API_KEY")),
-        ("FINNHUB_API_KEY", os.getenv("FINNHUB_API_KEY")),
+def _print_optional_settings(settings: Settings) -> None:
+    optional_keys = [
+        "ALPHA_VANTAGE_API_KEY",
+        "POLYGON_API_KEY",
+        "FINNHUB_API_KEY",
+        "NEWSAPI_API_KEY",
     ]
 
-    for name, value in optional_checks:
+    print("\n[+] Optional Integrations")
+    print("-" * 60)
+    for key in optional_keys:
+        value = os.getenv(key)
         status = "[OK]" if value else "[SKIP]"
-        display_value = mask_key(value) if value else "Not configured (optional)"
-        print(f"  {status} {name:25} = {display_value}")
+        display = mask_secret(value) if value else "Not configured (optional)"
+        print(f"  {status} {key:25} = {display}")
 
-    # Summary
-    print("\n" + "=" * 60)
-    if all_good:
-        print("[SUCCESS] All required configuration verified!")
-        print("\nReady to start backend:")
-        print("  cd backend")
-        print("  python -m uvicorn app.main:app --reload --port 8001")
-        print("\nAPI Documentation will be available at:")
-        print("  http://127.0.0.1:8001/docs")
-        return True
-    else:
-        print("[FAILURE] Missing required configuration!")
-        print("\nPlease check your .env file and add missing values.")
-        print("Use .env.example as a template.")
+
+def _print_database_settings(settings: Settings) -> None:
+    print("\n[+] Database & Cache")
+    print("-" * 60)
+    db_url = os.getenv("DATABASE_URL")
+    redis_url = os.getenv("REDIS_URL")
+    print(
+        "  [OK] DATABASE_URL configured"
+        if db_url
+        else "  [WARN] DATABASE_URL not configured (required for multi-user deployments)"
+    )
+    print(
+        "  [OK] REDIS_URL configured"
+        if redis_url
+        else "  [WARN] REDIS_URL not configured (required for caching/queues)"
+    )
+
+
+def verify_config() -> bool:
+    """Run the shared prelaunch validators and report optional context."""
+
+    settings = Settings()
+    report = emit_startup_summary(
+        settings=settings,
+        application="paiid-backend-config",
+        env_path=ENV_PATH,
+    )
+
+    _print_database_settings(settings)
+    _print_optional_settings(settings)
+
+    if report.has_errors:
+        print("\n[FAILURE] Critical configuration missing. Resolve errors above before deploying.")
         return False
+
+    if report.has_warnings:
+        print("\n[NOTICE] Configuration includes warnings. Review before production deploy.")
+
+    print("\n[SUCCESS] Core configuration verified!")
+    return True
 
 
 if __name__ == "__main__":
