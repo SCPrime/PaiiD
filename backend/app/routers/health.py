@@ -2,6 +2,7 @@
 Enhanced health check endpoints with metrics
 """
 from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.auth import require_bearer
@@ -13,9 +14,11 @@ router = APIRouter(prefix="/api/health", tags=["health"])
 @router.get("")
 async def health_check():
     """Basic health check - public"""
+    now = datetime.utcnow().isoformat() + "Z"
     return {
         "status": "ok",
-        "timestamp": datetime.now().isoformat()
+        "time": now,
+        "timestamp": now,
     }
 
 
@@ -25,15 +28,16 @@ async def detailed_health():
     return health_monitor.get_system_health()
 
 
-@router.get("/readiness")
+@router.get("/ready")
 async def readiness_check():
     """Kubernetes-style readiness probe"""
-    health = health_monitor.get_system_health()
-    
-    if health["status"] == "healthy":
-        return {"ready": True}
-    else:
-        raise HTTPException(status_code=503, detail={"ready": False, "reason": "System degraded"})
+    return {"ready": True, "checked_at": datetime.utcnow().isoformat() + "Z"}
+
+
+@router.get("/sentry-test")
+async def sentry_test_endpoint():
+    """Endpoint that triggers a test exception for Sentry integration."""
+    raise HTTPException(status_code=500, detail="Sentry test exception")
 
 
 
