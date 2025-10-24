@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { useWorkflow } from "../../contexts/WorkflowContext";
+
 /**
  * Options Chain Component
  *
@@ -43,6 +45,7 @@ interface OptionsChainData {
   underlying_price?: number;
   calls: OptionContract[];
   puts: OptionContract[];
+  strikes?: number[];
   total_contracts: number;
 }
 
@@ -59,6 +62,7 @@ interface OptionsChainProps {
 type FilterType = "all" | "calls" | "puts";
 
 export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
+  const { navigateToTrade } = useWorkflow();
   const [chainData, setChainData] = useState<OptionsChainData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,8 +87,9 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
   const fetchExpirations = async () => {
     try {
       const token = process.env.NEXT_PUBLIC_API_TOKEN;
+      const normalizedSymbol = symbol.toUpperCase();
 
-      const response = await fetch(`/api/proxy/options/expirations/${symbol}`, {
+      const response = await fetch(`/api/proxy/options/expirations/${normalizedSymbol}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -113,9 +118,10 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
 
     try {
       const token = process.env.NEXT_PUBLIC_API_TOKEN;
+      const normalizedSymbol = symbol.toUpperCase();
 
       const response = await fetch(
-        `/api/proxy/options/chain/${symbol}?expiration=${selectedExpiration}`,
+        `/api/proxy/options/chain/${normalizedSymbol}?expiration=${selectedExpiration}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -137,11 +143,6 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
     }
   };
 
-  // TODO: Implement trade execution
-  // const handleExecuteTrade = (contract: OptionContract, side: "buy" | "sell") => {
-  //   console.log("Execute", side, "for", contract.symbol);
-  // };
-
   // Format Greeks with color coding
   const formatGreek = (value: number | undefined, type: string) => {
     if (value === undefined || value === null) return "—";
@@ -154,6 +155,74 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
     }
 
     return <span style={{ color }}>{value.toFixed(4)}</span>;
+  };
+
+  const handleTrade = (contract: OptionContract, side: "buy" | "sell") => {
+    const tradePrice =
+      side === "buy"
+        ? contract.ask ?? contract.last_price ?? undefined
+        : contract.bid ?? contract.last_price ?? undefined;
+
+    navigateToTrade({
+      symbol: symbol.toUpperCase(),
+      assetClass: "option",
+      optionSymbol: contract.symbol,
+      optionType: contract.option_type,
+      expirationDate: contract.expiration_date,
+      strikePrice: contract.strike_price,
+      side,
+      quantity: 1,
+      orderType: tradePrice ? "limit" : "market",
+      entryPrice: tradePrice,
+    });
+  };
+
+  const renderTradeButtons = (
+    contract: OptionContract | undefined,
+    align: "left" | "right"
+  ) => {
+    if (!contract) {
+      return "—";
+    }
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          gap: "4px",
+          justifyContent: align === "right" ? "flex-end" : "flex-start",
+        }}
+      >
+        <button
+          onClick={() => handleTrade(contract, "buy")}
+          style={{
+            padding: "6px 10px",
+            background: "rgba(16, 185, 129, 0.15)",
+            color: "#10b981",
+            border: "1px solid rgba(16, 185, 129, 0.4)",
+            borderRadius: "6px",
+            fontSize: "12px",
+            cursor: "pointer",
+          }}
+        >
+          Buy
+        </button>
+        <button
+          onClick={() => handleTrade(contract, "sell")}
+          style={{
+            padding: "6px 10px",
+            background: "rgba(239, 68, 68, 0.15)",
+            color: "#ef4444",
+            border: "1px solid rgba(239, 68, 68, 0.4)",
+            borderRadius: "6px",
+            fontSize: "12px",
+            cursor: "pointer",
+          }}
+        >
+          Sell
+        </button>
+      </div>
+    );
   };
 
   // Group calls and puts by strike
@@ -344,7 +413,7 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>
                   <th
-                    colSpan={6}
+                    colSpan={7}
                     style={{
                       padding: "12px 8px",
                       color: "#10b981",
@@ -366,7 +435,7 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
                     STRIKE
                   </th>
                   <th
-                    colSpan={6}
+                    colSpan={7}
                     style={{
                       padding: "12px 8px",
                       color: "#ef4444",
@@ -390,6 +459,7 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
                   <th style={{ padding: "8px 4px", textAlign: "right" }}>Gamma</th>
                   <th style={{ padding: "8px 4px", textAlign: "right" }}>Theta</th>
                   <th style={{ padding: "8px 4px", textAlign: "right" }}>Vega</th>
+                  <th style={{ padding: "8px 4px", textAlign: "right" }}>Trade</th>
                   <th style={{ padding: "8px 8px", textAlign: "center" }}>Price</th>
                   <th style={{ padding: "8px 4px", textAlign: "left" }}>Bid</th>
                   <th style={{ padding: "8px 4px", textAlign: "left" }}>Ask</th>
@@ -397,6 +467,7 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
                   <th style={{ padding: "8px 4px", textAlign: "left" }}>Gamma</th>
                   <th style={{ padding: "8px 4px", textAlign: "left" }}>Theta</th>
                   <th style={{ padding: "8px 4px", textAlign: "left" }}>Vega</th>
+                  <th style={{ padding: "8px 4px", textAlign: "left" }}>Trade</th>
                 </tr>
               </thead>
               <tbody>
@@ -445,6 +516,9 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
                     <td style={{ padding: "8px 4px", textAlign: "right" }}>
                       {formatGreek(call?.vega, "vega")}
                     </td>
+                    <td style={{ padding: "8px 4px", textAlign: "right" }}>
+                      {renderTradeButtons(call, "right")}
+                    </td>
 
                     {/* Strike */}
                     <td
@@ -489,6 +563,9 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
                     </td>
                     <td style={{ padding: "8px 4px", textAlign: "left" }}>
                       {formatGreek(put?.vega, "vega")}
+                    </td>
+                    <td style={{ padding: "8px 4px", textAlign: "left" }}>
+                      {renderTradeButtons(put, "left")}
                     </td>
                   </tr>
                 ))}

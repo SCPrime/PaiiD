@@ -183,7 +183,7 @@ Create `.vscode/thunder-tests/thunderclient.json`:
     {
       "name": "OPTT Expirations",
       "method": "GET",
-      "url": "http://localhost:8001/api/expirations/OPTT",
+      "url": "http://localhost:8001/api/options/expirations/OPTT",
       "headers": [
         {
           "name": "Authorization",
@@ -194,7 +194,7 @@ Create `.vscode/thunder-tests/thunderclient.json`:
     {
       "name": "OPTT Options Chain",
       "method": "GET",
-      "url": "http://localhost:8001/api/chain/OPTT?expiration=2025-11-21",
+      "url": "http://localhost:8001/api/options/chain/OPTT?expiration=2025-11-21",
       "headers": [
         {
           "name": "Authorization",
@@ -364,7 +364,7 @@ AI Actions:
 2. Types "OPTT" in symbol input
 3. Clicks "Load Options Chain"
 4. Inspects console for errors
-5. Checks network request to /api/proxy/chain/OPTT
+5. Checks network request to /api/proxy/options/chain/OPTT
 6. Verifies 14 contracts returned
 7. Confirms Greeks present in response
 8. Reports: "✅ OPTT loaded successfully, no errors found"

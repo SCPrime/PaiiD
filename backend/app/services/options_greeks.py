@@ -16,7 +16,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
-from scipy.stats import norm
+
+def _norm_pdf(x: float) -> float:
+    return (1.0 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * x * x)
+
+
+def _norm_cdf(x: float) -> float:
+    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
 
 
 @dataclass
@@ -118,7 +124,7 @@ class GreeksCalculator:
         extrinsic = theo_price - intrinsic
 
         # Probability of finishing ITM
-        prob_itm = norm.cdf(d2) if option_type == "call" else norm.cdf(-d2)
+        prob_itm = _norm_cdf(d2) if option_type == "call" else _norm_cdf(-d2)
 
         return OptionsGreeks(
             delta=delta,
@@ -163,13 +169,9 @@ class GreeksCalculator:
         dividend_discount = math.exp(-dividend_yield * time_to_expiry)
 
         if option_type == "call":
-            price = spot_price * dividend_discount * norm.cdf(
-                d1
-            ) - strike_price * discount_factor * norm.cdf(d2)
+            price = spot_price * dividend_discount * _norm_cdf(d1) - strike_price * discount_factor * _norm_cdf(d2)
         else:  # put
-            price = strike_price * discount_factor * norm.cdf(
-                -d2
-            ) - spot_price * dividend_discount * norm.cdf(-d1)
+            price = strike_price * discount_factor * _norm_cdf(-d2) - spot_price * dividend_discount * _norm_cdf(-d1)
 
         return price
 
@@ -184,9 +186,9 @@ class GreeksCalculator:
         dividend_discount = math.exp(-dividend_yield * time_to_expiry)
 
         if option_type == "call":
-            return dividend_discount * norm.cdf(d1)
+            return dividend_discount * _norm_cdf(d1)
         else:  # put
-            return dividend_discount * (norm.cdf(d1) - 1)
+            return dividend_discount * (_norm_cdf(d1) - 1)
 
     def _calculate_gamma(
         self,
@@ -198,7 +200,7 @@ class GreeksCalculator:
     ) -> float:
         """Calculate Gamma (∂²V/∂S²) - same for calls and puts"""
         dividend_discount = math.exp(-dividend_yield * time_to_expiry)
-        numerator = dividend_discount * norm.pdf(d1)
+        numerator = dividend_discount * _norm_pdf(d1)
         denominator = spot_price * volatility * math.sqrt(time_to_expiry)
         return numerator / denominator
 
@@ -218,21 +220,21 @@ class GreeksCalculator:
         dividend_discount = math.exp(-dividend_yield * time_to_expiry)
 
         # First term (volatility component)
-        first_term = -(spot_price * dividend_discount * norm.pdf(d1) * volatility) / (
+        first_term = -(spot_price * dividend_discount * _norm_pdf(d1) * volatility) / (
             2 * math.sqrt(time_to_expiry)
         )
 
         if option_type == "call":
             # Second term (interest rate component for calls)
-            second_term = -self.risk_free_rate * strike_price * discount_factor * norm.cdf(d2)
+            second_term = -self.risk_free_rate * strike_price * discount_factor * _norm_cdf(d2)
             # Third term (dividend component)
-            third_term = dividend_yield * spot_price * dividend_discount * norm.cdf(d1)
+            third_term = dividend_yield * spot_price * dividend_discount * _norm_cdf(d1)
             theta = first_term + second_term + third_term
         else:  # put
             # Second term (interest rate component for puts)
-            second_term = self.risk_free_rate * strike_price * discount_factor * norm.cdf(-d2)
+            second_term = self.risk_free_rate * strike_price * discount_factor * _norm_cdf(-d2)
             # Third term (dividend component)
-            third_term = -dividend_yield * spot_price * dividend_discount * norm.cdf(-d1)
+            third_term = -dividend_yield * spot_price * dividend_discount * _norm_cdf(-d1)
             theta = first_term + second_term + third_term
 
         # Convert to per-day theta (divide by 365)
@@ -243,7 +245,7 @@ class GreeksCalculator:
     ) -> float:
         """Calculate Vega (∂V/∂σ) - sensitivity to volatility"""
         dividend_discount = math.exp(-dividend_yield * time_to_expiry)
-        vega = spot_price * dividend_discount * norm.pdf(d1) * math.sqrt(time_to_expiry)
+        vega = spot_price * dividend_discount * _norm_pdf(d1) * math.sqrt(time_to_expiry)
         # Return vega per 1% change in volatility (divide by 100)
         return vega / 100
 
@@ -258,9 +260,9 @@ class GreeksCalculator:
         discount_factor = math.exp(-self.risk_free_rate * time_to_expiry)
 
         if option_type == "call":
-            rho = strike_price * time_to_expiry * discount_factor * norm.cdf(d2)
+            rho = strike_price * time_to_expiry * discount_factor * _norm_cdf(d2)
         else:  # put
-            rho = -strike_price * time_to_expiry * discount_factor * norm.cdf(-d2)
+            rho = -strike_price * time_to_expiry * discount_factor * _norm_cdf(-d2)
 
         # Return rho per 1% change in interest rate (divide by 100)
         return rho / 100

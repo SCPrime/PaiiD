@@ -2,7 +2,7 @@
 
 ## Options Endpoint 500 Error
 
-**Route:** `/api/expirations/{symbol}`
+**Route:** `/api/options/expirations/{symbol}`
 **Status:** Returns 500 Internal Server Error, request never reaches handler
 **Impact:** Frontend OptionsChain component can't load expiration dates dropdown
 **Discovered:** 2025-10-22

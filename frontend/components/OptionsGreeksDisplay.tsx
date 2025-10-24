@@ -74,11 +74,11 @@ export default function OptionsGreeksDisplay({
         const params = new URLSearchParams({
           symbol,
           strike: strike.toString(),
-          expiry,
+          expiration: expiry,
           option_type: optionType,
         });
 
-        const response = await fetch(`/api/proxy/api/options/greeks?${params}`);
+        const response = await fetch(`/api/proxy/options/greeks?${params}`);
 
         if (!response.ok) {
           const errorData = await response.json();

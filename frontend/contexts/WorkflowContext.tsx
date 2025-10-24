@@ -23,6 +23,11 @@ export type WorkflowType =
 
 export interface TradeData {
   symbol: string;
+  assetClass?: "stock" | "option";
+  optionSymbol?: string;
+  optionType?: "call" | "put";
+  expirationDate?: string;
+  strikePrice?: number;
   side?: "buy" | "sell";
   quantity?: number;
   entryPrice?: number;
