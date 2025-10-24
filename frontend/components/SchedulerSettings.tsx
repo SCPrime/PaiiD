@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Clock,
   Play,
@@ -11,6 +11,7 @@ import {
   Calendar,
   Bell,
 } from "lucide-react";
+import useExecutionHistory from "../hooks/useExecutionHistory";
 
 interface Schedule {
   id: string;
@@ -25,24 +26,24 @@ interface Schedule {
   status: "active" | "paused" | "error";
 }
 
-interface Execution {
-  id: string;
-  schedule_id: string;
-  schedule_name: string;
-  started_at: string;
-  completed_at?: string;
-  status: "pending" | "running" | "completed" | "failed" | "awaiting_approval";
-  result?: string;
-  error?: string;
-}
-
 export default function SchedulerSettings() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [executions, setExecutions] = useState<Execution[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [globalPaused, setGlobalPaused] = useState(false);
   const [activeTab, setActiveTab] = useState<"schedules" | "history">("schedules");
+  const historyInitializedRef = useRef(false);
+
+  const {
+    items: executions,
+    loading: historyLoading,
+    error: historyError,
+    hasMore: hasMoreExecutions,
+    loadNextPage,
+    refresh: refreshExecutions,
+    total: totalExecutions,
+  } = useExecutionHistory({ pageSize: 10, autoStart: false });
 
   // New schedule form state
   const [newSchedule, setNewSchedule] = useState({
@@ -54,62 +55,68 @@ export default function SchedulerSettings() {
     enabled: true,
   });
 
-  useEffect(() => {
-    fetchSchedules();
-    fetchExecutions();
-    const interval = setInterval(() => {
-      fetchSchedules();
-      fetchExecutions();
-    }, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchSchedules = async () => {
+  const fetchSchedules = useCallback(async () => {
     try {
       const response = await fetch("/api/proxy/scheduler/schedules");
       const data = await response.json();
       setSchedules(data);
+      setScheduleError(null);
       setLoading(false);
     } catch (error) {
       console.error("Failed to fetch schedules:", error);
+      setScheduleError("Failed to load schedules. Try again shortly.");
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchExecutions = async () => {
-    try {
-      const response = await fetch("/api/proxy/scheduler/executions?limit=20");
-      const data = await response.json();
-      setExecutions(data);
-    } catch (error) {
-      console.error("Failed to fetch executions:", error);
-    }
-  };
-
-  const toggleSchedule = async (id: string, enabled: boolean) => {
-    try {
-      await fetch(`/api/proxy/scheduler/schedules/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled }),
-      });
+  useEffect(() => {
+    fetchSchedules();
+    const interval = setInterval(() => {
       fetchSchedules();
-    } catch (error) {
-      console.error("Failed to toggle schedule:", error);
-    }
-  };
+      if (historyInitializedRef.current) {
+        refreshExecutions();
+      }
+    }, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, [fetchSchedules, refreshExecutions]);
 
-  const deleteSchedule = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this schedule?")) return;
-    try {
-      await fetch(`/api/proxy/scheduler/schedules/${id}`, { method: "DELETE" });
-      fetchSchedules();
-    } catch (error) {
-      console.error("Failed to delete schedule:", error);
+  useEffect(() => {
+    if (activeTab === "history" && !historyInitializedRef.current) {
+      historyInitializedRef.current = true;
+      refreshExecutions();
     }
-  };
+  }, [activeTab, refreshExecutions]);
 
-  const createSchedule = async () => {
+  const toggleSchedule = useCallback(
+    async (id: string, enabled: boolean) => {
+      try {
+        await fetch(`/api/proxy/scheduler/schedules/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled }),
+        });
+        fetchSchedules();
+      } catch (error) {
+        console.error("Failed to toggle schedule:", error);
+      }
+    },
+    [fetchSchedules]
+  );
+
+  const deleteSchedule = useCallback(
+    async (id: string) => {
+      if (!confirm("Are you sure you want to delete this schedule?")) return;
+      try {
+        await fetch(`/api/proxy/scheduler/schedules/${id}`, { method: "DELETE" });
+        fetchSchedules();
+      } catch (error) {
+        console.error("Failed to delete schedule:", error);
+      }
+    },
+    [fetchSchedules]
+  );
+
+  const createSchedule = useCallback(async () => {
     try {
       await fetch("/api/proxy/scheduler/schedules", {
         method: "POST",
@@ -129,9 +136,9 @@ export default function SchedulerSettings() {
     } catch (error) {
       console.error("Failed to create schedule:", error);
     }
-  };
+  }, [fetchSchedules, newSchedule]);
 
-  const pauseAllSchedules = async () => {
+  const pauseAllSchedules = useCallback(async () => {
     if (!confirm("⚠️ PAUSE ALL SCHEDULES? This will immediately stop all automated trading."))
       return;
     try {
@@ -141,9 +148,9 @@ export default function SchedulerSettings() {
     } catch (error) {
       console.error("Failed to pause all schedules:", error);
     }
-  };
+  }, [fetchSchedules]);
 
-  const resumeAllSchedules = async () => {
+  const resumeAllSchedules = useCallback(async () => {
     try {
       await fetch("/api/proxy/scheduler/resume-all", { method: "POST" });
       setGlobalPaused(false);
@@ -151,7 +158,7 @@ export default function SchedulerSettings() {
     } catch (error) {
       console.error("Failed to resume schedules:", error);
     }
-  };
+  }, [fetchSchedules]);
 
   const getCronDescription = (cron: string) => {
     const descriptions: { [key: string]: string } = {
@@ -196,19 +203,24 @@ export default function SchedulerSettings() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header with Emergency Controls */}
-        <div className="flex justify-between items-center">
-          <div>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
             <h2 className="text-3xl font-bold text-white flex items-center gap-3">
               <Clock className="text-cyan-400" size={32} />
               Automation & Scheduling
             </h2>
             <p className="text-slate-400 mt-2">Manage automated trading schedules and approvals</p>
           </div>
-          <div className="flex gap-3">
+          <div
+            className="flex flex-wrap gap-3"
+            role="group"
+            aria-label="Emergency scheduling controls"
+          >
             {globalPaused ? (
               <button
                 onClick={resumeAllSchedules}
                 className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 transition-all"
+                aria-label="Resume all schedules"
               >
                 <Play className="w-4 h-4" />
                 Resume All
@@ -217,6 +229,7 @@ export default function SchedulerSettings() {
               <button
                 onClick={pauseAllSchedules}
                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2 transition-all"
+                aria-label="Pause all schedules"
               >
                 <Pause className="w-4 h-4" />
                 Emergency Pause All
@@ -225,6 +238,7 @@ export default function SchedulerSettings() {
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 flex items-center gap-2 transition-all"
+              aria-label="Create new schedule"
             >
               <Plus className="w-4 h-4" />
               New Schedule
@@ -234,7 +248,11 @@ export default function SchedulerSettings() {
 
         {/* Global Status Alert */}
         {globalPaused && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-3">
+          <div
+            className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-3"
+            role="status"
+            aria-live="polite"
+          >
             <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="font-semibold text-red-400">All Schedules Paused</p>
@@ -243,10 +261,27 @@ export default function SchedulerSettings() {
           </div>
         )}
 
+        {scheduleError && (
+          <div
+            className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-sm text-red-300"
+            role="alert"
+          >
+            {scheduleError}
+          </div>
+        )}
+
         {/* Tabs */}
-        <div className="flex gap-4 border-b border-slate-700">
+        <div
+          className="flex gap-4 border-b border-slate-700"
+          role="tablist"
+          aria-label="Scheduler sections"
+        >
           <button
             onClick={() => setActiveTab("schedules")}
+            id="scheduler-tab-schedules"
+            role="tab"
+            aria-selected={activeTab === "schedules"}
+            aria-controls="scheduler-panel-schedules"
             className={`pb-3 px-1 font-medium transition-colors ${
               activeTab === "schedules"
                 ? "border-b-2 border-cyan-400 text-cyan-400"
@@ -257,6 +292,10 @@ export default function SchedulerSettings() {
           </button>
           <button
             onClick={() => setActiveTab("history")}
+            id="scheduler-tab-history"
+            role="tab"
+            aria-selected={activeTab === "history"}
+            aria-controls="scheduler-panel-history"
             className={`pb-3 px-1 font-medium transition-colors ${
               activeTab === "history"
                 ? "border-b-2 border-cyan-400 text-cyan-400"
@@ -269,7 +308,12 @@ export default function SchedulerSettings() {
 
         {/* Schedules Tab */}
         {activeTab === "schedules" && (
-          <div className="space-y-4">
+          <div
+            id="scheduler-panel-schedules"
+            role="tabpanel"
+            aria-labelledby="scheduler-tab-schedules"
+            className="space-y-4"
+          >
             {schedules.length === 0 ? (
               <div className="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700">
                 <Clock className="w-12 h-12 text-slate-400 mx-auto mb-3" />
@@ -338,6 +382,7 @@ export default function SchedulerSettings() {
                             : "bg-slate-700 text-slate-400 hover:bg-slate-600"
                         }`}
                         title={schedule.enabled ? "Disable" : "Enable"}
+                        aria-label={`${schedule.enabled ? "Disable" : "Enable"} ${schedule.name}`}
                       >
                         {schedule.enabled ? (
                           <Pause className="w-4 h-4" />
@@ -349,6 +394,7 @@ export default function SchedulerSettings() {
                         onClick={() => deleteSchedule(schedule.id)}
                         className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
                         title="Delete"
+                        aria-label={`Delete ${schedule.name}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -362,56 +408,97 @@ export default function SchedulerSettings() {
 
         {/* History Tab */}
         {activeTab === "history" && (
-          <div className="space-y-3">
-            {executions.length === 0 ? (
+          <div
+            id="scheduler-panel-history"
+            role="tabpanel"
+            aria-labelledby="scheduler-tab-history"
+            className="space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-400" aria-live="polite">
+                {historyLoading
+                  ? "Loading execution history..."
+                  : `${executions.length} of ${totalExecutions} runs displayed`}
+              </span>
+              <button
+                onClick={refreshExecutions}
+                className="text-sm text-cyan-300 hover:text-cyan-200 underline"
+                disabled={historyLoading}
+                aria-label="Refresh execution history"
+              >
+                Refresh
+              </button>
+            </div>
+
+            {historyError && (
+              <div
+                className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-sm text-red-300"
+                role="alert"
+              >
+                {historyError}
+              </div>
+            )}
+
+            {!historyLoading && executions.length === 0 && !historyError && (
               <div className="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700">
                 <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-3" />
                 <p className="text-slate-300">No execution history yet</p>
               </div>
-            ) : (
-              executions.map((execution) => (
-                <div
-                  key={execution.id}
-                  className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <span className="font-medium text-white">{execution.schedule_name}</span>
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full bg-slate-900/50 ${getStatusColor(execution.status)}`}
-                        >
-                          {execution.status}
-                        </span>
-                      </div>
-                      <div className="text-sm text-slate-400">
-                        Started: {new Date(execution.started_at).toLocaleString()}
-                        {execution.completed_at && (
-                          <> • Completed: {new Date(execution.completed_at).toLocaleString()}</>
-                        )}
-                      </div>
-                      {execution.error && (
-                        <div className="mt-2 text-sm text-red-400 bg-red-500/10 rounded p-2 border border-red-500/30">
-                          Error: {execution.error}
-                        </div>
-                      )}
-                      {execution.result && (
-                        <div className="mt-2 text-sm text-slate-400 bg-slate-900/50 rounded p-2">
-                          {execution.result}
-                        </div>
+            )}
+
+            {executions.map((execution) => (
+              <div
+                key={execution.id}
+                className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4"
+              >
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-3 mb-1">
+                      <span className="font-medium text-white">{execution.schedule_name}</span>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full bg-slate-900/50 ${getStatusColor(execution.status)}`}
+                      >
+                        {execution.status}
+                      </span>
+                    </div>
+                    <div className="text-sm text-slate-400 space-y-1">
+                      <div>Started: {new Date(execution.started_at).toLocaleString()}</div>
+                      {execution.completed_at && (
+                        <div>Completed: {new Date(execution.completed_at).toLocaleString()}</div>
                       )}
                     </div>
-                    <div>
-                      {execution.status === "completed" && (
-                        <CheckCircle className="w-5 h-5 text-green-400" />
-                      )}
-                      {execution.status === "failed" && (
-                        <XCircle className="w-5 h-5 text-red-400" />
-                      )}
-                    </div>
+                    {execution.error && (
+                      <div className="mt-2 text-sm text-red-400 bg-red-500/10 rounded p-2 border border-red-500/30">
+                        Error: {execution.error}
+                      </div>
+                    )}
+                    {execution.result && (
+                      <div className="mt-2 text-sm text-slate-400 bg-slate-900/50 rounded p-2">
+                        {execution.result}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2" aria-hidden="true">
+                    {execution.status === "completed" && (
+                      <CheckCircle className="w-5 h-5 text-green-400" />
+                    )}
+                    {execution.status === "failed" && <XCircle className="w-5 h-5 text-red-400" />}
                   </div>
                 </div>
-              ))
+              </div>
+            ))}
+
+            {hasMoreExecutions && (
+              <div className="flex justify-center">
+                <button
+                  onClick={loadNextPage}
+                  className="px-4 py-2 bg-slate-800 text-cyan-200 border border-slate-700 rounded-lg hover:bg-slate-700 disabled:opacity-60"
+                  disabled={historyLoading}
+                  aria-label="Load more execution history"
+                >
+                  {historyLoading ? "Loading…" : "Load more"}
+                </button>
+              </div>
             )}
           </div>
         )}
