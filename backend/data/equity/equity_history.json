@@ -68,5 +68,33 @@
     "cash": 0.0,
     "positions_value": 0.0,
     "num_positions": 0
+  },
+  {
+    "timestamp": "2025-10-24T20:15:04.268176",
+    "equity": 0.0,
+    "cash": 0.0,
+    "positions_value": 0.0,
+    "num_positions": 0
+  },
+  {
+    "timestamp": "2025-10-24T20:15:04.272993",
+    "equity": 0.0,
+    "cash": 0.0,
+    "positions_value": 0.0,
+    "num_positions": 0
+  },
+  {
+    "timestamp": "2025-10-24T20:15:04.304537",
+    "equity": 0.0,
+    "cash": 0.0,
+    "positions_value": 0.0,
+    "num_positions": 0
+  },
+  {
+    "timestamp": "2025-10-24T20:15:04.368512",
+    "equity": 0.0,
+    "cash": 0.0,
+    "positions_value": 0.0,
+    "num_positions": 0
   }
 ]

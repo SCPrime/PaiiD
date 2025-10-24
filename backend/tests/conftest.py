@@ -89,9 +89,9 @@ def client(test_db):
     blocking test client initialization. This allows tests to run even if
     external services (Redis, Tradier, etc.) are unavailable.
     """
-    from app.models.database import User
     from app.core.jwt import get_current_user
     from app.core.unified_auth import get_current_user_unified
+    from app.models.database import User
 
     def override_get_db():
         try:

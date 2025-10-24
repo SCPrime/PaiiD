@@ -6,9 +6,6 @@ Note: These tests use the client fixture from conftest.py which mocks authentica
 They test that endpoints are properly protected, not the JWT token validation itself.
 """
 
-import pytest
-
-
 # Valid token from config (matches conftest.py)
 VALID_TOKEN = "test-token-12345"
 INVALID_TOKEN = "wrong-token-123"
@@ -20,7 +17,9 @@ def test_valid_bearer_token(client):
     response = client.get("/api/account", headers=headers)
     # Should succeed or return external API error, NOT 401 (auth should work)
     # 401 means auth failed, 500/503 means external API issue (acceptable in tests)
-    assert response.status_code in [200, 500, 503], f"Got {response.status_code}: {response.text}"
+    assert response.status_code in [200, 500, 503], (
+        f"Got {response.status_code}: {response.text}"
+    )
 
 
 def test_missing_authorization_header(client):

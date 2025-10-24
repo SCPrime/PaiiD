@@ -100,10 +100,10 @@ def test_missing_authorization_header(client):
 
 ## 📋 Files Modified
 
-| File | Changes | Why |
-|------|---------|-----|
-| `tests/conftest.py` | Added auth mocking to `client` fixture | Tests need authenticated access without real tokens |
-| `tests/test_auth.py` | Updated all test functions | Align with unified auth behavior (MVP fallback) |
+| File                 | Changes                                | Why                                                 |
+| -------------------- | -------------------------------------- | --------------------------------------------------- |
+| `tests/conftest.py`  | Added auth mocking to `client` fixture | Tests need authenticated access without real tokens |
+| `tests/test_auth.py` | Updated all test functions             | Align with unified auth behavior (MVP fallback)     |
 
 ---
 

@@ -55,7 +55,13 @@ def test_backtest_returns_performance_metrics(client):
     if response.status_code == 200:
         data = response.json()
         # Check for essential backtest metrics
-        expected_keys = ["totalReturn", "sharpeRatio", "maxDrawdown", "winRate", "trades"]
+        expected_keys = [
+            "totalReturn",
+            "sharpeRatio",
+            "maxDrawdown",
+            "winRate",
+            "trades",
+        ]
         for key in expected_keys:
             assert key in data, f"Missing {key} in backtest results"
 
@@ -79,7 +85,9 @@ def test_backtest_with_different_symbols(client):
 
         response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
         # Should complete or return error, not crash
-        assert response.status_code in [200, 400, 422, 500], f"Unexpected status for {symbol}"
+        assert response.status_code in [200, 400, 422, 500], (
+            f"Unexpected status for {symbol}"
+        )
 
 
 def test_backtest_validates_date_range(client):
@@ -90,7 +98,10 @@ def test_backtest_validates_date_range(client):
         "startDate": "2024-06-01",
         "endDate": "2024-01-01",  # Before start date
         "initialCapital": 10000,
-        "rules": {"entryConditions": ["rsi_oversold"], "exitConditions": ["rsi_overbought"]},
+        "rules": {
+            "entryConditions": ["rsi_oversold"],
+            "exitConditions": ["rsi_overbought"],
+        },
     }
 
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
@@ -106,7 +117,10 @@ def test_backtest_validates_initial_capital(client):
         "startDate": "2024-01-01",
         "endDate": "2024-02-01",
         "initialCapital": -1000,  # Negative
-        "rules": {"entryConditions": ["rsi_oversold"], "exitConditions": ["rsi_overbought"]},
+        "rules": {
+            "entryConditions": ["rsi_oversold"],
+            "exitConditions": ["rsi_overbought"],
+        },
     }
 
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
@@ -162,7 +176,11 @@ def test_backtest_sma_crossover_strategy(client):
 
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
     # Should complete without error
-    assert response.status_code in [200, 422, 500]  # 422 for validation, 500 if data unavailable
+    assert response.status_code in [
+        200,
+        422,
+        500,
+    ]  # 422 for validation, 500 if data unavailable
 
 
 def test_backtest_performance_metrics_validation(client):

@@ -5,6 +5,7 @@ Tests P&L calculation, risk metrics, portfolio summary
 
 from unittest.mock import MagicMock, patch
 
+
 HEADERS = {"Authorization": "Bearer test-token-12345"}
 
 

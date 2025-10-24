@@ -24,15 +24,15 @@
 
 ## ✅ Files COMPLETELY Fixed
 
-| File | Tests | Status |
-|------|-------|--------|
-| `test_auth.py` | 8/8 | ✅ 100% PASSING |
-| `test_analytics.py` | 9/9 | ✅ 100% PASSING |
-| `test_backtest.py` | 10/10 | ✅ 100% PASSING |
+| File                 | Tests | Status         |
+| -------------------- | ----- | -------------- |
+| `test_auth.py`       | 8/8   | ✅ 100% PASSING |
+| `test_analytics.py`  | 9/9   | ✅ 100% PASSING |
+| `test_backtest.py`   | 10/10 | ✅ 100% PASSING |
 | `test_strategies.py` | 13/13 | ✅ 100% PASSING |
-| `test_imports.py` | 14/14 | ✅ 100% PASSING |
-| `test_database.py` | 23/23 | ✅ 100% PASSING |
-| `test_health.py` | 1/1 | ✅ 100% PASSING |
+| `test_imports.py`    | 14/14 | ✅ 100% PASSING |
+| `test_database.py`   | 23/23 | ✅ 100% PASSING |
+| `test_health.py`     | 1/1   | ✅ 100% PASSING |
 
 **Total Fixed: 78 tests!** 🎊
 
@@ -40,12 +40,12 @@
 
 ## 🟡 Files PARTIALLY Fixed
 
-| File | Estimated Status |
-|------|------------------|
-| `test_market.py` | ~75% fixed (3 functions done, ~16 remaining) |
-| `test_api_endpoints.py` | Need full pass |
-| `test_news.py` | Need full pass |
-| `test_orders.py` | Need full pass |
+| File                    | Estimated Status                             |
+| ----------------------- | -------------------------------------------- |
+| `test_market.py`        | ~75% fixed (3 functions done, ~16 remaining) |
+| `test_api_endpoints.py` | Need full pass                               |
+| `test_news.py`          | Need full pass                               |
+| `test_orders.py`        | Need full pass                               |
 
 **Estimated Remaining: ~15-20 failing tests**
 

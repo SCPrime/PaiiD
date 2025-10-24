@@ -75,11 +75,11 @@ Analyzes recent news sentiment for a stock using AI.
 
 #### Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `symbol` | path | ✅ Yes | - | Stock symbol (e.g., AAPL, TSLA) |
-| `include_news` | query | No | true | Include news analysis |
-| `lookback_days` | query | No | 7 | Days of news to analyze (1-30) |
+| Parameter       | Type  | Required | Default | Description                     |
+| --------------- | ----- | -------- | ------- | ------------------------------- |
+| `symbol`        | path  | ✅ Yes    | -       | Stock symbol (e.g., AAPL, TSLA) |
+| `include_news`  | query | No       | true    | Include news analysis           |
+| `lookback_days` | query | No       | 7       | Days of news to analyze (1-30)  |
 
 #### Response
 
@@ -117,11 +117,11 @@ Generates an AI-powered trade signal combining technical analysis and sentiment.
 
 #### Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `symbol` | path | ✅ Yes | - | Stock symbol (e.g., AAPL, TSLA) |
-| `include_sentiment` | query | No | true | Include sentiment analysis |
-| `lookback_days` | query | No | 30 | Days of price history (7-90) |
+| Parameter           | Type  | Required | Default | Description                     |
+| ------------------- | ----- | -------- | ------- | ------------------------------- |
+| `symbol`            | path  | ✅ Yes    | -       | Stock symbol (e.g., AAPL, TSLA) |
+| `include_sentiment` | query | No       | true    | Include sentiment analysis      |
+| `lookback_days`     | query | No       | 30      | Days of price history (7-90)    |
 
 #### Response
 
@@ -235,32 +235,32 @@ Check ML service status (no authentication required).
 
 ### SentimentResponse
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `symbol` | string | Stock symbol |
-| `sentiment` | string | "bullish", "bearish", or "neutral" |
-| `score` | float | Sentiment score (-1.0 to 1.0) |
-| `confidence` | float | Confidence level (0.0 to 1.0) |
-| `reasoning` | string | AI-generated explanation |
-| `timestamp` | datetime | Analysis timestamp |
-| `source` | string | Data source ("news", "social", "combined") |
+| Field        | Type     | Description                                |
+| ------------ | -------- | ------------------------------------------ |
+| `symbol`     | string   | Stock symbol                               |
+| `sentiment`  | string   | "bullish", "bearish", or "neutral"         |
+| `score`      | float    | Sentiment score (-1.0 to 1.0)              |
+| `confidence` | float    | Confidence level (0.0 to 1.0)              |
+| `reasoning`  | string   | AI-generated explanation                   |
+| `timestamp`  | datetime | Analysis timestamp                         |
+| `source`     | string   | Data source ("news", "social", "combined") |
 
 ### SignalResponse
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `symbol` | string | Stock symbol |
-| `signal` | string | "BUY", "SELL", or "HOLD" |
-| `strength` | string | "STRONG", "MODERATE", or "WEAK" |
-| `confidence` | float | Signal confidence (0.0 to 1.0) |
-| `price` | float | Current price |
-| `target_price` | float \| null | Recommended target price |
-| `stop_loss` | float \| null | Recommended stop loss |
-| `reasoning` | string | Detailed explanation |
-| `technical_score` | float | Technical analysis score (-1.0 to 1.0) |
-| `sentiment_score` | float | Sentiment score (-1.0 to 1.0) |
-| `combined_score` | float | Weighted combination (-1.0 to 1.0) |
-| `timestamp` | datetime | Signal generation timestamp |
+| Field             | Type          | Description                            |
+| ----------------- | ------------- | -------------------------------------- |
+| `symbol`          | string        | Stock symbol                           |
+| `signal`          | string        | "BUY", "SELL", or "HOLD"               |
+| `strength`        | string        | "STRONG", "MODERATE", or "WEAK"        |
+| `confidence`      | float         | Signal confidence (0.0 to 1.0)         |
+| `price`           | float         | Current price                          |
+| `target_price`    | float \| null | Recommended target price               |
+| `stop_loss`       | float \| null | Recommended stop loss                  |
+| `reasoning`       | string        | Detailed explanation                   |
+| `technical_score` | float         | Technical analysis score (-1.0 to 1.0) |
+| `sentiment_score` | float         | Sentiment score (-1.0 to 1.0)          |
+| `combined_score`  | float         | Weighted combination (-1.0 to 1.0)     |
+| `timestamp`       | datetime      | Signal generation timestamp            |
 
 ---
 
@@ -348,12 +348,12 @@ print(f"Target: ${signal['target_price']}, Stop Loss: ${signal['stop_loss']}")
 
 ### Common Errors
 
-| Status Code | Error | Description |
-|-------------|-------|-------------|
-| 401 | Unauthorized | Missing or invalid JWT token |
-| 404 | Not Found | No data available for symbol |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | ML service error |
+| Status Code | Error                 | Description                  |
+| ----------- | --------------------- | ---------------------------- |
+| 401         | Unauthorized          | Missing or invalid JWT token |
+| 404         | Not Found             | No data available for symbol |
+| 429         | Too Many Requests     | Rate limit exceeded          |
+| 500         | Internal Server Error | ML service error             |
 
 ### Error Examples
 

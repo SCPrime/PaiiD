@@ -191,7 +191,7 @@ const MonitorDashboard: React.FC = () => {
 
       {/* Event Counters */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">📊 This Week's Activity</h2>
+        <h2 className="text-xl font-semibold mb-4">📊 This Week&apos;s Activity</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <MetricCard label="Commits" value={data.eventCounters.commits} />
           <MetricCard label="Pushes" value={data.eventCounters.pushes} />

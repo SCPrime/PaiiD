@@ -161,19 +161,19 @@ Built a complete AI-powered sentiment analysis and trade signal generation syste
 ## 📊 Implementation Statistics
 
 ### Code
-| Component | Lines | Purpose |
-|-----------|-------|---------|
-| sentiment_analyzer.py | ~250 | AI sentiment analysis |
-| signal_generator.py | ~350 | Trade signal generation |
-| ml.py (router) | ~300 | API endpoints |
-| **Total** | **~900** | **Core ML engine** |
+| Component             | Lines    | Purpose                 |
+| --------------------- | -------- | ----------------------- |
+| sentiment_analyzer.py | ~250     | AI sentiment analysis   |
+| signal_generator.py   | ~350     | Trade signal generation |
+| ml.py (router)        | ~300     | API endpoints           |
+| **Total**             | **~900** | **Core ML engine**      |
 
 ### Documentation
-| File | Lines | Purpose |
-|------|-------|---------|
-| ML_API_DOCUMENTATION.md | ~600 | API reference |
-| ML_IMPLEMENTATION_COMPLETE.md | ~400 | This file |
-| **Total** | **~1,000** | **Complete docs** |
+| File                          | Lines      | Purpose           |
+| ----------------------------- | ---------- | ----------------- |
+| ML_API_DOCUMENTATION.md       | ~600       | API reference     |
+| ML_IMPLEMENTATION_COMPLETE.md | ~400       | This file         |
+| **Total**                     | **~1,000** | **Complete docs** |
 
 ### API Endpoints
 - **4 endpoints**: sentiment, signals, batch, health

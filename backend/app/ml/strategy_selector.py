@@ -17,7 +17,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
-from ..services.backtesting_engine import BacktestEngine
+from ..services.backtesting_engine import BacktestingEngine
 from ..services.strategy_templates import get_all_strategy_templates
 from .data_pipeline import get_data_pipeline
 from .market_regime import get_regime_detector
@@ -80,7 +80,7 @@ class StrategySelector:
 
             pipeline = get_data_pipeline()
             regime_detector = get_regime_detector()
-            backtest_engine = BacktestEngine()
+            backtest_engine = BacktestingEngine()
 
             # Get all available strategies
             strategies = get_all_strategy_templates()
