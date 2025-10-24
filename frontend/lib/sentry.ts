@@ -15,90 +15,158 @@ import * as Sentry from "@sentry/nextjs";
 
 let sentryInitialized = false;
 
+const AUTH_HEADER_KEYS = new Set(["authorization", "Authorization"]);
+
+function coerceSampleRate(values: Array<string | number | undefined>, fallback: number): number {
+  for (const value of values) {
+    if (value === undefined) {
+      continue;
+    }
+
+    const numericValue = typeof value === "number" ? value : Number(value);
+    if (Number.isFinite(numericValue) && numericValue >= 0 && numericValue <= 1) {
+      return numericValue;
+    }
+  }
+
+  return fallback;
+}
+
+function redactHeaders<T extends Record<string, unknown> | undefined>(headers: T): T {
+  if (!headers) {
+    return headers;
+  }
+
+  const sanitized = { ...headers } as Record<string, unknown>;
+  for (const key of Object.keys(sanitized)) {
+    if (AUTH_HEADER_KEYS.has(key) || key.toLowerCase() === "authorization") {
+      sanitized[key] = "[REDACTED]";
+    }
+  }
+
+  return sanitized as T;
+}
+
+function sanitizeEvent(event: Sentry.Event): Sentry.Event {
+  if (event.request?.headers) {
+    event.request.headers = redactHeaders(event.request.headers);
+  }
+
+  if ((event as Record<string, unknown>).type === "replay_event") {
+    const contexts = event.contexts as Record<string, any> | undefined;
+    const replayContext = contexts?.replay as Record<string, any> | undefined;
+    if (replayContext?.request?.headers) {
+      replayContext.request.headers = redactHeaders(replayContext.request.headers);
+    }
+  }
+
+  if (event.breadcrumbs) {
+    event.breadcrumbs = event.breadcrumbs.map((breadcrumb) => {
+      if (breadcrumb.data?.url) {
+        breadcrumb.data.url = breadcrumb.data.url.replace(/token=[^&]*/g, "token=REDACTED");
+      }
+      if (breadcrumb.data?.request?.headers) {
+        breadcrumb.data.request.headers = redactHeaders(breadcrumb.data.request.headers);
+      }
+      return breadcrumb;
+    });
+  }
+
+  return event;
+}
+
 export function initSentry(): void {
-  // Only initialize once
   if (sentryInitialized) {
     return;
   }
 
-  const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
+  const sentryDsn =
+    process.env.NEXT_PUBLIC_SENTRY_DSN ||
+    process.env.SENTRY_DSN ||
+    process.env.NEXT_PUBLIC_RENDER_SENTRY_DSN ||
+    process.env.RENDER_SENTRY_DSN;
 
-  // Skip initialization if no DSN configured
-  if (!SENTRY_DSN) {
+  if (!sentryDsn) {
     console.info("[Sentry] DSN not configured - error tracking disabled");
     console.info("[Sentry] To enable: Add NEXT_PUBLIC_SENTRY_DSN to environment variables");
     return;
   }
 
+  const isProduction = process.env.NODE_ENV === "production";
+  const resolvedEnvironment =
+    process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ||
+    process.env.SENTRY_ENVIRONMENT ||
+    process.env.VERCEL_ENV ||
+    (isProduction ? "production" : "development");
+
+  const releaseSha =
+    process.env.NEXT_PUBLIC_SENTRY_RELEASE ||
+    process.env.SENTRY_RELEASE ||
+    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
+    process.env.VERCEL_GIT_COMMIT_SHA ||
+    process.env.GIT_COMMIT_SHA;
+  const release = `paiid-frontend@${releaseSha || "dev"}`;
+
+  const tracesSampleRate = coerceSampleRate(
+    [
+      process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE,
+      process.env.SENTRY_TRACES_SAMPLE_RATE,
+    ],
+    0.1,
+  );
+
+  const replaysSessionSampleRate = coerceSampleRate(
+    [
+      process.env.NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE,
+      process.env.SENTRY_REPLAYS_SESSION_SAMPLE_RATE,
+    ],
+    isProduction ? 0.1 : 0,
+  );
+
+  const replaysOnErrorSampleRate = coerceSampleRate(
+    [
+      process.env.NEXT_PUBLIC_SENTRY_REPLAYS_ERROR_SAMPLE_RATE,
+      process.env.SENTRY_REPLAYS_ERROR_SAMPLE_RATE,
+    ],
+    1,
+  );
+
   try {
     Sentry.init({
-      dsn: SENTRY_DSN,
-
-      // Environment detection
-      environment: process.env.NODE_ENV === "production" ? "production" : "development",
-
-      // Performance Monitoring
-      tracesSampleRate: 0.1, // 10% of transactions for performance monitoring
-
-      // Session Replay (captures user interactions for debugging)
-      replaysSessionSampleRate: 0.1, // 10% of sessions
-      replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors
-
-      // Release tracking
-      release: `paiid-frontend@${process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || "dev"}`,
-
-      // Integrations
+      dsn: sentryDsn,
+      environment: resolvedEnvironment,
+      tracesSampleRate,
+      replaysSessionSampleRate,
+      replaysOnErrorSampleRate,
+      release,
       integrations: [
-        new Sentry.BrowserTracing({
-          // Next.js handles routing automatically via @sentry/nextjs
-          // No React Router instrumentation needed
-        }),
+        new Sentry.BrowserTracing({}),
         new Sentry.Replay({
-          // Mask all text and user input by default for privacy
           maskAllText: true,
+          maskAllInputs: true,
           blockAllMedia: true,
+          networkCaptureBodies: false,
+          networkRequestHeaders: false,
+          networkResponseHeaders: false,
         }),
       ],
-
-      // Filter out sensitive data
-      beforeSend(event, _hint) {
-        // Remove Authorization headers
-        if (event.request?.headers) {
-          delete event.request.headers.Authorization;
-          delete event.request.headers.authorization;
-        }
-
-        // Remove API tokens from breadcrumbs
-        if (event.breadcrumbs) {
-          event.breadcrumbs = event.breadcrumbs.map((breadcrumb) => {
-            if (breadcrumb.data?.url) {
-              breadcrumb.data.url = breadcrumb.data.url.replace(/token=[^&]*/g, "token=REDACTED");
-            }
-            return breadcrumb;
-          });
-        }
-
-        return event;
+      beforeSend(event) {
+        return sanitizeEvent(event);
       },
-
-      // Ignore known non-critical errors
       ignoreErrors: [
-        // Browser extensions
         "top.GLOBALS",
         "canvas.contentDocument",
         "MyApp_RemoveAllHighlights",
         "atomicFindClose",
-        // Network errors (handled gracefully)
         "NetworkError",
         "Failed to fetch",
-        // React hydration warnings (cosmetic)
         "Hydration failed",
         "There was an error while hydrating",
       ],
-
-      // Don't send PII (personally identifiable information)
       sendDefaultPii: false,
     });
+
+    Sentry.addGlobalEventProcessor((event) => sanitizeEvent(event));
 
     sentryInitialized = true;
     console.info("[Sentry] ✅ Error tracking initialized");
