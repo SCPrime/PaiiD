@@ -125,10 +125,22 @@ Frontend runs at http://localhost:3000
 ```bash
 cd backend
 pip install -r requirements.txt
-python -m uvicorn main:app --reload --port 8000
+python -m uvicorn app.main:app --reload --port 8001
 ```
 
-Backend runs at http://localhost:8000
+Backend runs at http://localhost:8001
+
+### Process Management & Monitoring
+
+- Runtime directories: `backend/.run/`, `backend/.logs/`, `frontend/.run/`,
+  and `frontend/.logs/`. Only `.gitkeep` files are tracked in Git.
+- Run `bash scripts/ci-cleanup.sh` to clear lingering development servers and
+  stale PID files. GitHub Actions executes this script before and after every
+  backend/frontend job.
+- Use `bash scripts/validate-managed-processes.sh` to verify PID files are in
+  sync before deployments or after manual restarts.
+- Schedule `scripts/health-monitor.ps1` on Windows to capture recurring health
+  reports in `monitoring/logs/`.
 
 ### Environment Variables
 
@@ -193,7 +205,7 @@ PaiiD/
 3. Configure:
    - **Root Directory**: `backend`
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT --lifespan on --timeout-keep-alive 5 --graceful-timeout 30`
 4. Add environment variables (Alpaca API keys)
 
 **API URL**: https://ai-trader-86a1.onrender.com

@@ -80,6 +80,16 @@ python -m uvicorn app.main:app --reload --port 8001
 # Entry point: backend/app/main.py
 ```
 
+### Process Management Helpers
+- Runtime PID files and logs live under `backend/.run/`, `backend/.logs/`,
+  `frontend/.run/`, and `frontend/.logs/`. Only `.gitkeep` files are committed.
+- `scripts/ci-cleanup.sh` is executed by CI to clear zombie processes before
+  running tests. It can be used locally via `bash scripts/ci-cleanup.sh`.
+- `scripts/validate-managed-processes.sh` checks PID files and exits non-zero if
+  any stale processes are detected.
+- `scripts/health-monitor.ps1` runs on Windows to validate open ports and
+  produce monitoring logs under `monitoring/logs/`.
+
 ### Environment Variables
 
 **Frontend `.env.local`:**
