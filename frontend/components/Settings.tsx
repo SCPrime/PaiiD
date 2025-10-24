@@ -33,6 +33,7 @@ import KillSwitchToggle from "./KillSwitchToggle";
 import MLModelManagement from "./MLModelManagement";
 import MLTrainingDashboard from "./MLTrainingDashboard";
 import PatternBacktestDashboard from "./PatternBacktestDashboard";
+import PortfolioOptimizer from "./PortfolioOptimizer";
 import RiskDashboard from "./RiskDashboard";
 import SchedulerSettings from "./SchedulerSettings";
 import SentimentDashboard from "./SentimentDashboard";
@@ -475,6 +476,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     { id: "ml-training", label: "ML Training", icon: Brain, alwaysShow: true },
     { id: "pattern-backtest", label: "Pattern Backtest", icon: BarChart3, alwaysShow: true },
     { id: "ml-models", label: "ML Models", icon: Database, alwaysShow: true },
+    { id: "portfolio-optimizer", label: "Portfolio Optimizer", icon: Target, alwaysShow: true },
     { id: "sentiment", label: "News Sentiment", icon: Newspaper, alwaysShow: true },
     { id: "ai-chat", label: "AI Chat", icon: MessageSquare, alwaysShow: true },
     { id: "automation", label: "Automation", icon: Clock, alwaysShow: true },
@@ -1047,6 +1049,11 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
           {activeTab === "ml-models" && (
             <div className="min-h-[500px]">
               <MLModelManagement />
+            </div>
+          )}
+          {activeTab === "portfolio-optimizer" && (
+            <div className="min-h-[500px]">
+              <PortfolioOptimizer />
             </div>
           )}
           {activeTab === "sentiment" && (
