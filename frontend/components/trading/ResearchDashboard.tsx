@@ -125,7 +125,9 @@ export default function ResearchDashboard() {
   const volumeChartRef = useRef<IChartApi | null>(null);
 
   const priceSeriesRef = useRef<ISeriesApi<"Candlestick" | "Line" | "Area"> | null>(null);
-  const indicatorSeriesRef = useRef<Map<string, ISeriesApi<"Line" | "Area" | "Histogram">>>(new Map());
+  const indicatorSeriesRef = useRef<Map<string, ISeriesApi<"Line" | "Area" | "Histogram">>>(
+    new Map()
+  );
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 

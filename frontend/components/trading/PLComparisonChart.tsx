@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import type { PLComparison, PLViewMode, PositionTracking, TheoreticalPayoff } from "@/types/pnl";
 import { createChart, IChartApi, LineData } from "lightweight-charts";
-import type { TheoreticalPayoff, PLComparison, PositionTracking, PLViewMode } from "@/types/pnl";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * P&L Comparison Chart
