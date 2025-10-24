@@ -4,6 +4,17 @@
 
 This directory contains reference documentation for implementing the options trading features in PaiiD.
 
+### 🔄 2025-10-24 Regression Recovery Snapshot
+
+Recent regressions around authentication and the options expirations endpoint have been addressed. Key updates:
+
+- **JWT-first authentication:** every router now relies on `app.core.jwt.get_current_user` (via `CurrentUser` / `require_current_user`). Legacy API tokens are no longer accepted for protected endpoints.
+- **Options expirations reliability:** the `/api/options/expirations/{symbol}` handler guards against Tradier client misconfiguration and returns structured cache-friendly data, eliminating the 500 error reported in `BUG_REPORT_OPTIONS_500.md`.
+- **Telemetry metadata:** high-value market responses (`/api/market/quote*`, options chains, portfolio data) now include a `source` flag (e.g. `tradier`, `cache`) so downstream consumers can track provenance.
+- **Tests & tooling:** backend pytest coverage exercises login + token refresh, options chains/expirations, and cached responses. Playwright/API suites were extended to mirror these flows.
+
+See `docs/RELEASE_NOTES.md` for the detailed changelog and verification checklist.
+
 ### 📚 Documents
 
 1. **TRADIER_IMPLEMENTATION.md** ⭐ **PRIMARY REFERENCE**

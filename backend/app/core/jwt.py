@@ -21,10 +21,10 @@ from .config import settings
 
 
 # Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 # HTTP Bearer token scheme
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 def hash_password(password: str) -> str:
@@ -138,7 +138,8 @@ def decode_token(token: str) -> dict[str, Any]:
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    db: Session = Depends(get_db),
 ) -> User:
     """
     FastAPI dependency to get current authenticated user from JWT token
@@ -153,6 +154,12 @@ def get_current_user(
     Raises:
         HTTPException: If token invalid or user not found/inactive
     """
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authorization header",
+        )
+
     token = credentials.credentials
 
     # Decode token
@@ -166,8 +173,10 @@ def get_current_user(
         )
 
     # Get user_id from payload
-    user_id: int = payload.get("sub")
-    if user_id is None:
+    sub = payload.get("sub")
+    try:
+        user_id = int(sub)
+    except (TypeError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token missing user identifier"
         )
@@ -242,8 +251,8 @@ def create_token_pair(
         Dictionary with access_token, refresh_token, token_type
     """
     # Create token payloads
-    access_payload = {"sub": user.id, "role": user.role, "email": user.email}
-    refresh_payload = {"sub": user.id}
+    access_payload = {"sub": str(user.id), "role": user.role, "email": user.email}
+    refresh_payload = {"sub": str(user.id)}
 
     # Generate tokens
     access_token = create_access_token(access_payload)

@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 
-from ..core.auth import require_bearer
+from ..core.auth import CurrentUser, require_current_user
 from ..db.session import get_db
 from ..models.database import User
 
@@ -49,7 +49,7 @@ class UserPreferencesUpdate(BaseModel):
 
 @router.get("/users/preferences")
 def get_user_preferences(
-    _=Depends(require_bearer), db: Session = Depends(get_db)
+    current_user: CurrentUser, db: Session = Depends(get_db)
 ) -> UserPreferencesResponse:
     """
     Get user preferences including risk tolerance
@@ -57,22 +57,13 @@ def get_user_preferences(
     Returns current user preferences or default values if not set.
     """
     try:
-        # For now, use a default user (user_id=1) until auth is fully implemented
-        # TODO: Get actual user_id from JWT token in require_bearer
-        user = db.query(User).filter(User.id == 1).first()
+        user = db.query(User).filter(User.id == current_user.id).first()
 
         if not user:
-            # Create default user if doesn't exist
-            user = User(
-                id=1,
-                email="default@paiid.com",
-                alpaca_account_id=None,
-                preferences={"risk_tolerance": 50},  # Default to moderate risk
-            )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            logger.info("✅ Created default user with preferences")
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
 
         preferences = user.preferences or {}
 
@@ -91,7 +82,9 @@ def get_user_preferences(
 
 @router.patch("/users/preferences")
 def update_user_preferences(
-    updates: UserPreferencesUpdate, _=Depends(require_bearer), db: Session = Depends(get_db)
+    updates: UserPreferencesUpdate,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
 ) -> UserPreferencesResponse:
     """
     Update user preferences
@@ -100,14 +93,10 @@ def update_user_preferences(
     Validates risk_tolerance is between 0-100.
     """
     try:
-        # Get or create default user
-        user = db.query(User).filter(User.id == 1).first()
+        user = db.query(User).filter(User.id == current_user.id).first()
 
         if not user:
-            user = User(id=1, email="default@paiid.com", alpaca_account_id=None, preferences={})
-            db.add(user)
-            db.commit()
-            db.refresh(user)
+            raise HTTPException(status_code=404, detail="User not found")
 
         # Get current preferences
         preferences = user.preferences or {}
@@ -195,14 +184,14 @@ def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
 
 
 @router.get("/users/risk-limits")
-def get_user_risk_limits(_=Depends(require_bearer), db: Session = Depends(get_db)):
+def get_user_risk_limits(current_user: CurrentUser, db: Session = Depends(get_db)):
     """
     Get calculated risk limits based on user's risk tolerance
 
     Returns position sizing limits and maximum concurrent positions.
     """
     try:
-        user = db.query(User).filter(User.id == 1).first()
+        user = db.query(User).filter(User.id == current_user.id).first()
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")

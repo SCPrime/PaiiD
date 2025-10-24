@@ -8,7 +8,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.auth import require_current_user
 
 
 router = APIRouter(tags=["screening"])
@@ -25,7 +25,7 @@ class Opportunity(BaseModel):
     risk: Literal["low", "medium", "high"]
 
 
-@router.get("/screening/opportunities", dependencies=[Depends(require_bearer)])
+@router.get("/screening/opportunities", dependencies=[Depends(require_current_user)])
 async def get_opportunities(max_price: float | None = None) -> dict:
     """
     Get strategy-based trading opportunities
@@ -309,7 +309,7 @@ async def get_opportunities(max_price: float | None = None) -> dict:
     }
 
 
-@router.get("/screening/strategies", dependencies=[Depends(require_bearer)])
+@router.get("/screening/strategies", dependencies=[Depends(require_current_user)])
 async def get_available_strategies() -> dict:
     """
     Get list of available screening strategies

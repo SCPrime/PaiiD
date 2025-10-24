@@ -20,16 +20,32 @@ class TradierClient:
         self.account_id = os.getenv("TRADIER_ACCOUNT_ID")
         self.base_url = os.getenv("TRADIER_API_BASE_URL", "https://api.tradier.com/v1")
 
+        if not self.api_key:
+            raise ValueError("TRADIER_API_KEY must be set in the environment")
+
+        if not self.account_id:
+            logger.warning(
+                "TRADIER_ACCOUNT_ID is not configured – account-specific endpoints will be disabled"
+            )
+
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Accept": "application/json",
             "Accept-Encoding": "gzip, deflate",  # Enable compression for faster responses
         }
 
-        if not self.api_key or not self.account_id:
-            raise ValueError("TRADIER_API_KEY and TRADIER_ACCOUNT_ID must be set in .env")
+        logger.info(
+            "Tradier client initialized%s",
+            f" for account {self.account_id}" if self.account_id else " (accountless mode)",
+        )
 
-        logger.info(f"Tradier client initialized for account {self.account_id}")
+    def _require_account_id(self) -> str:
+        if not self.account_id:
+            raise RuntimeError(
+                "TRADIER_ACCOUNT_ID must be configured for this operation. "
+                "Set the environment variable or configure account mapping."
+            )
+        return self.account_id
 
     def _request(self, method: str, endpoint: str, **kwargs) -> dict:
         """Make authenticated request to Tradier API with compression and timeouts"""
@@ -60,11 +76,12 @@ class TradierClient:
 
     def get_account(self) -> dict:
         """Get account balances"""
-        result = self._request("GET", f"/accounts/{self.account_id}/balances")
+        account_id = self._require_account_id()
+        result = self._request("GET", f"/accounts/{account_id}/balances")
         if "balances" in result:
             balances = result["balances"]
             return {
-                "account_number": self.account_id,
+                "account_number": account_id,
                 "cash": float(balances.get("total_cash", 0)),
                 "buying_power": float(balances.get("option_buying_power", 0)),
                 "portfolio_value": float(balances.get("total_equity", 0)),
@@ -77,7 +94,8 @@ class TradierClient:
 
     def get_positions(self) -> list[dict]:
         """Get all positions"""
-        response = self._request("GET", f"/accounts/{self.account_id}/positions")
+        account_id = self._require_account_id()
+        response = self._request("GET", f"/accounts/{account_id}/positions")
 
         if "positions" in response and response["positions"] != "null":
             positions = response["positions"].get("position", [])
@@ -113,7 +131,8 @@ class TradierClient:
 
     def get_orders(self) -> list[dict]:
         """Get all orders"""
-        response = self._request("GET", f"/accounts/{self.account_id}/orders")
+        account_id = self._require_account_id()
+        response = self._request("GET", f"/accounts/{account_id}/orders")
 
         if "orders" in response and response["orders"] != "null":
             orders = response["orders"].get("order", [])
@@ -145,6 +164,8 @@ class TradierClient:
             price: Limit price (for limit orders)
             stop: Stop price (for stop orders)
         """
+        account_id = self._require_account_id()
+
         data = {
             "class": "equity",
             "symbol": symbol,
@@ -161,11 +182,12 @@ class TradierClient:
             data["stop"] = stop
 
         logger.info(f"Placing order: {data}")
-        return self._request("POST", f"/accounts/{self.account_id}/orders", data=data)
+        return self._request("POST", f"/accounts/{account_id}/orders", data=data)
 
     def cancel_order(self, order_id: str) -> dict:
         """Cancel an order"""
-        return self._request("DELETE", f"/accounts/{self.account_id}/orders/{order_id}")
+        account_id = self._require_account_id()
+        return self._request("DELETE", f"/accounts/{account_id}/orders/{order_id}")
 
     # ==================== MARKET DATA ====================
 

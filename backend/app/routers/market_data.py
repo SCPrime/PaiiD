@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.auth import require_bearer
+from app.core.auth import CurrentUser, require_current_user
 
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
@@ -24,12 +24,12 @@ print("=" * 80)
 print("🚨 TRADIER INTEGRATION CODE LOADED - market_data.py")
 print("=" * 80, flush=True)
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_current_user)])
 
 
 @router.get("/market/quote/{symbol}")
 async def get_quote(
-    symbol: str, _=Depends(require_bearer), cache: CacheService = Depends(get_cache)
+    symbol: str, _current_user: CurrentUser, cache: CacheService = Depends(get_cache)
 ):
     """Get real-time quote for a symbol using Tradier (cached for 15s)"""
     # Check cache first
@@ -37,7 +37,11 @@ async def get_quote(
     cached_quote = cache.get(cache_key)
     if cached_quote:
         logger.info(f"✅ Cache HIT for quote {symbol}")
-        return cached_quote
+        if isinstance(cached_quote, dict):
+            cached_quote.setdefault("source", "cache")
+            cached_quote.setdefault("cached", True)
+            return cached_quote
+        return {"symbol": symbol.upper(), "source": "cache", "cached": True, "quote": cached_quote}
 
     try:
         client = get_tradier_client()
@@ -55,6 +59,8 @@ async def get_quote(
             "last": float(quote.get("last", 0)),
             "volume": int(quote.get("volume", 0)),
             "timestamp": quote.get("trade_date", datetime.now().isoformat()),
+            "source": "tradier",
+            "cached": False,
         }
 
         # Cache for 15 seconds
@@ -68,7 +74,7 @@ async def get_quote(
 
 
 @router.get("/market/quotes")
-async def get_quotes(symbols: str, _=Depends(require_bearer)):
+async def get_quotes(symbols: str, _current_user: CurrentUser):
     """Get quotes for multiple symbols (comma-separated) using Tradier"""
     try:
         client = get_tradier_client()
@@ -84,10 +90,11 @@ async def get_quotes(symbols: str, _=Depends(require_bearer)):
                     "ask": float(q.get("ask", 0)),
                     "last": float(q.get("last", 0)),
                     "timestamp": q.get("trade_date", datetime.now().isoformat()),
+                    "source": "tradier",
                 }
 
         logger.info(f"✅ Retrieved {len(result)} quotes from Tradier")
-        return result
+        return {"quotes": result, "requested": symbol_list, "source": "tradier"}
     except Exception as e:
         logger.error(f"❌ Tradier quotes request failed: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch quotes: {e!s}")
@@ -95,7 +102,10 @@ async def get_quotes(symbols: str, _=Depends(require_bearer)):
 
 @router.get("/market/bars/{symbol}")
 async def get_bars(
-    symbol: str, timeframe: str = "daily", limit: int = 100, _=Depends(require_bearer)
+    symbol: str,
+    _current_user: CurrentUser,
+    timeframe: str = "daily",
+    limit: int = 100,
 ):
     """Get historical price bars using Tradier"""
     try:
@@ -145,14 +155,14 @@ async def get_bars(
             )
 
         logger.info(f"✅ Retrieved {len(result)} bars for {symbol} from Tradier")
-        return {"symbol": symbol.upper(), "bars": result}
+        return {"symbol": symbol.upper(), "bars": result, "source": "tradier"}
     except Exception as e:
         logger.error(f"❌ Tradier bars request failed for {symbol}: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch bars: {e!s}")
 
 
 @router.get("/market/scanner/under4")
-async def scan_under_4(_=Depends(require_bearer)):
+async def scan_under_4(_current_user: CurrentUser):
     """Scan for stocks under $4 with volume using Tradier"""
     try:
         # Pre-defined list of liquid stocks that trade near/under $4
@@ -198,7 +208,7 @@ async def scan_under_4(_=Depends(require_bearer)):
         results.sort(key=lambda x: x["price"])
 
         logger.info(f"✅ Scanner found {len(results)} stocks under $4 from Tradier")
-        return {"candidates": results, "count": len(results)}
+        return {"candidates": results, "count": len(results), "source": "tradier"}
     except Exception as e:
         logger.error(f"❌ Tradier scanner request failed: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to scan stocks: {e!s}")
