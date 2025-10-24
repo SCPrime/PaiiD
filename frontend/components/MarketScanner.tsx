@@ -51,10 +51,6 @@ export default function MarketScanner() {
   const [selectedSymbol, setSelectedSymbol] = useState<string>("");
   const [showResearch, setShowResearch] = useState(false);
 
-  useEffect(() => {
-    runScan();
-  }, [scanType, runScan]);
-
   const runScan = useCallback(async () => {
     setLoading(true);
     try {
@@ -92,6 +88,10 @@ export default function MarketScanner() {
       setLoading(false);
     }
   }, [filter.minPrice, filter.maxPrice, filter.minVolume, filter.signalType, scanType]);
+
+  useEffect(() => {
+    runScan();
+  }, [scanType, runScan]);
 
   /*
       Legacy mock preserved for reference:
