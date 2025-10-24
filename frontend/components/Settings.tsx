@@ -9,6 +9,7 @@ import {
   Brain,
   CheckCircle2,
   Clock,
+  CreditCard,
   Database,
   FileText,
   Lock,
@@ -38,6 +39,7 @@ import PortfolioOptimizer from "./PortfolioOptimizer";
 import RiskDashboard from "./RiskDashboard";
 import SchedulerSettings from "./SchedulerSettings";
 import SentimentDashboard from "./SentimentDashboard";
+import SubscriptionManager from "./SubscriptionManager";
 import TradingJournal from "./TradingJournal";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _MLTrainingDashboard = MLTrainingDashboard; // Reserved for future ML training feature
@@ -472,6 +474,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
   const tabs = [
     { id: "personal", label: "Personal Settings", icon: SettingsIcon, alwaysShow: true },
+    { id: "subscription", label: "Subscription & Billing", icon: CreditCard, alwaysShow: true },
     { id: "journal", label: "Trading Journal", icon: BookOpen, alwaysShow: true },
     { id: "risk", label: "Risk Control", icon: Shield, alwaysShow: true },
     { id: "ml-training", label: "ML Training", icon: Brain, alwaysShow: true },
@@ -1036,6 +1039,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             </div>
           )}
 
+          {activeTab === "subscription" && <SubscriptionManager />}
           {activeTab === "journal" && <TradingJournal />}
           {activeTab === "risk" && <RiskDashboard />}
           {activeTab === "ml-training" && (
