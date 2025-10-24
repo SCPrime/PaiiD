@@ -116,8 +116,8 @@ export default function TemplateCustomizationModal({
 
       // Update exit rules
       const exitRules = [...(template.config.exit_rules || [])];
-      const stopLossIndex = exitRules.findIndex((r: any) => r.type === "stop_loss");
-      const takeProfitIndex = exitRules.findIndex((r: any) => r.type === "take_profit");
+      const stopLossIndex = exitRules.findIndex((r: unknown) => r.type === "stop_loss");
+      const takeProfitIndex = exitRules.findIndex((r: unknown) => r.type === "take_profit");
 
       if (stopLossIndex >= 0) {
         exitRules[stopLossIndex] = { ...exitRules[stopLossIndex], value: stopLoss };
@@ -149,7 +149,7 @@ export default function TemplateCustomizationModal({
       toast.success(`Strategy "${customName}" created successfully!`);
       onClose();
       if (onCloneSuccess) onCloneSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Clone template error:", err);
       toast.error(err.message || "Failed to clone template");
     } finally {
@@ -167,9 +167,9 @@ export default function TemplateCustomizationModal({
   const originalPositionSize = template.config?.position_size_percent || 10;
   const originalMaxPositions = template.config?.max_positions || 5;
   const originalStopLoss =
-    template.config?.exit_rules?.find((r: any) => r.type === "stop_loss")?.value || 3;
+    template.config?.exit_rules?.find((r: unknown) => r.type === "stop_loss")?.value || 3;
   const originalTakeProfit =
-    template.config?.exit_rules?.find((r: any) => r.type === "take_profit")?.value || 8;
+    template.config?.exit_rules?.find((r: unknown) => r.type === "take_profit")?.value || 8;
 
   const hasChanges =
     positionSize !== originalPositionSize ||

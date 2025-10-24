@@ -96,7 +96,7 @@ interface Template {
   avg_return_percent: number;
   max_drawdown_percent: number;
   recommended_for: string[];
-  config: any;
+  config: unknown;
 }
 
 export default function StrategyBuilderAI() {
@@ -170,7 +170,7 @@ export default function StrategyBuilderAI() {
       const data = await response.json();
       setTemplates(data.templates || []);
       setUserRiskTolerance(data.user_risk_tolerance || 50);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Template fetch error:", err);
       setTemplatesError(err.message || "Failed to load strategy templates");
     } finally {
@@ -205,7 +205,7 @@ export default function StrategyBuilderAI() {
 
       // Refresh saved strategies or add to local state
       // For now, just show success message
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Clone template error:", err);
       toast.error(err.message || "Failed to clone template");
     }
@@ -221,7 +221,7 @@ export default function StrategyBuilderAI() {
       const strategy = await claudeAI.generateStrategy(nlInput);
       setCurrentStrategy(strategy);
       setView("create");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || "Failed to generate strategy");
       console.error("Strategy generation error:", err);
     } finally {

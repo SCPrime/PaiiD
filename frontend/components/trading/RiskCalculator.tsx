@@ -69,7 +69,7 @@ export default function RiskCalculator({
       setProposal(newProposal);
       setLimitPrice(newProposal.premium.toFixed(2));
       onCreateProposal(newProposal);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message);
     } finally {
       setLoading(false);
@@ -108,7 +108,7 @@ export default function RiskCalculator({
       setProposal(null);
       setOptionSymbol("");
       setLimitPrice("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message);
     } finally {
       setLoading(false);

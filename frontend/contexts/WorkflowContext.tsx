@@ -35,7 +35,7 @@ export interface TradeData {
 
 export interface WorkflowNavigationData {
   workflow: WorkflowType;
-  data?: any; // Flexible data payload
+  data?: unknown; // Flexible data payload
   tradeData?: TradeData; // Specific for trade execution
   timestamp: string;
 }
@@ -44,7 +44,7 @@ interface WorkflowContextType {
   currentWorkflow: WorkflowType | null;
   pendingNavigation: WorkflowNavigationData | null;
   setCurrentWorkflow: (workflow: WorkflowType) => void;
-  navigateToWorkflow: (workflow: WorkflowType, data?: any) => void;
+  navigateToWorkflow: (workflow: WorkflowType, data?: unknown) => void;
   navigateToTrade: (tradeData: TradeData) => void;
   clearPendingNavigation: () => void;
 }
@@ -67,7 +67,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({ children }) 
   const [currentWorkflow, setCurrentWorkflow] = useState<WorkflowType | null>(null);
   const [pendingNavigation, setPendingNavigation] = useState<WorkflowNavigationData | null>(null);
 
-  const navigateToWorkflow = (workflow: WorkflowType, data?: any) => {
+  const navigateToWorkflow = (workflow: WorkflowType, data?: unknown) => {
     const navigationData: WorkflowNavigationData = {
       workflow,
       data,

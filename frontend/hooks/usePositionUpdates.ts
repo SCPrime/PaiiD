@@ -85,7 +85,7 @@ export function usePositionUpdates(
   const heartbeatCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const log = useCallback(
-    (...args: any[]) => {
+    (...args: unknown[]) => {
       if (debug) {
         console.info("[usePositionUpdates]", ...args);
       }
@@ -250,7 +250,7 @@ export function usePositionUpdates(
           }));
         }
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[usePositionUpdates] Connection error:", error);
       setState((prev) => ({
         ...prev,

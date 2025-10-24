@@ -429,7 +429,7 @@ export default function MorningRoutineAI() {
       // Extract step types from AI routine
       if (routine.steps && Array.isArray(routine.steps)) {
         const stepTypes = routine.steps
-          .map((step: any) => step.type)
+          .map((step: unknown) => step.type)
           .filter((type: string) => availableSteps.some((s) => s.id === type));
         console.info("[MorningRoutine] Setting step types:", stepTypes);
         if (stepTypes.length > 0) {
@@ -441,7 +441,7 @@ export default function MorningRoutineAI() {
       setAiInput("");
       alert(`AI generated routine: "${routine.name || "Custom Routine"}"`);
       console.info("[MorningRoutine] ✅ Routine generated successfully");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[MorningRoutine] Error generating routine:", err);
       setError(err.message || "Failed to generate routine. Please try again.");
     } finally {
@@ -494,7 +494,7 @@ Keep it brief and actionable for a day trader.`;
         addLog(`Prices as of: ${new Date(liveData.timestamp).toLocaleTimeString()}`);
 
         // Extract stock symbols for AI analysis
-        const stockSymbols = liveData.candidates.map((s: any) => s.symbol);
+        const stockSymbols = liveData.candidates.map((s: unknown) => s.symbol);
         addLog(`📋 Symbols found: ${stockSymbols.join(", ")}`);
 
         // **CRITICAL FIX:** Pass stock data to AI for actionable analysis
@@ -504,7 +504,7 @@ Keep it brief and actionable for a day trader.`;
 
 ${liveData.candidates
   .map(
-    (stock: any) => `
+    (stock: unknown) => `
 **${stock.symbol}** - $${stock.price.toFixed(2)}
 - Bid: $${stock.bid.toFixed(2)} | Ask: $${stock.ask.toFixed(2)}
 - Spread: $${(stock.ask - stock.bid).toFixed(3)} (${(((stock.ask - stock.bid) / stock.ask) * 100).toFixed(2)}%)
@@ -569,7 +569,7 @@ Provide:
 
       addLog("🎉 Morning Routine Complete!");
       addLog("Ready to trade. Good luck today! 🚀");
-    } catch (err: any) {
+    } catch (err: unknown) {
       addLog(`❌ Error: ${err.message}`);
       addLog("Routine execution failed. Please try again.");
     } finally {
@@ -893,7 +893,7 @@ Provide:
                   >
                     Top Candidates:
                   </p>
-                  {liveDataPreview.candidates.slice(0, 3).map((stock: any, idx: number) => (
+                  {liveDataPreview.candidates.slice(0, 3).map((stock: unknown, idx: number) => (
                     <div
                       key={idx}
                       style={{

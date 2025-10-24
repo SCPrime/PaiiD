@@ -624,7 +624,7 @@ Proposal system coming in INCREMENT 9`);
         title: "SMA 20",
       });
       series.setData(
-        calculatedIndicators.sma20.map((point: any) => ({
+        calculatedIndicators.sma20.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -639,7 +639,7 @@ Proposal system coming in INCREMENT 9`);
         title: "SMA 50",
       });
       series.setData(
-        calculatedIndicators.sma50.map((point: any) => ({
+        calculatedIndicators.sma50.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -654,7 +654,7 @@ Proposal system coming in INCREMENT 9`);
         title: "SMA 200",
       });
       series.setData(
-        calculatedIndicators.sma200.map((point: any) => ({
+        calculatedIndicators.sma200.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -672,7 +672,7 @@ Proposal system coming in INCREMENT 9`);
         title: "BB Upper",
       });
       upperSeries.setData(
-        upper.map((point: any) => ({
+        upper.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -684,7 +684,7 @@ Proposal system coming in INCREMENT 9`);
         title: "BB Middle",
       });
       middleSeries.setData(
-        middle.map((point: any) => ({
+        middle.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -696,7 +696,7 @@ Proposal system coming in INCREMENT 9`);
         title: "BB Lower",
       });
       lowerSeries.setData(
-        lower.map((point: any) => ({
+        lower.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -717,7 +717,7 @@ Proposal system coming in INCREMENT 9`);
         title: "Tenkan",
       });
       tenkanSeries.setData(
-        tenkan.map((point: any) => ({
+        tenkan.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -729,7 +729,7 @@ Proposal system coming in INCREMENT 9`);
         title: "Kijun",
       });
       kijunSeries.setData(
-        kijun.map((point: any) => ({
+        kijun.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -741,7 +741,7 @@ Proposal system coming in INCREMENT 9`);
         title: "Senkou A",
       });
       senkouASeries.setData(
-        senkouA.map((point: any) => ({
+        senkouA.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -753,7 +753,7 @@ Proposal system coming in INCREMENT 9`);
         title: "Senkou B",
       });
       senkouBSeries.setData(
-        senkouB.map((point: any) => ({
+        senkouB.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -765,7 +765,7 @@ Proposal system coming in INCREMENT 9`);
         title: "Chikou",
       });
       chikouSeries.setData(
-        chikou.map((point: any) => ({
+        chikou.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -820,7 +820,7 @@ Proposal system coming in INCREMENT 9`);
         title: "MACD",
       });
       macdSeries.setData(
-        macd.map((point: any) => ({
+        macd.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -833,7 +833,7 @@ Proposal system coming in INCREMENT 9`);
         title: "Signal",
       });
       signalSeries.setData(
-        signal.map((point: any) => ({
+        signal.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
         }))
@@ -849,7 +849,7 @@ Proposal system coming in INCREMENT 9`);
         },
       });
       histogramSeries.setData(
-        histogram.map((point: any) => ({
+        histogram.map((point: unknown) => ({
           time: (new Date(point.time).getTime() / 1000) as any,
           value: point.value,
           color: point.value >= 0 ? "#10b981" : "#ef4444",

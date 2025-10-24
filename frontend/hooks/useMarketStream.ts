@@ -83,7 +83,7 @@ export function useMarketStream(
   const heartbeatCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const log = useCallback(
-    (...args: any[]) => {
+    (...args: unknown[]) => {
       if (debug) {
         console.info("[useMarketStream]", ...args);
       }
@@ -255,7 +255,7 @@ export function useMarketStream(
           }));
         }
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[useMarketStream] Connection error:", error);
       setState((prev) => ({
         ...prev,

@@ -179,7 +179,7 @@ export default function StrategyBuilder({
       const response = await fetch(`/api/strategies/${strategyId}/versions`);
       if (response.ok) {
         const data = await response.json();
-        const versionData = data.versions.find((v: any) => v.version === version);
+        const versionData = data.versions.find((v: unknown) => v.version === version);
         if (versionData) {
           // Convert Strategy JSON to form data
           convertStrategyToFormData(versionData.strategy_json);
@@ -205,7 +205,7 @@ export default function StrategyBuilder({
       maxOptionSpread: strategy.universe.filters.max_option_spread || 0.1,
       excludeOTC: strategy.universe.filters.exclude_otc ?? true,
       earningsBlackoutDays: strategy.universe.filters.earnings_within_days || 7,
-      legs: strategy.position.legs.map((leg: any, idx: number) => ({
+      legs: strategy.position.legs.map((leg: unknown, idx: number) => ({
         id: `leg_${idx}`,
         type: leg.type,
         side: leg.side,
@@ -231,7 +231,7 @@ export default function StrategyBuilder({
     }));
   };
 
-  const updateField = (field: keyof StrategyFormData, value: any) => {
+  const updateField = (field: keyof StrategyFormData, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear client error for this field
     if (clientErrors[field]) {
@@ -266,7 +266,7 @@ export default function StrategyBuilder({
     );
   };
 
-  const updateLeg = (id: string, field: keyof Leg, value: any) => {
+  const updateLeg = (id: string, field: keyof Leg, value: unknown) => {
     updateField(
       "legs",
       formData.legs.map((leg) => (leg.id === id ? { ...leg, [field]: value } : leg))
@@ -827,7 +827,7 @@ function UniverseFiltersSection({
   expanded: boolean;
   onToggle: () => void;
   formData: StrategyFormData;
-  updateField: (field: keyof StrategyFormData, value: any) => void;
+  updateField: (field: keyof StrategyFormData, value: unknown) => void;
   errors: ValidationErrors;
 }) {
   return (
@@ -971,7 +971,7 @@ function PositionStructureSection({
   legs: Leg[];
   addLeg: () => void;
   removeLeg: (id: string) => void;
-  updateLeg: (id: string, field: keyof Leg, value: any) => void;
+  updateLeg: (id: string, field: keyof Leg, value: unknown) => void;
   errors: ValidationErrors;
 }) {
   return (
@@ -1097,7 +1097,7 @@ function SizingSection({
   expanded: boolean;
   onToggle: () => void;
   formData: StrategyFormData;
-  updateField: (field: keyof StrategyFormData, value: any) => void;
+  updateField: (field: keyof StrategyFormData, value: unknown) => void;
   errors: ValidationErrors;
 }) {
   return (
@@ -1198,7 +1198,7 @@ function ExitsSection({
   expanded: boolean;
   onToggle: () => void;
   formData: StrategyFormData;
-  updateField: (field: keyof StrategyFormData, value: any) => void;
+  updateField: (field: keyof StrategyFormData, value: unknown) => void;
   errors: ValidationErrors;
 }) {
   return (
