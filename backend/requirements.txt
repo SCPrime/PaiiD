@@ -34,6 +34,9 @@ py_vollib>=1.0.1
 # Resilience (Phase 5.C)
 tenacity>=8.2.0
 
+# Caching utilities for options metadata (Phase 5.C)
+cachetools>=5.3.0
+
 # System Monitoring & Health Checks (Phase 7: Production Monitoring)
 psutil>=5.9.0
 

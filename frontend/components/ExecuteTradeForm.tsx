@@ -1,15 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import {
-  TrendingUp,
-  Check,
-  AlertCircle,
-  ChevronDown,
-  Save,
-  BookmarkPlus,
-  Trash2,
-  Search,
-} from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { TrendingUp, Check, AlertCircle, ChevronDown } from "lucide-react";
 import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
 import ConfirmDialog from "./ConfirmDialog";
@@ -21,38 +12,26 @@ import StockLookup from "./StockLookup";
 import OptionsGreeksDisplay from "./OptionsGreeksDisplay";
 import RiskCalculator from "./trading/RiskCalculator";
 
-interface Order {
-  symbol: string;
-  side: "buy" | "sell";
-  qty: number;
-  type: "market" | "limit";
-  limitPrice?: number;
-  // Options fields
-  asset_class?: "stock" | "option";
-  option_type?: "call" | "put";
-  strike_price?: number;
-  expiration_date?: string;
-}
+import { PreviewModal } from "@/src/features/orders/components/PreviewModal";
+import { TemplateManager } from "@/src/features/orders/components/TemplateManager";
+import { useOrderKeyboardShortcuts } from "@/src/features/orders/hooks/useOrderKeyboardShortcuts";
+import {
+  OrderDraft,
+  OrderPayload,
+  OrderTemplateResponse,
+  OrderClass,
+} from "@/src/features/orders/types";
+import {
+  draftToOrderPayload,
+  draftToTemplatePayload,
+  templateToDraft,
+} from "@/src/features/orders/utils";
 
 interface ExecuteResponse {
   accepted: boolean;
   duplicate?: boolean;
   dryRun?: boolean;
-  orders?: Order[];
-}
-
-interface OrderTemplate {
-  id: number;
-  name: string;
-  description?: string;
-  symbol: string;
-  side: "buy" | "sell";
-  quantity: number;
-  order_type: "market" | "limit";
-  limit_price?: number;
-  created_at: string;
-  updated_at: string;
-  last_used_at?: string;
+  orders?: OrderPayload[];
 }
 
 export default function ExecuteTradeForm() {
@@ -76,20 +55,24 @@ export default function ExecuteTradeForm() {
   const [qty, setQty] = useState(1);
   const [orderType, setOrderType] = useState<"market" | "limit">("market");
   const [limitPrice, setLimitPrice] = useState("");
+  const [orderClass, setOrderClass] = useState<OrderClass>("simple");
+  const [takeProfitPrice, setTakeProfitPrice] = useState("");
+  const [stopLossPrice, setStopLossPrice] = useState("");
+  const [stopLossLimitPrice, setStopLossLimitPrice] = useState("");
+  const [trailPrice, setTrailPrice] = useState("");
+  const [trailPercent, setTrailPercent] = useState("");
+  const [estimatedPrice, setEstimatedPrice] = useState("");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<ExecuteResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastRequestId, setLastRequestId] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
+  const [pendingOrder, setPendingOrder] = useState<OrderPayload | null>(null);
   const [showRawJson, setShowRawJson] = useState(false);
 
   // Template-related state
-  const [templates, setTemplates] = useState<OrderTemplate[]>([]);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
-  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
-  const [templateName, setTemplateName] = useState("");
-  const [templateDescription, setTemplateDescription] = useState("");
+  const [templates, setTemplates] = useState<OrderTemplateResponse[]>([]);
+  const [showTemplateCreator, setShowTemplateCreator] = useState(false);
 
   // Stock research state
   const [showStockLookup, setShowStockLookup] = useState(false);
@@ -103,10 +86,74 @@ export default function ExecuteTradeForm() {
   const [availableStrikes, setAvailableStrikes] = useState<number[]>([]);
   const [loadingOptionsChain, setLoadingOptionsChain] = useState(false);
 
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewOrders, setPreviewOrders] = useState<OrderPayload[]>([]);
+
   // AI Analysis state
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+
+  const currentDraft = useMemo<OrderDraft>(() => {
+    const toNumber = (value: string) => {
+      const parsed = parseFloat(value);
+      return Number.isNaN(parsed) ? undefined : parsed;
+    };
+
+    const limit = toNumber(limitPrice);
+    const tp = toNumber(takeProfitPrice);
+    const sl = toNumber(stopLossPrice);
+    const slLimit = toNumber(stopLossLimitPrice);
+    const trailingPrice = toNumber(trailPrice);
+    const trailingPercent = toNumber(trailPercent);
+    const estPrice = toNumber(estimatedPrice);
+
+    const draft: OrderDraft = {
+      symbol,
+      side,
+      quantity: qty,
+      orderType,
+      limitPrice: limit,
+      assetClass,
+      orderClass,
+      takeProfit: tp ? { limitPrice: tp } : null,
+      stopLoss: sl
+        ? {
+            stopPrice: sl,
+            limitPrice: slLimit ?? null,
+          }
+        : null,
+      trailPrice: trailingPrice ?? null,
+      trailPercent: trailingPercent ?? null,
+      estimatedPrice: estPrice ?? null,
+    };
+
+    if (assetClass === "option") {
+      draft.optionType = optionType;
+      const strike = toNumber(strikePrice);
+      if (strike) draft.strikePrice = strike;
+      if (expirationDate) draft.expirationDate = expirationDate;
+    }
+
+    return draft;
+  }, [
+    symbol,
+    side,
+    qty,
+    orderType,
+    limitPrice,
+    assetClass,
+    optionType,
+    strikePrice,
+    expirationDate,
+    orderClass,
+    takeProfitPrice,
+    stopLossPrice,
+    stopLossLimitPrice,
+    trailPrice,
+    trailPercent,
+    estimatedPrice,
+  ]);
 
   // Load templates on mount
   useEffect(() => {
@@ -278,61 +325,71 @@ export default function ExecuteTradeForm() {
     }
   };
 
-  const handleTemplateSelect = (templateId: string) => {
-    setSelectedTemplateId(templateId);
-    if (templateId === "") return;
+  const applyTemplate = (template: OrderTemplateResponse) => {
+    setSymbol(template.symbol);
+    setSide(template.side);
+    setQty(template.quantity);
+    setOrderType(template.order_type);
+    setLimitPrice(template.limit_price ? template.limit_price.toString() : "");
+    setOrderClass(template.order_class);
+    setAssetClass(template.asset_class);
+    setTakeProfitPrice(
+      template.take_profit?.limit_price ? template.take_profit.limit_price.toString() : ""
+    );
+    setStopLossPrice(
+      template.stop_loss?.stop_price ? template.stop_loss.stop_price.toString() : ""
+    );
+    setStopLossLimitPrice(
+      template.stop_loss?.limit_price ? template.stop_loss.limit_price.toString() : ""
+    );
+    setTrailPrice(template.trail_price ? template.trail_price.toString() : "");
+    setTrailPercent(template.trail_percent ? template.trail_percent.toString() : "");
+    setEstimatedPrice("");
 
-    const template = templates.find((t) => t.id === parseInt(templateId));
-    if (template) {
-      setSymbol(template.symbol);
-      setSide(template.side);
-      setQty(template.quantity);
-      setOrderType(template.order_type);
-      setLimitPrice(template.limit_price ? template.limit_price.toString() : "");
-      showSuccess(`✅ Template "${template.name}" loaded`);
-
-      // Mark template as used
-      fetch(`/api/proxy/api/order-templates/${template.id}/use`, {
-        method: "POST",
-      }).catch((err) => console.error("Failed to mark template as used:", err));
+    if (template.asset_class === "option") {
+      setOptionType(template.option_type ?? "call");
+      setStrikePrice(template.strike_price ? template.strike_price.toString() : "");
+      setExpirationDate(template.expiration_date ?? "");
+    } else {
+      setOptionType("call");
+      setStrikePrice("");
+      setExpirationDate("");
     }
+
+    showSuccess(`✅ Template "${template.name}" loaded`);
+
+    fetch(`/api/proxy/api/order-templates/${template.id}/use`, {
+      method: "POST",
+    }).catch((err) => console.error("Failed to mark template as used:", err));
   };
 
-  const handleSaveTemplate = async () => {
-    if (!templateName.trim()) {
-      showError("❌ Template name is required");
-      return;
+  const saveTemplateFromDraft = async (name: string, description: string | null) => {
+    const validationError = validateDraft();
+    if (validationError) {
+      showError(`❌ Cannot save template: ${validationError}`);
+      throw new Error(validationError);
     }
 
-    try {
-      const res = await fetch("/api/proxy/api/order-templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: templateName,
-          description: templateDescription || null,
-          symbol: symbol.trim().toUpperCase(),
-          side,
-          quantity: qty,
-          order_type: orderType,
-          limit_price: orderType === "limit" ? parseFloat(limitPrice) : null,
-        }),
-      });
+    const payload = draftToTemplatePayload(currentDraft, name, description);
 
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    const res = await fetch("/api/proxy/api/order-templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-      const newTemplate = await res.json();
-      setTemplates([...templates, newTemplate]);
-      setShowSaveTemplate(false);
-      setTemplateName("");
-      setTemplateDescription("");
-      showSuccess(`✅ Template "${newTemplate.name}" saved`);
-    } catch (err: any) {
-      showError(`❌ Failed to save template: ${err.message}`);
+    if (!res.ok) {
+      const message = `${res.status} ${res.statusText}`;
+      showError(`❌ Failed to save template: ${message}`);
+      throw new Error(message);
     }
+
+    const newTemplate: OrderTemplateResponse = await res.json();
+    setTemplates((prev) => [...prev, newTemplate]);
+    showSuccess(`✅ Template "${newTemplate.name}" saved`);
   };
 
-  const handleDeleteTemplate = async (templateId: number) => {
+  const deleteTemplate = async (templateId: number) => {
     if (!confirm("Are you sure you want to delete this template?")) return;
 
     try {
@@ -342,10 +399,7 @@ export default function ExecuteTradeForm() {
 
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 
-      setTemplates(templates.filter((t) => t.id !== templateId));
-      if (selectedTemplateId === templateId.toString()) {
-        setSelectedTemplateId("");
-      }
+      setTemplates((prev) => prev.filter((t) => t.id !== templateId));
       showSuccess("✅ Template deleted");
     } catch (err: any) {
       showError(`❌ Failed to delete template: ${err.message}`);
@@ -355,61 +409,116 @@ export default function ExecuteTradeForm() {
   const generateRequestId = () =>
     `req-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Client-side validation
+  const validateDraft = (): string | null => {
     if (!symbol || symbol.trim() === "") {
-      setError("Symbol is required");
-      return;
+      return "Symbol is required";
     }
     if (qty <= 0) {
-      setError("Quantity must be greater than 0");
-      return;
+      return "Quantity must be greater than 0";
     }
-    if (orderType === "limit" && (!limitPrice || parseFloat(limitPrice) <= 0)) {
-      setError("Limit price is required for limit orders");
-      return;
+    if (orderType === "limit") {
+      const limit = parseFloat(limitPrice);
+      if (!limit || limit <= 0) {
+        return "Limit price is required for limit orders";
+      }
     }
 
-    // Options-specific validation
     if (assetClass === "option") {
       if (!optionType) {
-        setError("Option type (call/put) is required");
-        return;
+        return "Option type (call/put) is required";
       }
-      if (!strikePrice || parseFloat(strikePrice) <= 0) {
-        setError("Strike price is required for options");
-        return;
+      const strike = parseFloat(strikePrice);
+      if (!strike || strike <= 0) {
+        return "Strike price is required for options";
       }
       if (!expirationDate) {
-        setError("Expiration date is required for options");
-        return;
+        return "Expiration date is required for options";
       }
     }
 
-    const order: Order = {
-      symbol: symbol.trim().toUpperCase(),
-      side,
-      qty,
-      type: orderType,
-      asset_class: assetClass,
-    };
+    const tp = takeProfitPrice ? parseFloat(takeProfitPrice) : undefined;
+    const sl = stopLossPrice ? parseFloat(stopLossPrice) : undefined;
+    const slLimit = stopLossLimitPrice ? parseFloat(stopLossLimitPrice) : undefined;
+    const trailingP = trailPrice ? parseFloat(trailPrice) : undefined;
+    const trailingPct = trailPercent ? parseFloat(trailPercent) : undefined;
 
-    if (orderType === "limit") {
-      order.limitPrice = parseFloat(limitPrice);
+    if (orderClass === "bracket" && !tp && !sl) {
+      return "Bracket orders require a take-profit or stop-loss";
     }
 
-    // Add options fields if applicable
-    if (assetClass === "option") {
-      order.option_type = optionType;
-      order.strike_price = parseFloat(strikePrice);
-      order.expiration_date = expirationDate;
+    if (orderClass === "oco" && (!tp || !sl)) {
+      return "OCO orders require both take-profit and stop-loss";
     }
 
-    // Show confirmation dialog
-    setPendingOrder(order);
+    if (trailPrice && trailPercent) {
+      return "Choose either trailing price or trailing percent";
+    }
+
+    if (tp !== undefined && tp <= 0) {
+      return "Take-profit price must be greater than 0";
+    }
+
+    if (sl !== undefined && sl <= 0) {
+      return "Stop-loss price must be greater than 0";
+    }
+
+    if (slLimit !== undefined && sl !== undefined && slLimit < sl) {
+      return "Stop-loss limit must be greater than or equal to stop price";
+    }
+
+    if (trailingP !== undefined && trailingP <= 0) {
+      return "Trail price must be greater than 0";
+    }
+
+    if (trailingPct !== undefined && (trailingPct <= 0 || trailingPct > 100)) {
+      return "Trail percent must be between 0 and 100";
+    }
+
+    if (estimatedPrice) {
+      const estimated = parseFloat(estimatedPrice);
+      if (!estimated || estimated <= 0) {
+        return "Estimated price must be greater than 0";
+      }
+    }
+
+    return null;
+  };
+
+  const reviewOrder = () => {
+    const validationError = validateDraft();
+    if (validationError) {
+      setError(validationError);
+      showError(`❌ ${validationError}`);
+      return;
+    }
+
+    const orderPayload = draftToOrderPayload(currentDraft);
+    setPendingOrder(orderPayload);
     setShowConfirmDialog(true);
+  };
+
+  const openPreviewModal = () => {
+    const validationError = validateDraft();
+    if (validationError) {
+      setError(validationError);
+      showError(`❌ ${validationError}`);
+      return;
+    }
+
+    const orderPayload = draftToOrderPayload(currentDraft);
+    setPreviewOrders([orderPayload]);
+    setShowPreview(true);
+  };
+
+  useOrderKeyboardShortcuts({
+    onPreview: openPreviewModal,
+    onSubmit: reviewOrder,
+    onSaveTemplate: () => setShowTemplateCreator(true),
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    reviewOrder();
   };
 
   const executeOrder = async () => {
@@ -448,7 +557,7 @@ export default function ExecuteTradeForm() {
         showWarning(`⚠️ Duplicate request detected - Order not resubmitted`);
       } else if (data.accepted) {
         showSuccess(
-          `✅ ${pendingOrder.side.toUpperCase()} order accepted (Dry-Run): ${pendingOrder.qty} shares of ${pendingOrder.symbol}`
+          `✅ ${pendingOrder.side.toUpperCase()} order accepted (Dry-Run): ${pendingOrder.qty} ${pendingOrder.asset_class === "option" ? "contracts" : "shares"} of ${pendingOrder.symbol}`
         );
       }
 
@@ -458,7 +567,7 @@ export default function ExecuteTradeForm() {
         side: pendingOrder.side,
         qty: pendingOrder.qty,
         type: pendingOrder.type,
-        limitPrice: pendingOrder.limitPrice,
+        limitPrice: pendingOrder.limit_price ?? undefined,
         status: data.accepted ? "executed" : "cancelled",
         dryRun: false,
       });
@@ -481,16 +590,7 @@ export default function ExecuteTradeForm() {
     setError(null);
     setResponse(null);
 
-    const order: Order = {
-      symbol: symbol.trim().toUpperCase(),
-      side,
-      qty,
-      type: orderType,
-    };
-
-    if (orderType === "limit") {
-      order.limitPrice = parseFloat(limitPrice);
-    }
+    const order = draftToOrderPayload(currentDraft);
 
     const body = {
       dryRun: false, // Paper trading via Alpaca
@@ -522,8 +622,8 @@ export default function ExecuteTradeForm() {
     if (!pendingOrder) return "";
 
     const priceStr =
-      pendingOrder.type === "limit" && pendingOrder.limitPrice
-        ? ` at $${pendingOrder.limitPrice.toFixed(2)}`
+      pendingOrder.type === "limit" && pendingOrder.limit_price
+        ? ` at $${pendingOrder.limit_price.toFixed(2)}`
         : " at market price";
 
     if (pendingOrder.asset_class === "option") {
@@ -571,6 +671,11 @@ export default function ExecuteTradeForm() {
           }
         }
       `}</style>
+      <PreviewModal
+        open={showPreview}
+        orders={previewOrders}
+        onClose={() => setShowPreview(false)}
+      />
       <ConfirmDialog
         isOpen={showConfirmDialog}
         title="Confirm Order"
@@ -674,148 +779,16 @@ export default function ExecuteTradeForm() {
             </div>
           </div>
 
-          {/* Template Selection and Management */}
-          <div
-            style={{
-              marginBottom: theme.spacing.xl,
-              padding: theme.spacing.lg,
-              background: theme.background.input,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: theme.borderRadius.lg,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: theme.spacing.md,
-              }}
-            >
-              <label
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  color: theme.colors.textMuted,
-                }}
-              >
-                <BookmarkPlus
-                  size={16}
-                  style={{ display: "inline", marginRight: "8px", verticalAlign: "middle" }}
-                />
-                Order Templates
-              </label>
-              <Button
-                variant="secondary"
-                onClick={() => setShowSaveTemplate(!showSaveTemplate)}
-                style={{ fontSize: "12px", padding: "6px 12px" }}
-              >
-                <Save size={14} style={{ marginRight: "4px" }} />
-                Save Current as Template
-              </Button>
-            </div>
-
-            {/* Template Selector */}
-            <div style={{ display: "flex", gap: theme.spacing.sm }}>
-              <select
-                value={selectedTemplateId}
-                onChange={(e) => handleTemplateSelect(e.target.value)}
-                style={{
-                  flex: 1,
-                  padding: "10px 14px",
-                  background: theme.background.card,
-                  border: `1px solid ${theme.colors.border}`,
-                  borderRadius: theme.borderRadius.md,
-                  color: theme.colors.text,
-                  fontSize: "14px",
-                }}
-              >
-                <option value="">-- Select a template --</option>
-                {templates.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.symbol} - {t.side.toUpperCase()})
-                  </option>
-                ))}
-              </select>
-              {selectedTemplateId && (
-                <Button
-                  variant="danger"
-                  onClick={() => handleDeleteTemplate(parseInt(selectedTemplateId))}
-                  style={{ padding: "10px" }}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              )}
-            </div>
-
-            {/* Save Template Modal */}
-            {showSaveTemplate && (
-              <div
-                style={{
-                  marginTop: theme.spacing.md,
-                  padding: theme.spacing.md,
-                  background: theme.background.card,
-                  border: `1px solid ${theme.colors.primary}`,
-                  borderRadius: theme.borderRadius.md,
-                }}
-              >
-                <h4
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    color: theme.colors.text,
-                    marginBottom: theme.spacing.sm,
-                  }}
-                >
-                  Save as Template
-                </h4>
-                <input
-                  type="text"
-                  placeholder="Template name (e.g., SPY Quick Buy)"
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    marginBottom: theme.spacing.sm,
-                    background: theme.background.input,
-                    border: `1px solid ${theme.colors.border}`,
-                    borderRadius: theme.borderRadius.sm,
-                    color: theme.colors.text,
-                    fontSize: "13px",
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Description (optional)"
-                  value={templateDescription}
-                  onChange={(e) => setTemplateDescription(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    marginBottom: theme.spacing.sm,
-                    background: theme.background.input,
-                    border: `1px solid ${theme.colors.border}`,
-                    borderRadius: theme.borderRadius.sm,
-                    color: theme.colors.text,
-                    fontSize: "13px",
-                  }}
-                />
-                <div style={{ display: "flex", gap: theme.spacing.sm }}>
-                  <Button variant="primary" onClick={handleSaveTemplate} style={{ flex: 1 }}>
-                    Save
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowSaveTemplate(false)}
-                    style={{ flex: 1 }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
+          <TemplateManager
+            templates={templates}
+            onApplyTemplate={applyTemplate}
+            onCreateTemplate={saveTemplateFromDraft}
+            onDeleteTemplate={deleteTemplate}
+            onRefresh={loadTemplates}
+            busy={loading}
+            createOpen={showTemplateCreator}
+            onCreateOpenChange={setShowTemplateCreator}
+          />
 
           {/* Asset Class Toggle (Stock vs Options) */}
           <div
@@ -1445,11 +1418,242 @@ export default function ExecuteTradeForm() {
                       color: theme.colors.text,
                       fontSize: responsiveSizes.inputFontSize,
                       transition: theme.transitions.normal,
-                      opacity: loading ? 0.5 : 1,
-                    }}
-                  />
-                </div>
+                    opacity: loading ? 0.5 : 1,
+                  }}
+                />
+              </div>
               )}
+
+              <div style={{ gridColumn: isMobile ? "auto" : "span 2" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: theme.colors.textMuted,
+                    marginBottom: theme.spacing.sm,
+                  }}
+                >
+                  Order Class & Advanced Legs
+                </label>
+                <select
+                  value={orderClass}
+                  onChange={(event) => setOrderClass(event.target.value as OrderClass)}
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: responsiveSizes.inputPadding,
+                    background: theme.background.input,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.borderRadius.md,
+                    color: theme.colors.text,
+                    fontSize: responsiveSizes.inputFontSize,
+                    transition: theme.transitions.normal,
+                    opacity: loading ? 0.5 : 1,
+                    marginBottom: theme.spacing.sm,
+                  }}
+                >
+                  <option value="simple">Simple</option>
+                  <option value="bracket">Bracket</option>
+                  <option value="oco">OCO Exit</option>
+                </select>
+
+                {(orderClass === "bracket" || orderClass === "oco") && (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
+                      gap: theme.spacing.sm,
+                      marginTop: theme.spacing.sm,
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: "13px",
+                          fontWeight: "600",
+                          color: theme.colors.textMuted,
+                          marginBottom: theme.spacing.xs,
+                        }}
+                      >
+                        Take-Profit Limit
+                      </label>
+                      <input
+                        type="number"
+                        value={takeProfitPrice}
+                        onChange={(event) => setTakeProfitPrice(event.target.value)}
+                        min="0"
+                        step="0.01"
+                        placeholder="Target price"
+                        disabled={loading}
+                        style={{
+                          width: "100%",
+                          padding: responsiveSizes.inputPadding,
+                          background: theme.background.input,
+                          border: `1px solid ${theme.colors.border}`,
+                          borderRadius: theme.borderRadius.md,
+                          color: theme.colors.text,
+                          fontSize: responsiveSizes.inputFontSize,
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: "13px",
+                          fontWeight: "600",
+                          color: theme.colors.textMuted,
+                          marginBottom: theme.spacing.xs,
+                        }}
+                      >
+                        Stop-Loss Trigger
+                      </label>
+                      <input
+                        type="number"
+                        value={stopLossPrice}
+                        onChange={(event) => setStopLossPrice(event.target.value)}
+                        min="0"
+                        step="0.01"
+                        placeholder="Stop price"
+                        disabled={loading}
+                        style={{
+                          width: "100%",
+                          padding: responsiveSizes.inputPadding,
+                          background: theme.background.input,
+                          border: `1px solid ${theme.colors.border}`,
+                          borderRadius: theme.borderRadius.md,
+                          color: theme.colors.text,
+                          fontSize: responsiveSizes.inputFontSize,
+                          marginBottom: theme.spacing.xs,
+                        }}
+                      />
+                      <input
+                        type="number"
+                        value={stopLossLimitPrice}
+                        onChange={(event) => setStopLossLimitPrice(event.target.value)}
+                        min="0"
+                        step="0.01"
+                        placeholder="Optional stop-limit price"
+                        disabled={loading}
+                        style={{
+                          width: "100%",
+                          padding: responsiveSizes.inputPadding,
+                          background: theme.background.input,
+                          border: `1px solid ${theme.colors.border}`,
+                          borderRadius: theme.borderRadius.md,
+                          color: theme.colors.text,
+                          fontSize: responsiveSizes.inputFontSize,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
+                    gap: theme.spacing.sm,
+                    marginTop: theme.spacing.sm,
+                  }}
+                >
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        color: theme.colors.textMuted,
+                        marginBottom: theme.spacing.xs,
+                      }}
+                    >
+                      Trailing Stop ($)
+                    </label>
+                    <input
+                      type="number"
+                      value={trailPrice}
+                      onChange={(event) => setTrailPrice(event.target.value)}
+                      min="0"
+                      step="0.01"
+                      placeholder="Dollar trail"
+                      disabled={loading}
+                      style={{
+                        width: "100%",
+                        padding: responsiveSizes.inputPadding,
+                        background: theme.background.input,
+                        border: `1px solid ${theme.colors.border}`,
+                        borderRadius: theme.borderRadius.md,
+                        color: theme.colors.text,
+                        fontSize: responsiveSizes.inputFontSize,
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        color: theme.colors.textMuted,
+                        marginBottom: theme.spacing.xs,
+                      }}
+                    >
+                      Trailing Stop (%)
+                    </label>
+                    <input
+                      type="number"
+                      value={trailPercent}
+                      onChange={(event) => setTrailPercent(event.target.value)}
+                      min="0"
+                      step="0.1"
+                      placeholder="Percent trail"
+                      disabled={loading}
+                      style={{
+                        width: "100%",
+                        padding: responsiveSizes.inputPadding,
+                        background: theme.background.input,
+                        border: `1px solid ${theme.colors.border}`,
+                        borderRadius: theme.borderRadius.md,
+                        color: theme.colors.text,
+                        fontSize: responsiveSizes.inputFontSize,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    color: theme.colors.textMuted,
+                    marginTop: theme.spacing.sm,
+                    marginBottom: theme.spacing.xs,
+                  }}
+                >
+                  Estimated Fill (for preview)
+                </label>
+                <input
+                  type="number"
+                  value={estimatedPrice}
+                  onChange={(event) => setEstimatedPrice(event.target.value)}
+                  min="0"
+                  step="0.01"
+                  placeholder="Optional estimated execution price"
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: responsiveSizes.inputPadding,
+                    background: theme.background.input,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.borderRadius.md,
+                    color: theme.colors.text,
+                    fontSize: responsiveSizes.inputFontSize,
+                  }}
+                />
+              </div>
             </div>
 
             {/* Options Greeks Preview (conditional) */}
@@ -1504,8 +1708,24 @@ export default function ExecuteTradeForm() {
             )}
 
             {/* Action Buttons */}
-            <div style={{ display: "flex", gap: theme.spacing.md, marginTop: theme.spacing.lg }}>
-              <Button type="submit" loading={loading} variant="primary" style={{ flex: 1 }}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: theme.spacing.md,
+                marginTop: theme.spacing.lg,
+              }}
+            >
+              <Button
+                type="button"
+                onClick={openPreviewModal}
+                variant="secondary"
+                style={{ flex: 1, minWidth: "180px" }}
+              >
+                Preview Risk (Ctrl + Enter)
+              </Button>
+
+              <Button type="submit" loading={loading} variant="primary" style={{ flex: 1, minWidth: "180px" }}>
                 {loading ? "Processing..." : "Submit Order (Dry-Run)"}
               </Button>
 

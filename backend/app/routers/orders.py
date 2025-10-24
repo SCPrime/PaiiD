@@ -4,7 +4,7 @@ from datetime import datetime
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, model_validator, validator
 from sqlalchemy.orm import Session
 from tenacity import (
     before_sleep_log,
@@ -21,7 +21,9 @@ from ..core.kill_switch import is_killed, set_kill
 from ..db.session import get_db
 from ..middleware.validation import (
     validate_limit_price,
+    validate_order_class,
     validate_order_type,
+    validate_price_range,
     validate_quantity,
     validate_request_id,
     validate_side,
@@ -109,6 +111,74 @@ class AlpacaCircuitBreaker:
 alpaca_circuit_breaker = AlpacaCircuitBreaker(failure_threshold=3, cooldown_seconds=60)
 
 
+def _validate_advanced_order_requirements(
+    order_class: str,
+    take_profit: "TakeProfitConfig | None",
+    stop_loss: "StopLossConfig | None",
+    trail_price: float | None,
+    trail_percent: float | None,
+):
+    """Shared validation rules for advanced order legs."""
+
+    if order_class == "bracket" and not (take_profit or stop_loss):
+        raise ValueError("Bracket orders require at least a take-profit or stop-loss configuration")
+
+    if order_class == "oco":
+        if not take_profit or not stop_loss:
+            raise ValueError("OCO orders require both take-profit and stop-loss configurations")
+
+    if trail_price and trail_percent:
+        raise ValueError("Specify either trail_price or trail_percent, not both")
+
+
+# Advanced order configuration models
+class TakeProfitConfig(BaseModel):
+    """Configuration for take-profit legs."""
+
+    limit_price: float = Field(
+        ...,
+        gt=0,
+        le=1_000_000,
+        description="Target price that will close the position for profit",
+    )
+
+    @validator("limit_price")
+    def validate_limit_price_value(cls, v):
+        return validate_price_range(v, field_name="Take-profit limit price")
+
+
+class StopLossConfig(BaseModel):
+    """Configuration for stop-loss legs."""
+
+    stop_price: float = Field(
+        ...,
+        gt=0,
+        le=1_000_000,
+        description="Price at which the stop loss triggers",
+    )
+    limit_price: float | None = Field(
+        None,
+        gt=0,
+        le=1_000_000,
+        description="Optional limit price for stop-limit exits",
+    )
+
+    @validator("stop_price")
+    def validate_stop_price(cls, v):
+        return validate_price_range(v, field_name="Stop-loss price")
+
+    @validator("limit_price")
+    def validate_limit_price(cls, v, values):
+        if v is None:
+            return v
+
+        validated_value = validate_price_range(v, field_name="Stop-loss limit price")
+        stop_price = values.get("stop_price")
+        if stop_price is not None and validated_value < stop_price:
+            raise ValueError("Stop-loss limit price must be greater than or equal to stop price")
+        return validated_value
+
+
 # Order Model (must be defined before use in function signatures)
 class Order(BaseModel):
     """Order model with comprehensive validation (supports stocks and options)"""
@@ -152,6 +222,28 @@ class Order(BaseModel):
         pattern=r"^\d{4}-\d{2}-\d{2}$",
         description="Expiration date in YYYY-MM-DD format (required for options)",
     )
+    order_class: str = Field(
+        default="simple",
+        description="Order class defining advanced legs (simple, bracket, oco)",
+    )
+    take_profit: TakeProfitConfig | None = Field(
+        default=None, description="Take-profit configuration for bracket/OCO orders"
+    )
+    stop_loss: StopLossConfig | None = Field(
+        default=None, description="Stop-loss configuration for bracket/OCO orders"
+    )
+    trail_price: float | None = Field(
+        default=None,
+        gt=0,
+        le=1_000_000,
+        description="Trailing stop amount in dollars",
+    )
+    trail_percent: float | None = Field(
+        default=None,
+        gt=0,
+        le=100,
+        description="Trailing stop percentage (0-100)",
+    )
 
     @validator("symbol")
     def validate_symbol_format(cls, v):
@@ -172,6 +264,11 @@ class Order(BaseModel):
     def validate_order_type_value(cls, v):
         """Validate order type"""
         return validate_order_type(v)
+
+    @validator("order_class")
+    def validate_order_class_value(cls, v):
+        """Validate order class"""
+        return validate_order_class(v)
 
     @validator("limit_price", always=True)
     def validate_limit_price_value(cls, v, values):
@@ -202,6 +299,30 @@ class Order(BaseModel):
         if asset_class == "option" and not v:
             raise ValueError("expiration_date is required for options orders (YYYY-MM-DD format)")
         return v
+
+    @validator("trail_price")
+    def validate_trail_price_value(cls, v):
+        if v is not None:
+            return validate_price_range(v, field_name="Trail price")
+        return v
+
+    @validator("trail_percent")
+    def validate_trail_percent_value(cls, v):
+        if v is not None:
+            if v <= 0 or v > 100:
+                raise ValueError("Trail percent must be between 0 and 100")
+        return v
+
+    @model_validator(mode="after")
+    def validate_order_class_requirements(self):
+        _validate_advanced_order_requirements(
+            self.order_class,
+            self.take_profit,
+            self.stop_loss,
+            self.trail_price,
+            self.trail_percent,
+        )
+        return self
 
 
 @retry(
@@ -263,6 +384,22 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
             )
         else:
             logger.info(f"[Alpaca] Submitting STOCK order: {order.symbol} {order.qty} {order.side}")
+
+        # Attach advanced order parameters (bracket/OCO/trailing)
+        if order.order_class and order.order_class != "simple":
+            order_payload["order_class"] = order.order_class
+
+        if order.take_profit:
+            order_payload["take_profit"] = order.take_profit.dict()
+
+        if order.stop_loss:
+            order_payload["stop_loss"] = order.stop_loss.dict()
+
+        if order.trail_price is not None:
+            order_payload["trail_price"] = order.trail_price
+
+        if order.trail_percent is not None:
+            order_payload["trail_percent"] = order.trail_percent
 
         # Execute order via Alpaca API
         response = requests.post(
@@ -327,6 +464,49 @@ class ExecRequest(BaseModel):
         return v
 
 
+class PreviewOrder(Order):
+    """Order definition with optional estimated price for preview calculations."""
+
+    estimated_price: float | None = Field(
+        default=None,
+        alias="estimatedPrice",
+        gt=0,
+        le=1_000_000,
+        description="Estimated execution price for preview calculations",
+    )
+
+    class Config:
+        allow_population_by_field_name = True
+
+
+class OrderPreviewRequest(BaseModel):
+    orders: list[PreviewOrder] = Field(
+        ..., min_items=1, max_items=10, description="Orders to preview"
+    )
+
+
+class OrderPreviewBreakdown(BaseModel):
+    symbol: str
+    side: str
+    quantity: float
+    order_type: str
+    order_class: str
+    entry_price: float | None
+    notional: float | None
+    take_profit_price: float | None
+    stop_loss_price: float | None
+    max_profit: float | None
+    max_loss: float | None
+    risk_reward_ratio: float | None
+
+
+class OrderPreviewResponse(BaseModel):
+    total_notional: float
+    total_max_profit: float
+    total_max_loss: float
+    orders: list[OrderPreviewBreakdown]
+
+
 @router.post("/trading/execute")
 async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer)):
     """
@@ -351,7 +531,7 @@ async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer))
         # Respect LIVE_TRADING setting
         if req.dryRun or not settings.LIVE_TRADING:
             logger.info(f"[Trading Execute] Dry-run mode: {len(req.orders)} orders")
-            return {"accepted": True, "dryRun": True, "orders": [o.dict() for o in req.orders]}
+            return {"accepted": True, "dryRun": True, "orders": [o.model_dump() for o in req.orders]}
 
         # Execute real trades via Alpaca API with circuit breaker and retry logic
         logger.info(f"[Trading Execute] Executing {len(req.orders)} live orders")
@@ -361,7 +541,7 @@ async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer))
             alpaca_order = execute_alpaca_order_with_retry(order)
             executed_orders.append(
                 {
-                    **order.dict(),
+                    **order.model_dump(),
                     "alpaca_order_id": alpaca_order.get("id"),
                     "status": alpaca_order.get("status"),
                 }
@@ -376,6 +556,84 @@ async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer))
             f"[Trading Execute] UNEXPECTED ERROR: {type(e).__name__}: {e!s}", exc_info=True
         )
         raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}")
+
+
+@router.post("/orders/preview", response_model=OrderPreviewResponse)
+def preview_orders(req: OrderPreviewRequest, _=Depends(require_bearer)):
+    """Provide risk and exposure preview for pending orders."""
+
+    breakdowns: list[OrderPreviewBreakdown] = []
+    total_notional = 0.0
+    total_max_profit = 0.0
+    total_max_loss = 0.0
+
+    for order in req.orders:
+        # Determine entry price preference: limit price -> estimated price -> None
+        entry_price: float | None = None
+        if order.type in {"limit", "stop_limit"} and order.limit_price:
+            entry_price = order.limit_price
+        elif order.estimated_price:
+            entry_price = order.estimated_price
+        elif order.limit_price:
+            entry_price = order.limit_price
+
+        notional: float | None = None
+        if entry_price is not None:
+            notional = round(order.qty * entry_price, 2)
+            total_notional += notional
+
+        take_profit_price = order.take_profit.limit_price if order.take_profit else None
+        stop_loss_price = order.stop_loss.stop_price if order.stop_loss else None
+
+        max_profit: float | None = None
+        if entry_price is not None and take_profit_price is not None:
+            price_diff = (
+                take_profit_price - entry_price
+                if order.side == "buy"
+                else entry_price - take_profit_price
+            )
+            max_profit = round(max(price_diff * order.qty, 0.0), 2)
+            if max_profit is not None:
+                total_max_profit += max_profit
+
+        max_loss: float | None = None
+        if entry_price is not None and stop_loss_price is not None:
+            price_diff = (
+                entry_price - stop_loss_price
+                if order.side == "buy"
+                else stop_loss_price - entry_price
+            )
+            max_loss = round(max(price_diff * order.qty, 0.0), 2)
+            if max_loss is not None:
+                total_max_loss += max_loss
+
+        risk_reward: float | None = None
+        if max_profit and max_profit > 0 and max_loss and max_loss > 0:
+            risk_reward = round(max_profit / max_loss, 2)
+
+        breakdowns.append(
+            OrderPreviewBreakdown(
+                symbol=order.symbol,
+                side=order.side,
+                quantity=order.qty,
+                order_type=order.type,
+                order_class=order.order_class,
+                entry_price=entry_price,
+                notional=notional,
+                take_profit_price=take_profit_price,
+                stop_loss_price=stop_loss_price,
+                max_profit=max_profit,
+                max_loss=max_loss,
+                risk_reward_ratio=risk_reward,
+            )
+        )
+
+    return OrderPreviewResponse(
+        total_notional=round(total_notional, 2),
+        total_max_profit=round(total_max_profit, 2),
+        total_max_loss=round(total_max_loss, 2),
+        orders=breakdowns,
+    )
 
 
 @router.post("/admin/kill")
@@ -399,6 +657,42 @@ class OrderTemplateCreate(BaseModel):
         default="market", pattern=r"^(market|limit|stop|stop_limit)$", description="Order type"
     )
     limit_price: float | None = Field(None, gt=0, le=1000000, description="Limit price")
+    asset_class: str = Field(
+        default="stock", pattern=r"^(stock|option)$", description="Asset class"
+    )
+    option_type: str | None = Field(
+        default=None, pattern=r"^(call|put)$", description="Option type for option templates"
+    )
+    strike_price: float | None = Field(
+        default=None, gt=0, le=100000, description="Strike price for option templates"
+    )
+    expiration_date: str | None = Field(
+        default=None,
+        pattern=r"^\d{4}-\d{2}-\d{2}$",
+        description="Expiration date (YYYY-MM-DD) for option templates",
+    )
+    order_class: str = Field(
+        default="simple",
+        description="Advanced order class (simple, bracket, oco)",
+    )
+    take_profit: TakeProfitConfig | None = Field(
+        default=None, description="Take-profit configuration"
+    )
+    stop_loss: StopLossConfig | None = Field(
+        default=None, description="Stop-loss configuration"
+    )
+    trail_price: float | None = Field(
+        default=None,
+        gt=0,
+        le=1_000_000,
+        description="Trailing stop amount in dollars",
+    )
+    trail_percent: float | None = Field(
+        default=None,
+        gt=0,
+        le=100,
+        description="Trailing stop percentage",
+    )
 
     @validator("symbol")
     def validate_symbol_format(cls, v):
@@ -421,6 +715,60 @@ class OrderTemplateCreate(BaseModel):
         order_type = values.get("order_type", "market")
         return validate_limit_price(v, order_type)
 
+    @validator("asset_class")
+    def validate_asset_class(cls, v):
+        return v.lower()
+
+    @validator("option_type")
+    def validate_option_type(cls, v, values):
+        asset_class = values.get("asset_class", "stock")
+        if asset_class == "option" and not v:
+            raise ValueError("option_type is required when asset_class is option")
+        return v
+
+    @validator("strike_price")
+    def validate_strike_price(cls, v, values):
+        asset_class = values.get("asset_class", "stock")
+        if asset_class == "option" and v is None:
+            raise ValueError("strike_price is required when asset_class is option")
+        if v is not None:
+            validate_price_range(v, field_name="Strike price")
+        return v
+
+    @validator("expiration_date")
+    def validate_expiration_date(cls, v, values):
+        asset_class = values.get("asset_class", "stock")
+        if asset_class == "option" and not v:
+            raise ValueError("expiration_date is required when asset_class is option")
+        return v
+
+    @validator("order_class")
+    def validate_order_class(cls, v):
+        return validate_order_class(v)
+
+    @validator("trail_price")
+    def validate_template_trail_price(cls, v):
+        if v is not None:
+            return validate_price_range(v, field_name="Trail price")
+        return v
+
+    @validator("trail_percent")
+    def validate_template_trail_percent(cls, v):
+        if v is not None and (v <= 0 or v > 100):
+            raise ValueError("Trail percent must be between 0 and 100")
+        return v
+
+    @model_validator(mode="after")
+    def validate_advanced_requirements(self):
+        _validate_advanced_order_requirements(
+            self.order_class or "simple",
+            self.take_profit,
+            self.stop_loss,
+            self.trail_price,
+            self.trail_percent,
+        )
+        return self
+
 
 class OrderTemplateUpdate(BaseModel):
     """Update order template with validation"""
@@ -432,6 +780,15 @@ class OrderTemplateUpdate(BaseModel):
     quantity: float | None = Field(None, gt=0, le=10000)
     order_type: str | None = Field(None, pattern=r"^(market|limit|stop|stop_limit)$")
     limit_price: float | None = Field(None, gt=0, le=1000000)
+    asset_class: str | None = Field(None, pattern=r"^(stock|option)$")
+    option_type: str | None = Field(None, pattern=r"^(call|put)$")
+    strike_price: float | None = Field(None, gt=0, le=100000)
+    expiration_date: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    order_class: str | None = Field(None, pattern=r"^(simple|bracket|oco)$")
+    take_profit: TakeProfitConfig | None = None
+    stop_loss: StopLossConfig | None = None
+    trail_price: float | None = Field(None, gt=0, le=1_000_000)
+    trail_percent: float | None = Field(None, gt=0, le=100)
 
     @validator("symbol")
     def validate_symbol_format(cls, v):
@@ -457,6 +814,79 @@ class OrderTemplateUpdate(BaseModel):
             return validate_order_type(v)
         return v
 
+    @validator("limit_price")
+    def validate_limit_price_value(cls, v, values):
+        if v is not None:
+            order_type = values.get("order_type", "limit")
+            return validate_limit_price(v, order_type)
+        return v
+
+    @validator("asset_class")
+    def validate_asset_class(cls, v):
+        if v is not None:
+            return v.lower()
+        return v
+
+    @validator("option_type")
+    def validate_option_type(cls, v, values):
+        asset_class = values.get("asset_class")
+        if asset_class == "option" and not v:
+            raise ValueError("option_type is required when asset_class is option")
+        return v
+
+    @validator("strike_price")
+    def validate_strike_price(cls, v, values):
+        asset_class = values.get("asset_class")
+        if asset_class == "option" and v is None:
+            raise ValueError("strike_price is required when asset_class is option")
+        if v is not None:
+            validate_price_range(v, field_name="Strike price")
+        return v
+
+    @validator("expiration_date")
+    def validate_expiration_date(cls, v, values):
+        asset_class = values.get("asset_class")
+        if asset_class == "option" and not v:
+            raise ValueError("expiration_date is required when asset_class is option")
+        return v
+
+    @validator("order_class")
+    def validate_order_class_value(cls, v):
+        if v is not None:
+            return validate_order_class(v)
+        return v
+
+    @validator("trail_price")
+    def validate_trail_price(cls, v):
+        if v is not None:
+            return validate_price_range(v, field_name="Trail price")
+        return v
+
+    @validator("trail_percent")
+    def validate_trail_percent(cls, v):
+        if v is not None and (v <= 0 or v > 100):
+            raise ValueError("Trail percent must be between 0 and 100")
+        return v
+
+    @model_validator(mode="after")
+    def validate_advanced_requirements(self):
+        order_class = self.order_class
+        take_profit = self.take_profit
+        stop_loss = self.stop_loss
+        trail_price = self.trail_price
+        trail_percent = self.trail_percent
+
+        if order_class:
+            _validate_advanced_order_requirements(
+                order_class, take_profit, stop_loss, trail_price, trail_percent
+            )
+        elif take_profit or stop_loss or trail_price or trail_percent:
+            _validate_advanced_order_requirements(
+                "bracket", take_profit, stop_loss, trail_price, trail_percent
+            )
+
+        return self
+
 
 class OrderTemplateResponse(BaseModel):
     id: int
@@ -468,6 +898,15 @@ class OrderTemplateResponse(BaseModel):
     quantity: float
     order_type: str
     limit_price: float | None
+    asset_class: str
+    option_type: str | None
+    strike_price: float | None
+    expiration_date: str | None
+    order_class: str
+    take_profit: dict | None
+    stop_loss: dict | None
+    trail_price: float | None
+    trail_percent: float | None
     created_at: datetime
     updated_at: datetime
     last_used_at: datetime | None
@@ -492,6 +931,15 @@ def create_order_template(
         quantity=template.quantity,
         order_type=template.order_type,
         limit_price=template.limit_price,
+        asset_class=template.asset_class,
+        option_type=template.option_type,
+        strike_price=template.strike_price,
+        expiration_date=template.expiration_date,
+        order_class=template.order_class,
+        take_profit=template.take_profit.model_dump() if template.take_profit else None,
+        stop_loss=template.stop_loss.model_dump() if template.stop_loss else None,
+        trail_price=template.trail_price,
+        trail_percent=template.trail_percent,
         user_id=None,  # For now, templates are global (not user-specific)
     )
     db.add(db_template)
@@ -531,6 +979,7 @@ def update_order_template(
         raise HTTPException(status_code=404, detail="Order template not found")
 
     # Update fields if provided
+    fields_set = template_update.__fields_set__
     if template_update.name is not None:
         db_template.name = template_update.name
     if template_update.description is not None:
@@ -545,6 +994,34 @@ def update_order_template(
         db_template.order_type = template_update.order_type
     if template_update.limit_price is not None:
         db_template.limit_price = template_update.limit_price
+    if template_update.asset_class is not None:
+        db_template.asset_class = template_update.asset_class
+        if template_update.asset_class == "stock":
+            db_template.option_type = None
+            db_template.strike_price = None
+            db_template.expiration_date = None
+    if template_update.option_type is not None:
+        db_template.option_type = template_update.option_type
+    if template_update.strike_price is not None:
+        db_template.strike_price = template_update.strike_price
+    if template_update.expiration_date is not None:
+        db_template.expiration_date = template_update.expiration_date
+    if template_update.order_class is not None:
+        db_template.order_class = template_update.order_class
+    if "take_profit" in fields_set:
+        db_template.take_profit = (
+            template_update.take_profit.dict()
+            if template_update.take_profit
+            else None
+        )
+    if "stop_loss" in fields_set:
+        db_template.stop_loss = (
+            template_update.stop_loss.dict() if template_update.stop_loss else None
+        )
+    if template_update.trail_price is not None or "trail_price" in fields_set:
+        db_template.trail_price = template_update.trail_price
+    if template_update.trail_percent is not None or "trail_percent" in fields_set:
+        db_template.trail_percent = template_update.trail_percent
 
     db_template.updated_at = datetime.utcnow()
     db.commit()

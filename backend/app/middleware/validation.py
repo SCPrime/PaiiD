@@ -100,6 +100,33 @@ def validate_order_type(order_type: str) -> str:
     return order_type
 
 
+def validate_order_class(order_class: str) -> str:
+    """Validate advanced order class (simple, bracket, oco)."""
+
+    order_class = order_class.lower().strip()
+
+    valid_classes = ["simple", "bracket", "oco"]
+
+    if order_class not in valid_classes:
+        raise ValueError(
+            f"Invalid order class '{order_class}'. Must be one of: {', '.join(valid_classes)}"
+        )
+
+    return order_class
+
+
+def validate_price_range(value: float, *, field_name: str) -> float:
+    """Validate common price-based inputs (limit, stop, trailing)."""
+
+    if value <= 0:
+        raise ValueError(f"{field_name} must be greater than 0")
+
+    if value > 1_000_000:
+        raise ValueError(f"{field_name} cannot exceed $1,000,000")
+
+    return value
+
+
 def validate_limit_price(limit_price: float | None, order_type: str) -> float | None:
     """
     Validate limit price (required for limit/stop_limit orders).
@@ -111,11 +138,7 @@ def validate_limit_price(limit_price: float | None, order_type: str) -> float | 
         if limit_price is None:
             raise ValueError(f"Limit price is required for {order_type} orders")
 
-        if limit_price <= 0:
-            raise ValueError("Limit price must be greater than 0")
-
-        if limit_price > 1000000:
-            raise ValueError("Limit price cannot exceed $1,000,000")
+        validate_price_range(limit_price, field_name="Limit price")
 
     return limit_price
 
