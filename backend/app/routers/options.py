@@ -12,13 +12,53 @@ Phase 1 Implementation:
 
 from datetime import datetime
 from typing import List, Optional
-import requests
 import asyncio
 import logging
+import time
 
+import requests
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+
+try:  # pragma: no cover - exercised via import path
+    from cachetools import TTLCache as CacheToolsTTLCache
+except ModuleNotFoundError:  # pragma: no cover - fallback for minimal environments
+    class TTLCache:  # type: ignore[override]
+        """Lightweight TTL cache fallback when cachetools is unavailable."""
+
+        def __init__(self, maxsize: int, ttl: int):
+            self.maxsize = maxsize
+            self.ttl = ttl
+            self._store: dict[str, tuple[float, object]] = {}
+
+        def __contains__(self, key: str) -> bool:
+            self._purge()
+            return key in self._store
+
+        def __getitem__(self, key: str):
+            self._purge()
+            expires, value = self._store[key]
+            if expires <= time.monotonic():
+                del self._store[key]
+                raise KeyError(key)
+            return value
+
+        def __setitem__(self, key: str, value: object) -> None:
+            self._purge()
+            if len(self._store) >= self.maxsize:
+                oldest_key = min(self._store.items(), key=lambda item: item[1][0])[0]
+                del self._store[oldest_key]
+            self._store[key] = (time.monotonic() + self.ttl, value)
+
+        def _purge(self) -> None:
+            now = time.monotonic()
+            expired_keys = [key for key, (expires, _) in self._store.items() if expires <= now]
+            for key in expired_keys:
+                del self._store[key]
+
+    TTLCache = TTLCache
+else:  # pragma: no cover - exercised when dependency installed
+    TTLCache = CacheToolsTTLCache
 
 from ..core.config import settings
 from ..core.auth import require_bearer
