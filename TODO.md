@@ -14,7 +14,16 @@
 - [x] Remove Allessandra system (Oct 21)
 - [x] Workflow documentation audit (Oct 22)
 
-**Completion:** 100% ✅
+### Phase 0: Hardening Enhancements (Oct 23, 2025)
+- [x] Add backend pre-launch validator and wire into all entry points (start.sh, Procfile, ASGI)
+- [x] Enforce Sentry DSN for production/staging builds via config model validation
+- [x] Introduce deterministic options fixtures and router feature flag
+- [x] Add Playwright scripts and shared fixtures for frontend deterministic tests
+- [x] Document validation workflow (`PRELAUNCH_VALIDATION_GUIDE.md`) and QA acceptance criteria (`QE_ACCEPTANCE_CHECKLIST.md`)
+
+**Completion:** 100% ✅ (Phase 0 audit complete)
+
+**Completion:** 100% ✅ (hardening tasks deployed Oct 23)
 
 ---
 

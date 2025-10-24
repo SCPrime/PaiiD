@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 # Load .env file BEFORE reading env vars (works even when imported directly)
@@ -17,6 +17,15 @@ class Settings(BaseModel):
     LIVE_TRADING: bool = os.getenv("LIVE_TRADING", "false").lower() == "true"
     TESTING: bool = os.getenv("TESTING", "false").lower() == "true"
     IDMP_TTL_SECONDS: int = int(os.getenv("IDMP_TTL_SECONDS", "600"))
+
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    RELEASE_VERSION: str | None = os.getenv("RELEASE_VERSION")
+    COMMIT_SHA: str | None = os.getenv("COMMIT_SHA")
+    PRELAUNCH_REQUIRED_PORTS: tuple[int, ...] = tuple(
+        int(port.strip())
+        for port in os.getenv("PRELAUNCH_REQUIRED_PORTS", "8000").split(",")
+        if port.strip()
+    )
 
     # Alpaca API credentials (PAPER TRADING EXECUTION ONLY)
     ALPACA_API_KEY: str = os.getenv("ALPACA_PAPER_API_KEY", "")
@@ -47,6 +56,30 @@ class Settings(BaseModel):
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # 15 minutes
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days
+
+    @model_validator(mode="after")
+    def _require_sentry_for_managed_env(self):  # type: ignore[override]
+        """Enforce observability requirements for production-like environments."""
+
+        if self.ENVIRONMENT.lower() in {"production", "staging"} and not self.SENTRY_DSN:
+            raise ValueError(
+                "SENTRY_DSN must be configured when ENVIRONMENT is production or staging"
+            )
+        return self
+
+    @property
+    def environment_display(self) -> str:
+        return self.ENVIRONMENT.lower()
+
+    @property
+    def release_identifier(self) -> str:
+        if self.RELEASE_VERSION and self.COMMIT_SHA:
+            return f"{self.RELEASE_VERSION}+{self.COMMIT_SHA[:7]}"
+        if self.RELEASE_VERSION:
+            return self.RELEASE_VERSION
+        if self.COMMIT_SHA:
+            return self.COMMIT_SHA[:7]
+        return "unknown"
 
 
 settings = Settings()

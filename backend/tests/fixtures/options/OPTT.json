@@ -1,0 +1,46 @@
+{
+  "symbol": "OPTT",
+  "expiration_date": "2024-02-16",
+  "underlying_price": 2.85,
+  "calls": [
+    {
+      "symbol": "OPTT240216C00030000",
+      "underlying_symbol": "OPTT",
+      "option_type": "call",
+      "strike_price": 3,
+      "expiration_date": "2024-02-16",
+      "bid": 0.25,
+      "ask": 0.35,
+      "last_price": 0.3,
+      "volume": 420,
+      "open_interest": 600,
+      "delta": 0.31,
+      "gamma": 0.12,
+      "theta": -0.01,
+      "vega": 0.05,
+      "rho": 0.0,
+      "implied_volatility": 0.75
+    }
+  ],
+  "puts": [
+    {
+      "symbol": "OPTT240216P00030000",
+      "underlying_symbol": "OPTT",
+      "option_type": "put",
+      "strike_price": 3,
+      "expiration_date": "2024-02-16",
+      "bid": 0.45,
+      "ask": 0.55,
+      "last_price": 0.5,
+      "volume": 210,
+      "open_interest": 350,
+      "delta": -0.69,
+      "gamma": 0.15,
+      "theta": -0.02,
+      "vega": 0.07,
+      "rho": -0.01,
+      "implied_volatility": 0.82
+    }
+  ],
+  "total_contracts": 2
+}

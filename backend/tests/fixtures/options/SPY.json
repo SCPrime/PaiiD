@@ -1,0 +1,46 @@
+{
+  "symbol": "SPY",
+  "expiration_date": "2024-01-19",
+  "underlying_price": 430.12,
+  "calls": [
+    {
+      "symbol": "SPY240119C00430000",
+      "underlying_symbol": "SPY",
+      "option_type": "call",
+      "strike_price": 430,
+      "expiration_date": "2024-01-19",
+      "bid": 5.5,
+      "ask": 5.75,
+      "last_price": 5.62,
+      "volume": 123,
+      "open_interest": 456,
+      "delta": 0.52,
+      "gamma": 0.08,
+      "theta": -0.03,
+      "vega": 0.11,
+      "rho": 0.04,
+      "implied_volatility": 0.22
+    }
+  ],
+  "puts": [
+    {
+      "symbol": "SPY240119P00430000",
+      "underlying_symbol": "SPY",
+      "option_type": "put",
+      "strike_price": 430,
+      "expiration_date": "2024-01-19",
+      "bid": 5.4,
+      "ask": 5.6,
+      "last_price": 5.48,
+      "volume": 98,
+      "open_interest": 321,
+      "delta": -0.48,
+      "gamma": 0.07,
+      "theta": -0.02,
+      "vega": 0.12,
+      "rho": -0.04,
+      "implied_volatility": 0.23
+    }
+  ],
+  "total_contracts": 2
+}

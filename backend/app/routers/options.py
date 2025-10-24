@@ -16,12 +16,18 @@ import requests
 import asyncio
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+try:
+    from cachetools import TTLCache
+except ImportError:  # pragma: no cover - fallback for minimal environments
+    class TTLCache(dict):
+        def __init__(self, maxsize: int, ttl: int):
+            super().__init__()
 
 from ..core.config import settings
 from ..core.auth import require_bearer
+from ..services.fixture_loader import load_options_fixture, should_use_fixture_mode
 from ..services.tradier_client import get_tradier_client
 
 router = APIRouter(prefix="/options", tags=["options"])
@@ -79,8 +85,8 @@ class OptionsChainResponse(BaseModel):
     symbol: str
     expiration_date: str
     underlying_price: Optional[float] = None
-    calls: List[OptionContract] = []
-    puts: List[OptionContract] = []
+    calls: List[OptionContract] = Field(default_factory=list)
+    puts: List[OptionContract] = Field(default_factory=list)
     total_contracts: int = 0
 
 
@@ -96,10 +102,23 @@ class ExpirationDate(BaseModel):
 # ============================================================================
 
 
-@router.get("/chains/{symbol}", response_model=OptionsChainResponse, dependencies=[Depends(require_bearer)])
+@router.get(
+    "/chains/{symbol}",
+    response_model=OptionsChainResponse,
+    dependencies=[Depends(require_bearer)],
+)
 async def get_options_chain(
     symbol: str,
+    request: Request,
     expiration: Optional[str] = Query(None, description="Expiration date (YYYY-MM-DD). If not provided, uses nearest expiration."),
+    fixture: bool = Query(
+        False,
+        description="Set to true to use deterministic fixture data instead of the Tradier API.",
+    ),
+    fixture_symbol: Optional[str] = Query(
+        None,
+        description="Override the symbol used to load fixture data (defaults to the requested symbol).",
+    ),
 ):
     """
     Get options chain for a symbol with Greeks
@@ -115,6 +134,25 @@ async def get_options_chain(
         OptionsChainResponse with calls and puts including Greeks
     """
     logger.info(f"========== OPTIONS CHAIN ENDPOINT: symbol={symbol}, expiration={expiration} ==========")
+
+    use_fixture = should_use_fixture_mode(
+        explicit_flag=fixture,
+        header_value=request.headers.get("x-fixture-mode"),
+    )
+
+    if use_fixture:
+        override_symbol = (fixture_symbol or symbol).upper()
+        logger.info(
+            "[Fixture Mode] Serving options chain from fixture for symbol=%s, expiration=%s",
+            override_symbol,
+            expiration,
+        )
+        try:
+            payload = load_options_fixture(symbol=override_symbol, expiration=expiration)
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+        return OptionsChainResponse(**payload)
 
     try:
         # Initialize Tradier client

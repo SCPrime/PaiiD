@@ -10,6 +10,10 @@ ANTHROPIC_API_KEY=<from-backend-dot-env>
 ALLOW_ORIGIN=https://frontend-scprimes-projects.vercel.app
 TRADING_MODE=live
 SUPERVISOR_MODE=suggest
+ENVIRONMENT=production
+SENTRY_DSN=<from-sentry-project>
+PRELAUNCH_REQUIRED_PORTS=8000
+USE_FIXTURE_DATA=false  # Enable true only for deterministic CI smoke tests
 
 # Optional (can use defaults):
 AI_MODEL=claude-3-sonnet-20240229

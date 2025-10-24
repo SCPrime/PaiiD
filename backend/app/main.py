@@ -1,20 +1,44 @@
+import logging
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 
+from .core.prelaunch import PrelaunchValidationError, ensure_prelaunch_validation
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s :: %(message)s",
+)
+startup_logger = logging.getLogger("paiid.startup")
 
 # Load .env file before importing settings
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
 
-print("\n===== BACKEND STARTUP =====")
-print(f".env path: {env_path}")
-print(f".env exists: {env_path.exists()}")
-print(f"API_TOKEN from env: {os.getenv('API_TOKEN', 'NOT_SET')}")
-print(f"TRADIER_API_KEY configured: {'YES' if os.getenv('TRADIER_API_KEY') else 'NO'}")
-print("Deployed from: main branch - Tradier integration active")
-print("===========================\n", flush=True)
+startup_logger.info("===== BACKEND STARTUP =====")
+startup_logger.info(".env path: %s", env_path)
+startup_logger.info(".env exists: %s", env_path.exists())
+
+try:
+    validation_checks = ensure_prelaunch_validation(success_required=True)
+except PrelaunchValidationError as exc:
+    for check in exc.failed_checks:
+        startup_logger.error(
+            "Pre-launch validation failed :: %s :: %s", check.name, check.message
+        )
+    raise
+else:
+    for check in validation_checks:
+        if check.passed:
+            startup_logger.info("[PRELAUNCH PASS] %s :: %s", check.name, check.message)
+        else:
+            startup_logger.warning(
+                "[PRELAUNCH WARN] %s :: %s", check.name, check.message
+            )
+
+startup_logger.info("===========================")
 
 
 import sentry_sdk
@@ -62,12 +86,8 @@ if settings.SENTRY_DSN:
         ],
         traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
         profiles_sample_rate=0.1,  # 10% profiling
-        environment=(
-            "production"
-            if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "")
-            else "development"
-        ),
-        release="paiid-backend@1.0.0",
+        environment=settings.environment_display,
+        release=f"paiid-backend@{settings.release_identifier}",
         send_default_pii=False,  # Don't send personally identifiable info
         before_send=lambda event, hint: (
             event
@@ -84,13 +104,14 @@ if settings.SENTRY_DSN:
             }
         ),
     )
-    print("[OK] Sentry error tracking initialized", flush=True)
+    startup_logger.info("[OK] Sentry error tracking initialized")
 else:
-    print("[WARNING] SENTRY_DSN not configured - error tracking disabled", flush=True)
+    startup_logger.warning("SENTRY_DSN not configured - error tracking disabled")
 
-print("\n===== SETTINGS LOADED =====")
-print(f"settings.API_TOKEN: {settings.API_TOKEN}")
-print("===========================\n", flush=True)
+startup_logger.info("Environment: %s", settings.environment_display)
+startup_logger.info("Release identifier: %s", settings.release_identifier)
+startup_logger.info("API token configured: %s", bool(settings.API_TOKEN and settings.API_TOKEN != "change-me"))
+startup_logger.info("Tradier key configured: %s", bool(settings.TRADIER_API_KEY))
 
 app = FastAPI(
     title="PaiiD Trading API",
