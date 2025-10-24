@@ -102,6 +102,21 @@ You MUST:
 
 ---
 
+## 🔍 CRITICAL STABILITY CHECKS
+
+When coding or reviewing code, refer to `.cursorrules-checks` for focused patterns that prevent:
+- API endpoint errors (500s)
+- Security vulnerabilities (SQL injection, exposed secrets)
+- Financial calculation errors (float vs Decimal)
+- Missing error handling on external APIs
+- Options endpoint routing issues
+
+**See `.cursorrules-checks` for detailed examples and search patterns.**
+
+These checks are migrated from GitHub Claude Code Action to help catch issues locally in Cursor before committing.
+
+---
+
 ## Remember: DREAM WORK comes from TEAM WORK! 🤝
 
 When in doubt, ASK. When certain, VERIFY. Always EXECUTE PRECISELY.

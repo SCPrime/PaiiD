@@ -3,6 +3,19 @@ name: Claude Code Review (Custom)
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    branches:
+      - main # Only run on PRs to main branch (cost optimization)
+    paths:
+      # Only run when critical files change (stability focus)
+      - 'backend/app/routers/**/*.py'
+      - 'backend/app/services/**/*.py'
+      - 'backend/app/core/security.py'
+      - 'backend/app/core/auth.py'
+      - 'frontend/pages/api/proxy/**/*.ts'
+      - 'backend/app/models/**/*.py'
+      - 'backend/requirements.txt'
+      - 'frontend/package.json'
+  workflow_dispatch: # Allow manual trigger for on-demand reviews
 
 permissions:
   contents: read
@@ -23,7 +36,7 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v45
         with:
-          separator: ","
+          separator: ','
 
       - name: Setup Python
         uses: actions/setup-python@v5

@@ -1,0 +1,339 @@
+# Critical Stability Checks for Cursor
+# This file contains focused patterns to check during coding
+# Focus: Issues that break app stability, function, and implementation
+
+## 🔴 CRITICAL BLOCKERS - App Won't Work
+
+### 1. API Endpoint Error Handling
+**Pattern**: Unhandled exceptions in API endpoints
+**Check**: Every route function MUST have try/except
+**Example**:
+```python
+# ❌ REJECT - No error handling
+@router.get("/api/expirations/{symbol}")
+async def get_expirations(symbol: str):
+    return tradier_client.get_expirations(symbol)  # Can throw 500
+
+# ✅ APPROVE - Proper error handling
+@router.get("/api/expirations/{symbol}")
+async def get_expirations(symbol: str):
+    try:
+        result = tradier_client.get_expirations(symbol)
+        if not result:
+            raise HTTPException(status_code=404, detail="No data found")
+        return result
+    except Exception as e:
+        logger.error(f"Expiration error for {symbol}: {str(e)}")
+        raise HTTPException(status_code=503, detail="Service unavailable")
+```
+
+### 2. SQL Injection Prevention
+**Pattern**: Non-parameterized SQL queries
+**Check**: NO f-strings or string concatenation in SQL
+**Example**:
+```python
+# ❌ REJECT - SQL injection risk
+db.execute(f"SELECT * FROM orders WHERE symbol = '{symbol}'")
+db.execute("DELETE FROM orders WHERE id = " + str(order_id))
+
+# ✅ APPROVE - Parameterized queries
+db.query(Order).filter(Order.symbol == symbol).all()
+db.query(Order).filter(Order.id == order_id).delete()
+```
+
+### 3. Authentication on Protected Endpoints
+**Pattern**: Missing auth dependency on sensitive routes
+**Check**: All routes except /health MUST require auth
+**Example**:
+```python
+# ❌ REJECT - No auth on sensitive endpoint
+@router.get("/api/account")
+async def get_account():
+    return alpaca_client.get_account()
+
+# ✅ APPROVE - Auth required
+@router.get("/api/account")
+async def get_account(current_user: str = Depends(verify_bearer_token)):
+    return alpaca_client.get_account()
+```
+
+### 4. Database Session Management
+**Pattern**: Missing DB session handling
+**Check**: All DB operations MUST use dependency injection or context manager
+**Example**:
+```python
+# ❌ REJECT - No session management
+def create_order(order_data):
+    order = Order(**order_data)
+    db.add(order)
+    db.commit()  # What if this fails?
+
+# ✅ APPROVE - Proper session management
+def create_order(db: Session, order_data):
+    try:
+        with db.begin():
+            order = Order(**order_data)
+            db.add(order)
+            db.commit()
+    except Exception:
+        db.rollback()
+        raise
+```
+
+---
+
+## ⚠️ STABILITY ISSUES - App Might Crash
+
+### 5. External API Error Handling
+**Pattern**: Missing try/except on Tradier, Alpaca, Anthropic calls
+**Check**: EVERY external API call MUST be wrapped
+**Example**:
+```python
+# ❌ REJECT - Unhandled API call
+quote = tradier_client.get_quote(symbol)
+order = alpaca_client.submit_order(qty=100, symbol="SPY")
+response = anthropic_client.messages.create(...)
+
+# ✅ APPROVE - Handled API calls
+try:
+    quote = tradier_client.get_quote(symbol)
+except requests.RequestException as e:
+    logger.error(f"Tradier error: {e}")
+    raise HTTPException(status_code=503, detail="Market data unavailable")
+
+try:
+    order = alpaca_client.submit_order(qty=100, symbol="SPY")
+except AlpacaAPIError as e:
+    logger.error(f"Alpaca error: {e}")
+    raise HTTPException(status_code=502, detail="Order execution failed")
+```
+
+### 6. Financial Precision - Decimal vs Float
+**Pattern**: Using float for money/prices/quantities
+**Check**: MUST use Decimal for ALL financial calculations
+**Example**:
+```python
+# ❌ REJECT - Float in financial calculation
+total_value = float(position.qty) * float(position.price)
+profit_loss = current_price - entry_price
+percentage = (gain / cost) * 100
+
+# ✅ APPROVE - Decimal for financial calculations
+from decimal import Decimal
+total_value = Decimal(str(position.qty)) * Decimal(str(position.price))
+profit_loss = Decimal(str(current_price)) - Decimal(str(entry_price))
+percentage = (Decimal(str(gain)) / Decimal(str(cost))) * Decimal("100")
+```
+
+### 7. Options Endpoint Routing Pattern
+**Pattern**: Route not reaching handler (known issue)
+**Check**: Verify route registration and path params
+**Example**:
+```python
+# ❌ REJECT - Missing await on async call
+@router.get("/api/expirations/{symbol}")
+def get_expirations(symbol: str):  # Not async but calling async service
+    return tradier_client.get_expirations(symbol)
+
+# ❌ REJECT - Route conflict
+@router.get("/api/options/{symbol}")  # Too generic
+@router.get("/api/options/expirations")  # Will never be reached
+
+# ✅ APPROVE - Proper async and route ordering
+@router.get("/api/options/expirations/{symbol}")
+async def get_expirations(symbol: str):
+    try:
+        result = await tradier_client.get_expirations(symbol)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+```
+
+### 8. CORS and Security Headers
+**Pattern**: Missing CORS or security headers
+**Check**: Frontend domains MUST be in allowed origins
+**Example**:
+```python
+# ❌ REJECT - Overly permissive CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Security risk!
+    allow_credentials=True,
+)
+
+# ✅ APPROVE - Explicit allowed origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://paiid-frontend.vercel.app",
+        "http://localhost:3000"
+    ],
+    allow_credentials=True,
+)
+```
+
+---
+
+## 🎯 FRONTEND SPECIFIC CHECKS
+
+### 9. API Proxy Usage
+**Pattern**: Direct backend calls from frontend
+**Check**: ALL API calls MUST go through `/api/proxy`
+**Example**:
+```typescript
+// ❌ REJECT - Direct backend call (exposes URL)
+const response = await fetch('https://paiid-backend.onrender.com/api/account', {
+  headers: { Authorization: `Bearer ${token}` }
+});
+
+// ✅ APPROVE - Through proxy
+const response = await fetch('/api/proxy/account', {
+  headers: { Authorization: `Bearer ${token}` }
+});
+```
+
+### 10. TypeScript Type Safety
+**Pattern**: Using `any` type
+**Check**: Define proper interfaces, avoid `any`
+**Example**:
+```typescript
+// ❌ REJECT - Any type
+function calculatePL(position: any): number {
+  return position.qty * position.price;
+}
+
+// ✅ APPROVE - Proper types
+interface Position {
+  qty: number;
+  avgEntryPrice: number;
+  currentPrice: number;
+}
+function calculatePL(position: Position): number {
+  return position.qty * (position.currentPrice - position.avgEntryPrice);
+}
+```
+
+### 11. Error and Loading States
+**Pattern**: Missing UI feedback for async operations
+**Check**: Show loading/error states for ALL API calls
+**Example**:
+```typescript
+// ❌ REJECT - No loading/error states
+const [data, setData] = useState(null);
+useEffect(() => {
+  fetch('/api/proxy/account')
+    .then(r => r.json())
+    .then(setData);
+}, []);
+
+// ✅ APPROVE - Proper state management
+const [data, setData] = useState(null);
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState(null);
+
+useEffect(() => {
+  setLoading(true);
+  fetch('/api/proxy/account')
+    .then(r => r.json())
+    .then(setData)
+    .catch(setError)
+    .finally(() => setLoading(false));
+}, []);
+
+if (loading) return <div>Loading...</div>;
+if (error) return <div>Error: {error.message}</div>;
+```
+
+---
+
+## 🔒 SECURITY CHECKS
+
+### 12. No Secrets in Code
+**Pattern**: Hardcoded API keys or tokens
+**Check**: ALL secrets MUST be in environment variables
+**Example**:
+```python
+# ❌ REJECT - Hardcoded secrets
+TRADIER_TOKEN = "abc123xyz789"
+ALPACA_KEY = "PKXXXXXXXXXXXX"
+
+# ✅ APPROVE - Environment variables
+import os
+TRADIER_TOKEN = os.getenv("TRADIER_TOKEN")
+ALPACA_KEY = os.getenv("ALPACA_API_KEY")
+if not TRADIER_TOKEN:
+    raise ValueError("TRADIER_TOKEN not set")
+```
+
+### 13. No Sensitive Data in Logs
+**Pattern**: Logging account balances, API keys, personal info
+**Check**: Log only non-sensitive metadata
+**Example**:
+```python
+# ❌ REJECT - Sensitive data logged
+logger.info(f"User balance: ${account.cash}")
+logger.debug(f"API key: {api_key[:10]}...")
+logger.info(f"Order placed: {user.email}, {order.symbol}, ${order.price}")
+
+# ✅ APPROVE - Safe logging
+logger.info(f"Account updated", extra={"account_id": account.id})
+logger.debug("API authentication successful")
+logger.info(f"Order placed", extra={"order_id": order.id, "symbol": order.symbol})
+```
+
+---
+
+## 📋 WHEN TO USE THIS FILE
+
+### During Coding in Cursor:
+1. **Before writing new endpoint** - Check patterns #1, #3, #5, #7
+2. **Before financial calculation** - Check pattern #6
+3. **Before database query** - Check patterns #2, #4
+4. **Before frontend API call** - Check patterns #9, #11
+5. **Before committing security code** - Check patterns #8, #12, #13
+
+### Quick Search Patterns to Run Locally:
+```bash
+# Find potential float usage in financial code
+grep -r "float.*price\|float.*quantity\|float.*balance" backend/app/
+
+# Find potential SQL injection risks
+grep -r "f\".*SELECT\|f\".*INSERT\|f\".*UPDATE" backend/app/
+
+# Find unhandled API calls
+grep -r "tradier_client\.\|alpaca\." backend/app/ | grep -v "try:"
+
+# Find hardcoded secrets
+grep -r "TOKEN\s*=\s*\"\|API_KEY\s*=\s*\"" backend/app/
+
+# Find TypeScript any usage
+grep -r ": any\|as any" frontend/
+```
+
+---
+
+## 🎯 PRIORITY FOCUS
+
+**Most Important** (Check EVERY time):
+1. ✅ Error handling on external API calls (#5)
+2. ✅ Decimal for financial calculations (#6)
+3. ✅ SQL injection prevention (#2)
+4. ✅ Auth on protected endpoints (#3)
+
+**Important** (Check when relevant):
+5. ✅ Options endpoint routing pattern (#7)
+6. ✅ CORS configuration (#8)
+7. ✅ No secrets in code (#12)
+8. ✅ Frontend proxy usage (#9)
+
+**Good to Have** (Check when time allows):
+9. ✅ TypeScript type safety (#10)
+10. ✅ UI loading/error states (#11)
+11. ✅ No sensitive data in logs (#13)
+
+---
+
+**Last Updated**: 2025-10-24
+**For**: Cursor AI to reference during code review and development
+**Maintained by**: Dr. SC Prime + Dr. Cursor Claude
+

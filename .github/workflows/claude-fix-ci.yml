@@ -10,6 +10,23 @@ on:
           - test-backend
           - test-frontend
           - both
+      error_type:
+        description: 'Focus on specific error types (optional)'
+        required: false
+        type: choice
+        options:
+          - all
+          - api-errors
+          - auth-security
+          - financial-precision
+          - import-errors
+          - database-errors
+        default: all
+      file_pattern:
+        description: 'File pattern to analyze (e.g., routers, services, all)'
+        required: false
+        type: string
+        default: 'all'
 
 permissions:
   contents: write
@@ -39,6 +56,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           JOB_TO_FIX: ${{ inputs.job }}
+          ERROR_TYPE: ${{ inputs.error_type }}
+          FILE_PATTERN: ${{ inputs.file_pattern }}
         run: |
           python .github/scripts/claude_fix_ci.py
 

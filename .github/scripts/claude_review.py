@@ -6,23 +6,26 @@ Uses Anthropic API to review PR changes based on .github/CLAUDE.md standards
 
 import os
 import sys
+from pathlib import Path
+
 import anthropic
 import requests
-from pathlib import Path
+
 
 def load_review_standards():
     """Load the CLAUDE.md file with review standards"""
     claude_md_path = Path(".github/CLAUDE.md")
     if claude_md_path.exists():
-        return claude_md_path.read_text(encoding='utf-8')
+        return claude_md_path.read_text(encoding="utf-8")
     return ""
+
 
 def get_pr_diff(github_token, repo, pr_number):
     """Fetch PR diff from GitHub API"""
     url = f"https://api.github.com/repos/{repo}/pulls/{pr_number}"
     headers = {
         "Authorization": f"Bearer {github_token}",
-        "Accept": "application/vnd.github.v3.diff"
+        "Accept": "application/vnd.github.v3.diff",
     }
 
     response = requests.get(url, headers=headers)
@@ -32,31 +35,34 @@ def get_pr_diff(github_token, repo, pr_number):
 
     return response.text
 
+
 def get_changed_files_content(changed_files):
     """Read content of changed files"""
     files_content = {}
 
-    for file_path in changed_files.split(','):
+    for file_path in changed_files.split(","):
         file_path = file_path.strip()
         if not file_path:
             continue
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 files_content[file_path] = f.read()
         except Exception as e:
             print(f"Warning: Could not read {file_path}: {e}")
 
     return files_content
 
+
 def review_code_with_claude(api_key, review_standards, pr_diff, files_content):
-    """Send code to Claude for review"""
+    """Send code to Claude for review - FOCUSED ON STABILITY ONLY"""
     client = anthropic.Anthropic(api_key=api_key)
 
     # Build the review prompt
     files_list = "\n".join([f"- {path}" for path in files_content.keys()])
 
     prompt = f"""You are reviewing a pull request for the PaiiD trading platform.
+⚡ FOCUS: CRITICAL STABILITY & SECURITY ISSUES ONLY ⚡
 
 REVIEW STANDARDS:
 {review_standards}
@@ -67,55 +73,84 @@ CHANGED FILES:
 PR DIFF:
 {pr_diff}
 
-Please provide a comprehensive code review following the standards in CLAUDE.md. Focus on:
+🎯 WHAT TO FLAG (CRITICAL BLOCKERS & STABILITY ISSUES):
 
-1. **Financial Safety** - Check for Decimal usage, atomic transactions
-2. **Security** - SQL injection, data privacy, auth
-3. **Error Handling** - Try/except for API calls, user-friendly errors
-4. **Data Validation** - Pydantic models, TypeScript interfaces
-5. **Architecture Compliance** - Pages Router, async/await, proxy pattern
+**CRITICAL BLOCKERS** - App won't work:
+- API endpoint errors (500 errors, missing error handling)
+- Authentication/security vulnerabilities (SQL injection, exposed secrets)
+- Database connection failures
+- Missing dependency imports that break builds
+- Syntax errors
 
-Format your response as:
+**STABILITY ISSUES** - App might crash:
+- Unhandled exceptions in external API calls (Tradier, Alpaca, Anthropic)
+- Float usage in financial calculations (MUST use Decimal)
+- Missing CORS/security headers
+- Race conditions in async code
+- Options endpoint routing issues (known problem - check for similar patterns)
+
+🚫 WHAT TO IGNORE (NOT CRITICAL):
+- Code style/formatting issues
+- TODO/FIXME comments
+- TypeScript warnings that don't block builds
+- Missing tests or documentation
+- Performance optimizations
+- Minor naming conventions
+
+📊 FORMAT YOUR RESPONSE:
 
 ## Summary
-[Brief overview of changes]
+[One sentence: What changed and stability impact]
 
-## Critical Issues 🚨
-[HIGH severity issues that MUST be fixed - list with line numbers]
+## Critical Blockers 🚨
+[ONLY issues that WILL break the app - with file:line numbers]
 
-## Medium Issues ⚠️
-[MEDIUM severity issues that should be addressed - list with line numbers]
+## Stability Warnings ⚠️
+[Issues that MIGHT cause crashes - with file:line numbers]
 
-## Minor Suggestions 💡
-[LOW severity improvements - optional suggestions]
+## Cursor Migration Notes 💡
+[List which issues could be caught by Cursor locally instead of GitHub Actions]
 
 ## Approval Status
-- [ ] ✅ APPROVED (no critical issues)
-- [ ] ⚠️ APPROVED WITH COMMENTS (minor issues only)
-- [ ] 🚨 REQUEST CHANGES (critical issues must be fixed)
+- [ ] ✅ APPROVED (no critical/stability issues)
+- [ ] ⚠️ APPROVED WITH WARNINGS (stability concerns noted)
+- [ ] 🚨 BLOCKED (critical issues MUST be fixed)
+
+## Cost Estimate
+[Estimated tokens used: ~X,XXX tokens ≈ $X.XX]
 """
 
     try:
         message = client.messages.create(
             model="claude-sonnet-4-5-20250929",
-            max_tokens=8192,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            max_tokens=4096,  # Reduced from 8192 to save costs
+            messages=[{"role": "user", "content": prompt}],
         )
 
-        return message.content[0].text
+        # Calculate cost estimate
+        input_tokens = message.usage.input_tokens
+        output_tokens = message.usage.output_tokens
+        # Sonnet 4.5 pricing: $3/MTok input, $15/MTok output
+        cost = (input_tokens * 3 / 1_000_000) + (output_tokens * 15 / 1_000_000)
+
+        review_text = message.content[0].text
+
+        # Append actual cost to review
+        cost_report = f"\n\n---\n**Actual API Cost**: {input_tokens:,} input + {output_tokens:,} output tokens ≈ ${cost:.4f}"
+
+        return review_text + cost_report
 
     except Exception as e:
         print(f"Error calling Claude API: {e}")
         return None
+
 
 def post_review_comment(github_token, repo, pr_number, review_text):
     """Post the review as a PR comment"""
     url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
     headers = {
         "Authorization": f"Bearer {github_token}",
-        "Accept": "application/vnd.github.v3+json"
+        "Accept": "application/vnd.github.v3+json",
     }
 
     body = f"""## 🤖 Claude AI Code Review
@@ -135,6 +170,7 @@ def post_review_comment(github_token, repo, pr_number, review_text):
         print(f"❌ Failed to post comment: {response.status_code}")
         print(response.text)
         return False
+
 
 def main():
     # Get environment variables
@@ -174,10 +210,7 @@ def main():
     # Review with Claude
     print("🤖 Sending to Claude for review...")
     review_text = review_code_with_claude(
-        anthropic_api_key,
-        review_standards,
-        pr_diff,
-        files_content
+        anthropic_api_key, review_standards, pr_diff, files_content
     )
 
     if not review_text:
@@ -194,6 +227,7 @@ def main():
     else:
         print("❌ Failed to post review comment")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
