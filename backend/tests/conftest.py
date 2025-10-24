@@ -89,6 +89,9 @@ def client(test_db):
     blocking test client initialization. This allows tests to run even if
     external services (Redis, Tradier, etc.) are unavailable.
     """
+    from app.models.database import User
+    from app.core.jwt import get_current_user
+    from app.core.unified_auth import get_current_user_unified
 
     def override_get_db():
         try:
@@ -96,7 +99,26 @@ def client(test_db):
         finally:
             pass
 
+    def override_get_current_user():
+        """Mock authentication for tests - creates/returns test user (id=1)"""
+        user = test_db.query(User).filter(User.id == 1).first()
+        if not user:
+            user = User(
+                id=1,
+                email="test@example.com",
+                username="test_user",
+                password_hash=TEST_PASSWORD_HASH,
+                role="owner",
+                is_active=True,
+            )
+            test_db.add(user)
+            test_db.commit()
+            test_db.refresh(user)
+        return user
+
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_current_user_unified] = override_get_current_user
 
     # Use raise_server_exceptions=False to allow TestClient to start
     # even if startup events fail (e.g., Redis connection, external APIs)

@@ -1,19 +1,21 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import html2canvas from "html2canvas";
 import {
+  Award,
   BarChart3,
-  TrendingDown,
   DollarSign,
+  Download,
+  Loader2,
   Percent,
   Target,
-  Award,
-  Download,
+  TrendingDown,
 } from "lucide-react";
-import { Card, Button } from "./ui";
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useIsMobile } from "../hooks/useBreakpoint";
 import { theme } from "../styles/theme";
 import TradingViewChart from "./TradingViewChart";
-import { useIsMobile } from "../hooks/useBreakpoint";
-import html2canvas from "html2canvas";
+import { Button, Card } from "./ui";
 
 interface PerformanceMetrics {
   totalReturn: number;
@@ -305,22 +307,76 @@ export default function Analytics() {
   const equityChartRef = useRef<HTMLDivElement>(null);
   const pnlChartRef = useRef<HTMLDivElement>(null);
 
-  // Export chart as PNG
+  // Export loading state (per chart)
+  const [exportingChart, setExportingChart] = useState<string | null>(null);
+
+  // Export chart as PNG with mobile optimizations
   const exportChartAsPNG = async (chartRef: React.RefObject<HTMLDivElement>, chartName: string) => {
-    if (!chartRef.current) return;
+    if (!chartRef.current) {
+      toast.error("Chart not ready for export");
+      return;
+    }
+
+    // Prevent multiple simultaneous exports
+    if (exportingChart) {
+      toast.error("Please wait for current export to complete");
+      return;
+    }
+
+    setExportingChart(chartName);
+    const toastId = toast.loading("Preparing chart export...");
 
     try {
+      // Mobile-optimized canvas settings
       const canvas = await html2canvas(chartRef.current, {
         backgroundColor: theme.background.card,
-        scale: 2, // Higher quality
+        scale: isMobile ? 1.5 : 2, // Reduced scale on mobile to prevent memory issues
+        useCORS: true, // Enable cross-origin images
+        allowTaint: false, // Prevent tainted canvas (iOS Safari compatibility)
+        logging: false, // Disable console logs
+        windowWidth: chartRef.current.scrollWidth,
+        windowHeight: chartRef.current.scrollHeight,
       });
 
-      const link = document.createElement("a");
-      link.download = `PaiiD_${chartName}_${new Date().toISOString().split("T")[0]}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+      // Convert to blob for better mobile compatibility
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            throw new Error("Failed to create image blob");
+          }
+
+          // Create download link
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.download = `PaiiD_${chartName}_${new Date().toISOString().split("T")[0]}.png`;
+          link.href = url;
+
+          // Trigger download
+          link.click();
+
+          // Cleanup
+          setTimeout(() => URL.revokeObjectURL(url), 100);
+
+          // Success notification
+          toast.success("Chart exported successfully! 📊", { id: toastId });
+        },
+        "image/png",
+        0.95 // Quality setting
+      );
     } catch (error) {
       console.error("Failed to export chart:", error);
+
+      // User-friendly error messages
+      const errorMessage =
+        error instanceof Error && error.message.includes("memory")
+          ? "Chart too large for mobile export. Try a smaller timeframe."
+          : error instanceof Error && error.message.includes("tainted")
+            ? "Export blocked by browser security. Try again."
+            : "Failed to export chart. Please try again.";
+
+      toast.error(errorMessage, { id: toastId });
+    } finally {
+      setExportingChart(null);
     }
   };
 
@@ -330,11 +386,11 @@ export default function Analytics() {
     setAiError(null);
 
     try {
-      const response = await fetch('/api/proxy/api/ai/analyze-portfolio', {
-        method: 'GET',
+      const response = await fetch("/api/proxy/api/ai/analyze-portfolio", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.ok) {
@@ -345,8 +401,8 @@ export default function Analytics() {
       setAiAnalysis(data);
       setShowAiPanel(true);
     } catch (error: any) {
-      console.error('AI Portfolio Analysis error:', error);
-      setAiError(error.message || 'Failed to fetch AI analysis');
+      console.error("AI Portfolio Analysis error:", error);
+      setAiError(error.message || "Failed to fetch AI analysis");
     } finally {
       setAiLoading(false);
     }
@@ -648,47 +704,57 @@ export default function Analytics() {
           onClick={fetchAIPortfolioAnalysis}
           disabled={aiLoading}
           style={{
-            padding: '12px 24px',
-            backgroundColor: aiLoading ? '#4B5563' : '#8B5CF6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: aiLoading ? 'not-allowed' : 'pointer',
-            fontSize: '16px',
-            fontWeight: '600',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'all 0.2s'
+            padding: "12px 24px",
+            backgroundColor: aiLoading ? "#4B5563" : "#8B5CF6",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: aiLoading ? "not-allowed" : "pointer",
+            fontSize: "16px",
+            fontWeight: "600",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            transition: "all 0.2s",
           }}
         >
-          <span style={{ fontSize: '20px' }}>🤖</span>
-          {aiLoading ? 'Analyzing Portfolio...' : 'AI Portfolio Health Check'}
+          <span style={{ fontSize: "20px" }}>🤖</span>
+          {aiLoading ? "Analyzing Portfolio..." : "AI Portfolio Health Check"}
         </button>
 
         {/* AI Analysis Panel */}
         {showAiPanel && aiAnalysis && (
-          <div style={{
-            marginTop: '24px',
-            padding: '24px',
-            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1))',
-            border: '1px solid rgba(139, 92, 246, 0.3)',
-            borderRadius: '12px',
-            backdropFilter: 'blur(10px)'
-          }}>
+          <div
+            style={{
+              marginTop: "24px",
+              padding: "24px",
+              background:
+                "linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1))",
+              border: "1px solid rgba(139, 92, 246, 0.3)",
+              borderRadius: "12px",
+              backdropFilter: "blur(10px)",
+            }}
+          >
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#E2E8F0' }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "20px",
+              }}
+            >
+              <h3 style={{ fontSize: "24px", fontWeight: "bold", color: "#E2E8F0" }}>
                 🤖 AI Portfolio Health Analysis
               </h3>
               <button
                 onClick={() => setShowAiPanel(false)}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#94A3B8',
-                  cursor: 'pointer',
-                  fontSize: '24px'
+                  background: "none",
+                  border: "none",
+                  color: "#94A3B8",
+                  cursor: "pointer",
+                  fontSize: "24px",
                 }}
               >
                 ×
@@ -696,90 +762,130 @@ export default function Analytics() {
             </div>
 
             {/* Health Score */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '16px',
-              marginBottom: '24px'
-            }}>
-              <div style={{
-                padding: '16px',
-                background: 'rgba(15, 23, 42, 0.6)',
-                borderRadius: '8px',
-                border: '1px solid rgba(148, 163, 184, 0.2)'
-              }}>
-                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: '8px' }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: "16px",
+                marginBottom: "24px",
+              }}
+            >
+              <div
+                style={{
+                  padding: "16px",
+                  background: "rgba(15, 23, 42, 0.6)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(148, 163, 184, 0.2)",
+                }}
+              >
+                <div style={{ fontSize: "14px", color: "#94A3B8", marginBottom: "8px" }}>
                   Health Score
                 </div>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#10B981' }}>
+                <div style={{ fontSize: "32px", fontWeight: "bold", color: "#10B981" }}>
                   {aiAnalysis.health_score}/100
                 </div>
               </div>
 
-              <div style={{
-                padding: '16px',
-                background: 'rgba(15, 23, 42, 0.6)',
-                borderRadius: '8px',
-                border: '1px solid rgba(148, 163, 184, 0.2)'
-              }}>
-                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: '8px' }}>
+              <div
+                style={{
+                  padding: "16px",
+                  background: "rgba(15, 23, 42, 0.6)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(148, 163, 184, 0.2)",
+                }}
+              >
+                <div style={{ fontSize: "14px", color: "#94A3B8", marginBottom: "8px" }}>
                   Risk Level
                 </div>
-                <div style={{
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  color: aiAnalysis.risk_level === 'Low' ? '#10B981' :
-                         aiAnalysis.risk_level === 'Medium' ? '#F59E0B' : '#EF4444'
-                }}>
+                <div
+                  style={{
+                    fontSize: "24px",
+                    fontWeight: "bold",
+                    color:
+                      aiAnalysis.risk_level === "Low"
+                        ? "#10B981"
+                        : aiAnalysis.risk_level === "Medium"
+                          ? "#F59E0B"
+                          : "#EF4444",
+                  }}
+                >
                   {aiAnalysis.risk_level}
                 </div>
               </div>
 
-              <div style={{
-                padding: '16px',
-                background: 'rgba(15, 23, 42, 0.6)',
-                borderRadius: '8px',
-                border: '1px solid rgba(148, 163, 184, 0.2)'
-              }}>
-                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: '8px' }}>
+              <div
+                style={{
+                  padding: "16px",
+                  background: "rgba(15, 23, 42, 0.6)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(148, 163, 184, 0.2)",
+                }}
+              >
+                <div style={{ fontSize: "14px", color: "#94A3B8", marginBottom: "8px" }}>
                   Diversification
                 </div>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#3B82F6' }}>
+                <div style={{ fontSize: "32px", fontWeight: "bold", color: "#3B82F6" }}>
                   {aiAnalysis.diversification_score}/100
                 </div>
               </div>
             </div>
 
             {/* AI Summary */}
-            <div style={{
-              padding: '16px',
-              background: 'rgba(15, 23, 42, 0.6)',
-              borderRadius: '8px',
-              border: '1px solid rgba(148, 163, 184, 0.2)',
-              marginBottom: '16px'
-            }}>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#E2E8F0', marginBottom: '8px' }}>
+            <div
+              style={{
+                padding: "16px",
+                background: "rgba(15, 23, 42, 0.6)",
+                borderRadius: "8px",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+                marginBottom: "16px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  color: "#E2E8F0",
+                  marginBottom: "8px",
+                }}
+              >
                 📊 AI Summary
               </div>
-              <div style={{ fontSize: '14px', color: '#CBD5E1', lineHeight: '1.6' }}>
+              <div style={{ fontSize: "14px", color: "#CBD5E1", lineHeight: "1.6" }}>
                 {aiAnalysis.ai_summary}
               </div>
             </div>
 
             {/* Recommendations */}
-            <div style={{
-              padding: '16px',
-              background: 'rgba(15, 23, 42, 0.6)',
-              borderRadius: '8px',
-              border: '1px solid rgba(148, 163, 184, 0.2)',
-              marginBottom: '16px'
-            }}>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#E2E8F0', marginBottom: '12px' }}>
+            <div
+              style={{
+                padding: "16px",
+                background: "rgba(15, 23, 42, 0.6)",
+                borderRadius: "8px",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+                marginBottom: "16px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  color: "#E2E8F0",
+                  marginBottom: "12px",
+                }}
+              >
                 💡 AI Recommendations
               </div>
-              <ul style={{ margin: 0, paddingLeft: '20px' }}>
+              <ul style={{ margin: 0, paddingLeft: "20px" }}>
                 {aiAnalysis.recommendations.map((rec: string, idx: number) => (
-                  <li key={idx} style={{ fontSize: '14px', color: '#CBD5E1', marginBottom: '8px', lineHeight: '1.6' }}>
+                  <li
+                    key={idx}
+                    style={{
+                      fontSize: "14px",
+                      color: "#CBD5E1",
+                      marginBottom: "8px",
+                      lineHeight: "1.6",
+                    }}
+                  >
                     {rec}
                   </li>
                 ))}
@@ -788,19 +894,36 @@ export default function Analytics() {
 
             {/* Risk Factors */}
             {aiAnalysis.risk_factors.length > 0 && (
-              <div style={{
-                padding: '16px',
-                background: 'rgba(15, 23, 42, 0.6)',
-                borderRadius: '8px',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                marginBottom: '16px'
-              }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#EF4444', marginBottom: '12px' }}>
+              <div
+                style={{
+                  padding: "16px",
+                  background: "rgba(15, 23, 42, 0.6)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  marginBottom: "16px",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    color: "#EF4444",
+                    marginBottom: "12px",
+                  }}
+                >
                   ⚠️ Risk Factors
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                <ul style={{ margin: 0, paddingLeft: "20px" }}>
                   {aiAnalysis.risk_factors.map((risk: string, idx: number) => (
-                    <li key={idx} style={{ fontSize: '14px', color: '#FCA5A5', marginBottom: '8px', lineHeight: '1.6' }}>
+                    <li
+                      key={idx}
+                      style={{
+                        fontSize: "14px",
+                        color: "#FCA5A5",
+                        marginBottom: "8px",
+                        lineHeight: "1.6",
+                      }}
+                    >
                       {risk}
                     </li>
                   ))}
@@ -810,18 +933,35 @@ export default function Analytics() {
 
             {/* Opportunities */}
             {aiAnalysis.opportunities.length > 0 && (
-              <div style={{
-                padding: '16px',
-                background: 'rgba(15, 23, 42, 0.6)',
-                borderRadius: '8px',
-                border: '1px solid rgba(16, 185, 129, 0.3)'
-              }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#10B981', marginBottom: '12px' }}>
+              <div
+                style={{
+                  padding: "16px",
+                  background: "rgba(15, 23, 42, 0.6)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(16, 185, 129, 0.3)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    color: "#10B981",
+                    marginBottom: "12px",
+                  }}
+                >
                   🎯 Opportunities
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                <ul style={{ margin: 0, paddingLeft: "20px" }}>
                   {aiAnalysis.opportunities.map((opp: string, idx: number) => (
-                    <li key={idx} style={{ fontSize: '14px', color: '#6EE7B7', marginBottom: '8px', lineHeight: '1.6' }}>
+                    <li
+                      key={idx}
+                      style={{
+                        fontSize: "14px",
+                        color: "#6EE7B7",
+                        marginBottom: "8px",
+                        lineHeight: "1.6",
+                      }}
+                    >
                       {opp}
                     </li>
                   ))}
@@ -833,14 +973,16 @@ export default function Analytics() {
 
         {/* Error Display */}
         {aiError && (
-          <div style={{
-            marginTop: '16px',
-            padding: '16px',
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: '8px',
-            color: '#FCA5A5'
-          }}>
+          <div
+            style={{
+              marginTop: "16px",
+              padding: "16px",
+              background: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              color: "#FCA5A5",
+            }}
+          >
             ⚠️ {aiError}
           </div>
         )}
@@ -917,10 +1059,21 @@ export default function Analytics() {
                 variant="secondary"
                 size="sm"
                 onClick={() => exportChartAsPNG(equityChartRef, "Equity_Curve")}
-                style={{ display: "flex", alignItems: "center", gap: theme.spacing.xs }}
+                disabled={exportingChart !== null}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: theme.spacing.xs,
+                  minWidth: isMobile ? "44px" : "auto", // iOS touch target standard
+                  minHeight: "44px", // iOS touch target standard
+                }}
               >
-                <Download size={16} />
-                {!isMobile && "Export"}
+                {exportingChart === "Equity_Curve" ? (
+                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                ) : (
+                  <Download size={16} />
+                )}
+                {!isMobile && (exportingChart === "Equity_Curve" ? "Exporting..." : "Export")}
               </Button>
             </div>
             <div
@@ -983,10 +1136,21 @@ export default function Analytics() {
                 variant="secondary"
                 size="sm"
                 onClick={() => exportChartAsPNG(pnlChartRef, "Daily_PnL")}
-                style={{ display: "flex", alignItems: "center", gap: theme.spacing.xs }}
+                disabled={exportingChart !== null}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: theme.spacing.xs,
+                  minWidth: isMobile ? "44px" : "auto", // iOS touch target standard
+                  minHeight: "44px", // iOS touch target standard
+                }}
               >
-                <Download size={16} />
-                {!isMobile && "Export"}
+                {exportingChart === "Daily_PnL" ? (
+                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                ) : (
+                  <Download size={16} />
+                )}
+                {!isMobile && (exportingChart === "Daily_PnL" ? "Exporting..." : "Export")}
               </Button>
             </div>
             <div
