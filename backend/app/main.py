@@ -52,6 +52,7 @@ from .routers import (
     stock,
     strategies,
     stream,
+    subscription,
     telemetry,
     users,
 )
@@ -116,13 +117,16 @@ from starlette.middleware.gzip import GZIPMiddleware
 
 from .middleware.kill_switch import KillSwitchMiddleware
 from .middleware.request_id import RequestIDMiddleware
+from .middleware.usage_tracking import UsageTrackingMiddleware
 
 
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(KillSwitchMiddleware)
+app.add_middleware(UsageTrackingMiddleware)  # Phase 2: Monetization - Usage metering
 # Add GZIP compression for responses >1KB (reduces bandwidth by ~70%)
 app.add_middleware(GZIPMiddleware, minimum_size=1000)
 print("[OK] GZIP compression enabled for responses >1KB", flush=True)
+print("[OK] Usage tracking middleware enabled", flush=True)
 
 # Configure rate limiting (Phase 3: Bulletproof Reliability)
 # Skip rate limiting in test environment to avoid middleware conflicts with TestClient
@@ -442,5 +446,6 @@ app.include_router(analytics.router, prefix="/api")
 app.include_router(backtesting.router, prefix="/api")
 app.include_router(ml.router)  # Machine Learning (Phase 2)
 app.include_router(ml_sentiment.router)  # ML Sentiment & Signals (Phase 2 - Active)
+app.include_router(subscription.router)  # Subscription & Billing (Phase 2 - Monetization)
 app.include_router(monitor.router)  # GitHub Repository Monitor
 app.include_router(telemetry.router)

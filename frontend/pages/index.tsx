@@ -38,6 +38,7 @@ const PositionManager = dynamic(() => import("../components/trading/PositionMana
 });
 
 import AIChat from "../components/AIChat";
+import CommandPalette from "../components/CommandPalette";
 import CompletePaiiDLogo from "../components/CompletePaiiDLogo";
 import KeyboardShortcuts from "../components/KeyboardShortcuts";
 import MarketScanner from "../components/MarketScanner";
@@ -241,6 +242,9 @@ export default function Dashboard() {
 
   return (
     <>
+      {/* Command Palette (Cmd+K) */}
+      <CommandPalette onNavigate={setSelectedWorkflow} />
+
       {/* Development Mode Banner */}
       {ENABLE_DEV_BYPASS && (
         <div
