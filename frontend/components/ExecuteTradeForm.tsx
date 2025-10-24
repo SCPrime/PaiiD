@@ -218,14 +218,14 @@ export default function ExecuteTradeForm() {
     if (assetClass === "option" && symbol.trim()) {
       fetchExpirations(symbol);
     }
-  }, [symbol, assetClass]);
+  }, [symbol, assetClass, fetchExpirations]);
 
   // Fetch strikes when expiration changes
   useEffect(() => {
     if (assetClass === "option" && symbol.trim() && expirationDate) {
       fetchStrikes(symbol, expirationDate);
     }
-  }, [expirationDate]);
+  }, [expirationDate, assetClass, symbol, fetchStrikes]);
 
   // Debounced AI analysis when symbol changes
   useEffect(() => {
@@ -1491,12 +1491,10 @@ export default function ExecuteTradeForm() {
                 }}
               >
                 <RiskCalculator
-                  onCreateProposal={(proposal) => {
-                    console.log("Proposal created:", proposal);
+                  onCreateProposal={(_proposal) => {
                     showSuccess("Trade proposal created with risk analysis");
                   }}
-                  onExecuteProposal={(proposal, limitPrice) => {
-                    console.log("Executing proposal:", proposal, "at price:", limitPrice);
+                  onExecuteProposal={(proposal, _limitPrice) => {
                     showSuccess(`Order submitted for ${proposal.option_symbol}`);
                   }}
                 />

@@ -72,7 +72,7 @@ const StockLookup: React.FC<StockLookupProps> = ({
     if (initialSymbol) {
       handleSearch(initialSymbol);
     }
-  }, [initialSymbol]);
+  }, [initialSymbol, handleSearch]);
 
   const handleSearch = async (searchSymbol: string) => {
     if (!searchSymbol.trim()) {

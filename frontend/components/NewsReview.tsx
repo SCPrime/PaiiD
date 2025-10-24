@@ -146,7 +146,7 @@ const NewsReview: React.FC = () => {
       // Only fetch after providers are loaded
       fetchNews(searchSymbol || undefined);
     }
-  }, [filter, selectedProvider]);
+  }, [filter, selectedProvider, fetchNews, providers.length, searchSymbol]);
 
   const handleSearch = () => {
     if (searchSymbol.trim()) {

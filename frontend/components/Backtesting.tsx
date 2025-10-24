@@ -1,17 +1,19 @@
 "use client";
-import { useState } from "react";
 import {
-  BarChart3,
-  TrendingUp,
-  TrendingDown,
   Activity,
+  BarChart3,
   DollarSign,
   Percent,
   Play,
+  TrendingDown,
+  TrendingUp,
 } from "lucide-react";
-import { Card, Button, Input, Select } from "./ui";
-import { theme } from "../styles/theme";
+import { useCallback, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { ApiError, apiPost } from "../lib/api";
+import { theme } from "../styles/theme";
+import { Button, Card, Input, Select } from "./ui";
+import { Skeleton } from "./ui/Skeleton";
 
 interface BacktestConfig {
   symbol: string;
@@ -57,68 +59,63 @@ export default function Backtesting() {
   const [results, setResults] = useState<BacktestResults | null>(null);
   const [isRunning, setIsRunning] = useState(false);
 
-  const runBacktest = async () => {
+  const runBacktest = useCallback(async () => {
     setIsRunning(true);
-
-    // Simulate backtest
-    setTimeout(() => {
-      const mockResults: BacktestResults = {
-        totalReturn: 1847.32,
-        totalReturnPercent: 18.47,
-        annualizedReturn: 18.47,
-        sharpeRatio: 1.42,
-        maxDrawdown: -12.3,
-        winRate: 58.5,
-        totalTrades: 47,
-        winningTrades: 27,
-        losingTrades: 20,
-        avgWin: 142.5,
-        avgLoss: -87.3,
-        profitFactor: 2.13,
-        equityCurve: generateEquityCurve(),
-        tradeHistory: generateTradeHistory(),
+    try {
+      const body = {
+        symbol: config.symbol,
+        startDate: config.startDate,
+        endDate: config.endDate,
+        initialCapital: Number(config.initialCapital || 10000),
+        strategyName: config.strategyName,
       };
-
-      setResults(mockResults);
+      const data = await apiPost<BacktestResults>("/api/proxy/backtesting/run", body);
+      setResults(data);
+    } catch (e: any) {
+      const err = e as ApiError;
+      console.error("[Backtesting] run error", err.status, err.message);
+      setResults(null);
+    } finally {
       setIsRunning(false);
-    }, 2000);
-  };
-
-  const generateEquityCurve = () => {
-    const curve = [];
-    let value = 10000;
-    const startDate = new Date("2024-01-01");
-
-    for (let i = 0; i < 365; i++) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-      const change = (Math.random() - 0.45) * 150;
-      value += change;
-      curve.push({
-        date: date.toISOString().split("T")[0],
-        value: Math.max(8000, value),
-      });
     }
-    return curve;
-  };
+  }, [config]);
 
-  const generateTradeHistory = () => {
-    const trades = [];
-    const types: ("buy" | "sell")[] = ["buy", "sell"];
+  // Unused helper functions - kept for future implementation
+  // const generateEquityCurve = () => {
+  //   const curve = [];
+  //   let value = 10000;
+  //   const startDate = new Date("2024-01-01");
+  //
+  //   for (let i = 0; i < 365; i++) {
+  //     const date = new Date(startDate);
+  //     date.setDate(date.getDate() + i);
+  //     const change = (Math.random() - 0.45) * 150;
+  //     value += change;
+  //     curve.push({
+  //       date: date.toISOString().split("T")[0],
+  //       value: Math.max(8000, value),
+  //     });
+  //   }
+  //   return curve;
+  // };
 
-    for (let i = 0; i < 10; i++) {
-      const date = new Date("2024-01-01");
-      date.setDate(date.getDate() + i * 36);
-      trades.push({
-        date: date.toISOString().split("T")[0],
-        type: types[i % 2],
-        price: 450 + Math.random() * 50,
-        quantity: Math.floor(Math.random() * 20) + 1,
-        pnl: (Math.random() - 0.4) * 300,
-      });
-    }
-    return trades;
-  };
+  // const generateTradeHistory = () => {
+  //   const trades = [];
+  //   const types: ("buy" | "sell")[] = ["buy", "sell"];
+  //
+  //   for (let i = 0; i < 10; i++) {
+  //     const date = new Date("2024-01-01");
+  //     date.setDate(date.getDate() + i * 36);
+  //     trades.push({
+  //       date: date.toISOString().split("T")[0],
+  //       type: types[i % 2],
+  //       price: 450 + Math.random() * 50,
+  //       quantity: Math.floor(Math.random() * 20) + 1,
+  //       pnl: (Math.random() - 0.4) * 300,
+  //     });
+  //   }
+  //   return trades;
+  // };
 
   return (
     <div style={{ padding: isMobile ? theme.spacing.md : theme.spacing.lg }}>
@@ -254,6 +251,23 @@ export default function Backtesting() {
       </Card>
 
       {/* Results */}
+      {isRunning && !results && (
+        <Card>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: theme.spacing.sm,
+              padding: theme.spacing.lg,
+            }}
+          >
+            <Skeleton height={20} />
+            <Skeleton height={180} />
+            <Skeleton height={20} />
+          </div>
+        </Card>
+      )}
+
       {results && (
         <>
           {/* Metrics Grid */}

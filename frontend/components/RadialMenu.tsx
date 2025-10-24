@@ -824,7 +824,7 @@ function RadialMenuComponent({
           .style("opacity", 1)
           .on("end", repeat);
       });
-  }, [menuSize, fontSizes, onWorkflowSelect, onWorkflowHover, isMarketDataLoading]); // Re-render when menu size or loading state changes
+  }, [menuSize, fontSizes, onWorkflowSelect, onWorkflowHover, isMarketDataLoading, marketData.dow.value, marketData.dow.change, marketData.nasdaq.value, marketData.nasdaq.change]); // Re-render when menu size or loading state changes
 
   // Separate effect for market data updates - only update text when data changes
   useEffect(() => {

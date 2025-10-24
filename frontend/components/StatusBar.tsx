@@ -43,7 +43,7 @@ export default function StatusBar() {
       setStatus("error");
       setMessage(`Backend error: ${error.message || "Cannot connect"}`);
     }
-  }, []);
+  }, [marketStreamConnected]);
 
   useEffect(() => {
     // eslint-disable-next-line no-console

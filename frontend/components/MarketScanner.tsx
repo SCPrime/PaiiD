@@ -1,10 +1,13 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Search, RefreshCw } from "lucide-react";
-import { Card, Button, Input, Select } from "./ui";
-import { theme } from "../styles/theme";
+import { RefreshCw, Search } from "lucide-react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
-import StockLookup from "./StockLookup";
+import { ApiError, apiGet } from "../lib/api";
+import { theme } from "../styles/theme";
+import { Button, Card, Input, Select } from "./ui";
+import { Skeleton } from "./ui/Skeleton";
+const StockLookup = dynamic(() => import("./StockLookup"), { ssr: false });
 
 interface ScanResult {
   symbol: string;
@@ -50,13 +53,48 @@ export default function MarketScanner() {
 
   useEffect(() => {
     runScan();
-  }, [scanType]);
+  }, [scanType, runScan]);
 
-  const runScan = async () => {
+  const runScan = useCallback(async () => {
     setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        minPrice: String(filter.minPrice),
+        maxPrice: String(filter.maxPrice),
+        minVolume: String(filter.minVolume),
+        signalType: filter.signalType,
+        scanType,
+      });
+      const data = await apiGet<any>(`/api/proxy/screening/opportunities?${params.toString()}`);
+      const apiResults: ScanResult[] = (data?.results || []).map((r: any) => ({
+        symbol: r.symbol,
+        price: r.price,
+        change: r.change,
+        changePercent: r.changePercent,
+        volume: r.volume,
+        avgVolume: r.avgVolume,
+        signal: r.signal,
+        indicators: r.indicators || {
+          rsi: 50,
+          macd: "neutral",
+          movingAverage: "50_above",
+          volumeProfile: "normal",
+        },
+        pattern: r.pattern,
+        reason: r.reason || "",
+      }));
+      setResults(apiResults);
+    } catch (e: any) {
+      const err = e as ApiError;
+      console.error("[MarketScanner] scan error", err.status, err.message);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [filter.minPrice, filter.maxPrice, filter.minVolume, filter.signalType, scanType]);
 
-    // Simulate scan - in production, call backend API
-    setTimeout(() => {
+  /*
+      Legacy mock preserved for reference:
       const mockResults: ScanResult[] = [
         {
           symbol: "AAPL",
@@ -156,9 +194,7 @@ export default function MarketScanner() {
       });
 
       setResults(mockResults);
-      setLoading(false);
-    }, 1500);
-  };
+  */
 
   const getSignalColor = (signal: ScanResult["signal"]) => {
     switch (signal) {
@@ -357,13 +393,15 @@ export default function MarketScanner() {
         <Card>
           <div
             style={{
-              textAlign: "center",
-              padding: theme.spacing.xl,
-              color: theme.colors.textMuted,
+              display: "flex",
+              flexDirection: "column",
+              gap: theme.spacing.sm,
+              padding: theme.spacing.lg,
             }}
           >
-            <RefreshCw size={32} style={{ animation: "spin 1s linear infinite" }} />
-            <p style={{ marginTop: theme.spacing.md }}>Scanning market...</p>
+            <Skeleton height={20} />
+            <Skeleton height={20} />
+            <Skeleton height={20} />
           </div>
         </Card>
       ) : results.length === 0 ? (
