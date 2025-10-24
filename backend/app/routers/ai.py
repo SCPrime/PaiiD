@@ -12,11 +12,21 @@ from datetime import datetime
 from typing import Literal
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from ..core.auth import require_bearer
 from ..db.session import get_db
+from ..recommendations.schemas import (
+    RecommendationAction,
+    RecommendationCreate,
+    RecommendationFilterParams,
+    RecommendationRead,
+    RecommendationRiskLevel,
+    RecommendationSortKey,
+    SortDirection,
+)
+from ..recommendations.service import create_recommendation, list_recommendations
 from ..services.technical_indicators import TechnicalIndicators
 from ..services.tradier_client import get_tradier_client
 
@@ -1624,13 +1634,23 @@ class SaveRecommendationRequest(BaseModel):
     symbol: str
     recommendation_type: Literal["buy", "sell", "hold"]
     confidence_score: float
-    analysis_data: dict = {}
+    analysis_data: dict = Field(default_factory=dict)
     suggested_entry_price: float | None = None
     suggested_stop_loss: float | None = None
     suggested_take_profit: float | None = None
     suggested_position_size: float | None = None
     reasoning: str | None = None
     market_context: str | None = None
+    risk_level: Literal["low", "medium", "high"] = "medium"
+    risk_score: float | None = None
+    volatility_score: float | None = None
+    volatility_label: str | None = None
+    momentum_score: float | None = None
+    momentum_trend: str | None = None
+    time_horizon: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    status: str = "pending"
+    expires_at: datetime | None = None
 
 
 class RecommendationHistoryResponse(BaseModel):
@@ -1640,6 +1660,14 @@ class RecommendationHistoryResponse(BaseModel):
     symbol: str
     recommendation_type: str
     confidence_score: float
+    risk_level: str
+    risk_score: float | None
+    volatility_score: float | None
+    volatility_label: str | None
+    momentum_score: float | None
+    momentum_trend: str | None
+    time_horizon: str | None
+    tags: list[str]
     analysis_data: dict
     suggested_entry_price: float | None
     suggested_stop_loss: float | None
@@ -1655,8 +1683,35 @@ class RecommendationHistoryResponse(BaseModel):
     actual_pnl: float | None
     actual_pnl_percent: float | None
 
-    class Config:
-        from_attributes = True
+    @classmethod
+    def from_schema(cls, record: "RecommendationRead") -> "RecommendationHistoryResponse":
+        return cls(
+            id=record.id,
+            symbol=record.symbol,
+            recommendation_type=record.recommendation_type.value,
+            confidence_score=record.confidence_score,
+            risk_level=record.risk_level.value,
+            risk_score=record.risk_score,
+            volatility_score=record.volatility_score,
+            volatility_label=record.volatility_label,
+            momentum_score=record.momentum_score,
+            momentum_trend=record.momentum_trend,
+            time_horizon=record.time_horizon,
+            tags=record.tags,
+            analysis_data=record.analysis_data,
+            suggested_entry_price=record.suggested_entry_price,
+            suggested_stop_loss=record.suggested_stop_loss,
+            suggested_take_profit=record.suggested_take_profit,
+            reasoning=record.reasoning,
+            market_context=record.market_context,
+            status=record.status,
+            created_at=record.created_at.isoformat() + "Z",
+            expires_at=record.expires_at.isoformat() + "Z" if record.expires_at else None,
+            executed_at=record.executed_at.isoformat() + "Z" if record.executed_at else None,
+            execution_price=record.execution_price,
+            actual_pnl=record.actual_pnl,
+            actual_pnl_percent=record.actual_pnl_percent,
+        )
 
 
 @router.post("/recommendations/save", dependencies=[Depends(require_bearer)])
@@ -1674,31 +1729,32 @@ async def save_recommendation(request: SaveRecommendationRequest, db: Session = 
     try:
         from datetime import timedelta
 
-        from ..models.database import AIRecommendation
+        expires_at = request.expires_at or (datetime.utcnow() + timedelta(days=7))
 
-        # Calculate expiry (recommendations expire after 7 days)
-        expires_at = datetime.utcnow() + timedelta(days=7)
-
-        # Create recommendation record
-        recommendation = AIRecommendation(
-            user_id=1,  # TODO: Get from auth once multi-user support added
-            symbol=request.symbol.upper(),
-            recommendation_type=request.recommendation_type.lower(),
+        payload = RecommendationCreate(
+            symbol=request.symbol,
+            recommendation_type=RecommendationAction(request.recommendation_type.lower()),
             confidence_score=request.confidence_score,
-            analysis_data=request.analysis_data or {},
+            analysis_data=request.analysis_data,
+            risk_level=RecommendationRiskLevel(request.risk_level.lower()),
+            risk_score=request.risk_score,
+            volatility_score=request.volatility_score,
+            volatility_label=request.volatility_label,
+            momentum_score=request.momentum_score,
+            momentum_trend=request.momentum_trend,
+            time_horizon=request.time_horizon,
             suggested_entry_price=request.suggested_entry_price,
             suggested_stop_loss=request.suggested_stop_loss,
             suggested_take_profit=request.suggested_take_profit,
             suggested_position_size=request.suggested_position_size,
             reasoning=request.reasoning,
             market_context=request.market_context,
-            status="pending",
+            tags=request.tags,
+            status=request.status,
             expires_at=expires_at,
         )
 
-        db.add(recommendation)
-        db.commit()
-        db.refresh(recommendation)
+        recommendation = create_recommendation(db, payload, user_id=1)
 
         logger.info(
             f"✅ Saved recommendation: {request.symbol} {request.recommendation_type.upper()} ({request.confidence_score:.1f}% confidence)"
@@ -1741,50 +1797,21 @@ async def get_recommendation_history(
     Phase: Final 6% MVP completion
     """
     try:
-        from ..models.database import AIRecommendation
+        filters = RecommendationFilterParams(
+            symbol=symbol,
+            statuses=[status.lower()] if status else None,
+        )
 
-        # Build query
-        query = db.query(AIRecommendation).filter(
-            AIRecommendation.user_id == 1
-        )  # TODO: Multi-user support
+        response = list_recommendations(
+            db,
+            filters=filters,
+            sort_key=RecommendationSortKey.CREATED_AT,
+            direction=SortDirection.DESC,
+            limit=limit,
+            offset=offset,
+        )
 
-        # Apply filters
-        if symbol:
-            query = query.filter(AIRecommendation.symbol == symbol.upper())
-
-        if status:
-            query = query.filter(AIRecommendation.status == status.lower())
-
-        # Order by creation date (newest first)
-        query = query.order_by(AIRecommendation.created_at.desc())
-
-        # Apply pagination
-        recommendations = query.offset(offset).limit(limit).all()
-
-        # Convert to response format
-        result = []
-        for rec in recommendations:
-            result.append(
-                RecommendationHistoryResponse(
-                    id=rec.id,
-                    symbol=rec.symbol,
-                    recommendation_type=rec.recommendation_type,
-                    confidence_score=rec.confidence_score,
-                    analysis_data=rec.analysis_data or {},
-                    suggested_entry_price=rec.suggested_entry_price,
-                    suggested_stop_loss=rec.suggested_stop_loss,
-                    suggested_take_profit=rec.suggested_take_profit,
-                    reasoning=rec.reasoning,
-                    market_context=rec.market_context,
-                    status=rec.status,
-                    created_at=rec.created_at.isoformat() + "Z" if rec.created_at else None,
-                    expires_at=rec.expires_at.isoformat() + "Z" if rec.expires_at else None,
-                    executed_at=rec.executed_at.isoformat() + "Z" if rec.executed_at else None,
-                    execution_price=rec.execution_price,
-                    actual_pnl=rec.actual_pnl,
-                    actual_pnl_percent=rec.actual_pnl_percent,
-                )
-            )
+        result = [RecommendationHistoryResponse.from_schema(item) for item in response.items]
 
         logger.info(
             f"✅ Retrieved {len(result)} recommendations from history (filters: symbol={symbol}, status={status})"
@@ -1837,6 +1864,7 @@ async def analyze_portfolio():
     """
     try:
         import os
+
         from anthropic import Anthropic
 
         logger.info("🤖 AI Portfolio Analysis - Starting...")
@@ -2195,10 +2223,10 @@ Base your analysis on:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ News analysis error: {str(e)}")
+        logger.error(f"❌ News analysis error: {e!s}")
         raise HTTPException(
             status_code=500,
-            detail=f"News analysis failed: {str(e)}"
+            detail=f"News analysis failed: {e!s}"
         )
 
 
@@ -2238,8 +2266,8 @@ async def analyze_news_batch(
         }
 
     except Exception as e:
-        logger.error(f"❌ Batch news analysis error: {str(e)}")
+        logger.error(f"❌ Batch news analysis error: {e!s}")
         raise HTTPException(
             status_code=500,
-            detail=f"Batch analysis failed: {str(e)}"
+            detail=f"Batch analysis failed: {e!s}"
         )
