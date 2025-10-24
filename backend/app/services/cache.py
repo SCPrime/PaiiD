@@ -2,11 +2,15 @@
 Redis Cache Service
 
 Provides Redis caching with graceful fallback when Redis is unavailable.
-Implements common cache operations with TTL support.
+Implements common cache operations with TTL support and exposes connection
+diagnostics for observability.
 """
 
+from __future__ import annotations
+
 import json
-from typing import Any
+import time
+from typing import Any, Dict
 
 import redis
 
@@ -19,15 +23,26 @@ class CacheService:
     def __init__(self):
         self.client: redis.Redis | None = None
         self.available = False
+        self.latency_ms: float | None = None
+        self.last_error: str | None = None
+        self.status: str = "disabled"  # disabled|connected|error
         self._initialize()
 
     def _initialize(self):
         """Initialize Redis connection"""
+        self.client = None
+        self.available = False
+        self.latency_ms = None
+        self.last_error = None
+        self.status = "disabled"
+
         if not settings.REDIS_URL:
             print("[WARNING] REDIS_URL not configured - caching disabled", flush=True)
+            self.last_error = "REDIS_URL not configured"
             return
 
         try:
+            start = time.perf_counter()
             self.client = redis.from_url(
                 settings.REDIS_URL,
                 decode_responses=True,
@@ -37,11 +52,15 @@ class CacheService:
             # Test connection
             self.client.ping()
             self.available = True
+            self.status = "connected"
+            self.latency_ms = (time.perf_counter() - start) * 1000
             print("[OK] Redis cache connected", flush=True)
         except Exception as e:
             print(f"[WARNING] Redis connection failed: {e} - caching disabled", flush=True)
             self.client = None
             self.available = False
+            self.status = "error"
+            self.last_error = str(e)
 
     def get(self, key: str) -> Any | None:
         """
@@ -86,6 +105,20 @@ class CacheService:
             return True
         except Exception as e:
             print(f"[WARNING] Cache SET error for key '{key}': {e}", flush=True)
+            return False
+
+    def set_if_not_exists(self, key: str, value: Any, ttl: int) -> bool:
+        """Atomically set a key if it does not already exist."""
+        if not self.available or not self.client:
+            return False
+
+        try:
+            serialized = json.dumps(value)
+            # Use native SET with NX flag for atomic behaviour
+            result = self.client.set(key, serialized, nx=True, ex=ttl)
+            return bool(result)
+        except Exception as e:
+            print(f"[WARNING] Cache SETNX error for key '{key}': {e}", flush=True)
             return False
 
     def delete(self, key: str) -> bool:
@@ -149,6 +182,20 @@ class CacheService:
         except Exception as e:
             print(f"[WARNING] Cache CLEAR_PATTERN error for pattern '{pattern}': {e}", flush=True)
             return 0
+
+    def refresh(self):
+        """Re-attempt connection using current settings."""
+        self._initialize()
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return connection diagnostics for monitoring dashboards."""
+        return {
+            "status": self.status,
+            "available": self.available,
+            "latency_ms": self.latency_ms,
+            "last_error": self.last_error,
+            "url_configured": bool(settings.REDIS_URL),
+        }
 
 
 # Global cache instance

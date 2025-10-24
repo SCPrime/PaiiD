@@ -1,12 +1,18 @@
-"""
-Production Health Monitoring Service
-"""
+"""Production Health Monitoring Service."""
+
+from __future__ import annotations
+
 import logging
 import time
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict
+
 import psutil
 import requests
+
+from app.services.cache import get_cache
+from app.services.news.news_cache import get_news_cache
+
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +68,27 @@ class HealthMonitor:
     def _check_dependencies(self) -> dict:
         """Check health of external dependencies"""
         dependencies = {}
-        
+
+        # Redis cache diagnostics
+        cache = get_cache()
+        dependencies["redis"] = {
+            **cache.get_stats(),
+            "checked_at": datetime.now().isoformat(),
+        }
+
+        # News cache combines Redis + fallback insights
+        try:
+            dependencies["news_cache"] = {
+                **get_news_cache().get_stats(),
+                "checked_at": datetime.now().isoformat(),
+            }
+        except Exception as exc:  # pragma: no cover - defensive safeguard
+            dependencies["news_cache"] = {
+                "status": "error",
+                "error": str(exc),
+                "checked_at": datetime.now().isoformat(),
+            }
+
         # Check Tradier API
         try:
             start = time.time()
