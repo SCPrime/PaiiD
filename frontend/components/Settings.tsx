@@ -30,6 +30,7 @@ import { clearUserData, getCurrentUser, getUserAnalytics } from "../lib/userMana
 import ApprovalQueue from "./ApprovalQueue";
 import ClaudeAIChat from "./ClaudeAIChat";
 import KillSwitchToggle from "./KillSwitchToggle";
+import MLAnalyticsDashboard from "./MLAnalyticsDashboard";
 import MLModelManagement from "./MLModelManagement";
 import MLTrainingDashboard from "./MLTrainingDashboard";
 import PatternBacktestDashboard from "./PatternBacktestDashboard";
@@ -476,6 +477,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     { id: "ml-training", label: "ML Training", icon: Brain, alwaysShow: true },
     { id: "pattern-backtest", label: "Pattern Backtest", icon: BarChart3, alwaysShow: true },
     { id: "ml-models", label: "ML Models", icon: Database, alwaysShow: true },
+    { id: "ml-analytics", label: "ML Analytics", icon: Activity, alwaysShow: true },
     { id: "portfolio-optimizer", label: "Portfolio Optimizer", icon: Target, alwaysShow: true },
     { id: "sentiment", label: "News Sentiment", icon: Newspaper, alwaysShow: true },
     { id: "ai-chat", label: "AI Chat", icon: MessageSquare, alwaysShow: true },
@@ -1049,6 +1051,11 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
           {activeTab === "ml-models" && (
             <div className="min-h-[500px]">
               <MLModelManagement />
+            </div>
+          )}
+          {activeTab === "ml-analytics" && (
+            <div className="min-h-[500px]">
+              <MLAnalyticsDashboard />
             </div>
           )}
           {activeTab === "portfolio-optimizer" && (
