@@ -88,6 +88,39 @@ If Redis is unavailable:
 | `/api/positions` | 30s | Portfolio positions |
 | `/api/market/quote/{symbol}` | 15s | Real-time quotes |
 
+## Monitoring & Instrumentation
+
+### 1. Render Redis Dashboard
+
+1. Open the Redis service in the [Render dashboard](https://dashboard.render.com).
+2. Confirm the instance status is **Live** and review the **Uptime** chart for drops.
+3. Inspect **Connections** and **Memory Usage** metrics; sustained spikes usually mean cache churn.
+4. If metrics appear stale, use the **Manual Refresh** button in the top-right corner of the dashboard.
+5. Capture a screenshot of the graphs after incidents so the team can compare trends during postmortems.
+
+> ℹ️ The Render dashboard is the source of truth for availability. The local development environment used for these docs does not have access to hosted metrics, so always verify directly in Render before assuming Redis is healthy.
+
+### 2. Backend Runtime Logs
+
+- Cache initialization now emits structured log entries such as `Redis cache connected` and `Redis URL not configured`.
+- Every interaction is instrumented:
+  - `Redis GET hit/miss` entries confirm cache utilization per key.
+  - `Redis SET succeeded` includes TTL metadata for validation.
+  - `Redis unavailable during ...` entries highlight fallback events when Redis is down.
+- Use `docker logs`, `uvicorn` output, or your Render service logs to review these messages in real time. Filtering for `Redis` quickly surfaces cache behaviour during incidents.
+
+### 3. Alerting Hooks (Optional)
+
+- Forward the Redis logs to your monitoring stack (e.g., Datadog, Grafana Loki) to build automated alerts on repeated failures.
+- Render Pro plans expose metrics via Prometheus; connect them to Grafana for long-term trend analysis if you outgrow the free dashboard.
+
+## Fallback Behaviour
+
+- If `REDIS_URL` is missing or invalid, the backend logs `Redis URL not configured; cache service disabled` and continues serving requests without caching.
+- When Redis becomes unavailable at runtime, cache operations short-circuit, log `Redis unavailable during ...`, and return safe defaults (`None`/`False`) so API handlers proceed without raising errors.
+- Serialization issues (e.g., attempting to cache non-JSON data) are caught and logged as `Redis SET serialization error`, preventing malformed payloads from poisoning the cache.
+- Use these logs to decide when to switch the frontend to reduced polling modes or when to trigger manual cache flushes once Redis is restored.
+
 ## Performance Metrics
 
 ### API Call Reduction
