@@ -35,6 +35,7 @@ from .routers import (
     market,
     market_data,
     news,
+    order_history,
     options,
     orders,
     portfolio,
@@ -236,6 +237,7 @@ app.include_router(auth.router, prefix="/api")  # Authentication endpoints
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(portfolio.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
+app.include_router(order_history.router, prefix="/api")
 app.include_router(positions.router)  # Position management
 app.include_router(stream.router, prefix="/api")
 app.include_router(screening.router, prefix="/api")

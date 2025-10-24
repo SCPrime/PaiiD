@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..core.auth import require_bearer
 from ..db.session import get_db
-from ..models.database import User
+from ..models.database import User, UserProfileData
 
 
 logger = logging.getLogger(__name__)
@@ -45,6 +45,30 @@ class UserPreferencesUpdate(BaseModel):
         if v is not None and (v < 0 or v > 100):
             raise ValueError("risk_tolerance must be between 0 and 100")
         return v
+
+
+class UserProfilePayload(BaseModel):
+    """Payload for persisting structured profile data."""
+
+    data: dict[str, Any]
+
+
+def _get_or_create_default_user(db: Session) -> User:
+    user = db.query(User).filter(User.id == 1).first()
+    if user:
+        return user
+
+    user = User(
+        id=1,
+        email="owner@paiid.local",
+        password_hash="migrated",
+        role="owner",
+        preferences={"risk_tolerance": 50},
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 @router.get("/users/preferences")
@@ -217,3 +241,71 @@ def get_user_risk_limits(_=Depends(require_bearer), db: Session = Depends(get_db
     except Exception as e:
         logger.error(f"❌ Failed to calculate risk limits: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to calculate risk limits: {e!s}")
+
+
+@router.get("/users/profile/{profile_type}")
+def get_user_profile(
+    profile_type: str,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db),
+):
+    """Fetch stored profile data for the authenticated user."""
+
+    user = _get_or_create_default_user(db)
+    record = (
+        db.query(UserProfileData)
+        .filter(
+            UserProfileData.user_id == user.id,
+            UserProfileData.profile_type == profile_type,
+        )
+        .first()
+    )
+
+    if not record:
+        return {"data": {}, "profile_type": profile_type}
+
+    return {
+        "data": record.data or {},
+        "profile_type": profile_type,
+        "updated_at": record.updated_at.isoformat() if record.updated_at else None,
+    }
+
+
+@router.post("/users/profile/{profile_type}")
+def upsert_user_profile(
+    profile_type: str,
+    payload: UserProfilePayload,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db),
+):
+    """Persist profile data in the database."""
+
+    user = _get_or_create_default_user(db)
+    record = (
+        db.query(UserProfileData)
+        .filter(
+            UserProfileData.user_id == user.id,
+            UserProfileData.profile_type == profile_type,
+        )
+        .first()
+    )
+
+    if record:
+        merged = dict(record.data or {})
+        merged.update(payload.data)
+        record.data = merged
+    else:
+        record = UserProfileData(
+            user_id=user.id,
+            profile_type=profile_type,
+            data=payload.data,
+        )
+        db.add(record)
+
+    db.commit()
+    db.refresh(record)
+    return {
+        "data": record.data,
+        "profile_type": profile_type,
+        "updated_at": record.updated_at.isoformat() if record.updated_at else None,
+    }

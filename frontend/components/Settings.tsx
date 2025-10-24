@@ -152,14 +152,39 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   useEffect(() => {
     if (!isOpen) return;
 
-    const savedSettings = localStorage.getItem("allessandra_settings");
-    if (savedSettings) {
+    const fetchPersistedSettings = async () => {
+      const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api/proxy/api";
+
       try {
-        setSettings(JSON.parse(savedSettings));
+        const response = await fetch(`${baseUrl}/settings`, {
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSettings((prev) => ({ ...prev, ...data }));
+          localStorage.setItem("allessandra_settings", JSON.stringify(data));
+        } else {
+          // Fall back to cached settings if backend unavailable
+          const cached = localStorage.getItem("allessandra_settings");
+          if (cached) {
+            setSettings(JSON.parse(cached));
+          }
+        }
       } catch (error) {
-        console.error("Failed to load settings:", error);
+        console.error("Failed to load persisted settings:", error);
+        const cached = localStorage.getItem("allessandra_settings");
+        if (cached) {
+          setSettings(JSON.parse(cached));
+        }
       }
-    }
+    };
+
+    fetchPersistedSettings();
 
     // Fetch risk tolerance and account balance from backend
     fetchRiskTolerance();
@@ -375,17 +400,38 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     setIsSaving(true);
     setSaveMessage("");
 
-    localStorage.setItem("allessandra_settings", JSON.stringify(settings));
+    try {
+      const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api/proxy/api";
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await fetch(`${baseUrl}/settings`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(settings),
+      });
 
-    setIsSaving(false);
-    setHasUnsavedChanges(false);
-    setSaveMessage("Settings saved successfully!");
+      if (!response.ok) {
+        throw new Error(`Failed with status ${response.status}`);
+      }
 
-    setTimeout(() => {
-      setSaveMessage("");
-    }, 3000);
+      const payload = await response.json();
+      localStorage.setItem("allessandra_settings", JSON.stringify(payload));
+
+      setIsSaving(false);
+      setHasUnsavedChanges(false);
+      setSaveMessage("Settings saved successfully!");
+
+      setTimeout(() => {
+        setSaveMessage("");
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to persist settings:", error);
+      toast.error("Failed to save settings. Please try again.");
+      setIsSaving(false);
+    }
   };
 
   const handleReset = () => {

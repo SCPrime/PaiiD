@@ -179,6 +179,22 @@ export function saveProfile(profile: UserProfile): void {
 
   // Emit custom event for other components to listen
   window.dispatchEvent(new CustomEvent("profile-updated", { detail: calculated }));
+
+  const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+  const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api/proxy/api";
+
+  if (apiToken) {
+    fetch(`${baseUrl}/users/profile/investment_profile`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ data: calculated }),
+    }).catch((error) => {
+      console.error("[Profile] Failed to persist profile:", error);
+    });
+  }
 }
 
 export function loadProfile(): UserProfile | null {
@@ -187,6 +203,29 @@ export function loadProfile(): UserProfile | null {
     if (!stored) return null;
 
     const profile = JSON.parse(stored) as UserProfile;
+    // Refresh from backend in the background
+    const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api/proxy/api";
+    if (apiToken) {
+      fetch(`${baseUrl}/users/profile/investment_profile`, {
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((payload) => {
+          if (payload?.data) {
+            const updated = calculateDerivedValues(payload.data);
+            localStorage.setItem("paid_user_profile", JSON.stringify(updated));
+            window.dispatchEvent(new CustomEvent("profile-updated", { detail: updated }));
+          }
+        })
+        .catch((error) => {
+          console.error("[Profile] Failed to sync profile:", error);
+        });
+    }
+
     return calculateDerivedValues(profile);
   } catch (error) {
     console.error("[Profile] Failed to load profile:", error);

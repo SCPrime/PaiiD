@@ -5,11 +5,12 @@ Endpoints for managing trading strategies
 
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, validator
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field, root_validator, validator
 from sqlalchemy.orm import Session
 
 from ..core.auth import require_bearer
@@ -33,37 +34,110 @@ from strategies.under4_multileg import Under4MultilegConfig, create_under4_multi
 
 router = APIRouter()
 
-# Strategy storage path
-STRATEGIES_DIR = Path("data/strategies")
-STRATEGIES_DIR.mkdir(parents=True, exist_ok=True)
 
+def _get_or_create_default_user(db: Session) -> User:
+    user = db.query(User).filter(User.id == 1).first()
+    if user:
+        return user
 
-class StrategyConfigRequest(BaseModel):
-    """Request model for saving strategy configuration with validation"""
-
-    strategy_type: str = Field(
-        ...,
-        min_length=1,
-        max_length=50,
-        pattern=r"^[a-z0-9\-]+$",
-        description="Strategy type identifier (lowercase, alphanumeric + hyphens)",
-        examples=["under4-multileg", "trend-following", "custom"],
+    user = User(
+        id=1,
+        email="owner@paiid.local",
+        password_hash="migrated",
+        role="owner",
+        preferences={"risk_tolerance": 50},
     )
-    config: dict = Field(..., description="Strategy configuration parameters")
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
-    @validator("strategy_type")
-    def validate_strategy_type(cls, v):
-        """Validate strategy type"""
-        allowed_types = [
-            "under4-multileg",
-            "trend-following",
-            "mean-reversion",
-            "momentum",
-            "custom",
-        ]
-        if v not in allowed_types:
-            raise ValueError(f"Invalid strategy type. Allowed: {', '.join(allowed_types)}")
-        return v
+
+def _serialize_strategy(strategy: Strategy) -> dict[str, Any]:
+    config = strategy.config or {}
+    response = {
+        "id": strategy.client_strategy_id or config.get("id") or f"strategy-{strategy.id}",
+        "dbId": strategy.id,
+        "name": strategy.name,
+        "description": strategy.description,
+        "strategy_type": strategy.strategy_type,
+        "config": config,
+        "is_active": strategy.is_active,
+        "is_autopilot": strategy.is_autopilot,
+        "created_at": strategy.created_at.isoformat() if strategy.created_at else None,
+        "updated_at": strategy.updated_at.isoformat() if strategy.updated_at else None,
+    }
+    # Preserve commonly accessed fields for compatibility with frontend code
+    for key in ["rules", "riskParams", "entry", "exit", "status", "aiPrompt"]:
+        if key in config:
+            response[key] = config[key]
+    return response
+
+
+def _get_strategy_by_identifier(
+    db: Session, user: User, identifier: str
+) -> Strategy | None:
+    strategy = (
+        db.query(Strategy)
+        .filter(Strategy.user_id == user.id, Strategy.client_strategy_id == identifier)
+        .first()
+    )
+    if strategy:
+        return strategy
+
+    # Try integer primary key fallback
+    try:
+        strategy_id = int(identifier)
+    except ValueError:
+        strategy_id = None
+
+    if strategy_id is not None:
+        strategy = (
+            db.query(Strategy)
+            .filter(Strategy.user_id == user.id, Strategy.id == strategy_id)
+            .first()
+        )
+        if strategy:
+            return strategy
+
+    # Fallback by strategy type
+    return (
+        db.query(Strategy)
+        .filter(Strategy.user_id == user.id, Strategy.strategy_type == identifier)
+        .first()
+    )
+
+class StrategyPayload(BaseModel):
+    """Generic strategy payload accepted from the frontend."""
+
+    name: str = Field(..., min_length=1, max_length=255)
+    description: str | None = None
+    strategy_type: str | None = Field(default="custom", max_length=50)
+    symbol: str | None = None
+    rules: dict[str, Any] | None = None
+    riskParams: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
+    config: dict[str, Any] | None = None
+    client_id: str | None = Field(default=None, alias="clientId")
+    legacy_id: str | None = Field(default=None, alias="id")
+
+    class Config:
+        allow_population_by_field_name = True
+        extra = "allow"
+
+    @root_validator(pre=True)
+    def ensure_config(cls, values: dict[str, Any]) -> dict[str, Any]:
+        """Ensure config is always populated with the original payload."""
+
+        if "config" not in values or values.get("config") is None:
+            # Store a shallow copy of the payload as config for traceability
+            cloned = {k: v for k, v in values.items() if k not in {"config"}}
+            values["config"] = cloned
+        return values
+
+    @property
+    def effective_client_id(self) -> str | None:
+        return self.client_id or self.legacy_id
 
 
 class StrategyRunRequest(BaseModel):
@@ -95,109 +169,120 @@ class StrategyRunRequest(BaseModel):
         return v
 
 
-@router.post("/strategies/save")
-async def save_strategy(request: StrategyConfigRequest, _=Depends(require_bearer)):
-    """
-    Save strategy configuration
+@router.post("/strategies/save", status_code=status.HTTP_201_CREATED)
+def save_strategy(
+    request: StrategyPayload,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db),
+):
+    """Create or update a strategy using database persistence."""
 
-    POST /api/strategies/save
-    Body: {
-        "strategy_type": "under4-multileg",
-        "config": { ... }
-    }
-    """
-    user_id = "default"  # TODO: Get from auth
-    strategy_file = STRATEGIES_DIR / f"{user_id}_{request.strategy_type}.json"
+    user = _get_or_create_default_user(db)
+    client_id = request.effective_client_id
 
-    try:
-        # Validate config based on strategy type
-        if request.strategy_type == "under4-multileg":
-            # Validate against Pydantic model
-            config = Under4MultilegConfig(**request.config)
-            validated_config = config.model_dump()
-        else:
-            raise HTTPException(
-                status_code=400, detail=f"Unknown strategy type: {request.strategy_type}"
-            )
+    existing = None
+    if client_id:
+        existing = _get_strategy_by_identifier(db, user, client_id)
 
-        # Save to file
-        with open(strategy_file, "w") as f:
-            json.dump(
-                {"strategy_type": request.strategy_type, "config": validated_config}, f, indent=2
-            )
+    payload_config = request.config or {}
+    payload_config.setdefault("id", client_id or request.legacy_id)
+    payload_config.setdefault("clientId", client_id)
 
+    if existing:
+        merged_config = dict(existing.config or {})
+        merged_config.update(payload_config)
+
+        existing.name = request.name
+        existing.description = request.description
+        existing.strategy_type = request.strategy_type or existing.strategy_type
+        existing.client_strategy_id = client_id or existing.client_strategy_id
+        existing.config = merged_config
+        existing.updated_at = datetime.utcnow()
+
+        db.add(existing)
+        db.commit()
+        db.refresh(existing)
+        return _serialize_strategy(existing)
+
+    strategy = Strategy(
+        user_id=user.id,
+        name=request.name,
+        description=request.description,
+        strategy_type=request.strategy_type or "custom",
+        client_strategy_id=client_id,
+        config=payload_config,
+        is_active=payload_config.get("status") == "active",
+        is_autopilot=bool(payload_config.get("is_autopilot")),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
+    db.add(strategy)
+    db.commit()
+    db.refresh(strategy)
+    return _serialize_strategy(strategy)
+
+
+@router.get("/strategies/load/{strategy_identifier}")
+def load_strategy(
+    strategy_identifier: str,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db),
+):
+    """Load a specific strategy configuration."""
+
+    user = _get_or_create_default_user(db)
+    strategy = _get_strategy_by_identifier(db, user, strategy_identifier)
+
+    if strategy:
         return {
-            "success": True,
-            "message": f"Strategy '{request.strategy_type}' saved successfully",
+            "strategy_type": strategy.strategy_type,
+            "config": strategy.config or {},
+            "is_default": False,
         }
 
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    if strategy_identifier == "under4-multileg":
+        default_config = Under4MultilegConfig()
+        return {
+            "strategy_type": strategy_identifier,
+            "config": default_config.model_dump(),
+            "is_default": True,
+        }
 
-
-@router.get("/strategies/load/{strategy_type}")
-async def load_strategy(strategy_type: str, _=Depends(require_bearer)):
-    """
-    Load strategy configuration
-
-    GET /api/strategies/load/under4-multileg
-    """
-    user_id = "default"  # TODO: Get from auth
-    strategy_file = STRATEGIES_DIR / f"{user_id}_{strategy_type}.json"
-
-    if not strategy_file.exists():
-        # Return default configuration
-        if strategy_type == "under4-multileg":
-            default_config = Under4MultilegConfig()
-            return {
-                "strategy_type": strategy_type,
-                "config": default_config.model_dump(),
-                "is_default": True,
-            }
-        else:
-            raise HTTPException(status_code=404, detail=f"Strategy '{strategy_type}' not found")
-
-    try:
-        with open(strategy_file) as f:
-            data = json.load(f)
-
-        return {**data, "is_default": False}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    raise HTTPException(status_code=404, detail=f"Strategy '{strategy_identifier}' not found")
 
 
 @router.get("/strategies/list")
-async def list_strategies(_=Depends(require_bearer)):
-    """
-    List all available strategies
+def list_strategies(
+    limit: int = 100,
+    offset: int = 0,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db),
+):
+    """List saved strategies with pagination support."""
 
-    GET /api/strategies/list
-    """
-    user_id = "default"  # TODO: Get from auth
+    user = _get_or_create_default_user(db)
+    query = (
+        db.query(Strategy)
+        .filter(Strategy.user_id == user.id)
+        .order_by(Strategy.updated_at.desc())
+    )
+    total = query.count()
+    strategies = query.offset(offset).limit(limit).all()
 
-    strategies = []
-
-    # Check for saved strategies
-    for strategy_file in STRATEGIES_DIR.glob(f"{user_id}_*.json"):
-        try:
-            with open(strategy_file) as f:
-                data = json.load(f)
-            strategies.append({"strategy_type": data["strategy_type"], "has_config": True})
-        except:
-            continue
-
-    # Add available strategies that haven't been configured
-    available_strategies = ["under4-multileg", "custom"]
-    for strategy_type in available_strategies:
-        if not any(s["strategy_type"] == strategy_type for s in strategies):
-            strategies.append({"strategy_type": strategy_type, "has_config": False})
-
-    return {"strategies": strategies}
+    return {
+        "strategies": [_serialize_strategy(strategy) for strategy in strategies],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
 
 
 @router.post("/strategies/run")
-async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
+def run_strategy(
+    request: StrategyRunRequest,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db),
+):
     """
     Run a strategy (execute morning routine)
 
@@ -207,22 +292,26 @@ async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
         "dry_run": true
     }
     """
-    user_id = "default"  # TODO: Get from auth
+    user = _get_or_create_default_user(db)
 
     try:
-        # Load strategy configuration
-        strategy_file = STRATEGIES_DIR / f"{user_id}_{request.strategy_type}.json"
-
-        if strategy_file.exists():
-            with open(strategy_file) as f:
-                data = json.load(f)
-                config_dict = data["config"]
-        else:
-            config_dict = None
+        strategy_record = _get_strategy_by_identifier(db, user, request.strategy_type)
+        config_dict: dict[str, Any] | None = None
+        if strategy_record and isinstance(strategy_record.config, dict):
+            config_dict = strategy_record.config.get("config") or strategy_record.config
 
         # Create strategy instance
         if request.strategy_type == "under4-multileg":
-            strategy = create_under4_multileg_strategy(config_dict)
+            validated = None
+            if config_dict:
+                try:
+                    validated = Under4MultilegConfig(**config_dict).model_dump()
+                except Exception:
+                    validated = Under4MultilegConfig().model_dump()
+            else:
+                validated = Under4MultilegConfig().model_dump()
+
+            strategy = create_under4_multileg_strategy(validated)
         else:
             raise HTTPException(
                 status_code=400, detail=f"Unknown strategy type: {request.strategy_type}"
@@ -267,24 +356,71 @@ async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/strategies/{strategy_type}")
-async def delete_strategy(strategy_type: str, _=Depends(require_bearer)):
-    """
-    Delete a saved strategy configuration
+@router.get("/strategies/{strategy_id}")
+def get_strategy(
+    strategy_id: str,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db),
+):
+    """Fetch a single strategy by identifier."""
 
-    DELETE /api/strategies/under4-multileg
-    """
-    user_id = "default"  # TODO: Get from auth
-    strategy_file = STRATEGIES_DIR / f"{user_id}_{strategy_type}.json"
+    user = _get_or_create_default_user(db)
+    strategy = _get_strategy_by_identifier(db, user, strategy_id)
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Strategy not found")
+    return _serialize_strategy(strategy)
 
-    if not strategy_file.exists():
-        raise HTTPException(status_code=404, detail=f"Strategy '{strategy_type}' not found")
 
-    try:
-        strategy_file.unlink()
-        return {"success": True, "message": f"Strategy '{strategy_type}' deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.put("/strategies/{strategy_id}")
+def update_strategy(
+    strategy_id: str,
+    request: StrategyPayload,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db),
+):
+    """Update an existing strategy."""
+
+    user = _get_or_create_default_user(db)
+    strategy = _get_strategy_by_identifier(db, user, strategy_id)
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Strategy not found")
+
+    payload_config = request.config or {}
+    payload_config.setdefault("id", request.effective_client_id or strategy.client_strategy_id)
+    payload_config.setdefault("clientId", request.effective_client_id or strategy.client_strategy_id)
+
+    merged_config = dict(strategy.config or {})
+    merged_config.update(payload_config)
+
+    strategy.name = request.name
+    strategy.description = request.description
+    strategy.strategy_type = request.strategy_type or strategy.strategy_type
+    strategy.client_strategy_id = request.effective_client_id or strategy.client_strategy_id
+    strategy.config = merged_config
+    strategy.updated_at = datetime.utcnow()
+
+    db.add(strategy)
+    db.commit()
+    db.refresh(strategy)
+    return _serialize_strategy(strategy)
+
+
+@router.delete("/strategies/{strategy_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_strategy(
+    strategy_id: str,
+    _=Depends(require_bearer),
+    db: Session = Depends(get_db),
+):
+    """Delete a strategy from the database."""
+
+    user = _get_or_create_default_user(db)
+    strategy = _get_strategy_by_identifier(db, user, strategy_id)
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Strategy not found")
+
+    db.delete(strategy)
+    db.commit()
+    return None
 
 
 # ========================================

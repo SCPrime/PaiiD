@@ -22,8 +22,25 @@ os.environ["API_TOKEN"] = "test-token-12345"
 os.environ["TRADIER_API_KEY"] = "test-tradier-key"
 os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
+import types
+
+try:
+    import cachetools  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - test environment fallback
+    cachetools = types.ModuleType("cachetools")
+
+    class _StubTTLCache(dict):
+        def __init__(self, *_, **__):
+            super().__init__()
+
+    cachetools.TTLCache = _StubTTLCache  # type: ignore[attr-defined]
+    import sys
+
+    sys.modules["cachetools"] = cachetools
+
 from app.db.session import Base, get_db
-from app.main import app
+from app.main import app as fastapi_app
+import app.models.database  # noqa: F401 ensure models are registered
 
 
 # ===========================================
@@ -92,12 +109,12 @@ def client(test_db):
         finally:
             pass
 
-    app.dependency_overrides[get_db] = override_get_db
+    fastapi_app.dependency_overrides[get_db] = override_get_db
 
-    with TestClient(app) as test_client:
+    with TestClient(fastapi_app) as test_client:
         yield test_client
 
-    app.dependency_overrides.clear()
+    fastapi_app.dependency_overrides.clear()
 
 
 @pytest.fixture(scope="function")

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "./ui";
 import { theme } from "../styles/theme";
 
@@ -19,24 +19,63 @@ export default function OrderHistory() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [filter, setFilter] = useState<"all" | "executed" | "dry-run">("all");
 
-  // Load orders from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem("orderHistory");
-    if (stored) {
-      try {
-        setOrders(JSON.parse(stored));
-      } catch (e) {
-        console.error("Failed to load order history:", e);
-      }
-    }
+  const apiToken = process.env.NEXT_PUBLIC_API_TOKEN || "";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api/proxy/api";
+
+  const mapOrderFromApi = useCallback((data: any): OrderRecord => {
+    return {
+      id: data?.id || `order-${Date.now()}`,
+      timestamp: data?.timestamp || new Date().toISOString(),
+      symbol: data?.symbol || "",
+      side: data?.side || "buy",
+      qty: Number(data?.qty ?? data?.quantity ?? 0),
+      type: data?.type || data?.order_type || "market",
+      limitPrice: data?.limitPrice ?? data?.limit_price ?? undefined,
+      status: (data?.status as OrderRecord["status"]) || "pending",
+      dryRun: Boolean(data?.dryRun ?? data?.is_dry_run ?? false),
+    };
   }, []);
 
-  // Save orders to localStorage whenever they change
-  useEffect(() => {
-    if (orders.length > 0) {
-      localStorage.setItem("orderHistory", JSON.stringify(orders));
+  const fetchOrders = useCallback(async () => {
+    try {
+      const response = await fetch(`${baseUrl}/orders/history`, {
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch order history: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const mapped = (data?.orders || []).map(mapOrderFromApi);
+      setOrders(mapped);
+      localStorage.setItem("orderHistory", JSON.stringify(mapped));
+    } catch (error) {
+      console.error("Failed to fetch order history:", error);
+      const stored = localStorage.getItem("orderHistory");
+      if (stored) {
+        try {
+          setOrders(JSON.parse(stored));
+        } catch (e) {
+          console.error("Failed to parse cached order history:", e);
+        }
+      }
     }
-  }, [orders]);
+  }, [apiToken, baseUrl, mapOrderFromApi]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  useEffect(() => {
+    const handler = () => fetchOrders();
+    window.addEventListener("orderHistoryUpdated", handler);
+    return () => window.removeEventListener("orderHistoryUpdated", handler);
+  }, [fetchOrders]);
 
   const filteredOrders = orders.filter((order) => {
     if (filter === "all") return true;
@@ -47,8 +86,19 @@ export default function OrderHistory() {
 
   const clearHistory = () => {
     if (confirm("Are you sure you want to clear all order history?")) {
-      setOrders([]);
-      localStorage.removeItem("orderHistory");
+      fetch(`${baseUrl}/orders/history`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+        },
+      })
+        .then(() => {
+          setOrders([]);
+          localStorage.removeItem("orderHistory");
+        })
+        .catch((error) => {
+          console.error("Failed to clear order history:", error);
+        });
     }
   };
 
@@ -282,24 +332,42 @@ export default function OrderHistory() {
 }
 
 // Export helper function to add orders to history
-export function addOrderToHistory(order: Omit<OrderRecord, "id" | "timestamp">) {
+export async function addOrderToHistory(order: Omit<OrderRecord, "id" | "timestamp">) {
   const orderRecord: OrderRecord = {
     ...order,
     id: `order-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
     timestamp: new Date().toISOString(),
   };
 
-  const stored = localStorage.getItem("orderHistory");
-  const orders: OrderRecord[] = stored ? JSON.parse(stored) : [];
-  orders.unshift(orderRecord); // Add to beginning
+  const apiToken = process.env.NEXT_PUBLIC_API_TOKEN || "";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api/proxy/api";
 
-  // Keep only last 100 orders
-  if (orders.length > 100) {
-    orders.splice(100);
+  try {
+    const response = await fetch(`${baseUrl}/orders/history`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(orderRecord),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to persist order history: ${response.status}`);
+    }
+
+    // Update cached copy for offline access
+    const stored = localStorage.getItem("orderHistory");
+    const orders: OrderRecord[] = stored ? JSON.parse(stored) : [];
+    orders.unshift(orderRecord);
+    if (orders.length > 100) {
+      orders.splice(100);
+    }
+    localStorage.setItem("orderHistory", JSON.stringify(orders));
+  } catch (error) {
+    console.error("Failed to persist order history:", error);
   }
 
-  localStorage.setItem("orderHistory", JSON.stringify(orders));
-
-  // Dispatch custom event to notify OrderHistory component
   window.dispatchEvent(new CustomEvent("orderHistoryUpdated"));
 }

@@ -4,7 +4,7 @@
  * NOTE: TypeScript checking disabled temporarily - needs interface fixes
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Sparkles,
   Code2,
@@ -59,6 +59,8 @@ interface SavedStrategy extends Omit<Strategy, "id"> {
     totalTrades: number;
     profitFactor: number;
   };
+  config?: any;
+  dbId?: number;
 }
 
 interface Template {
@@ -96,24 +98,63 @@ export default function StrategyBuilderAI() {
   const [researchSymbol, setResearchSymbol] = useState("");
   const [showStockLookup, setShowStockLookup] = useState(false);
 
-  // Load saved strategies from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("ai_trader_strategies");
-    if (saved) {
-      try {
-        setSavedStrategies(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to load strategies:", e);
-      }
-    }
+  const apiToken = process.env.NEXT_PUBLIC_API_TOKEN || "";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "/api/proxy/api";
+
+  const mapStrategyFromApi = useCallback((data: any): SavedStrategy => {
+    const config = data?.config || {};
+    return {
+      id: data?.id || data?.clientId || `strategy-${Date.now()}`,
+      name: data?.name || config.name || "Untitled Strategy",
+      entry: config.entry || [],
+      exit: config.exit || [],
+      riskManagement: config.riskManagement,
+      status: config.status || data?.status,
+      aiPrompt: config.aiPrompt,
+      createdAt: data?.created_at || config.createdAt,
+      updatedAt: data?.updated_at || config.updatedAt,
+      entryRules: config.entryRules,
+      exitRules: config.exitRules,
+      positionSizing: config.positionSizing,
+      backtestResults: config.backtestResults,
+      config,
+      dbId: data?.dbId,
+    };
   }, []);
 
-  // Save strategies to localStorage whenever they change
-  useEffect(() => {
-    if (savedStrategies.length > 0) {
-      localStorage.setItem("ai_trader_strategies", JSON.stringify(savedStrategies));
+  const fetchSavedStrategies = useCallback(async () => {
+    try {
+      const response = await fetch(`${baseUrl}/strategies/list`, {
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch strategies: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const strategies = (data?.strategies || []).map(mapStrategyFromApi);
+      setSavedStrategies(strategies);
+    } catch (error) {
+      console.error("Strategy fetch error:", error);
+      const cached = localStorage.getItem("ai_trader_strategies");
+      if (cached) {
+        try {
+          setSavedStrategies(JSON.parse(cached));
+        } catch (e) {
+          console.error("Failed to parse cached strategies:", e);
+        }
+      }
     }
-  }, [savedStrategies]);
+  }, [apiToken, baseUrl, mapStrategyFromApi]);
+
+  useEffect(() => {
+    fetchSavedStrategies();
+  }, [fetchSavedStrategies]);
 
   // Fetch templates when library view is opened
   useEffect(() => {
@@ -205,7 +246,7 @@ export default function StrategyBuilderAI() {
     }
   };
 
-  const handleSaveStrategy = () => {
+  const handleSaveStrategy = async () => {
     if (!currentStrategy) return;
 
     // Ensure strategy has an ID
@@ -214,30 +255,76 @@ export default function StrategyBuilderAI() {
       id: currentStrategy.id || `strategy-${Date.now()}`,
     };
 
-    const existingIndex = savedStrategies.findIndex((s) => s.id === strategyToSave.id);
+    try {
+      const response = await fetch(`${baseUrl}/strategies/save`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(strategyToSave),
+      });
 
-    if (existingIndex >= 0) {
-      // Update existing
-      setSavedStrategies(
-        savedStrategies.map((s) =>
-          s.id === strategyToSave.id
-            ? { ...strategyToSave, updatedAt: new Date().toISOString() }
-            : s
-        )
-      );
-    } else {
-      // Add new
-      setSavedStrategies([...savedStrategies, strategyToSave]);
+      if (!response.ok) {
+        throw new Error(`Failed to save strategy: ${response.status}`);
+      }
+
+      const payload = await response.json();
+      const mapped = mapStrategyFromApi(payload);
+
+      setSavedStrategies((prev) => {
+        const existingIndex = prev.findIndex((s) => s.id === mapped.id);
+        let updated: SavedStrategy[];
+        if (existingIndex >= 0) {
+          updated = [...prev];
+          updated[existingIndex] = mapped;
+        } else {
+          updated = [...prev, mapped];
+        }
+        localStorage.setItem("ai_trader_strategies", JSON.stringify(updated));
+        return updated;
+      });
+
+      setView("library");
+      setCurrentStrategy(null);
+      setNlInput("");
+      toast.success("Strategy saved to backend");
+    } catch (error) {
+      console.error("Failed to save strategy:", error);
+      toast.error("Failed to save strategy. Please try again.");
     }
-
-    setView("library");
-    setCurrentStrategy(null);
-    setNlInput("");
   };
 
-  const handleDeleteStrategy = (id: string) => {
+  const handleDeleteStrategy = async (id: string) => {
     if (confirm("Are you sure you want to delete this strategy?")) {
-      setSavedStrategies(savedStrategies.filter((s) => s.id !== id));
+      try {
+        const response = await fetch(`${baseUrl}/strategies/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+          },
+        });
+
+        if (response.ok || response.status === 204) {
+          setSavedStrategies((prev) => {
+            const updated = prev.filter((s) => s.id !== id);
+            localStorage.setItem("ai_trader_strategies", JSON.stringify(updated));
+            return updated;
+          });
+        toast.success("Strategy deleted");
+      } else if (response.status === 404) {
+          setSavedStrategies((prev) => {
+            const updated = prev.filter((s) => s.id !== id);
+            localStorage.setItem("ai_trader_strategies", JSON.stringify(updated));
+            return updated;
+          });
+        } else {
+          throw new Error(`Failed with status ${response.status}`);
+        }
+      } catch (error) {
+        console.error("Failed to delete strategy:", error);
+        toast.error("Failed to delete strategy. Please try again.");
+      }
     }
   };
 
@@ -247,12 +334,37 @@ export default function StrategyBuilderAI() {
     setView("create");
   };
 
-  const handleActivateStrategy = (id: string) => {
-    setSavedStrategies(
-      savedStrategies.map((s) =>
-        s.id === id ? { ...s, status: s.status === "active" ? "paused" : "active" } : s
-      )
-    );
+  const handleActivateStrategy = async (id: string) => {
+    const target = savedStrategies.find((s) => s.id === id);
+    if (!target) return;
+
+    const nextStatus = target.status === "active" ? "paused" : "active";
+
+    try {
+      const response = await fetch(`${baseUrl}/strategies/${id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...target, status: nextStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update status: ${response.status}`);
+      }
+
+      const payload = await response.json();
+      const mapped = mapStrategyFromApi(payload);
+      setSavedStrategies((prev) => {
+        const updated = prev.map((s) => (s.id === id ? mapped : s));
+        localStorage.setItem("ai_trader_strategies", JSON.stringify(updated));
+        return updated;
+      });
+    } catch (error) {
+      console.error("Failed to toggle strategy status:", error);
+      toast.error("Failed to update strategy status");
+    }
   };
 
   const accentColor = theme.workflow.strategyBuilder;

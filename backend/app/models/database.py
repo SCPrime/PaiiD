@@ -7,7 +7,18 @@ Defines schema for users, strategies, trades, performance tracking, and equity s
 
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from ..db.session import Base
@@ -31,6 +42,9 @@ class User(Base):
 
     # Legacy broker integration
     alpaca_account_id = Column(String(100), unique=True, nullable=True, index=True)
+
+    # External identifier (e.g., browser-generated userId)
+    external_id = Column(String(255), unique=True, nullable=True, index=True)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -139,6 +153,9 @@ class Strategy(Base):
     strategy_type = Column(
         String(50), nullable=False, index=True
     )  # trend_following, mean_reversion, momentum, custom
+
+    # Optional identifier supplied by client applications (e.g., localStorage IDs)
+    client_strategy_id = Column(String(100), unique=True, nullable=True, index=True)
 
     # Strategy configuration (stored as JSON)
     # Example: {"entry_rules": [...], "exit_rules": [...], "rsi_period": 14}
@@ -307,6 +324,78 @@ class OrderTemplate(Base):
 
     def __repr__(self):
         return f"<OrderTemplate(id={self.id}, name='{self.name}', symbol='{self.symbol}', side='{self.side}')>"
+
+
+class UserSettings(Base):
+    """Persisted UI/settings preferences migrated from localStorage."""
+
+    __tablename__ = "user_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    settings = Column(JSON, default=dict, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = relationship("User")
+
+    def __repr__(self):
+        return f"<UserSettings(id={self.id}, user_id={self.user_id})>"
+
+
+class UserProfileData(Base):
+    """Versioned profile data (supports multiple profile types per user)."""
+
+    __tablename__ = "user_profiles"
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "profile_type", name="uq_user_profiles_user_profile"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    profile_type = Column(String(50), nullable=False, index=True)
+    data = Column(JSON, default=dict, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = relationship("User")
+
+    def __repr__(self):
+        return f"<UserProfileData(id={self.id}, profile_type={self.profile_type})>"
+
+
+class OrderHistory(Base):
+    """Historical orders migrated from browser localStorage."""
+
+    __tablename__ = "order_history"
+
+    __table_args__ = (
+        UniqueConstraint("client_order_id", name="uq_order_history_client_order_id"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    client_order_id = Column(String(100), unique=True, nullable=True, index=True)
+
+    symbol = Column(String(20), nullable=False)
+    side = Column(String(10), nullable=False)
+    quantity = Column(Float, nullable=False)
+    order_type = Column(String(20), nullable=False)
+    limit_price = Column(Float, nullable=True)
+    status = Column(String(20), default="pending", nullable=False)
+    is_dry_run = Column(Boolean, default=False, nullable=False)
+    executed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    user = relationship("User")
+
+    def __repr__(self):
+        return (
+            f"<OrderHistory(id={self.id}, symbol='{self.symbol}', side='{self.side}', "
+            f"qty={self.quantity})>"
+        )
 
 
 class AIRecommendation(Base):

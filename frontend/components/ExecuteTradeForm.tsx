@@ -453,7 +453,7 @@ export default function ExecuteTradeForm() {
       }
 
       // Add to order history
-      addOrderToHistory({
+      await addOrderToHistory({
         symbol: pendingOrder.symbol,
         side: pendingOrder.side,
         qty: pendingOrder.qty,
