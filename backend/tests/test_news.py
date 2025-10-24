@@ -130,7 +130,7 @@ def test_news_providers_aggregation(client):
 
         if len(articles) > 0:
             # Get unique sources
-            sources = set(article.get("source") for article in articles if "source" in article)
+            sources = {article.get("source") for article in articles if "source" in article}
 
             # Should have news from multiple sources (if configured)
             # This validates the aggregation is working

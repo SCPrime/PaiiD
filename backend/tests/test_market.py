@@ -251,9 +251,7 @@ def test_ohlc_data_validation(client):
 
 def test_extended_hours_data(client):
     """Test pre-market and after-hours data availability"""
-    response = client.get(
-        "/api/market/quote/AAPL?includeExtendedHours=true", headers=HEADERS
-    )
+    response = client.get("/api/market/quote/AAPL?includeExtendedHours=true", headers=HEADERS)
 
     if response.status_code == 200:
         data = response.json()

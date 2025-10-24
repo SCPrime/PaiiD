@@ -6,8 +6,6 @@ Tests for critical API endpoints: health, portfolio, orders, market data
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 
 class TestHealthEndpoints:
     """Test health check endpoints"""
@@ -64,9 +62,7 @@ class TestAuthenticationProtection:
 
     def test_invalid_bearer_token(self, client):
         """Test invalid Authorization token"""
-        response = client.get(
-            "/api/positions", headers={"Authorization": "Bearer invalid-token"}
-        )
+        response = client.get("/api/positions", headers={"Authorization": "Bearer invalid-token"})
         # May get 401 (invalid token) or 403 (MVP fallback) or 500 (external API)
         assert response.status_code in [401, 403, 500]
 
@@ -75,9 +71,7 @@ class TestMarketEndpoints:
     """Test market data endpoints"""
 
     @patch("app.routers.market.requests.get")
-    def test_market_indices_success(
-        self, mock_get, client, auth_headers, mock_market_indices
-    ):
+    def test_market_indices_success(self, mock_get, client, auth_headers, mock_market_indices):
         """Test /api/market/indices with mocked Tradier response (may get auth or API error)"""
         # Mock Tradier API response
         mock_response = MagicMock()
@@ -249,9 +243,7 @@ class TestMarketDataEndpoints:
         }
         mock_client.return_value = mock_instance
 
-        response = client.get(
-            "/api/market/quotes?symbols=AAPL,MSFT", headers=auth_headers
-        )
+        response = client.get("/api/market/quotes?symbols=AAPL,MSFT", headers=auth_headers)
         # Accept 200 or 500 (API may fail with fake credentials)
         assert response.status_code in [200, 500]
         if response.status_code == 200:

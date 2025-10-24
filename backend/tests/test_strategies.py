@@ -61,9 +61,7 @@ def test_get_strategy_by_id(client):
         "rules": {"entryConditions": ["price_above_sma"], "smaPeriod": 20},
     }
 
-    create_response = client.post(
-        "/api/strategies/save", json=strategy, headers=HEADERS
-    )
+    create_response = client.post("/api/strategies/save", json=strategy, headers=HEADERS)
 
     if create_response.status_code == 201:
         strategy_id = create_response.json()["id"]
@@ -86,9 +84,7 @@ def test_update_strategy(client):
         "rules": {"entryConditions": ["rsi_oversold"], "rsiPeriod": 14},
     }
 
-    create_response = client.post(
-        "/api/strategies/save", json=strategy, headers=HEADERS
-    )
+    create_response = client.post("/api/strategies/save", json=strategy, headers=HEADERS)
 
     if create_response.status_code == 201:
         strategy_id = create_response.json()["id"]
@@ -122,17 +118,13 @@ def test_delete_strategy(client):
         "rules": {"entryConditions": ["price_above_sma"]},
     }
 
-    create_response = client.post(
-        "/api/strategies/save", json=strategy, headers=HEADERS
-    )
+    create_response = client.post("/api/strategies/save", json=strategy, headers=HEADERS)
 
     if create_response.status_code == 201:
         strategy_id = create_response.json()["id"]
 
         # Delete the strategy
-        delete_response = client.delete(
-            f"/api/strategies/{strategy_id}", headers=HEADERS
-        )
+        delete_response = client.delete(f"/api/strategies/{strategy_id}", headers=HEADERS)
 
         if delete_response.status_code == 204:
             # Verify it's deleted
@@ -148,9 +140,7 @@ def test_create_strategy_validation(client):
         # Missing symbol and rules
     }
 
-    response = client.post(
-        "/api/strategies/save", json=invalid_strategy, headers=HEADERS
-    )
+    response = client.post("/api/strategies/save", json=invalid_strategy, headers=HEADERS)
     # Should return validation error
     assert response.status_code in [400, 422]
 
@@ -249,9 +239,7 @@ def test_update_nonexistent_strategy(client):
         "rules": {"entryConditions": ["rsi_oversold"]},
     }
 
-    response = client.put(
-        f"/api/strategies/{fake_id}", json=updated_strategy, headers=HEADERS
-    )
+    response = client.put(f"/api/strategies/{fake_id}", json=updated_strategy, headers=HEADERS)
     # Should return 404 or 405 (method not supported)
     assert response.status_code in [404, 405]
 

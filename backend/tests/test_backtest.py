@@ -85,9 +85,7 @@ def test_backtest_with_different_symbols(client):
 
         response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
         # Should complete or return error, not crash
-        assert response.status_code in [200, 400, 422, 500], (
-            f"Unexpected status for {symbol}"
-        )
+        assert response.status_code in [200, 400, 422, 500], f"Unexpected status for {symbol}"
 
 
 def test_backtest_validates_date_range(client):

@@ -80,7 +80,6 @@ class TestUserModel:
 
     def test_user_cascade_delete(self, test_db, sample_user, sample_strategy):
         """Test cascade delete (deleting user deletes strategies)"""
-        user_id = sample_user.id
         strategy_id = sample_strategy.id
 
         test_db.delete(sample_user)
@@ -368,7 +367,6 @@ class TestModelRelationships:
 
     def test_trade_set_null_on_strategy_delete(self, test_db, sample_trade, sample_strategy):
         """Test ON DELETE SET NULL for strategy_id"""
-        strategy_id = sample_strategy.id
         trade_id = sample_trade.id
 
         # Delete strategy

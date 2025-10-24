@@ -14,9 +14,7 @@ print("\n===== BACKEND STARTUP =====")
 print(f".env path: {env_path}")
 print(f".env exists: {env_path.exists()}")
 print("API_TOKEN from env: " + ("***" if os.getenv("API_TOKEN") else "NOT_SET"))
-print(
-    "TRADIER_API_KEY configured: " + ("YES" if os.getenv("TRADIER_API_KEY") else "NO")
-)
+print("TRADIER_API_KEY configured: " + ("YES" if os.getenv("TRADIER_API_KEY") else "NO"))
 print("Deployed from: main branch - Tradier integration active")
 print("===========================\n", flush=True)
 
@@ -69,9 +67,7 @@ if settings.SENTRY_DSN:
         traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
         profiles_sample_rate=0.1,  # 10% profiling
         environment=(
-            "production"
-            if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "")
-            else "development"
+            "production" if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "") else "development"
         ),
         release="paiid-backend@1.0.0",
         send_default_pii=False,  # Don't send personally identifiable info
@@ -160,22 +156,16 @@ async def startup_event():
     logger.info(f"   Hostname: {os.getenv('HOSTNAME', 'unknown')}")
     logger.info(f"   Python Version: {sys.version}")
     logger.info(f"   OS: {os.name} - {os.getenv('OS', 'unknown')}")
-    logger.info(
-        f"   Sentry DSN: {'✅ Configured' if settings.SENTRY_DSN else '❌ Missing'}"
-    )
+    logger.info(f"   Sentry DSN: {'✅ Configured' if settings.SENTRY_DSN else '❌ Missing'}")
     logger.info(
         f"   Test Fixtures: {'✅ Enabled' if settings.USE_TEST_FIXTURES else '❌ Disabled'}"
     )
-    logger.info(
-        f"   Live Trading: {'✅ Enabled' if settings.LIVE_TRADING else '❌ Disabled'}"
-    )
+    logger.info(f"   Live Trading: {'✅ Enabled' if settings.LIVE_TRADING else '❌ Disabled'}")
     logger.info(f"   Log Level: {settings.LOG_LEVEL}")
     logger.info(
         f"   Redis URL: {'✅ Configured' if settings.REDIS_URL else '❌ Missing (in-memory fallback)'}"
     )
-    logger.info(
-        f"   Database URL: {'✅ Configured' if settings.DATABASE_URL else '❌ Missing'}"
-    )
+    logger.info(f"   Database URL: {'✅ Configured' if settings.DATABASE_URL else '❌ Missing'}")
 
     # Log key package versions
     try:
@@ -218,7 +208,7 @@ async def startup_event():
     try:
         async with monitor.phase("prelaunch_validation", timeout=10.0):
             validator = PrelaunchValidator(strict_mode=True)
-            success, errors, warnings = await validator.validate_all()
+            success, errors, _warnings = await validator.validate_all()
 
             if not success:
                 logger.error("🚨 Pre-launch validation failed!")
@@ -257,7 +247,7 @@ async def startup_event():
     # Initialize scheduler
     try:
         async with monitor.phase("scheduler_init", timeout=5.0):
-            scheduler_instance = init_scheduler()
+            init_scheduler()
             print("[OK] Scheduler initialized and started", flush=True)
     except Exception as e:
         print(f"[ERROR] Failed to initialize scheduler: {e!s}", flush=True)
@@ -297,9 +287,7 @@ async def startup_event():
                     flush=True,
                 )
     except Exception as e:
-        print(
-            f"[WARNING] Tradier stream startup failed (non-blocking): {e}", flush=True
-        )
+        print(f"[WARNING] Tradier stream startup failed (non-blocking): {e}", flush=True)
         print(
             "[INFO] Application will continue - streaming will retry automatically",
             flush=True,
@@ -309,9 +297,7 @@ async def startup_event():
     monitor.finish()
 
     # Log startup completion with duration
-    startup_duration = (
-        time.time() - monitor.start_time if hasattr(monitor, "start_time") else 0
-    )
+    startup_duration = time.time() - monitor.start_time if hasattr(monitor, "start_time") else 0
     logger.info("=" * 70)
     logger.info(f"✅ Backend startup completed successfully in {startup_duration:.2f}s")
     logger.info("   All systems operational")
