@@ -12,7 +12,7 @@ import requests
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.dependencies import require_user
 from ..core.config import settings
 from ..services.cache import CacheService, get_cache
 
@@ -26,7 +26,7 @@ print(f"TRADIER_API_BASE_URL: {settings.TRADIER_API_BASE_URL}")
 print(f"ANTHROPIC_API_KEY present: {bool(settings.ANTHROPIC_API_KEY)}")
 print("=" * 80, flush=True)
 
-router = APIRouter(tags=["market"])
+router = APIRouter(tags=["market"], dependencies=[Depends(require_user)])
 
 
 class MarketCondition(BaseModel):
@@ -36,7 +36,7 @@ class MarketCondition(BaseModel):
     details: str | None = None
 
 
-@router.get("/market/conditions", dependencies=[Depends(require_bearer)])
+@router.get("/market/conditions")
 async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dict:
     """
     Get current market conditions for trading analysis using real Tradier data
@@ -252,7 +252,7 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
         }
 
 
-@router.get("/market/indices", dependencies=[Depends(require_bearer)])
+@router.get("/market/indices")
 async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
     """
     Get current prices for Dow Jones Industrial and NASDAQ Composite
@@ -389,7 +389,7 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
             )
 
 
-@router.get("/market/sectors", dependencies=[Depends(require_bearer)])
+@router.get("/market/sectors")
 async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> dict:
     """
     Get performance of major market sectors using real Tradier data
@@ -503,7 +503,7 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
         }
 
 
-@router.get("/market/status", dependencies=[Depends(require_bearer)])
+@router.get("/market/status")
 async def get_market_status(cache: CacheService = Depends(get_cache)) -> dict:
     """
     Get current market status (open/closed) and trading hours

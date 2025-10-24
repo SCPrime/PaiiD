@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.auth import require_bearer
+from app.core.dependencies import require_user
 
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
@@ -24,12 +24,13 @@ print("=" * 80)
 print("🚨 TRADIER INTEGRATION CODE LOADED - market_data.py")
 print("=" * 80, flush=True)
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_user)])
 
 
 @router.get("/market/quote/{symbol}")
 async def get_quote(
-    symbol: str, _=Depends(require_bearer), cache: CacheService = Depends(get_cache)
+    symbol: str,
+    cache: CacheService = Depends(get_cache),
 ):
     """Get real-time quote for a symbol using Tradier (cached for 15s)"""
     # Check cache first
@@ -68,7 +69,7 @@ async def get_quote(
 
 
 @router.get("/market/quotes")
-async def get_quotes(symbols: str, _=Depends(require_bearer)):
+async def get_quotes(symbols: str):
     """Get quotes for multiple symbols (comma-separated) using Tradier"""
     try:
         client = get_tradier_client()
@@ -95,7 +96,9 @@ async def get_quotes(symbols: str, _=Depends(require_bearer)):
 
 @router.get("/market/bars/{symbol}")
 async def get_bars(
-    symbol: str, timeframe: str = "daily", limit: int = 100, _=Depends(require_bearer)
+    symbol: str,
+    timeframe: str = "daily",
+    limit: int = 100,
 ):
     """Get historical price bars using Tradier"""
     try:
@@ -152,7 +155,7 @@ async def get_bars(
 
 
 @router.get("/market/scanner/under4")
-async def scan_under_4(_=Depends(require_bearer)):
+async def scan_under_4():
     """Scan for stocks under $4 with volume using Tradier"""
     try:
         # Pre-defined list of liquid stocks that trade near/under $4

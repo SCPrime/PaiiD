@@ -18,24 +18,15 @@ class TestHealthEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "ok"
-        assert "time" in data
+        assert "timestamp" in data
 
-    def test_ready_endpoint(self, client):
-        """Test /api/ready returns 200"""
-        response = client.get("/api/ready")
+    def test_detailed_health_requires_auth(self, client):
+        response = client.get("/api/health/detailed")
+        assert response.status_code == 403
+
+    def test_detailed_health_with_auth(self, client, auth_headers):
+        response = client.get("/api/health/detailed", headers=auth_headers)
         assert response.status_code == 200
-        data = response.json()
-        assert data["ready"] is True
-
-    def test_sentry_test_endpoint(self, client):
-        """Test /api/sentry-test raises error (for Sentry capture)"""
-        # This endpoint intentionally raises an exception for Sentry testing
-        # The TestClient will propagate the exception instead of returning 500
-        with pytest.raises(Exception) as excinfo:
-            response = client.get("/api/sentry-test")
-
-        # Verify it's the intentional test exception
-        assert "SENTRY TEST" in str(excinfo.value)
 
 
 class TestAuthenticationProtection:
@@ -44,7 +35,7 @@ class TestAuthenticationProtection:
     def test_positions_requires_auth(self, client):
         """Test /api/positions requires Authorization header"""
         response = client.get("/api/positions")
-        assert response.status_code == 401  # Unauthorized without auth
+        assert response.status_code == 403  # HTTPBearer returns 403 when missing
 
     def test_positions_with_valid_auth(self, client, auth_headers):
         """Test /api/positions with valid auth (may fail on Tradier call)"""

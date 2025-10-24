@@ -236,9 +236,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const url = `${BACKEND}/api/${path}${queryString ? "?" + queryString : ""}`;
 
   const headers: Record<string, string> = {
-    authorization: `Bearer ${API_TOKEN}`,
     "content-type": "application/json",
   };
+
+  const incomingAuth = req.headers.authorization;
+  if (incomingAuth && typeof incomingAuth === "string") {
+    headers.authorization = incomingAuth;
+  } else {
+    console.warn("[PROXY] ❌ Missing Authorization header - rejecting request");
+    return res.status(401).json({ error: "Authorization header required" });
+  }
 
   // propagate request id if client set one
   const rid = (req.headers["x-request-id"] as string) || "";
@@ -250,7 +257,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.info(`[PROXY] Original URL: ${req.url}`);
   console.info(`[PROXY] Extracted path: "${path}"`);
   console.info(`[PROXY] Constructed URL: ${url}`);
-  console.info(`[PROXY] Auth header: Bearer ${API_TOKEN?.substring(0, 8)}...`);
+  if (headers.authorization) {
+    console.info(`[PROXY] Auth header: ${headers.authorization.substring(0, 20)}...`);
+  } else {
+    console.warn("[PROXY] ⚠️ No Authorization header forwarded to backend");
+  }
   console.info(`[PROXY] Backend: ${BACKEND}`);
   if (req.method === "POST") {
     console.info(`[PROXY] Body:`, JSON.stringify(req.body, null, 2));
