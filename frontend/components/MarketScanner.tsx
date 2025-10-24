@@ -61,8 +61,24 @@ export default function MarketScanner() {
         signalType: filter.signalType,
         scanType,
       });
-      const data = await apiGet<any>(`/api/proxy/screening/opportunities?${params.toString()}`);
-      const apiResults: ScanResult[] = (data?.results || []).map((r: any) => ({
+      const data = await apiGet<{
+        results: Array<{
+          symbol: string;
+          price: number;
+          change: number;
+          changePercent: number;
+          volume: number;
+          avgVolume: number;
+          signal: string;
+          indicators?: {
+            rsi: number;
+            macd: number;
+            bollinger: number;
+          };
+          reason?: string;
+        }>;
+      }>(`/api/proxy/screening/opportunities?${params.toString()}`);
+      const apiResults: ScanResult[] = (data?.results || []).map((r) => ({
         symbol: r.symbol,
         price: r.price,
         change: r.change,
@@ -80,7 +96,7 @@ export default function MarketScanner() {
         reason: r.reason || "",
       }));
       setResults(apiResults);
-    } catch (e: any) {
+    } catch (e: unknown) {
       const err = e as ApiError;
       console.error("[MarketScanner] scan error", err.status, err.message);
       setResults([]);

@@ -35,7 +35,13 @@ const NewsReview: React.FC = () => {
   const [providers, setProviders] = useState<string[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [selectedProvider, setSelectedProvider] = useState<string>("all");
-  const [marketSentiment, setMarketSentiment] = useState<any>(null);
+  const [marketSentiment, setMarketSentiment] = useState<{
+    overall: string;
+    bullish: number;
+    bearish: number;
+    neutral: number;
+    keyEvents: string[];
+  } | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [selectedSymbol, setSelectedSymbol] = useState<string>("");
@@ -43,8 +49,13 @@ const NewsReview: React.FC = () => {
   const ARTICLES_PER_PAGE = 20;
 
   // AI Analysis State
-  const [_selectedArticle, setSelectedArticle] = useState<any>(null);
-  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [_selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    summary: string;
+    sentiment: string;
+    keyPoints: string[];
+    impact: string;
+  } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [showAiPanel, setShowAiPanel] = useState(false);
@@ -54,7 +65,7 @@ const NewsReview: React.FC = () => {
       const response = await fetch("/api/proxy/news/providers");
       if (!response.ok) throw new Error("Failed to fetch providers");
       const data = await response.json();
-      setProviders(data.providers.map((p: any) => p.name));
+      setProviders(data.providers.map((p: { name: string }) => p.name));
     } catch (err) {
       console.error("[NEWS] Provider fetch error:", err);
     }
@@ -116,8 +127,8 @@ const NewsReview: React.FC = () => {
 
         setHasMore(data.articles.length === (loadMore ? page + 1 : 1) * ARTICLES_PER_PAGE);
         setLastUpdate(new Date());
-      } catch (err: any) {
-        setError(err.message || "Failed to load news");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to load news");
         console.error("[NEWS] Fetch error:", err);
       } finally {
         setLoading(false);

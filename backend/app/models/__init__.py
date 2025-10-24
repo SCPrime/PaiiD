@@ -22,6 +22,13 @@ from .ml_analytics import (
     MLPredictionHistory,
     MLTrainingJob,
 )
+from .subscription import (
+    Invoice,
+    PaymentMethod,
+    Subscription,
+    SubscriptionEvent,
+    UsageRecord,
+)
 
 
 __all__ = [
@@ -30,13 +37,18 @@ __all__ = [
     "BacktestResult",
     "EquitySnapshot",
     "FeatureStore",
+    "Invoice",
     "MLModelMetrics",
     "MLPredictionHistory",
     "MLTrainingJob",
     "OrderTemplate",
+    "PaymentMethod",
     "Performance",
     "Strategy",
+    "Subscription",
+    "SubscriptionEvent",
     "Trade",
+    "UsageRecord",
     "User",
     "UserSession",
 ]

@@ -614,7 +614,7 @@ function RadialMenuComponent({
         d3.select(this)
           .transition()
           .duration(150)
-          .attr("d", hoverArc as any)
+          .attr("d", hoverArc as (d: unknown) => string)
           .style("filter", "url(#hoverGlow)");
         setHoveredWorkflow(d.data);
         if (onWorkflowHover) onWorkflowHover(d.data);
@@ -623,7 +623,7 @@ function RadialMenuComponent({
         d3.select(this)
           .transition()
           .duration(150)
-          .attr("d", arc as any)
+          .attr("d", arc as (d: unknown) => string)
           .style("filter", "url(#normalShadow)");
         setHoveredWorkflow(null);
         if (onWorkflowHover) onWorkflowHover(null);
@@ -920,7 +920,7 @@ function RadialMenuComponent({
     // Update only the selected wedge styling without full re-render
     d3.select(svgRef.current)
       .selectAll(".segment path")
-      .style("filter", function (this: any, d: any) {
+      .style("filter", function (this: SVGPathElement, d: { data: { id: string } }) {
         return d.data.id === selectedWorkflow ? "url(#clickGlow)" : "url(#normalShadow)";
       });
   }, [selectedWorkflow]);

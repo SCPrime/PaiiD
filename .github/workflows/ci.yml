@@ -2,40 +2,40 @@ name: 🚀 PaiiD CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   # Backend validation
   backend-check:
     name: 🐍 Backend Health Check
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          
+
       - name: Cache Python dependencies
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
-          
+
       - name: Install dependencies
         run: |
           cd backend
           pip install -r requirements.txt
-          
+
       - name: Python syntax check
         run: |
           cd backend
           python -m py_compile app/main.py
-          
+
       - name: Health check
         run: |
           echo "✅ Backend syntax validated"
@@ -44,31 +44,31 @@ jobs:
   frontend-check:
     name: ⚛️ Frontend Health Check
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          
+
       - name: Cache Node modules
         uses: actions/cache@v4
         with:
           path: frontend/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
-          
+
       - name: Install dependencies
         run: |
           cd frontend
           npm ci
-          
+
       - name: Type check
         run: |
           cd frontend
           npm run type-check || echo "⚠️ Type warnings exist but build will proceed"
-          
+
       - name: Build check
         run: |
           cd frontend
@@ -79,7 +79,7 @@ jobs:
     name: ✅ CI Pipeline Summary
     runs-on: ubuntu-latest
     needs: [backend-check, frontend-check]
-    
+
     steps:
       - name: Success
         run: |

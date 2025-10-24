@@ -295,7 +295,12 @@ export default function Analytics() {
   const [isDemoMode, setIsDemoMode] = useState(false);
 
   // AI Portfolio Analysis state
-  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    summary: string;
+    recommendations: string[];
+    riskAssessment: string;
+    performanceInsights: string;
+  } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [showAiPanel, setShowAiPanel] = useState(false);
@@ -400,9 +405,9 @@ export default function Analytics() {
       const data = await response.json();
       setAiAnalysis(data);
       setShowAiPanel(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("AI Portfolio Analysis error:", error);
-      setAiError(error.message || "Failed to fetch AI analysis");
+      setAiError(error instanceof Error ? error.message : "Failed to fetch AI analysis");
     } finally {
       setAiLoading(false);
     }

@@ -71,7 +71,7 @@ export default function Backtesting() {
       };
       const data = await apiPost<BacktestResults>("/api/proxy/backtesting/run", body);
       setResults(data);
-    } catch (e: any) {
+    } catch (e: unknown) {
       const err = e as ApiError;
       console.error("[Backtesting] run error", err.status, err.message);
       setResults(null);

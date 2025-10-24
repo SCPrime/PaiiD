@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { AlertTriangle, Shield, Power, CheckCircle2 } from "lucide-react";
-import { showSuccess, showError } from "../lib/toast";
+import { AlertTriangle, CheckCircle2, Power, Shield } from "lucide-react";
+import { useEffect, useState } from "react";
+import { showError, showSuccess } from "../lib/toast";
 
 interface KillSwitchToggleProps {
   /** Whether component is standalone or embedded in Settings */
@@ -26,7 +26,7 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
         setTradingHalted(false);
         setLastChecked(new Date());
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching kill-switch status:", err);
       setError("Unable to determine status");
     }
@@ -64,12 +64,13 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
           ? "✅ Trading halted successfully - All order submissions blocked"
           : "▶️ Trading resumed - Orders can now be submitted"
       );
-    } catch (err: any) {
-      setError(err.message || "Failed to update kill-switch");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update kill-switch";
+      setError(errorMessage);
       console.error("Kill-switch error:", err);
 
       // Show error toast
-      showError(`Failed to update kill-switch: ${err.message || "Unknown error"}`);
+      showError(`Failed to update kill-switch: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
