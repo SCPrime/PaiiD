@@ -1,35 +1,39 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import {
-  Settings as SettingsIcon,
-  Users,
-  Palette,
-  Shield,
-  Database,
   Activity,
-  Save,
   AlertTriangle,
+  Bell,
+  BookOpen,
+  Brain,
   CheckCircle2,
+  Clock,
+  Database,
+  FileText,
+  Lock,
+  MessageSquare,
+  Palette,
+  Save,
+  Settings as SettingsIcon,
+  Shield,
+  Target,
   ToggleLeft,
   ToggleRight,
-  FileText,
-  Bell,
-  Lock,
-  BookOpen,
-  Clock,
-  Target,
-  Brain,
+  Users,
 } from "lucide-react";
-import TradingJournal from "./TradingJournal";
-import RiskDashboard from "./RiskDashboard";
-import SchedulerSettings from "./SchedulerSettings";
-import ApprovalQueue from "./ApprovalQueue";
-import KillSwitchToggle from "./KillSwitchToggle";
-import MLTrainingDashboard from "./MLTrainingDashboard";
-import { getCurrentUser, getUserAnalytics, clearUserData } from "../lib/userManagement";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { clearUserData, getCurrentUser, getUserAnalytics } from "../lib/userManagement";
+import ApprovalQueue from "./ApprovalQueue";
+import ClaudeAIChat from "./ClaudeAIChat";
+import KillSwitchToggle from "./KillSwitchToggle";
+import MLTrainingDashboard from "./MLTrainingDashboard";
+import RiskDashboard from "./RiskDashboard";
+import SchedulerSettings from "./SchedulerSettings";
+import TradingJournal from "./TradingJournal";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _MLTrainingDashboard = MLTrainingDashboard; // Reserved for future ML training feature
 
 interface User {
   id: string;
@@ -464,6 +468,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     { id: "journal", label: "Trading Journal", icon: BookOpen, alwaysShow: true },
     { id: "risk", label: "Risk Control", icon: Shield, alwaysShow: true },
     { id: "ml-training", label: "ML Training", icon: Brain, alwaysShow: true },
+    { id: "ai-chat", label: "AI Chat", icon: MessageSquare, alwaysShow: true },
     { id: "automation", label: "Automation", icon: Clock, alwaysShow: true },
     { id: "approvals", label: "Approvals", icon: CheckCircle2, alwaysShow: true },
     { id: "users", label: "User Management", icon: Users, adminOnly: true },
@@ -1024,6 +1029,11 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
           {activeTab === "ml-training" && (
             <div className="min-h-[500px]">
               <MLTrainingDashboard />
+            </div>
+          )}
+          {activeTab === "ai-chat" && (
+            <div className="min-h-[500px]">
+              <ClaudeAIChat />
             </div>
           )}
           {activeTab === "automation" && (
