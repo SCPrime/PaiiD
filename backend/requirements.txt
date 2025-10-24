@@ -40,6 +40,9 @@ psutil>=5.9.0
 # Rate Limiting (Phase 3: Bulletproof Reliability)
 slowapi>=0.1.9
 
+# Caching utilities (Phase 1 options router)
+cachetools>=5.3.0
+
 # Authentication (Week 2-4: Multi-User System)
 passlib[bcrypt]>=1.7.4
 python-jose[cryptography]>=3.3.0
