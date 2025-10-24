@@ -38,6 +38,9 @@ const ALLOW_GET = new Set<string>([
   // Options endpoints
   "options/greeks",
   "options/chain",
+  "options/chains",
+  "options/expirations",
+  "options/multi-leg/orders",
   // News endpoints
   "news/providers",
   "news/company",
@@ -91,6 +94,7 @@ const ALLOW_POST = new Set<string>([
   "news/cache/clear",
   // Backtesting endpoints
   "backtesting/run",
+  "options/multi-leg/orders",
 ]);
 
 const ALLOW_DELETE = new Set<string>([
