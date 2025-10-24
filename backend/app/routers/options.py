@@ -18,7 +18,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+from ..utils.cache import TTLCache
 
 from ..core.config import settings
 from ..core.auth import require_bearer

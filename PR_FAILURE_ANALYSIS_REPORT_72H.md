@@ -479,6 +479,22 @@ starlette/testclient.py:694: in __enter__
 [... 8 nested lifespan contexts ...]
 ```
 
+### C. Candidate PR Recovery Plan
+
+To reduce the backlog of high-signal pull requests, execute the Genius Accelerator 2 blueprint:
+
+1. **Coordinate Backend & Frontend Updates** – Capture the latest scanner batch and open paired
+   PRs that persist the candidate payload in
+   `backend/app/routers/market_data.py` and surface the enriched metadata via
+   `frontend/components/MorningRoutineAI.tsx`.
+2. **Document the Contracts** – Align `API_DOCUMENTATION.md` with the updated response schema
+   and note the deployment checklist steps for Render environments.
+3. **Track Audit Status** – Log each merged batch in this report and link to the detailed
+   process outline in `GENIUS_ACCELERATOR_2.md` for reviewers.
+
+Following this loop ensures the "best candidate" insights turn into measurable repository
+updates without introducing additional review drift.
+
 **Example 2: Frontend ESLint Warnings**
 ```
 frontend/components/ExecuteTradeForm.tsx
