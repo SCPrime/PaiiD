@@ -1,4 +1,6 @@
 import os
+import sys
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -92,6 +94,12 @@ print("\n===== SETTINGS LOADED =====")
 print(f"settings.API_TOKEN: {settings.API_TOKEN}")
 print("===========================\n", flush=True)
 
+# Register signal handlers for graceful shutdown BEFORE creating app
+from .core.signals import setup_shutdown_handlers
+
+
+setup_shutdown_handlers()
+
 app = FastAPI(
     title="PaiiD Trading API",
     description="Personal Artificial Intelligence Investment Dashboard",
@@ -113,10 +121,103 @@ else:
 # Initialize scheduler, cache, and streaming on startup
 @app.on_event("startup")
 async def startup_event():
+    # Skip startup initialization in test environment
+    # Tests manage their own fixtures and don't need external service connections
+    if settings.TESTING:
+        print("[TEST MODE] Skipping startup event initialization", flush=True)
+        return
+
+    import logging
+    from datetime import datetime
+
+    from .core.prelaunch import PrelaunchValidator
     from .core.startup_monitor import get_startup_monitor
+
+    # Configure structured logging
+    logging.basicConfig(
+        level=getattr(logging, settings.LOG_LEVEL, logging.INFO),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    logger = logging.getLogger(__name__)
+
+    # Enhanced startup logging with comprehensive telemetry
+    logger.info("=" * 70)
+    logger.info(f"🚀 Backend startup initiated at {datetime.utcnow().isoformat()}")
+    logger.info(f"   Environment: {settings.SENTRY_ENVIRONMENT}")
+    logger.info(f"   Port: {os.getenv('PORT', '8001')}")
+    logger.info(f"   Hostname: {os.getenv('HOSTNAME', 'unknown')}")
+    logger.info(f"   Python Version: {sys.version}")
+    logger.info(f"   OS: {os.name} - {os.getenv('OS', 'unknown')}")
+    logger.info(
+        f"   Sentry DSN: {'✅ Configured' if settings.SENTRY_DSN else '❌ Missing'}"
+    )
+    logger.info(
+        f"   Test Fixtures: {'✅ Enabled' if settings.USE_TEST_FIXTURES else '❌ Disabled'}"
+    )
+    logger.info(
+        f"   Live Trading: {'✅ Enabled' if settings.LIVE_TRADING else '❌ Disabled'}"
+    )
+    logger.info(f"   Log Level: {settings.LOG_LEVEL}")
+    logger.info(
+        f"   Redis URL: {'✅ Configured' if settings.REDIS_URL else '❌ Missing (in-memory fallback)'}"
+    )
+    logger.info(
+        f"   Database URL: {'✅ Configured' if settings.DATABASE_URL else '❌ Missing'}"
+    )
+
+    # Log key package versions
+    try:
+        import fastapi
+        import sentry_sdk
+        import uvicorn
+
+        logger.info(f"   FastAPI: {fastapi.__version__}")
+        logger.info(f"   Uvicorn: {uvicorn.__version__}")
+        logger.info(f"   Sentry SDK: {sentry_sdk.VERSION}")
+    except Exception as e:
+        logger.warning(f"   Package version check failed: {e}")
+
+    # Log environment variable states (redacted secrets)
+    env_vars = {
+        "API_TOKEN": "***" if settings.API_TOKEN else "NOT_SET",
+        "TRADIER_API_KEY": "***" if settings.TRADIER_API_KEY else "NOT_SET",
+        "ALPACA_API_KEY": "***" if settings.ALPACA_API_KEY else "NOT_SET",
+        "ANTHROPIC_API_KEY": "***" if settings.ANTHROPIC_API_KEY else "NOT_SET",
+        "SENTRY_DSN": "***" if settings.SENTRY_DSN else "NOT_SET",
+        "REDIS_URL": "***" if settings.REDIS_URL else "NOT_SET",
+        "DATABASE_URL": "***" if settings.DATABASE_URL else "NOT_SET",
+        "USE_TEST_FIXTURES": str(settings.USE_TEST_FIXTURES),
+        "LIVE_TRADING": str(settings.LIVE_TRADING),
+        "TESTING": str(settings.TESTING),
+        "LOG_LEVEL": settings.LOG_LEVEL,
+        "SENTRY_ENVIRONMENT": settings.SENTRY_ENVIRONMENT,
+    }
+
+    logger.info("   Environment Variables:")
+    for key, value in env_vars.items():
+        logger.info(f"     {key}: {value}")
+
+    logger.info("=" * 70)
 
     monitor = get_startup_monitor()
     monitor.start()
+
+    # Run pre-launch validation
+    try:
+        async with monitor.phase("prelaunch_validation", timeout=10.0):
+            validator = PrelaunchValidator(strict_mode=True)
+            success, errors, warnings = await validator.validate_all()
+
+            if not success:
+                logger.error("🚨 Pre-launch validation failed!")
+                for error in errors:
+                    logger.error(f"   • {error}")
+                raise RuntimeError(f"Pre-launch validation failed: {errors}")
+            else:
+                logger.info("✅ Pre-launch validation passed")
+    except Exception as e:
+        logger.error(f"❌ Pre-launch validation error: {e}")
+        raise
 
     # Initialize cache service
     try:
@@ -181,28 +282,81 @@ async def startup_event():
     # Finish monitoring and log summary
     monitor.finish()
 
+    # Log startup completion with duration
+    startup_duration = (
+        time.time() - monitor.start_time if hasattr(monitor, "start_time") else 0
+    )
+    logger.info("=" * 70)
+    logger.info(f"✅ Backend startup completed successfully in {startup_duration:.2f}s")
+    logger.info("   All systems operational")
+    logger.info("   Ready to accept requests")
+    logger.info("=" * 70)
+
 
 # Shutdown scheduler and streaming gracefully
 @app.on_event("shutdown")
 async def shutdown_event():
+    """
+    Enhanced shutdown handler with PID file cleanup and metrics logging
+    Timeout: Max 30 seconds for graceful shutdown
+    """
+    # Skip shutdown in test environment
+    if settings.TESTING:
+        print("[TEST MODE] Skipping shutdown event", flush=True)
+        return
+
+    import time
+    from pathlib import Path
+
+    shutdown_start = time.time()
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    logger.info("=" * 70)
+    logger.info("FastAPI shutdown event triggered")
+    logger.info("=" * 70)
+
     # Shutdown scheduler
     try:
         from .scheduler import get_scheduler
 
         scheduler_instance = get_scheduler()
-        scheduler_instance.shutdown()
-        print("[OK] Scheduler shut down gracefully", flush=True)
+        scheduler_instance.shutdown(wait=False)  # Don't wait indefinitely
+        logger.info("[OK] Scheduler shut down gracefully")
     except Exception as e:
-        print(f"[ERROR] Scheduler shutdown error: {e!s}", flush=True)
+        logger.error(f"[ERROR] Scheduler shutdown error: {e!s}")
 
     # Stop Tradier streaming
     try:
         from .services.tradier_stream import stop_tradier_stream
 
         await stop_tradier_stream()
-        print("[OK] Tradier stream stopped", flush=True)
+        logger.info("[OK] Tradier stream stopped")
     except Exception as e:
-        print(f"[ERROR] Tradier shutdown error: {e}", flush=True)
+        logger.error(f"[ERROR] Tradier shutdown error: {e}")
+
+    # Remove PID file
+    try:
+        project_root = Path(__file__).parent.parent.parent
+        pid_file = project_root / "backend" / ".run" / "backend-server.pid"
+
+        if pid_file.exists():
+            pid_content = pid_file.read_text().strip()
+            pid_file.unlink()
+            logger.info(f"[OK] Removed PID file (PID: {pid_content})")
+        else:
+            logger.info("[INFO] No PID file found to remove")
+    except Exception as e:
+        logger.error(f"[ERROR] PID file removal error: {e}")
+
+    # Log shutdown metrics
+    shutdown_duration = time.time() - shutdown_start
+    logger.info(f"[METRICS] Shutdown duration: {shutdown_duration:.2f}s")
+
+    logger.info("=" * 70)
+    logger.info("Shutdown complete")
+    logger.info("=" * 70)
 
 
 # Add Sentry context middleware if Sentry is enabled

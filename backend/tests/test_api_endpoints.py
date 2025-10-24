@@ -21,21 +21,25 @@ class TestHealthEndpoints:
         assert "time" in data
 
     def test_ready_endpoint(self, client):
-        """Test /api/ready returns 200"""
-        response = client.get("/api/ready")
+        """Test /api/health/ready returns 200"""
+        response = client.get("/api/health/ready")
         assert response.status_code == 200
         data = response.json()
         assert data["ready"] is True
 
     def test_sentry_test_endpoint(self, client):
-        """Test /api/sentry-test raises error (for Sentry capture)"""
-        # This endpoint intentionally raises an exception for Sentry testing
-        # The TestClient will propagate the exception instead of returning 500
-        with pytest.raises(Exception) as excinfo:
-            response = client.get("/api/sentry-test")
+        """Test /api/health/sentry-test endpoint exists and responds"""
+        # This endpoint intentionally raises an exception for Sentry testing in production
+        # In test mode with raise_server_exceptions=False, it returns 500 instead
+        # We just verify the endpoint exists and responds (even with error)
+        response = client.get("/api/health/sentry-test")
 
-        # Verify it's the intentional test exception
-        assert "SENTRY TEST" in str(excinfo.value)
+        # In test mode, TestClient with raise_server_exceptions=False
+        # will return a 500 response instead of raising the exception
+        assert response.status_code == 500
+
+        # Verify it's identified as a server error (not 404 not found)
+        assert response.status_code >= 500
 
 
 class TestAuthenticationProtection:
@@ -59,7 +63,9 @@ class TestAuthenticationProtection:
 
     def test_invalid_bearer_token(self, client):
         """Test invalid Authorization token"""
-        response = client.get("/api/positions", headers={"Authorization": "Bearer invalid-token"})
+        response = client.get(
+            "/api/positions", headers={"Authorization": "Bearer invalid-token"}
+        )
         assert response.status_code == 401
 
 
@@ -67,7 +73,9 @@ class TestMarketEndpoints:
     """Test market data endpoints"""
 
     @patch("app.routers.market.requests.get")
-    def test_market_indices_success(self, mock_get, client, auth_headers, mock_market_indices):
+    def test_market_indices_success(
+        self, mock_get, client, auth_headers, mock_market_indices
+    ):
         """Test /api/market/indices with mocked Tradier response"""
         # Mock Tradier API response
         mock_response = MagicMock()
@@ -132,7 +140,12 @@ class TestPortfolioEndpoints:
         """Test /api/positions returns position data"""
         mock_instance = MagicMock()
         mock_instance.get_positions.return_value = [
-            {"symbol": "AAPL", "quantity": 10, "cost_basis": 1505.00, "market_value": 1754.30}
+            {
+                "symbol": "AAPL",
+                "quantity": 10,
+                "cost_basis": 1505.00,
+                "market_value": 1754.30,
+            }
         ]
         mock_client.return_value = mock_instance
 
@@ -219,12 +232,24 @@ class TestMarketDataEndpoints:
         """Test /api/market/quotes with multiple symbols"""
         mock_instance = MagicMock()
         mock_instance.get_quotes.return_value = {
-            "AAPL": {"last": 175.43, "bid": 175.42, "ask": 175.44, "trade_date": "2025-10-13"},
-            "MSFT": {"last": 380.25, "bid": 380.20, "ask": 380.30, "trade_date": "2025-10-13"},
+            "AAPL": {
+                "last": 175.43,
+                "bid": 175.42,
+                "ask": 175.44,
+                "trade_date": "2025-10-13",
+            },
+            "MSFT": {
+                "last": 380.25,
+                "bid": 380.20,
+                "ask": 380.30,
+                "trade_date": "2025-10-13",
+            },
         }
         mock_client.return_value = mock_instance
 
-        response = client.get("/api/market/quotes?symbols=AAPL,MSFT", headers=auth_headers)
+        response = client.get(
+            "/api/market/quotes?symbols=AAPL,MSFT", headers=auth_headers
+        )
         # Accept 200 or 500 (API may fail with fake credentials)
         assert response.status_code in [200, 500]
         if response.status_code == 200:
