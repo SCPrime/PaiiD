@@ -10,6 +10,12 @@ ENV_PATH = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(ENV_PATH)
 
 
+DEFAULT_JWT_SECRET = "dev-secret-key-change-in-production-NEVER-COMMIT-THIS"
+ALLOW_INSECURE_JWT_SECRET = (
+    os.getenv("ALLOW_INSECURE_JWT_SECRET", "false").lower() == "true"
+)
+
+
 class Settings(BaseModel):
     # Read directly from environment variables (loaded above)
     API_TOKEN: str = os.getenv("API_TOKEN", "change-me")
@@ -41,12 +47,19 @@ class Settings(BaseModel):
     SENTRY_DSN: str | None = os.getenv("SENTRY_DSN")
 
     # JWT Authentication (Week 2-4: Multi-User System)
-    JWT_SECRET_KEY: str = os.getenv(
-        "JWT_SECRET_KEY", "dev-secret-key-change-in-production-NEVER-COMMIT-THIS"
-    )
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", DEFAULT_JWT_SECRET)
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # 15 minutes
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days
 
 
 settings = Settings()
+
+if (
+    settings.JWT_SECRET_KEY == DEFAULT_JWT_SECRET
+    and not settings.TESTING
+    and not ALLOW_INSECURE_JWT_SECRET
+):
+    raise ValueError(
+        "JWT_SECRET_KEY must be overridden in the environment before starting the API"
+    )

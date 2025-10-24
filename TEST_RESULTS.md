@@ -115,3 +115,11 @@ Required environment variables for Production:
 
 The backend is confirmed working. The frontend endpoint is deployed.
 **Next step:** User needs to test from browser to confirm end-to-end flow.
+
+---
+
+## 📱 Mobile Validation Log (2025-10-13)
+
+| Device | OS Version | Result | Notes |
+| --- | --- | --- | --- |
+| _Physical device validation not executed_ | N/A | ⚠️ Blocked | The current workspace does not provide access to physical iOS or Android hardware. Mobile chart export and navigation flows require manual validation on real devices outside of this environment. |

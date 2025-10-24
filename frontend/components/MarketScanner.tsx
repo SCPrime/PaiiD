@@ -1,185 +1,220 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useMemo } from "react";
 import { Search, RefreshCw } from "lucide-react";
+
 import { Card, Button, Input, Select } from "./ui";
 import { theme } from "../styles/theme";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import StockLookup from "./StockLookup";
 
+export type OpportunityType = "stock" | "option" | "multileg";
+export type SignalStrength =
+  | "strong_buy"
+  | "buy"
+  | "neutral"
+  | "sell"
+  | "strong_sell";
+
 interface ScanResult {
   symbol: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  avgVolume: number;
-  signal: "strong_buy" | "buy" | "neutral" | "sell" | "strong_sell";
-  indicators: {
-    rsi: number;
-    macd: "bullish" | "bearish" | "neutral";
-    movingAverage: "50_above" | "50_below" | "200_above" | "200_below";
-    volumeProfile: "high" | "normal" | "low";
-  };
-  pattern?: string;
+  type: OpportunityType;
+  strategy: string;
   reason: string;
+  currentPrice: number;
+  targetPrice: number | null;
+  confidence: number;
+  risk: "low" | "medium" | "high";
+  signal: SignalStrength;
 }
 
 interface ScanFilter {
   minPrice: number;
   maxPrice: number;
-  minVolume: number;
-  sector?: string;
+  minConfidence: number;
   signalType: "all" | "buy" | "sell";
 }
+
+const DEFAULT_FILTER: ScanFilter = {
+  minPrice: 1,
+  maxPrice: 1000,
+  minConfidence: 65,
+  signalType: "all",
+};
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+
+const getSignalColor = (signal: SignalStrength) => {
+  switch (signal) {
+    case "strong_buy":
+      return theme.colors.primary;
+    case "buy":
+      return theme.colors.secondary;
+    case "neutral":
+      return theme.colors.textMuted;
+    case "sell":
+      return theme.colors.warning;
+    case "strong_sell":
+      return theme.colors.danger;
+  }
+};
+
+const getSignalLabel = (signal: SignalStrength) =>
+  signal
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
+const deriveSignal = (confidence: number, risk: ScanResult["risk"]): SignalStrength => {
+  const riskAdjustment = risk === "high" ? -8 : risk === "low" ? 6 : 0;
+  const score = confidence + riskAdjustment;
+
+  if (score >= 85) return "strong_buy";
+  if (score >= 72) return "buy";
+  if (score <= 45) return "strong_sell";
+  if (score <= 60) return "sell";
+  return "neutral";
+};
+
+const getConfidenceLabel = (confidence: number) => {
+  if (confidence >= 85) return "High conviction";
+  if (confidence >= 70) return "Moderate conviction";
+  return "Developing setup";
+};
+
+const getRiskBadge = (risk: ScanResult["risk"]) => {
+  switch (risk) {
+    case "low":
+      return {
+        color: theme.colors.success,
+        description: "Tighter risk parameters",
+      };
+    case "medium":
+      return {
+        color: theme.colors.warning,
+        description: "Balanced risk/reward",
+      };
+    case "high":
+      return {
+        color: theme.colors.danger,
+        description: "Requires active management",
+      };
+  }
+};
 
 export default function MarketScanner() {
   const isMobile = useIsMobile();
   const [results, setResults] = useState<ScanResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<ScanFilter>({
-    minPrice: 1,
-    maxPrice: 1000,
-    minVolume: 100000,
-    signalType: "all",
-  });
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<ScanFilter>(DEFAULT_FILTER);
   const [scanType, setScanType] = useState<"momentum" | "breakout" | "reversal" | "custom">(
-    "momentum"
+    "momentum",
   );
   const [selectedSymbol, setSelectedSymbol] = useState<string>("");
   const [showResearch, setShowResearch] = useState(false);
 
   useEffect(() => {
     runScan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanType]);
+
+  const maxPriceParam = useMemo(() => {
+    if (!Number.isFinite(filter.maxPrice) || filter.maxPrice <= 0) {
+      return undefined;
+    }
+    return filter.maxPrice;
+  }, [filter.maxPrice]);
 
   const runScan = async () => {
     setLoading(true);
+    setError(null);
 
-    // Simulate scan - in production, call backend API
-    setTimeout(() => {
-      const mockResults: ScanResult[] = [
-        {
-          symbol: "AAPL",
-          price: 182.3,
-          change: 2.8,
-          changePercent: 1.56,
-          volume: 52340000,
-          avgVolume: 48200000,
-          signal: "buy" as const,
-          indicators: {
-            rsi: 62.5,
-            macd: "bullish" as const,
-            movingAverage: "50_above" as const,
-            volumeProfile: "high" as const,
-          },
-          pattern: "Bull Flag",
-          reason: "Breaking above 20-day MA with strong volume. RSI bullish but not overbought.",
-        },
-        {
-          symbol: "MSFT",
-          price: 378.45,
-          change: 5.65,
-          changePercent: 1.52,
-          volume: 24150000,
-          avgVolume: 22800000,
-          signal: "strong_buy" as const,
-          indicators: {
-            rsi: 68.2,
-            macd: "bullish" as const,
-            movingAverage: "200_above" as const,
-            volumeProfile: "high" as const,
-          },
-          pattern: "Ascending Triangle",
-          reason: "Strong uptrend with increasing volume. MACD crossover confirmed.",
-        },
-        {
-          symbol: "TSLA",
-          price: 238.9,
-          change: -6.4,
-          changePercent: -2.61,
-          volume: 135200000,
-          avgVolume: 98500000,
-          signal: "sell" as const,
-          indicators: {
-            rsi: 32.8,
-            macd: "bearish" as const,
-            movingAverage: "50_below" as const,
-            volumeProfile: "high" as const,
-          },
-          pattern: "Head and Shoulders",
-          reason: "Breaking down from support with elevated volume. Bearish trend confirmed.",
-        },
-        {
-          symbol: "NVDA",
-          price: 485.2,
-          change: 12.4,
-          changePercent: 2.62,
-          volume: 42800000,
-          avgVolume: 38500000,
-          signal: "strong_buy" as const,
-          indicators: {
-            rsi: 71.5,
-            macd: "bullish" as const,
-            movingAverage: "50_above" as const,
-            volumeProfile: "high" as const,
-          },
-          pattern: "Cup and Handle",
-          reason: "Breakout from consolidation pattern. Strong momentum with institutional buying.",
-        },
-        {
-          symbol: "AMD",
-          price: 142.6,
-          change: -1.2,
-          changePercent: -0.83,
-          volume: 45200000,
-          avgVolume: 52000000,
-          signal: "neutral" as const,
-          indicators: {
-            rsi: 48.5,
-            macd: "neutral" as const,
-            movingAverage: "50_above" as const,
-            volumeProfile: "normal" as const,
-          },
-          reason: "Consolidating near key support. Waiting for directional confirmation.",
-        },
-      ].filter((result) => {
-        // Apply filters
-        if (filter.signalType !== "all") {
-          if (filter.signalType === "buy" && !["buy", "strong_buy"].includes(result.signal))
-            return false;
-          if (filter.signalType === "sell" && !["sell", "strong_sell"].includes(result.signal))
-            return false;
-        }
-        if (result.price < filter.minPrice || result.price > filter.maxPrice) return false;
-        if (result.volume < filter.minVolume) return false;
-        return true;
-      });
+    try {
+      const params = new URLSearchParams();
+      if (maxPriceParam) {
+        params.set("max_price", maxPriceParam.toString());
+      }
+      params.set("scan_type", scanType);
 
-      setResults(mockResults);
+      const query = params.toString();
+      const response = await fetch(
+        `/api/proxy/screening/opportunities${query ? `?${query}` : ""}`,
+        { cache: "no-store" },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Market scan failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const opportunities: any[] = Array.isArray(data?.opportunities)
+        ? data.opportunities
+        : [];
+
+      const normalized = opportunities
+        .map((raw) => {
+          const currentPrice = Number(raw?.currentPrice ?? raw?.price ?? 0);
+          if (!Number.isFinite(currentPrice)) {
+            return null;
+          }
+          const target = raw?.targetPrice != null ? Number(raw.targetPrice) : null;
+          const confidence = Number(raw?.confidence ?? 0);
+          const risk = (raw?.risk ?? "medium") as ScanResult["risk"];
+
+          return {
+            symbol: String(raw?.symbol ?? "").toUpperCase(),
+            type: (raw?.type ?? "stock") as OpportunityType,
+            strategy: String(raw?.strategy ?? "Unknown strategy"),
+            reason: String(raw?.reason ?? ""),
+            currentPrice,
+            targetPrice: Number.isFinite(target) ? target : null,
+            confidence,
+            risk,
+            signal: deriveSignal(confidence, risk),
+          } satisfies ScanResult;
+        })
+        .filter((result): result is ScanResult => Boolean(result));
+
+      let filteredResults = normalized.filter(
+        (opportunity) =>
+          opportunity.currentPrice >= filter.minPrice &&
+          opportunity.currentPrice <= filter.maxPrice &&
+          opportunity.confidence >= filter.minConfidence,
+      );
+
+      if (filter.signalType !== "all") {
+        const desiredSignals =
+          filter.signalType === "buy"
+            ? ["buy", "strong_buy"]
+            : ["sell", "strong_sell"];
+        filteredResults = filteredResults.filter((result) =>
+          desiredSignals.includes(result.signal),
+        );
+      }
+
+      setResults(filteredResults);
+    } catch (fetchError) {
+      const message =
+        fetchError instanceof Error
+          ? fetchError.message
+          : "Unable to load market scanner results";
+      setError(message);
+      setResults([]);
+    } finally {
       setLoading(false);
-    }, 1500);
-  };
-
-  const getSignalColor = (signal: ScanResult["signal"]) => {
-    switch (signal) {
-      case "strong_buy":
-        return theme.colors.primary;
-      case "buy":
-        return theme.colors.secondary;
-      case "neutral":
-        return theme.colors.textMuted;
-      case "sell":
-        return theme.colors.warning;
-      case "strong_sell":
-        return theme.colors.danger;
     }
   };
 
-  const getSignalLabel = (signal: ScanResult["signal"]) => {
-    return signal
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+  const handleConfidenceChange = (value: string) => {
+    const numeric = Number(value);
+    setFilter((prev) => ({ ...prev, minConfidence: Number.isFinite(numeric) ? numeric : prev.minConfidence }));
   };
 
   return (
@@ -274,7 +309,7 @@ export default function MarketScanner() {
         </div>
       </Card>
 
-      {/* Scan Type Selection */}
+      {/* Scan Type & Filters */}
       <Card style={{ marginBottom: theme.spacing.md, padding: theme.spacing.md }}>
         <div style={{ marginBottom: theme.spacing.md }}>
           <p
@@ -301,7 +336,6 @@ export default function MarketScanner() {
           </div>
         </div>
 
-        {/* Filters */}
         <div
           style={{
             display: "grid",
@@ -309,48 +343,71 @@ export default function MarketScanner() {
             gap: theme.spacing.md,
           }}
         >
-          <div>
-            <Input
-              label="Min Price"
-              type="number"
-              value={filter.minPrice.toString()}
-              onChange={(e) => setFilter({ ...filter, minPrice: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-          <div>
-            <Input
-              label="Max Price"
-              type="number"
-              value={filter.maxPrice.toString()}
-              onChange={(e) =>
-                setFilter({ ...filter, maxPrice: parseFloat(e.target.value) || 1000 })
-              }
-            />
-          </div>
-          <div>
-            <Input
-              label="Min Volume"
-              type="number"
-              value={filter.minVolume.toString()}
-              onChange={(e) => setFilter({ ...filter, minVolume: parseInt(e.target.value) || 0 })}
-            />
-          </div>
-          <div>
-            <Select
-              label="Signal Type"
-              options={[
-                { value: "all", label: "All Signals" },
-                { value: "buy", label: "Buy Signals" },
-                { value: "sell", label: "Sell Signals" },
-              ]}
-              value={filter.signalType}
-              onChange={(e) =>
-                setFilter({ ...filter, signalType: e.target.value as "all" | "buy" | "sell" })
-              }
-            />
-          </div>
+          <Input
+            label="Min Price"
+            type="number"
+            value={filter.minPrice.toString()}
+            onChange={(e) =>
+              setFilter({
+                ...filter,
+                minPrice: Number.isFinite(Number(e.target.value))
+                  ? Number(e.target.value)
+                  : filter.minPrice,
+              })
+            }
+          />
+          <Input
+            label="Max Price"
+            type="number"
+            value={filter.maxPrice.toString()}
+            onChange={(e) =>
+              setFilter({
+                ...filter,
+                maxPrice: Number.isFinite(Number(e.target.value))
+                  ? Number(e.target.value)
+                  : filter.maxPrice,
+              })
+            }
+          />
+          <Input
+            label="Min Confidence (%)"
+            type="number"
+            value={filter.minConfidence.toString()}
+            onChange={(e) => handleConfidenceChange(e.target.value)}
+          />
+          <Select
+            label="Signal Bias"
+            options={[
+              { value: "all", label: "All" },
+              { value: "buy", label: "Bullish" },
+              { value: "sell", label: "Bearish" },
+            ]}
+            value={filter.signalType}
+            onChange={(e) =>
+              setFilter({ ...filter, signalType: e.target.value as ScanFilter["signalType"] })
+            }
+          />
         </div>
       </Card>
+
+      {error && (
+        <Card glow="red" style={{ marginBottom: theme.spacing.md }}>
+          <div
+            style={{
+              color: theme.colors.danger,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: theme.spacing.sm,
+            }}
+          >
+            <span>{error}</span>
+            <Button size="sm" variant="secondary" onClick={runScan}>
+              Retry
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Results */}
       {loading ? (
@@ -380,155 +437,160 @@ export default function MarketScanner() {
         </Card>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: theme.spacing.md }}>
-          {results.map((result) => (
-            <Card
-              key={result.symbol}
-              glow={
-                result.signal.includes("buy")
-                  ? "green"
-                  : result.signal.includes("sell")
+          {results.map((result) => {
+            const riskBadge = getRiskBadge(result.risk);
+            return (
+              <Card
+                key={`${result.symbol}-${result.strategy}`}
+                glow={
+                  result.signal.includes("buy")
+                    ? "green"
+                    : result.signal.includes("sell")
                     ? "red"
                     : undefined
-              }
-            >
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: isMobile ? "column" : "row",
-                  justifyContent: "space-between",
-                  gap: isMobile ? theme.spacing.sm : 0,
-                  marginBottom: theme.spacing.md,
-                }}
+                }
               >
-                <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: theme.spacing.sm,
-                      marginBottom: theme.spacing.xs,
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <h3
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: isMobile ? "column" : "row",
+                    justifyContent: "space-between",
+                    gap: isMobile ? theme.spacing.sm : 0,
+                    marginBottom: theme.spacing.md,
+                  }}
+                >
+                  <div>
+                    <div
                       style={{
-                        margin: 0,
-                        fontSize: isMobile ? "20px" : "24px",
-                        fontWeight: "700",
-                        color: theme.colors.text,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: theme.spacing.sm,
+                        marginBottom: theme.spacing.xs,
+                        flexWrap: "wrap",
                       }}
                     >
-                      {result.symbol}
-                    </h3>
-                    <span
-                      style={{
-                        padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
-                        borderRadius: theme.borderRadius.sm,
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        background: `${getSignalColor(result.signal)}20`,
-                        color: getSignalColor(result.signal),
-                      }}
-                    >
-                      {getSignalLabel(result.signal)}
-                    </span>
-                    {result.pattern && (
+                      <h3
+                        style={{
+                          margin: 0,
+                          fontSize: isMobile ? "20px" : "24px",
+                          fontWeight: "700",
+                          color: theme.colors.text,
+                        }}
+                      >
+                        {result.symbol}
+                      </h3>
                       <span
                         style={{
                           padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
                           borderRadius: theme.borderRadius.sm,
                           fontSize: "12px",
-                          background: theme.background.input,
-                          color: theme.colors.textMuted,
+                          fontWeight: "600",
+                          background: `${getSignalColor(result.signal)}20`,
+                          color: getSignalColor(result.signal),
                         }}
                       >
-                        {result.pattern}
+                        {getSignalLabel(result.signal)}
                       </span>
-                    )}
+                      <span
+                        style={{
+                          padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+                          borderRadius: theme.borderRadius.sm,
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          background: `${riskBadge.color}20`,
+                          color: riskBadge.color,
+                        }}
+                      >
+                        {result.risk.charAt(0).toUpperCase() + result.risk.slice(1)} risk
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: "14px", color: theme.colors.textMuted }}>
+                      {formatCurrency(result.currentPrice)}
+                      {result.targetPrice
+                        ? ` · Target ${formatCurrency(result.targetPrice)}`
+                        : ""}
+                    </p>
                   </div>
-                  <p style={{ margin: 0, fontSize: "14px", color: theme.colors.textMuted }}>
-                    ${result.price.toFixed(2)} · {result.change >= 0 ? "+" : ""}
-                    {result.change.toFixed(2)} ({result.changePercent >= 0 ? "+" : ""}
-                    {result.changePercent.toFixed(2)}%)
-                  </p>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: isMobile ? "column" : "row",
+                      gap: theme.spacing.xs,
+                      width: isMobile ? "100%" : "auto",
+                    }}
+                  >
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedSymbol(result.symbol);
+                        setShowResearch(true);
+                      }}
+                      style={{ width: isMobile ? "100%" : "auto" }}
+                    >
+                      Research
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedSymbol(result.symbol);
+                        setShowResearch(true);
+                      }}
+                      style={{ width: isMobile ? "100%" : "auto" }}
+                    >
+                      Prepare Trade
+                    </Button>
+                  </div>
                 </div>
+
                 <div
                   style={{
-                    display: "flex",
-                    flexDirection: isMobile ? "column" : "row",
-                    gap: theme.spacing.xs,
-                    width: isMobile ? "100%" : "auto",
+                    display: "grid",
+                    gridTemplateColumns: isMobile
+                      ? "repeat(2, 1fr)"
+                      : "repeat(auto-fit, minmax(160px, 1fr))",
+                    gap: theme.spacing.md,
+                    marginBottom: theme.spacing.md,
+                    padding: theme.spacing.md,
+                    background: theme.background.input,
+                    borderRadius: theme.borderRadius.md,
                   }}
                 >
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedSymbol(result.symbol);
-                      setShowResearch(true);
-                    }}
-                    style={{ width: isMobile ? "100%" : "auto" }}
-                  >
-                    Research
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      // Navigate to execute trade with this symbol
-                      alert(`Execute trade for ${result.symbol}`);
-                    }}
-                    style={{ width: isMobile ? "100%" : "auto" }}
-                  >
-                    Trade
-                  </Button>
+                  <Indicator label="Strategy" value={result.strategy} />
+                  <Indicator
+                    label="Opportunity Type"
+                    value={result.type.charAt(0).toUpperCase() + result.type.slice(1)}
+                  />
+                  <Indicator
+                    label="Confidence"
+                    value={`${result.confidence.toFixed(0)}%`}
+                    subValue={getConfidenceLabel(result.confidence)}
+                  />
+                  <Indicator label="Risk Guidance" value={riskBadge.description} />
+                  <Indicator
+                    label="Target"
+                    value={
+                      result.targetPrice ? formatCurrency(result.targetPrice) : "Not specified"
+                    }
+                  />
                 </div>
-              </div>
 
-              {/* Indicators */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: isMobile
-                    ? "repeat(2, 1fr)"
-                    : "repeat(auto-fit, minmax(150px, 1fr))",
-                  gap: theme.spacing.md,
-                  marginBottom: theme.spacing.md,
-                  padding: theme.spacing.md,
-                  background: theme.background.input,
-                  borderRadius: theme.borderRadius.md,
-                }}
-              >
-                <Indicator label="RSI" value={result.indicators.rsi.toFixed(1)} />
-                <Indicator
-                  label="MACD"
-                  value={
-                    result.indicators.macd.charAt(0).toUpperCase() + result.indicators.macd.slice(1)
-                  }
-                />
-                <Indicator label="MA" value={result.indicators.movingAverage.replace("_", " ")} />
-                <Indicator
-                  label="Volume"
-                  value={`${(result.volume / 1000000).toFixed(1)}M`}
-                  subValue={result.indicators.volumeProfile}
-                />
-              </div>
-
-              {/* Reason */}
-              <div
-                style={{
-                  padding: theme.spacing.md,
-                  background: `${getSignalColor(result.signal)}10`,
-                  borderLeft: `4px solid ${getSignalColor(result.signal)}`,
-                  borderRadius: theme.borderRadius.sm,
-                }}
-              >
-                <p style={{ margin: 0, fontSize: "14px", color: theme.colors.text }}>
-                  <strong>Analysis:</strong> {result.reason}
-                </p>
-              </div>
-            </Card>
-          ))}
+                <div
+                  style={{
+                    padding: theme.spacing.md,
+                    background: `${getSignalColor(result.signal)}10`,
+                    borderLeft: `4px solid ${getSignalColor(result.signal)}`,
+                    borderRadius: theme.borderRadius.sm,
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: "14px", color: theme.colors.text }}>
+                    <strong>Analysis:</strong> {result.reason}
+                  </p>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -580,7 +642,6 @@ export default function MarketScanner() {
         </div>
       )}
 
-      {/* Animations */}
       <style jsx>{`
         @keyframes spin {
           from {

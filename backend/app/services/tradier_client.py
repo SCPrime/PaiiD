@@ -4,9 +4,10 @@ Handles: Account, Positions, Orders, Market Data, Options
 """
 
 import logging
-import os
 
 import requests
+
+from ..core.config import settings
 
 
 logger = logging.getLogger(__name__)
@@ -16,9 +17,9 @@ class TradierClient:
     """Tradier API client for production trading"""
 
     def __init__(self):
-        self.api_key = os.getenv("TRADIER_API_KEY")
-        self.account_id = os.getenv("TRADIER_ACCOUNT_ID")
-        self.base_url = os.getenv("TRADIER_API_BASE_URL", "https://api.tradier.com/v1")
+        self.api_key = settings.TRADIER_API_KEY
+        self.account_id = settings.TRADIER_ACCOUNT_ID
+        self.base_url = settings.TRADIER_API_BASE_URL or "https://api.tradier.com/v1"
 
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -27,7 +28,7 @@ class TradierClient:
         }
 
         if not self.api_key or not self.account_id:
-            raise ValueError("TRADIER_API_KEY and TRADIER_ACCOUNT_ID must be set in .env")
+            raise ValueError("Tradier credentials are not configured in settings")
 
         logger.info(f"Tradier client initialized for account {self.account_id}")
 
@@ -181,6 +182,16 @@ class TradierClient:
             quotes = response["quotes"]["quote"]
             return quotes if isinstance(quotes, dict) else quotes[0]
         return {}
+
+    def get_option_quote(self, option_symbol: str) -> dict:
+        """Get a single option quote including Greeks"""
+        params = {"symbols": option_symbol, "greeks": "true"}
+        response = self._request("GET", "/markets/options/quotes", params=params)
+
+        quote = response.get("quotes", {}).get("quote") if response else None
+        if isinstance(quote, list):
+            return quote[0] if quote else {}
+        return quote or {}
 
     def get_market_clock(self) -> dict:
         """Get market status"""
