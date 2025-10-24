@@ -22,6 +22,9 @@ Complete guide to development tools, code quality standards, and workflows for t
 
 ### Required Software
 
+- **PowerShell Core** 7.2+ (`pwsh`)
+  - Verify with `pwsh --version`
+  - Run `pwsh -File ./scripts/ensure-powershell-core.ps1` for guided installation help
 - **Node.js** 18+ and npm 9+
 - **Python** 3.11+
 - **Git** 2.40+

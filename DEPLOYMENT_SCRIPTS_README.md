@@ -10,6 +10,7 @@ This suite provides enterprise-grade deployment automation with:
 - Automated rollback capabilities
 - Detailed deployment reporting
 - Pre-deployment validation
+- Verified compatibility with PowerShell Core 7+ (`pwsh`) via `scripts/ensure-powershell-core.ps1`
 
 ## 🗂️ Scripts
 

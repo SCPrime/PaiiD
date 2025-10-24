@@ -34,6 +34,16 @@ npm install
 npm run dev
 ```
 
+### Testing
+
+- **Unit tests**: `npm test`
+- **E2E smoke tests**:
+  1. Install Playwright browsers (one-time): `npx playwright install`
+  2. Run the suite: `npm run test:e2e`
+
+The E2E suite includes mocked options chain API flows and radial workflow coverage for the
+interactive dashboard pages (`/test-options` and `/test-radial`).
+
 ## Pages
 
 - `/` - Main dashboard

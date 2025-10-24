@@ -5,6 +5,17 @@ param(
     [switch]$KillExisting = $false
 )
 
+function Get-PreferredShell {
+    $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($pwsh) {
+        return "pwsh"
+    }
+
+    return "powershell"
+}
+
+$shellExecutable = Get-PreferredShell
+
 Write-Host "`n=== AI Trader Development Startup ===" -ForegroundColor Cyan
 
 # Kill existing processes if requested
@@ -77,7 +88,7 @@ Write-Host "  ✅ API_TOKEN matches: $backendToken" -ForegroundColor Green
 # Start backend
 Write-Host "`nStarting backend on port 8000..." -ForegroundColor Yellow
 $backendPath = Join-Path $PSScriptRoot "backend"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$backendPath'; uvicorn app.main:app --reload --port 8000" -WindowStyle Normal
+Start-Process $shellExecutable -ArgumentList "-NoExit", "-Command", "cd '$backendPath'; uvicorn app.main:app --reload --port 8000" -WindowStyle Normal
 
 Start-Sleep -Seconds 3
 
@@ -93,7 +104,7 @@ if ($backendRunning) {
 # Start frontend
 Write-Host "`nStarting frontend on port 3000..." -ForegroundColor Yellow
 $frontendPath = Join-Path $PSScriptRoot "frontend"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$frontendPath'; npm run dev" -WindowStyle Normal
+Start-Process $shellExecutable -ArgumentList "-NoExit", "-Command", "cd '$frontendPath'; npm run dev" -WindowStyle Normal
 
 Start-Sleep -Seconds 5
 
