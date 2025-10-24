@@ -130,6 +130,29 @@ python -m uvicorn main:app --reload --port 8000
 
 Backend runs at http://localhost:8000
 
+### Internal PyPI Mirror (Optional)
+
+For security auditing with `pip-audit` behind corporate proxies or in offline environments:
+
+```bash
+# 1. Populate the mirror
+cd backend/pypi-mirror
+chmod +x scripts/download-packages.sh
+./scripts/download-packages.sh
+
+# 2. Start local mirror server
+python scripts/serve-mirror.py
+
+# 3. Configure pip to use mirror
+source backend/pypi-mirror/activate-mirror.sh
+
+# 4. Install and run pip-audit
+pip install pip-audit
+cd backend && pip-audit -r requirements.txt
+```
+
+See [backend/pypi-mirror/README.md](backend/pypi-mirror/README.md) for complete documentation.
+
 ### Environment Variables
 
 **Frontend** (`.env.local`):

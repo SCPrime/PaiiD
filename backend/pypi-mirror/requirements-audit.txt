@@ -1,0 +1,19 @@
+# PaiiD Security Audit Requirements
+#
+# This file lists pip-audit and its dependencies for security scanning.
+# Install from internal mirror using:
+#
+#   source backend/pypi-mirror/activate-mirror.sh
+#   pip install -r backend/pypi-mirror/requirements-audit.txt
+#
+# Or directly with index URL:
+#
+#   pip install --index-url http://localhost:8080/ -r backend/pypi-mirror/requirements-audit.txt
+
+# Security audit tool
+pip-audit>=2.6.0
+
+# Optional: Additional security tools
+# Uncomment if you want to include these in your security scanning workflow
+# bandit>=1.7.5
+# safety>=2.3.0

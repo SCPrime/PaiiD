@@ -36,42 +36,76 @@ Thank you for contributing to **PaiiD (Personal Artificial Intelligence Investme
 
 ## Getting Started
 
+### Quick Setup (Recommended)
+
+Use our automated setup script for fastest onboarding:
+
+```bash
+./scripts/setup-dev-env.sh
+```
+
+This will automatically:
+- ✅ Check all prerequisites
+- ✅ Create virtual environments
+- ✅ Install all dependencies (frontend + backend)
+- ✅ Set up environment files from templates
+- ✅ Configure internal PyPI mirror for security auditing
+- ✅ Verify installation
+
+**Time:** ~5 minutes ⚡
+
 ### Prerequisites
 
 Before contributing, make sure you have:
 
 1. **Git** installed and configured
-2. **Node.js 18+** and npm 9+
+2. **Node.js 20+** and npm 9+
 3. **Python 3.11+** and pip
 4. **VS Code** or another editor with EditorConfig support
 5. **API keys** for development (Tradier, Alpaca, Anthropic)
 
-### Initial Setup
+### Manual Setup
+
+If you prefer manual setup or the automated script fails:
 
 1. **Fork the repository** on GitHub
 2. **Clone your fork:**
    ```bash
-   git clone https://github.com/YOUR-USERNAME/ai-Trader.git
-   cd ai-Trader
+   git clone https://github.com/YOUR-USERNAME/PaiiD.git
+   cd PaiiD
    ```
 
 3. **Add upstream remote:**
    ```bash
-   git remote add upstream https://github.com/ORIGINAL-OWNER/ai-Trader.git
+   git remote add upstream https://github.com/SCPrime/PaiiD.git
    ```
 
 4. **Install dependencies:**
    ```bash
    # Frontend
    cd frontend
-   npm install
+   npm ci
 
    # Backend
    cd ../backend
+   python3 -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
    pip install -r requirements.txt
+   pip install -r requirements-dev.txt  # Optional dev tools
    ```
 
-5. **Set up environment variables** (see `DEVELOPER_SETUP.md`)
+5. **Set up environment variables:**
+   ```bash
+   # Backend
+   cd backend
+   cp .env.example .env
+   # Edit .env and add your API keys
+
+   # Frontend
+   cd frontend
+   echo "NEXT_PUBLIC_API_TOKEN=rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl" > .env.local
+   echo "NEXT_PUBLIC_BACKEND_API_BASE_URL=http://127.0.0.1:8001" >> .env.local
+   ```
 
 6. **Verify setup:**
    ```bash
@@ -83,9 +117,179 @@ Before contributing, make sure you have:
 
    # Backend
    cd backend
+   source venv/bin/activate
    python -m uvicorn app.main:app --reload --port 8001  # Should start on :8001
    pytest -v           # Tests should pass
    ```
+
+---
+
+## 🔒 Security Practices
+
+### Dependency Security Audits
+
+PaiiD uses an **internal PyPI mirror** for automated security scanning with `pip-audit`. All Python dependencies are continuously monitored for vulnerabilities.
+
+#### Running Security Audits Locally
+
+**Quick Audit (Recommended):**
+```bash
+cd backend/pypi-mirror
+./scripts/quick-audit.sh
+```
+
+This automated script will:
+1. Populate the internal mirror (if needed)
+2. Start the mirror server
+3. Install pip-audit from the mirror
+4. Scan all backend dependencies
+5. Generate a detailed security report
+6. Display vulnerabilities with fix recommendations
+
+**Output:**
+```
+🔒 PaiiD Security Audit
+📦 Packages Audited: 85
+⚠️  Vulnerabilities Found: 1
+📄 Report: backend/security-audit-20251024-123456.txt
+```
+
+**Manual Audit:**
+```bash
+# 1. Start mirror server (in one terminal)
+cd backend/pypi-mirror
+python scripts/serve-mirror.py
+
+# 2. In another terminal, configure and audit
+source backend/pypi-mirror/activate-mirror.sh
+pip install pip-audit
+cd backend
+pip-audit -r requirements.txt
+```
+
+#### CI/CD Automated Scanning
+
+**Every commit automatically:**
+- ✅ Runs `pip-audit` on all backend dependencies
+- ✅ Posts PR comments if vulnerabilities found
+- ✅ Uploads detailed audit reports (90-day retention)
+- ✅ Blocks merge if critical vulnerabilities detected
+
+**Viewing Audit Reports:**
+1. Go to **Actions** tab on GitHub
+2. Click on your workflow run
+3. Download "pip-audit-report" artifact
+4. Review JSON report for full vulnerability details
+
+#### Handling Security Vulnerabilities
+
+When vulnerabilities are found:
+
+**1. Review the Report:**
+```bash
+cat backend/security-audit-*.txt
+```
+
+**2. Assess Impact:**
+- Is it in a direct or indirect dependency?
+- Does it affect functionality we actually use?
+- What's the severity? (Critical, High, Medium, Low)
+- Is there a fix available?
+
+**3. Fix the Vulnerability:**
+
+```bash
+# Option A: Update the vulnerable package
+cd backend
+source venv/bin/activate
+pip install --upgrade vulnerable-package
+pip freeze | grep vulnerable-package >> requirements.txt
+
+# Option B: Update all dependencies (careful!)
+pip install --upgrade -r requirements.txt
+pip freeze > requirements.txt
+
+# Option C: Switch to alternative package (if no fix available)
+pip uninstall vulnerable-package
+pip install alternative-package
+# Update imports in code
+```
+
+**4. Verify the Fix:**
+```bash
+cd backend/pypi-mirror
+./scripts/quick-audit.sh --no-download
+```
+
+**5. Commit and Test:**
+```bash
+git add backend/requirements.txt
+git commit -m "fix(security): update <package> to fix <CVE-ID>"
+
+# Run full test suite
+cd backend && pytest
+cd frontend && npm test
+```
+
+**6. Document if Accepting Risk:**
+
+If vulnerability has no fix or minimal impact:
+```bash
+# Create docs/security/CVE-XXXX-XXXXX.md
+echo "## CVE-XXXX-XXXXX Assessment
+
+**Package:** package-name v1.2.3
+**Severity:** Medium
+**Impact:** Timing attack on cryptographic operations
+
+**Risk Assessment:** ACCEPTED
+- Attack requires local access to measure timing
+- Not exposed in our API usage
+- Upstream has no planned fix
+- Alternative packages have worse trade-offs
+
+**Mitigation:**
+- Rate limiting on authentication endpoints
+- Network-level TLS protections
+- Monitoring for unusual timing patterns
+
+**Approved By:** @username
+**Date:** 2025-10-24
+" > docs/security/CVE-XXXX-XXXXX.md
+
+git add docs/security/CVE-XXXX-XXXXX.md
+git commit -m "docs(security): document accepted risk for CVE-XXXX-XXXXX"
+```
+
+#### Security Best Practices
+
+**Never commit secrets:**
+- ✅ Use `.env` files (in `.gitignore`)
+- ✅ Use environment variables in CI/CD
+- ✅ Use `.env.example` templates for documentation
+- ❌ Never commit real API keys, passwords, or tokens
+
+**Keep dependencies updated:**
+```bash
+# Check for outdated packages
+cd backend && pip list --outdated
+
+# Update specific package
+pip install --upgrade package-name
+
+# Run security audit after updates
+cd pypi-mirror && ./scripts/quick-audit.sh
+```
+
+**Use the internal mirror:**
+```bash
+# In development
+source backend/pypi-mirror/activate-mirror.sh
+pip install <package>
+
+# In CI/CD (automatically configured)
+# See .github/workflows/ci.yml
+```
 
 ---
 

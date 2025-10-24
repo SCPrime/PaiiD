@@ -1,6 +1,10 @@
 # Backend Dockerfile for PaiiD Trading App
 FROM python:3.11-slim
 
+# Build arguments for optional internal PyPI mirror
+ARG PIP_INDEX_URL=""
+ARG PIP_TRUSTED_HOST=""
+
 # Set working directory
 WORKDIR /app
 
@@ -8,12 +12,20 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
+    curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Configure pip if mirror is specified
+ENV PIP_INDEX_URL=${PIP_INDEX_URL} \
+    PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST} \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Copy requirements first for better caching
 COPY requirements.txt .
 
 # Install Python dependencies
+# If PIP_INDEX_URL is set, pip will use the internal mirror
+# Otherwise, it will use the default PyPI
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code

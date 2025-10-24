@@ -1,0 +1,25 @@
+# Exclude downloaded packages (regenerate with download-packages.sh)
+simple/
+
+# Exclude local environment configuration
+.env
+
+# Exclude Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Exclude temporary files
+*.log
+*.tmp
+.DS_Store
+
+# Keep scripts and documentation
+!scripts/
+!*.md
+!*.conf
+!*.sh
+!*.py
+!.env.example
+!requirements-audit.txt
