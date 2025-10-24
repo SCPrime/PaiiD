@@ -4,13 +4,13 @@ Analyzes market news and social media sentiment for trading insights
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from datetime import datetime
 
 import anthropic
 from pydantic import BaseModel
 
 from ..core.config import get_settings
+
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -68,12 +68,12 @@ class SentimentAnalyzer:
                 sentiment="neutral",
                 score=0.0,
                 confidence=0.0,
-                reasoning=f"Analysis failed: {str(e)}",
+                reasoning=f"Analysis failed: {e!s}",
                 timestamp=datetime.utcnow(),
                 source=source,
             )
 
-    async def analyze_news_batch(self, symbol: str, news_articles: List[Dict]) -> SentimentScore:
+    async def analyze_news_batch(self, symbol: str, news_articles: list[dict]) -> SentimentScore:
         """
         Analyze multiple news articles and aggregate sentiment
 
@@ -117,7 +117,7 @@ class SentimentAnalyzer:
                 sentiment="neutral",
                 score=0.0,
                 confidence=0.0,
-                reasoning=f"Batch analysis failed: {str(e)}",
+                reasoning=f"Batch analysis failed: {e!s}",
                 timestamp=datetime.utcnow(),
                 source="news",
             )
@@ -215,12 +215,12 @@ Focus on the most recent and impactful information."""
                 sentiment="neutral",
                 score=0.0,
                 confidence=0.0,
-                reasoning=f"Parse error: {str(e)}",
+                reasoning=f"Parse error: {e!s}",
                 timestamp=datetime.utcnow(),
                 source=source,
             )
 
-    def _combine_news_articles(self, articles: List[Dict]) -> str:
+    def _combine_news_articles(self, articles: list[dict]) -> str:
         """Combine multiple news articles into one text"""
         combined = []
         for i, article in enumerate(articles[:10], 1):  # Limit to 10 articles
@@ -238,7 +238,7 @@ Focus on the most recent and impactful information."""
 
 
 # Global instance
-_sentiment_analyzer: Optional[SentimentAnalyzer] = None
+_sentiment_analyzer: SentimentAnalyzer | None = None
 
 
 def get_sentiment_analyzer() -> SentimentAnalyzer:

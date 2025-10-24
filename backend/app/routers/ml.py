@@ -13,7 +13,7 @@ from typing import Any
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 
-from ..ml import get_regime_detector, get_strategy_selector
+from ..ml import get_pattern_detector, get_regime_detector, get_strategy_selector
 
 
 logger = logging.getLogger(__name__)
@@ -261,3 +261,55 @@ async def train_strategy_selector(
     except Exception as e:
         logger.error(f"Training failed: {e}")
         raise HTTPException(status_code=500, detail=f"Training failed: {e!s}") from e
+
+
+@router.get("/detect-patterns")
+async def detect_patterns(
+    symbol: str = Query("SPY", description="Stock symbol to analyze"),
+    lookback_days: int = Query(90, ge=30, le=180, description="Days of history to analyze"),
+    min_confidence: float = Query(0.6, ge=0.5, le=0.95, description="Minimum pattern confidence"),
+) -> dict[str, Any]:
+    """
+    Detect chart patterns in recent price action
+
+    Identifies classic technical analysis patterns:
+    - Double top/bottom (reversal signals)
+    - Head and shoulders (major reversal)
+    - Triangle patterns (continuation/breakout)
+    - Support/resistance breaks
+
+    Returns:
+        - symbol: Stock symbol analyzed
+        - patterns: List of detected patterns with confidence scores
+        - total_patterns: Count of patterns found
+        - timestamp: When analysis was performed
+
+    Example:
+        GET /api/ml/detect-patterns?symbol=AAPL&lookback_days=90&min_confidence=0.7
+    """
+    try:
+        logger.info(f"Pattern detection requested for {symbol}")
+
+        detector = get_pattern_detector()
+        detector.min_confidence = min_confidence
+
+        # Detect patterns
+        patterns = detector.detect_patterns(symbol, lookback_days)
+
+        # Convert patterns to dicts
+        pattern_dicts = [p.to_dict() for p in patterns]
+
+        logger.info(f"✅ Found {len(patterns)} patterns for {symbol}")
+
+        return {
+            "symbol": symbol,
+            "patterns": pattern_dicts,
+            "total_patterns": len(patterns),
+            "lookback_days": lookback_days,
+            "min_confidence": min_confidence,
+            "timestamp": pd.Timestamp.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Pattern detection failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Pattern detection failed: {e!s}") from e

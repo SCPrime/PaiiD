@@ -6,13 +6,13 @@ Combines technical indicators with sentiment analysis to generate trade signals
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
 
 import pandas as pd
 from pydantic import BaseModel
 
 from .feature_engineering import FeatureEngineer
-from .sentiment_analyzer import SentimentAnalyzer, SentimentScore
+from .sentiment_analyzer import SentimentAnalyzer
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,14 +41,14 @@ class TradeSignal(BaseModel):
     strength: SignalStrength
     confidence: float  # 0.0 to 1.0
     price: float
-    target_price: Optional[float] = None
-    stop_loss: Optional[float] = None
+    target_price: float | None = None
+    stop_loss: float | None = None
     reasoning: str
     technical_score: float  # -1.0 to 1.0
     sentiment_score: float  # -1.0 to 1.0
     combined_score: float  # -1.0 to 1.0
     timestamp: datetime
-    indicators: Dict[str, float]  # Key technical indicators
+    indicators: dict[str, float]  # Key technical indicators
 
 
 class SignalGenerator:
@@ -75,7 +75,7 @@ class SignalGenerator:
         self,
         symbol: str,
         price_data: pd.DataFrame,
-        news_articles: Optional[List[Dict]] = None,
+        news_articles: list[dict] | None = None,
     ) -> TradeSignal:
         """
         Generate a trade signal for a symbol
@@ -149,7 +149,7 @@ class SignalGenerator:
             # Return HOLD signal on error
             return self._create_hold_signal(symbol, str(e))
 
-    def _calculate_technical_score(self, df: pd.DataFrame) -> tuple[float, Dict[str, float]]:
+    def _calculate_technical_score(self, df: pd.DataFrame) -> tuple[float, dict[str, float]]:
         """
         Calculate technical analysis score
 
@@ -264,8 +264,8 @@ class SignalGenerator:
         current_price: float,
         signal: SignalType,
         strength: SignalStrength,
-        indicators: Dict[str, float],
-    ) -> tuple[Optional[float], Optional[float]]:
+        indicators: dict[str, float],
+    ) -> tuple[float | None, float | None]:
         """
         Calculate target price and stop loss
 
@@ -300,7 +300,7 @@ class SignalGenerator:
         signal: SignalType,
         technical_score: float,
         sentiment_score: float,
-        indicators: Dict[str, float],
+        indicators: dict[str, float],
         sentiment_reasoning: str,
     ) -> str:
         """Generate human-readable reasoning for the signal"""
@@ -352,7 +352,7 @@ class SignalGenerator:
 
 
 # Global instance
-_signal_generator: Optional[SignalGenerator] = None
+_signal_generator: SignalGenerator | None = None
 
 
 def get_signal_generator() -> SignalGenerator:
