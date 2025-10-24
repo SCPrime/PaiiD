@@ -8,7 +8,12 @@ services:
   rootDir: backend
   buildCommand: pip install -r requirements.txt
   startCommand: bash start.sh
+  healthCheckPath: /api/health
   envVars:
+    - key: ENVIRONMENT
+      value: production
+    - key: PRELAUNCH_REQUIRED_PORTS
+      value: "8000"
     - key: API_TOKEN
       sync: false  # Set via Render dashboard for security
     # Alpaca API - PAPER TRADING EXECUTION ONLY (not for market data)
@@ -39,3 +44,8 @@ services:
     # PostgreSQL Database - Required for auth and data persistence
     - key: DATABASE_URL
       sync: false  # Set via Render dashboard (connect to Render Postgres)
+    - key: SENTRY_DSN
+      sync: false  # Required for production/staging deployments
+    - key: USE_FIXTURE_DATA
+      value: "false"  # Enable deterministic fixtures in CI environments only
+

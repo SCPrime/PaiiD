@@ -8,8 +8,12 @@ services:
     branch: main
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: bash start.sh
     envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PRELAUNCH_REQUIRED_PORTS
+        value: "8000"
       - key: API_TOKEN
         sync: false # Set via Render dashboard for security
       # Alpaca API - PAPER TRADING EXECUTION ONLY (not for market data)
@@ -37,6 +41,11 @@ services:
         value: paper
       - key: REDIS_URL
         generateValue: true
+      - key: SENTRY_DSN
+        sync: false # Required for production/staging deployments
+      - key: USE_FIXTURE_DATA
+        value: "false" # Enable deterministic fixtures in CI environments only
+    healthCheckPath: /api/health
 
   # Frontend - Next.js Docker service
   - type: web

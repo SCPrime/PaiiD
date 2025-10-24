@@ -212,3 +212,20 @@ Bug is fixed when:
 
 **Estimated Effort:** 1-2 hours with Python debugger access
 **Workaround Effort:** 30 minutes (implement frontend Tradier direct call)
+
+---
+
+## ✅ Resolution Summary (2025-10-10)
+
+1. **Pre-launch validation guard:** Added `app/core/prelaunch.py` and wired it into `main.py`, `start.sh`, and the Procfile so missing credentials or occupied ports fail fast with actionable logs.
+2. **Configuration hardening:** Updated `app/core/config.py` to require `SENTRY_DSN` for production/staging environments and to surface release metadata in startup logs.
+3. **Deterministic fixture mode:** Implemented `app/services/fixture_loader.py`, fixture JSON assets, and a new router pathway that serves canned data when `fixture=true` or the `X-Fixture-Mode: options` header is present.
+4. **Playwright support:** Added frontend fixtures (`frontend/tests/fixtures/options.ts`) and npm scripts to run Playwright for end-to-end verification of the options workflow.
+5. **Documentation & telemetry:** Authored `PRELAUNCH_VALIDATION_GUIDE.md`, `QE_ACCEPTANCE_CHECKLIST.md`, and appended telemetry events capturing validator outcomes and fixture usage.
+
+**Verification:**
+- `python -m app.core.prelaunch` now reports all validation checks and exits non-zero when requirements are missing.
+- `/options/chains/{symbol}?fixture=true` returns deterministic data without touching Tradier, enabling reliable Playwright coverage.
+- Backend startup logs display environment, release identifier, and a redacted credential summary while confirming Sentry initialization.
+
+The options endpoint 500 regression is resolved and guarded against recurrence through automated validation, deterministic testing, and expanded operational runbooks.
