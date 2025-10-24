@@ -16,13 +16,14 @@ import json
 import logging
 import time
 from collections.abc import AsyncGenerator
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Query
 from sse_starlette.sse import EventSourceResponse
 
 from app.core.auth import require_bearer
+from app.market_data.streaming import get_tradier_streaming_client
 from app.services.cache import CacheService, get_cache
-from app.services.tradier_stream import get_tradier_stream
 
 
 logger = logging.getLogger(__name__)
@@ -69,8 +70,10 @@ async def stream_prices(
     logger.info(f"📡 Client subscribed to price stream for: {symbol_list}")
 
     # Subscribe to Tradier streaming
-    tradier_stream = get_tradier_stream()
-    await tradier_stream.subscribe_quotes(symbol_list)
+    streaming_client = get_tradier_streaming_client()
+    await streaming_client.start()
+    consumer_id = f"sse:{uuid4()}"
+    await streaming_client.subscribe(symbol_list, consumer_id)
 
     async def price_generator() -> AsyncGenerator:
         """
@@ -134,11 +137,12 @@ async def stream_prices(
 
         except asyncio.CancelledError:
             logger.info(f"📡 Client disconnected from price stream: {symbol_list}")
-            # Cleanup not needed - Tradier stream continues for other clients
             raise
         except Exception as e:
             logger.error(f"❌ Error in price stream: {e}")
             yield {"event": "error", "data": json.dumps({"error": str(e)})}
+        finally:
+            await streaming_client.remove_consumer(consumer_id)
 
     return EventSourceResponse(price_generator())
 

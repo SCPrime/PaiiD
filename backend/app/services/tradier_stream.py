@@ -17,9 +17,11 @@ IMPLEMENTATION:
 """
 
 import asyncio
+import inspect
 import json
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from typing import Any
 
@@ -70,6 +72,9 @@ class TradierStreamService:
         # Background tasks
         self._connection_task: asyncio.Task | None = None
         self._session_renewal_task: asyncio.Task | None = None
+
+        # Event listeners (used by higher level streaming client)
+        self._listeners: list[Callable[[dict], Awaitable[None] | None]] = []
 
         logger.info("✅ TradierStreamService initialized")
 
@@ -392,6 +397,7 @@ class TradierStreamService:
 
                 # Cache in Redis (5s TTL)
                 self.cache.set(f"quote:{symbol}", quote_data, ttl=5)
+                await self._notify_listeners(quote_data)
 
             elif msg_type == "trade":
                 # Trade update (last price)
@@ -405,6 +411,7 @@ class TradierStreamService:
 
                 # Cache in Redis (5s TTL)
                 self.cache.set(f"price:{symbol}", trade_data, ttl=5)
+                await self._notify_listeners(trade_data)
 
             elif msg_type == "summary":
                 # Summary data (open, high, low, close, volume)
@@ -421,11 +428,28 @@ class TradierStreamService:
 
                 # Cache in Redis (5s TTL)
                 self.cache.set(f"summary:{symbol}", summary_data, ttl=5)
+                await self._notify_listeners(summary_data)
 
         except json.JSONDecodeError:
             logger.warning(f"⚠️ Invalid JSON message: {message[:100]}")
         except Exception as e:
             logger.error(f"❌ Error handling message: {e}")
+
+    def register_listener(self, listener: Callable[[dict], Awaitable[None] | None]) -> None:
+        """Register a listener that will receive parsed streaming payloads."""
+
+        self._listeners.append(listener)
+
+    async def _notify_listeners(self, payload: dict) -> None:
+        """Dispatch an event payload to registered listeners."""
+
+        for listener in list(self._listeners):
+            try:
+                result = listener(payload)
+                if inspect.isawaitable(result):
+                    await result
+            except Exception:  # pragma: no cover - listeners should not break streaming
+                logger.exception("Streaming listener raised an exception")
 
     async def start(self):
         """Start the streaming service"""
