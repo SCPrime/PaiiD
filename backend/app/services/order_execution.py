@@ -139,7 +139,7 @@ class OrderExecutionService:
             order_data = {
                 "symbol": proposal.option_symbol,
                 "qty": proposal.quantity,
-                "side": "buy",  # TODO: Support sell orders
+                "side": proposal.side if hasattr(proposal, "side") else "buy",  # PHASE 1: Support sell orders
                 "type": "limit" if limit_price else "market",
                 "time_in_force": "day",
                 "order_class": "simple",

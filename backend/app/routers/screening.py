@@ -33,12 +33,15 @@ async def get_opportunities(max_price: float | None = None) -> dict:
     Args:
         max_price: Optional maximum price to filter opportunities (based on available account balance)
 
-    TODO: Implement real screening logic based on:
-    - User's selected strategies from settings
-    - Technical indicators (moving averages, RSI, MACD)
-    - Volume analysis
-    - Options data (IV, Greeks)
-    - Risk parameters from user settings
+    PHASE 2 IMPLEMENTATION: Real-time strategy screening
+    Planned features:
+    - Integrate user's selected strategies from settings (Phase 1 prerequisite)
+    - Calculate technical indicators using TechnicalIndicators service (already exists)
+    - Volume analysis with historical comparison (requires OHLCV storage)
+    - Options screening with IV rank and Greeks (Phase 1 options integration)
+    - Risk-based filtering using user risk_tolerance settings
+
+    Current: Returns curated static examples for UI/UX development and testing
     """
 
     # Expanded opportunity universe - randomly select from each type
