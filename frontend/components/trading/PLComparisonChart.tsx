@@ -320,7 +320,7 @@ function renderPreTradeView(container: HTMLDivElement, payoff: TheoreticalPayoff
   });
 
   const payoffData: LineData[] = payoff.payoffCurve.map((point, index) => ({
-    time: index as any,
+    time: index as number,
     value: point.pnl,
   }));
 
@@ -350,7 +350,7 @@ function renderPreTradeView(container: HTMLDivElement, payoff: TheoreticalPayoff
     });
 
     const probData: LineData[] = payoff.probabilityDistribution.map((point, index) => ({
-      time: index as any,
+      time: index as number,
       value: point.pnl * 100, // Scale probability
     }));
 

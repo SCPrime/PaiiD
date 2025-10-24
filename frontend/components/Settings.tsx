@@ -26,9 +26,9 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTheme } from "../contexts/ThemeContext";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { clearUserData, getCurrentUser, getUserAnalytics } from "../lib/userManagement";
-import { useTheme } from "../contexts/ThemeContext";
 import ApprovalQueue from "./ApprovalQueue";
 import ClaudeAIChat from "./ClaudeAIChat";
 import KillSwitchToggle from "./KillSwitchToggle";
@@ -99,7 +99,7 @@ interface SettingsProps {
 export default function Settings({ isOpen, onClose }: SettingsProps) {
   const isMobile = useIsMobile();
   const currentUserData = getCurrentUser();
-  const { theme, toggleTheme } = useTheme();
+  const { theme: currentTheme, toggleTheme } = useTheme();
   const [currentUser] = useState({
     id: currentUserData?.userId || "owner-001",
     role: "owner" as const,
@@ -756,29 +756,28 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   {/* Theme Toggle */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-slate-200 font-medium block mb-1">
-                        Theme
-                      </label>
-                      <p className="text-sm text-slate-400">
-                        Switch between dark and light mode
-                      </p>
+                      <label className="text-slate-200 font-medium block mb-1">Theme</label>
+                      <p className="text-sm text-slate-400">Switch between dark and light mode</p>
                     </div>
                     <button
                       onClick={toggleTheme}
                       className="relative inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105"
                       style={{
-                        background: theme === 'dark'
-                          ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-                          : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-                        border: theme === 'dark'
-                          ? '1px solid rgba(148, 163, 184, 0.3)'
-                          : '1px solid rgba(203, 213, 225, 0.5)',
-                        boxShadow: theme === 'dark'
-                          ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                          : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                        background:
+                          currentTheme === "dark"
+                            ? "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)"
+                            : "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+                        border:
+                          currentTheme === "dark"
+                            ? "1px solid rgba(148, 163, 184, 0.3)"
+                            : "1px solid rgba(203, 213, 225, 0.5)",
+                        boxShadow:
+                          currentTheme === "dark"
+                            ? "0 4px 12px rgba(0, 0, 0, 0.3)"
+                            : "0 4px 12px rgba(0, 0, 0, 0.1)",
                       }}
                     >
-                      {theme === 'dark' ? (
+                      {theme === "dark" ? (
                         <>
                           <span className="text-slate-300">🌙</span>
                           <span className="text-sm font-medium text-slate-300">Dark</span>
@@ -796,27 +795,28 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   <div
                     className="p-4 rounded-lg border"
                     style={{
-                      background: theme === 'dark' ? '#0f172a' : '#ffffff',
-                      borderColor: theme === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)',
+                      background: theme === "dark" ? "#0f172a" : "#ffffff",
+                      borderColor:
+                        theme === "dark" ? "rgba(71, 85, 105, 0.3)" : "rgba(203, 213, 225, 0.5)",
                     }}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <div
                         className="w-10 h-10 rounded-full"
                         style={{
-                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                         }}
                       />
                       <div>
                         <div
                           className="text-sm font-medium"
-                          style={{ color: theme === 'dark' ? '#ffffff' : '#0f172a' }}
+                          style={{ color: theme === "dark" ? "#ffffff" : "#0f172a" }}
                         >
                           Theme Preview
                         </div>
                         <div
                           className="text-xs"
-                          style={{ color: theme === 'dark' ? '#94a3b8' : '#64748b' }}
+                          style={{ color: theme === "dark" ? "#94a3b8" : "#64748b" }}
                         >
                           Your interface will look like this
                         </div>
@@ -825,8 +825,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                     <div
                       className="text-xs p-2 rounded"
                       style={{
-                        background: theme === 'dark' ? 'rgba(30, 41, 59, 0.6)' : 'rgba(248, 250, 252, 0.8)',
-                        color: theme === 'dark' ? '#cbd5e1' : '#475569',
+                        background:
+                          theme === "dark" ? "rgba(30, 41, 59, 0.6)" : "rgba(248, 250, 252, 0.8)",
+                        color: theme === "dark" ? "#cbd5e1" : "#475569",
                       }}
                     >
                       ✓ Saved to localStorage
@@ -870,7 +871,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       <input
                         type="checkbox"
                         checked={settings[key as keyof SettingsData] as boolean}
-                        onChange={(e) => updateSetting(key as any, e.target.checked)}
+                        onChange={(e) => updateSetting(key as keyof SettingsData, e.target.checked)}
                         className="w-5 h-5"
                       />
                     </label>

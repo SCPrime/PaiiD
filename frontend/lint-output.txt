@@ -1,405 +1,114 @@
 
 > lint
-> eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 0
+> eslint . --ext .ts,.tsx,.js,.jsx
 
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\AIAnalysisModal.tsx
-   80:6    warning  React Hook useEffect has a missing dependency: 'fetchAnalysis'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  837:116  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
-  856:115  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
-  884:88   warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\components\Settings.tsx
+  873:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\AIRecommendations.tsx
-  114:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\components\trading\PLComparisonChart.tsx
+   66:30  warning  The ref value 'chartRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'chartRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+  323:20  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
+  353:22  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\ActivePositions.tsx
-  63:6  warning  React Hook useEffect has a missing dependency: 'loadPositions'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\components\trading\ResearchDashboard.tsx
+  106:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  375:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  564:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  579:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  594:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  628:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  643:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  658:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  676:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  688:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  700:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  721:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  733:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  745:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  757:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  769:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  824:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  837:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  853:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  911:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\Analytics.tsx
-  232:6   warning  React Hook useEffect has a missing dependency: 'loadAnalytics'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  262:74  warning  Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\components\trading\StrategyBuilder.tsx
+  18:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\ApprovalQueue.tsx
-  22:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\components\ui\AnimatedCounter.tsx
+  50:6  warning  React Hook useEffect has a missing dependency: 'displayValue'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\ExecuteTradeForm.tsx
-  180:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  200:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  289:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  338:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\lib\utils.ts
+  26:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  26:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\KillSwitchToggle.tsx
-  29:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  67:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\pages\_document.tsx
+  8:9  warning  Do not use `<title>` element with `<Head />` component from `next/document`. Titles should defined at the page-level using `<Head />` from `next/head` instead. See: https://nextjs.org/docs/messages/no-title-in-document-head  @next/next/no-title-in-document-head
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\MarketScanner.tsx
-  51:6  warning  React Hook useEffect has a missing dependency: 'runScan'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\pages\api\ai\suggest-strategy.ts
+  4:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\MorningRoutineAI.tsx
-   67:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   86:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  277:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  317:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  330:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  426:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\tests\fixtures\options.ts
+   86:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  146:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:9   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  163:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  168:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  172:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  176:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  182:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\NewsReview.tsx
-   37:58  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
-   49:43  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
-  110:19  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
-  130:6   warning  React Hook useEffect has missing dependencies: 'fetchNews' and 'searchSymbol'. Either include them or remove the dependency array                                                                                                                               react-hooks/exhaustive-deps
-  137:6   warning  React Hook useEffect has missing dependencies: 'fetchNews', 'providers.length', and 'searchSymbol'. Either include them or remove the dependency array                                                                                                          react-hooks/exhaustive-deps
-  508:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\tests\global-setup.ts
+   15:3  warning  Unexpected console statement  no-console
+   28:5  warning  Unexpected console statement  no-console
+   31:5  warning  Unexpected console statement  no-console
+   39:3  warning  Unexpected console statement  no-console
+   64:3  warning  Unexpected console statement  no-console
+   71:3  warning  Unexpected console statement  no-console
+   88:5  warning  Unexpected console statement  no-console
+   96:3  warning  Unexpected console statement  no-console
+   97:3  warning  Unexpected console statement  no-console
+   98:3  warning  Unexpected console statement  no-console
+  115:3  warning  Unexpected console statement  no-console
+  116:3  warning  Unexpected console statement  no-console
+  117:3  warning  Unexpected console statement  no-console
+  118:3  warning  Unexpected console statement  no-console
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\PositionsTable.tsx
-  44:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  68:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\tests\global-teardown.ts
+   15:3  warning  Unexpected console statement  no-console
+   31:7  warning  Unexpected console statement  no-console
+   42:3  warning  Unexpected console statement  no-console
+   64:3  warning  Unexpected console statement  no-console
+   71:3  warning  Unexpected console statement  no-console
+   80:7  warning  Unexpected console statement  no-console
+   89:3  warning  Unexpected console statement  no-console
+   90:3  warning  Unexpected console statement  no-console
+   91:3  warning  Unexpected console statement  no-console
+  105:3  warning  Unexpected console statement  no-console
+  106:3  warning  Unexpected console statement  no-console
+  107:3  warning  Unexpected console statement  no-console
+  108:3  warning  Unexpected console statement  no-console
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\RadialMenu.tsx
-  618:6   warning  React Hook useEffect has missing dependencies: 'marketData.dow.change', 'marketData.dow.value', 'marketData.nasdaq.change', and 'marketData.nasdaq.value'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
-  676:39  warning  Unexpected any. Specify a different type                                                                                                                                                                       @typescript-eslint/no-explicit-any
-  676:47  warning  Unexpected any. Specify a different type                                                                                                                                                                       @typescript-eslint/no-explicit-any
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\tests\market-data.spec.ts
+   29:5  warning  Unexpected console statement  no-console
+   49:5  warning  Unexpected console statement  no-console
+   69:5  warning  Unexpected console statement  no-console
+   93:5  warning  Unexpected console statement  no-console
+  112:5  warning  Unexpected console statement  no-console
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\ResearchDashboardSimple.tsx
-  36:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\frontend\tests\options-chain.spec.ts
+   66:5  warning  Unexpected console statement  no-console
+   88:7  warning  Unexpected console statement  no-console
+  170:7  warning  Unexpected console statement  no-console
+  189:5  warning  Unexpected console statement  no-console
+  219:5  warning  Unexpected console statement  no-console
+  239:5  warning  Unexpected console statement  no-console
+  258:5  warning  Unexpected console statement  no-console
 
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\Settings.tsx
-    46:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   455:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   600:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   889:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   958:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  1002:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  1042:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  1110:84  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\StatusBar.tsx
-  40:21  warning  Unexpected any. Specify a different type                                                                                    @typescript-eslint/no-explicit-any
-  45:6   warning  React Hook useCallback has a missing dependency: 'marketStreamConnected'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\StockLookup.tsx
-  75:6  warning  React Hook useEffect has a missing dependency: 'handleSearch'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\StrategyBuilder.deprecated.tsx
-  71:5  warning  Unexpected console statement  no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\StrategyBuilderAI.tsx
-   57:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  130:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  164:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  180:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\TemplateCustomizationModal.tsx
-   24:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   57:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   58:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   75:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   83:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   84:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  116:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  133:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  134:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\TradingViewChart.tsx
-  13:19  warning  Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
-  30:28  warning  Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
-  64:6   warning  React Hook useEffect has a missing dependency: 'initWidget'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  71:6   warning  React Hook useEffect has a missing dependency: 'initWidget'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\UserSetup.tsx
-   19:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  423:7   warning  Unexpected console statement              no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\UserSetupAI.tsx
-   74:9   warning  Unexpected console statement              no-console
-  187:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  230:5   warning  Unexpected console statement              no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\WatchlistManager.tsx
-  77:6  warning  React Hook useEffect has a missing dependency: 'selectedWatchlistId'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  87:6  warning  React Hook useEffect has a missing dependency: 'profile.watchlists'. Either include it or remove the dependency array   react-hooks/exhaustive-deps
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\WatchlistPanel.tsx
-  84:6  warning  React Hook useEffect has a missing dependency: 'selectedWatchlistId'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  95:6  warning  React Hook useEffect has a missing dependency: 'fetchQuotes'. Either include it or remove the dependency array          react-hooks/exhaustive-deps
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\trading\OptionsChain.tsx
-  61:6  warning  React Hook useEffect has a missing dependency: 'fetchOptionsChain'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\trading\PLComparisonChart.tsx
-   40:9   warning  Unexpected console statement                                                                                                                                                                                                                                     no-console
-   66:18  warning  The ref value 'chartRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'chartRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
-  293:20  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
-  323:22  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\trading\ResearchDashboard.tsx
-   90:66  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  112:60  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  357:35  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  546:54  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  561:54  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  576:54  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  609:48  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  610:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  624:48  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  625:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  639:49  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  640:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  657:27  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  658:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  669:28  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  670:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  681:27  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  682:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  702:28  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  703:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  714:27  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  715:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  726:29  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  727:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  738:29  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  739:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  750:28  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  751:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  805:26  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  806:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  818:28  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  819:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  834:31  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  835:58  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  893:54  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
-  918:6   warning  React Hook useEffect has a missing dependency: 'stockData.symbol'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\components\trading\StrategyBuilder.tsx
-   164:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   216:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   251:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   812:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   962:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  1088:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  1191:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\contexts\AuthContext.tsx
-  74:6  warning  React Hook useEffect has a missing dependency: 'startRefreshTimer'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\contexts\WorkflowContext.tsx
-   38:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   47:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   70:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   85:5   warning  Unexpected console statement              no-console
-  103:5   warning  Unexpected console statement              no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\hooks\useMarketStream.ts
-   85:37  warning  Unexpected any. Specify a different type                                                                                                  @typescript-eslint/no-explicit-any
-   87:7   warning  Unexpected console statement                                                                                                              no-console
-  194:50  error    'event' is defined but never used. Allowed unused args must match /^_/u                                                                   @typescript-eslint/no-unused-vars
-  220:30  error    'error' is defined but never used. Allowed unused args must match /^_/u                                                                   @typescript-eslint/no-unused-vars
-  252:21  warning  Unexpected any. Specify a different type                                                                                                  @typescript-eslint/no-explicit-any
-  261:6   warning  React Hook useCallback has a missing dependency: 'heartbeatTimeout'. Either include it or remove the dependency array                     react-hooks/exhaustive-deps
-  292:6   warning  React Hook useEffect has a missing dependency: 'symbols.length'. Either include it or remove the dependency array                         react-hooks/exhaustive-deps
-  292:7   warning  React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\hooks\usePositionUpdates.ts
-   87:37  warning  Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
-   89:7   warning  Unexpected console statement                                                                                           no-console
-  189:50  error    'event' is defined but never used. Allowed unused args must match /^_/u                                                @typescript-eslint/no-unused-vars
-  215:30  error    'error' is defined but never used. Allowed unused args must match /^_/u                                                @typescript-eslint/no-unused-vars
-  247:21  warning  Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
-  256:6   warning  React Hook useCallback has a missing dependency: 'heartbeatTimeout'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\hooks\useSWR.ts
-  28:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\lib\aiAdapter.ts
-   33:5   warning  Unexpected console statement              no-console
-   71:7   warning  Unexpected console statement              no-console
-   94:9   warning  Unexpected console statement              no-console
-  123:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  141:7   warning  Unexpected console statement              no-console
-  183:7   warning  Unexpected console statement              no-console
-  227:7   warning  Unexpected console statement              no-console
-  261:7   warning  Unexpected console statement              no-console
-  285:9   warning  Unexpected console statement              no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\lib\alpaca.ts
-  393:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  394:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  400:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\lib\apiClient.ts
-   19:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   36:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   51:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   84:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   84:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  118:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  118:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  152:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  192:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  199:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  206:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  219:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\lib\authApi.ts
-  36:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\lib\logger.ts
-  14:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  29:7   warning  Unexpected console statement              no-console
-  45:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  58:7   warning  Unexpected console statement              no-console
-  67:7   warning  Unexpected console statement              no-console
-  73:7   warning  Unexpected console statement              no-console
-  82:7   warning  Unexpected console statement              no-console
-  88:7   warning  Unexpected console statement              no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\lib\marketData.ts
-  57:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\lib\sentry.ts
-   28:5   warning  Unexpected console statement                                            no-console
-   29:5   warning  Unexpected console statement                                            no-console
-   64:25  error    'hint' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-  104:5   warning  Unexpected console statement                                            no-console
-  113:73  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
-  129:5   warning  Unexpected console statement                                            no-console
-  153:70  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\lib\toast.ts
-  80:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\lib\tradeHistory.ts
-  254:3  warning  Unexpected console statement  no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\lib\userManagement.ts
-  129:3  warning  Unexpected console statement  no-console
-  220:3  warning  Unexpected console statement  no-console
-  261:5  warning  Unexpected console statement  no-console
-  287:3  warning  Unexpected console statement  no-console
-  304:3  warning  Unexpected console statement  no-console
-  354:3  warning  Unexpected console statement  no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\api\ai\suggest-strategy.ts
-  167:11  error  'symbol' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-  324:3   error  'optionsChain' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\api\chat.ts
-  26:5   warning  Unexpected console statement              no-console
-  51:5   warning  Unexpected console statement              no-console
-  55:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\api\market\historical.ts
-  79:5  warning  Unexpected console statement  no-console
-  92:7  warning  Unexpected console statement  no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\api\market\options-chain.ts
-  100:45  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
-  107:73  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
-  183:11  error    'isITM_Call' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-  184:11  error    'isITM_Put' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\api\pnl\calculate-theoretical.ts
-  160:51  error  'underlyingPrice' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\api\pnl\track-position.ts
-    2:33  error    'ActualMetrics' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-  171:39  warning  Unexpected any. Specify a different type                                         @typescript-eslint/no-explicit-any
-  200:33  warning  Unexpected any. Specify a different type                                         @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\api\proposals\[id]\approve.ts
-  36:5  warning  Unexpected console statement  no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\api\proposals\[id]\reject.ts
-  35:5  warning  Unexpected console statement  no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\api\proposals\[id]\reprice.ts
-  36:5  warning  Unexpected console statement  no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\api\proxy\[...path].ts
-   12:3  warning  Unexpected console statement  no-console
-  104:5  warning  Unexpected console statement  no-console
-  114:9  warning  Unexpected console statement  no-console
-  128:3  warning  Unexpected console statement  no-console
-  129:3  warning  Unexpected console statement  no-console
-  130:3  warning  Unexpected console statement  no-console
-  131:3  warning  Unexpected console statement  no-console
-  135:5  warning  Unexpected console statement  no-console
-  155:3  warning  Unexpected console statement  no-console
-  170:3  warning  Unexpected console statement  no-console
-  220:3  warning  Unexpected console statement  no-console
-  221:3  warning  Unexpected console statement  no-console
-  222:3  warning  Unexpected console statement  no-console
-  223:3  warning  Unexpected console statement  no-console
-  224:3  warning  Unexpected console statement  no-console
-  225:3  warning  Unexpected console statement  no-console
-  226:3  warning  Unexpected console statement  no-console
-  228:5  warning  Unexpected console statement  no-console
-  241:5  warning  Unexpected console statement  no-console
-  242:5  warning  Unexpected console statement  no-console
-  243:5  warning  Unexpected console statement  no-console
-  253:5  warning  Unexpected console statement  no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\api\strategies\index.ts
-  136:3   warning  Unexpected console statement                                                  no-console
-  144:34  error    'strategyId' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-  153:29  error    'strategyId' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\pages\index.tsx
-  54:9  warning  Unexpected console statement  no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\services\telemetry.ts
-   10:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   72:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   89:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   99:82  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  102:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  115:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  129:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  132:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  165:7   warning  Unexpected console statement              no-console
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\strategies\schema.ts
-   64:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  538:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  576:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  628:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  629:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\strategies\validator.ts
-    8:3   error    'Strategy' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-   18:44  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  150:13  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  152:3   error    'warnings' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-  224:10  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  259:13  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  284:31  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  348:11  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  350:3   error    'warnings' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-  418:10  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  420:3   error    'warnings' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-  458:9   warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  460:3   error    'warnings' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-  504:15  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  551:12  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  553:3   error    'warnings' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-  598:13  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  608:13  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  614:15  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  638:49  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-  645:37  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\types\lightweight-charts.d.ts
-  5:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  5:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  6:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  6:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  7:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  7:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  8:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  8:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\SSaint-Cyr\Documents\source\ai-Trader\frontend\types\profile.ts
-  246:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-✖ 278 problems (19 errors, 259 warnings)
+Γ£û 81 problems (0 errors, 81 warnings)
 

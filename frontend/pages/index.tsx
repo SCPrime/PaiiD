@@ -5,6 +5,7 @@ import RadialMenu, { Workflow, workflows } from "../components/RadialMenu";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 
 import ExecuteTradeForm from "../components/ExecuteTradeForm";
+import MobileDashboard from "../components/MobileDashboard";
 import Settings from "../components/Settings";
 import UserSetupAI from "../components/UserSetupAI";
 
@@ -113,6 +114,13 @@ export default function Dashboard() {
   // Show user setup modal if not set up (unless development bypass is enabled)
   if (!ENABLE_DEV_BYPASS && !isUserSetup) {
     return <UserSetupAI onComplete={handleUserSetupComplete} />;
+  }
+
+  // Use mobile dashboard for mobile devices
+  if (isMobile) {
+    return (
+      <MobileDashboard onWorkflowSelect={setSelectedWorkflow} selectedWorkflow={selectedWorkflow} />
+    );
   }
 
   const getWorkflowById = (id: string) => {

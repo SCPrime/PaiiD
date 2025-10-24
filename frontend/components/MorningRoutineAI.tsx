@@ -443,7 +443,9 @@ export default function MorningRoutineAI() {
       console.info("[MorningRoutine] ✅ Routine generated successfully");
     } catch (err: unknown) {
       console.error("[MorningRoutine] Error generating routine:", err);
-      setError(err instanceof Error ? err.message : "Failed to generate routine. Please try again.");
+      setError(
+        err instanceof Error ? err.message : "Failed to generate routine. Please try again."
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -900,51 +902,58 @@ Provide:
                   </p>
                   {liveDataPreview.candidates
                     .slice(0, 3)
-                    .map((stock: { symbol: string; bid: number; ask: number; price: number }, idx: number) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: theme.spacing.sm,
-                        background: theme.background.glass,
-                        borderRadius: theme.borderRadius.sm,
-                        border: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: theme.spacing.sm }}>
-                        <span
+                    .map(
+                      (
+                        stock: { symbol: string; bid: number; ask: number; price: number },
+                        idx: number
+                      ) => (
+                        <div
+                          key={idx}
                           style={{
-                            fontSize: "16px",
-                            fontWeight: "700",
-                            color: theme.colors.text,
-                            minWidth: "60px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: theme.spacing.sm,
+                            background: theme.background.glass,
+                            borderRadius: theme.borderRadius.sm,
+                            border: `1px solid ${theme.colors.border}`,
                           }}
                         >
-                          {stock.symbol}
-                        </span>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                          <span style={{ fontSize: "11px", color: theme.colors.textMuted }}>
-                            Bid/Ask: ${stock.bid.toFixed(2)} / ${stock.ask.toFixed(2)}
-                          </span>
-                          <span style={{ fontSize: "11px", color: theme.colors.textMuted }}>
-                            Spread: ${(stock.ask - stock.bid).toFixed(3)} (
-                            {(((stock.ask - stock.bid) / stock.ask) * 100).toFixed(2)}%)
+                          <div
+                            style={{ display: "flex", alignItems: "center", gap: theme.spacing.sm }}
+                          >
+                            <span
+                              style={{
+                                fontSize: "16px",
+                                fontWeight: "700",
+                                color: theme.colors.text,
+                                minWidth: "60px",
+                              }}
+                            >
+                              {stock.symbol}
+                            </span>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                              <span style={{ fontSize: "11px", color: theme.colors.textMuted }}>
+                                Bid/Ask: ${stock.bid.toFixed(2)} / ${stock.ask.toFixed(2)}
+                              </span>
+                              <span style={{ fontSize: "11px", color: theme.colors.textMuted }}>
+                                Spread: ${(stock.ask - stock.bid).toFixed(3)} (
+                                {(((stock.ask - stock.bid) / stock.ask) * 100).toFixed(2)}%)
+                              </span>
+                            </div>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: "20px",
+                              fontWeight: "700",
+                              color: theme.colors.primary,
+                            }}
+                          >
+                            ${stock.price.toFixed(2)}
                           </span>
                         </div>
-                      </div>
-                      <span
-                        style={{
-                          fontSize: "20px",
-                          fontWeight: "700",
-                          color: theme.colors.primary,
-                        }}
-                      >
-                        ${stock.price.toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
+                      )
+                    )}
                 </div>
 
                 {liveDataPreview.count > 3 && (

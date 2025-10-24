@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 // TODO: Re-enable when strategies module is implemented
 // import { Strategy } from "@/strategies/schema";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Strategy = any;
 
 /**

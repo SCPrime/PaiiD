@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
  */
 
 // Temporary types until strategies module is created
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Strategy = any;
 interface ValidationResult {
   valid: boolean;
