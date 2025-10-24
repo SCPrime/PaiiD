@@ -1,7 +1,8 @@
 # ✅ API Configuration Complete - Summary
 
-**Date:** October 11, 2025
-**Status:** Configuration files created, ready for deployment setup
+**Date:** October 11, 2025  
+**Updated:** October 24, 2025 (Vercel decommissioned - Render only)  
+**Status:** Configuration files created, ready for Render deployment
 
 ---
 
@@ -29,13 +30,8 @@
 
 ✅ **`RENDER_SETUP_GUIDE.md`**
 - Step-by-step instructions for Render dashboard
-- All 9 environment variables listed
+- All environment variables listed
 - Troubleshooting section
-
-✅ **`VERCEL_SETUP_GUIDE.md`**
-- Step-by-step instructions for Vercel dashboard
-- All 5 environment variables listed
-- Deployment instructions
 
 ✅ **`API_CONFIGURATION_COMPLETE.md`** (this file)
 - Summary and next steps
@@ -78,39 +74,37 @@ python -m uvicorn app.main:app --reload --port 8001
 **Follow**: `RENDER_SETUP_GUIDE.md`
 
 1. Go to https://dashboard.render.com
-2. Select your backend service
-3. Click "Environment" → Add 9 variables
-4. Service will auto-redeploy (~2 minutes)
-5. Verify: https://ai-trader-86a1.onrender.com/api/health
+2. Select your backend service (paiid-backend)
+3. Click "Environment" → Add environment variables
+4. Service will auto-redeploy (~2-5 minutes)
+5. Verify: https://paiid-backend.onrender.com/api/health
 
 **Time**: 5-10 minutes
 
-### Step 3: Configure Vercel Dashboard ⏳
+### Step 3: Configure Render Frontend ⏳
 
-**Follow**: `VERCEL_SETUP_GUIDE.md`
-
-1. Go to https://vercel.com/scprimes-projects/frontend
-2. Settings → Environment Variables
-3. Add 5 variables (check all 3 environments)
-4. Trigger redeploy (or push to GitHub)
-5. Verify: https://frontend-scprimes-projects.vercel.app
+1. Go to https://dashboard.render.com
+2. Select your frontend service (paiid-frontend)
+3. Click "Environment" → Add environment variables
+4. Service will auto-redeploy (~2-5 minutes)
+5. Verify: https://paiid-frontend.onrender.com
 
 **Time**: 5-10 minutes
 
 ### Step 4: End-to-End Testing ⏳
 
-Once both platforms are configured:
+Once both services are configured on Render:
 
 **Backend Tests**:
 ```bash
 # Health check
-curl https://ai-trader-86a1.onrender.com/api/health
+curl https://paiid-backend.onrender.com/api/health
 
 # Expected: {"status":"ok",...}
 ```
 
 **Frontend Tests**:
-1. Open: https://frontend-scprimes-projects.vercel.app
+1. Open: https://paiid-frontend.onrender.com
 2. Complete user onboarding
 3. Check browser console (F12) for errors
 4. Verify API calls reach backend
@@ -131,18 +125,17 @@ curl https://ai-trader-86a1.onrender.com/api/health
 
 ### Render (Backend)
 - [ ] Dashboard accessed
-- [ ] 9 environment variables added
-- [ ] Service redeployed
+- [ ] Environment variables configured
+- [ ] Service deployed
 - [ ] Health endpoint returns `{"status":"ok"}`
 - [ ] No errors in logs
 
-### Vercel (Frontend)
+### Render (Frontend)
 - [ ] Dashboard accessed
-- [ ] 5 environment variables added
-- [ ] All variables set for Production + Preview + Development
-- [ ] Deployment triggered
+- [ ] Environment variables configured
+- [ ] Service deployed
 - [ ] Build completed successfully
-- [ ] Frontend accessible (no 401 errors)
+- [ ] Frontend accessible (no errors)
 
 ### Integration Testing
 - [ ] Frontend can reach backend
@@ -166,10 +159,10 @@ These files contain real keys but are gitignored:
 
 ### ⚠️ Platform Security
 
-1. **Render**: Keys stored in dashboard (encrypted)
-2. **Vercel**: Keys stored in dashboard (encrypted)
-3. **Never commit**: API keys to GitHub
-4. **Rotate regularly**: Change keys every 90 days
+1. **Render**: All keys stored in dashboard (encrypted)
+2. **GitHub**: Never commit API keys or secrets
+3. **Rotate regularly**: Change keys every 90 days
+4. **Monitor access**: Review Render deployment logs regularly
 
 ---
 
@@ -193,9 +186,9 @@ python verify_config.py
 - Check dashboard for typos in variable names
 - Verify service redeployed after changes
 
-### Issue: Vercel build fails after env var changes
+### Issue: Render build fails after env var changes
 **Solution**:
-- Trigger fresh deployment (not from cache)
+- Trigger manual deployment from dashboard
 - Check build logs for specific errors
 
 ---
@@ -204,10 +197,6 @@ python verify_config.py
 
 ### Render
 - **Docs**: https://render.com/docs/environment-variables
-- **Support**: Dashboard → Help
-
-### Vercel
-- **Docs**: https://vercel.com/docs/concepts/projects/environment-variables
 - **Support**: Dashboard → Help
 
 ### PaiiD Project
@@ -221,8 +210,8 @@ python verify_config.py
 **Your Action Items**:
 
 1. ✅ Review this file (you're doing it!)
-2. ⏳ Follow `RENDER_SETUP_GUIDE.md` (10 minutes)
-3. ⏳ Follow `VERCEL_SETUP_GUIDE.md` (10 minutes)
+2. ⏳ Configure Render Backend (10 minutes)
+3. ⏳ Configure Render Frontend (10 minutes)
 4. ⏳ Test the application end-to-end (10 minutes)
 
 **Total Time**: ~30 minutes to full deployment
@@ -235,11 +224,11 @@ python verify_config.py
 |-----------|--------|-----------------|-----------|
 | **Local Backend** | ✅ Ready | 3 (Tradier, Anthropic, Token) | Start with uvicorn |
 | **Local Frontend** | ✅ Ready | 3 (Backend URL, Token, Anthropic) | Start with npm run dev |
-| **Render Backend** | ⏳ Pending | 9 to add | Follow RENDER_SETUP_GUIDE.md |
-| **Vercel Frontend** | ⏳ Pending | 5 to add | Follow VERCEL_SETUP_GUIDE.md |
+| **Render Backend** | ⏳ Pending | Configure environment variables | Follow RENDER_SETUP_GUIDE.md |
+| **Render Frontend** | ⏳ Pending | Configure environment variables | Follow RENDER_SETUP_GUIDE.md |
 
 ---
 
-**Let's get PaiiD deployed! Follow the guides and you'll be trading with AI in 30 minutes! 🚀**
+**Let's get PaiiD deployed! Follow the guide and you'll be trading with AI in 30 minutes! 🚀**
 
-*Need help? The guides have detailed troubleshooting sections.*
+*Need help? Check the troubleshooting sections in RENDER_SETUP_GUIDE.md*

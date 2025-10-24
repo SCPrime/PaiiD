@@ -1,10 +1,18 @@
-# Cloud Deployment Instructions
+# PaiiD Deployment Instructions - Render Only
+
+**Last Updated**: October 24, 2025  
+**Platform**: Render (Backend + Frontend)
+
+---
 
 ## Prerequisites
+
 - GitHub repo: `SCPrime/PaiiD`
-- Branch: `feat/option-a-cloud-backend`
+- Branch: `main`
 - Render account with access to the repo
-- Vercel account with access to the repo
+- Environment variables ready (see RENDER_SETUP_GUIDE.md)
+
+---
 
 ## Step 1: Deploy Backend to Render
 
@@ -12,9 +20,9 @@
 2. Click **New +** → **Web Service**
 3. Connect repository: `SCPrime/PaiiD`
 4. Configure:
-   - **Name**: `paiid-backend` (or your preferred name)
+   - **Name**: `paiid-backend`
    - **Region**: Choose closest to you
-   - **Branch**: `feat/option-a-cloud-backend`
+   - **Branch**: `main`
    - **Root Directory**: `backend/`
    - **Runtime**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
@@ -25,154 +33,159 @@
    ```
    API_TOKEN=<generate-secure-token>
    LIVE_TRADING=false
-   ALLOW_ORIGIN=https://<your-vercel-app>.vercel.app
-   REDIS_URL=redis://localhost:6379
+   ALPACA_PAPER_API_KEY=<your-key>
+   ALPACA_PAPER_SECRET_KEY=<your-secret>
+   ANTHROPIC_API_KEY=<your-key>
+   TRADIER_API_KEY=<your-key>
+   TRADIER_ACCOUNT_ID=<your-account>
+   DATABASE_URL=<postgres-url>
+   REDIS_URL=<redis-url>
    ```
 
    **Important**:
    - Generate a strong `API_TOKEN` (use `openssl rand -hex 32`)
-   - You'll add the correct `ALLOW_ORIGIN` after Vercel deployment
-   - For production, use managed Redis (add Redis service in Render)
+   - For production, use managed PostgreSQL and Redis services in Render
 
 6. Click **Create Web Service**
 7. Wait for deployment (5-10 minutes)
-8. **Copy your Render URL**: `https://paiid-backend-xxxx.onrender.com`
+8. **Copy your Render URL**: `https://paiid-backend.onrender.com` (or similar)
 
 ### Verify Backend
 
 ```bash
-curl -s https://paiid-backend-xxxx.onrender.com/api/health | jq .
+curl -s https://paiid-backend.onrender.com/api/health | jq .
 ```
 
 Expected response:
 ```json
 {
-  "status": "healthy",
+  "status": "ok",
   "timestamp": "...",
-  "redis": "connected",
-  "kill_switch": {"enabled": false}
+  "redis": {...},
+  "database": {...}
 }
 ```
 
-## Step 2: Deploy Frontend to Vercel
+---
 
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Click **Add New** → **Project**
-3. Import repository: `SCPrime/PaiiD`
+## Step 2: Deploy Frontend to Render
+
+1. Go to [Render Dashboard](https://dashboard.render.com/)
+2. Click **New +** → **Static Site** (or **Web Service** for server-side rendering)
+3. Connect repository: `SCPrime/PaiiD`
 4. Configure:
-   - **Framework Preset**: `Next.js`
+   - **Name**: `paiid-frontend`
+   - **Region**: Choose same as backend
+   - **Branch**: `main`
    - **Root Directory**: `frontend/`
-   - **Build Command**: (leave default: `next build`)
-   - **Output Directory**: (leave default)
+   - **Build Command**: `npm install && npm run build`
+   - **Publish Directory**: `.next` (for static) or use start command for SSR
 
-5. **Environment Variables** (Server-side only):
+   **For Server-Side Rendering (recommended)**:
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+
+5. **Environment Variables**:
    ```
-   BACKEND_API_BASE_URL=https://paiid-backend-xxxx.onrender.com
-   API_TOKEN=<same-token-as-render>
+   NEXT_PUBLIC_API_BASE_URL=https://paiid-backend.onrender.com
+   API_TOKEN=<same-token-as-backend>
    ```
 
-6. **Git Configuration**:
-   - Click **Settings** → **Git**
-   - **Production Branch**: `feat/option-a-cloud-backend`
+6. Click **Create Static Site** (or **Create Web Service**)
+7. Wait for deployment (5-10 minutes)
+8. **Copy your Render URL**: `https://paiid-frontend.onrender.com` (or similar)
 
-7. Click **Deploy**
-8. Wait for deployment (2-5 minutes)
-9. **Copy your Vercel URL**: `https://paiid-xxxx.vercel.app`
+---
 
-## Step 3: Update CORS on Render
+## Step 3: Update Backend CORS
 
 1. Go back to Render dashboard
 2. Select your `paiid-backend` service
 3. Go to **Environment** tab
-4. Update `ALLOW_ORIGIN`:
+4. Add or update `ALLOW_ORIGIN`:
    ```
-   ALLOW_ORIGIN=https://paiid-xxxx.vercel.app
+   ALLOW_ORIGIN=https://paiid-frontend.onrender.com
    ```
-5. Save (this will trigger a redeploy)
+5. Save (this will trigger a redeploy ~2-5 min)
+
+---
 
 ## Step 4: Acceptance Testing
 
-### Browser Testing (DevTools → Network)
+### Browser Testing
 
-1. Open: `https://paiid-xxxx.vercel.app`
+1. Open: `https://paiid-frontend.onrender.com`
 2. Open DevTools → Network tab
-3. Click each button:
-   - **Health** → JSON response appears
-   - **Settings** → JSON response appears
-   - **Positions** → JSON response appears
-   - **Execute (Dry)** → JSON response appears
-
-4. Verify in Network tab:
-   - All requests go to `/api/proxy/...` (NOT direct to Render)
+3. Test authentication:
+   - Sign up or log in
+   - Verify JWT token in localStorage
+4. Test API endpoints:
+   - Dashboard loads
+   - Positions display
+   - Settings accessible
+5. Verify in Network tab:
+   - All requests go to `https://paiid-backend.onrender.com`
    - No CORS errors
    - No 404/500 errors
-   - No localhost URLs
-   - Response headers include `x-request-id`
+   - Response includes status codes
 
 ### Terminal Testing
 
-Replace `<vercel-app>` with your actual Vercel URL:
+Replace `<backend-url>` and `<your-token>` with your actual values:
 
 ```bash
 # Test health endpoint
-curl -s https://<vercel-app>.vercel.app/api/proxy/api/health | jq .
+curl -s https://paiid-backend.onrender.com/api/health | jq .
 
-# Test idempotency (duplicate detection)
-RID="test-duplicate-$(date +%s)"
-
-# First request
-curl -s -X POST \
-  -H "content-type: application/json" \
-  -d "{\"dryRun\":true,\"requestId\":\"$RID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}" \
-  https://<vercel-app>.vercel.app/api/proxy/api/trading/execute | jq .
-
-# Second request (same RID) - should return duplicate:true
-curl -s -X POST \
-  -H "content-type: application/json" \
-  -d "{\"dryRun\":true,\"requestId\":\"$RID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}" \
-  https://<vercel-app>.vercel.app/api/proxy/api/trading/execute | jq .
+# Test authenticated endpoint
+curl -s https://paiid-backend.onrender.com/api/positions \
+  -H "authorization: Bearer YOUR_JWT_TOKEN" | jq .
 ```
 
-Expected second response:
-```json
-{
-  "duplicate": true,
-  "original_timestamp": "..."
-}
-```
+---
 
-## Step 5: Update Documentation
+## Step 5: Configure Auto-Deploy
 
-Update GitHub Pages or README to reference cloud URLs instead of localhost:
+Both Render services are configured to auto-deploy on push to `main`:
 
-- **Live UI**: `https://<vercel-app>.vercel.app`
-- **Backend API**: `https://<render-app>.onrender.com`
+1. Make code changes locally
+2. Commit and push:
+   ```bash
+   git add .
+   git commit -m "Your message"
+   git push origin main
+   ```
+3. Render automatically deploys both services
+4. Monitor progress in Render dashboard
 
-Remove any "Production Ready ✅" claims pointing to localhost.
+---
 
 ## Architecture Summary
 
 ```
 User Browser
     ↓
-Vercel (Frontend + Proxy)
-    ↓ [API_TOKEN auth, server-side]
-Render (FastAPI Backend)
+Render Frontend (Next.js)
+    ↓ [JWT auth, API calls]
+Render Backend (FastAPI)
     ↓
-Redis (Idempotency + Kill-Switch)
+PostgreSQL (Database)
+    ↓
+Redis (Cache)
 ```
 
 ### Security Features Deployed
 
+- ✅ JWT Authentication (all endpoints)
 - ✅ Strict CORS to specific origins
 - ✅ CSP + security headers
-- ✅ Dual-token rotation capability
-- ✅ Server-side token hiding (never exposed to browser)
-- ✅ Redis idempotency (duplicate request detection)
+- ✅ Environment variables hidden (never exposed to browser)
 - ✅ Kill-switch (emergency trading halt)
 - ✅ Rate limiting (60 req/min per IP)
 - ✅ Structured JSON logging
 - ✅ Request ID tracing
+
+---
 
 ## Troubleshooting
 
@@ -180,29 +193,39 @@ Redis (Idempotency + Kill-Switch)
 - Check Render logs: Dashboard → Service → Logs
 - Verify `requirements.txt` exists in `backend/`
 - Ensure `PORT` env var is not overridden
+- Check all required environment variables are set
 
-### Frontend proxy 404
-- Verify `BACKEND_API_BASE_URL` env var is set correctly
-- Check Vercel Function Logs: Dashboard → Project → Logs
-- Ensure root directory is `frontend/`
+### Frontend build fails
+- Check Render logs: Dashboard → Service → Logs
+- Verify `package.json` exists in `frontend/`
+- Ensure all dependencies are in `dependencies` (not just `devDependencies`)
+- Check Node.js version compatibility
 
 ### CORS errors
-- Verify `ALLOW_ORIGIN` on Render matches Vercel URL exactly
+- Verify `ALLOW_ORIGIN` on backend matches frontend URL exactly
 - No trailing slashes
 - Must be HTTPS
+- Redeploy backend after changing CORS settings
 
-### Duplicate detection not working
-- Verify Redis is connected (check `/api/health` response)
-- Render Free tier: use `redis://localhost:6379` (ephemeral)
-- Production: add managed Redis service
+### API returns 401
+- Verify JWT token is valid
+- Check token expiration
+- Ensure `API_TOKEN` matches on both services
+- Test with `/api/auth/login` endpoint first
+
+---
 
 ## Cost Estimate
 
-- **Render Free Tier**: $0/month (backend sleeps after 15min inactivity)
-- **Vercel Hobby**: $0/month (frontend always on)
-- **Redis (managed)**: ~$5/month for production
+- **Render Free Tier**: $0/month (services sleep after 15min inactivity)
+- **Render Starter**: $7/month per service (no sleep, always on)
+- **PostgreSQL (managed)**: $7/month
+- **Redis (managed)**: $10/month
 
-Total: **$0-5/month** depending on Redis choice.
+**Free Total**: $0/month (with cold starts)  
+**Production Total**: $31/month (always on, with databases)
+
+---
 
 ## Next Steps
 
@@ -210,7 +233,36 @@ After successful deployment:
 
 1. [ ] Test all acceptance criteria above
 2. [ ] Monitor Render logs for any errors
-3. [ ] Set up Redis managed service for production
-4. [ ] Configure custom domain (optional)
-5. [ ] Set up monitoring/alerts (optional)
-6. [ ] Merge `feat/option-a-cloud-backend` to `main`
+3. [ ] Set up PostgreSQL managed service for production
+4. [ ] Set up Redis managed service for production
+5. [ ] Configure custom domain (optional)
+6. [ ] Set up monitoring/alerts (Sentry, etc.)
+7. [ ] Run security audit
+8. [ ] Document production URLs in OPERATIONS.md
+
+---
+
+## Production Checklist
+
+- [ ] Backend deployed and healthy
+- [ ] Frontend deployed and accessible
+- [ ] All environment variables configured
+- [ ] CORS properly configured
+- [ ] JWT authentication working
+- [ ] PostgreSQL database connected
+- [ ] Redis cache connected
+- [ ] Auto-deploy configured
+- [ ] Monitoring configured
+- [ ] Backup strategy in place
+- [ ] Security audit completed
+
+---
+
+**🎉 Deployment Complete!**
+
+Your PaiiD application is now live on Render!
+
+- Frontend: `https://paiid-frontend.onrender.com`
+- Backend: `https://paiid-backend.onrender.com`
+
+For daily operations, see `OPERATIONS.md`

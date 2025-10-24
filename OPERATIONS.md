@@ -1,42 +1,37 @@
 # PaiiD Operations Card
 
-**Production Environment** | Last verified: 2025-09-30
+**Production Environment** | Last updated: 2025-10-24
 
 ---
 
-## 🌐 Live URLs
+## 🌐 Live URLs (Render Only)
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| **Frontend** | https://paiid-snowy.vercel.app | Main UI (Next.js) |
-| **Backend** | https://paiid-86a1.onrender.com | FastAPI service |
-| **Proxy Health** | https://paiid-snowy.vercel.app/api/proxy/api/health | End-to-end check |
+| **Frontend** | https://paiid-frontend.onrender.com | Main UI (Next.js) |
+| **Backend** | https://paiid-backend.onrender.com | FastAPI service |
+| **Backend Health** | https://paiid-backend.onrender.com/api/health | Health check |
 
 ---
 
 ## 🚦 Health Checks (30 seconds)
 
 ### Quick browser checks
-1. **Proxy Health**: https://paiid-snowy.vercel.app/api/proxy/api/health
+1. **Backend Health**: https://paiid-backend.onrender.com/api/health
    ✅ Expect: `{"status":"ok", "time":"..."}`
 
-2. **Backend Direct**: https://paiid-86a1.onrender.com/api/health
-   ✅ Expect: `{"status":"ok", "time":"...", "redis":{...}}`
-
-3. **Frontend Root**: https://paiid-snowy.vercel.app/
+2. **Frontend Root**: https://paiid-frontend.onrender.com/
    ✅ Expect: PaiiD Dashboard UI
 
 ### Automated smoke test (PowerShell)
 ```powershell
-cd C:\Users\SSaint-Cyr\Documents\source\PaiiD
-.\test-deployment.ps1 -VercelDomain "paiid-snowy.vercel.app" -TestDuplicate
+cd C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD
+.\test-deployment.ps1
 ```
 
-**Expected output**: 4/4 tests passing
+**Expected output**: All tests passing
 - Backend health ✅
-- Proxy health ✅
 - Frontend root ✅
-- Duplicate detection ✅
 
 ---
 
@@ -46,19 +41,19 @@ cd C:\Users\SSaint-Cyr\Documents\source\PaiiD
 
 **Enable kill-switch** (blocks all live orders):
 ```bash
-curl -X POST "https://paiid-snowy.vercel.app/api/proxy/api/admin/kill" \
+curl -X POST "https://paiid-backend.onrender.com/api/admin/kill" \
   -H "content-type: application/json" -d "true"
 ```
 
 **Disable kill-switch** (resume trading):
 ```bash
-curl -X POST "https://paiid-snowy.vercel.app/api/proxy/api/admin/kill" \
+curl -X POST "https://paiid-backend.onrender.com/api/admin/kill" \
   -H "content-type: application/json" -d "false"
 ```
 
 **Verify status**:
 ```bash
-curl "https://paiid-snowy.vercel.app/api/proxy/api/settings"
+curl "https://paiid-backend.onrender.com/api/settings"
 # Look for: "tradingHalted": true/false
 ```
 
@@ -71,18 +66,6 @@ curl "https://paiid-snowy.vercel.app/api/proxy/api/settings"
 
 ## 🔄 Deploy & Update
 
-### Frontend (Vercel)
-**Auto-deploy**: Push to `main` → Vercel builds automatically
-
-**Manual deploy** (from laptop):
-```bash
-cd frontend
-vercel --prod
-```
-
-**Check deployment**:
-Vercel → Projects → paiid → Deployments → latest should be "Ready"
-
 ### Backend (Render)
 **Auto-deploy**: Push to `main` → Render builds automatically
 
@@ -92,14 +75,24 @@ Render → your service → Manual Deploy → Deploy latest commit
 **Check logs**:
 Render → Logs → look for "Application startup complete"
 
+### Frontend (Render)
+**Auto-deploy**: Push to `main` → Render builds automatically
+
+**Manual redeploy**:
+Render → your service → Manual Deploy → Deploy latest commit
+
+**Check logs**:
+Render → Logs → look for "Build complete"
+
 ---
 
 ## 🧪 Test Execution Flow (Dry-Run)
 
 ### Single dry-run order
 ```bash
-curl -X POST "https://paiid-snowy.vercel.app/api/proxy/api/trading/execute" \
+curl -X POST "https://paiid-backend.onrender.com/api/trading/execute" \
   -H "content-type: application/json" \
+  -H "authorization: Bearer YOUR_TOKEN" \
   -d '{
     "dryRun": true,
     "requestId": "test-'$(date +%s)'",
@@ -111,48 +104,35 @@ curl -X POST "https://paiid-snowy.vercel.app/api/proxy/api/trading/execute" \
 
 **Expected**: `{"accepted": true, "dryRun": true, "orders": [...]}`
 
-### Test duplicate protection
-```bash
-# First request (same ID)
-REQ_ID="dup-test-123"
-curl -X POST "https://paiid-snowy.vercel.app/api/proxy/api/trading/execute" \
-  -H "content-type: application/json" \
-  -d "{\"dryRun\":true,\"requestId\":\"$REQ_ID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}"
-
-# Second request (same ID) - should be rejected
-curl -X POST "https://paiid-snowy.vercel.app/api/proxy/api/trading/execute" \
-  -H "content-type: application/json" \
-  -d "{\"dryRun\":true,\"requestId\":\"$REQ_ID\",\"orders\":[{\"symbol\":\"AAPL\",\"side\":\"buy\",\"qty\":1}]}"
-```
-
-**Expected second response**: `{"accepted": false, "duplicate": true}`
-
 ---
 
 ## 🔐 Security Checklist
 
-- ✅ **No public API tokens**: All secrets server-side only
-- ✅ **Proxy auth**: Frontend → Vercel proxy → Render backend (token injected server-side)
-- ✅ **CORS locked**: Backend accepts only from Vercel domain
-- ✅ **Rate limiting**: 60 req/min per IP at proxy layer
-- ✅ **Idempotency**: 600s window (in-memory, upgradeable to Redis)
+- ✅ **JWT Authentication**: All endpoints require valid JWT tokens
+- ✅ **CORS configured**: Backend accepts only from frontend domain
+- ✅ **Rate limiting**: 60 req/min per IP
 - ✅ **Kill-switch**: Independent safety layer
-- ✅ **CSP headers**: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection
+- ✅ **Environment variables**: All secrets in Render dashboard only
 
 ### Environment Variables (DO NOT COMMIT)
 
-**Vercel** (Production):
+**Render Backend**:
 ```
-BACKEND_API_BASE_URL=https://paiid-86a1.onrender.com
 API_TOKEN=<secret-token>
+LIVE_TRADING=false
+ALPACA_PAPER_API_KEY=<key>
+ALPACA_PAPER_SECRET_KEY=<secret>
+ANTHROPIC_API_KEY=<key>
+TRADIER_API_KEY=<key>
+TRADIER_ACCOUNT_ID=<account>
+DATABASE_URL=<postgres-url>
+REDIS_URL=<redis-url>
 ```
 
-**Render**:
+**Render Frontend**:
 ```
-API_TOKEN=<same-as-vercel>
-LIVE_TRADING=false
-ALLOW_ORIGIN=https://paiid-snowy.vercel.app
-REDIS_URL=<optional-redis-connection-string>
+NEXT_PUBLIC_API_BASE_URL=https://paiid-backend.onrender.com
+API_TOKEN=<same-as-backend>
 ```
 
 ---
@@ -161,49 +141,43 @@ REDIS_URL=<optional-redis-connection-string>
 
 ### View current settings
 ```bash
-curl "https://paiid-snowy.vercel.app/api/proxy/api/settings"
+curl "https://paiid-backend.onrender.com/api/settings" \
+  -H "authorization: Bearer YOUR_TOKEN"
 ```
 
 ### View positions
 ```bash
-curl "https://paiid-snowy.vercel.app/api/proxy/api/positions"
+curl "https://paiid-backend.onrender.com/api/positions" \
+  -H "authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Check build status
-- **Vercel**: https://vercel.com/scprimes-projects/paiid/deployments
-- **Render**: https://dashboard.render.com → your service → Events
-
-### Clear idempotency cache
-**If using Redis**: Wait 10 minutes (TTL) or flush Redis
-**If in-memory**: Restart Render service (Render → Manual Deploy)
+- **Render Dashboard**: https://dashboard.render.com → Services → Events
 
 ---
 
 ## 📊 Monitoring Checklist
 
 ### Daily (automated)
-- [ ] Run smoke test: `.\test-deployment.ps1 -VercelDomain "paiid-snowy.vercel.app" -TestDuplicate`
-- [ ] Check Vercel deployment status: all green
-- [ ] Check Render service status: "Live"
+- [ ] Run smoke test: `.\test-deployment.ps1`
+- [ ] Check Render deployment status: all services "Live"
 
 ### Before going live
 - [ ] Verify kill-switch works (enable → test live execute → expect 423)
 - [ ] Verify LIVE_TRADING is correct (false for safety)
-- [ ] Run duplicate detection test
+- [ ] Confirm backend health endpoint returns OK
 - [ ] Check Redis connection (if enabled): `"redis": {"connected": true}`
-- [ ] Confirm ALLOW_ORIGIN matches frontend domain
 
 ### During live trading window
 - [ ] Kill-switch disabled (trading allowed)
 - [ ] LIVE_TRADING=true on Render
 - [ ] Monitor Render logs for errors
-- [ ] Keep `.\test-deployment.ps1` ready to verify health
+- [ ] Keep smoke tests ready to verify health
 
 ### After trading window
 - [ ] Enable kill-switch (safety)
 - [ ] Set LIVE_TRADING=false on Render
 - [ ] Review logs for any failed orders
-- [ ] Clear sensitive request IDs from cache (if needed)
 
 ---
 
@@ -211,16 +185,15 @@ curl "https://paiid-snowy.vercel.app/api/proxy/api/positions"
 
 | Symptom | Check | Fix |
 |---------|-------|-----|
-| Proxy returns 404 | Vercel Root Directory | Settings → Build & Deployment → Root Directory = `frontend` |
-| Proxy returns 500 | Vercel env vars | Add `BACKEND_API_BASE_URL` and `API_TOKEN` |
-| Backend returns 403 | CORS / Origin | Render → ALLOW_ORIGIN must match Vercel domain |
-| TypeScript build fails | Dependencies | Ensure TS is in `dependencies`, not `devDependencies` |
-| Duplicate not detected | Idempotency cache | Check backend logs; verify requestId is sent |
-| Live order executes when kill=true | Kill-switch code | Check `backend/app/routers/orders.py` line ~29 |
+| Backend won't start | Render logs | Check environment variables |
+| Frontend 404 | Build logs | Verify build completed successfully |
+| Backend returns 403 | CORS / Origin | Check ALLOW_ORIGIN env var |
+| TypeScript build fails | Dependencies | Ensure TS is in `dependencies` |
+| API returns 401 | Authentication | Verify JWT token is valid |
 
 ### Get help fast
-1. **Build logs**: Vercel → Deployments → click deployment → Build Logs
-2. **Runtime logs**: Render → Logs (live tail)
+1. **Build logs**: Render → Service → Logs
+2. **Runtime logs**: Render → Service → Logs (live tail)
 3. **Test locally**: `cd backend && uvicorn app.main:app --reload`
 
 ---
@@ -229,7 +202,7 @@ curl "https://paiid-snowy.vercel.app/api/proxy/api/positions"
 
 | Role | Contact | Responsibility |
 |------|---------|----------------|
-| DevOps | Spence | Deployment, infrastructure |
+| DevOps | Dr. SC Prime | Deployment, infrastructure |
 | Trading Ops | TBD | Live execution approval |
 | Security | TBD | Token rotation, audits |
 
@@ -237,21 +210,15 @@ curl "https://paiid-snowy.vercel.app/api/proxy/api/positions"
 
 ## 🔄 Everyday Workflow
 
-1. **Make changes** in VS Code
+1. **Make changes** in Cursor/VS Code
 2. **Commit & push** to `main`:
    ```bash
    git add .
    git commit -m "your message"
    git push origin main
    ```
-3. **Wait for auto-deploy**: Vercel (~2 min) + Render (~3 min)
+3. **Wait for auto-deploy**: Render (~3-5 min for both services)
 4. **Verify**: Run `.\test-deployment.ps1`
-
-**For instant deploy** (frontend only):
-```bash
-cd frontend
-vercel --prod
-```
 
 ---
 
@@ -260,18 +227,16 @@ vercel --prod
 | Component | Status | Notes |
 |-----------|--------|-------|
 | Frontend build | ✅ | Next.js 14, TypeScript |
-| Backend API | ✅ | FastAPI, idempotency, kill-switch |
-| Proxy layer | ✅ | Rate limiting, auth injection |
+| Backend API | ✅ | FastAPI, JWT auth, kill-switch |
 | Health checks | ✅ | Automated smoke tests |
-| Duplicate detection | ✅ | 600s TTL, in-memory (Redis-ready) |
 | Kill-switch | ✅ | Tested, operational |
-| CORS security | ✅ | Locked to Vercel domain |
+| CORS security | ✅ | Configured for Render frontend |
 | Secrets management | ✅ | Server-side only, no leaks |
 | Monitoring | ⚠️ | Manual smoke tests (automate via cron/Actions) |
-| Redis (optional) | 🔄 | In-memory works; Redis for multi-instance |
+| JWT Migration | ✅ | All endpoints standardized |
 
 ---
 
-**Last Updated**: 2025-09-30
-**Maintained By**: Spence
+**Last Updated**: 2025-10-24 (Vercel decommissioned - Render only)  
+**Maintained By**: Dr. SC Prime  
 **Repo**: https://github.com/SCPrime/PaiiD
