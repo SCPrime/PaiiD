@@ -18,7 +18,44 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+
+try:  # pragma: no cover - exercised when dependency is available
+    from cachetools import TTLCache
+except ModuleNotFoundError:  # pragma: no cover - fallback implementation
+    from collections import OrderedDict
+    from typing import Hashable, Tuple
+    import time
+
+    class TTLCache:  # type: ignore[misc]
+        """Lightweight TTL cache fallback used when cachetools isn't installed."""
+
+        def __init__(self, maxsize: int, ttl: float):
+            self.maxsize = maxsize
+            self.ttl = ttl
+            self._store: "OrderedDict[Hashable, Tuple[object, float]]" = OrderedDict()
+
+        def _purge(self) -> None:
+            now = time.monotonic()
+            expired = [key for key, (_, expires) in self._store.items() if expires <= now]
+            for key in expired:
+                self._store.pop(key, None)
+
+        def __contains__(self, key: Hashable) -> bool:  # type: ignore[override]
+            self._purge()
+            return key in self._store
+
+        def __getitem__(self, key: Hashable) -> object:  # type: ignore[override]
+            self._purge()
+            value, _ = self._store[key]
+            return value
+
+        def __setitem__(self, key: Hashable, value: object) -> None:  # type: ignore[override]
+            self._purge()
+            if key in self._store:
+                self._store.pop(key)
+            elif len(self._store) >= self.maxsize:
+                self._store.popitem(last=False)
+            self._store[key] = (value, time.monotonic() + self.ttl)
 
 from ..core.config import settings
 from ..core.auth import require_bearer

@@ -3,6 +3,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from .core.prelaunch import PrelaunchCheckError, ensure_prelaunch_ready
+
 
 # Load .env file before importing settings
 env_path = Path(__file__).parent.parent / ".env"
@@ -15,6 +17,12 @@ print(f"API_TOKEN from env: {os.getenv('API_TOKEN', 'NOT_SET')}")
 print(f"TRADIER_API_KEY configured: {'YES' if os.getenv('TRADIER_API_KEY') else 'NO'}")
 print("Deployed from: main branch - Tradier integration active")
 print("===========================\n", flush=True)
+
+
+try:
+    ensure_prelaunch_ready()
+except PrelaunchCheckError as exc:  # pragma: no cover - executed during startup
+    raise SystemExit(1) from exc
 
 
 import sentry_sdk
