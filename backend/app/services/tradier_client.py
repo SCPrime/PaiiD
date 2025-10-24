@@ -1,15 +1,22 @@
-"""
-Tradier API Client - Production Integration
-Handles: Account, Positions, Orders, Market Data, Options
-"""
+"""Tradier API client helpers for market data and trading."""
+
+from __future__ import annotations
 
 import logging
 import os
+from datetime import datetime
+from typing import Any, Dict, Iterable, Literal
 
 import requests
 
 
 logger = logging.getLogger(__name__)
+
+
+OptionSide = Literal["call", "put"]
+OrderSide = Literal["buy", "sell", "buy_to_open", "buy_to_close", "sell_to_open", "sell_to_close"]
+OrderType = Literal["market", "limit", "stop", "stop_limit"]
+OrderDuration = Literal["day", "gtc", "pre", "post", "gtc_pre", "gtc_post"]
 
 
 class TradierClient:
@@ -269,17 +276,232 @@ class TradierClient:
 
     # ==================== OPTIONS ====================
 
-    def get_option_chains(self, symbol: str, expiration: str | None = None) -> dict:
-        """Get option chains"""
-        params = {"symbol": symbol, "greeks": "true"}
+    def get_option_chains(
+        self,
+        symbol: str,
+        expiration: str | None = None,
+        option_type: OptionSide | Literal["all"] = "all",
+        strikes: int | None = None,
+        include_greeks: bool = True,
+    ) -> dict:
+        """Fetch raw option chain data from Tradier."""
+
+        params: dict[str, Any] = {
+            "symbol": symbol,
+            "greeks": str(include_greeks).lower(),
+        }
         if expiration:
             params["expiration"] = expiration
+        if option_type in ("call", "put"):
+            params["option_type"] = option_type
+        if strikes:
+            params["strikes"] = strikes
+
         return self._request("GET", "/markets/options/chains", params=params)
+
+    def get_normalized_option_chain(
+        self,
+        symbol: str,
+        expiration: str | None = None,
+        option_type: OptionSide | Literal["all"] = "all",
+        strikes: int | None = None,
+        min_volume: int | None = None,
+        min_open_interest: int | None = None,
+    ) -> dict:
+        """Return normalized option chain data with aggregated Greeks exposure."""
+
+        raw_chain = self.get_option_chains(
+            symbol=symbol,
+            expiration=expiration,
+            option_type=option_type,
+            strikes=strikes,
+            include_greeks=True,
+        )
+
+        options_payload = raw_chain.get("options", {})
+        raw_options: Iterable[dict[str, Any]]
+        raw_options = options_payload.get("option", []) if options_payload else []
+
+        if isinstance(raw_options, dict):
+            raw_options = [raw_options]
+
+        normalized_calls: list[dict[str, Any]] = []
+        normalized_puts: list[dict[str, Any]] = []
+
+        resolved_expiration = expiration
+        for option in raw_options:
+            contract = self._normalize_option_contract(option, symbol)
+
+            if min_volume is not None and (contract.get("volume") or 0) < min_volume:
+                continue
+            if min_open_interest is not None and (contract.get("open_interest") or 0) < min_open_interest:
+                continue
+
+            resolved_expiration = contract.get("expiration_date") or resolved_expiration
+
+            if contract.get("option_type") == "call":
+                normalized_calls.append(contract)
+            else:
+                normalized_puts.append(contract)
+
+        underlying_price = self._extract_underlying_price(raw_chain)
+
+        greeks_exposure = {
+            "calls": self._calculate_greeks_exposure(normalized_calls),
+            "puts": self._calculate_greeks_exposure(normalized_puts),
+        }
+        greeks_exposure["net"] = {
+            greek: round(greeks_exposure["calls"].get(greek, 0.0) + greeks_exposure["puts"].get(greek, 0.0), 6)
+            for greek in {"delta", "gamma", "theta", "vega", "rho"}
+        }
+
+        normalized_payload: dict[str, Any] = {
+            "symbol": symbol,
+            "expiration_date": resolved_expiration,
+            "underlying_price": underlying_price,
+            "calls": normalized_calls,
+            "puts": normalized_puts,
+            "total_contracts": len(normalized_calls) + len(normalized_puts),
+            "greeks_exposure": greeks_exposure,
+            "as_of": datetime.utcnow().isoformat() + "Z",
+            "raw": raw_chain,
+        }
+
+        return normalized_payload
 
     def get_option_expirations(self, symbol: str) -> dict:
         """Get option expiration dates"""
         params = {"symbol": symbol}
         return self._request("GET", "/markets/options/expirations", params=params)
+
+    def place_option_order(
+        self,
+        symbol: str,
+        option_symbol: str,
+        side: OrderSide,
+        quantity: int,
+        order_type: OrderType = "market",
+        duration: OrderDuration = "day",
+        price: float | None = None,
+        stop: float | None = None,
+        preview: bool = False,
+    ) -> dict:
+        """Place a single-leg option order through Tradier."""
+
+        if quantity <= 0:
+            raise ValueError("Quantity must be positive")
+
+        payload: dict[str, Any] = {
+            "class": "option",
+            "symbol": symbol,
+            "option_symbol": option_symbol,
+            "side": side,
+            "quantity": quantity,
+            "type": order_type,
+            "duration": duration,
+        }
+
+        if order_type in {"limit", "stop_limit"}:
+            if price is None:
+                raise ValueError("price is required for limit and stop_limit orders")
+            payload["price"] = price
+
+        if order_type in {"stop", "stop_limit"}:
+            if stop is None:
+                raise ValueError("stop price is required for stop and stop_limit orders")
+            payload["stop"] = stop
+
+        endpoint = f"/accounts/{self.account_id}/orders"
+        if preview:
+            payload["preview"] = "true"
+
+        logger.info(
+            "Placing option order",
+            extra={
+                "symbol": symbol,
+                "option_symbol": option_symbol,
+                "side": side,
+                "quantity": quantity,
+                "order_type": order_type,
+                "duration": duration,
+                "preview": preview,
+            },
+        )
+        return self._request("POST", endpoint, data=payload)
+
+    # ==================== HELPERS ====================
+
+    def _normalize_option_contract(self, option: dict[str, Any], underlying_symbol: str) -> dict[str, Any]:
+        greeks = option.get("greeks", {}) or {}
+
+        def _to_float(value: Any) -> float | None:
+            try:
+                if value is None or value == "null":
+                    return None
+                return float(value)
+            except (TypeError, ValueError):
+                return None
+
+        def _to_int(value: Any) -> int | None:
+            try:
+                if value is None or value == "null":
+                    return None
+                return int(value)
+            except (TypeError, ValueError):
+                return None
+
+        normalized = {
+            "symbol": option.get("symbol"),
+            "underlying_symbol": underlying_symbol,
+            "option_type": option.get("option_type"),
+            "strike_price": _to_float(option.get("strike")),
+            "expiration_date": option.get("expiration_date"),
+            "bid": _to_float(option.get("bid")),
+            "ask": _to_float(option.get("ask")),
+            "last_price": _to_float(option.get("last")),
+            "mid_price": _to_float(option.get("mid")),
+            "volume": _to_int(option.get("volume")) or 0,
+            "open_interest": _to_int(option.get("open_interest")) or 0,
+            "delta": _to_float(greeks.get("delta")),
+            "gamma": _to_float(greeks.get("gamma")),
+            "theta": _to_float(greeks.get("theta")),
+            "vega": _to_float(greeks.get("vega")),
+            "rho": _to_float(greeks.get("rho")),
+            "implied_volatility": _to_float(greeks.get("mid_iv")) or _to_float(option.get("implied_volatility")),
+            "multiplier": _to_int(option.get("multiplier")) or 100,
+            "updated_at": option.get("trade_date") or option.get("updated_at"),
+        }
+
+        return normalized
+
+    def _calculate_greeks_exposure(self, contracts: Iterable[dict[str, Any]]) -> Dict[str, float]:
+        totals: Dict[str, float] = {"delta": 0.0, "gamma": 0.0, "theta": 0.0, "vega": 0.0, "rho": 0.0}
+
+        for contract in contracts:
+            multiplier = contract.get("multiplier") or 100
+            open_interest = contract.get("open_interest") or 0
+
+            for greek in totals.keys():
+                value = contract.get(greek)
+                if value is None:
+                    continue
+                totals[greek] += float(value) * multiplier * open_interest
+
+        return {key: round(val, 6) for key, val in totals.items()}
+
+    def _extract_underlying_price(self, payload: dict[str, Any]) -> float | None:
+        try:
+            underlying = payload.get("underlying")
+            if isinstance(underlying, dict):
+                last = underlying.get("last")
+                if last is not None:
+                    return float(last)
+            summary = payload.get("summary")
+            if isinstance(summary, dict) and summary.get("last") is not None:
+                return float(summary["last"])
+        except (TypeError, ValueError):
+            logger.debug("Unable to parse underlying price from Tradier payload", exc_info=True)
+        return None
 
 
 # Singleton instance

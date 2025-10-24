@@ -16,6 +16,7 @@
 - ✅ All 10 workflows mobile-responsive
 - ✅ Real-time SSE position updates implemented
 - ✅ Interactive chart export functionality
+- ✅ Options trading workspace with normalized Greeks + paper-trade validation
 - ✅ 117 backend tests passing (0 failures)
 - ✅ Production deployment verified (Redis connected)
 
@@ -140,6 +141,12 @@
 - ✅ AIAnalysisModal component (880 lines)
 - ✅ Workflow integrations (5/5 workflows)
 - ✅ Watchlist system (WatchlistManager, WatchlistPanel)
+
+### Phase 7: Options Trading Enhancements (4/4 - 100%) ✅
+- ✅ Normalized Tradier options chains with aggregated Greeks exposure (server-side caching + filters)
+- ✅ `/api/options/orders` endpoint with strict validation, preview support, and structured logging
+- ✅ Radial menu workflow wired to new Options Trading workspace (design tokens, toast feedback, inline chain selection)
+- ✅ Sandbox paper-trading validation captured for launch readiness (see attached screenshot `options-trading-workspace.png`)
 
 ---
 
