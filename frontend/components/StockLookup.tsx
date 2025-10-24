@@ -68,12 +68,6 @@ const StockLookup: React.FC<StockLookupProps> = ({
     border: "rgba(148, 163, 184, 0.2)",
   };
 
-  useEffect(() => {
-    if (initialSymbol) {
-      handleSearch(initialSymbol);
-    }
-  }, [initialSymbol, handleSearch]);
-
   const handleSearch = async (searchSymbol: string) => {
     if (!searchSymbol.trim()) {
       setError("Please enter a stock symbol");
@@ -126,6 +120,12 @@ const StockLookup: React.FC<StockLookupProps> = ({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initialSymbol) {
+      handleSearch(initialSymbol);
+    }
+  }, [initialSymbol, handleSearch]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
