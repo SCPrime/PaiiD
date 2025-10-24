@@ -81,7 +81,7 @@ export default function ClaudeAIChat() {
         if (res.ok) {
           const data = await res.json();
           if (data.patterns.length > 0) {
-            const patternList = data.patterns.map((p: any) =>
+            const patternList = data.patterns.map((p: unknown) =>
               `• **${p.pattern_type.replace(/_/g, " ").toUpperCase()}** (${p.signal}) - ${(p.confidence * 100).toFixed(0)}% confidence\n  Target: $${p.target_price.toFixed(2)} | Stop: $${p.stop_loss.toFixed(2)}`
             ).join("\n\n");
             const assistantMessage: Message = {
@@ -115,7 +115,7 @@ export default function ClaudeAIChat() {
         const res = await fetch(`/api/proxy/api/ml/recommend-strategy?symbol=${symbol}&top_n=3`);
         if (res.ok) {
           const data = await res.json();
-          const strategyList = data.recommendations.map((r: any, idx: number) =>
+          const strategyList = data.recommendations.map((r: unknown, idx: number) =>
             `${idx + 1}. **${r.strategy_id.replace(/-/g, " ").toUpperCase()}** - ${(r.probability * 100).toFixed(0)}% probability`
           ).join("\n");
           const assistantMessage: Message = {

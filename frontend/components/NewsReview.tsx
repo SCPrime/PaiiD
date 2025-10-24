@@ -243,7 +243,7 @@ const NewsReview: React.FC = () => {
   };
 
   // AI Analysis Function
-  const analyzeNewsWithAI = async (article: any) => {
+  const analyzeNewsWithAI = async (article: unknown) => {
     setAiLoading(true);
     setAiError(null);
     setSelectedArticle(article);
@@ -269,7 +269,7 @@ const NewsReview: React.FC = () => {
       const data = await response.json();
       setAiAnalysis(data);
       setShowAiPanel(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("AI News Analysis error:", error);
       setAiError(error.message || "Failed to analyze news");
     } finally {

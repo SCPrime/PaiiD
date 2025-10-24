@@ -589,7 +589,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as string)}
                 className={`
                   px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap
                   ${
@@ -1204,7 +1204,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   );
 }
 
-function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: any) {
+function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: unknown) {
   const isMobile = useIsMobile();
 
   return (
@@ -1287,7 +1287,7 @@ function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: an
   );
 }
 
-function ThemeCustomizationTab({ themeCustom, onUpdate }: any) {
+function ThemeCustomizationTab({ themeCustom, onUpdate }: unknown) {
   const isMobile = useIsMobile();
 
   return (
@@ -1334,7 +1334,7 @@ function ThemeCustomizationTab({ themeCustom, onUpdate }: any) {
   );
 }
 
-function PermissionsTab({ users, isOwner, onUpdatePermission }: any) {
+function PermissionsTab({ users, isOwner, onUpdatePermission }: unknown) {
   const isMobile = useIsMobile();
 
   return (
@@ -1381,7 +1381,7 @@ function PermissionsTab({ users, isOwner, onUpdatePermission }: any) {
   );
 }
 
-function TelemetryTab({ enabled, data, users, onToggle, onExport }: any) {
+function TelemetryTab({ enabled, data, users, onToggle, onExport }: unknown) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -1453,7 +1453,7 @@ function TelemetryTab({ enabled, data, users, onToggle, onExport }: any) {
   );
 }
 
-function TradingControlTab({ users, isOwner, currentUserId, onToggleTradingMode }: any) {
+function TradingControlTab({ users, isOwner, currentUserId, onToggleTradingMode }: unknown) {
   return (
     <div className="space-y-6">
       {/* Kill Switch Section */}
