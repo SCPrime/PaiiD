@@ -5,25 +5,25 @@
  * Includes "Run Now" button to execute routines on-demand
  */
 
-import { useState, useEffect } from "react";
 import {
-  Sun,
-  Calendar,
-  Sparkles,
   AlertCircle,
-  CheckCircle,
-  XCircle,
   Bell,
-  Loader2,
   Brain,
+  Calendar,
+  CheckCircle,
+  Loader2,
+  Sparkles,
+  Sun,
+  XCircle,
   Zap,
 } from "lucide-react";
-import { GlassCard, GlassButton, GlassBadge } from "./GlassmorphicComponents";
-import { theme } from "../styles/theme";
-import { claudeAI } from "../lib/aiAdapter";
+import { useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
-import { getCurrentUser, updateUser } from "../lib/userManagement";
+import { claudeAI } from "../lib/aiAdapter";
 import { fetchUnder4Scanner } from "../lib/marketData";
+import { getCurrentUser, updateUser } from "../lib/userManagement";
+import { theme } from "../styles/theme";
+import { GlassBadge, GlassButton, GlassCard } from "./GlassmorphicComponents";
 
 interface PortfolioMetrics {
   totalValue: number;
@@ -64,7 +64,19 @@ async function fetchLiveMarketData() {
 }
 
 // Helper function to format live data into markdown
-function formatLiveMarketData(data: any) {
+function formatLiveMarketData(
+  data: {
+    count: number;
+    candidates: Array<{
+      symbol: string;
+      price: number;
+      change: number;
+      changePercent: number;
+      volume: number;
+      marketCap: number;
+    }>;
+  } | null
+) {
   if (!data || data.count === 0) {
     return `# ❌ No Live Data Available
 
@@ -85,7 +97,7 @@ Unable to fetch real-time market data from backend.
 
 ${data.candidates
   .map(
-    (stock: any, idx: number) => `
+    (stock, idx: number) => `
 ### ${idx + 1}. ${stock.symbol} - **$${stock.price.toFixed(2)}**
 
 | Metric | Value |
@@ -131,7 +143,16 @@ export default function MorningRoutineAI() {
 
   // Live data preview state
   const [liveDataPreview, setLiveDataPreview] = useState<{
-    candidates: any[];
+    candidates: Array<{
+      symbol: string;
+      price: number;
+      change: number;
+      changePercent: number;
+      volume: number;
+      marketCap: number;
+      bid: number;
+      ask: number;
+    }>;
     count: number;
     timestamp: string;
   } | null>(null);
@@ -355,7 +376,16 @@ export default function MorningRoutineAI() {
       console.info("[MorningRoutine] Raw AI response:", response);
 
       // Try to parse JSON from the response
-      let routine: any = null;
+      let routine: {
+        title: string;
+        steps: Array<{
+          time: string;
+          task: string;
+          description: string;
+          priority: string;
+        }>;
+        summary: string;
+      } | null = null;
       let parsed = response.trim();
 
       // Remove markdown code blocks if present

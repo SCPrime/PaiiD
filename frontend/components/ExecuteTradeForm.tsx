@@ -1,25 +1,25 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
 import {
-  TrendingUp,
-  Check,
   AlertCircle,
+  BookmarkPlus,
+  Check,
   ChevronDown,
   Save,
-  BookmarkPlus,
-  Trash2,
   Search,
+  Trash2,
+  TrendingUp,
 } from "lucide-react";
-import { Card, Button } from "./ui";
+import { useCallback, useEffect, useState } from "react";
+import { useWorkflow } from "../contexts/WorkflowContext";
+import { useIsMobile } from "../hooks/useBreakpoint";
+import { showError, showSuccess, showWarning } from "../lib/toast";
 import { theme } from "../styles/theme";
 import ConfirmDialog from "./ConfirmDialog";
-import { addOrderToHistory } from "./OrderHistory";
-import { showSuccess, showError, showWarning } from "../lib/toast";
-import { useIsMobile } from "../hooks/useBreakpoint";
-import { useWorkflow } from "../contexts/WorkflowContext";
-import StockLookup from "./StockLookup";
 import OptionsGreeksDisplay from "./OptionsGreeksDisplay";
+import { addOrderToHistory } from "./OrderHistory";
+import StockLookup from "./StockLookup";
 import RiskCalculator from "./trading/RiskCalculator";
+import { Button, Card } from "./ui";
 
 interface Order {
   symbol: string;
@@ -104,7 +104,12 @@ export default function ExecuteTradeForm() {
   const [loadingOptionsChain, setLoadingOptionsChain] = useState(false);
 
   // AI Analysis state
-  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    recommendation: string;
+    confidence: number;
+    reasoning: string;
+    riskLevel: string;
+  } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
@@ -168,50 +173,56 @@ export default function ExecuteTradeForm() {
   };
 
   // Fetch available expiration dates when symbol changes (for options mode)
-  const fetchExpirations = useCallback(async (sym: string) => {
-    if (!sym || sym.trim() === "" || assetClass !== "option") return;
+  const fetchExpirations = useCallback(
+    async (sym: string) => {
+      if (!sym || sym.trim() === "" || assetClass !== "option") return;
 
-    setLoadingOptionsChain(true);
-    try {
-      const response = await fetch(`/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableExpirations(data.expirations || []);
-        if (data.expirations && data.expirations.length > 0) {
-          setExpirationDate(data.expirations[0]); // Auto-select first expiration
+      setLoadingOptionsChain(true);
+      try {
+        const response = await fetch(`/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}`);
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableExpirations(data.expirations || []);
+          if (data.expirations && data.expirations.length > 0) {
+            setExpirationDate(data.expirations[0]); // Auto-select first expiration
+          }
         }
+      } catch (err) {
+        console.error("Failed to fetch expirations:", err);
+      } finally {
+        setLoadingOptionsChain(false);
       }
-    } catch (err) {
-      console.error("Failed to fetch expirations:", err);
-    } finally {
-      setLoadingOptionsChain(false);
-    }
-  }, [assetClass]);
+    },
+    [assetClass]
+  );
 
   // Fetch available strikes when expiration changes
-  const fetchStrikes = useCallback(async (sym: string, expiry: string) => {
-    if (!sym || !expiry || assetClass !== "option") return;
+  const fetchStrikes = useCallback(
+    async (sym: string, expiry: string) => {
+      if (!sym || !expiry || assetClass !== "option") return;
 
-    setLoadingOptionsChain(true);
-    try {
-      const response = await fetch(
-        `/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}&expiration=${expiry}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableStrikes(data.strikes || []);
-        if (data.strikes && data.strikes.length > 0) {
-          // Auto-select strike closest to ATM
-          const middleIndex = Math.floor(data.strikes.length / 2);
-          setStrikePrice(data.strikes[middleIndex].toString());
+      setLoadingOptionsChain(true);
+      try {
+        const response = await fetch(
+          `/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}&expiration=${expiry}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableStrikes(data.strikes || []);
+          if (data.strikes && data.strikes.length > 0) {
+            // Auto-select strike closest to ATM
+            const middleIndex = Math.floor(data.strikes.length / 2);
+            setStrikePrice(data.strikes[middleIndex].toString());
+          }
         }
+      } catch (err) {
+        console.error("Failed to fetch strikes:", err);
+      } finally {
+        setLoadingOptionsChain(false);
       }
-    } catch (err) {
-      console.error("Failed to fetch strikes:", err);
-    } finally {
-      setLoadingOptionsChain(false);
-    }
-  }, [assetClass]);
+    },
+    [assetClass]
+  );
 
   // Fetch expirations when symbol or asset class changes
   useEffect(() => {
@@ -269,9 +280,9 @@ export default function ExecuteTradeForm() {
 
       const data = await response.json();
       setAiAnalysis(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("AI analysis error:", err);
-      setAiError(err.message || "Failed to load AI analysis");
+      setAiError(err instanceof Error ? err.message : "Failed to load AI analysis");
       setAiAnalysis(null);
     } finally {
       setAiLoading(false);
@@ -327,8 +338,10 @@ export default function ExecuteTradeForm() {
       setTemplateName("");
       setTemplateDescription("");
       showSuccess(`✅ Template "${newTemplate.name}" saved`);
-    } catch (err: any) {
-      showError(`❌ Failed to save template: ${err.message}`);
+    } catch (err: unknown) {
+      showError(
+        `❌ Failed to save template: ${err instanceof Error ? err.message : "Unknown error"}`
+      );
     }
   };
 
@@ -347,8 +360,10 @@ export default function ExecuteTradeForm() {
         setSelectedTemplateId("");
       }
       showSuccess("✅ Template deleted");
-    } catch (err: any) {
-      showError(`❌ Failed to delete template: ${err.message}`);
+    } catch (err: unknown) {
+      showError(
+        `❌ Failed to delete template: ${err instanceof Error ? err.message : "Unknown error"}`
+      );
     }
   };
 
@@ -462,9 +477,10 @@ export default function ExecuteTradeForm() {
         status: data.accepted ? "executed" : "cancelled",
         dryRun: false,
       });
-    } catch (err: any) {
-      setError(err.message);
-      showError(`❌ Order failed: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
+      showError(`❌ Order failed: ${errorMessage}`);
     } finally {
       setLoading(false);
       setPendingOrder(null);
@@ -511,8 +527,8 @@ export default function ExecuteTradeForm() {
 
       const data: ExecuteResponse = await res.json();
       setResponse(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { Card, Button } from "./ui";
-import { theme } from "../styles/theme";
+import { useMemo, useState } from "react";
 import { useMarketStream } from "../hooks/useMarketStream";
+import { theme } from "../styles/theme";
+import { Button, Card } from "./ui";
 
 interface Position {
   symbol: string;
@@ -45,33 +45,51 @@ export default function PositionsTable() {
           : [];
 
       // Calculate enhanced metrics
-      const enhanced: Position[] = rawPositions.map((p: any) => {
-        const qty = p.qty || p.quantity || 0;
-        const avgPrice = p.avgPrice || p.average_price || p.avg_entry_price || 0;
-        const currentPrice =
-          p.marketPrice || p.market_price || p.currentPrice || p.current_price || 0;
-        const marketValue = p.marketValue || p.market_value || currentPrice * qty;
-        const costBasis = avgPrice * qty;
-        const unrealizedPnL = marketValue - costBasis;
-        const unrealizedPnLPercent = costBasis > 0 ? (unrealizedPnL / costBasis) * 100 : 0;
+      const enhanced: Position[] = rawPositions.map(
+        (p: {
+          qty?: number;
+          quantity?: number;
+          avgPrice?: number;
+          average_price?: number;
+          avg_entry_price?: number;
+          marketPrice?: number;
+          market_price?: number;
+          currentPrice?: number;
+          current_price?: number;
+          marketValue?: number;
+          market_value?: number;
+          unrealizedPnL?: number;
+          unrealized_pnl?: number;
+          unrealizedPnLPercent?: number;
+          unrealized_pnl_percent?: number;
+        }) => {
+          const qty = p.qty || p.quantity || 0;
+          const avgPrice = p.avgPrice || p.average_price || p.avg_entry_price || 0;
+          const currentPrice =
+            p.marketPrice || p.market_price || p.currentPrice || p.current_price || 0;
+          const marketValue = p.marketValue || p.market_value || currentPrice * qty;
+          const costBasis = avgPrice * qty;
+          const unrealizedPnL = marketValue - costBasis;
+          const unrealizedPnLPercent = costBasis > 0 ? (unrealizedPnL / costBasis) * 100 : 0;
 
-        return {
-          symbol: p.symbol || "N/A",
-          qty,
-          avgPrice,
-          currentPrice,
-          marketValue,
-          unrealizedPnL,
-          unrealizedPnLPercent,
-        };
-      });
+          return {
+            symbol: p.symbol || "N/A",
+            qty,
+            avgPrice,
+            currentPrice,
+            marketValue,
+            unrealizedPnL,
+            unrealizedPnLPercent,
+          };
+        }
+      );
 
       // eslint-disable-next-line no-console
       console.info("Enhanced positions:", enhanced);
       setPositions(enhanced);
       setLastRefreshed(new Date().toLocaleTimeString());
-    } catch (e: any) {
-      setError(e?.message || String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }

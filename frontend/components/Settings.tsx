@@ -74,7 +74,7 @@ interface TelemetryData {
   action: string;
   component: string;
   timestamp: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 interface SettingsData {

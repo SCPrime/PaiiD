@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Input, Select, Button } from "./ui";
 import { theme } from "../styles/theme";
+import { Button, Card, Input, Select } from "./ui";
 
 export default function ResearchDashboardSimple() {
   const [symbol, setSymbol] = useState("");
@@ -33,8 +33,8 @@ export default function ResearchDashboardSimple() {
       setHasData(true);
       setCurrentPrice(result.currentPrice || 184.1);
       setPriceChange(result.priceChange || 1.25);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch data");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to fetch data");
       console.error("Historical data fetch error:", err);
       setHasData(false);
     } finally {
