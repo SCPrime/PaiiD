@@ -45,7 +45,11 @@ STRATEGY_TEMPLATES = [
                 },
             ],
             "exit_rules": [
-                {"type": "take_profit", "value": 8.0, "description": "Take profit at +8%"},
+                {
+                    "type": "take_profit",
+                    "value": 8.0,
+                    "description": "Take profit at +8%",
+                },
                 {"type": "stop_loss", "value": 3.0, "description": "Stop loss at -3%"},
                 {
                     "type": "trailing_stop",
@@ -86,8 +90,16 @@ STRATEGY_TEMPLATES = [
                 },
             ],
             "exit_rules": [
-                {"type": "take_profit", "value": 5.0, "description": "Take profit at +5%"},
-                {"type": "stop_loss", "value": 2.5, "description": "Stop loss at -2.5%"},
+                {
+                    "type": "take_profit",
+                    "value": 5.0,
+                    "description": "Take profit at +5%",
+                },
+                {
+                    "type": "stop_loss",
+                    "value": 2.5,
+                    "description": "Stop loss at -2.5%",
+                },
                 {
                     "indicator": "RSI",
                     "operator": ">",
@@ -104,7 +116,11 @@ STRATEGY_TEMPLATES = [
         expected_win_rate=62.0,
         avg_return_percent=3.8,
         max_drawdown_percent=8.5,
-        recommended_for=["Ranging markets", "Blue chip stocks", "Low volatility periods"],
+        recommended_for=[
+            "Ranging markets",
+            "Blue chip stocks",
+            "Low volatility periods",
+        ],
     ),
     StrategyTemplate(
         id="momentum-breakout",
@@ -134,7 +150,11 @@ STRATEGY_TEMPLATES = [
                 },
             ],
             "exit_rules": [
-                {"type": "take_profit", "value": 12.0, "description": "Take profit at +12%"},
+                {
+                    "type": "take_profit",
+                    "value": 12.0,
+                    "description": "Take profit at +12%",
+                },
                 {"type": "stop_loss", "value": 5.0, "description": "Stop loss at -5%"},
                 {
                     "indicator": "VOLUME",
@@ -150,7 +170,11 @@ STRATEGY_TEMPLATES = [
         expected_win_rate=48.0,
         avg_return_percent=8.5,
         max_drawdown_percent=18.0,
-        recommended_for=["High volatility markets", "Small cap stocks", "Momentum stocks"],
+        recommended_for=[
+            "High volatility markets",
+            "Small cap stocks",
+            "Momentum stocks",
+        ],
     ),
     StrategyTemplate(
         id="volatility-breakout-atr",
@@ -179,7 +203,11 @@ STRATEGY_TEMPLATES = [
                 },
             ],
             "exit_rules": [
-                {"type": "take_profit", "value": 10.0, "description": "Take profit at +10%"},
+                {
+                    "type": "take_profit",
+                    "value": 10.0,
+                    "description": "Take profit at +10%",
+                },
                 {"type": "stop_loss", "value": 4.0, "description": "Stop loss at -4%"},
                 {
                     "indicator": "BB_WIDTH",
@@ -197,7 +225,11 @@ STRATEGY_TEMPLATES = [
         expected_win_rate=58.0,
         avg_return_percent=6.3,
         max_drawdown_percent=14.0,
-        recommended_for=["Volatility expansion periods", "Post-earnings plays", "Breakout stocks"],
+        recommended_for=[
+            "Volatility expansion periods",
+            "Post-earnings plays",
+            "Breakout stocks",
+        ],
     ),
 ]
 
@@ -238,7 +270,9 @@ def filter_templates_by_risk(risk_tolerance: int) -> list[StrategyTemplate]:
     return [t for t in STRATEGY_TEMPLATES if t.risk_level in allowed_levels]
 
 
-def customize_template_for_risk(template: StrategyTemplate, risk_tolerance: int) -> dict[str, Any]:
+def customize_template_for_risk(
+    template: StrategyTemplate, risk_tolerance: int
+) -> dict[str, Any]:
     """
     Customize template parameters based on user's risk tolerance
 
@@ -278,7 +312,10 @@ def customize_template_for_risk(template: StrategyTemplate, risk_tolerance: int)
 
 
 def get_template_compatibility_score(
-    template: StrategyTemplate, risk_tolerance: int, market_volatility: str, portfolio_size: float
+    template: StrategyTemplate,
+    risk_tolerance: int,
+    market_volatility: str,
+    portfolio_size: float,
 ) -> float:
     """
     Calculate compatibility score for template recommendation
@@ -345,7 +382,7 @@ def get_template_compatibility_score(
 def get_all_strategy_templates() -> list[StrategyTemplate]:
     """
     Get all available strategy templates
-    
+
     Returns:
         List of all strategy templates
     """

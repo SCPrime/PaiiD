@@ -81,6 +81,35 @@ interface PortfolioAnalysis {
   recommendations: string[];
 }
 
+interface MLMarketRegime {
+  symbol: string;
+  regime: string;
+  confidence: number;
+  features: {
+    trend_direction: number;
+    trend_strength: number;
+    volatility: number;
+    rsi: number;
+  };
+  recommended_strategies: string[];
+}
+
+interface MLPattern {
+  pattern_type: string;
+  signal: "bullish" | "bearish" | "neutral";
+  confidence: number;
+  description: string;
+  target_price: number;
+  stop_loss: number;
+  key_levels?: Record<string, number>;
+}
+
+interface MLStrategyRecommendation {
+  strategy_id: string;
+  probability: number;
+  confidence: number;
+}
+
 export default function AIRecommendations() {
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
@@ -88,6 +117,12 @@ export default function AIRecommendations() {
   const [portfolioAnalysis, setPortfolioAnalysis] = useState<PortfolioAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedRec, setSelectedRec] = useState<Recommendation | null>(null);
+
+  // ML Engine state
+  const [mlRegime, setMlRegime] = useState<MLMarketRegime | null>(null);
+  const [mlPatterns, setMlPatterns] = useState<MLPattern[]>([]);
+  const [mlStrategies, setMlStrategies] = useState<MLStrategyRecommendation[]>([]);
+  const [mlLoading, setMlLoading] = useState(false);
 
   // Stock research state
   const [researchSymbol, setResearchSymbol] = useState<string>("");
@@ -122,6 +157,39 @@ export default function AIRecommendations() {
       setPortfolioAnalysis(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMLInsights = async (symbol: string = "SPY") => {
+    setMlLoading(true);
+
+    try {
+      // Fetch market regime, patterns, and strategy recommendations in parallel
+      const [regimeRes, patternsRes, strategiesRes] = await Promise.all([
+        fetch(`/api/proxy/api/ml/market-regime?symbol=${symbol}&lookback_days=90`),
+        fetch(`/api/proxy/api/ml/detect-patterns?symbol=${symbol}&lookback_days=90&min_confidence=0.7`),
+        fetch(`/api/proxy/api/ml/recommend-strategy?symbol=${symbol}&lookback_days=90&top_n=3`),
+      ]);
+
+      if (regimeRes.ok) {
+        const regimeData = await regimeRes.json();
+        setMlRegime(regimeData);
+      }
+
+      if (patternsRes.ok) {
+        const patternsData = await patternsRes.json();
+        setMlPatterns(patternsData.patterns || []);
+      }
+
+      if (strategiesRes.ok) {
+        const strategiesData = await strategiesRes.json();
+        setMlStrategies(strategiesData.recommendations || []);
+      }
+    } catch (err: unknown) {
+      console.error("Error fetching ML insights:", err);
+      // Don't show error, ML is optional enhancement
+    } finally {
+      setMlLoading(false);
     }
   };
 
@@ -218,6 +286,48 @@ export default function AIRecommendations() {
     return theme.colors.warning; // Yellow - negative
   };
 
+  // ML-specific color helpers
+  const getRegimeColor = (regime: string) => {
+    switch (regime) {
+      case "trending_bullish":
+        return theme.colors.primary; // Green
+      case "trending_bearish":
+        return theme.colors.danger; // Red
+      case "ranging":
+        return theme.colors.secondary; // Cyan
+      case "high_volatility":
+        return theme.colors.warning; // Yellow
+      default:
+        return theme.colors.textMuted;
+    }
+  };
+
+  const getRegimeEmoji = (regime: string) => {
+    switch (regime) {
+      case "trending_bullish":
+        return "📈";
+      case "trending_bearish":
+        return "📉";
+      case "ranging":
+        return "↔️";
+      case "high_volatility":
+        return "⚡";
+      default:
+        return "❓";
+    }
+  };
+
+  const getPatternSignalColor = (signal: "bullish" | "bearish" | "neutral") => {
+    switch (signal) {
+      case "bullish":
+        return theme.colors.primary;
+      case "bearish":
+        return theme.colors.danger;
+      case "neutral":
+        return theme.colors.secondary;
+    }
+  };
+
   return (
     <div style={{ padding: isMobile ? theme.spacing.md : theme.spacing.lg }}>
       <div
@@ -254,8 +364,15 @@ export default function AIRecommendations() {
           </p>
         </div>
 
-        <Button onClick={fetchRecommendations} loading={loading} variant="primary">
-          Generate Recommendations
+        <Button
+          onClick={() => {
+            fetchRecommendations();
+            fetchMLInsights("SPY"); // Fetch ML insights for SPY (market overview)
+          }}
+          loading={loading || mlLoading}
+          variant="primary"
+        >
+          🧠 Generate AI + ML Recommendations
         </Button>
       </div>
 
@@ -472,6 +589,258 @@ export default function AIRecommendations() {
               ))}
             </div>
           )}
+        </Card>
+      )}
+
+      {/* ML Engine: Market Regime */}
+      {mlRegime && (
+        <Card glow="purple" style={{ marginBottom: theme.spacing.lg }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: theme.spacing.lg,
+              marginBottom: theme.spacing.md,
+            }}
+          >
+            <div style={{ fontSize: "48px" }}>{getRegimeEmoji(mlRegime.regime)}</div>
+            <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: theme.colors.textMuted,
+                  textTransform: "uppercase",
+                  letterSpacing: "1px",
+                  marginBottom: "4px",
+                }}
+              >
+                🧠 ML Market Regime • {mlRegime.symbol}
+              </div>
+              <div
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "700",
+                  color: getRegimeColor(mlRegime.regime),
+                  textTransform: "uppercase",
+                  textShadow: `0 0 10px ${getRegimeColor(mlRegime.regime)}50`,
+                }}
+              >
+                {mlRegime.regime.replace("_", " ")}
+              </div>
+              <div
+                style={{
+                  fontSize: "14px",
+                  color: theme.colors.textMuted,
+                  marginTop: "4px",
+                }}
+              >
+                Confidence: {(mlRegime.confidence * 100).toFixed(0)}% • RSI: {mlRegime.features.rsi.toFixed(1)} • Volatility: {(mlRegime.features.volatility * 100).toFixed(1)}%
+              </div>
+            </div>
+          </div>
+
+          {/* Recommended Strategies */}
+          {mlRegime.recommended_strategies.length > 0 && (
+            <div
+              style={{
+                padding: theme.spacing.sm,
+                background: `${getRegimeColor(mlRegime.regime)}15`,
+                border: `1px solid ${getRegimeColor(mlRegime.regime)}`,
+                borderRadius: theme.borderRadius.md,
+                fontSize: "13px",
+                color: theme.colors.text,
+              }}
+            >
+              <strong style={{ color: getRegimeColor(mlRegime.regime) }}>
+                💡 Recommended Strategies:
+              </strong>{" "}
+              {mlRegime.recommended_strategies.join(", ")}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* ML Engine: Chart Patterns */}
+      {mlPatterns.length > 0 && (
+        <Card glow="cyan" style={{ marginBottom: theme.spacing.lg }}>
+          <div
+            style={{
+              fontSize: "18px",
+              fontWeight: "700",
+              color: theme.colors.text,
+              marginBottom: theme.spacing.md,
+              display: "flex",
+              alignItems: "center",
+              gap: theme.spacing.sm,
+            }}
+          >
+            📊 Pattern Recognition ({mlPatterns.length} detected)
+          </div>
+
+          <div style={{ display: "grid", gap: theme.spacing.sm }}>
+            {mlPatterns.map((pattern, idx) => (
+              <div
+                key={idx}
+                style={{
+                  padding: theme.spacing.md,
+                  background: `${getPatternSignalColor(pattern.signal)}10`,
+                  border: `2px solid ${getPatternSignalColor(pattern.signal)}`,
+                  borderRadius: theme.borderRadius.md,
+                  display: "grid",
+                  gridTemplateColumns: isMobile ? "1fr" : "auto 1fr auto auto",
+                  gap: theme.spacing.md,
+                  alignItems: "center",
+                }}
+              >
+                {/* Pattern Type */}
+                <div>
+                  <div
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "700",
+                      color: getPatternSignalColor(pattern.signal),
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {pattern.pattern_type.replace(/_/g, " ")}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: theme.colors.textMuted,
+                      marginTop: "2px",
+                    }}
+                  >
+                    {pattern.signal.toUpperCase()} • {(pattern.confidence * 100).toFixed(0)}% confidence
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div
+                  style={{
+                    fontSize: "13px",
+                    color: theme.colors.text,
+                  }}
+                >
+                  {pattern.description}
+                </div>
+
+                {/* Target Price */}
+                <div>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: theme.colors.textMuted,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Target
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: "700",
+                      color: theme.colors.primary,
+                    }}
+                  >
+                    ${pattern.target_price.toFixed(2)}
+                  </div>
+                </div>
+
+                {/* Stop Loss */}
+                <div>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: theme.colors.textMuted,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Stop Loss
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: "700",
+                      color: theme.colors.danger,
+                    }}
+                  >
+                    ${pattern.stop_loss.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* ML Engine: Strategy Recommendations */}
+      {mlStrategies.length > 0 && (
+        <Card glow="green" style={{ marginBottom: theme.spacing.lg }}>
+          <div
+            style={{
+              fontSize: "18px",
+              fontWeight: "700",
+              color: theme.colors.text,
+              marginBottom: theme.spacing.md,
+              display: "flex",
+              alignItems: "center",
+              gap: theme.spacing.sm,
+            }}
+          >
+            🎯 ML Strategy Recommendations
+          </div>
+
+          <div style={{ display: "grid", gap: theme.spacing.sm }}>
+            {mlStrategies.map((strategy, idx) => (
+              <div
+                key={idx}
+                style={{
+                  padding: theme.spacing.md,
+                  background: "rgba(16, 185, 129, 0.1)",
+                  border: `2px solid ${theme.colors.primary}`,
+                  borderRadius: theme.borderRadius.md,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "700",
+                      color: theme.colors.text,
+                    }}
+                  >
+                    #{idx + 1}: {strategy.strategy_id.replace(/-/g, " ").toUpperCase()}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: theme.colors.textMuted,
+                      marginTop: "2px",
+                    }}
+                  >
+                    ML Confidence: {(strategy.confidence * 100).toFixed(0)}%
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    padding: "8px 16px",
+                    background: `${theme.colors.primary}20`,
+                    borderRadius: "9999px",
+                    fontSize: "18px",
+                    fontWeight: "700",
+                    color: theme.colors.primary,
+                  }}
+                >
+                  {(strategy.probability * 100).toFixed(0)}%
+                </div>
+              </div>
+            ))}
+          </div>
         </Card>
       )}
 

@@ -140,14 +140,14 @@ class BacktestingEngine:  # ✅ Correct
 
 ## 📈 PROGRESS TRACKER
 
-| Phase | Status | Count |
-|-------|--------|-------|
-| Test files updated | ✅ COMPLETE | 8/8 files |
+| Phase                | Status     | Count           |
+| -------------------- | ---------- | --------------- |
+| Test files updated   | ✅ COMPLETE | 8/8 files       |
 | Test functions fixed | ✅ COMPLETE | 93/93 functions |
-| Import errors fixed | ✅ COMPLETE | 2/2 locations |
-| ESLint errors fixed | ✅ COMPLETE | 1/1 errors |
-| Dependencies added | ✅ COMPLETE | 1/1 missing |
-| CI status | ⏳ RUNNING | Waiting... |
+| Import errors fixed  | ✅ COMPLETE | 2/2 locations   |
+| ESLint errors fixed  | ✅ COMPLETE | 1/1 errors      |
+| Dependencies added   | ✅ COMPLETE | 1/1 missing     |
+| CI status            | ⏳ RUNNING  | Waiting...      |
 
 ---
 
