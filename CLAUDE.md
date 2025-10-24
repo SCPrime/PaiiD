@@ -306,3 +306,45 @@ npm run test:ci      # CI mode with coverage
 - `DATA_SOURCES.md` - Explains real vs calculated data
 - `IMPLEMENTATION_STATUS.md` - Current implementation checklist
 - `instructions/` - Detailed implementation specs (15+ markdown files)
+## GitHub Claude Reviewer Configuration
+To guarantee Claude acts as the decisive merge blocker for regression-prone areas, wire it into GitHub as both a reviewer and status check.
+
+1. **Install GitHub App**
+   - Navigate to https://github.com/apps/anthropic-claude-code and click **Install**.
+   - Select the PaiiD organization/repository and grant access to all branches.
+
+2. **Repository Settings**
+   - Go to **Settings → Branches → Branch protection rules**.
+   - Edit the `main` rule (or add one if missing) and enable:
+     - ✅ Require status checks to pass → add `claude-code-review`.
+     - ✅ Require pull request reviews before merging → set **Minimum approving reviews** to 1 and tick **Require review from Claude Code**.
+     - ✅ Dismiss stale reviews when new commits are pushed.
+
+3. **Workflow Automation**
+   - Ensure `/.github/workflows/claude-review.yml` exists or create it:
+     ```yaml
+     name: Claude Code Review
+     on:
+       pull_request:
+         types: [opened, synchronize, reopened]
+     jobs:
+       claude-review:
+         uses: anthropic/claude-code-review-action/.github/workflows/claude-review.yml@v1
+         with:
+           github-token: ${{ secrets.GITHUB_TOKEN }}
+           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+           instructions-path: CLAUDE_PROTOCOL.md
+           enable_auto_resolve: true
+     ```
+   - Store the Anthropic API key in **Settings → Secrets and variables → Actions** as `ANTHROPIC_API_KEY`.
+
+4. **Claude Auto-Resolution**
+   - In the workflow `with` block, `enable_auto_resolve: true` allows Claude to mark threads as resolved after verifying fixes.
+   - Combine with `Require conversation resolution before merging` in branch protection to ensure Claude must explicitly confirm fixes.
+
+5. **Rollout Checklist**
+   - Test on a non-critical PR (e.g., documentation change) to validate Claude posts reviews.
+   - Update `PRODUCTION_DEPLOYMENT_GUIDE.md` with a reference to the Claude reviewer requirement.
+   - Monitor the Actions tab for any failures; adjust permissions if Claude cannot post comments.
+
+Following these steps positions Claude as the authoritative reviewer that can auto-resolve issues and gate merges whenever regressions are detected.
