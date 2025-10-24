@@ -14,13 +14,22 @@ from ..core.config import settings
 
 # Create engine based on configuration
 if settings.DATABASE_URL:
-    # Production: Use PostgreSQL
-    engine = create_engine(
-        settings.DATABASE_URL,
-        pool_pre_ping=True,  # Verify connections before using
-        echo=False,  # Set to True for SQL debugging
-    )
-    print("[OK] Database engine created: PostgreSQL", flush=True)
+    if settings.DATABASE_URL.startswith("sqlite"):
+        engine = create_engine(
+            settings.DATABASE_URL,
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            echo=False,
+        )
+        print("[OK] Database engine created: SQLite", flush=True)
+    else:
+        # Production: Use PostgreSQL
+        engine = create_engine(
+            settings.DATABASE_URL,
+            pool_pre_ping=True,  # Verify connections before using
+            echo=False,  # Set to True for SQL debugging
+        )
+        print("[OK] Database engine created: PostgreSQL", flush=True)
 else:
     # Development fallback: SQLite in memory
     engine = create_engine(
@@ -60,6 +69,9 @@ def init_db():
     Initialize database tables
     Call this on startup to create all tables
     """
+
+    # Import models so that SQLAlchemy registers the table metadata
+    from .. import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
     print("[OK] Database tables initialized", flush=True)

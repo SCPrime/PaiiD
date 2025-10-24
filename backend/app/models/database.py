@@ -299,6 +299,15 @@ class OrderTemplate(Base):
     quantity = Column(Float, nullable=False)
     order_type = Column(String(20), nullable=False)  # market, limit
     limit_price = Column(Float, nullable=True)
+    asset_class = Column(String(20), nullable=False, default="stock")
+    option_type = Column(String(10), nullable=True)
+    strike_price = Column(Float, nullable=True)
+    expiration_date = Column(String(20), nullable=True)
+    order_class = Column(String(20), nullable=False, default="simple")
+    take_profit = Column(JSON, nullable=True)
+    stop_loss = Column(JSON, nullable=True)
+    trail_price = Column(Float, nullable=True)
+    trail_percent = Column(Float, nullable=True)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

@@ -27,6 +27,7 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 from slowapi.errors import RateLimitExceeded
 
 from .core.config import settings
+from .db.session import init_db
 from .routers import (
     ai,
     analytics,
@@ -105,6 +106,10 @@ app = FastAPI(
     description="Personal Artificial Intelligence Investment Dashboard",
     version="1.0.0",
 )
+
+# Ensure database schema exists in testing environments
+if settings.TESTING:
+    init_db()
 
 # Configure rate limiting (Phase 3: Bulletproof Reliability)
 # Skip rate limiting in test environment to avoid middleware conflicts with TestClient

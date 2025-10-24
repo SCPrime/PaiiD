@@ -18,7 +18,10 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+try:
+    from cachetools import TTLCache  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - fallback for test sandbox
+    from ..utils.ttl_cache import TTLCache
 
 from ..core.config import settings
 from ..core.auth import require_bearer
