@@ -16,91 +16,135 @@ if (!API_TOKEN) {
 }
 
 // Exact endpoints our UI uses (paths without /api prefix - added in URL construction)
-const ALLOW_GET = new Set<string>([
-  "health",
-  "settings",
-  "portfolio/positions",
-  "ai/recommendations",
-  "ai/signals",
-  "ai/analyze-symbol",
-  "market/historical",
-  "screening/opportunities",
-  "screening/strategies",
-  "market/conditions",
-  "market/indices",
-  "market/sectors",
-  "market/status", // Market hours detection
-  // Live market data endpoints
-  "market/quote",
-  "market/quotes",
-  "market/scanner/under4",
-  "market/bars",
-  // Options endpoints
-  "options/greeks",
-  "options/chain",
-  // News endpoints
-  "news/providers",
-  "news/company",
-  "news/market",
-  "news/sentiment/market",
-  "news/cache/stats",
-  // Alpaca endpoints
-  "account",
-  "positions",
-  "orders",
-  "assets",
-  "clock",
-  "calendar",
-  "watchlists",
-  // Order templates
-  "order-templates",
-  // Claude AI endpoints
-  "claude/chat",
-  "claude/health",
-  // Analytics endpoints
-  "portfolio/summary",
-  "portfolio/history",
-  "analytics/performance",
-  // Backtesting endpoints
-  "backtesting/run",
-  "backtesting/quick-test",
-  "backtesting/strategy-templates",
-  // Strategy endpoints
-  "strategies/templates",
-  // SSE streaming endpoints
-  "stream/market-indices",
-  "stream/positions",
-]);
+type HttpMethod = "GET" | "POST" | "DELETE";
 
-const ALLOW_POST = new Set<string>([
-  "trading/execute",
-  "settings",
-  "admin/kill",
-  // Alpaca endpoints
-  "orders",
-  "watchlists",
-  // Order templates
-  "order-templates",
-  // Claude AI endpoints (both full and simplified paths)
-  "claude/chat",
-  "claude/health",
-  "chat",
-  // Telemetry
-  "telemetry",
-  // News cache management
-  "news/cache/clear",
-  // Backtesting endpoints
-  "backtesting/run",
-]);
+const ALLOWED_PATH_PATTERNS: Record<HttpMethod, string[]> = {
+  GET: [
+    "health",
+    "settings",
+    "portfolio/positions",
+    "ai/recommendations",
+    "ai/signals",
+    "ai/analyze-symbol",
+    "market/historical",
+    "screening/opportunities",
+    "screening/strategies",
+    "market/conditions",
+    "market/indices",
+    "market/sectors",
+    "market/status", // Market hours detection
+    // Live market data endpoints
+    "market/quote",
+    "market/quote/:symbol",
+    "market/quotes",
+    "market/scanner/under4",
+    "market/bars",
+    "market/bars/:symbol",
+    // Options endpoints
+    "options/greeks",
+    "options/chain",
+    // News endpoints
+    "news/providers",
+    "news/company",
+    "news/market",
+    "news/sentiment/market",
+    "news/cache/stats",
+    // Alpaca endpoints
+    "account",
+    "positions",
+    "positions/:symbol",
+    "orders",
+    "orders/:orderId",
+    "assets",
+    "assets/:symbol",
+    "clock",
+    "calendar",
+    "watchlists",
+    "watchlists/:watchlistId",
+    // Order templates
+    "order-templates",
+    "order-templates/:templateId",
+    // Claude AI endpoints
+    "claude/chat",
+    "claude/health",
+    // Analytics endpoints
+    "portfolio/summary",
+    "portfolio/history",
+    "analytics/performance",
+    // Backtesting endpoints
+    "backtesting/run",
+    "backtesting/quick-test",
+    "backtesting/strategy-templates",
+    // Strategy endpoints
+    "strategies/templates",
+    // SSE streaming endpoints
+    "stream/market-indices",
+    "stream/positions",
+  ],
+  POST: [
+    "trading/execute",
+    "settings",
+    "admin/kill",
+    // Alpaca endpoints
+    "orders",
+    "orders/:orderId",
+    "watchlists",
+    "watchlists/:watchlistId",
+    // Order templates
+    "order-templates",
+    "order-templates/:templateId",
+    // Claude AI endpoints (both full and simplified paths)
+    "claude/chat",
+    "claude/health",
+    "chat",
+    // Telemetry
+    "telemetry",
+    // News cache management
+    "news/cache/clear",
+    // Backtesting endpoints
+    "backtesting/run",
+  ],
+  DELETE: [
+    // Alpaca endpoints
+    "positions",
+    "positions/:symbol",
+    "orders",
+    "orders/:orderId",
+    "watchlists",
+    "watchlists/:watchlistId",
+    // Order templates
+    "order-templates",
+    "order-templates/:templateId",
+  ],
+};
 
-const ALLOW_DELETE = new Set<string>([
-  // Alpaca endpoints
-  "positions",
-  "orders",
-  "watchlists",
-  // Order templates
-  "order-templates",
-]);
+const PATH_REGEX_CACHE = new Map<string, RegExp>();
+
+function patternToRegex(pattern: string): RegExp {
+  const cached = PATH_REGEX_CACHE.get(pattern);
+  if (cached) {
+    return cached;
+  }
+
+  let regexString = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  regexString = regexString.replace(/:([A-Za-z0-9_]+)/g, "[^/]+");
+  regexString = regexString.replace(/\*/g, ".*");
+
+  const compiled = new RegExp(`^${regexString}$`);
+  PATH_REGEX_CACHE.set(pattern, compiled);
+  return compiled;
+}
+
+function isPathAllowed(method: string | undefined, path: string): boolean {
+  const normalizedMethod = (method ?? "GET").toUpperCase() as keyof typeof ALLOWED_PATH_PATTERNS;
+  const patterns = ALLOWED_PATH_PATTERNS[normalizedMethod];
+
+  if (!patterns) {
+    return false;
+  }
+
+  return patterns.some((pattern) => patternToRegex(pattern).test(path));
+}
 
 // Allowed origins for CORS (production and development only)
 const ALLOWED_ORIGINS = new Set<string>([
@@ -205,30 +249,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Check if path is allowed based on method
-  if (req.method === "GET" && !ALLOW_GET.has(path)) {
-    // Allow wildcard patterns for dynamic routes
-    const isAllowedPattern = Array.from(ALLOW_GET).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
-    }
-  }
-  if (req.method === "POST" && !ALLOW_POST.has(path)) {
-    const isAllowedPattern = Array.from(ALLOW_POST).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
-    }
-  }
-  if (req.method === "DELETE" && !ALLOW_DELETE.has(path)) {
-    const isAllowedPattern = Array.from(ALLOW_DELETE).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
-    }
+  if (!isPathAllowed(req.method, path)) {
+    return res.status(405).json({ error: "Not allowed" });
   }
 
   // Preserve query parameters from original request
