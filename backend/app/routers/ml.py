@@ -1104,3 +1104,55 @@ async def get_ml_analytics() -> dict[str, Any]:
     except Exception as e:
         logger.error(f"Failed to get ML analytics: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get ML analytics: {e!s}") from e
+
+
+@router.get("/ensemble-prediction")
+async def get_ensemble_prediction(
+    symbol: str = Query("SPY", description="Stock symbol to analyze"),
+    lookback_days: int = Query(90, ge=30, le=365, description="Days of history to analyze"),
+) -> dict[str, Any]:
+    """
+    Get ensemble prediction combining multiple ML models
+
+    Combines predictions from:
+    - Regime detector (K-Means clustering)
+    - Strategy selector (Random Forest)
+    - Pattern detector (Technical analysis)
+
+    Uses weighted soft voting for more robust predictions.
+
+    Returns:
+        - prediction: Ensemble market regime
+        - confidence: Ensemble confidence score
+        - individual_predictions: Predictions from each model
+        - vote_distribution: How models voted
+
+    Example:
+        GET /api/ml/ensemble-prediction?symbol=AAPL&lookback_days=90
+    """
+    try:
+        logger.info(f"Ensemble prediction requested for {symbol}")
+
+        from ..ml.ensemble import get_regime_ensemble
+
+        ensemble = get_regime_ensemble()
+
+        # Get ensemble prediction
+        result = ensemble.predict_regime(symbol, lookback_days)
+
+        return {
+            "symbol": symbol,
+            "lookback_days": lookback_days,
+            "ensemble_prediction": result["prediction"],
+            "ensemble_confidence": result["confidence"],
+            "voting_method": result["method"],
+            "individual_predictions": result["individual_predictions"],
+            "individual_confidences": result["individual_confidences"],
+            "vote_distribution": result["vote_distribution"],
+            "num_models": result["num_models"],
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Ensemble prediction failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Ensemble prediction failed: {e!s}") from e
