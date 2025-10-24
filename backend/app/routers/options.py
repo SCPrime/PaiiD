@@ -18,7 +18,7 @@ import requests
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.alpaca_options import get_alpaca_options_client
 from ..services.cache import get_cache
@@ -106,7 +106,7 @@ async def get_options_chain(
         None,
         description="Expiration date (YYYY-MM-DD). If not provided, uses nearest expiration.",
     ),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Get options chain for a symbol with Greeks
@@ -290,7 +290,7 @@ async def get_options_chain(
 
 
 @router.get("/expirations/{symbol}", response_model=list[ExpirationDate])
-def get_expiration_dates(symbol: str, current_user: User = Depends(get_current_user)):
+def get_expiration_dates(symbol: str, current_user: User = Depends(get_current_user_unified)):
     """
     Get available expiration dates for a symbol
 
@@ -384,7 +384,7 @@ async def calculate_greeks(
     implied_volatility: float = Query(
         0.3, description="Implied volatility (default 30%)"
     ),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Calculate Greeks for a specific option contract
@@ -458,7 +458,7 @@ async def calculate_greeks(
     response_model=OptionContract,
 )
 async def get_option_contract(
-    option_symbol: str, current_user: User = Depends(get_current_user)
+    option_symbol: str, current_user: User = Depends(get_current_user_unified)
 ):
     """
     Get details for a specific option contract
