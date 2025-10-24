@@ -4,7 +4,7 @@ Position Management API
 
 from fastapi import APIRouter, Depends
 
-from app.core.auth import require_bearer
+from app.core.jwt import get_current_user
 from app.services.position_tracker import (
     PortfolioGreeks,
     Position,
@@ -15,7 +15,7 @@ from app.services.position_tracker import (
 router = APIRouter(prefix="/api/positions", tags=["positions"])
 
 
-@router.get("", response_model=list[Position], dependencies=[Depends(require_bearer)])
+@router.get("", response_model=list[Position], dependencies=[Depends(get_current_user)])
 async def get_positions():
     """Get all open positions with real-time P&L and Greeks"""
     service = PositionTrackerService()
@@ -23,7 +23,7 @@ async def get_positions():
 
 
 @router.get(
-    "/greeks", response_model=PortfolioGreeks, dependencies=[Depends(require_bearer)]
+    "/greeks", response_model=PortfolioGreeks, dependencies=[Depends(get_current_user)]
 )
 async def get_portfolio_greeks():
     """Get aggregate portfolio Greeks"""
@@ -31,7 +31,7 @@ async def get_portfolio_greeks():
     return await service.get_portfolio_greeks()
 
 
-@router.post("/{position_id}/close", dependencies=[Depends(require_bearer)])
+@router.post("/{position_id}/close", dependencies=[Depends(get_current_user)])
 async def close_position(position_id: str, limit_price: float | None = None):
     """Close an open position"""
     service = PositionTrackerService()

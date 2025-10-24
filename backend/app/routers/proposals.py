@@ -8,7 +8,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.core.auth import require_bearer
+from app.core.jwt import get_current_user
 from app.services.order_execution import OptionsProposal, get_order_execution_service
 
 
@@ -33,7 +33,7 @@ class ExecuteProposalRequest(BaseModel):
     limit_price: Optional[float] = None
 
 
-@router.post("/create", dependencies=[Depends(require_bearer)])
+@router.post("/create", dependencies=[Depends(get_current_user)])
 async def create_proposal(request: CreateProposalRequest):
     """
     Create a detailed options trade proposal with risk analysis
@@ -103,7 +103,7 @@ async def create_proposal(request: CreateProposalRequest):
         raise HTTPException(status_code=500, detail="Failed to create proposal")
 
 
-@router.post("/execute", dependencies=[Depends(require_bearer)])
+@router.post("/execute", dependencies=[Depends(get_current_user)])
 async def execute_proposal(request: ExecuteProposalRequest):
     """
     Execute an approved options trade proposal
@@ -161,7 +161,7 @@ async def execute_proposal(request: ExecuteProposalRequest):
         raise HTTPException(status_code=500, detail="Failed to execute order")
 
 
-@router.get("/history", dependencies=[Depends(require_bearer)])
+@router.get("/history", dependencies=[Depends(get_current_user)])
 async def get_proposal_history():
     """
     Get history of created proposals

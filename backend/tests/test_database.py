@@ -25,7 +25,7 @@ class TestUserModel:
             email="user@example.com",
             password_hash=TEST_PASSWORD_HASH,
             alpaca_account_id="ACCOUNT123",
-            preferences={"risk_tolerance": "moderate", "position_size": 0.02},
+            preferences={"risk_tolerance": 50, "position_size": 0.02},
         )
         test_db.add(user)
         test_db.commit()
@@ -34,7 +34,7 @@ class TestUserModel:
         assert user.id is not None
         assert user.email == "user@example.com"
         assert user.alpaca_account_id == "ACCOUNT123"
-        assert user.preferences["risk_tolerance"] == "moderate"
+        assert user.preferences["risk_tolerance"] == 50
         assert user.created_at is not None
         assert user.updated_at is not None
 

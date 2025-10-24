@@ -10,7 +10,7 @@ from anthropic import Anthropic
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
 
 
 # Set UTF-8 encoding for console output on Windows
@@ -48,7 +48,7 @@ class ChatResponse(BaseModel):
     role: str = "assistant"
 
 
-@router.post("/chat", response_model=ChatResponse, dependencies=[Depends(require_bearer)])
+@router.post("/chat", response_model=ChatResponse, dependencies=[Depends(get_current_user)])
 async def claude_chat(request: ChatRequest):
     """
     Proxy Claude API chat requests from frontend
