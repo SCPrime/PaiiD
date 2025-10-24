@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { ALLOW_DELETE, ALLOW_GET, ALLOW_POST, isPathAllowed } from "@/lib/proxyAccess";
+
 /**
  * Middleware to handle maintenance mode.
  *
@@ -10,6 +12,27 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   // Allow proxy API routes even during maintenance (for backend health checks)
   if (request.nextUrl.pathname.startsWith("/api/proxy")) {
+    const proxyPath = request.nextUrl.pathname.replace(/^\/api\/proxy\/?/, "");
+    const method = request.method.toUpperCase();
+
+    if (
+      (method === "GET" && proxyPath && !isPathAllowed(proxyPath, ALLOW_GET)) ||
+      (method === "POST" && proxyPath && !isPathAllowed(proxyPath, ALLOW_POST)) ||
+      (method === "DELETE" && proxyPath && !isPathAllowed(proxyPath, ALLOW_DELETE))
+    ) {
+      return new NextResponse(
+        JSON.stringify({
+          error: "Proxy path not allowed",
+          method,
+          path: proxyPath,
+        }),
+        {
+          status: 405,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     return NextResponse.next();
   }
 

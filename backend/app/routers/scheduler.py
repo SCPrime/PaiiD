@@ -10,7 +10,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
 from ..scheduler import APPROVALS_DIR, EXECUTIONS_DIR, SCHEDULES_DIR, get_scheduler
 
 
@@ -179,7 +179,7 @@ def _update_approval(approval_id: str, updates: dict):
 
 
 @router.get("/schedules", response_model=list[ScheduleResponse])
-async def list_schedules(_=Depends(require_bearer)):
+async def list_schedules(_=Depends(get_current_user)):
     """Get all schedules for the current user"""
     schedules = _load_all_schedules()
 
@@ -213,7 +213,7 @@ async def list_schedules(_=Depends(require_bearer)):
 
 
 @router.post("/schedules", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED)
-async def create_schedule(schedule_data: ScheduleCreate, _=Depends(require_bearer)):
+async def create_schedule(schedule_data: ScheduleCreate, _=Depends(get_current_user)):
     """Create a new schedule"""
     schedule_id = str(uuid.uuid4())
 
@@ -258,7 +258,7 @@ async def create_schedule(schedule_data: ScheduleCreate, _=Depends(require_beare
 
 @router.patch("/schedules/{schedule_id}", response_model=ScheduleResponse)
 async def update_schedule(
-    schedule_id: str, schedule_data: ScheduleUpdate, _=Depends(require_bearer)
+    schedule_id: str, schedule_data: ScheduleUpdate, _=Depends(get_current_user)
 ):
     """Update an existing schedule"""
     schedule = _load_schedule(schedule_id)
@@ -304,7 +304,7 @@ async def update_schedule(
 
 
 @router.delete("/schedules/{schedule_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_schedule(schedule_id: str, _=Depends(require_bearer)):
+async def delete_schedule(schedule_id: str, _=Depends(get_current_user)):
     """Delete a schedule"""
     schedule = _load_schedule(schedule_id)
 
@@ -325,7 +325,7 @@ async def delete_schedule(schedule_id: str, _=Depends(require_bearer)):
 
 
 @router.post("/pause-all")
-async def pause_all_schedules(_=Depends(require_bearer)):
+async def pause_all_schedules(_=Depends(get_current_user)):
     """Emergency pause all schedules"""
     scheduler = get_scheduler()
     await scheduler.pause_all()
@@ -340,7 +340,7 @@ async def pause_all_schedules(_=Depends(require_bearer)):
 
 
 @router.post("/resume-all")
-async def resume_all_schedules(_=Depends(require_bearer)):
+async def resume_all_schedules(_=Depends(get_current_user)):
     """Resume all paused schedules"""
     scheduler = get_scheduler()
     await scheduler.resume_all()
@@ -361,7 +361,7 @@ async def resume_all_schedules(_=Depends(require_bearer)):
 
 @router.get("/executions", response_model=list[ExecutionResponse])
 async def list_executions(
-    limit: int = 20, schedule_id: str | None = None, _=Depends(require_bearer)
+    limit: int = 20, schedule_id: str | None = None, _=Depends(get_current_user)
 ):
     """Get execution history"""
     executions = _load_executions(limit, schedule_id)
@@ -374,14 +374,14 @@ async def list_executions(
 
 
 @router.get("/pending-approvals", response_model=list[ApprovalResponse])
-async def list_pending_approvals(_=Depends(require_bearer)):
+async def list_pending_approvals(_=Depends(get_current_user)):
     """Get all pending trade approvals"""
     approvals = _load_pending_approvals()
     return approvals
 
 
 @router.post("/approvals/{approval_id}/approve")
-async def approve_trade(approval_id: str, _=Depends(require_bearer)):
+async def approve_trade(approval_id: str, _=Depends(get_current_user)):
     """Approve a pending trade"""
     approval_file = APPROVALS_DIR / f"{approval_id}.json"
 
@@ -410,7 +410,7 @@ async def approve_trade(approval_id: str, _=Depends(require_bearer)):
 
 
 @router.post("/approvals/{approval_id}/reject")
-async def reject_trade(approval_id: str, decision: ApprovalDecision, _=Depends(require_bearer)):
+async def reject_trade(approval_id: str, decision: ApprovalDecision, _=Depends(get_current_user)):
     """Reject a pending trade"""
     approval_file = APPROVALS_DIR / f"{approval_id}.json"
 
@@ -442,7 +442,7 @@ async def reject_trade(approval_id: str, decision: ApprovalDecision, _=Depends(r
 
 
 @router.get("/status")
-async def scheduler_status(_=Depends(require_bearer)):
+async def scheduler_status(_=Depends(get_current_user)):
     """Get scheduler health status"""
     scheduler = get_scheduler()
 

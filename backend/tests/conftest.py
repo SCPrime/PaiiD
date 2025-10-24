@@ -22,6 +22,7 @@ os.environ["API_TOKEN"] = "test-token-12345"
 os.environ["TRADIER_API_KEY"] = "test-tradier-key"
 os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
+from app.core.jwt import get_current_user
 from app.db.session import Base, get_db
 from app.main import app
 
@@ -101,16 +102,18 @@ def client(test_db):
 
 
 @pytest.fixture(scope="function")
-def auth_headers():
-    """
-    Authentication headers for API requests
+def authorized_client(client, sample_user):
+    """FastAPI client with authenticated user override"""
 
-    Usage:
-        def test_protected_endpoint(client, auth_headers):
-            response = client.get("/api/positions", headers=auth_headers)
-            assert response.status_code == 200
-    """
-    return {"Authorization": "Bearer test-token-12345"}
+    def override_get_current_user():
+        return sample_user
+
+    app.dependency_overrides[get_current_user] = override_get_current_user
+
+    try:
+        yield client
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 # ==================== MOCK CACHE FIXTURES ====================

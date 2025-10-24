@@ -15,7 +15,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
 from ..db.session import get_db
 from ..services.technical_indicators import TechnicalIndicators
 from ..services.tradier_client import get_tradier_client
@@ -80,7 +80,7 @@ class RecommendationsResponse(BaseModel):
     model_version: str = "v1.0.0"
 
 
-@router.get("/recommendations", response_model=RecommendationsResponse, dependencies=[Depends(require_bearer)])
+@router.get("/recommendations", response_model=RecommendationsResponse, dependencies=[Depends(get_current_user)])
 async def get_recommendations():
     """
     Generate AI-powered trading recommendations using real market data
@@ -301,7 +301,7 @@ async def get_symbol_recommendation(symbol: str):
 
 
 @router.get(
-    "/signals", response_model=RecommendationsResponse, dependencies=[Depends(require_bearer)]
+    "/signals", response_model=RecommendationsResponse, dependencies=[Depends(get_current_user)]
 )
 async def get_ml_signals(
     symbols: str | None = Query(default=None, description="Comma-separated list of symbols"),
@@ -463,7 +463,7 @@ class SymbolAnalysis(BaseModel):
 @router.get(
     "/analyze-symbol/{symbol}",
     response_model=SymbolAnalysis,
-    dependencies=[Depends(require_bearer)],
+    dependencies=[Depends(get_current_user)],
 )
 async def analyze_symbol(symbol: str):
     """
@@ -1459,7 +1459,7 @@ def _generate_recommendation_explanation(
 # ====== PHASE 3.A.3: STRATEGY TEMPLATE MATCHING ======
 
 
-@router.get("/recommended-templates", dependencies=[Depends(require_bearer)])
+@router.get("/recommended-templates", dependencies=[Depends(get_current_user)])
 async def get_recommended_templates(db: Session = Depends(get_db)):
     """
     Get AI-recommended strategy templates based on user's risk profile, portfolio, and market conditions
@@ -1659,7 +1659,7 @@ class RecommendationHistoryResponse(BaseModel):
         from_attributes = True
 
 
-@router.post("/recommendations/save", dependencies=[Depends(require_bearer)])
+@router.post("/recommendations/save", dependencies=[Depends(get_current_user)])
 async def save_recommendation(request: SaveRecommendationRequest, db: Session = Depends(get_db)):
     """
     Save an AI recommendation to history for tracking and analysis
@@ -1718,7 +1718,7 @@ async def save_recommendation(request: SaveRecommendationRequest, db: Session = 
 @router.get(
     "/recommendations/history",
     response_model=list[RecommendationHistoryResponse],
-    dependencies=[Depends(require_bearer)],
+    dependencies=[Depends(get_current_user)],
 )
 async def get_recommendation_history(
     symbol: str | None = Query(None, description="Filter by symbol"),
@@ -1821,7 +1821,7 @@ class PortfolioAnalysisResponse(BaseModel):
     generated_at: str
 
 
-@router.get("/analyze-portfolio", response_model=PortfolioAnalysisResponse, dependencies=[Depends(require_bearer)])
+@router.get("/analyze-portfolio", response_model=PortfolioAnalysisResponse, dependencies=[Depends(get_current_user)])
 async def analyze_portfolio():
     """
     AI-powered portfolio analysis using Claude API
@@ -2074,7 +2074,7 @@ def _generate_rule_based_portfolio_analysis(
     )
 
 
-@router.post("/analyze-news", dependencies=[Depends(require_bearer)])
+@router.post("/analyze-news", dependencies=[Depends(get_current_user)])
 async def analyze_news(
     article: dict = Body(..., example={
         "title": "Tech Stocks Rally on Strong Earnings",
@@ -2202,7 +2202,7 @@ Base your analysis on:
         )
 
 
-@router.post("/analyze-news-batch", dependencies=[Depends(require_bearer)])
+@router.post("/analyze-news-batch", dependencies=[Depends(get_current_user)])
 async def analyze_news_batch(
     articles: list = Body(..., example=[
         {"title": "Article 1", "content": "Tech stocks surge...", "source": "CNBC"},

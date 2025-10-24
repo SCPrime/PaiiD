@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 /**
  * Options Chain Component
@@ -44,6 +44,7 @@ interface OptionsChainData {
   calls: OptionContract[];
   puts: OptionContract[];
   total_contracts: number;
+  source?: string;
 }
 
 interface ExpirationDate {
@@ -66,21 +67,7 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
   const [expirations, setExpirations] = useState<ExpirationDate[]>([]);
   const [filter, setFilter] = useState<FilterType>("all");
 
-  // Fetch available expirations
-  useEffect(() => {
-    if (symbol) {
-      fetchExpirations();
-    }
-  }, [symbol]);
-
-  // Fetch options chain when expiration selected
-  useEffect(() => {
-    if (symbol && selectedExpiration) {
-      fetchOptionsChain();
-    }
-  }, [symbol, selectedExpiration]);
-
-  const fetchExpirations = async () => {
+  const fetchExpirations = useCallback(async () => {
     try {
       const token = process.env.NEXT_PUBLIC_API_TOKEN;
 
@@ -105,9 +92,9 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
       console.error("Error fetching expirations:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch expirations");
     }
-  };
+  }, [symbol]);
 
-  const fetchOptionsChain = async () => {
+  const fetchOptionsChain = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -135,7 +122,21 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedExpiration, symbol]);
+
+  // Fetch available expirations
+  useEffect(() => {
+    if (symbol) {
+      fetchExpirations();
+    }
+  }, [fetchExpirations, symbol]);
+
+  // Fetch options chain when expiration selected
+  useEffect(() => {
+    if (symbol && selectedExpiration) {
+      fetchOptionsChain();
+    }
+  }, [fetchOptionsChain, selectedExpiration, symbol]);
 
   // TODO: Implement trade execution
   // const handleExecuteTrade = (contract: OptionContract, side: "buy" | "sell") => {

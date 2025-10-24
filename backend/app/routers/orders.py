@@ -14,7 +14,7 @@ from tenacity import (
     wait_exponential,
 )
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
 from ..core.config import settings
 from ..core.idempotency import check_and_store
 from ..core.kill_switch import is_killed, set_kill
@@ -328,7 +328,7 @@ class ExecRequest(BaseModel):
 
 
 @router.post("/trading/execute")
-async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer)):
+async def execute(request: Request, req: ExecRequest, _=Depends(get_current_user)):
     """
     Execute trading orders with idempotency and dry-run support.
 
@@ -379,7 +379,7 @@ async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer))
 
 
 @router.post("/admin/kill")
-def kill(state: bool, _=Depends(require_bearer)):
+def kill(state: bool, _=Depends(get_current_user)):
     set_kill(state)
     return {"tradingHalted": state}
 
@@ -481,7 +481,7 @@ class OrderTemplateResponse(BaseModel):
     "/order-templates", response_model=OrderTemplateResponse, status_code=status.HTTP_201_CREATED
 )
 def create_order_template(
-    template: OrderTemplateCreate, db: Session = Depends(get_db), _=Depends(require_bearer)
+    template: OrderTemplateCreate, db: Session = Depends(get_db), _=Depends(get_current_user)
 ):
     """Create a new order template"""
     db_template = OrderTemplate(
@@ -502,7 +502,7 @@ def create_order_template(
 
 @router.get("/order-templates", response_model=list[OrderTemplateResponse])
 def list_order_templates(
-    skip: int = 0, limit: int = 100, db: Session = Depends(get_db), _=Depends(require_bearer)
+    skip: int = 0, limit: int = 100, db: Session = Depends(get_db), _=Depends(get_current_user)
 ):
     """List all order templates"""
     templates = db.query(OrderTemplate).offset(skip).limit(limit).all()
@@ -510,7 +510,7 @@ def list_order_templates(
 
 
 @router.get("/order-templates/{template_id}", response_model=OrderTemplateResponse)
-def get_order_template(template_id: int, db: Session = Depends(get_db), _=Depends(require_bearer)):
+def get_order_template(template_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
     """Get a specific order template by ID"""
     template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
     if not template:
@@ -523,7 +523,7 @@ def update_order_template(
     template_id: int,
     template_update: OrderTemplateUpdate,
     db: Session = Depends(get_db),
-    _=Depends(require_bearer),
+    _=Depends(get_current_user),
 ):
     """Update an existing order template"""
     db_template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
@@ -554,7 +554,7 @@ def update_order_template(
 
 @router.delete("/order-templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_order_template(
-    template_id: int, db: Session = Depends(get_db), _=Depends(require_bearer)
+    template_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)
 ):
     """Delete an order template"""
     db_template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
@@ -567,7 +567,7 @@ def delete_order_template(
 
 
 @router.post("/order-templates/{template_id}/use", response_model=OrderTemplateResponse)
-def use_order_template(template_id: int, db: Session = Depends(get_db), _=Depends(require_bearer)):
+def use_order_template(template_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
     """Mark template as used (updates last_used_at timestamp)"""
     db_template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
     if not db_template:

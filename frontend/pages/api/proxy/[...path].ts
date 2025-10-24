@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
+import { ALLOW_DELETE, ALLOW_GET, ALLOW_POST, isPathAllowed } from "@/lib/proxyAccess";
+
 // NOTE: API routes run server-side and use NON-PREFIXED env vars
 // NEXT_PUBLIC_* is for client-side code only!
 const BACKEND =
@@ -14,93 +16,6 @@ if (!API_TOKEN) {
 } else {
   console.info(`[PROXY] ✅ API_TOKEN loaded: ${API_TOKEN.substring(0, 10)}...`);
 }
-
-// Exact endpoints our UI uses (paths without /api prefix - added in URL construction)
-const ALLOW_GET = new Set<string>([
-  "health",
-  "settings",
-  "portfolio/positions",
-  "ai/recommendations",
-  "ai/signals",
-  "ai/analyze-symbol",
-  "market/historical",
-  "screening/opportunities",
-  "screening/strategies",
-  "market/conditions",
-  "market/indices",
-  "market/sectors",
-  "market/status", // Market hours detection
-  // Live market data endpoints
-  "market/quote",
-  "market/quotes",
-  "market/scanner/under4",
-  "market/bars",
-  // Options endpoints
-  "options/greeks",
-  "options/chain",
-  // News endpoints
-  "news/providers",
-  "news/company",
-  "news/market",
-  "news/sentiment/market",
-  "news/cache/stats",
-  // Alpaca endpoints
-  "account",
-  "positions",
-  "orders",
-  "assets",
-  "clock",
-  "calendar",
-  "watchlists",
-  // Order templates
-  "order-templates",
-  // Claude AI endpoints
-  "claude/chat",
-  "claude/health",
-  // Analytics endpoints
-  "portfolio/summary",
-  "portfolio/history",
-  "analytics/performance",
-  // Backtesting endpoints
-  "backtesting/run",
-  "backtesting/quick-test",
-  "backtesting/strategy-templates",
-  // Strategy endpoints
-  "strategies/templates",
-  // SSE streaming endpoints
-  "stream/market-indices",
-  "stream/positions",
-]);
-
-const ALLOW_POST = new Set<string>([
-  "trading/execute",
-  "settings",
-  "admin/kill",
-  // Alpaca endpoints
-  "orders",
-  "watchlists",
-  // Order templates
-  "order-templates",
-  // Claude AI endpoints (both full and simplified paths)
-  "claude/chat",
-  "claude/health",
-  "chat",
-  // Telemetry
-  "telemetry",
-  // News cache management
-  "news/cache/clear",
-  // Backtesting endpoints
-  "backtesting/run",
-]);
-
-const ALLOW_DELETE = new Set<string>([
-  // Alpaca endpoints
-  "positions",
-  "orders",
-  "watchlists",
-  // Order templates
-  "order-templates",
-]);
 
 // Allowed origins for CORS (production and development only)
 const ALLOWED_ORIGINS = new Set<string>([
@@ -205,30 +120,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Check if path is allowed based on method
-  if (req.method === "GET" && !ALLOW_GET.has(path)) {
-    // Allow wildcard patterns for dynamic routes
-    const isAllowedPattern = Array.from(ALLOW_GET).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
-    }
+  if (req.method === "GET" && !isPathAllowed(path, ALLOW_GET)) {
+    return res.status(405).json({ error: "Not allowed" });
   }
-  if (req.method === "POST" && !ALLOW_POST.has(path)) {
-    const isAllowedPattern = Array.from(ALLOW_POST).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
-    }
+  if (req.method === "POST" && !isPathAllowed(path, ALLOW_POST)) {
+    return res.status(405).json({ error: "Not allowed" });
   }
-  if (req.method === "DELETE" && !ALLOW_DELETE.has(path)) {
-    const isAllowedPattern = Array.from(ALLOW_DELETE).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
-    }
+  if (req.method === "DELETE" && !isPathAllowed(path, ALLOW_DELETE)) {
+    return res.status(405).json({ error: "Not allowed" });
   }
 
   // Preserve query parameters from original request
