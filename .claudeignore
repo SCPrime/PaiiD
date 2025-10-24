@@ -1,0 +1,33 @@
+# Claude Code - Protected Files
+# These files are OFF-LIMITS - do not modify without explicit permission
+
+# ============================================================================
+# 🔒 PROTECTED: Logo & Branding (User's artistic work)
+# ============================================================================
+frontend/components/CompletePaiiDLogo.tsx
+frontend/styles/logoConstants.ts
+
+# ============================================================================
+# 🔒 PROTECTED: RadialMenu Core (User's design work)
+# ============================================================================
+frontend/components/RadialMenu.tsx
+frontend/components/RadialMenuNav.tsx
+
+# ============================================================================
+# 🔒 PROTECTED: Chat Integration (User's hard work)
+# ============================================================================
+frontend/components/AIChatBot.tsx
+frontend/components/AIChat.tsx
+frontend/components/ChatContext.tsx
+
+# ============================================================================
+# NOTE: Visual tidying/spacing fixes
+# ============================================================================
+# If radial menu needs spacing fixes (things bumping into each other),
+# user will handle or explicitly request help with specific CSS tweaks only.
+# NO structural changes without permission!
+
+# ============================================================================
+# General Protection Patterns
+# ============================================================================
+# Add more protected patterns below as needed
