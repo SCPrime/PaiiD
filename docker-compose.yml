@@ -25,6 +25,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: paiid-backend
+    init: true
+    stop_grace_period: 30s
     environment:
       - DATABASE_URL=postgresql://paiid_user:paiid_dev_password_123@postgres:5432/paiid_trading
       - API_TOKEN=${API_TOKEN}
@@ -42,13 +44,15 @@ services:
       - /app/__pycache__
     networks:
       - paiid-network
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload --lifespan on
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: paiid-frontend
+    init: true
+    stop_grace_period: 20s
     environment:
       - NEXT_PUBLIC_API_TOKEN=${API_TOKEN}
       - NEXT_PUBLIC_BACKEND_API_BASE_URL=http://backend:8001

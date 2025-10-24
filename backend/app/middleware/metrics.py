@@ -15,17 +15,30 @@ async def metrics_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
         response_time = time.time() - start_time
-        
+
         # Record metrics
         is_error = response.status_code >= 400
-        health_monitor.record_request(response_time, is_error)
-        
+        health_monitor.record_request(
+            response_time,
+            is_error,
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+        )
+
         # Add metrics headers
         response.headers["X-Response-Time"] = f"{response_time:.3f}s"
-        
+
         return response
-        
-    except Exception:
+
+    except Exception as exc:
         response_time = time.time() - start_time
-        health_monitor.record_request(response_time, is_error=True)
+        health_monitor.record_request(
+            response_time,
+            is_error=True,
+            method=request.method,
+            path=request.url.path,
+            status_code=500,
+            error=str(exc),
+        )
         raise

@@ -15,6 +15,9 @@ jobs:
       with:
         fetch-depth: 0  # Shallow clones disabled for better analysis
 
+    - name: Pre-clean managed processes
+      run: bash scripts/ci-cleanup.sh
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -111,6 +114,10 @@ jobs:
         name: backend-coverage
         path: backend/coverage.xml
 
+    - name: Post-clean managed processes
+      if: always()
+      run: bash scripts/ci-cleanup.sh
+
   test-frontend:
     runs-on: ubuntu-latest
 
@@ -119,6 +126,8 @@ jobs:
       with:
         fetch-depth: 0  # Shallow clones disabled for better analysis
 
+    - name: Pre-clean managed processes
+      run: bash scripts/ci-cleanup.sh
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -157,6 +166,10 @@ jobs:
       with:
         name: frontend-coverage
         path: frontend/coverage/lcov.info
+
+    - name: Post-clean managed processes
+      if: always()
+      run: bash scripts/ci-cleanup.sh
 
   sonar-backend:
     runs-on: ubuntu-latest
