@@ -1,0 +1,25 @@
+{
+  "name": "paiid-backend",
+  "runtime": "python",
+  "plan": "free",
+  "region": "oregon",
+  "branch": "main",
+  "rootDir": "backend",
+  "buildCommand": "pip install -r requirements.txt",
+  "startCommand": "bash start.sh",
+  "env": {
+    "API_TOKEN": "secret",
+    "ALPACA_PAPER_API_KEY": "secret",
+    "ALPACA_PAPER_SECRET_KEY": "secret",
+    "APCA_API_BASE_URL": "https://paper-api.alpaca.markets",
+    "TRADIER_API_KEY": "secret",
+    "TRADIER_ACCOUNT_ID": "secret",
+    "TRADIER_API_BASE_URL": "https://api.tradier.com/v1",
+    "ANTHROPIC_API_KEY": "secret",
+    "ALLOW_ORIGIN": "https://paiid-frontend.onrender.com",
+    "LIVE_TRADING": "false",
+    "TRADING_MODE": "paper",
+    "REDIS_URL": "generated",
+    "DATABASE_URL": "secret"
+  }
+}

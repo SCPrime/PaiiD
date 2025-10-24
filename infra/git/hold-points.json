@@ -1,0 +1,6 @@
+{
+  "protectedBranches": ["main", "production"],
+  "releaseBranchPattern": "^release\\/.*$",
+  "allowBypassEnv": "DEPLOY_FORCE",
+  "notes": "Branches listed in protectedBranches require DEPLOY_FORCE=1 to continue."
+}

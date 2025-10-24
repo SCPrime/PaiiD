@@ -35,6 +35,13 @@ $VERCEL_URL = $envVars["ALLOW_ORIGIN"]
 if (-not $SkipChecks) {
     Write-Host "✓ Pre-flight checks..." -ForegroundColor Yellow
 
+    Write-Host "  Checking branch hold points..." -ForegroundColor Gray
+    & python scripts/check_hold_points.py
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  ❌ Branch hold point validation failed" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
+
     # Check git status
     $gitStatus = git status --porcelain
     if ($gitStatus -and ($gitStatus | Measure-Object).Count -gt 0) {
@@ -80,6 +87,12 @@ if (-not $SkipRender) {
     Write-Host "`n🔧 Deploying Backend to Render..." -ForegroundColor Cyan
     Write-Host "   URL: $BACKEND_URL" -ForegroundColor Gray
 
+    & python infra/render/validate.py --service backend
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "   ❌ Render config validation failed" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
+
     Write-Host "`n   Required Environment Variables on Render:" -ForegroundColor Yellow
     Write-Host "   ├─ ALPACA_PAPER_API_KEY=$ALPACA_KEY" -ForegroundColor Gray
     Write-Host "   ├─ ALPACA_PAPER_SECRET_KEY=***" -ForegroundColor Gray
@@ -104,6 +117,12 @@ if (-not $SkipRender) {
 if (-not $SkipVercel) {
     Write-Host "`n🎨 Deploying Frontend to Vercel..." -ForegroundColor Cyan
     Write-Host "   URL: $VERCEL_URL" -ForegroundColor Gray
+
+    & python infra/render/validate.py --service frontend
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "   ❌ Frontend config validation failed" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
 
     Write-Host "`n   Vercel Configuration:" -ForegroundColor Yellow
     Write-Host "   ├─ Production Branch: $(git branch --show-current)" -ForegroundColor Gray

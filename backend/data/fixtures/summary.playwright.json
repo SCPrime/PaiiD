@@ -1,0 +1,23 @@
+{
+  "available_symbols": [
+    "OPTT"
+  ],
+  "fixtures": {
+    "OPTT": {
+      "expirations": [
+        {
+          "date": "2025-01-17",
+          "days_to_expiry": 90
+        },
+        {
+          "date": "2025-02-21",
+          "days_to_expiry": 125
+        }
+      ],
+      "chain_keys": [
+        "2025-01-17",
+        "2025-02-21"
+      ]
+    }
+  }
+}

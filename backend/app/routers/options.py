@@ -23,6 +23,11 @@ from cachetools import TTLCache
 from ..core.config import settings
 from ..core.auth import require_bearer
 from ..services.tradier_client import get_tradier_client
+from ..services.fixture_loader import (
+    FixtureNotFoundError,
+    get_options_chain as get_fixture_chain,
+    load_options_fixture,
+)
 
 router = APIRouter(prefix="/options", tags=["options"])
 logger = logging.getLogger(__name__)
@@ -115,6 +120,27 @@ async def get_options_chain(
         OptionsChainResponse with calls and puts including Greeks
     """
     logger.info(f"========== OPTIONS CHAIN ENDPOINT: symbol={symbol}, expiration={expiration} ==========")
+
+    if settings.USE_TEST_FIXTURES:
+        fixture_payload = get_fixture_chain(symbol, expiration)
+        if fixture_payload:
+            meta = fixture_payload["meta"]
+            chain = fixture_payload["chain"]
+            selected_expiration = fixture_payload["expiration"]
+            calls = [OptionContract(**contract) for contract in chain.get("calls", [])]
+            puts = [OptionContract(**contract) for contract in chain.get("puts", [])]
+            total = len(calls) + len(puts)
+
+            return OptionsChainResponse(
+                symbol=symbol.upper(),
+                expiration_date=selected_expiration,
+                underlying_price=chain.get("underlying_price", meta.get("underlying_price")),
+                calls=calls,
+                puts=puts,
+                total_contracts=total,
+            )
+
+        logger.info("USE_TEST_FIXTURES enabled but no fixture found for %s", symbol)
 
     try:
         # Initialize Tradier client
@@ -238,6 +264,16 @@ def get_expiration_dates(symbol: str, authorization: str = Depends(require_beare
     Returns list of available option expiration dates with days until expiry.
     Uses Tradier API for real-time expiration data.
     """
+    if settings.USE_TEST_FIXTURES:
+        try:
+            fixture = load_options_fixture(symbol)
+        except FixtureNotFoundError:
+            logger.info("No fixture expirations found for symbol %s", symbol)
+        else:
+            fixture_expirations = [ExpirationDate(**exp) for exp in fixture.get("expirations", [])]
+            if fixture_expirations:
+                return fixture_expirations
+
     try:
         # Get Tradier client instance
         client = _get_tradier_client()

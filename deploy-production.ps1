@@ -59,6 +59,27 @@ if (-not $env:RENDER_API_KEY) {
 
 Write-Host ""
 
+Write-Host "🔐 Validating branch hold points..." -ForegroundColor Yellow
+& python scripts/check_hold_points.py
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "✗ Hold point validation failed" -ForegroundColor Red
+    exit $LASTEXITCODE
+}
+Write-Host "  ✓ Hold points satisfied" -ForegroundColor Green
+
+Write-Host "🧾 Validating Render service exports..." -ForegroundColor Yellow
+& python infra/render/validate.py --service backend
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "✗ Backend Render config invalid" -ForegroundColor Red
+    exit $LASTEXITCODE
+}
+& python infra/render/validate.py --service frontend
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "✗ Frontend Render config invalid" -ForegroundColor Red
+    exit $LASTEXITCODE
+}
+Write-Host "  ✓ Render configs validated" -ForegroundColor Green
+
 # ============================================
 # STEP 2: Verify Git Repository State
 # ============================================

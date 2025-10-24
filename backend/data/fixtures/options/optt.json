@@ -1,0 +1,168 @@
+{
+  "symbol": "OPTT",
+  "underlying_price": 3.42,
+  "expirations": [
+    { "date": "2025-01-17", "days_to_expiry": 90 },
+    { "date": "2025-02-21", "days_to_expiry": 125 }
+  ],
+  "chains": {
+    "2025-01-17": {
+      "underlying_price": 3.42,
+      "calls": [
+        {
+          "symbol": "OPTT250117C00020000",
+          "underlying_symbol": "OPTT",
+          "option_type": "call",
+          "strike_price": 2.0,
+          "expiration_date": "2025-01-17",
+          "bid": 1.35,
+          "ask": 1.45,
+          "last_price": 1.40,
+          "volume": 102,
+          "open_interest": 250,
+          "delta": 0.65,
+          "gamma": 0.12,
+          "theta": -0.08,
+          "vega": 0.05,
+          "rho": 0.01,
+          "implied_volatility": 1.2
+        },
+        {
+          "symbol": "OPTT250117C00035000",
+          "underlying_symbol": "OPTT",
+          "option_type": "call",
+          "strike_price": 3.5,
+          "expiration_date": "2025-01-17",
+          "bid": 0.72,
+          "ask": 0.78,
+          "last_price": 0.75,
+          "volume": 67,
+          "open_interest": 144,
+          "delta": 0.48,
+          "gamma": 0.15,
+          "theta": -0.06,
+          "vega": 0.04,
+          "rho": 0.009,
+          "implied_volatility": 1.18
+        }
+      ],
+      "puts": [
+        {
+          "symbol": "OPTT250117P00030000",
+          "underlying_symbol": "OPTT",
+          "option_type": "put",
+          "strike_price": 3.0,
+          "expiration_date": "2025-01-17",
+          "bid": 0.65,
+          "ask": 0.72,
+          "last_price": 0.68,
+          "volume": 88,
+          "open_interest": 205,
+          "delta": -0.42,
+          "gamma": 0.11,
+          "theta": -0.05,
+          "vega": 0.03,
+          "rho": -0.008,
+          "implied_volatility": 1.16
+        },
+        {
+          "symbol": "OPTT250117P00050000",
+          "underlying_symbol": "OPTT",
+          "option_type": "put",
+          "strike_price": 5.0,
+          "expiration_date": "2025-01-17",
+          "bid": 1.85,
+          "ask": 1.92,
+          "last_price": 1.89,
+          "volume": 41,
+          "open_interest": 123,
+          "delta": -0.74,
+          "gamma": 0.07,
+          "theta": -0.09,
+          "vega": 0.06,
+          "rho": -0.014,
+          "implied_volatility": 1.25
+        }
+      ]
+    },
+    "2025-02-21": {
+      "underlying_price": 3.55,
+      "calls": [
+        {
+          "symbol": "OPTT250221C00025000",
+          "underlying_symbol": "OPTT",
+          "option_type": "call",
+          "strike_price": 2.5,
+          "expiration_date": "2025-02-21",
+          "bid": 1.52,
+          "ask": 1.61,
+          "last_price": 1.58,
+          "volume": 112,
+          "open_interest": 198,
+          "delta": 0.62,
+          "gamma": 0.13,
+          "theta": -0.07,
+          "vega": 0.05,
+          "rho": 0.012,
+          "implied_volatility": 1.22
+        },
+        {
+          "symbol": "OPTT250221C00045000",
+          "underlying_symbol": "OPTT",
+          "option_type": "call",
+          "strike_price": 4.5,
+          "expiration_date": "2025-02-21",
+          "bid": 0.58,
+          "ask": 0.64,
+          "last_price": 0.61,
+          "volume": 52,
+          "open_interest": 110,
+          "delta": 0.41,
+          "gamma": 0.1,
+          "theta": -0.05,
+          "vega": 0.035,
+          "rho": 0.007,
+          "implied_volatility": 1.19
+        }
+      ],
+      "puts": [
+        {
+          "symbol": "OPTT250221P00035000",
+          "underlying_symbol": "OPTT",
+          "option_type": "put",
+          "strike_price": 3.5,
+          "expiration_date": "2025-02-21",
+          "bid": 0.72,
+          "ask": 0.78,
+          "last_price": 0.75,
+          "volume": 75,
+          "open_interest": 162,
+          "delta": -0.46,
+          "gamma": 0.12,
+          "theta": -0.06,
+          "vega": 0.04,
+          "rho": -0.009,
+          "implied_volatility": 1.21
+        },
+        {
+          "symbol": "OPTT250221P00055000",
+          "underlying_symbol": "OPTT",
+          "option_type": "put",
+          "strike_price": 5.5,
+          "expiration_date": "2025-02-21",
+          "bid": 1.94,
+          "ask": 2.02,
+          "last_price": 1.98,
+          "volume": 36,
+          "open_interest": 98,
+          "delta": -0.78,
+          "gamma": 0.08,
+          "theta": -0.1,
+          "vega": 0.065,
+          "rho": -0.016,
+          "implied_volatility": 1.27
+        }
+      ]
+    }
+  }
+}

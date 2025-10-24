@@ -35,6 +35,7 @@ py_vollib>=1.0.1
 tenacity>=8.2.0
 
 # System Monitoring & Health Checks (Phase 7: Production Monitoring)
+# Used by app.scripts.prelaunch to guard uvicorn start-up
 psutil>=5.9.0
 
 # Rate Limiting (Phase 3: Bulletproof Reliability)
