@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from ..core.auth import require_bearer
+from ..portfolio import PortfolioGreekAnalytics, aggregate_greeks
 from ..services.tradier_client import get_tradier_client
 
 
@@ -66,6 +67,30 @@ class PerformanceMetrics(BaseModel):
     current_streak: int
     best_day: float
     worst_day: float
+
+
+@router.get(
+    "/portfolio/greeks",
+    response_model=PortfolioGreekAnalytics,
+    dependencies=[Depends(require_bearer)],
+)
+async def get_portfolio_greeks() -> PortfolioGreekAnalytics:
+    """Aggregate option Greeks across all current holdings."""
+
+    try:
+        client = get_tradier_client()
+        positions = client.get_positions()
+        analytics = aggregate_greeks(positions)
+        logger.info(
+            "✅ Calculated portfolio Greeks: Δ=%.2f Γ=%.4f Θ=%.2f",
+            analytics.totals.delta,
+            analytics.totals.gamma,
+            analytics.totals.theta,
+        )
+        return analytics
+    except Exception as exc:  # pragma: no cover - logged and re-raised
+        logger.error("❌ Failed to aggregate portfolio Greeks: %s", exc)
+        raise HTTPException(status_code=500, detail="Failed to aggregate portfolio Greeks")
 
 
 @router.get("/portfolio/summary", dependencies=[Depends(require_bearer)])
