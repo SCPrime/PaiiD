@@ -15,6 +15,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from ..core.auth import require_bearer
 from ..core.jwt import get_current_user
 from ..db.session import get_db
 from ..models.database import User
