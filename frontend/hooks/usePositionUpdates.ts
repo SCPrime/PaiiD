@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { recordStreamEvent, StreamLogLevel } from "../utils/streamMonitoring";
 
 export interface Position {
   symbol: string;
@@ -84,11 +85,24 @@ export function usePositionUpdates(
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const log = useCallback(
-    (...args: any[]) => {
-      if (debug) {
-        console.info("[usePositionUpdates]", ...args);
-      }
+  const updateCountRef = useRef(0);
+  const heartbeatCountRef = useRef(0);
+
+  const emitStreamEvent = useCallback(
+    (
+      event: string,
+      message: string,
+      level: StreamLogLevel = "info",
+      context: Record<string, unknown> = {}
+    ) => {
+      recordStreamEvent({
+        stream: "positions",
+        event,
+        message,
+        level,
+        context,
+        debug,
+      });
     },
     [debug]
   );
@@ -113,7 +127,9 @@ export function usePositionUpdates(
     }
 
     setState((prev) => ({ ...prev, connecting: true, error: null }));
-    log("Connecting to position stream");
+    emitStreamEvent("connect_start", "Connecting to position stream", "info", {
+      url: "/api/proxy/stream/positions",
+    });
 
     try {
       // Build SSE URL
@@ -125,7 +141,11 @@ export function usePositionUpdates(
 
       // Handle connection open
       eventSource.onopen = () => {
-        log("✅ Connected to position stream");
+        emitStreamEvent("connected", "Connected to position stream", "info", {
+          reconnectAttempts: reconnectAttemptsRef.current,
+        });
+        updateCountRef.current = 0;
+        heartbeatCountRef.current = 0;
         const now = new Date();
         setState((prev) => ({
           ...prev,
@@ -146,7 +166,15 @@ export function usePositionUpdates(
             const timeSinceHeartbeat = (Date.now() - currentState.lastHeartbeat.getTime()) / 1000;
 
             if (timeSinceHeartbeat > heartbeatTimeout) {
-              log(`⚠️ Heartbeat timeout (${timeSinceHeartbeat.toFixed(0)}s since last heartbeat)`);
+              emitStreamEvent(
+                "heartbeat_timeout",
+                "Heartbeat timeout detected",
+                "warning",
+                {
+                  secondsSinceLastHeartbeat: timeSinceHeartbeat,
+                  timeoutThreshold: heartbeatTimeout,
+                }
+              );
 
               // Trigger reconnect
               if (eventSourceRef.current) {
@@ -156,8 +184,14 @@ export function usePositionUpdates(
 
               if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
                 reconnectAttemptsRef.current++;
-                log(
-                  `🔄 Reconnecting due to heartbeat timeout (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
+                emitStreamEvent(
+                  "heartbeat_reconnect",
+                  "Scheduling reconnect due to heartbeat timeout",
+                  "warning",
+                  {
+                    attempt: reconnectAttemptsRef.current,
+                    maxReconnectAttempts,
+                  }
                 );
                 connect();
               }
@@ -178,7 +212,19 @@ export function usePositionUpdates(
       eventSource.addEventListener("position_update", (event) => {
         try {
           const newPositions = JSON.parse(event.data) as Position[];
-          log("📊 Position update:", newPositions.length, "positions");
+          updateCountRef.current += 1;
+
+          if (updateCountRef.current === 1 || updateCountRef.current % 10 === 0) {
+            emitStreamEvent(
+              "position_update",
+              "Received streamed position payload",
+              "info",
+              {
+                positionsCount: newPositions.length,
+                updateSequence: updateCountRef.current,
+              }
+            );
+          }
 
           setState((prev) => ({
             ...prev,
@@ -186,14 +232,23 @@ export function usePositionUpdates(
             lastUpdate: new Date(),
           }));
         } catch (error) {
-          console.error("[usePositionUpdates] Error parsing position update:", error);
+          emitStreamEvent("parse_error", "Error parsing position update", "error", {
+            rawData: event.data,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
       });
 
       // Handle heartbeat (keep-alive and timeout detection)
       eventSource.addEventListener("heartbeat", (_event) => {
         const now = new Date();
-        log("💓 Heartbeat received");
+        heartbeatCountRef.current += 1;
+
+        if (heartbeatCountRef.current === 1 || heartbeatCountRef.current % 12 === 0) {
+          emitStreamEvent("heartbeat", "Heartbeat received", "info", {
+            heartbeatSequence: heartbeatCountRef.current,
+          });
+        }
         setState((prev) => ({
           ...prev,
           lastHeartbeat: now,
@@ -204,7 +259,9 @@ export function usePositionUpdates(
       eventSource.addEventListener("error", (event) => {
         try {
           const errorData = JSON.parse((event as MessageEvent).data);
-          console.error("[usePositionUpdates] Server error:", errorData.error);
+          emitStreamEvent("server_error", "Position stream returned error", "error", {
+            error: errorData.error,
+          });
           setState((prev) => ({
             ...prev,
             error: errorData.error,
@@ -212,13 +269,13 @@ export function usePositionUpdates(
           }));
         } catch {
           // Not a formatted error event, just log it
-          log("Error event (likely connection issue)");
+          emitStreamEvent("generic_error", "Received unformatted error event", "warning");
         }
       });
 
       // Handle connection errors/close
       eventSource.onerror = (_error) => {
-        log("❌ Connection error or closed");
+        emitStreamEvent("connection_error", "Connection error or closed", "warning");
 
         setState((prev) => ({
           ...prev,
@@ -236,14 +293,19 @@ export function usePositionUpdates(
           reconnectAttemptsRef.current++;
           const backoffTime = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Max 30s
 
-          log(
-            `⏳ Reconnecting in ${backoffTime / 1000}s (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
-          );
+          emitStreamEvent("reconnect_scheduled", "Scheduling reconnect attempt", "warning", {
+            delayMs: backoffTime,
+            attempt: reconnectAttemptsRef.current,
+            maxReconnectAttempts,
+          });
 
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, backoffTime);
         } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+          emitStreamEvent("reconnect_limit", "Max reconnect attempts reached", "error", {
+            maxReconnectAttempts,
+          });
           setState((prev) => ({
             ...prev,
             error: "Max reconnect attempts reached. Please refresh the page.",
@@ -251,7 +313,9 @@ export function usePositionUpdates(
         }
       };
     } catch (error: any) {
-      console.error("[usePositionUpdates] Connection error:", error);
+      emitStreamEvent("connection_exception", "Connection exception thrown", "error", {
+        error: error?.message || String(error),
+      });
       setState((prev) => ({
         ...prev,
         connected: false,
@@ -259,14 +323,14 @@ export function usePositionUpdates(
         error: error.message || "Failed to connect",
       }));
     }
-  }, [autoReconnect, maxReconnectAttempts, log]);
+  }, [autoReconnect, emitStreamEvent, heartbeatTimeout, maxReconnectAttempts]);
 
   // Manual reconnect method
   const reconnect = useCallback(() => {
-    log("🔄 Manual reconnect triggered");
+    emitStreamEvent("manual_reconnect", "Manual reconnect triggered", "info");
     reconnectAttemptsRef.current = 0; // Reset counter on manual reconnect
     connect();
-  }, [connect, log]);
+  }, [connect, emitStreamEvent]);
 
   // Connect on mount
   useEffect(() => {
@@ -274,7 +338,7 @@ export function usePositionUpdates(
 
     // Cleanup on unmount
     return () => {
-      log("🧹 Cleaning up position stream");
+      emitStreamEvent("cleanup", "Cleaning up position stream", "info");
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
@@ -283,12 +347,12 @@ export function usePositionUpdates(
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
-      if (heartbeatCheckIntervalRef.current) {
-        clearInterval(heartbeatCheckIntervalRef.current);
-        heartbeatCheckIntervalRef.current = null;
-      }
-    };
-  }, [connect, log]);
+        if (heartbeatCheckIntervalRef.current) {
+          clearInterval(heartbeatCheckIntervalRef.current);
+          heartbeatCheckIntervalRef.current = null;
+        }
+      };
+  }, [connect, emitStreamEvent]);
 
   return {
     ...state,

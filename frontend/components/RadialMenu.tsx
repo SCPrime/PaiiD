@@ -4,6 +4,7 @@ import * as d3 from "d3";
 import { throttle } from "lodash";
 import { useWindowDimensions, useIsMobile } from "../hooks/useBreakpoint";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
+import { recordStreamEvent } from "../utils/streamMonitoring";
 import CompletePaiiDLogo from "./CompletePaiiDLogo";
 
 export interface Workflow {
@@ -184,12 +185,34 @@ function RadialMenuComponent({
 
   // Throttled market data update - prevents animation interruptions
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  const reportStreamEvent = useCallback(
+    (
+      event: string,
+      message: string,
+      level: "info" | "warning" | "error" = "info",
+      context: Record<string, unknown> = {}
+    ) => {
+      recordStreamEvent({
+        stream: "market-indices",
+        event,
+        message,
+        level,
+        context,
+        debug: true,
+      });
+    },
+    []
+  );
+
   const throttledSetMarketData = useCallback(
     throttle((newData: typeof marketData) => {
       setMarketData(newData);
-      console.info("[RadialMenu] 🎯 Market data updated (throttled)");
+      reportStreamEvent("indices_update_throttled", "Applied throttled market data", "info", {
+        dow: newData.dow.value,
+        nasdaq: newData.nasdaq.value,
+      });
     }, 10000), // Update max once per 10 seconds
-    []
+    [reportStreamEvent]
   );
 
   // ⚡ REAL-TIME STREAMING: SSE for market data with auto-reconnection
@@ -197,6 +220,8 @@ function RadialMenuComponent({
     let eventSource: EventSource | null = null;
     let reconnectTimeout: NodeJS.Timeout | null = null;
     let isUnmounted = false;
+    let heartbeatCount = 0;
+    let updateCount = 0;
 
     // Load cached market data on mount
     const loadCachedData = () => {
@@ -206,13 +231,17 @@ function RadialMenuComponent({
           const parsed = JSON.parse(cached);
           // Only use cache if it's less than 24 hours old
           if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-            console.info("[RadialMenu] 💾 Loading cached market data from localStorage");
+            reportStreamEvent("cache_hit", "Loaded cached market data", "info", {
+              timestamp: parsed.timestamp,
+            });
             setMarketData(parsed.data);
             setIsMarketDataLoading(false);
           }
         }
       } catch (error) {
-        console.error("[RadialMenu] ❌ Failed to load cached market data:", error);
+        reportStreamEvent("cache_error", "Failed to load cached market data", "warning", {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
@@ -224,14 +253,17 @@ function RadialMenuComponent({
       const baseDelay = 2000; // 2 seconds
 
       if (retryAttempt >= maxRetries) {
-        console.error("[RadialMenu] 🚨 Max SSE retry attempts reached. Giving up.");
+        reportStreamEvent("retry_exhausted", "Max SSE retry attempts reached", "error", {
+          maxRetries,
+        });
         setIsMarketDataLoading(false);
         return;
       }
 
-      console.info(
-        `[RadialMenu] 📡 Connecting to SSE stream (attempt ${retryAttempt + 1}/${maxRetries})...`
-      );
+      reportStreamEvent("connect_attempt", "Connecting to market indices stream", "info", {
+        attempt: retryAttempt + 1,
+        maxRetries,
+      });
       setSseRetryCount(retryAttempt);
 
       try {
@@ -239,7 +271,7 @@ function RadialMenuComponent({
 
         eventSource.addEventListener("indices_update", (e) => {
           const data = JSON.parse(e.data);
-          console.debug("[RadialMenu] 📊 Received live market data:", data);
+          updateCount += 1;
 
           const newData = {
             dow: {
@@ -253,6 +285,14 @@ function RadialMenuComponent({
               symbol: "COMP",
             },
           };
+
+          if (updateCount === 1 || updateCount % 5 === 0) {
+            reportStreamEvent("indices_update", "Received live market indices payload", "info", {
+              updateSequence: updateCount,
+              dow: newData.dow.value,
+              nasdaq: newData.nasdaq.value,
+            });
+          }
 
           // Use throttled update to prevent logo animation interruptions
           throttledSetMarketData(newData);
@@ -271,18 +311,32 @@ function RadialMenuComponent({
                 timestamp: Date.now(),
               })
             );
+            reportStreamEvent("cache_write", "Cached latest market indices", "info", {
+              dow: newData.dow.value,
+              nasdaq: newData.nasdaq.value,
+            });
           } catch (error) {
-            console.error("[RadialMenu] ❌ Failed to cache market data:", error);
+            reportStreamEvent("cache_write_error", "Failed to cache market data", "warning", {
+              error: error instanceof Error ? error.message : String(error),
+            });
           }
         });
 
         eventSource.addEventListener("heartbeat", (e) => {
           const data = JSON.parse(e.data);
-          console.debug("[RadialMenu] 💓 SSE heartbeat received:", data.timestamp);
+          heartbeatCount += 1;
+          if (heartbeatCount === 1 || heartbeatCount % 12 === 0) {
+            reportStreamEvent("heartbeat", "Heartbeat received from market indices stream", "info", {
+              heartbeatSequence: heartbeatCount,
+              timestamp: data?.timestamp,
+            });
+          }
         });
 
         eventSource.addEventListener("error", (e) => {
-          console.error("[RadialMenu] ❌ SSE connection error:", e);
+          reportStreamEvent("stream_error", "Market indices stream emitted error", "warning", {
+            error: (e as MessageEvent)?.data ?? null,
+          });
           setSseConnected(false);
 
           if (eventSource) {
@@ -292,9 +346,11 @@ function RadialMenuComponent({
 
           // Exponential backoff: 2s, 4s, 8s, 16s, 32s, 64s, 128s (max ~2min)
           const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 128000);
-          console.warn(
-            `[RadialMenu] ⚠️ SSE disconnected. Retrying in ${delay / 1000}s... (attempt ${retryAttempt + 1}/${maxRetries})`
-          );
+          reportStreamEvent("reconnect_scheduled", "SSE disconnected, scheduling retry", "warning", {
+            delayMs: delay,
+            attempt: retryAttempt + 1,
+            maxRetries,
+          });
 
           reconnectTimeout = setTimeout(() => {
             connectSSE(retryAttempt + 1);
@@ -302,15 +358,22 @@ function RadialMenuComponent({
         });
 
         eventSource.addEventListener("open", () => {
-          console.info("[RadialMenu] ✅ SSE connection established");
+          reportStreamEvent("connected", "Market indices stream connected", "info");
           setSseConnected(true);
         });
       } catch (error) {
-        console.error("[RadialMenu] ❌ Failed to create EventSource:", error);
+        reportStreamEvent("connection_exception", "Failed to create EventSource", "error", {
+          error: error instanceof Error ? error.message : String(error),
+        });
         setSseConnected(false);
 
         // Retry with exponential backoff
         const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 128000);
+        reportStreamEvent("connect_retry", "Retrying after EventSource failure", "warning", {
+          delayMs: delay,
+          attempt: retryAttempt + 1,
+          maxRetries,
+        });
         reconnectTimeout = setTimeout(() => {
           connectSSE(retryAttempt + 1);
         }, delay);
@@ -324,7 +387,10 @@ function RadialMenuComponent({
     // Cleanup: close SSE connection on unmount
     return () => {
       isUnmounted = true;
-      console.info("[RadialMenu] 🔌 Closing SSE connection");
+      reportStreamEvent("cleanup", "Cleaning up market indices SSE connection", "info", {
+        heartbeatCount,
+        updateCount,
+      });
 
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
@@ -334,7 +400,7 @@ function RadialMenuComponent({
         eventSource.close();
       }
     };
-  }, [throttledSetMarketData]);
+  }, [reportStreamEvent, throttledSetMarketData]);
 
   // Debug logging for Fast Refresh loop detection
   useEffect(() => {
