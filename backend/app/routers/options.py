@@ -18,13 +18,24 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+try:
+    from cachetools import TTLCache
+except ImportError:  # pragma: no cover - lightweight fallback for tests
+    class TTLCache(dict):
+        def __init__(self, maxsize: int, ttl: int):
+            super().__init__()
+            self.maxsize = maxsize
+            self.ttl = ttl
 
 from ..core.config import settings
-from ..core.auth import require_bearer
+from ..core.dependencies import require_user
 from ..services.tradier_client import get_tradier_client
 
-router = APIRouter(prefix="/options", tags=["options"])
+router = APIRouter(
+    prefix="/options",
+    tags=["options"],
+    dependencies=[Depends(require_user)],
+)
 logger = logging.getLogger(__name__)
 
 # 5-minute cache for options chain data
@@ -82,6 +93,7 @@ class OptionsChainResponse(BaseModel):
     calls: List[OptionContract] = []
     puts: List[OptionContract] = []
     total_contracts: int = 0
+    source: str = Field(default="tradier", description="Primary data source")
 
 
 class ExpirationDate(BaseModel):
@@ -96,10 +108,13 @@ class ExpirationDate(BaseModel):
 # ============================================================================
 
 
-@router.get("/chains/{symbol}", response_model=OptionsChainResponse, dependencies=[Depends(require_bearer)])
+@router.get("/chains/{symbol}", response_model=OptionsChainResponse)
 async def get_options_chain(
     symbol: str,
-    expiration: Optional[str] = Query(None, description="Expiration date (YYYY-MM-DD). If not provided, uses nearest expiration."),
+    expiration: Optional[str] = Query(
+        None,
+        description="Expiration date (YYYY-MM-DD). If not provided, uses nearest expiration.",
+    ),
 ):
     """
     Get options chain for a symbol with Greeks
@@ -175,7 +190,8 @@ async def get_options_chain(
                 expiration_date=expiration,
                 calls=[],
                 puts=[],
-                total_contracts=0
+                total_contracts=0,
+                source="tradier",
             )
 
         # Separate calls and puts, parse Greeks
@@ -215,7 +231,8 @@ async def get_options_chain(
             underlying_price=None,  # Could fetch from separate quote endpoint
             calls=calls,
             puts=puts,
-            total_contracts=len(calls) + len(puts)
+            total_contracts=len(calls) + len(puts),
+            source="tradier",
         )
 
     except requests.exceptions.HTTPError as e:
@@ -231,7 +248,7 @@ async def get_options_chain(
 
 
 @router.get("/expirations/{symbol}", response_model=List[ExpirationDate])
-def get_expiration_dates(symbol: str, authorization: str = Depends(require_bearer)):
+def get_expiration_dates(symbol: str):
     """
     Get available expiration dates for a symbol
 
@@ -259,11 +276,11 @@ def get_expiration_dates(symbol: str, authorization: str = Depends(require_beare
 
         for exp_date_str in expirations:
             exp_date = datetime.strptime(exp_date_str, "%Y-%m-%d").date()
-            days_to_expiry = (exp_date - today).days
+            days_to_expiry = max((exp_date - today).days, 0)
 
             result.append(ExpirationDate(
                 date=exp_date_str,
-                days_to_expiry=days_to_expiry
+                days_to_expiry=days_to_expiry,
             ))
 
         return result
@@ -282,7 +299,7 @@ def get_expiration_dates(symbol: str, authorization: str = Depends(require_beare
         )
 
 
-@router.post("/greeks", dependencies=[Depends(require_bearer)])
+@router.post("/greeks")
 async def calculate_greeks(
     symbol: str = Query(..., description="Option symbol"),
     underlying_price: float = Query(..., description="Current price of underlying asset"),
@@ -302,7 +319,7 @@ async def calculate_greeks(
     raise HTTPException(status_code=501, detail="Greeks calculation endpoint not yet implemented - Phase 1 scaffold")
 
 
-@router.get("/contract/{option_symbol}", response_model=OptionContract, dependencies=[Depends(require_bearer)])
+@router.get("/contract/{option_symbol}", response_model=OptionContract)
 async def get_option_contract(option_symbol: str):
     """
     Get details for a specific option contract

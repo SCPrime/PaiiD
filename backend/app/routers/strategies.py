@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 
-from ..core.auth import require_bearer
+from ..core.dependencies import require_user
 from ..db.session import get_db
 from ..models.database import Strategy, User
 from ..services.strategy_templates import (
@@ -31,7 +31,7 @@ sys.path.insert(0, str(backend_root))
 from strategies.under4_multileg import Under4MultilegConfig, create_under4_multileg_strategy
 
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_user)])
 
 # Strategy storage path
 STRATEGIES_DIR = Path("data/strategies")
@@ -96,7 +96,7 @@ class StrategyRunRequest(BaseModel):
 
 
 @router.post("/strategies/save")
-async def save_strategy(request: StrategyConfigRequest, _=Depends(require_bearer)):
+async def save_strategy(request: StrategyConfigRequest):
     """
     Save strategy configuration
 
@@ -136,7 +136,7 @@ async def save_strategy(request: StrategyConfigRequest, _=Depends(require_bearer
 
 
 @router.get("/strategies/load/{strategy_type}")
-async def load_strategy(strategy_type: str, _=Depends(require_bearer)):
+async def load_strategy(strategy_type: str):
     """
     Load strategy configuration
 
@@ -168,7 +168,7 @@ async def load_strategy(strategy_type: str, _=Depends(require_bearer)):
 
 
 @router.get("/strategies/list")
-async def list_strategies(_=Depends(require_bearer)):
+async def list_strategies():
     """
     List all available strategies
 
@@ -197,7 +197,7 @@ async def list_strategies(_=Depends(require_bearer)):
 
 
 @router.post("/strategies/run")
-async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
+async def run_strategy(request: StrategyRunRequest):
     """
     Run a strategy (execute morning routine)
 
@@ -268,7 +268,7 @@ async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
 
 
 @router.delete("/strategies/{strategy_type}")
-async def delete_strategy(strategy_type: str, _=Depends(require_bearer)):
+async def delete_strategy(strategy_type: str):
     """
     Delete a saved strategy configuration
 
@@ -294,7 +294,7 @@ async def delete_strategy(strategy_type: str, _=Depends(require_bearer)):
 
 @router.get("/strategies/templates")
 async def get_strategy_templates(
-    filter_by_risk: bool | None = True, _=Depends(require_bearer), db: Session = Depends(get_db)
+    filter_by_risk: bool | None = True, db: Session = Depends(get_db)
 ):
     """
     Get all available strategy templates
@@ -361,7 +361,6 @@ async def get_strategy_templates(
 async def get_strategy_template(
     template_id: str,
     customize: bool | None = True,
-    _=Depends(require_bearer),
     db: Session = Depends(get_db),
 ):
     """
@@ -436,7 +435,6 @@ class CloneTemplateRequest(BaseModel):
 async def clone_strategy_template(
     template_id: str,
     request: CloneTemplateRequest,
-    _=Depends(require_bearer),
     db: Session = Depends(get_db),
 ):
     """

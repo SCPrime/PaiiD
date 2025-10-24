@@ -14,12 +14,15 @@ from pathlib import Path
 import pytest
 
 
+APP_DIR = Path(__file__).resolve().parents[1] / "app"
+
+
 class TestPackageStructure:
     """Verify Python package structure is valid"""
 
     def test_middleware_package_has_init(self):
         """Verify middleware package has __init__.py"""
-        init_file = Path("app/middleware/__init__.py")
+        init_file = APP_DIR / "middleware" / "__init__.py"
         assert init_file.exists(), (
             "app/middleware/__init__.py is REQUIRED for Python to treat "
             "the directory as a package. Without it, imports like "
@@ -28,7 +31,7 @@ class TestPackageStructure:
 
     def test_services_package_has_init(self):
         """Verify services package has __init__.py"""
-        init_file = Path("app/services/__init__.py")
+        init_file = APP_DIR / "services" / "__init__.py"
         assert init_file.exists(), (
             "app/services/__init__.py is REQUIRED. "
             "Missing this file caused 16+ hours of downtime in Oct 2025."
@@ -36,17 +39,17 @@ class TestPackageStructure:
 
     def test_routers_package_has_init(self):
         """Verify routers package has __init__.py"""
-        init_file = Path("app/routers/__init__.py")
+        init_file = APP_DIR / "routers" / "__init__.py"
         assert init_file.exists(), "app/routers/__init__.py is required for router imports"
 
     def test_core_package_has_init(self):
         """Verify core package has __init__.py"""
-        init_file = Path("app/core/__init__.py")
+        init_file = APP_DIR / "core" / "__init__.py"
         assert init_file.exists(), "app/core/__init__.py is required for core imports"
 
     def test_all_app_subdirectories_have_init(self):
         """Verify ALL subdirectories in app/ have __init__.py"""
-        app_dir = Path("app")
+        app_dir = APP_DIR
 
         if not app_dir.exists():
             pytest.skip("app directory not found (may be running from different location)")

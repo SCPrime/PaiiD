@@ -1,8 +1,4 @@
-"""
-Pytest Configuration and Fixtures
-
-Provides test fixtures for database, API client, and mocked services.
-"""
+"""Pytest configuration and fixtures for backend tests."""
 
 import os
 
@@ -13,15 +9,18 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 
-# Set test environment variables
-os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-os.environ["REDIS_URL"] = ""  # Disable Redis for tests
-os.environ["SENTRY_DSN"] = ""  # Disable Sentry for tests
-os.environ["TESTING"] = "true"  # Disable rate limiting for tests
-os.environ["API_TOKEN"] = "test-token-12345"
-os.environ["TRADIER_API_KEY"] = "test-tradier-key"
-os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
+# Set test environment variables before importing application modules
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+os.environ.setdefault("REDIS_URL", "")  # Disable Redis for tests
+os.environ.setdefault("SENTRY_DSN", "")  # Disable Sentry for tests
+os.environ.setdefault("TESTING", "true")  # Disable rate limiting for tests
+os.environ.setdefault("API_TOKEN", "test-token-12345")
+os.environ.setdefault("TRADIER_API_KEY", "test-tradier-key")
+os.environ.setdefault("ANTHROPIC_API_KEY", "test-anthropic-key")
+os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key")
 
+from app.core import jwt as jwt_module
+from app.core.jwt import create_token_pair
 from app.db.session import Base, get_db
 from app.main import app
 
@@ -40,11 +39,23 @@ from app.main import app
 #   your_hash = pwd_context.hash("your-test-password")
 # ===========================================
 
-# Test password hash (pre-computed bcrypt hash for "TestPassword123!")
-# Pre-computed to avoid hashing at module import time (which can cause bcrypt backend issues in CI)
-# Original password: "TestPassword123!"
-# Generated with: CryptContext(schemes=["bcrypt"]).hash("TestPassword123!")
-TEST_PASSWORD_HASH = "$2b$12$LQ3JzqjX7Y8ZHnVc9r5MHOfWw8L4vQy8QWxK0X1y0HdTYJKRQ6qKK"
+
+def _test_hash(password: str) -> str:
+    return f"plain::{password}"
+
+
+jwt_module.hash_password = _test_hash
+jwt_module.verify_password = lambda plain, hashed: hashed == _test_hash(plain)
+
+# Ensure routers use the patched helpers
+from app.routers import auth as auth_router
+
+auth_router.hash_password = jwt_module.hash_password
+auth_router.verify_password = jwt_module.verify_password
+
+
+# Test password hash (simple deterministic hash for tests)
+TEST_PASSWORD_HASH = _test_hash("TestPassword123!")
 
 
 # ==================== DATABASE FIXTURES ====================
@@ -101,7 +112,7 @@ def client(test_db):
 
 
 @pytest.fixture(scope="function")
-def auth_headers():
+def auth_headers(sample_user, test_db):
     """
     Authentication headers for API requests
 
@@ -110,7 +121,8 @@ def auth_headers():
             response = client.get("/api/positions", headers=auth_headers)
             assert response.status_code == 200
     """
-    return {"Authorization": "Bearer test-token-12345"}
+    tokens = create_token_pair(sample_user, test_db)
+    return {"Authorization": f"Bearer {tokens['access_token']}"}
 
 
 # ==================== MOCK CACHE FIXTURES ====================

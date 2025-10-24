@@ -166,10 +166,18 @@ def get_current_user(
         )
 
     # Get user_id from payload
-    user_id: int = payload.get("sub")
-    if user_id is None:
+    user_id_value = payload.get("sub")
+    if user_id_value is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token missing user identifier"
+        )
+
+    try:
+        user_id = int(user_id_value)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user identifier in token",
         )
 
     # Fetch user from database
@@ -242,8 +250,8 @@ def create_token_pair(
         Dictionary with access_token, refresh_token, token_type
     """
     # Create token payloads
-    access_payload = {"sub": user.id, "role": user.role, "email": user.email}
-    refresh_payload = {"sub": user.id}
+    access_payload = {"sub": str(user.id), "role": user.role, "email": user.email}
+    refresh_payload = {"sub": str(user.id)}
 
     # Generate tokens
     access_token = create_access_token(access_payload)

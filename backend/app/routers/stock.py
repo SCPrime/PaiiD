@@ -8,13 +8,17 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.dependencies import require_user
 from ..services.tradier_client import get_tradier_client
 
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/stock", tags=["stock"])
+router = APIRouter(
+    prefix="/stock",
+    tags=["stock"],
+    dependencies=[Depends(require_user)],
+)
 
 
 class CompanyInfo(BaseModel):
@@ -55,7 +59,7 @@ class StockInfoResponse(BaseModel):
     news: list[NewsArticle] = []
 
 
-@router.get("/{symbol}/info", dependencies=[Depends(require_bearer)])
+@router.get("/{symbol}/info")
 async def get_stock_info(symbol: str) -> CompanyInfo:
     """
     Get comprehensive company information for a symbol
@@ -110,7 +114,7 @@ async def get_stock_info(symbol: str) -> CompanyInfo:
         raise HTTPException(status_code=500, detail=f"Failed to get stock info: {e!s}")
 
 
-@router.get("/{symbol}/news", dependencies=[Depends(require_bearer)])
+@router.get("/{symbol}/news")
 async def get_stock_news(
     symbol: str,
     limit: int = Query(default=10, ge=1, le=50, description="Number of news articles to return"),
@@ -159,7 +163,7 @@ async def get_stock_news(
         raise HTTPException(status_code=500, detail=f"Failed to get stock news: {e!s}")
 
 
-@router.get("/{symbol}/complete", dependencies=[Depends(require_bearer)])
+@router.get("/{symbol}/complete")
 async def get_complete_stock_info(symbol: str) -> StockInfoResponse:
     """
     Get complete stock information including company info, technicals, and news

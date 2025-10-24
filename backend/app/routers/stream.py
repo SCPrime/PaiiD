@@ -20,14 +20,14 @@ from collections.abc import AsyncGenerator
 from fastapi import APIRouter, Depends, Query
 from sse_starlette.sse import EventSourceResponse
 
-from app.core.auth import require_bearer
+from app.core.dependencies import require_user
 from app.services.cache import CacheService, get_cache
 from app.services.tradier_stream import get_tradier_stream
 
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["streaming"])
+router = APIRouter(tags=["streaming"], dependencies=[Depends(require_user)])
 
 # Configuration
 HEARTBEAT_INTERVAL = 15  # Send heartbeat every 15 seconds
@@ -37,7 +37,6 @@ DATA_CHECK_INTERVAL = 1  # Check for new data every 1 second
 @router.get("/stream/prices")
 async def stream_prices(
     symbols: str = Query(..., description="Comma-separated list of symbols (e.g., AAPL,MSFT,TSLA)"),
-    _=Depends(require_bearer),
     cache: CacheService = Depends(get_cache),
 ):
     """
@@ -144,7 +143,7 @@ async def stream_prices(
 
 
 @router.get("/stream/positions")
-async def stream_positions(_=Depends(require_bearer), cache: CacheService = Depends(get_cache)):
+async def stream_positions(cache: CacheService = Depends(get_cache)):
     """
     Stream position updates via Server-Sent Events
 
@@ -216,7 +215,7 @@ async def stream_positions(_=Depends(require_bearer), cache: CacheService = Depe
 
 @router.get("/stream/market-indices")
 async def stream_market_indices(
-    _=Depends(require_bearer), cache: CacheService = Depends(get_cache)
+    cache: CacheService = Depends(get_cache)
 ):
     """
     Stream real-time market indices (Dow Jones, NASDAQ) via Server-Sent Events
@@ -342,7 +341,7 @@ async def stream_market_indices(
 
 
 @router.get("/stream/status")
-async def stream_status(_=Depends(require_bearer)):
+async def stream_status():
     """
     Get streaming service status
 
