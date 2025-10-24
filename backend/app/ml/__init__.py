@@ -7,15 +7,15 @@ and market regime detection using scikit-learn and technical analysis.
 Phase 2: ML Strategy Engine
 """
 
+from .data_pipeline import MLDataPipeline, get_data_pipeline
 from .feature_engineering import FeatureEngineer
-from .market_regime import MarketRegimeDetector
-from .pattern_recognition import PatternDetector
-from .strategy_selector import StrategySelector
+from .market_regime import MarketRegimeDetector, get_regime_detector
 
 
 __all__ = [
     "FeatureEngineer",
+    "MLDataPipeline",
     "MarketRegimeDetector",
-    "PatternDetector",
-    "StrategySelector",
+    "get_data_pipeline",
+    "get_regime_detector",
 ]
