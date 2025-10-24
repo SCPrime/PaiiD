@@ -1,16 +1,43 @@
-import { useState, useEffect, useRef } from "react";
-import { BarChart3, TrendingUp, Activity, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Activity, BarChart3, RefreshCw, TrendingUp } from "lucide-react";
 import { theme } from "../styles/theme";
 
 interface TradingViewChartProps {
   symbol?: string;
   autoHeight?: boolean;
   height?: number;
+  /**
+   * Control the current interval externally. When provided, the component will
+   * use this value instead of its internal state.
+   */
+  interval?: string;
+  /**
+   * Default interval used when the chart first mounts. Ignored when the
+   * `interval` prop is supplied.
+   */
+  defaultInterval?: string;
+  /**
+   * Callback fired whenever the interval changes due to user interaction.
+   */
+  onIntervalChange?: (value: string) => void;
+  /**
+   * Hide the built-in controls so the chart can be embedded inside custom
+   * dashboards without duplicated UI.
+   */
+  showControls?: boolean;
+  /**
+   * Toggle the indicator buttons inside the controls header.
+   */
+  showIndicatorToggles?: boolean;
+}
+
+interface TradingViewGlobal {
+  widget: (options: Record<string, unknown>) => unknown;
 }
 
 declare global {
   interface Window {
-    TradingView?: any;
+    TradingView?: TradingViewGlobal;
   }
 }
 
@@ -18,16 +45,32 @@ export default function TradingViewChart({
   symbol = "$DJI.IX",
   autoHeight = false,
   height = 500,
+  interval,
+  defaultInterval = "D",
+  onIntervalChange,
+  showControls = true,
+  showIndicatorToggles = true,
 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentSymbol, setCurrentSymbol] = useState(symbol);
-  const [interval, setInterval] = useState<string>("D");
+  const [internalInterval, setInternalInterval] = useState<string>(interval ?? defaultInterval);
   const [showIndicators, setShowIndicators] = useState({
     sma: true,
     rsi: false,
     macd: false,
   });
-  const widgetRef = useRef<any>(null);
+  const widgetRef = useRef<unknown>(null);
+  const containerId = useId();
+
+  useEffect(() => {
+    setCurrentSymbol(symbol);
+  }, [symbol]);
+
+  useEffect(() => {
+    if (interval) {
+      setInternalInterval(interval);
+    }
+  }, [interval]);
 
   const timeframes = [
     { label: "1D", value: "D", name: "1 Day" },
@@ -44,37 +87,15 @@ export default function TradingViewChart({
   ];
 
   // Load TradingView script
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/tv.js";
-    script.async = true;
-    script.onload = () => {
-      if (containerRef.current) {
-        initWidget();
-      }
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, []);
-
-  // Reinitialize widget when symbol, interval, or indicators change
-  useEffect(() => {
-    if (window.TradingView && containerRef.current) {
-      initWidget();
+  const initWidget = useCallback(() => {
+    const target = containerRef.current;
+    const tradingView = window.TradingView;
+    if (!target || !tradingView || typeof tradingView.widget !== "function") {
+      return;
     }
-  }, [currentSymbol, interval, showIndicators]);
-
-  const initWidget = () => {
-    if (!containerRef.current || !window.TradingView) return;
 
     // Clear existing widget
-    containerRef.current.innerHTML = "";
+    target.innerHTML = "";
 
     // Build studies array based on selected indicators
     const studies: string[] = [];
@@ -89,10 +110,10 @@ export default function TradingViewChart({
     }
 
     // Create new widget
-    widgetRef.current = new window.TradingView.widget({
+    widgetRef.current = tradingView.widget({
       autosize: true,
       symbol: currentSymbol,
-      interval: interval,
+      interval: internalInterval,
       timezone: "America/New_York",
       theme: "dark",
       style: "1",
@@ -102,14 +123,43 @@ export default function TradingViewChart({
       hide_top_toolbar: false,
       hide_legend: false,
       save_image: false,
-      container_id: containerRef.current.id,
+      container_id: containerId,
       studies: studies,
       backgroundColor: "#0f172a",
       gridColor: "#1e293b",
       height: autoHeight ? "100%" : height,
       width: "100%",
     });
-  };
+  }, [
+    autoHeight,
+    containerId,
+    currentSymbol,
+    height,
+    internalInterval,
+    showIndicators.macd,
+    showIndicators.rsi,
+    showIndicators.sma,
+  ]);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/tv.js";
+    script.async = true;
+    script.onload = () => {
+      initWidget();
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
+  }, [initWidget]);
+
+  useEffect(() => {
+    initWidget();
+  }, [initWidget]);
 
   const handleSymbolChange = (newSymbol: string) => {
     setCurrentSymbol(newSymbol.toUpperCase());
@@ -122,6 +172,13 @@ export default function TradingViewChart({
     }));
   };
 
+  const updateInterval = (value: string) => {
+    if (!interval) {
+      setInternalInterval(value);
+    }
+    onIntervalChange?.(value);
+  };
+
   return (
     <div
       style={{
@@ -131,163 +188,188 @@ export default function TradingViewChart({
         padding: theme.spacing.lg,
       }}
     >
-      {/* Header with Controls */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: theme.spacing.lg,
-          flexWrap: "wrap",
-          gap: theme.spacing.md,
-        }}
-      >
-        {/* Symbol Input */}
-        <div style={{ display: "flex", alignItems: "center", gap: theme.spacing.sm }}>
-          <input
-            type="text"
-            value={currentSymbol}
-            onChange={(e) => handleSymbolChange(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSymbolChange(currentSymbol)}
-            placeholder="Symbol (e.g., $DJI.IX, AAPL)"
-            style={{
-              padding: "8px 12px",
-              background: theme.background.input,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: theme.borderRadius.sm,
-              color: theme.colors.text,
-              fontSize: "14px",
-              fontWeight: "600",
-              width: "120px",
-              textTransform: "uppercase",
-            }}
-          />
-          <button
-            onClick={() => setCurrentSymbol(symbol)}
-            style={{
-              padding: "8px",
-              background: theme.background.input,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: theme.borderRadius.sm,
-              color: theme.colors.textMuted,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: theme.transitions.normal,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = theme.colors.primary;
-              e.currentTarget.style.color = theme.colors.primary;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = theme.colors.border;
-              e.currentTarget.style.color = theme.colors.textMuted;
-            }}
-            title="Reset to default symbol"
-          >
-            <RefreshCw size={16} />
-          </button>
-        </div>
-
-        {/* Timeframe Selector */}
+      {showControls && (
         <div
           style={{
             display: "flex",
-            gap: theme.spacing.xs,
-            background: theme.background.input,
-            padding: "4px",
-            borderRadius: theme.borderRadius.sm,
-            border: `1px solid ${theme.colors.border}`,
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: theme.spacing.lg,
+            flexWrap: "wrap",
+            gap: theme.spacing.md,
           }}
         >
-          {timeframes.map((tf) => (
-            <button
-              key={tf.value}
-              onClick={() => setInterval(tf.value)}
+          {/* Symbol Input */}
+          <div style={{ display: "flex", alignItems: "center", gap: theme.spacing.sm }}>
+            <label
+              htmlFor={`${containerId}-symbol`}
               style={{
-                padding: "6px 12px",
-                background: interval === tf.value ? theme.colors.primary : "transparent",
-                border: "none",
+                position: "absolute",
+                width: 1,
+                height: 1,
+                padding: 0,
+                margin: -1,
+                overflow: "hidden",
+                clip: "rect(0, 0, 0, 0)",
+                whiteSpace: "nowrap",
+                border: 0,
+              }}
+            >
+              Symbol
+            </label>
+            <input
+              id={`${containerId}-symbol`}
+              type="text"
+              value={currentSymbol}
+              onChange={(e) => handleSymbolChange(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSymbolChange(currentSymbol)}
+              placeholder="Symbol (e.g., $DJI.IX, AAPL)"
+              style={{
+                padding: "8px 12px",
+                background: theme.background.input,
+                border: `1px solid ${theme.colors.border}`,
                 borderRadius: theme.borderRadius.sm,
-                color: interval === tf.value ? "#ffffff" : theme.colors.textMuted,
-                fontSize: "13px",
+                color: theme.colors.text,
+                fontSize: "14px",
                 fontWeight: "600",
+                width: "120px",
+                textTransform: "uppercase",
+              }}
+            />
+            <button
+              onClick={() => setCurrentSymbol(symbol)}
+              style={{
+                padding: "8px",
+                background: theme.background.input,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: theme.borderRadius.sm,
+                color: theme.colors.textMuted,
                 cursor: "pointer",
-                transition: theme.transitions.fast,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: theme.transitions.normal,
               }}
               onMouseEnter={(e) => {
-                if (interval !== tf.value) {
-                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-                  e.currentTarget.style.color = theme.colors.primary;
-                }
+                e.currentTarget.style.borderColor = theme.colors.primary;
+                e.currentTarget.style.color = theme.colors.primary;
               }}
               onMouseLeave={(e) => {
-                if (interval !== tf.value) {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = theme.colors.textMuted;
-                }
+                e.currentTarget.style.borderColor = theme.colors.border;
+                e.currentTarget.style.color = theme.colors.textMuted;
               }}
-              title={tf.name}
+              title="Reset to default symbol"
             >
-              {tf.label}
+              <RefreshCw size={16} />
             </button>
-          ))}
-        </div>
+          </div>
 
-        {/* Indicator Toggles */}
-        <div
-          style={{
-            display: "flex",
-            gap: theme.spacing.xs,
-          }}
-        >
-          {indicators.map((ind) => {
-            const Icon = ind.icon;
-            const isActive = showIndicators[ind.key as "sma" | "rsi" | "macd"];
-            return (
+          {/* Timeframe Selector */}
+          <div
+            style={{
+              display: "flex",
+              gap: theme.spacing.xs,
+              background: theme.background.input,
+              padding: "4px",
+              borderRadius: theme.borderRadius.sm,
+              border: `1px solid ${theme.colors.border}`,
+            }}
+          >
+            {timeframes.map((tf) => (
               <button
-                key={ind.key}
-                onClick={() => toggleIndicator(ind.key as "sma" | "rsi" | "macd")}
+                key={tf.value}
+                onClick={() => updateInterval(tf.value)}
                 style={{
-                  padding: "6px 10px",
-                  background: isActive ? "rgba(16, 185, 129, 0.2)" : theme.background.input,
-                  border: `1px solid ${isActive ? theme.colors.primary : theme.colors.border}`,
+                  padding: "6px 12px",
+                  background:
+                    internalInterval === tf.value ? theme.colors.primary : "transparent",
+                  border: "none",
                   borderRadius: theme.borderRadius.sm,
-                  color: isActive ? theme.colors.primary : theme.colors.textMuted,
-                  fontSize: "12px",
+                  color: internalInterval === tf.value ? "#ffffff" : theme.colors.textMuted,
+                  fontSize: "13px",
                   fontWeight: "600",
                   cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  transition: theme.transitions.normal,
+                  transition: theme.transitions.fast,
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.borderColor = theme.colors.primary;
+                  if (internalInterval !== tf.value) {
+                    e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
                     e.currentTarget.style.color = theme.colors.primary;
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.borderColor = theme.colors.border;
+                  if (internalInterval !== tf.value) {
+                    e.currentTarget.style.background = "transparent";
                     e.currentTarget.style.color = theme.colors.textMuted;
                   }
                 }}
-                title={ind.name}
+                title={tf.name}
               >
-                <Icon size={14} />
-                {ind.label}
+                {tf.label}
               </button>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Indicator Toggles */}
+          {showIndicatorToggles && (
+            <div
+              style={{
+                display: "flex",
+                gap: theme.spacing.xs,
+              }}
+            >
+              {indicators.map((ind) => {
+                const Icon = ind.icon;
+                const isActive = showIndicators[ind.key as "sma" | "rsi" | "macd"];
+                return (
+                  <button
+                    key={ind.key}
+                    onClick={() => toggleIndicator(ind.key as "sma" | "rsi" | "macd")}
+                    style={{
+                      padding: "6px 10px",
+                      background: isActive
+                        ? "rgba(16, 185, 129, 0.2)"
+                        : theme.background.input,
+                      border: `1px solid ${
+                        isActive ? theme.colors.primary : theme.colors.border
+                      }`,
+                      borderRadius: theme.borderRadius.sm,
+                      color: isActive ? theme.colors.primary : theme.colors.textMuted,
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      transition: theme.transitions.normal,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.borderColor = theme.colors.primary;
+                        e.currentTarget.style.color = theme.colors.primary;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.borderColor = theme.colors.border;
+                        e.currentTarget.style.color = theme.colors.textMuted;
+                      }
+                    }}
+                    title={ind.name}
+                  >
+                    <Icon size={14} />
+                    {ind.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {/* TradingView Widget Container */}
       <div
-        id="tradingview_widget"
+        id={containerId}
         ref={containerRef}
         style={{
           height: autoHeight ? "100%" : `${height}px`,
