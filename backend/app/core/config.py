@@ -48,5 +48,10 @@ class Settings(BaseModel):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # 15 minutes
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days
 
+    # Internal PyPI Mirror Configuration (Security Audit)
+    PYPI_MIRROR_URL: str | None = os.getenv("PIP_INDEX_URL")
+    PYPI_MIRROR_HOST: str | None = os.getenv("PIP_TRUSTED_HOST")
+    PYPI_MIRROR_ENABLED: bool = os.getenv("PYPI_MIRROR_ENABLED", "false").lower() == "true"
+
 
 settings = Settings()

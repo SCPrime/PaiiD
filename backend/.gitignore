@@ -84,3 +84,9 @@ dump.rdb
 *.tmp
 *.temp
 .tmp/
+
+# Security audit reports
+security-audit-*.txt
+security-audit-*.json
+pip-audit-report.json
+*-audit-*.log
