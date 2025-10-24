@@ -49,40 +49,75 @@ fi
 echo "✅ No LOCKED FINAL files modified."
 
 # ====================================
-# PHASE 2: FRONTEND VALIDATION
+# PHASE 2: DETECT CHANGED FILES
 # ====================================
 
-echo "📦 Phase 2: Frontend validation..."
-cd frontend && npx lint-staged
-if [ $? -ne 0 ]; then
-  echo "❌ Frontend lint-staged failed!"
-  exit 1
-fi
+# Detect what files are staged
+FRONTEND_FILES=$(git diff --cached --name-only | grep "^frontend/")
+BACKEND_FILES=$(git diff --cached --name-only | grep "^backend/")
+DOC_ONLY=$(git diff --cached --name-only | grep -v "^frontend/" | grep -v "^backend/" | grep "\.md$")
 
-echo "🔧 Frontend: Type checking..."
-npm run type-check
-if [ $? -ne 0 ]; then
-  echo "❌ Frontend type-check failed! Fix TypeScript errors before committing."
-  exit 1
+# If only docs changed, skip validation
+if [ -z "$FRONTEND_FILES" ] && [ -z "$BACKEND_FILES" ] && [ -n "$DOC_ONLY" ]; then
+  echo "📝 Only documentation files changed, skipping code validation."
+  echo "✅ All pre-commit checks passed!"
+  exit 0
 fi
 
 # ====================================
-# PHASE 3: BACKEND VALIDATION
+# PHASE 3: FRONTEND VALIDATION
 # ====================================
 
-echo "🐍 Phase 3: Backend validation..."
-cd ../backend
-ruff check . --fix
-if [ $? -ne 0 ]; then
-  echo "❌ Backend Ruff linting failed! Fix Python errors before committing."
-  exit 1
+if [ -n "$FRONTEND_FILES" ]; then
+  echo "📦 Phase 3a: Frontend files detected, running validation..."
+  cd frontend
+
+  echo "🎨 Running lint-staged..."
+  npx lint-staged
+  if [ $? -ne 0 ]; then
+    echo "❌ Frontend lint-staged failed!"
+    exit 1
+  fi
+
+  echo "🔧 Type checking..."
+  npm run type-check
+  if [ $? -ne 0 ]; then
+    echo "❌ Frontend type-check failed! Fix TypeScript errors before committing."
+    exit 1
+  fi
+
+  cd ..
+  echo "✅ Frontend validation passed."
+else
+  echo "⏭️  No frontend files changed, skipping frontend validation."
 fi
 
-echo "🎨 Backend: Running Ruff formatter..."
-ruff format .
-if [ $? -ne 0 ]; then
-  echo "❌ Backend Ruff formatting failed!"
-  exit 1
+# ====================================
+# PHASE 4: BACKEND VALIDATION
+# ====================================
+
+if [ -n "$BACKEND_FILES" ]; then
+  echo "🐍 Phase 4a: Backend files detected, running validation..."
+  cd backend
+
+  echo "🔍 Running Ruff linter..."
+  ruff check . --fix
+  if [ $? -ne 0 ]; then
+    echo "❌ Backend Ruff linting failed! Fix Python errors before committing."
+    exit 1
+  fi
+
+  echo "🎨 Running Ruff formatter..."
+  ruff format .
+  if [ $? -ne 0 ]; then
+    echo "❌ Backend Ruff formatting failed!"
+    exit 1
+  fi
+
+  cd ..
+  echo "✅ Backend validation passed."
+else
+  echo "⏭️  No backend files changed, skipping backend validation."
 fi
 
 # ====================================
