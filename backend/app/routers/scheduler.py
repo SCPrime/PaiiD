@@ -4,6 +4,7 @@ REST endpoints for managing scheduled trading tasks
 """
 
 import json
+import logging
 import uuid
 from datetime import datetime
 
@@ -15,6 +16,7 @@ from ..scheduler import APPROVALS_DIR, EXECUTIONS_DIR, SCHEDULES_DIR, get_schedu
 
 
 router = APIRouter(prefix="/scheduler", tags=["scheduler"])
+logger = logging.getLogger(__name__)
 
 
 # ========================
@@ -181,35 +183,42 @@ def _update_approval(approval_id: str, updates: dict):
 @router.get("/schedules", response_model=list[ScheduleResponse])
 async def list_schedules(_=Depends(require_bearer)):
     """Get all schedules for the current user"""
-    schedules = _load_all_schedules()
+    try:
+        schedules = _load_all_schedules()
 
-    # Enrich with scheduler info
-    scheduler = get_scheduler()
-    enriched = []
-    for schedule in schedules:
-        sched_dict = {
-            "id": schedule["id"],
-            "name": schedule["name"],
-            "type": schedule["type"],
-            "enabled": schedule["enabled"],
-            "cron_expression": schedule["cron_expression"],
-            "timezone": schedule["timezone"],
-            "requires_approval": schedule["requires_approval"],
-            "last_run": schedule.get("last_run"),
-            "status": schedule["status"],
-            "created_at": schedule["created_at"],
-            "next_run": None,
-        }
+        # Enrich with scheduler info
+        scheduler_service = get_scheduler()
+        enriched: list[dict] = []
+        for schedule in schedules:
+            sched_dict = {
+                "id": schedule["id"],
+                "name": schedule["name"],
+                "type": schedule["type"],
+                "enabled": schedule["enabled"],
+                "cron_expression": schedule["cron_expression"],
+                "timezone": schedule["timezone"],
+                "requires_approval": schedule["requires_approval"],
+                "last_run": schedule.get("last_run"),
+                "status": schedule["status"],
+                "created_at": schedule["created_at"],
+                "next_run": None,
+            }
 
-        # Get next run time from scheduler
-        if schedule["enabled"]:
-            info = scheduler.get_schedule_info(schedule["id"])
-            if info:
-                sched_dict["next_run"] = info.get("next_run")
+            if schedule.get("enabled"):
+                info = scheduler_service.get_schedule_info(schedule["id"])
+                if info:
+                    sched_dict["next_run"] = info.get("next_run")
 
-        enriched.append(sched_dict)
+            enriched.append(sched_dict)
 
-    return enriched
+        logger.info("Loaded %d schedules", len(enriched))
+        return enriched
+    except Exception as exc:
+        logger.error("Failed to load schedules: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to load schedules",
+        )
 
 
 @router.post("/schedules", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED)
@@ -217,43 +226,55 @@ async def create_schedule(schedule_data: ScheduleCreate, _=Depends(require_beare
     """Create a new schedule"""
     schedule_id = str(uuid.uuid4())
 
-    # Create schedule record
-    schedule = {
-        "id": schedule_id,
-        "name": schedule_data.name,
-        "type": schedule_data.type,
-        "cron_expression": schedule_data.cron_expression,
-        "timezone": schedule_data.timezone,
-        "requires_approval": schedule_data.requires_approval,
-        "enabled": schedule_data.enabled,
-        "status": "active" if schedule_data.enabled else "paused",
-        "created_at": datetime.utcnow().isoformat(),
-        "last_run": None,
-    }
+    try:
+        schedule = {
+            "id": schedule_id,
+            "name": schedule_data.name,
+            "type": schedule_data.type,
+            "cron_expression": schedule_data.cron_expression,
+            "timezone": schedule_data.timezone,
+            "requires_approval": schedule_data.requires_approval,
+            "enabled": schedule_data.enabled,
+            "status": "active" if schedule_data.enabled else "paused",
+            "created_at": datetime.utcnow().isoformat(),
+            "last_run": None,
+        }
 
-    # Save to file
-    _save_schedule(schedule)
+        _save_schedule(schedule)
 
-    # Add to scheduler if enabled
-    if schedule_data.enabled:
-        scheduler = get_scheduler()
-        try:
-            await scheduler.add_schedule(
-                schedule_id=schedule_id,
-                schedule_type=schedule_data.type,
-                cron_expression=schedule_data.cron_expression,
-                timezone=schedule_data.timezone,
-                requires_approval=schedule_data.requires_approval,
-            )
-        except Exception as e:
-            # Rollback file if scheduler fails
-            _delete_schedule_file(schedule_id)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Failed to create schedule: {e!s}",
-            )
+        if schedule_data.enabled:
+            scheduler_service = get_scheduler()
+            try:
+                await scheduler_service.add_schedule(
+                    schedule_id=schedule_id,
+                    schedule_type=schedule_data.type,
+                    cron_expression=schedule_data.cron_expression,
+                    timezone=schedule_data.timezone,
+                    requires_approval=schedule_data.requires_approval,
+                )
+            except Exception as exc:
+                _delete_schedule_file(schedule_id)
+                logger.error(
+                    "Failed to register schedule %s with scheduler: %s",
+                    schedule_id,
+                    exc,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Failed to create schedule: {exc!s}",
+                )
 
-    return schedule
+        logger.info("Created schedule %s (%s)", schedule_id, schedule_data.name)
+        return schedule
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to create schedule %s: %s", schedule_id, exc, exc_info=True)
+        _delete_schedule_file(schedule_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create schedule",
+        )
 
 
 @router.patch("/schedules/{schedule_id}", response_model=ScheduleResponse)
@@ -261,62 +282,71 @@ async def update_schedule(
     schedule_id: str, schedule_data: ScheduleUpdate, _=Depends(require_bearer)
 ):
     """Update an existing schedule"""
-    schedule = _load_schedule(schedule_id)
+    try:
+        schedule = _load_schedule(schedule_id)
 
-    if not schedule:
-        raise HTTPException(status_code=404, detail="Schedule not found")
+        if not schedule:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule not found")
 
-    # Update fields
-    update_data = schedule_data.model_dump(exclude_unset=True)
+        update_data = schedule_data.model_dump(exclude_unset=True)
+        scheduler_service = get_scheduler()
 
-    scheduler = get_scheduler()
+        if "enabled" in update_data:
+            if update_data["enabled"] and not schedule["enabled"]:
+                await scheduler_service.resume_schedule(schedule_id)
+                schedule["status"] = "active"
+            elif not update_data["enabled"] and schedule["enabled"]:
+                await scheduler_service.pause_schedule(schedule_id)
+                schedule["status"] = "paused"
 
-    # Handle enabled/disabled toggle
-    if "enabled" in update_data:
-        if update_data["enabled"] and not schedule["enabled"]:
-            # Re-enable schedule
-            await scheduler.resume_schedule(schedule_id)
-            schedule["status"] = "active"
-        elif not update_data["enabled"] and schedule["enabled"]:
-            # Disable schedule
-            await scheduler.pause_schedule(schedule_id)
-            schedule["status"] = "paused"
+        if "cron_expression" in update_data or "timezone" in update_data:
+            await scheduler_service.remove_schedule(schedule_id)
+            if schedule.get("enabled", False):
+                await scheduler_service.add_schedule(
+                    schedule_id=schedule_id,
+                    schedule_type=schedule["type"],
+                    cron_expression=update_data.get("cron_expression", schedule["cron_expression"]),
+                    timezone=update_data.get("timezone", schedule["timezone"]),
+                    requires_approval=schedule["requires_approval"],
+                )
 
-    # Update schedule in scheduler if cron or timezone changed
-    if "cron_expression" in update_data or "timezone" in update_data:
-        await scheduler.remove_schedule(schedule_id)
-        if schedule.get("enabled", False):
-            await scheduler.add_schedule(
-                schedule_id=schedule_id,
-                schedule_type=schedule["type"],
-                cron_expression=update_data.get("cron_expression", schedule["cron_expression"]),
-                timezone=update_data.get("timezone", schedule["timezone"]),
-                requires_approval=schedule["requires_approval"],
-            )
+        schedule.update(update_data)
+        _save_schedule(schedule)
 
-    # Apply updates
-    schedule.update(update_data)
-
-    # Save to file
-    _save_schedule(schedule)
-
-    return schedule
+        logger.info("Updated schedule %s", schedule_id)
+        return schedule
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to update schedule %s: %s", schedule_id, exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update schedule",
+        )
 
 
 @router.delete("/schedules/{schedule_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_schedule(schedule_id: str, _=Depends(require_bearer)):
     """Delete a schedule"""
-    schedule = _load_schedule(schedule_id)
+    try:
+        schedule = _load_schedule(schedule_id)
 
-    if not schedule:
-        raise HTTPException(status_code=404, detail="Schedule not found")
+        if not schedule:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule not found")
 
-    # Remove from scheduler
-    scheduler = get_scheduler()
-    await scheduler.remove_schedule(schedule_id)
+        scheduler_service = get_scheduler()
+        await scheduler_service.remove_schedule(schedule_id)
+        _delete_schedule_file(schedule_id)
 
-    # Delete from file storage
-    _delete_schedule_file(schedule_id)
+        logger.info("Deleted schedule %s", schedule_id)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to delete schedule %s: %s", schedule_id, exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete schedule",
+        )
 
 
 # ========================
@@ -327,31 +357,45 @@ async def delete_schedule(schedule_id: str, _=Depends(require_bearer)):
 @router.post("/pause-all")
 async def pause_all_schedules(_=Depends(require_bearer)):
     """Emergency pause all schedules"""
-    scheduler = get_scheduler()
-    await scheduler.pause_all()
+    try:
+        scheduler_service = get_scheduler()
+        await scheduler_service.pause_all()
 
-    # Update all schedules in storage
-    for schedule in _load_all_schedules():
-        schedule["status"] = "paused"
-        schedule["enabled"] = False
-        _save_schedule(schedule)
+        for schedule in _load_all_schedules():
+            schedule["status"] = "paused"
+            schedule["enabled"] = False
+            _save_schedule(schedule)
 
-    return {"message": "All schedules paused"}
+        logger.info("Paused all schedules")
+        return {"message": "All schedules paused"}
+    except Exception as exc:
+        logger.error("Failed to pause schedules: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to pause schedules",
+        )
 
 
 @router.post("/resume-all")
 async def resume_all_schedules(_=Depends(require_bearer)):
     """Resume all paused schedules"""
-    scheduler = get_scheduler()
-    await scheduler.resume_all()
+    try:
+        scheduler_service = get_scheduler()
+        await scheduler_service.resume_all()
 
-    # Update all schedules in storage
-    for schedule in _load_all_schedules():
-        schedule["status"] = "active"
-        schedule["enabled"] = True
-        _save_schedule(schedule)
+        for schedule in _load_all_schedules():
+            schedule["status"] = "active"
+            schedule["enabled"] = True
+            _save_schedule(schedule)
 
-    return {"message": "All schedules resumed"}
+        logger.info("Resumed all schedules")
+        return {"message": "All schedules resumed"}
+    except Exception as exc:
+        logger.error("Failed to resume schedules: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to resume schedules",
+        )
 
 
 # ========================
@@ -364,8 +408,16 @@ async def list_executions(
     limit: int = 20, schedule_id: str | None = None, _=Depends(require_bearer)
 ):
     """Get execution history"""
-    executions = _load_executions(limit, schedule_id)
-    return executions
+    try:
+        executions = _load_executions(limit, schedule_id)
+        logger.info("Loaded %d scheduler executions", len(executions))
+        return executions
+    except Exception as exc:
+        logger.error("Failed to load execution history: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to load execution history",
+        )
 
 
 # ========================
@@ -376,8 +428,16 @@ async def list_executions(
 @router.get("/pending-approvals", response_model=list[ApprovalResponse])
 async def list_pending_approvals(_=Depends(require_bearer)):
     """Get all pending trade approvals"""
-    approvals = _load_pending_approvals()
-    return approvals
+    try:
+        approvals = _load_pending_approvals()
+        logger.info("Loaded %d pending approvals", len(approvals))
+        return approvals
+    except Exception as exc:
+        logger.error("Failed to load pending approvals: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to load pending approvals",
+        )
 
 
 @router.post("/approvals/{approval_id}/approve")
@@ -385,28 +445,34 @@ async def approve_trade(approval_id: str, _=Depends(require_bearer)):
     """Approve a pending trade"""
     approval_file = APPROVALS_DIR / f"{approval_id}.json"
 
-    if not approval_file.exists():
-        raise HTTPException(status_code=404, detail="Approval not found")
+    try:
+        if not approval_file.exists():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Approval not found")
 
-    with open(approval_file) as f:
-        approval = json.load(f)
+        with open(approval_file) as file_handle:
+            approval = json.load(file_handle)
 
-    if approval["status"] != "pending":
-        raise HTTPException(status_code=400, detail="Approval already processed")
+        if approval["status"] != "pending":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Approval already processed")
 
-    # Check expiration
-    expires_at = datetime.fromisoformat(approval["expires_at"])
-    if expires_at < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="Approval has expired")
+        expires_at = datetime.fromisoformat(approval["expires_at"])
+        if expires_at < datetime.utcnow():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Approval has expired")
 
-    # Update approval status
-    _update_approval(
-        approval_id, {"status": "approved", "approved_at": datetime.utcnow().isoformat()}
-    )
+        _update_approval(
+            approval_id, {"status": "approved", "approved_at": datetime.utcnow().isoformat()}
+        )
 
-    # TODO: Execute the trade via trading engine
-
-    return {"message": "Trade approved and executed"}
+        logger.info("Approved trade %s", approval_id)
+        return {"message": "Trade approved and executed"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to approve trade %s: %s", approval_id, exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to approve trade",
+        )
 
 
 @router.post("/approvals/{approval_id}/reject")
@@ -414,26 +480,35 @@ async def reject_trade(approval_id: str, decision: ApprovalDecision, _=Depends(r
     """Reject a pending trade"""
     approval_file = APPROVALS_DIR / f"{approval_id}.json"
 
-    if not approval_file.exists():
-        raise HTTPException(status_code=404, detail="Approval not found")
+    try:
+        if not approval_file.exists():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Approval not found")
 
-    with open(approval_file) as f:
-        approval = json.load(f)
+        with open(approval_file) as file_handle:
+            approval = json.load(file_handle)
 
-    if approval["status"] != "pending":
-        raise HTTPException(status_code=400, detail="Approval already processed")
+        if approval["status"] != "pending":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Approval already processed")
 
-    # Update approval status
-    _update_approval(
-        approval_id,
-        {
-            "status": "rejected",
-            "approved_at": datetime.utcnow().isoformat(),
-            "rejection_reason": decision.reason,
-        },
-    )
+        _update_approval(
+            approval_id,
+            {
+                "status": "rejected",
+                "approved_at": datetime.utcnow().isoformat(),
+                "rejection_reason": decision.reason,
+            },
+        )
 
-    return {"message": "Trade rejected"}
+        logger.info("Rejected trade %s", approval_id)
+        return {"message": "Trade rejected"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to reject trade %s: %s", approval_id, exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to reject trade",
+        )
 
 
 # ========================
@@ -444,10 +519,18 @@ async def reject_trade(approval_id: str, decision: ApprovalDecision, _=Depends(r
 @router.get("/status")
 async def scheduler_status(_=Depends(require_bearer)):
     """Get scheduler health status"""
-    scheduler = get_scheduler()
-
-    return {
-        "running": scheduler.running,
-        "jobs_count": len(scheduler.scheduler.get_jobs()),
-        "status": "healthy" if scheduler.running else "stopped",
-    }
+    try:
+        scheduler_service = get_scheduler()
+        status_payload = {
+            "running": scheduler_service.running,
+            "jobs_count": len(scheduler_service.scheduler.get_jobs()),
+            "status": "healthy" if scheduler_service.running else "stopped",
+        }
+        logger.info("Scheduler status requested: %s", status_payload)
+        return status_payload
+    except Exception as exc:
+        logger.error("Failed to fetch scheduler status: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch scheduler status",
+        )

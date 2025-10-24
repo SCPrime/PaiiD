@@ -3,6 +3,7 @@ Order Execution Service - Handles options trade proposal and execution
 """
 
 import logging
+from dataclasses import asdict
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Optional
@@ -10,7 +11,7 @@ from typing import Any, Optional
 from pydantic import BaseModel
 
 from app.services.alpaca_client import get_alpaca_client
-from app.services.greeks import GreeksCalculator
+from app.services.options_greeks import GreeksCalculator
 from app.services.tradier_client import get_tradier_client
 
 
@@ -84,13 +85,16 @@ class OrderExecutionService:
             # Calculate Greeks
             calculator = GreeksCalculator(risk_free_rate=0.05)
             days_to_expiry = int(self._calculate_dte(expiration) * 365)
-            greeks = calculator.calculate_greeks(
-                option_type=contract_type,
-                underlying_price=underlying_price,
+            time_to_expiry_years = max(days_to_expiry, 1) / 365
+            iv = chain_data.get("greeks", {}).get("mid_iv", 0.3)
+            greeks_obj = calculator.calculate_greeks(
+                spot_price=underlying_price,
                 strike_price=strike,
-                days_to_expiry=days_to_expiry,
-                implied_volatility=chain_data.get("greeks", {}).get("mid_iv", 0.3),
+                time_to_expiry=time_to_expiry_years,
+                volatility=iv if iv else 0.3,
+                option_type=contract_type,
             )
+            greeks = asdict(greeks_obj)
 
             # Calculate risk metrics
             risk_metrics = self._calculate_risk_metrics(

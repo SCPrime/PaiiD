@@ -8,7 +8,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from app.services.alpaca_client import get_alpaca_client
-from app.services.greeks import GreeksCalculator
+from app.services.options_greeks import GreeksCalculator
 from app.services.tradier_client import get_tradier_client
 
 
@@ -67,12 +67,19 @@ class PositionTrackerService:
 
                 # Get current market data from Tradier
                 quote = self.tradier.get_option_quote(pos.symbol)
+                if not quote:
+                    logger.warning(f"No Tradier quote data available for {pos.symbol}")
+                    continue
 
                 # Calculate Greeks
                 greeks = self._calculate_position_greeks(pos, quote)
 
                 # Calculate P&L
-                current_price = quote.get("last", pos.current_price)
+                current_price_raw = quote.get("last", pos.current_price)
+                try:
+                    current_price = float(current_price_raw)
+                except (TypeError, ValueError):
+                    current_price = float(pos.current_price)
                 unrealized_pl = (current_price - pos.avg_entry_price) * pos.qty * 100
                 cost_basis = pos.avg_entry_price * pos.qty * 100
                 unrealized_pl_percent = (
@@ -101,7 +108,7 @@ class PositionTrackerService:
             return positions
 
         except Exception as e:
-            logger.error(f"Failed to fetch positions: {e}")
+            logger.error(f"Failed to fetch positions: {e}", exc_info=True)
             return []
 
     async def get_portfolio_greeks(self) -> PortfolioGreeks:
@@ -165,25 +172,56 @@ class PositionTrackerService:
     def _calculate_position_greeks(self, position, quote) -> PositionGreeks:
         """Calculate Greeks for a position"""
         try:
-            # Parse option symbol
-            option_type, strike, expiration = self._parse_option_symbol(position.symbol)
+            greeks_data = quote.get("greeks") or {}
 
-            # Get underlying price
-            underlying_price = quote.get("underlying_price", 0)
+            # Prefer live Greeks from Tradier when available
+            if all(k in greeks_data for k in ("delta", "gamma", "theta", "vega")):
+                return PositionGreeks(
+                    delta=float(greeks_data.get("delta", 0)),
+                    gamma=float(greeks_data.get("gamma", 0)),
+                    theta=float(greeks_data.get("theta", 0)),
+                    vega=float(greeks_data.get("vega", 0)),
+                )
 
-            # Calculate Greeks
-            days_to_expiry = self._calculate_dte(position.symbol)
-            iv = quote.get("greeks", {}).get("mid_iv", 0.3)
+            # Fallback to local calculation
+            option_type, strike, _ = self._parse_option_symbol(position.symbol)
 
-            greeks = self.greeks_calc.calculate_greeks(
+            underlying_price = quote.get("underlying_price")
+            if isinstance(underlying_price, str):
+                underlying_price = float(underlying_price)
+
+            if not underlying_price:
+                underlying_data = quote.get("underlying") or {}
+                if isinstance(underlying_data, dict):
+                    underlying_price = underlying_data.get("last")
+
+            if not underlying_price:
+                underlying_price = quote.get("last")
+
+            if not underlying_price:
+                raise ValueError("Unable to determine underlying price for option")
+
+            days_to_expiry = max(self._calculate_dte(position.symbol), 0)
+            if days_to_expiry == 0:
+                days_to_expiry = 1  # Avoid division by zero; treat as 1 day remaining
+
+            iv = greeks_data.get("mid_iv") or greeks_data.get("smv_vol") or 0.3
+            iv = float(iv) if iv else 0.3
+
+            options_greeks = self.greeks_calc.calculate_greeks(
+                spot_price=float(underlying_price),
+                strike_price=float(strike),
+                time_to_expiry=days_to_expiry / 365,
+                volatility=iv,
                 option_type=option_type,
-                underlying_price=underlying_price,
-                strike_price=strike,
-                days_to_expiry=days_to_expiry,
-                implied_volatility=iv,
             )
 
-            return PositionGreeks(**greeks)
+            return PositionGreeks(
+                delta=options_greeks.delta,
+                gamma=options_greeks.gamma,
+                theta=options_greeks.theta,
+                vega=options_greeks.vega,
+            )
 
         except Exception as e:
             logger.warning(f"Failed to calculate Greeks: {e}")

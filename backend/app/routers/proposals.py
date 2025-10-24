@@ -5,7 +5,10 @@ Options Proposals Router - Create and execute options trade proposals
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+import logging
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from app.core.auth import require_bearer
@@ -33,7 +36,11 @@ class ExecuteProposalRequest(BaseModel):
     limit_price: Optional[float] = None
 
 
-@router.post("/create", dependencies=[Depends(require_bearer)])
+@router.post(
+    "/create",
+    dependencies=[Depends(require_bearer)],
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_proposal(request: CreateProposalRequest):
     """
     Create a detailed options trade proposal with risk analysis
@@ -89,18 +96,27 @@ async def create_proposal(request: CreateProposalRequest):
             order_type=request.order_type,
         )
 
+        logger.info(
+            "Created proposal for %s (%s contracts)",
+            request.option_symbol,
+            request.quantity,
+        )
+
         return {
             "success": True,
             "proposal": proposal.dict(),
             "message": f"Proposal created for {request.quantity} contract(s) of {request.option_symbol}",
         }
 
-    except ValueError as e:
-        logger.warning(f"Invalid proposal request: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Failed to create proposal: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create proposal")
+    except ValueError as exc:
+        logger.warning("Invalid proposal request: %s", exc)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except Exception as exc:
+        logger.error("Failed to create proposal: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create proposal",
+        )
 
 
 @router.post("/execute", dependencies=[Depends(require_bearer)])
@@ -152,13 +168,17 @@ async def execute_proposal(request: ExecuteProposalRequest):
                 detail=result.get("error", "Order execution failed"),
             )
 
+        logger.info("Executed proposal %s", request.proposal.option_symbol)
         return result
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Failed to execute proposal: {e}")
-        raise HTTPException(status_code=500, detail="Failed to execute order")
+    except Exception as exc:
+        logger.error("Failed to execute proposal: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to execute order",
+        )
 
 
 @router.get("/history", dependencies=[Depends(require_bearer)])

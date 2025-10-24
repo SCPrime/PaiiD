@@ -5,8 +5,10 @@ Endpoints for managing user preferences including risk tolerance
 
 import logging
 from typing import Any
+import logging
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 
@@ -84,9 +86,14 @@ def get_user_preferences(
             preferences=preferences,
         )
 
-    except Exception as e:
-        logger.error(f"❌ Failed to fetch user preferences: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch user preferences: {e!s}")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Failed to fetch user preferences: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch user preferences",
+        )
 
 
 @router.patch("/users/preferences")
@@ -153,9 +160,14 @@ def update_user_preferences(
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"❌ Failed to update user preferences: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to update user preferences: {e!s}")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Failed to update user preferences: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update user preferences",
+        )
 
 
 def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
@@ -214,6 +226,11 @@ def get_user_risk_limits(_=Depends(require_bearer), db: Session = Depends(get_db
 
         return {"risk_tolerance": risk_tolerance, **limits}
 
-    except Exception as e:
-        logger.error(f"❌ Failed to calculate risk limits: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to calculate risk limits: {e!s}")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Failed to calculate risk limits: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to calculate risk limits",
+        )

@@ -1,5 +1,4 @@
 import logging
-import os
 from datetime import datetime
 
 import requests
@@ -34,14 +33,20 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Alpaca API configuration
-ALPACA_API_KEY = os.getenv("ALPACA_API_KEY")
-ALPACA_SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
-ALPACA_BASE_URL = "https://paper-api.alpaca.markets"  # Paper trading
+# Alpaca API configuration sourced from shared settings
+ALPACA_API_KEY = settings.ALPACA_API_KEY
+ALPACA_SECRET_KEY = settings.ALPACA_SECRET_KEY
+ALPACA_BASE_URL = settings.ALPACA_BASE_URL
 
 
 def get_alpaca_headers():
     """Get headers for Alpaca API requests"""
+    if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
+        logger.error("Alpaca credentials are not configured in settings")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Alpaca API credentials are not configured",
+        )
     return {
         "APCA-API-KEY-ID": ALPACA_API_KEY,
         "APCA-API-SECRET-KEY": ALPACA_SECRET_KEY,
