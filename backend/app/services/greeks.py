@@ -13,10 +13,8 @@ Phase 1 Implementation:
 from datetime import datetime
 from typing import Dict, Optional
 
-# TODO: Uncomment after installing py_vollib
-# from py_vollib.black_scholes import black_scholes
-# from py_vollib.black_scholes.greeks import analytical
-# from py_vollib.black_scholes.implied_volatility import implied_volatility
+from py_vollib.black_scholes.greeks import analytical
+from py_vollib.black_scholes.implied_volatility import implied_volatility
 
 
 class GreeksCalculator:
@@ -63,27 +61,59 @@ class GreeksCalculator:
 
         **TODO:** Implement Black-Scholes Greeks calculation using py_vollib
         """
-        # Convert days to years
-        time_to_expiry = days_to_expiry / 365.0
+        flag = option_type[0].lower()
+        time_to_expiry = max(days_to_expiry, 1) / 365.0
 
-        # TODO: Implement using py_vollib
-        # Example (commented out until py_vollib installed):
-        # delta = analytical.delta(
-        #     flag=option_type[0].lower(),  # 'c' or 'p'
-        #     S=underlying_price,
-        #     K=strike_price,
-        #     t=time_to_expiry,
-        #     r=self.risk_free_rate,
-        #     sigma=implied_volatility
-        # )
+        if underlying_price <= 0 or strike_price <= 0 or implied_volatility is None:
+            raise ValueError("Invalid parameters for Greeks calculation")
 
-        # STUB: Return placeholder values
+        delta = analytical.delta(
+            flag=flag,
+            S=underlying_price,
+            K=strike_price,
+            t=time_to_expiry,
+            r=self.risk_free_rate,
+            sigma=implied_volatility,
+        )
+        gamma = analytical.gamma(
+            flag=flag,
+            S=underlying_price,
+            K=strike_price,
+            t=time_to_expiry,
+            r=self.risk_free_rate,
+            sigma=implied_volatility,
+        )
+        theta = analytical.theta(
+            flag=flag,
+            S=underlying_price,
+            K=strike_price,
+            t=time_to_expiry,
+            r=self.risk_free_rate,
+            sigma=implied_volatility,
+        ) / 365.0
+        vega = analytical.vega(
+            flag=flag,
+            S=underlying_price,
+            K=strike_price,
+            t=time_to_expiry,
+            r=self.risk_free_rate,
+            sigma=implied_volatility,
+        ) / 100.0
+        rho = analytical.rho(
+            flag=flag,
+            S=underlying_price,
+            K=strike_price,
+            t=time_to_expiry,
+            r=self.risk_free_rate,
+            sigma=implied_volatility,
+        ) / 100.0
+
         return {
-            "delta": 0.0,  # TODO: Calculate actual delta
-            "gamma": 0.0,  # TODO: Calculate actual gamma
-            "theta": 0.0,  # TODO: Calculate actual theta
-            "vega": 0.0,  # TODO: Calculate actual vega
-            "rho": 0.0,  # TODO: Calculate actual rho
+            "delta": float(delta),
+            "gamma": float(gamma),
+            "theta": float(theta),
+            "vega": float(vega),
+            "rho": float(rho),
         }
 
     def calculate_delta(
@@ -103,10 +133,21 @@ class GreeksCalculator:
 
         **TODO:** Implement delta calculation
         """
-        time_to_expiry = days_to_expiry / 365.0
+        time_to_expiry = max(days_to_expiry, 1) / 365.0
 
-        # TODO: Implement using py_vollib.black_scholes.greeks.analytical.delta
-        return 0.0
+        if underlying_price <= 0 or strike_price <= 0:
+            raise ValueError("Underlying and strike prices must be positive")
+
+        return float(
+            analytical.delta(
+                flag=option_type[0].lower(),
+                S=underlying_price,
+                K=strike_price,
+                t=time_to_expiry,
+                r=self.risk_free_rate,
+                sigma=implied_volatility,
+            )
+        )
 
     def calculate_gamma(
         self,
@@ -122,10 +163,21 @@ class GreeksCalculator:
 
         **TODO:** Implement gamma calculation
         """
-        time_to_expiry = days_to_expiry / 365.0
+        time_to_expiry = max(days_to_expiry, 1) / 365.0
 
-        # TODO: Implement using py_vollib.black_scholes.greeks.analytical.gamma
-        return 0.0
+        if underlying_price <= 0 or strike_price <= 0:
+            raise ValueError("Underlying and strike prices must be positive")
+
+        return float(
+            analytical.gamma(
+                flag="c",
+                S=underlying_price,
+                K=strike_price,
+                t=time_to_expiry,
+                r=self.risk_free_rate,
+                sigma=implied_volatility,
+            )
+        )
 
     def calculate_theta(
         self,
@@ -143,10 +195,21 @@ class GreeksCalculator:
 
         **TODO:** Implement theta calculation
         """
-        time_to_expiry = days_to_expiry / 365.0
+        time_to_expiry = max(days_to_expiry, 1) / 365.0
 
-        # TODO: Implement using py_vollib.black_scholes.greeks.analytical.theta
-        return 0.0
+        if underlying_price <= 0 or strike_price <= 0:
+            raise ValueError("Underlying and strike prices must be positive")
+
+        theta = analytical.theta(
+            flag=option_type[0].lower(),
+            S=underlying_price,
+            K=strike_price,
+            t=time_to_expiry,
+            r=self.risk_free_rate,
+            sigma=implied_volatility,
+        )
+
+        return float(theta / 365.0)
 
     def calculate_vega(
         self,
@@ -163,10 +226,21 @@ class GreeksCalculator:
 
         **TODO:** Implement vega calculation
         """
-        time_to_expiry = days_to_expiry / 365.0
+        time_to_expiry = max(days_to_expiry, 1) / 365.0
 
-        # TODO: Implement using py_vollib.black_scholes.greeks.analytical.vega
-        return 0.0
+        if underlying_price <= 0 or strike_price <= 0:
+            raise ValueError("Underlying and strike prices must be positive")
+
+        vega = analytical.vega(
+            flag="c",
+            S=underlying_price,
+            K=strike_price,
+            t=time_to_expiry,
+            r=self.risk_free_rate,
+            sigma=implied_volatility,
+        )
+
+        return float(vega / 100.0)
 
     def calculate_rho(
         self,
@@ -183,10 +257,21 @@ class GreeksCalculator:
 
         **TODO:** Implement rho calculation
         """
-        time_to_expiry = days_to_expiry / 365.0
+        time_to_expiry = max(days_to_expiry, 1) / 365.0
 
-        # TODO: Implement using py_vollib.black_scholes.greeks.analytical.rho
-        return 0.0
+        if underlying_price <= 0 or strike_price <= 0:
+            raise ValueError("Underlying and strike prices must be positive")
+
+        rho = analytical.rho(
+            flag=option_type[0].lower(),
+            S=underlying_price,
+            K=strike_price,
+            t=time_to_expiry,
+            r=self.risk_free_rate,
+            sigma=implied_volatility,
+        )
+
+        return float(rho / 100.0)
 
     def calculate_implied_volatility(
         self, option_type: str, option_price: float, underlying_price: float, strike_price: float, days_to_expiry: int
@@ -198,10 +283,29 @@ class GreeksCalculator:
 
         **TODO:** Implement IV calculation using py_vollib
         """
-        time_to_expiry = days_to_expiry / 365.0
+        time_to_expiry = max(days_to_expiry, 1) / 365.0
 
-        # TODO: Implement using py_vollib.black_scholes.implied_volatility
-        return None
+        if (
+            option_price is None
+            or option_price <= 0
+            or underlying_price <= 0
+            or strike_price <= 0
+        ):
+            return None
+
+        try:
+            return float(
+                implied_volatility(
+                    option_price,
+                    underlying_price,
+                    strike_price,
+                    time_to_expiry,
+                    self.risk_free_rate,
+                    option_type[0].lower(),
+                )
+            )
+        except Exception:
+            return None
 
 
 # ============================================================================

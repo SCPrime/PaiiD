@@ -7,7 +7,18 @@ Defines schema for users, strategies, trades, performance tracking, and equity s
 
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 from ..db.session import Base
@@ -51,6 +62,11 @@ class User(Base):
     trades = relationship("Trade", back_populates="user", cascade="all, delete-orphan")
     sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
     activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
+    option_multi_leg_orders = relationship(
+        "OptionMultiLegOrder",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, role={self.role})>"
@@ -278,6 +294,77 @@ class EquitySnapshot(Base):
     def __repr__(self):
         return (
             f"<EquitySnapshot(id={self.id}, timestamp={self.timestamp}, equity=${self.equity:.2f})>"
+        )
+
+
+class OptionMultiLegOrder(Base):
+    """Persisted multi-leg options orders with analytics."""
+
+    __tablename__ = "option_multi_leg_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    symbol = Column(String(20), nullable=False, index=True)
+    strategy = Column(String(50), nullable=False, index=True)
+    order_type = Column(String(20), nullable=False)
+    net_price = Column(Float, nullable=False)
+    underlying_price = Column(Float, nullable=True)
+    status = Column(String(20), default="draft", nullable=False, index=True)
+    notes = Column(Text, nullable=True)
+    metadata_json = Column(JSON, default=dict, nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    legs = relationship(
+        "OptionOrderLeg",
+        back_populates="order",
+        cascade="all, delete-orphan",
+    )
+    user = relationship("User", back_populates="option_multi_leg_orders")
+
+    def __repr__(self):
+        return (
+            f"<OptionMultiLegOrder(id={self.id}, symbol={self.symbol}, "
+            f"strategy={self.strategy}, legs={len(self.legs)})>"
+        )
+
+
+class OptionOrderLeg(Base):
+    """Individual option legs associated with a multi-leg order."""
+
+    __tablename__ = "option_order_legs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(
+        Integer,
+        ForeignKey("option_multi_leg_orders.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    action = Column(String(4), nullable=False)  # BUY / SELL
+    option_type = Column(String(4), nullable=False)  # call / put
+    strike_price = Column(Float, nullable=False)
+    expiration_date = Column(Date, nullable=False)
+    quantity = Column(Integer, nullable=False)
+    limit_price = Column(Float, nullable=True)
+    implied_volatility = Column(Float, nullable=True)
+    delta = Column(Float, nullable=True)
+    gamma = Column(Float, nullable=True)
+    theta = Column(Float, nullable=True)
+    vega = Column(Float, nullable=True)
+    rho = Column(Float, nullable=True)
+    underlying_price = Column(Float, nullable=True)
+    source_symbol = Column(String(30), nullable=False)
+    metadata_json = Column(JSON, default=dict, nullable=False)
+
+    order = relationship("OptionMultiLegOrder", back_populates="legs")
+
+    def __repr__(self):
+        return (
+            f"<OptionOrderLeg(id={self.id}, action={self.action}, strike={self.strike_price}, "
+            f"exp={self.expiration_date})>"
         )
 
 
