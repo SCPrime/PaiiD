@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from "@/lib/logger";
 
 /**
  * 🔒 LOCKED FINAL PaiiD CHAT BOX 🔒
@@ -52,7 +53,7 @@ const CompletePaiiDLogo: React.FC<CompletePaiiDLogoProps> = ({ size = 80, enable
 
   const handleQuerySubmit = async () => {
     if (query.trim()) {
-      console.log("User query:", query);
+      logger.info("User query submitted", { query });
       const userMessage = query.trim();
       setQuery("");
       setLoading(true);
@@ -79,18 +80,18 @@ const CompletePaiiDLogo: React.FC<CompletePaiiDLogoProps> = ({ size = 80, enable
 
         if (!apiResponse.ok) {
           const errorData = await apiResponse.json();
-          console.error("Chat API error:", errorData);
+          logger.error("Chat API error", errorData);
           setResponse(`Error: ${errorData.detail || "Failed to get response from AI"}`);
           setLoading(false);
           return;
         }
 
         const data = await apiResponse.json();
-        console.log("AI Response:", data);
+        logger.info("AI Response received", { responseLength: data.response?.length || 0 });
         setResponse(data.response || data.content || JSON.stringify(data));
         setLoading(false);
       } catch (error: any) {
-        console.error("Chat submission error:", error);
+        logger.error("Chat submission error", error);
         setResponse(`Error: ${error.message || "Failed to submit chat message"}`);
         setLoading(false);
       }
@@ -540,7 +541,7 @@ const PaiiDChatBoxWithLogo = () => {
 
   const handleQuerySubmit = async () => {
     if (query.trim()) {
-      console.log("User query:", query);
+      logger.info("User query submitted", { query });
       const userMessage = query.trim();
       setQuery("");
       setLoading(true);
@@ -567,18 +568,18 @@ const PaiiDChatBoxWithLogo = () => {
 
         if (!apiResponse.ok) {
           const errorData = await apiResponse.json();
-          console.error("Chat API error:", errorData);
+          logger.error("Chat API error", errorData);
           setResponse(`Error: ${errorData.detail || "Failed to get response from AI"}`);
           setLoading(false);
           return;
         }
 
         const data = await apiResponse.json();
-        console.log("AI Response:", data);
+        logger.info("AI Response received", { responseLength: data.response?.length || 0 });
         setResponse(data.response || data.content || JSON.stringify(data));
         setLoading(false);
       } catch (error: any) {
-        console.error("Chat submission error:", error);
+        logger.error("Chat submission error", error);
         setResponse(`Error: ${error.message || "Failed to submit chat message"}`);
         setLoading(false);
       }
