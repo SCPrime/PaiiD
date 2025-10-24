@@ -18,7 +18,35 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+try:
+    from cachetools import TTLCache
+except ModuleNotFoundError:  # pragma: no cover - fallback for test environment
+    class TTLCache(dict):
+        def __init__(self, maxsize: int, ttl: float):
+            super().__init__()
+            self._maxsize = maxsize
+            self._ttl = ttl
+            self._expiry: dict[str, float] = {}
+
+        def __getitem__(self, key):
+            value = super().__getitem__(key)
+            if self._expiry.get(key, 0) < datetime.utcnow().timestamp():
+                del self[key]
+                raise KeyError(key)
+            return value
+
+        def __setitem__(self, key, value):
+            if len(self) >= self._maxsize:
+                self._evict()
+            self._expiry[key] = datetime.utcnow().timestamp() + self._ttl
+            super().__setitem__(key, value)
+
+        def _evict(self):
+            if not self:
+                return
+            oldest_key = min(self._expiry, key=self._expiry.get)
+            del self._expiry[oldest_key]
+            super().__delitem__(oldest_key)
 
 from ..core.config import settings
 from ..core.auth import require_bearer

@@ -15,6 +15,7 @@ from .database import (
     User,
     UserSession,
 )
+from app.market_data.models import IntradayBar
 
 
 __all__ = [
@@ -27,4 +28,5 @@ __all__ = [
     "Trade",
     "User",
     "UserSession",
+    "IntradayBar",
 ]
