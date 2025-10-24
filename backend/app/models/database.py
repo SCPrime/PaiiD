@@ -7,7 +7,18 @@ Defines schema for users, strategies, trades, performance tracking, and equity s
 
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from ..db.session import Base
@@ -48,6 +59,9 @@ class User(Base):
 
     # Relationships
     strategies = relationship("Strategy", back_populates="user", cascade="all, delete-orphan")
+    strategy_configs = relationship(
+        "StrategyConfigModel", back_populates="owner", cascade="all, delete-orphan"
+    )
     trades = relationship("Trade", back_populates="user", cascade="all, delete-orphan")
     sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
     activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
@@ -165,6 +179,105 @@ class Strategy(Base):
 
     def __repr__(self):
         return f"<Strategy(id={self.id}, name='{self.name}', type='{self.strategy_type}')>"
+
+
+class StrategyConfigModel(Base):
+    """Persisted strategy configuration with version management"""
+
+    __tablename__ = "strategy_configs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(String(255), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    strategy_key = Column(String(100), nullable=False)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+
+    model_key = Column(String(100), nullable=True)
+    feature_flags = Column(JSON, default=dict, nullable=False)
+
+    current_version = Column(Integer, default=1, nullable=False)
+    current_config = Column(JSON, default=dict, nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    owner = relationship("User", back_populates="strategy_configs")
+    versions = relationship(
+        "StrategyVersionModel", back_populates="strategy_config", cascade="all, delete-orphan"
+    )
+    performance_logs = relationship(
+        "StrategyPerformanceLogModel",
+        back_populates="strategy_config",
+        cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (
+        UniqueConstraint("owner_id", "strategy_key", name="uq_strategy_owner_key"),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<StrategyConfigModel(id={self.id}, owner_id='{self.owner_id}',"
+            f" strategy_key='{self.strategy_key}', version={self.current_version})>"
+        )
+
+
+class StrategyVersionModel(Base):
+    """Immutable snapshot of a strategy configuration"""
+
+    __tablename__ = "strategy_versions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    strategy_config_id = Column(
+        Integer, ForeignKey("strategy_configs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    version_number = Column(Integer, nullable=False)
+    config_snapshot = Column(JSON, nullable=False)
+    changes_summary = Column(Text, nullable=True)
+    created_by = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    strategy_config = relationship("StrategyConfigModel", back_populates="versions")
+
+    __table_args__ = (
+        UniqueConstraint("strategy_config_id", "version_number", name="uq_strategy_version"),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<StrategyVersionModel(config_id={self.strategy_config_id},"
+            f" version={self.version_number})>"
+        )
+
+
+class StrategyPerformanceLogModel(Base):
+    """Performance metrics for strategy runs"""
+
+    __tablename__ = "strategy_performance_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    strategy_config_id = Column(
+        Integer, ForeignKey("strategy_configs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    version_number = Column(Integer, nullable=False)
+    run_type = Column(String(50), nullable=False, default="backtest")
+    metrics = Column(JSON, default=dict, nullable=False)
+    notes = Column(Text, nullable=True)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    strategy_config = relationship("StrategyConfigModel", back_populates="performance_logs")
+
+    def __repr__(self) -> str:
+        return (
+            f"<StrategyPerformanceLogModel(config_id={self.strategy_config_id},"
+            f" version={self.version_number}, run_type='{self.run_type}')>"
+        )
 
 
 class Trade(Base):

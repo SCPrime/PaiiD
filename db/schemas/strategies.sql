@@ -133,6 +133,66 @@ CREATE INDEX idx_performance_type ON strategy_performance(performance_type);
 CREATE INDEX idx_performance_date ON strategy_performance(end_date DESC);
 
 -- ============================================================================
+-- Strategy Configuration Persistence Tables
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS strategy_configs (
+  id SERIAL PRIMARY KEY,
+
+  owner_id VARCHAR(255) NOT NULL,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+
+  strategy_key VARCHAR(100) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+
+  model_key VARCHAR(100),
+  feature_flags JSONB NOT NULL DEFAULT '{}'::jsonb,
+
+  current_version INTEGER NOT NULL DEFAULT 1,
+  current_config JSONB NOT NULL DEFAULT '{}'::jsonb,
+
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT uq_strategy_owner_key UNIQUE (owner_id, strategy_key)
+);
+
+CREATE INDEX idx_strategy_configs_owner ON strategy_configs(owner_id);
+CREATE INDEX idx_strategy_configs_updated ON strategy_configs(updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS strategy_versions (
+  id SERIAL PRIMARY KEY,
+
+  strategy_config_id INTEGER NOT NULL REFERENCES strategy_configs(id) ON DELETE CASCADE,
+  version_number INTEGER NOT NULL,
+  config_snapshot JSONB NOT NULL,
+  changes_summary TEXT,
+  created_by VARCHAR(255),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT uq_strategy_version UNIQUE (strategy_config_id, version_number)
+);
+
+CREATE INDEX idx_strategy_versions_config ON strategy_versions(strategy_config_id, version_number DESC);
+
+CREATE TABLE IF NOT EXISTS strategy_performance_logs (
+  id SERIAL PRIMARY KEY,
+
+  strategy_config_id INTEGER NOT NULL REFERENCES strategy_configs(id) ON DELETE CASCADE,
+  version_number INTEGER NOT NULL,
+  run_type VARCHAR(50) NOT NULL,
+  metrics JSONB NOT NULL DEFAULT '{}'::jsonb,
+  notes TEXT,
+  started_at TIMESTAMP WITH TIME ZONE,
+  completed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_strategy_performance_logs_config ON strategy_performance_logs(strategy_config_id);
+CREATE INDEX idx_strategy_performance_logs_created ON strategy_performance_logs(created_at DESC);
+
+-- ============================================================================
 -- Helper Functions
 -- ============================================================================
 

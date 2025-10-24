@@ -29,6 +29,7 @@ import StockLookup from "./StockLookup";
 import TemplateCustomizationModal from "./TemplateCustomizationModal";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { StrategyConfigManager } from "@/src/features/strategies";
 interface Strategy {
   id?: string;
   name: string;
@@ -326,11 +327,11 @@ export default function StrategyBuilderAI() {
           </div>
 
           {/* View Toggle */}
-          <div style={{ display: "flex", gap: theme.spacing.sm }}>
-            <GlassButton
-              variant={view === "library" ? "primary" : "secondary"}
-              onClick={() => setView("library")}
-            >
+        <div style={{ display: "flex", gap: theme.spacing.sm }}>
+          <GlassButton
+            variant={view === "library" ? "primary" : "secondary"}
+            onClick={() => setView("library")}
+          >
               <Code2 style={{ width: "18px", height: "18px" }} />
               Strategy Library
             </GlassButton>
@@ -343,6 +344,8 @@ export default function StrategyBuilderAI() {
             </GlassButton>
           </div>
         </div>
+
+        <StrategyConfigManager strategyType="under4-multileg" />
 
         {/* Error Banner */}
         {error && (
