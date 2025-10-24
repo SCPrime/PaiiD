@@ -379,27 +379,76 @@ async def calculate_greeks(
     strike: float = Query(..., description="Strike price"),
     expiration: str = Query(..., description="Expiration date (YYYY-MM-DD)"),
     option_type: str = Query(..., description="call or put"),
+    implied_volatility: float = Query(
+        0.3, description="Implied volatility (default 30%)"
+    ),
     current_user: User = Depends(get_current_user),
 ):
     """
     Calculate Greeks for a specific option contract
 
-    Returns delta, gamma, theta, vega, and rho for the given option parameters.
-    Uses Black-Scholes model for calculation.
+    Returns delta, gamma, theta, vega calculated using Black-Scholes model.
+    Useful for custom options analysis and strategy building.
 
-    **PHASE 1 IMPLEMENTATION:**
-    Greeks calculator already implemented in app.services.greeks.GreeksCalculator
-    This endpoint will integrate it with options chain data from Alpaca.
+    Args:
+        symbol: Underlying stock symbol (e.g., "AAPL")
+        underlying_price: Current price of underlying asset
+        strike: Strike price of the option
+        expiration: Expiration date (YYYY-MM-DD)
+        option_type: "call" or "put"
+        implied_volatility: IV as decimal (default 0.3 = 30%)
+
+    Returns:
+        Greeks dict with delta, gamma, theta, vega
     """
-    # PHASE 1: Integrate GreeksCalculator with Alpaca options data
-    # Implementation plan:
-    #   1. Fetch option contract details from Alpaca API
-    #   2. Calculate Greeks using existing GreeksCalculator
-    #   3. Return combined data (pricing + Greeks)
-    raise HTTPException(
-        status_code=501,
-        detail="Greeks calculation endpoint not yet implemented - Phase 1 scaffold",
-    )
+    try:
+        from ..services.greeks import GreeksCalculator
+
+        # Calculate days to expiration
+        exp_date = datetime.strptime(expiration, "%Y-%m-%d")
+        today = datetime.now()
+        days_to_expiry = (exp_date - today).days
+
+        if days_to_expiry < 0:
+            raise HTTPException(
+                status_code=400, detail="Expiration date must be in the future"
+            )
+
+        # Initialize Greeks calculator
+        greeks_calc = GreeksCalculator(risk_free_rate=0.05)
+
+        # Calculate Greeks
+        greeks = greeks_calc.calculate_greeks(
+            option_type=option_type.lower(),
+            underlying_price=underlying_price,
+            strike_price=strike,
+            days_to_expiry=days_to_expiry,
+            implied_volatility=implied_volatility,
+        )
+
+        logger.info(
+            f"✅ Calculated Greeks for {symbol} {strike}{option_type[0].upper()} @ {expiration}"
+        )
+
+        return {
+            "symbol": symbol,
+            "underlying_price": underlying_price,
+            "strike": strike,
+            "expiration": expiration,
+            "option_type": option_type,
+            "days_to_expiry": days_to_expiry,
+            "implied_volatility": implied_volatility,
+            **greeks,
+        }
+
+    except ValueError as e:
+        logger.error(f"❌ Invalid parameters: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"❌ Failed to calculate Greeks: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to calculate Greeks: {e!s}"
+        )
 
 
 @router.get(
