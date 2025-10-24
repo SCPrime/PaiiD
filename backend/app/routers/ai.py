@@ -1837,6 +1837,7 @@ async def analyze_portfolio():
     """
     try:
         import os
+
         from anthropic import Anthropic
 
         logger.info("🤖 AI Portfolio Analysis - Starting...")
@@ -2195,10 +2196,10 @@ Base your analysis on:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ News analysis error: {str(e)}")
+        logger.error(f"❌ News analysis error: {e!s}")
         raise HTTPException(
             status_code=500,
-            detail=f"News analysis failed: {str(e)}"
+            detail=f"News analysis failed: {e!s}"
         )
 
 
@@ -2238,8 +2239,8 @@ async def analyze_news_batch(
         }
 
     except Exception as e:
-        logger.error(f"❌ Batch news analysis error: {str(e)}")
+        logger.error(f"❌ Batch news analysis error: {e!s}")
         raise HTTPException(
             status_code=500,
-            detail=f"Batch analysis failed: {str(e)}"
+            detail=f"Batch analysis failed: {e!s}"
         )

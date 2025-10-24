@@ -1,15 +1,18 @@
-"""
-Strategy-based opportunity screening endpoints
-"""
+"""Strategy-based opportunity screening endpoints."""
 
+import logging
 import random
 from typing import Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
+from ..models.database import User
+from .error_utils import log_and_sanitize_exceptions
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["screening"])
 
@@ -25,8 +28,16 @@ class Opportunity(BaseModel):
     risk: Literal["low", "medium", "high"]
 
 
-@router.get("/screening/opportunities", dependencies=[Depends(require_bearer)])
-async def get_opportunities(max_price: float | None = None) -> dict:
+@router.get("/screening/opportunities")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to fetch screening opportunities",
+    log_message="Unable to fetch screening opportunities",
+)
+async def get_opportunities(
+    max_price: float | None = None,
+    _current_user: User = Depends(get_current_user),
+) -> dict:
     """
     Get strategy-based trading opportunities
 
@@ -309,8 +320,15 @@ async def get_opportunities(max_price: float | None = None) -> dict:
     }
 
 
-@router.get("/screening/strategies", dependencies=[Depends(require_bearer)])
-async def get_available_strategies() -> dict:
+@router.get("/screening/strategies")
+@log_and_sanitize_exceptions(
+    logger,
+    public_message="Failed to fetch screening strategies",
+    log_message="Unable to fetch screening strategies",
+)
+async def get_available_strategies(
+    _current_user: User = Depends(get_current_user),
+) -> dict:
     """
     Get list of available screening strategies
 
