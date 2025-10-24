@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useMarketStream } from "../hooks/useMarketStream";
 
 export default function StatusBar() {
@@ -38,10 +38,10 @@ export default function StatusBar() {
         `✓ System operational • Backend: Online • Redis: ${redisStatus} • Market Data: ${streamStatus}`
       );
       setLastCheck(new Date());
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Health check failed:", error);
       setStatus("error");
-      setMessage(`Backend error: ${error.message || "Cannot connect"}`);
+      setMessage(`Backend error: ${error instanceof Error ? error.message : "Cannot connect"}`);
     }
   }, [marketStreamConnected]);
 

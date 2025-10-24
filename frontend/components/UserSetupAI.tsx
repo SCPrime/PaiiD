@@ -3,25 +3,25 @@
  * Conversational onboarding with Claude AI
  */
 
-import { useState, useRef, useEffect, useMemo } from "react";
 import {
+  ArrowRight,
   Brain,
-  Sparkles,
+  Check,
+  DollarSign,
+  Loader2,
   MessageCircle,
   Send,
-  Loader2,
-  Check,
-  ArrowRight,
-  Target,
   Shield,
+  Sparkles,
+  Target,
   TrendingUp,
-  DollarSign,
 } from "lucide-react";
-import { theme } from "../styles/theme";
-import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { claudeAI, UserPreferences } from "../lib/aiAdapter";
 import { createUser } from "../lib/userManagement";
-import dynamic from "next/dynamic";
+import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
+import { theme } from "../styles/theme";
 import CompletePaiiDLogo from "./CompletePaiiDLogo";
 
 const UserSetup = dynamic(() => import("./UserSetup"), { ssr: false });
@@ -187,7 +187,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
         setConversationStep("done");
         setShowReview(true);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (conversationStep === "trading") {
         setMessages((prev) => [
           ...prev,

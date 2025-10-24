@@ -4,42 +4,54 @@
  * NOTE: TypeScript checking disabled temporarily - needs interface fixes
  */
 
-import { useState, useEffect } from "react";
 import {
-  Sparkles,
-  Code2,
-  Save,
-  Play,
-  Trash2,
-  Edit3,
   AlertCircle,
-  Shield,
-  Target,
-  Brain,
-  Loader2,
-  Search,
-  Copy,
   Award,
   BarChart3,
+  Brain,
+  Code2,
+  Copy,
+  Edit3,
+  Loader2,
+  Play,
+  Save,
+  Search,
+  Shield,
+  Sparkles,
+  Target,
+  Trash2,
 } from "lucide-react";
-import { GlassCard, GlassButton, GlassBadge } from "./GlassmorphicComponents";
-import { theme } from "../styles/theme";
-import { claudeAI } from "../lib/aiAdapter";
-import StockLookup from "./StockLookup";
-import TemplateCustomizationModal from "./TemplateCustomizationModal";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { claudeAI } from "../lib/aiAdapter";
+import { theme } from "../styles/theme";
+import { GlassBadge, GlassButton, GlassCard } from "./GlassmorphicComponents";
+import StockLookup from "./StockLookup";
+import TemplateCustomizationModal from "./TemplateCustomizationModal";
 interface Strategy {
   id?: string;
   name: string;
   entry: string[];
   exit: string[];
-  riskManagement?: string[] | { maxDrawdown?: number; [key: string]: any };
+  riskManagement?: string[] | { maxDrawdown?: number; [key: string]: unknown };
   code?: string;
   status?: string;
-  entryRules?: any[];
-  exitRules?: any[];
-  positionSizing?: any;
+  entryRules?: Array<{
+    condition: string;
+    value: string;
+    operator: string;
+  }>;
+  exitRules?: Array<{
+    condition: string;
+    value: string;
+    operator: string;
+  }>;
+  positionSizing?: {
+    method: string;
+    percentage: number;
+    maxRisk: number;
+  };
   aiPrompt?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -51,9 +63,21 @@ interface SavedStrategy extends Omit<Strategy, "id"> {
   status?: string;
   createdAt?: string;
   updatedAt?: string;
-  entryRules?: any[];
-  exitRules?: any[];
-  positionSizing?: any;
+  entryRules?: Array<{
+    condition: string;
+    value: string;
+    operator: string;
+  }>;
+  exitRules?: Array<{
+    condition: string;
+    value: string;
+    operator: string;
+  }>;
+  positionSizing?: {
+    method: string;
+    percentage: number;
+    maxRisk: number;
+  };
   backtestResults?: {
     winRate: number;
     totalTrades: number;

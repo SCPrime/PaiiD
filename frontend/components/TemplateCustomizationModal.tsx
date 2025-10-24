@@ -3,12 +3,12 @@
  * Allows users to customize strategy template parameters before cloning
  */
 
+import { BarChart3, Copy, Shield, Target, TrendingUp, X } from "lucide-react";
 import { useState } from "react";
-import { X, Copy, BarChart3, TrendingUp, Shield, Target } from "lucide-react";
-import { GlassButton } from "./GlassmorphicComponents";
-import { theme } from "../styles/theme";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { theme } from "../styles/theme";
+import { GlassButton } from "./GlassmorphicComponents";
 
 interface Template {
   id: string;
@@ -21,7 +21,22 @@ interface Template {
   avg_return_percent: number;
   max_drawdown_percent: number;
   recommended_for: string[];
-  config: any;
+  config: {
+    entry_rules?: Array<{
+      type: string;
+      value: string;
+      operator: string;
+    }>;
+    exit_rules?: Array<{
+      type: string;
+      value: number;
+      operator: string;
+    }>;
+    position_sizing?: {
+      method: string;
+      percentage: number;
+    };
+  };
 }
 
 interface TemplateCustomizationModalProps {
@@ -54,8 +69,12 @@ export default function TemplateCustomizationModal({
 
       // Extract stop loss and take profit from exit rules
       const exitRules = template.config?.exit_rules || [];
-      const stopLossRule = exitRules.find((r: any) => r.type === "stop_loss");
-      const takeProfitRule = exitRules.find((r: any) => r.type === "take_profit");
+      const stopLossRule = exitRules.find(
+        (r: { type: string; value: number }) => r.type === "stop_loss"
+      );
+      const takeProfitRule = exitRules.find(
+        (r: { type: string; value: number }) => r.type === "take_profit"
+      );
 
       setStopLoss(stopLossRule?.value || 3);
       setTakeProfit(takeProfitRule?.value || 8);
@@ -73,7 +92,23 @@ export default function TemplateCustomizationModal({
 
     try {
       // Build config overrides
-      const configOverrides: any = {
+      const configOverrides: {
+        position_size_percent: number;
+        max_positions: number;
+        rsi_period: number;
+        stop_loss_percent: number;
+        take_profit_percent: number;
+        entry_rules: Array<{
+          type: string;
+          value: string;
+          operator: string;
+        }>;
+        exit_rules: Array<{
+          type: string;
+          value: number;
+          operator: string;
+        }>;
+      } = {
         position_size_percent: positionSize,
         max_positions: maxPositions,
         rsi_period: rsiPeriod,

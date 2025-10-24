@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { BarChart3, TrendingUp, Activity, RefreshCw } from "lucide-react";
+import { Activity, BarChart3, RefreshCw, TrendingUp } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { theme } from "../styles/theme";
 
 interface TradingViewChartProps {
@@ -10,7 +10,25 @@ interface TradingViewChartProps {
 
 declare global {
   interface Window {
-    TradingView?: any;
+    TradingView?: {
+      widget: (options: {
+        container_id: string;
+        symbol: string;
+        interval: string;
+        autosize: boolean;
+        height: number;
+        theme: string;
+        style: string;
+        locale: string;
+        toolbar_bg: string;
+        enable_publishing: boolean;
+        hide_top_toolbar: boolean;
+        hide_legend: boolean;
+        save_image: boolean;
+        studies: string[];
+        overrides: Record<string, unknown>;
+      }) => unknown;
+    };
   }
 }
 
@@ -27,7 +45,10 @@ export default function TradingViewChart({
     rsi: false,
     macd: false,
   });
-  const widgetRef = useRef<any>(null);
+  const widgetRef = useRef<{
+    remove: () => void;
+    onChartReady: (callback: () => void) => void;
+  } | null>(null);
 
   const timeframes = [
     { label: "1D", value: "D", name: "1 Day" },

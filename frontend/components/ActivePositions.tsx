@@ -1,18 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
 import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  RefreshCw,
   Brain,
   ChevronDown,
   ChevronUp,
+  DollarSign,
+  RefreshCw,
+  TrendingDown,
+  TrendingUp,
 } from "lucide-react";
-import { Card, Button } from "./ui";
-import { theme } from "../styles/theme";
-import { alpaca, formatPosition } from "../lib/alpaca";
+import { useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { alpaca, formatPosition } from "../lib/alpaca";
+import { theme } from "../styles/theme";
+import { Button, Card } from "./ui";
 // import { usePositionUpdates } from "../hooks/usePositionUpdates"; // DISABLED: Using REST API instead
 
 interface Position {
@@ -202,9 +202,12 @@ export default function ActivePositions() {
       };
 
       setAiAnalysisMap((prev) => ({ ...prev, [symbol]: analysis }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`AI analysis error for ${symbol}:`, error);
-      setAiErrorMap((prev) => ({ ...prev, [symbol]: error.message }));
+      setAiErrorMap((prev) => ({
+        ...prev,
+        [symbol]: error instanceof Error ? error.message : "Unknown error",
+      }));
     } finally {
       setAiLoadingMap((prev) => ({ ...prev, [symbol]: false }));
     }

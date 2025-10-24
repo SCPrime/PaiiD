@@ -1,35 +1,35 @@
 "use client";
 
-import { useState } from "react";
 import {
-  User,
-  Mail,
-  Users,
-  Info,
-  ChevronLeft,
-  ChevronRight,
-  ArrowRight,
-  Target,
-  DollarSign,
-  TrendingUp,
-  BookOpen,
-  Clock,
-  Zap,
-  Save,
-  X,
-  CheckCircle,
   Activity,
-  Search,
-  Book,
   AlertCircle,
+  ArrowRight,
   BarChart3,
   Bell,
+  Book,
+  BookOpen,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  DollarSign,
+  Info,
+  Mail,
+  Save,
+  Search,
+  Target,
+  TrendingUp,
+  User,
+  Users,
+  X,
+  Zap,
 } from "lucide-react";
+import { useState } from "react";
 import { createUser } from "../lib/userManagement";
-import { GlassCard, GlassButton, GlassInput } from "./GlassmorphicComponents";
-import { theme } from "../styles/theme";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
+import { theme } from "../styles/theme";
 import CompletePaiiDLogo from "./CompletePaiiDLogo";
+import { GlassButton, GlassCard, GlassInput } from "./GlassmorphicComponents";
 
 interface UserSetupProps {
   onComplete: () => void;
@@ -41,7 +41,7 @@ interface OnboardingField {
   type: "select" | "input" | "multiselect";
   options?: string[];
   tooltip: string;
-  icon?: any;
+  icon?: React.ComponentType<{ size?: number; className?: string }>;
 }
 
 interface OnboardingPage {

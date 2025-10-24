@@ -18,7 +18,15 @@ interface HealthMetrics {
     avg_response_time_ms: number;
     requests_per_minute: number;
   };
-  dependencies: Record<string, any>;
+  dependencies: Record<
+    string,
+    {
+      status: string;
+      response_time_ms?: number;
+      last_check?: string;
+      error?: string;
+    }
+  >;
 }
 
 export default function PerformanceDashboard() {
@@ -142,7 +150,7 @@ export default function PerformanceDashboard() {
       <div className="bg-gray-800 rounded-lg p-6">
         <h3 className="text-xl font-bold mb-4">External Services</h3>
         <div className="space-y-3">
-          {Object.entries(metrics.dependencies).map(([name, dep]: [string, any]) => (
+          {Object.entries(metrics.dependencies).map(([name, dep]) => (
             <div
               key={name}
               className="flex justify-between items-center border-b border-gray-700 pb-2"

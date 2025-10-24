@@ -1,0 +1,37 @@
+Contact: security@paiid.com
+Expires: 2026-12-31T23:59:59.000Z
+Preferred-Languages: en
+Canonical: https://scprime.github.io/PaiiD/.well-known/security.txt
+
+# PaiiD Trading Platform - Security Policy
+
+## Reporting Security Issues
+
+If you discover a security vulnerability, please report it responsibly:
+- DO NOT open a public GitHub issue
+- Email security concerns to: security@paiid.com
+- Include detailed reproduction steps
+- Allow 90 days for remediation before public disclosure
+
+## Bug Bounty
+
+We appreciate responsible security researchers. Bounties available for:
+- Critical vulnerabilities: $500-$2000
+- High severity: $250-$500
+- Medium severity: $100-$250
+
+## What We Protect
+
+This is a proprietary trading platform. We take intellectual property theft seriously.
+
+## Legal Notice
+
+Unauthorized access, copying, or distribution of this software may result in:
+- Civil liability
+- Criminal prosecution under the Computer Fraud and Abuse Act (CFAA)
+- DMCA takedown notices
+- Permanent ban from all services
+
+Think you found a bug? Report it responsibly.
+Think you can copy our code? Think again. We're watching. 🔍
+
