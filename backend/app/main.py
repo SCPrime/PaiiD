@@ -38,6 +38,7 @@ from .routers import (
     market_data,
     ml,
     ml_sentiment,
+    monitor,
     news,
     options,
     orders,
@@ -422,4 +423,5 @@ app.include_router(analytics.router, prefix="/api")
 app.include_router(backtesting.router, prefix="/api")
 app.include_router(ml.router)  # Machine Learning (Phase 2)
 app.include_router(ml_sentiment.router)  # ML Sentiment & Signals (Phase 2 - Active)
+app.include_router(monitor.router)  # GitHub Repository Monitor
 app.include_router(telemetry.router)

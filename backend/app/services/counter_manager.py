@@ -1,55 +1,54 @@
 """
-Counter Manager Service - Tracks all repository metrics and events
-
-Manages running counters for:
-- Event counts (commits, pushes, PRs, issues, deployments)
-- Issue health metrics
-- Project completion progress
-- System health indicators
+Counter Manager Service
+Manages all monitoring counters with Redis backend for real-time tracking
 """
 
-import json
+import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-from app.core.redis_client import get_redis
+from ..core.config import get_settings
+from ..core.redis_client import get_redis
+
+
+logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 class CounterManager:
     """Manages all monitoring counters with Redis backend"""
 
     def __init__(self):
-        self.redis = None
+        self.redis = get_redis()
         self.prefix = "monitor:counter:"
-
-    async def initialize(self):
-        """Initialize Redis connection"""
-        self.redis = await get_redis()
 
     async def increment(self, counter_name: str, amount: int = 1) -> int:
         """
         Increment a counter
 
         Args:
-            counter_name: Name of the counter (e.g., 'commits', 'issues_opened')
-            amount: Amount to increment by (default: 1)
+            counter_name: Name of the counter
+            amount: Amount to increment by
 
         Returns:
             New counter value
         """
-        if not self.redis:
-            await self.initialize()
+        try:
+            key = f"{self.prefix}{counter_name}"
+            new_value = await self.redis.incrby(key, amount)
 
-        key = f"{self.prefix}{counter_name}"
-        new_value = await self.redis.incrby(key, amount)
+            # Also track in time-series for trending
+            timestamp = datetime.utcnow().timestamp()
+            await self.redis.zadd(
+                f"{self.prefix}timeseries:{counter_name}", {str(timestamp): amount}
+            )
 
-        # Also track in time-series for trending
-        timestamp = datetime.utcnow().timestamp()
-        await self.redis.zadd(
-            f"{self.prefix}timeseries:{counter_name}", {str(timestamp): amount}
-        )
+            logger.debug(f"Incremented counter {counter_name} by {amount} to {new_value}")
+            return new_value
 
-        return new_value
+        except Exception as e:
+            logger.error(f"Error incrementing counter {counter_name}: {e}")
+            return 0
 
     async def get(self, counter_name: str) -> int:
         """
@@ -59,28 +58,16 @@ class CounterManager:
             counter_name: Name of the counter
 
         Returns:
-            Current counter value (0 if not exists)
+            Counter value (0 if not found)
         """
-        if not self.redis:
-            await self.initialize()
+        try:
+            key = f"{self.prefix}{counter_name}"
+            value = await self.redis.get(key)
+            return int(value) if value else 0
 
-        key = f"{self.prefix}{counter_name}"
-        value = await self.redis.get(key)
-        return int(value) if value else 0
-
-    async def set(self, counter_name: str, value: int):
-        """
-        Set counter to specific value
-
-        Args:
-            counter_name: Name of the counter
-            value: Value to set
-        """
-        if not self.redis:
-            await self.initialize()
-
-        key = f"{self.prefix}{counter_name}"
-        await self.redis.set(key, value)
+        except Exception as e:
+            logger.error(f"Error getting counter {counter_name}: {e}")
+            return 0
 
     async def get_all(self) -> dict[str, int]:
         """
@@ -89,28 +76,66 @@ class CounterManager:
         Returns:
             Dictionary of counter names to values
         """
-        if not self.redis:
-            await self.initialize()
+        try:
+            pattern = f"{self.prefix}*"
+            keys = await self.redis.keys(pattern)
+            counters = {}
 
-        pattern = f"{self.prefix}*"
-        keys = []
-        async for key in self.redis.scan_iter(match=pattern):
-            if b"timeseries" not in key:
-                keys.append(key.decode() if isinstance(key, bytes) else key)
+            for key in keys:
+                # Skip timeseries keys
+                if "timeseries" in key:
+                    continue
 
-        counters = {}
-        for key in keys:
-            name = key.replace(self.prefix, "")
-            counters[name] = await self.get(name)
+                name = key.replace(self.prefix, "")
+                value = await self.redis.get(key)
+                counters[name] = int(value) if value else 0
 
-        return counters
+            return counters
 
-    async def reset(self, counter_name: str):
-        """Reset a counter to 0"""
-        await self.set(counter_name, 0)
+        except Exception as e:
+            logger.error(f"Error getting all counters: {e}")
+            return {}
 
-    async def reset_weekly_counters(self):
-        """Reset weekly counters (called by cron every Monday)"""
+    async def set(self, counter_name: str, value: int) -> bool:
+        """
+        Set counter to specific value
+
+        Args:
+            counter_name: Name of the counter
+            value: Value to set
+
+        Returns:
+            True if successful
+        """
+        try:
+            key = f"{self.prefix}{counter_name}"
+            await self.redis.set(key, value)
+            logger.debug(f"Set counter {counter_name} to {value}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error setting counter {counter_name}: {e}")
+            return False
+
+    async def reset(self, counter_name: str) -> bool:
+        """
+        Reset counter to zero
+
+        Args:
+            counter_name: Name of the counter
+
+        Returns:
+            True if successful
+        """
+        return await self.set(counter_name, 0)
+
+    async def reset_weekly_counters(self) -> int:
+        """
+        Reset weekly counters (called by cron/scheduler)
+
+        Returns:
+            Number of counters reset
+        """
         weekly_counters = [
             "commits",
             "pushes",
@@ -126,8 +151,13 @@ class CounterManager:
             "hotfixes",
         ]
 
+        reset_count = 0
         for counter in weekly_counters:
-            await self.reset(counter)
+            if await self.reset(counter):
+                reset_count += 1
+
+        logger.info(f"Reset {reset_count} weekly counters")
+        return reset_count
 
     async def get_trend(
         self, counter_name: str, hours: int = 24
@@ -140,212 +170,61 @@ class CounterManager:
             hours: Number of hours to look back
 
         Returns:
-            List of {timestamp, value} dicts
+            List of {"timestamp": float, "value": int} dicts
         """
-        if not self.redis:
-            await self.initialize()
+        try:
+            key = f"{self.prefix}timeseries:{counter_name}"
+            since = (datetime.utcnow() - timedelta(hours=hours)).timestamp()
 
-        key = f"{self.prefix}timeseries:{counter_name}"
-        since = (datetime.utcnow() - timedelta(hours=hours)).timestamp()
-
-        # Get all entries since timestamp
-        data = await self.redis.zrangebyscore(key, since, "+inf", withscores=True)
-
-        trend = []
-        for value, score in data:
-            trend.append(
-                {
-                    "timestamp": datetime.fromtimestamp(score).isoformat(),
-                    "value": int(value.decode() if isinstance(value, bytes) else value),
-                }
+            # Get all entries since timestamp
+            data = await self.redis.zrangebyscore(
+                key, since, "+inf", withscores=True
             )
 
-        return trend
+            return [
+                {"timestamp": float(score), "value": int(float(value))}
+                for value, score in data
+            ]
 
-    async def get_completion_progress(self) -> dict[str, Any]:
+        except Exception as e:
+            logger.error(f"Error getting trend for {counter_name}: {e}")
+            return []
+
+    async def cleanup_old_timeseries(self, days: int = 90) -> int:
         """
-        Get project completion progress
-
-        Returns:
-            Completion metrics including overall progress and phase breakdown
-        """
-        # IMPLEMENTATION NOTE: Progress calculated from TODO.md parsing
-        # Future enhancement: Automate parsing of TODO.md checkboxes to populate these counters
-        # Current: Manual updates via counter increments when tasks complete
-        progress = {
-            "overall_progress": await self.get("progress_overall") / 100,
-            "phases": {
-                "phase_0_prep": {
-                    "progress": await self.get("progress_phase_0") / 100,
-                    "tasks_completed": await self.get("tasks_completed_phase_0"),
-                    "tasks_total": await self.get("tasks_total_phase_0"),
-                    "estimated_hours_remaining": await self.get(
-                        "hours_remaining_phase_0"
-                    ),
-                },
-                "phase_1_options": {
-                    "progress": await self.get("progress_phase_1") / 100,
-                    "tasks_completed": await self.get("tasks_completed_phase_1"),
-                    "tasks_total": await self.get("tasks_total_phase_1"),
-                    "estimated_hours_remaining": await self.get(
-                        "hours_remaining_phase_1"
-                    ),
-                },
-                "phase_2_ml": {
-                    "progress": await self.get("progress_phase_2") / 100,
-                    "tasks_completed": await self.get("tasks_completed_phase_2"),
-                    "tasks_total": await self.get("tasks_total_phase_2"),
-                    "estimated_hours_remaining": await self.get(
-                        "hours_remaining_phase_2"
-                    ),
-                },
-                "phase_3_ui": {
-                    "progress": await self.get("progress_phase_3") / 100,
-                    "tasks_completed": await self.get("tasks_completed_phase_3"),
-                    "tasks_total": await self.get("tasks_total_phase_3"),
-                    "estimated_hours_remaining": await self.get(
-                        "hours_remaining_phase_3"
-                    ),
-                },
-                "phase_4_cleanup": {
-                    "progress": await self.get("progress_phase_4") / 100,
-                    "tasks_completed": await self.get("tasks_completed_phase_4"),
-                    "tasks_total": await self.get("tasks_total_phase_4"),
-                    "estimated_hours_remaining": await self.get(
-                        "hours_remaining_phase_4"
-                    ),
-                },
-            },
-            "timeline": {
-                "total_hours_budgeted": 80,
-                "hours_completed": await self.get("hours_completed")
-                / 10,  # Stored as tenths
-                "hours_remaining": await self.get("hours_remaining") / 10,
-                "estimated_completion_date": await self.redis.get(
-                    f"{self.prefix}completion_date"
-                ),
-                "days_behind_schedule": await self.get("days_behind_schedule"),
-            },
-        }
-
-        return progress
-
-    async def update_phase_progress(
-        self, phase: str, tasks_completed: int, tasks_total: int, hours_remaining: float
-    ):
-        """
-        Update progress for a specific phase
+        Clean up timeseries data older than specified days
 
         Args:
-            phase: Phase identifier (e.g., 'phase_0', 'phase_1')
-            tasks_completed: Number of completed tasks
-            tasks_total: Total number of tasks
-            hours_remaining: Estimated hours remaining
-        """
-        progress_pct = (
-            int(tasks_completed / tasks_total * 100) if tasks_total > 0 else 0
-        )
-
-        await self.set(f"progress_{phase}", progress_pct)
-        await self.set(f"tasks_completed_{phase}", tasks_completed)
-        await self.set(f"tasks_total_{phase}", tasks_total)
-        await self.set(f"hours_remaining_{phase}", int(hours_remaining))
-
-        # Recalculate overall progress
-        await self.recalculate_overall_progress()
-
-    async def recalculate_overall_progress(self):
-        """Recalculate overall project progress from all phases"""
-        total_tasks_completed = 0
-        total_tasks = 0
-
-        for phase in ["phase_0", "phase_1", "phase_2", "phase_3", "phase_4"]:
-            total_tasks_completed += await self.get(f"tasks_completed_{phase}")
-            total_tasks += await self.get(f"tasks_total_{phase}")
-
-        overall_pct = (
-            int(total_tasks_completed / total_tasks * 100) if total_tasks > 0 else 0
-        )
-        await self.set("progress_overall", overall_pct)
-
-        # Update hours
-        total_hours_remaining = 0
-        for phase in ["phase_0", "phase_1", "phase_2", "phase_3", "phase_4"]:
-            total_hours_remaining += await self.get(f"hours_remaining_{phase}")
-
-        hours_completed = 80 - total_hours_remaining
-        await self.set("hours_completed", int(hours_completed * 10))  # Store as tenths
-        await self.set("hours_remaining", int(total_hours_remaining * 10))
-
-    async def record_progress_snapshot(self):
-        """
-        Record current progress for historical tracking (call daily)
-
-        Stores progress data points for line graph visualization
-        """
-        date_key = datetime.utcnow().strftime("%Y-%m-%d")
-        overall_progress = await self.get("progress_overall")
-
-        # Calculate target progress (assuming linear timeline over 80 days)
-        # This would need adjustment based on actual start date
-        # For now, we'll store actual progress only
-
-        await self.redis.hset(
-            f"{self.prefix}progress_history",
-            date_key,
-            json.dumps(
-                {
-                    "completion": overall_progress,
-                    "timestamp": datetime.utcnow().isoformat(),
-                }
-            ),
-        )
-
-    async def get_progress_history(self, days: int = 30) -> list[dict[str, Any]]:
-        """
-        Get historical progress data for line graph
-
-        Args:
-            days: Number of days to retrieve
+            days: Number of days to keep
 
         Returns:
-            List of progress data points
+            Number of entries removed
         """
-        history = await self.redis.hgetall(f"{self.prefix}progress_history")
+        try:
+            pattern = f"{self.prefix}timeseries:*"
+            keys = await self.redis.keys(pattern)
+            cutoff = (datetime.utcnow() - timedelta(days=days)).timestamp()
 
-        data_points = []
-        for date_str, value_json in history.items():
-            if isinstance(date_str, bytes):
-                date_str = date_str.decode()
-            if isinstance(value_json, bytes):
-                value_json = value_json.decode()
+            total_removed = 0
+            for key in keys:
+                removed = await self.redis.zremrangebyscore(key, "-inf", cutoff)
+                total_removed += removed
 
-            data = json.loads(value_json)
-            data_points.append(
-                {
-                    "date": date_str,
-                    "completion": data["completion"],
-                    "target": data.get(
-                        "target", data["completion"]
-                    ),  # Calculate target separately
-                }
-            )
+            logger.info(f"Cleaned up {total_removed} old timeseries entries")
+            return total_removed
 
-        # Sort by date
-        data_points.sort(key=lambda x: x["date"])
-
-        # Return last N days
-        return data_points[-days:] if len(data_points) > days else data_points
+        except Exception as e:
+            logger.error(f"Error cleaning up timeseries: {e}")
+            return 0
 
 
-# Singleton instance
-_counter_manager = None
+# Global instance
+_counter_manager: CounterManager | None = None
 
 
-async def get_counter_manager() -> CounterManager:
-    """Get or create CounterManager singleton"""
+def get_counter_manager() -> CounterManager:
+    """Get or create counter manager instance"""
     global _counter_manager
     if _counter_manager is None:
         _counter_manager = CounterManager()
-        await _counter_manager.initialize()
     return _counter_manager

@@ -1,326 +1,282 @@
 """
-Monitor API Router - Provides monitoring dashboard data
-
-Endpoints:
-- GET /dashboard - Complete dashboard data
-- GET /counters - Event counters
-- GET /progress - Completion progress with history
-- GET /alerts - Recent alerts
-- POST /webhook - GitHub webhook receiver
+GitHub Repository Monitor API Router
+Provides endpoints for monitoring dashboard and counters
 """
 
 import logging
 from datetime import datetime
-from typing import Any
 
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
 
-from app.core.config import settings
-from app.services.alert_manager import AlertSeverity, get_alert_manager
-from app.services.counter_manager import get_counter_manager
-from app.services.github_monitor import GitHubWebhookHandler
+from ..core.auth import get_current_user
+from ..core.config import get_settings
+from ..models.user import User
+from ..services.counter_manager import get_counter_manager
+from ..services.github_monitor import get_github_handler
 
 
 logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/api/monitor", tags=["Repository Monitor"])
+settings = get_settings()
 
-router = APIRouter(prefix="/monitor", tags=["monitoring"])
+
+# Response Models
+class CountersResponse(BaseModel):
+    """Current counter values"""
+
+    commits: int = 0
+    pushes: int = 0
+    pulls_opened: int = 0
+    pulls_merged: int = 0
+    pulls_closed: int = 0
+    issues_opened: int = 0
+    issues_closed: int = 0
+    deployments: int = 0
+    build_failures: int = 0
+    test_failures: int = 0
+    conflicts: int = 0
+    hotfixes: int = 0
 
 
-@router.get("/dashboard")
-async def get_dashboard() -> dict[str, Any]:
+class DashboardResponse(BaseModel):
+    """Complete dashboard data"""
+
+    event_counters: CountersResponse
+    timestamp: datetime
+    status: str
+
+
+class TrendPoint(BaseModel):
+    """Single point in trend data"""
+
+    timestamp: float
+    value: int
+
+
+class TrendResponse(BaseModel):
+    """Trend data for a counter"""
+
+    counter_name: str
+    hours: int
+    data: list[TrendPoint]
+
+
+# Endpoints
+@router.get("/counters", response_model=CountersResponse)
+async def get_counters(current_user: User = Depends(get_current_user)):
+    """
+    Get all current counter values
+
+    Returns current week's activity counters.
+    """
+    try:
+        counter_manager = get_counter_manager()
+        all_counters = await counter_manager.get_all()
+
+        return CountersResponse(
+            commits=all_counters.get("commits", 0),
+            pushes=all_counters.get("pushes", 0),
+            pulls_opened=all_counters.get("pulls_opened", 0),
+            pulls_merged=all_counters.get("pulls_merged", 0),
+            pulls_closed=all_counters.get("pulls_closed", 0),
+            issues_opened=all_counters.get("issues_opened", 0),
+            issues_closed=all_counters.get("issues_closed", 0),
+            deployments=all_counters.get("deployments", 0),
+            build_failures=all_counters.get("build_failures", 0),
+            test_failures=all_counters.get("test_failures", 0),
+            conflicts=all_counters.get("conflicts", 0),
+            hotfixes=all_counters.get("hotfixes", 0),
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting counters: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get counters: {e!s}") from e
+
+
+@router.get("/dashboard", response_model=DashboardResponse)
+async def get_dashboard(current_user: User = Depends(get_current_user)):
     """
     Get complete dashboard data
 
-    Returns all monitoring metrics for dashboard display
+    Returns all monitoring data for the dashboard UI.
     """
     try:
-        counter_mgr = await get_counter_manager()
-        alert_mgr = get_alert_manager()
+        counter_manager = get_counter_manager()
+        all_counters = await counter_manager.get_all()
 
-        # Get event counters
-        event_counters = {
-            "commits": await counter_mgr.get("commits"),
-            "pushes": await counter_mgr.get("pushes"),
-            "pulls_opened": await counter_mgr.get("pulls_opened"),
-            "pulls_merged": await counter_mgr.get("pulls_merged"),
-            "pulls_closed": await counter_mgr.get("pulls_closed"),
-            "issues_opened": await counter_mgr.get("issues_opened"),
-            "issues_closed": await counter_mgr.get("issues_closed"),
-            "deployments": await counter_mgr.get("deployments"),
-            "build_failures": await counter_mgr.get("build_failures"),
-            "test_failures": await counter_mgr.get("test_failures"),
-            "conflicts": await counter_mgr.get("conflicts"),
-        }
+        counters = CountersResponse(
+            commits=all_counters.get("commits", 0),
+            pushes=all_counters.get("pushes", 0),
+            pulls_opened=all_counters.get("pulls_opened", 0),
+            pulls_merged=all_counters.get("pulls_merged", 0),
+            pulls_closed=all_counters.get("pulls_closed", 0),
+            issues_opened=all_counters.get("issues_opened", 0),
+            issues_closed=all_counters.get("issues_closed", 0),
+            deployments=all_counters.get("deployments", 0),
+            build_failures=all_counters.get("build_failures", 0),
+            test_failures=all_counters.get("test_failures", 0),
+            conflicts=all_counters.get("conflicts", 0),
+            hotfixes=all_counters.get("hotfixes", 0),
+        )
 
-        # Get issue health (from ISSUE_TRACKER.md data)
-        issue_health = {
-            "total_issues": await counter_mgr.get("total_issues"),
-            "critical_p0": await counter_mgr.get("issues_p0"),
-            "high_p1": await counter_mgr.get("issues_p1"),
-            "medium_p2": await counter_mgr.get("issues_p2"),
-            "assigned": await counter_mgr.get("issues_assigned"),
-            "unassigned": await counter_mgr.get("issues_unassigned"),
-            "blocked": await counter_mgr.get("issues_blocked"),
-            "avg_resolution_time_hours": await counter_mgr.get("avg_resolution_hours")
-            / 10.0,  # Stored as tenths
-        }
-
-        # Get completion tracking
-        completion_tracking = await counter_mgr.get_completion_progress()
-
-        # Get system health
-        system_health = {
-            "frontend_status": "healthy",  # Would check actual health
-            "backend_status": "healthy",
-            "database_status": "healthy",
-            "redis_status": "healthy",
-            "last_crash": None,  # Would track actual crashes
-            "uptime_percent_7d": await counter_mgr.get("uptime_7d")
-            / 10.0,  # Stored as tenths
-            "api_error_rate_5m": await counter_mgr.get("error_rate_5m")
-            / 10000.0,  # Stored as ten-thousandths
-        }
-
-        # Get recent alerts
-        recent_alerts = await alert_mgr.get_recent_alerts(limit=5)
-
-        return {
-            "eventCounters": event_counters,
-            "issueHealth": issue_health,
-            "completionTracking": completion_tracking,
-            "systemHealth": system_health,
-            "recentAlerts": recent_alerts,
-            "timestamp": datetime.utcnow().isoformat(),
-        }
+        return DashboardResponse(
+            event_counters=counters,
+            timestamp=datetime.utcnow(),
+            status="healthy",
+        )
 
     except Exception as e:
         logger.error(f"Error getting dashboard data: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to get dashboard data: {e!s}"
+        ) from e
+
+
+@router.get("/trend/{counter_name}", response_model=TrendResponse)
+async def get_counter_trend(
+    counter_name: str,
+    hours: int = 24,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get trend data for a specific counter
+
+    Args:
+        counter_name: Name of the counter
+        hours: Number of hours to look back (default: 24)
+
+    Returns:
+        Trend data with timestamps and values
+    """
+    try:
+        counter_manager = get_counter_manager()
+        trend_data = await counter_manager.get_trend(counter_name, hours)
+
+        return TrendResponse(
+            counter_name=counter_name,
+            hours=hours,
+            data=[
+                TrendPoint(timestamp=point["timestamp"], value=point["value"])
+                for point in trend_data
+            ],
         )
 
-
-@router.get("/counters")
-async def get_counters() -> dict[str, int]:
-    """Get all event counters"""
-    try:
-        counter_mgr = await get_counter_manager()
-        return await counter_mgr.get_all()
     except Exception as e:
-        logger.error(f"Error getting counters: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/progress")
-async def get_progress(days: int = 30) -> dict[str, Any]:
-    """
-    Get project completion progress with historical data
-
-    Args:
-        days: Number of days of history to return
-
-    Returns:
-        Current progress and historical data points for line graph
-    """
-    try:
-        counter_mgr = await get_counter_manager()
-
-        # Get current progress
-        current = await counter_mgr.get_completion_progress()
-
-        # Get historical data
-        history = await counter_mgr.get_progress_history(days=days)
-
-        return {
-            "current": current,
-            "history": history,
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-    except Exception as e:
-        logger.error(f"Error getting progress data: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/alerts")
-async def get_alerts(limit: int = 10, severity: str | None = None) -> dict[str, Any]:
-    """
-    Get recent alerts
-
-    Args:
-        limit: Maximum number of alerts to return
-        severity: Filter by severity (critical, high, medium, low)
-
-    Returns:
-        List of recent alerts
-    """
-    try:
-        alert_mgr = get_alert_manager()
-
-        severity_enum = None
-        if severity:
-            try:
-                severity_enum = AlertSeverity(severity.lower())
-            except ValueError:
-                raise HTTPException(
-                    status_code=400, detail=f"Invalid severity: {severity}"
-                )
-
-        alerts = await alert_mgr.get_recent_alerts(limit=limit, severity=severity_enum)
-
-        return {
-            "alerts": alerts,
-            "total": len(alerts),
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting alerts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting trend for {counter_name}: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get trend data: {e!s}"
+        ) from e
 
 
 @router.post("/webhook")
-async def github_webhook(
-    request: Request,
-    x_hub_signature_256: str | None = Header(None),
-    x_github_event: str | None = Header(None),
-):
+async def github_webhook(request: Request):
     """
     Receive GitHub webhook events
 
-    This endpoint is called by GitHub when repository events occur.
-    Configure in GitHub: Repository → Settings → Webhooks
+    This endpoint receives webhooks from GitHub and processes events.
+    Requires webhook secret verification.
     """
     try:
-        # Get webhook secret from settings
-        webhook_secret = getattr(settings, "GITHUB_WEBHOOK_SECRET", None)
+        # Get signature and event type from headers
+        signature = request.headers.get("X-Hub-Signature-256", "")
+        event_type = request.headers.get("X-GitHub-Event", "unknown")
 
-        if not webhook_secret:
-            logger.warning("GITHUB_WEBHOOK_SECRET not configured")
-            return {"status": "accepted", "warning": "signature verification disabled"}
-
-        # Get raw body for signature verification
+        # Get raw payload for signature verification
         payload = await request.body()
 
+        # Get handler
+        handler = get_github_handler()
+
         # Verify signature
-        handler = GitHubWebhookHandler(webhook_secret)
-        if not handler.verify_signature(payload, x_hub_signature_256 or ""):
+        if not handler.verify_signature(payload, signature):
+            logger.warning(f"Invalid webhook signature for {event_type} event")
             raise HTTPException(status_code=403, detail="Invalid signature")
 
-        # Parse JSON
+        # Parse JSON payload
         event_data = await request.json()
 
         # Route to appropriate handler
-        if x_github_event == "push":
-            await handler.handle_push(event_data)
-        elif x_github_event == "pull_request":
-            await handler.handle_pull_request(event_data)
-        elif x_github_event == "check_suite":
-            await handler.handle_check_suite(event_data)
-        elif x_github_event == "issues":
-            await handler.handle_issues(event_data)
-        elif x_github_event == "deployment_status":
-            await handler.handle_deployment(event_data)
-        else:
-            logger.info(f"Unhandled webhook event: {x_github_event}")
+        result = {"event_type": event_type, "processed": False}
 
-        return {
-            "status": "processed",
-            "event_type": x_github_event,
-            "timestamp": datetime.utcnow().isoformat(),
-        }
+        if event_type == "push":
+            result = await handler.handle_push(event_data)
+        elif event_type == "pull_request":
+            result = await handler.handle_pull_request(event_data)
+        elif event_type == "issues":
+            result = await handler.handle_issues(event_data)
+        elif event_type == "check_suite":
+            result = await handler.handle_check_suite(event_data)
+        elif event_type == "deployment":
+            result = await handler.handle_deployment(event_data)
+        elif event_type == "deployment_status":
+            result = await handler.handle_deployment_status(event_data)
+        elif event_type == "release":
+            result = await handler.handle_release(event_data)
+        else:
+            logger.info(f"Unhandled webhook event type: {event_type}")
+            result = {"event_type": event_type, "status": "unhandled"}
+
+        result["processed"] = True
+        return result
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error processing webhook: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500, detail=f"Webhook processing failed: {e!s}"
+        ) from e
 
 
-@router.post("/progress/snapshot")
-async def record_progress_snapshot():
+@router.post("/reset-weekly")
+async def reset_weekly_counters(current_user: User = Depends(get_current_user)):
     """
-    Record current progress snapshot for historical tracking
+    Reset weekly counters
 
-    Call this daily (via cron) to track progress over time
-    """
-    try:
-        counter_mgr = await get_counter_manager()
-        await counter_mgr.record_progress_snapshot()
-
-        return {"status": "recorded", "timestamp": datetime.utcnow().isoformat()}
-    except Exception as e:
-        logger.error(f"Error recording progress snapshot: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/progress/update")
-async def update_phase_progress(
-    phase: str, tasks_completed: int, tasks_total: int, hours_remaining: float
-):
-    """
-    Update progress for a specific phase
-
-    Args:
-        phase: Phase identifier (phase_0, phase_1, etc.)
-        tasks_completed: Number of completed tasks
-        tasks_total: Total number of tasks
-        hours_remaining: Estimated hours remaining
+    Resets all weekly counters to zero.
+    Typically called by a scheduler on Monday at midnight.
     """
     try:
-        valid_phases = ["phase_0", "phase_1", "phase_2", "phase_3", "phase_4"]
-        if phase not in valid_phases:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid phase. Must be one of: {', '.join(valid_phases)}",
-            )
-
-        counter_mgr = await get_counter_manager()
-        await counter_mgr.update_phase_progress(
-            phase=phase,
-            tasks_completed=tasks_completed,
-            tasks_total=tasks_total,
-            hours_remaining=hours_remaining,
-        )
+        counter_manager = get_counter_manager()
+        reset_count = await counter_manager.reset_weekly_counters()
 
         return {
-            "status": "updated",
-            "phase": phase,
-            "progress": tasks_completed / tasks_total if tasks_total > 0 else 0,
+            "status": "success",
+            "reset_count": reset_count,
             "timestamp": datetime.utcnow().isoformat(),
         }
-    except HTTPException:
-        raise
+
     except Exception as e:
-        logger.error(f"Error updating phase progress: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error resetting weekly counters: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to reset counters: {e!s}"
+        ) from e
 
 
-@router.post("/issues/sync")
-async def sync_issue_counts(
-    total: int, p0: int, p1: int, p2: int, assigned: int = 0, blocked: int = 0
-):
-    """
-    Sync issue counts from ISSUE_TRACKER.md
-
-    Call this when issue tracker is updated to reflect changes in dashboard
-    """
+@router.get("/health")
+async def monitor_health_check():
+    """Check monitor service health"""
     try:
-        counter_mgr = await get_counter_manager()
+        counter_manager = get_counter_manager()
 
-        await counter_mgr.set("total_issues", total)
-        await counter_mgr.set("issues_p0", p0)
-        await counter_mgr.set("issues_p1", p1)
-        await counter_mgr.set("issues_p2", p2)
-        await counter_mgr.set("issues_assigned", assigned)
-        await counter_mgr.set("issues_unassigned", total - assigned)
-        await counter_mgr.set("issues_blocked", blocked)
+        # Try to get a counter to verify Redis connection
+        await counter_manager.get("commits")
 
         return {
-            "status": "synced",
-            "total_issues": total,
+            "status": "healthy",
+            "services": {
+                "counter_manager": "ready",
+                "webhook_handler": "ready",
+                "redis": "connected",
+            },
             "timestamp": datetime.utcnow().isoformat(),
         }
+
     except Exception as e:
-        logger.error(f"Error syncing issue counts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Monitor health check failed: {e}")
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat(),
+        }

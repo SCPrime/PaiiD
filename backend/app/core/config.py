@@ -26,12 +26,13 @@ class Settings(BaseModel):
     # Tradier API credentials (MARKET DATA, NEWS, QUOTES)
     TRADIER_API_KEY: str = os.getenv("TRADIER_API_KEY", "")
     TRADIER_ACCOUNT_ID: str = os.getenv("TRADIER_ACCOUNT_ID", "")
-    TRADIER_API_BASE_URL: str = os.getenv(
-        "TRADIER_API_BASE_URL", "https://api.tradier.com/v1"
-    )
+    TRADIER_API_BASE_URL: str = os.getenv("TRADIER_API_BASE_URL", "https://api.tradier.com/v1")
 
     # Anthropic API (AI FALLBACK for market data)
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+
+    # GitHub Webhook (Repository Monitor)
+    GITHUB_WEBHOOK_SECRET: str = os.getenv("GITHUB_WEBHOOK_SECRET", "")
 
     # Database (Phase 2.5)
     DATABASE_URL: str | None = os.getenv("DATABASE_URL")
