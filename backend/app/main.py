@@ -25,6 +25,7 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 from slowapi.errors import RateLimitExceeded
 
 from .core.config import settings
+from .core.prelaunch import run_prelaunch_checks
 from .routers import (
     ai,
     analytics,
@@ -91,6 +92,8 @@ else:
 print("\n===== SETTINGS LOADED =====")
 print(f"settings.API_TOKEN: {settings.API_TOKEN}")
 print("===========================\n", flush=True)
+
+run_prelaunch_checks(raise_on_failure=True)
 
 app = FastAPI(
     title="PaiiD Trading API",

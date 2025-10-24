@@ -42,7 +42,7 @@ services:
       - /app/__pycache__
     networks:
       - paiid-network
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+    command: bash -lc "python -m app.core.prelaunch && uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"
 
   frontend:
     build:
