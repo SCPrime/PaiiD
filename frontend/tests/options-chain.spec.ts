@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { PLAYWRIGHT_FIXTURE_EXPIRATIONS, PLAYWRIGHT_TEST_SYMBOL } from "./fixtures/options";
 
 /**
  * E2E tests for OptionsChain component
- * Tests Phase 1 implementation with OPTT symbol
+ * Tests Phase 1 implementation with OPTT fixture data
  */
 
 test.describe("Options Chain - Phase 1", () => {
@@ -17,15 +18,17 @@ test.describe("Options Chain - Phase 1", () => {
     await expect(page.locator("button")).toContainText("Load Options Chain");
   });
 
-  test("should load OPTT options chain with Greeks", async ({ page }) => {
+  test("should load fixture options chain with Greeks", async ({ page }) => {
     // Fill symbol input
-    await page.fill('input[type="text"]', "OPTT");
+    await page.fill('input[type="text"]', PLAYWRIGHT_TEST_SYMBOL);
 
     // Click load button
     await page.click('button:has-text("Load Options Chain")');
 
     // Wait for options chain modal to appear
-    await expect(page.locator('h2:has-text("Options Chain: OPTT")')).toBeVisible({
+    await expect(
+      page.locator(`h2:has-text("Options Chain: ${PLAYWRIGHT_TEST_SYMBOL}")`)
+    ).toBeVisible({
       timeout: 10000,
     });
 
@@ -33,9 +36,15 @@ test.describe("Options Chain - Phase 1", () => {
     const expirationSelect = page.locator("select");
     await expect(expirationSelect).toBeVisible();
 
-    // Check that options are available (OPTT has 4 expirations)
-    const optionCount = await expirationSelect.locator("option").count();
+    // Check that options are available (fixture includes 2 expirations)
+    const optionLocator = expirationSelect.locator("option");
+    const optionCount = await optionLocator.count();
     expect(optionCount).toBeGreaterThan(1); // At least 1 + default "Select Expiration"
+
+    const optionTexts = await optionLocator.allTextContents();
+    for (const expectedExpiration of PLAYWRIGHT_FIXTURE_EXPIRATIONS) {
+      expect(optionTexts).toContain(expectedExpiration);
+    }
 
     // Wait for options table to load
     await expect(page.locator("table")).toBeVisible({ timeout: 15000 });
@@ -51,7 +60,7 @@ test.describe("Options Chain - Phase 1", () => {
     await expect(page.locator('th:has-text("PUTS")')).toBeVisible();
     await expect(page.locator('th:has-text("STRIKE")')).toBeVisible();
 
-    // Verify contracts are loaded (OPTT has 14 contracts: 7 calls + 7 puts)
+    // Verify contracts are loaded (fixture includes deterministic calls/puts)
     const rows = await page.locator("tbody tr").count();
     expect(rows).toBeGreaterThan(0);
     console.log(`Loaded ${rows} options contracts`);
@@ -61,11 +70,13 @@ test.describe("Options Chain - Phase 1", () => {
   });
 
   test("should display contract count and expiration info", async ({ page }) => {
-    await page.fill('input[type="text"]', "OPTT");
+    await page.fill('input[type="text"]', PLAYWRIGHT_TEST_SYMBOL);
     await page.click('button:has-text("Load Options Chain")');
 
     // Wait for modal
-    await expect(page.locator('h2:has-text("Options Chain: OPTT")')).toBeVisible({
+    await expect(
+      page.locator(`h2:has-text("Options Chain: ${PLAYWRIGHT_TEST_SYMBOL}")`)
+    ).toBeVisible({
       timeout: 10000,
     });
 
@@ -82,7 +93,7 @@ test.describe("Options Chain - Phase 1", () => {
   });
 
   test("should support Call/Put/Both filter toggle", async ({ page }) => {
-    await page.fill('input[type="text"]', "OPTT");
+    await page.fill('input[type="text"]', PLAYWRIGHT_TEST_SYMBOL);
     await page.click('button:has-text("Load Options Chain")');
 
     // Wait for modal and table
@@ -126,11 +137,13 @@ test.describe("Options Chain - Phase 1", () => {
   });
 
   test("should close modal when clicking Close button", async ({ page }) => {
-    await page.fill('input[type="text"]', "OPTT");
+    await page.fill('input[type="text"]', PLAYWRIGHT_TEST_SYMBOL);
     await page.click('button:has-text("Load Options Chain")');
 
     // Wait for modal
-    await expect(page.locator('h2:has-text("Options Chain: OPTT")')).toBeVisible({
+    await expect(
+      page.locator(`h2:has-text("Options Chain: ${PLAYWRIGHT_TEST_SYMBOL}")`)
+    ).toBeVisible({
       timeout: 10000,
     });
 
@@ -138,7 +151,9 @@ test.describe("Options Chain - Phase 1", () => {
     await page.click('button:has-text("Close")');
 
     // Verify modal is closed
-    await expect(page.locator('h2:has-text("Options Chain: OPTT")')).not.toBeVisible();
+    await expect(
+      page.locator(`h2:has-text("Options Chain: ${PLAYWRIGHT_TEST_SYMBOL}")`)
+    ).not.toBeVisible();
   });
 
   test("should handle invalid symbol gracefully", async ({ page }) => {
@@ -157,7 +172,7 @@ test.describe("Options Chain - Phase 1", () => {
   });
 
   test("should display Greeks with proper formatting", async ({ page }) => {
-    await page.fill('input[type="text"]', "OPTT");
+    await page.fill('input[type="text"]', PLAYWRIGHT_TEST_SYMBOL);
     await page.click('button:has-text("Load Options Chain")');
 
     // Wait for table
@@ -182,16 +197,16 @@ test.describe("Options Chain - Network & Performance", () => {
   test("should make correct API calls", async ({ page }) => {
     // Listen for API calls
     const expirationsRequest = page.waitForRequest((req) =>
-      req.url().includes("/api/proxy/options/expirations/OPTT")
+      req.url().includes(`/api/proxy/options/expirations/${PLAYWRIGHT_TEST_SYMBOL}`)
     );
 
     const chainRequest = page.waitForRequest((req) =>
-      req.url().includes("/api/proxy/options/chain/OPTT")
+      req.url().includes(`/api/proxy/options/chain/${PLAYWRIGHT_TEST_SYMBOL}`)
     );
 
     // Navigate and trigger
     await page.goto("http://localhost:3000/test-options");
-    await page.fill('input[type="text"]', "OPTT");
+    await page.fill('input[type="text"]', PLAYWRIGHT_TEST_SYMBOL);
     await page.click('button:has-text("Load Options Chain")');
 
     // Verify requests were made
@@ -206,7 +221,7 @@ test.describe("Options Chain - Network & Performance", () => {
 
     const startTime = Date.now();
 
-    await page.fill('input[type="text"]', "OPTT");
+    await page.fill('input[type="text"]', PLAYWRIGHT_TEST_SYMBOL);
     await page.click('button:has-text("Load Options Chain")');
     await expect(page.locator("table")).toBeVisible({ timeout: 15000 });
 

@@ -9,6 +9,9 @@ echo "======================================"
 echo "PaiiD Backend Startup"
 echo "======================================"
 
+# Ensure uvicorn port is free before continuing
+python -m app.scripts.prelaunch check --port "${PORT:-8000}"
+
 # Run database migrations
 echo ""
 echo "[1/2] Running database migrations..."

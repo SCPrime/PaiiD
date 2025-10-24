@@ -26,6 +26,14 @@ jobs:
         pip install -r requirements.txt
         pip install pytest-cov
 
+    - name: Smoke test uvicorn boot
+      run: |
+        cd backend
+        python -m app.scripts.prelaunch smoke
+      env:
+        USE_TEST_FIXTURES: "true"
+        API_TOKEN: test-token
+
     - name: Verify Python package structure
       run: |
         echo "🔍 Checking Python package structure..."
@@ -207,3 +215,79 @@ jobs:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: https://sonarcloud.io
+
+  infra-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Validate Render exports
+      run: |
+        python infra/render/validate.py --service backend
+        python infra/render/validate.py --service frontend
+
+  playwright-e2e:
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        pip install -r requirements.lock || pip install -r requirements.txt
+
+    - name: Seed backend fixtures
+      run: |
+        cd backend
+        python scripts/seed_playwright.py
+
+    - name: Start backend for Playwright
+      run: |
+        cd backend
+        uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+        echo $! > ../backend.pid
+      env:
+        API_TOKEN: test-token
+        USE_TEST_FIXTURES: "true"
+
+    - name: Wait for backend health
+      run: |
+        timeout 60 bash -c 'until curl -fsS http://127.0.0.1:8000/api/health >/dev/null; do sleep 2; done'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+        npm run playwright:install
+
+    - name: Run Playwright tests
+      env:
+        NEXT_PUBLIC_BACKEND_API_BASE_URL: http://127.0.0.1:8000
+        API_TOKEN: test-token
+        NEXT_PUBLIC_API_TOKEN: test-token
+      run: |
+        cd frontend
+        npm run test:e2e:ci
+
+    - name: Stop backend server
+      if: always()
+      run: |
+        if [ -f backend.pid ]; then
+          kill $(cat backend.pid) || true
+          rm -f backend.pid
+        fi
