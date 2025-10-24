@@ -13,6 +13,7 @@ import {
   FileText,
   Lock,
   MessageSquare,
+  Newspaper,
   Palette,
   Save,
   Settings as SettingsIcon,
@@ -33,6 +34,7 @@ import MLTrainingDashboard from "./MLTrainingDashboard";
 import PatternBacktestDashboard from "./PatternBacktestDashboard";
 import RiskDashboard from "./RiskDashboard";
 import SchedulerSettings from "./SchedulerSettings";
+import SentimentDashboard from "./SentimentDashboard";
 import TradingJournal from "./TradingJournal";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _MLTrainingDashboard = MLTrainingDashboard; // Reserved for future ML training feature
@@ -471,6 +473,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     { id: "risk", label: "Risk Control", icon: Shield, alwaysShow: true },
     { id: "ml-training", label: "ML Training", icon: Brain, alwaysShow: true },
     { id: "pattern-backtest", label: "Pattern Backtest", icon: BarChart3, alwaysShow: true },
+    { id: "sentiment", label: "News Sentiment", icon: Newspaper, alwaysShow: true },
     { id: "ai-chat", label: "AI Chat", icon: MessageSquare, alwaysShow: true },
     { id: "automation", label: "Automation", icon: Clock, alwaysShow: true },
     { id: "approvals", label: "Approvals", icon: CheckCircle2, alwaysShow: true },
@@ -1037,6 +1040,11 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
           {activeTab === "pattern-backtest" && (
             <div className="min-h-[500px]">
               <PatternBacktestDashboard />
+            </div>
+          )}
+          {activeTab === "sentiment" && (
+            <div className="min-h-[500px]">
+              <SentimentDashboard />
             </div>
           )}
           {activeTab === "ai-chat" && (
