@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from ..core.auth import require_bearer
+from ..core.time_utils import utc_now
 from ..services.backtesting_engine import BacktestingEngine, StrategyRules
 from ..services.historical_data import HistoricalDataService
 
@@ -185,10 +186,11 @@ async def quick_backtest(
     Uses a simple RSI < 30 entry, 5% TP / 2% SL exit strategy.
     """
     try:
-        from datetime import datetime, timedelta
+        from datetime import timedelta
 
-        end_date = datetime.now().strftime("%Y-%m-%d")
-        start_date = (datetime.now() - timedelta(days=months_back * 30)).strftime("%Y-%m-%d")
+        end_dt = utc_now()
+        end_date = end_dt.strftime("%Y-%m-%d")
+        start_date = (end_dt - timedelta(days=months_back * 30)).strftime("%Y-%m-%d")
 
         request = BacktestRequest(
             symbol=symbol,

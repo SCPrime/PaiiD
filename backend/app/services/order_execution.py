@@ -13,6 +13,8 @@ from app.services.alpaca_client import get_alpaca_client
 from app.services.greeks import GreeksCalculator
 from app.services.tradier_client import get_tradier_client
 
+from app.core.time_utils import utc_now
+
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +164,7 @@ class OrderExecutionService:
                 "filled_qty": order.get("filled_qty", 0),
                 "filled_avg_price": order.get("filled_avg_price"),
                 "submitted_at": order.get("submitted_at"),
-                "proposal": proposal.dict(),
+                "proposal": proposal.model_dump(),
             }
 
         except Exception as e:
@@ -170,7 +172,7 @@ class OrderExecutionService:
             return {
                 "success": False,
                 "error": str(e),
-                "proposal": proposal.dict(),
+                "proposal": proposal.model_dump(),
             }
 
     async def _get_option_data(self, symbol: str, option_symbol: str) -> dict:
@@ -228,7 +230,7 @@ class OrderExecutionService:
     def _calculate_dte(self, expiration: str) -> float:
         """Calculate days to expiration as a fraction of a year"""
         exp_date = datetime.strptime(expiration, "%Y-%m-%d")
-        now = datetime.now()
+        now = utc_now()
         days = (exp_date - now).days
         return max(days / 365.0, 0.001)  # Avoid division by zero
 

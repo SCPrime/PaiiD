@@ -113,7 +113,7 @@ def update_user_preferences(
         preferences = user.preferences or {}
 
         # Update only provided fields
-        update_data = updates.dict(exclude_unset=True)
+        update_data = updates.model_dump(exclude_unset=True)
 
         # Apply backend safeguards for risk_tolerance
         if "risk_tolerance" in update_data:

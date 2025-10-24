@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from ..core.auth import require_bearer
+from ..core.time_utils import utc_now
 from ..services.tradier_client import get_tradier_client
 
 
@@ -195,7 +196,7 @@ async def get_portfolio_history(
         current_equity = float(account.get("portfolio_value", 100000))
 
         # Determine time range
-        now = datetime.now()
+        now = utc_now()
         if period == "1D":
             start_date = now - timedelta(days=1)
             num_points = 78  # Market hours: 6.5 hours * 12 points/hour
@@ -334,7 +335,7 @@ async def get_performance_metrics(
         from ..services.equity_tracker import get_equity_tracker
 
         tracker = get_equity_tracker()
-        now = datetime.now()
+        now = utc_now()
         equity_history = tracker.get_history(start_date=now - timedelta(days=365))
 
         if len(equity_history) > 1:

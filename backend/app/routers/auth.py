@@ -19,6 +19,7 @@ from ..core.jwt import (
     hash_password,
     verify_password,
 )
+from ..core.time_utils import utc_now
 from ..db.session import get_db
 from ..models.database import ActivityLog, User, UserSession
 
@@ -233,7 +234,7 @@ async def logout(current_user: User = Depends(get_current_user), db: Session = D
         resource_type="session",
         resource_id=current_user.id,
         details={"email": current_user.email},
-        timestamp=datetime.utcnow(),
+        timestamp=utc_now(),
     )
     db.add(activity)
     db.commit()
@@ -293,7 +294,7 @@ async def refresh_token(
         .filter(
             UserSession.user_id == user_id,
             UserSession.refresh_token_jti == refresh_jti,
-            UserSession.expires_at > datetime.utcnow(),
+            UserSession.expires_at > utc_now(),
         )
         .first()
     )

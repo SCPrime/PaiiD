@@ -15,13 +15,51 @@ from typing import List, Optional
 import requests
 import asyncio
 import logging
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+
+try:
+    from cachetools import TTLCache  # type: ignore
+except ModuleNotFoundError:
+    class TTLCache(dict):  # type: ignore
+        """Minimal TTL cache used when cachetools is unavailable."""
+
+        def __init__(self, maxsize: int, ttl: int):
+            super().__init__()
+            self.maxsize = maxsize
+            self.ttl = ttl
+            self._timestamps: dict[str, float] = {}
+
+        def _purge_expired(self) -> None:
+            now = time.time()
+            expired_keys = [key for key, ts in self._timestamps.items() if now - ts > self.ttl]
+            for key in expired_keys:
+                super().pop(key, None)
+                self._timestamps.pop(key, None)
+
+        def __contains__(self, key: object) -> bool:  # type: ignore[override]
+            self._purge_expired()
+            return super().__contains__(key)
+
+        def __getitem__(self, key):  # type: ignore[override]
+            self._purge_expired()
+            return super().__getitem__(key)
+
+        def __setitem__(self, key, value) -> None:  # type: ignore[override]
+            self._purge_expired()
+            if len(self) >= self.maxsize:
+                oldest = min(self._timestamps, key=self._timestamps.get, default=None)
+                if oldest is not None:
+                    super().pop(oldest, None)
+                    self._timestamps.pop(oldest, None)
+            self._timestamps[key] = time.time()
+            super().__setitem__(key, value)
 
 from ..core.config import settings
 from ..core.auth import require_bearer
+from ..core.time_utils import utc_now
 from ..services.tradier_client import get_tradier_client
 
 router = APIRouter(prefix="/options", tags=["options"])
@@ -255,7 +293,7 @@ def get_expiration_dates(symbol: str, authorization: str = Depends(require_beare
 
         # Calculate days to expiry for each
         result = []
-        today = datetime.now().date()
+        today = utc_now().date()
 
         for exp_date_str in expirations:
             exp_date = datetime.strptime(exp_date_str, "%Y-%m-%d").date()

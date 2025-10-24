@@ -1,9 +1,10 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import finnhub
 
 from .base_provider import BaseNewsProvider, NewsArticle
+from ...core.time_utils import to_isoformat, utc_now
 
 
 class FinnhubProvider(BaseNewsProvider):
@@ -15,8 +16,8 @@ class FinnhubProvider(BaseNewsProvider):
         self.provider_name = "finnhub"
 
     def get_company_news(self, symbol: str, days_back: int = 7) -> list[NewsArticle]:
-        to_date = datetime.now().strftime("%Y-%m-%d")
-        from_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
+        to_date = utc_now().strftime("%Y-%m-%d")
+        from_date = (utc_now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
 
         try:
             news = self.client.company_news(symbol.upper(), _from=from_date, to=to_date)
@@ -40,7 +41,9 @@ class FinnhubProvider(BaseNewsProvider):
             summary=article.get("summary", ""),
             source=article["source"],
             url=article["url"],
-            published_at=datetime.fromtimestamp(article["datetime"]).isoformat(),
+            published_at=to_isoformat(
+                datetime.fromtimestamp(article["datetime"], tz=timezone.utc)
+            ),
             sentiment=self._calculate_sentiment(article.get("sentiment", 0)),
             sentiment_score=article.get("sentiment", 0),
             symbols=[symbol] if symbol else article.get("related", "").split(","),

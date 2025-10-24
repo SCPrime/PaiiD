@@ -27,6 +27,7 @@ import httpx
 import websockets
 
 from app.core.config import settings
+from app.core.time_utils import utc_now_isoformat
 from app.services.cache import get_cache
 
 
@@ -386,7 +387,7 @@ class TradierStreamService:
                     "bidsize": data.get("bidsize"),
                     "asksize": data.get("asksize"),
                     "mid": ((bid + ask) / 2 if bid is not None and ask is not None else None),
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": utc_now_isoformat(),
                     "type": "quote",
                 }
 
@@ -399,7 +400,7 @@ class TradierStreamService:
                     "symbol": symbol,
                     "price": data.get("price"),
                     "size": data.get("size"),
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": utc_now_isoformat(),
                     "type": "trade",
                 }
 
@@ -415,7 +416,7 @@ class TradierStreamService:
                     "low": data.get("low"),
                     "close": data.get("close"),
                     "volume": data.get("volume"),
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": utc_now_isoformat(),
                     "type": "summary",
                 }
 

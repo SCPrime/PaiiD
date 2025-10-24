@@ -8,6 +8,7 @@ Phase 3: Bulletproof Reliability
 
 import re
 from datetime import datetime, time
+from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException
 from pydantic import Field
@@ -158,7 +159,7 @@ def is_market_open() -> bool:
     Returns:
         True if within market hours, False otherwise
     """
-    now = datetime.now()
+    now = datetime.now(tz=ZoneInfo("America/New_York"))
 
     # Check if weekend (Saturday=5, Sunday=6)
     if now.weekday() >= 5:

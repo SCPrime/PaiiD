@@ -6,7 +6,7 @@ for multi-user authentication system.
 """
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import Depends, HTTPException, status
@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from ..db.session import get_db
 from ..models.database import User, UserSession
 from .config import settings
+from .time_utils import ensure_utc, utc_now
 
 
 # Password hashing context
@@ -69,15 +70,15 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
 
     # Set expiration
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = utc_now() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = utc_now() + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
 
     # Add standard JWT claims
     to_encode.update(
         {
             "exp": expire,
-            "iat": datetime.utcnow(),
+            "iat": utc_now(),
             "jti": str(uuid.uuid4()),  # Unique token ID for tracking
             "type": "access",
         }
@@ -101,11 +102,11 @@ def create_refresh_token(data: dict[str, Any]) -> str:
     to_encode = data.copy()
 
     # Set expiration
-    expire = datetime.utcnow() + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = utc_now() + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
 
     # Add standard JWT claims
     to_encode.update(
-        {"exp": expire, "iat": datetime.utcnow(), "jti": str(uuid.uuid4()), "type": "refresh"}
+        {"exp": expire, "iat": utc_now(), "jti": str(uuid.uuid4()), "type": "refresh"}
     )
 
     # Encode token
@@ -191,7 +192,7 @@ def get_current_user(
             .filter(
                 UserSession.user_id == user_id,
                 UserSession.access_token_jti == jti,
-                UserSession.expires_at > datetime.utcnow(),
+                UserSession.expires_at > utc_now(),
             )
             .first()
         )
@@ -202,7 +203,7 @@ def get_current_user(
             )
 
         # Update last activity
-        session.last_activity_at = datetime.utcnow()
+        session.last_activity_at = utc_now()
         db.commit()
 
     return user
@@ -258,15 +259,17 @@ def create_token_pair(
         user_id=user.id,
         access_token_jti=access_decoded["jti"],
         refresh_token_jti=refresh_decoded["jti"],
-        expires_at=datetime.fromtimestamp(refresh_decoded["exp"]),
-        last_activity_at=datetime.utcnow(),
+        expires_at=ensure_utc(
+            datetime.fromtimestamp(refresh_decoded["exp"], tz=timezone.utc)
+        ),
+        last_activity_at=utc_now(),
         ip_address=ip_address,
         user_agent=user_agent,
     )
     db.add(session)
 
     # Update user's last login
-    user.last_login_at = datetime.utcnow()
+    user.last_login_at = utc_now()
 
     db.commit()
 

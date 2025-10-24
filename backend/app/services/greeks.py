@@ -13,6 +13,8 @@ Phase 1 Implementation:
 from datetime import datetime
 from typing import Dict, Optional
 
+from app.core.time_utils import utc_now
+
 # TODO: Uncomment after installing py_vollib
 # from py_vollib.black_scholes import black_scholes
 # from py_vollib.black_scholes.greeks import analytical
@@ -220,7 +222,7 @@ def days_until_expiration(expiration_date: str) -> int:
         Number of days until expiration
     """
     expiry = datetime.strptime(expiration_date, "%Y-%m-%d")
-    today = datetime.now()
+    today = utc_now()
     days = (expiry - today).days
     return max(1, days)  # Minimum 1 day to avoid division by zero
 

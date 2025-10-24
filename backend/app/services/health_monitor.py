@@ -1,19 +1,79 @@
-"""
-Production Health Monitoring Service
-"""
+"""Production Health Monitoring Service."""
 import logging
+import os
+import shutil
 import time
-from datetime import datetime
-from typing import Dict, List
-import psutil
+from types import SimpleNamespace
+
 import requests
+
+from ..core.time_utils import utc_now, utc_now_isoformat
+
+try:  # pragma: no cover - exercised indirectly via shim behaviour
+    import psutil  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - import shim path
+    psutil = None
 
 logger = logging.getLogger(__name__)
 
 
+def _cpu_percent(interval: float = 0.0) -> float:
+    """Return CPU utilisation percentage with a graceful fallback."""
+    if psutil:
+        return psutil.cpu_percent(interval=interval)
+
+    try:
+        load1, _, _ = os.getloadavg()
+        cpu_count = os.cpu_count() or 1
+        return min(100.0, (load1 / cpu_count) * 100.0)
+    except (OSError, AttributeError):
+        return 0.0
+
+
+def _memory_stats() -> SimpleNamespace:
+    """Return memory usage statistics in a psutil-compatible namespace."""
+    if psutil:
+        return psutil.virtual_memory()
+
+    mem_total = mem_available = None
+    try:
+        with open("/proc/meminfo", "r", encoding="utf-8") as meminfo:
+            for line in meminfo:
+                key, value = line.split(":", 1)
+                if key in {"MemTotal", "MemAvailable"}:
+                    mem_value = int(value.strip().split()[0]) * 1024
+                    if key == "MemTotal":
+                        mem_total = mem_value
+                    else:
+                        mem_available = mem_value
+        if mem_total and mem_available is not None:
+            used = mem_total - mem_available
+            percent = (used / mem_total) * 100.0 if mem_total else 0.0
+            return SimpleNamespace(
+                percent=percent,
+                used=used,
+                total=mem_total,
+            )
+    except (OSError, ValueError):
+        pass
+
+    return SimpleNamespace(percent=0.0, used=0, total=0)
+
+
+def _disk_usage(path: str = "/") -> SimpleNamespace:
+    """Return disk usage statistics mirroring psutil's interface."""
+    if psutil:
+        return psutil.disk_usage(path)
+
+    usage = shutil.disk_usage(path)
+    used = usage.total - usage.free
+    percent = (used / usage.total) * 100.0 if usage.total else 0.0
+    return SimpleNamespace(percent=percent, free=usage.free, total=usage.total)
+
+
 class HealthMonitor:
     def __init__(self):
-        self.start_time = datetime.now()
+        self.start_time = utc_now()
         self.request_count = 0
         self.error_count = 0
         self.response_times: list[float] = []
@@ -22,12 +82,12 @@ class HealthMonitor:
         """Get comprehensive system health metrics"""
         
         # CPU and Memory
-        cpu_percent = psutil.cpu_percent(interval=1)
-        memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
-        
+        cpu_percent = _cpu_percent(interval=1.0)
+        memory = _memory_stats()
+        disk = _disk_usage("/")
+
         # Application metrics
-        uptime = (datetime.now() - self.start_time).total_seconds()
+        uptime = (utc_now() - self.start_time).total_seconds()
         avg_response_time = (
             sum(self.response_times[-100:]) / len(self.response_times[-100:])
             if self.response_times else 0
@@ -39,7 +99,7 @@ class HealthMonitor:
 
         return {
             "status": "healthy" if cpu_percent < 80 and memory.percent < 85 else "degraded",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": utc_now_isoformat(),
             "uptime_seconds": uptime,
             "system": {
                 "cpu_percent": cpu_percent,
@@ -70,13 +130,13 @@ class HealthMonitor:
             dependencies["tradier"] = {
                 "status": "up" if resp.status_code < 500 else "down",
                 "response_time_ms": (time.time() - start) * 1000,
-                "last_checked": datetime.now().isoformat()
+                "last_checked": utc_now_isoformat(),
             }
         except Exception as e:
             dependencies["tradier"] = {
                 "status": "down",
                 "error": str(e),
-                "last_checked": datetime.now().isoformat()
+                "last_checked": utc_now_isoformat(),
             }
         
         # Check Alpaca API
@@ -86,13 +146,13 @@ class HealthMonitor:
             dependencies["alpaca"] = {
                 "status": "up" if resp.status_code < 500 else "down",
                 "response_time_ms": (time.time() - start) * 1000,
-                "last_checked": datetime.now().isoformat()
+                "last_checked": utc_now_isoformat(),
             }
         except Exception as e:
             dependencies["alpaca"] = {
                 "status": "down",
                 "error": str(e),
-                "last_checked": datetime.now().isoformat()
+                "last_checked": utc_now_isoformat(),
             }
 
         return dependencies

@@ -9,6 +9,8 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from app.core.time_utils import utc_now
+
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +110,7 @@ class HistoricalDataService:
                 return False
 
             # Check if dates are not in the future
-            if end_dt > datetime.now():
+            if end_dt > utc_now():
                 return False
 
             return True

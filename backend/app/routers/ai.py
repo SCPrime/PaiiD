@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..core.auth import require_bearer
+from ..core.time_utils import to_isoformat, utc_now, utc_now_isoformat
 from ..db.session import get_db
 from ..services.technical_indicators import TechnicalIndicators
 from ..services.tradier_client import get_tradier_client
@@ -244,7 +245,7 @@ async def get_recommendations():
         return RecommendationsResponse(
             recommendations=recommendations,
             portfolioAnalysis=portfolio_analysis,
-            generated_at=datetime.utcnow().isoformat() + "Z",
+            generated_at=utc_now_isoformat(),
             model_version="v2.0.0-portfolio-aware",
         )
 
@@ -360,7 +361,7 @@ async def get_ml_signals(
 
         return RecommendationsResponse(
             recommendations=recommendations[:5],  # Return top 5
-            generated_at=datetime.utcnow().isoformat() + "Z",
+            generated_at=utc_now_isoformat(),
             model_version="v2.0.0-technical",
         )
 
@@ -382,7 +383,7 @@ async def _generate_technical_signal(symbol: str) -> Recommendation | None:
         client = get_tradier_client()
 
         # Get 200 days of historical data
-        end_date = datetime.now()
+        end_date = utc_now()
         start_date = end_date - timedelta(days=250)  # Extra days for weekends/holidays
 
         bars = client.get_historical_bars(
@@ -493,7 +494,7 @@ async def analyze_symbol(symbol: str):
         current_price = float(quote["last"])
 
         # Get 200 days of historical data for comprehensive analysis
-        end_date = datetime.now()
+        end_date = utc_now()
         start_date = end_date - timedelta(days=250)
 
         bars = client.get_historical_bars(
@@ -883,7 +884,7 @@ async def _calculate_momentum_analysis(
         client = get_tradier_client()
 
         # Get 250 days of historical data (extra for weekends/holidays)
-        end_date = datetime.now()
+        end_date = utc_now()
         start_date = end_date - timedelta(days=300)
 
         bars = client.get_historical_bars(
@@ -1149,7 +1150,7 @@ async def _calculate_volatility_analysis(symbol: str, current_price: float) -> d
         client = get_tradier_client()
 
         # Get 60 days of OHLC data for ATR calculation
-        end_date = datetime.now()
+        end_date = utc_now()
         start_date = end_date - timedelta(days=80)  # Extra for weekends
 
         bars = client.get_historical_bars(
@@ -1495,7 +1496,7 @@ async def get_recommended_templates(db: Session = Depends(get_db)):
             client = get_tradier_client()
             from datetime import timedelta
 
-            end_date = datetime.now()
+            end_date = utc_now()
             start_date = end_date - timedelta(days=30)
 
             bars = client.get_historical_bars(
@@ -1604,7 +1605,7 @@ async def get_recommended_templates(db: Session = Depends(get_db)):
             "user_risk_tolerance": risk_tolerance,
             "market_volatility": market_volatility,
             "portfolio_value": portfolio_value,
-            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "generated_at": utc_now_isoformat(),
             "message": f"Found {len(recommended_templates)} strategies compatible with your {'' if risk_tolerance <= 33 else '' if risk_tolerance <= 66 else 'aggressive'} risk profile",
         }
 
@@ -1677,7 +1678,7 @@ async def save_recommendation(request: SaveRecommendationRequest, db: Session = 
         from ..models.database import AIRecommendation
 
         # Calculate expiry (recommendations expire after 7 days)
-        expires_at = datetime.utcnow() + timedelta(days=7)
+        expires_at = utc_now() + timedelta(days=7)
 
         # Create recommendation record
         recommendation = AIRecommendation(
@@ -1777,9 +1778,9 @@ async def get_recommendation_history(
                     reasoning=rec.reasoning,
                     market_context=rec.market_context,
                     status=rec.status,
-                    created_at=rec.created_at.isoformat() + "Z" if rec.created_at else None,
-                    expires_at=rec.expires_at.isoformat() + "Z" if rec.expires_at else None,
-                    executed_at=rec.executed_at.isoformat() + "Z" if rec.executed_at else None,
+                    created_at=to_isoformat(rec.created_at) if rec.created_at else None,
+                    expires_at=to_isoformat(rec.expires_at) if rec.expires_at else None,
+                    executed_at=to_isoformat(rec.executed_at) if rec.executed_at else None,
                     execution_price=rec.execution_price,
                     actual_pnl=rec.actual_pnl,
                     actual_pnl_percent=rec.actual_pnl_percent,
@@ -1967,7 +1968,7 @@ Format your response as JSON with these exact keys:
             risk_factors=ai_analysis.get("risk_factors", []),
             opportunities=ai_analysis.get("opportunities", []),
             ai_summary=ai_analysis.get("ai_summary", "Portfolio analysis complete."),
-            generated_at=datetime.now().isoformat() + "Z"
+            generated_at=utc_now_isoformat(),
         )
 
     except Exception as e:
@@ -2070,7 +2071,7 @@ def _generate_rule_based_portfolio_analysis(
         risk_factors=risk_factors,
         opportunities=opportunities,
         ai_summary=f"Portfolio health score: {health_score:.0f}/100. {recommendations[0] if recommendations else 'Portfolio analysis complete.'}",
-        generated_at=datetime.now().isoformat() + "Z"
+        generated_at=utc_now_isoformat(),
     )
 
 

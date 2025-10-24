@@ -3,11 +3,12 @@ Telemetry Router - Tracks user interactions and system events
 """
 
 import json
-from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
+from app.core.time_utils import utc_now_isoformat
 
 
 router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
@@ -38,14 +39,14 @@ async def log_telemetry(batch: TelemetryBatch):
     try:
         # Store events
         for event in batch.events:
-            event_dict = event.dict()
+            event_dict = event.model_dump()
             telemetry_events.append(event_dict)
 
         # Optional: Write to file for persistence
         log_file = "telemetry_events.jsonl"
         with open(log_file, "a") as f:
             for event in batch.events:
-                f.write(json.dumps(event.dict()) + "\n")
+                f.write(json.dumps(event.model_dump()) + "\n")
 
         return {
             "success": True,
@@ -154,6 +155,6 @@ async def export_telemetry():
     """
     return {
         "events": telemetry_events,
-        "exported_at": datetime.now().isoformat(),
+        "exported_at": utc_now_isoformat(),
         "total": len(telemetry_events),
     }

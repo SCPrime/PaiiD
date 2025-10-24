@@ -3,13 +3,15 @@ Position Tracking Service - Monitor open positions and calculate P&L
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from pydantic import BaseModel
 
 from app.services.alpaca_client import get_alpaca_client
 from app.services.greeks import GreeksCalculator
 from app.services.tradier_client import get_tradier_client
+
+from app.core.time_utils import utc_now
 
 
 logger = logging.getLogger(__name__)
@@ -225,5 +227,7 @@ class PositionTrackerService:
     def _calculate_dte(self, option_symbol: str) -> int:
         """Calculate days to expiration"""
         expiration_str = self._parse_expiration(option_symbol)
-        expiration = datetime.strptime(expiration_str, "%Y-%m-%d")
-        return (expiration - datetime.now()).days
+        expiration = datetime.strptime(expiration_str, "%Y-%m-%d").replace(
+            tzinfo=timezone.utc
+        )
+        return (expiration - utc_now()).days

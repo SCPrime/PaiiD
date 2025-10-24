@@ -7,9 +7,10 @@ Stores equity snapshots in JSON files for P&L Dashboard.
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
+from ..core.time_utils import ensure_utc, utc_now, utc_now_isoformat
 from ..services.tradier_client import get_tradier_client
 
 
@@ -54,7 +55,7 @@ class EquityTracker:
 
             # Create snapshot
             snapshot = {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now_isoformat(),
                 "equity": round(equity, 2),
                 "cash": round(cash, 2),
                 "positions_value": round(positions_value, 2),
@@ -111,18 +112,23 @@ class EquityTracker:
         """
         history = self.load_history()
 
-        if not start_date and not end_date:
+        start_dt = ensure_utc(start_date) if start_date else None
+        end_dt = ensure_utc(end_date) if end_date else None
+
+        if not start_dt and not end_dt:
             return history
 
         # Filter by date range
         filtered = []
         for snapshot in history:
-            snapshot_date = datetime.fromisoformat(snapshot["timestamp"])
+            snapshot_date = ensure_utc(
+                datetime.fromisoformat(snapshot["timestamp"].replace("Z", "+00:00"))
+            )
 
-            if start_date and snapshot_date < start_date:
+            if start_dt and snapshot_date < start_dt:
                 continue
 
-            if end_date and snapshot_date > end_date:
+            if end_dt and snapshot_date > end_dt:
                 continue
 
             filtered.append(snapshot)
@@ -156,9 +162,14 @@ class EquityTracker:
             }
 
         # Get snapshots within period
-        cutoff_date = datetime.utcnow().timestamp() - (period_days * 86400)
+        cutoff_dt = utc_now() - timedelta(days=period_days)
         recent_snapshots = [
-            s for s in history if datetime.fromisoformat(s["timestamp"]).timestamp() >= cutoff_date
+            s
+            for s in history
+            if ensure_utc(
+                datetime.fromisoformat(s["timestamp"].replace("Z", "+00:00"))
+            )
+            >= cutoff_dt
         ]
 
         if len(recent_snapshots) < 2:

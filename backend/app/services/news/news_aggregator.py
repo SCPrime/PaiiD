@@ -12,6 +12,7 @@ from tenacity import (
     wait_exponential,
 )
 
+from ...core.time_utils import to_isoformat, utc_now
 from .alpha_vantage_provider import AlphaVantageProvider
 from .base_provider import NewsArticle
 from .finnhub_provider import FinnhubProvider
@@ -64,7 +65,7 @@ class CircuitBreaker:
         else:
             self.failure_count += 1
 
-        self.last_failure_time = datetime.now()
+        self.last_failure_time = utc_now()
 
         if self.failure_count >= self.failure_threshold:
             self.state = "OPEN"
@@ -81,7 +82,7 @@ class CircuitBreaker:
         if self.state == "OPEN":
             # Check if cooldown period has elapsed
             if self.last_failure_time:
-                elapsed = (datetime.now() - self.last_failure_time).total_seconds()
+                elapsed = (utc_now() - self.last_failure_time).total_seconds()
                 if elapsed >= self.cooldown_seconds:
                     # Move to HALF_OPEN to test provider
                     self.state = "HALF_OPEN"
@@ -97,7 +98,7 @@ class CircuitBreaker:
         return {
             "state": self.state,
             "failure_count": self.failure_count,
-            "last_failure": self.last_failure_time.isoformat() if self.last_failure_time else None,
+            "last_failure": to_isoformat(self.last_failure_time) if self.last_failure_time else None,
         }
 
 
@@ -371,7 +372,7 @@ class NewsAggregator:
 
             try:
                 age_hours = (
-                    datetime.now()
+                    utc_now()
                     - datetime.fromisoformat(article.published_at.replace("Z", "+00:00"))
                 ).total_seconds() / 3600
                 score += max(0, 100 - age_hours)

@@ -18,6 +18,8 @@ from typing import Literal
 
 from scipy.stats import norm
 
+from ..core.time_utils import utc_now
+
 
 @dataclass
 class OptionsGreeks:
@@ -299,7 +301,7 @@ def days_to_expiry_in_years(expiry_date: datetime) -> float:
     Returns:
         Time to expiry in years (e.g., 30 days = 0.0822 years)
     """
-    now = datetime.now()
+    now = utc_now()
     days_remaining = (expiry_date - now).total_seconds() / 86400
     return max(0, days_remaining / 365.0)
 

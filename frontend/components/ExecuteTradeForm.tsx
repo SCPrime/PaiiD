@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   TrendingUp,
   Check,
@@ -108,10 +108,113 @@ export default function ExecuteTradeForm() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
+  const loadTemplates = useCallback(async () => {
+    try {
+      const res = await fetch("/api/proxy/api/order-templates");
+      if (res.ok) {
+        const data = await res.json();
+        setTemplates(data);
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Failed to load templates:", err);
+      }
+    }
+  }, []);
+
+  const fetchExpirations = useCallback(
+    async (sym: string) => {
+      if (!sym || sym.trim() === "" || assetClass !== "option") return;
+
+      setLoadingOptionsChain(true);
+      try {
+        const response = await fetch(`/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}`);
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableExpirations(data.expirations || []);
+          if (data.expirations && data.expirations.length > 0) {
+            setExpirationDate(data.expirations[0]);
+          }
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to fetch expirations:", err);
+        }
+      } finally {
+        setLoadingOptionsChain(false);
+      }
+    },
+    [assetClass]
+  );
+
+  const fetchStrikes = useCallback(
+    async (sym: string, expiry: string) => {
+      if (!sym || !expiry || assetClass !== "option") return;
+
+      setLoadingOptionsChain(true);
+      try {
+        const response = await fetch(
+          `/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}&expiration=${expiry}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableStrikes(data.strikes || []);
+          if (data.strikes && data.strikes.length > 0) {
+            const middleIndex = Math.floor(data.strikes.length / 2);
+            setStrikePrice(data.strikes[middleIndex].toString());
+          }
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to fetch strikes:", err);
+        }
+      } finally {
+        setLoadingOptionsChain(false);
+      }
+    },
+    [assetClass]
+  );
+
+  const fetchAIAnalysis = useCallback(async (sym: string) => {
+    setAiLoading(true);
+    setAiError(null);
+
+    try {
+      const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+
+      const response = await fetch(`/api/proxy/api/ai/analyze-symbol/${sym}`, {
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`Symbol ${sym} not found`);
+        } else if (response.status === 400) {
+          throw new Error(`Insufficient data for ${sym}`);
+        } else {
+          throw new Error(`${response.status} ${response.statusText}`);
+        }
+      }
+
+      const data = await response.json();
+      setAiAnalysis(data);
+    } catch (err: any) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("AI analysis error:", err);
+      }
+      setAiError(err.message || "Failed to load AI analysis");
+      setAiAnalysis(null);
+    } finally {
+      setAiLoading(false);
+    }
+  }, []);
+
   // Load templates on mount
   useEffect(() => {
-    loadTemplates();
-  }, []);
+    void loadTemplates();
+  }, [loadTemplates]);
 
   // Consume pre-filled data from workflow navigation
   useEffect(() => {
@@ -122,8 +225,9 @@ export default function ExecuteTradeForm() {
     ) {
       const { tradeData } = pendingNavigation;
 
-      // eslint-disable-next-line no-console
-      console.info("[ExecuteTradeForm] Pre-filling form with trade data:", tradeData);
+      if (process.env.NODE_ENV !== "production") {
+        console.info("[ExecuteTradeForm] Pre-filling form with trade data:", tradeData);
+      }
 
       // Pre-fill form fields
       if (tradeData.symbol) setSymbol(tradeData.symbol);
@@ -155,77 +259,19 @@ export default function ExecuteTradeForm() {
     }
   }, [pendingNavigation, clearPendingNavigation]);
 
-  const loadTemplates = async () => {
-    try {
-      const res = await fetch("/api/proxy/api/order-templates");
-      if (res.ok) {
-        const data = await res.json();
-        setTemplates(data);
-      }
-    } catch (err) {
-      console.error("Failed to load templates:", err);
-    }
-  };
-
-  // Fetch available expiration dates when symbol changes (for options mode)
-  const fetchExpirations = async (sym: string) => {
-    if (!sym || sym.trim() === "" || assetClass !== "option") return;
-
-    setLoadingOptionsChain(true);
-    try {
-      const response = await fetch(`/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableExpirations(data.expirations || []);
-        if (data.expirations && data.expirations.length > 0) {
-          setExpirationDate(data.expirations[0]); // Auto-select first expiration
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch expirations:", err);
-    } finally {
-      setLoadingOptionsChain(false);
-    }
-  };
-
-  // Fetch available strikes when expiration changes
-  const fetchStrikes = async (sym: string, expiry: string) => {
-    if (!sym || !expiry || assetClass !== "option") return;
-
-    setLoadingOptionsChain(true);
-    try {
-      const response = await fetch(
-        `/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}&expiration=${expiry}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableStrikes(data.strikes || []);
-        if (data.strikes && data.strikes.length > 0) {
-          // Auto-select strike closest to ATM
-          const middleIndex = Math.floor(data.strikes.length / 2);
-          setStrikePrice(data.strikes[middleIndex].toString());
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch strikes:", err);
-    } finally {
-      setLoadingOptionsChain(false);
-    }
-  };
-
   // Fetch expirations when symbol or asset class changes
   useEffect(() => {
     if (assetClass === "option" && symbol.trim()) {
-      fetchExpirations(symbol);
+      void fetchExpirations(symbol);
     }
-  }, [symbol, assetClass]);
+  }, [symbol, assetClass, fetchExpirations]);
 
   // Fetch strikes when expiration changes
   useEffect(() => {
     if (assetClass === "option" && symbol.trim() && expirationDate) {
-      fetchStrikes(symbol, expirationDate);
+      void fetchStrikes(symbol, expirationDate);
     }
-  }, [expirationDate]);
+  }, [assetClass, symbol, expirationDate, fetchStrikes]);
 
   // Debounced AI analysis when symbol changes
   useEffect(() => {
@@ -242,41 +288,7 @@ export default function ExecuteTradeForm() {
     }, 800);
 
     return () => clearTimeout(timeoutId);
-  }, [symbol]); // Re-run when symbol changes
-
-  const fetchAIAnalysis = async (sym: string) => {
-    setAiLoading(true);
-    setAiError(null);
-
-    try {
-      const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
-
-      const response = await fetch(`/api/proxy/api/ai/analyze-symbol/${sym}`, {
-        headers: {
-          'Authorization': `Bearer ${apiToken}`
-        }
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error(`Symbol ${sym} not found`);
-        } else if (response.status === 400) {
-          throw new Error(`Insufficient data for ${sym}`);
-        } else {
-          throw new Error(`${response.status} ${response.statusText}`);
-        }
-      }
-
-      const data = await response.json();
-      setAiAnalysis(data);
-    } catch (err: any) {
-      console.error("AI analysis error:", err);
-      setAiError(err.message || "Failed to load AI analysis");
-      setAiAnalysis(null);
-    } finally {
-      setAiLoading(false);
-    }
-  };
+  }, [symbol, fetchAIAnalysis]); // Re-run when symbol changes
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplateId(templateId);
@@ -294,7 +306,11 @@ export default function ExecuteTradeForm() {
       // Mark template as used
       fetch(`/api/proxy/api/order-templates/${template.id}/use`, {
         method: "POST",
-      }).catch((err) => console.error("Failed to mark template as used:", err));
+      }).catch((err) => {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to mark template as used:", err);
+        }
+      });
     }
   };
 
@@ -322,7 +338,7 @@ export default function ExecuteTradeForm() {
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 
       const newTemplate = await res.json();
-      setTemplates([...templates, newTemplate]);
+      setTemplates((prev) => [...prev, newTemplate]);
       setShowSaveTemplate(false);
       setTemplateName("");
       setTemplateDescription("");
@@ -342,7 +358,7 @@ export default function ExecuteTradeForm() {
 
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 
-      setTemplates(templates.filter((t) => t.id !== templateId));
+      setTemplates((prev) => prev.filter((t) => t.id !== templateId));
       if (selectedTemplateId === templateId.toString()) {
         setSelectedTemplateId("");
       }
@@ -1492,11 +1508,20 @@ export default function ExecuteTradeForm() {
               >
                 <RiskCalculator
                   onCreateProposal={(proposal) => {
-                    console.log("Proposal created:", proposal);
+                    if (process.env.NODE_ENV !== "production") {
+                      console.log("Proposal created:", proposal);
+                    }
                     showSuccess("Trade proposal created with risk analysis");
                   }}
                   onExecuteProposal={(proposal, limitPrice) => {
-                    console.log("Executing proposal:", proposal, "at price:", limitPrice);
+                    if (process.env.NODE_ENV !== "production") {
+                      console.log(
+                        "Executing proposal:",
+                        proposal,
+                        "at price:",
+                        limitPrice
+                      );
+                    }
                     showSuccess(`Order submitted for ${proposal.option_symbol}`);
                   }}
                 />

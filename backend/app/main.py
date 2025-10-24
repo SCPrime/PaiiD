@@ -95,7 +95,11 @@ print(f"settings.API_TOKEN: {settings.API_TOKEN}")
 print("===========================\n", flush=True)
 
 # Register signal handlers for graceful shutdown BEFORE creating app
-from .core.signals import setup_shutdown_handlers
+try:
+    from .core.signals import setup_shutdown_handlers
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    def setup_shutdown_handlers() -> None:
+        print("[WARN] Graceful shutdown handlers unavailable", flush=True)
 
 
 setup_shutdown_handlers()
@@ -142,7 +146,9 @@ async def startup_event():
 
     # Enhanced startup logging with comprehensive telemetry
     logger.info("=" * 70)
-    logger.info(f"🚀 Backend startup initiated at {datetime.utcnow().isoformat()}")
+    from app.core.time_utils import utc_now_isoformat
+
+    logger.info(f"🚀 Backend startup initiated at {utc_now_isoformat()}")
     logger.info(f"   Environment: {settings.SENTRY_ENVIRONMENT}")
     logger.info(f"   Port: {os.getenv('PORT', '8001')}")
     logger.info(f"   Hostname: {os.getenv('HOSTNAME', 'unknown')}")
