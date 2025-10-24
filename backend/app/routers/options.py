@@ -12,13 +12,56 @@ Phase 1 Implementation:
 
 from datetime import datetime
 from typing import List, Optional
-import requests
 import asyncio
 import logging
+import time
 
+import requests
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+
+try:  # pragma: no cover - fallback only used when cachetools missing
+    from cachetools import TTLCache  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover
+    class TTLCache(dict):
+        """Lightweight in-memory TTL cache used when cachetools is unavailable."""
+
+        def __init__(self, maxsize: int, ttl: int):
+            super().__init__()
+            self.maxsize = maxsize
+            self.ttl = ttl
+            self._store = {}
+
+        def _purge(self) -> None:
+            now = time.monotonic()
+            expired_keys = [key for key, (_, expires_at) in self._store.items() if expires_at <= now]
+            for key in expired_keys:
+                self._store.pop(key, None)
+
+        def __contains__(self, key):
+            self._purge()
+            return key in self._store
+
+        def __getitem__(self, key):
+            self._purge()
+            value, expires_at = self._store[key]
+            if expires_at <= time.monotonic():
+                self._store.pop(key, None)
+                raise KeyError(key)
+            return value
+
+        def __setitem__(self, key, value):
+            self._purge()
+            if len(self._store) >= self.maxsize:
+                oldest_key = min(self._store.items(), key=lambda item: item[1][1])[0]
+                self._store.pop(oldest_key, None)
+            self._store[key] = (value, time.monotonic() + self.ttl)
+
+        def get(self, key, default=None):
+            try:
+                return self.__getitem__(key)
+            except KeyError:
+                return default
 
 from ..core.config import settings
 from ..core.auth import require_bearer
