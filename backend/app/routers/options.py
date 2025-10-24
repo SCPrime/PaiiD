@@ -18,7 +18,51 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+try:
+    from cachetools import TTLCache
+except ModuleNotFoundError:  # pragma: no cover - offline test environments
+    import time
+    from collections import OrderedDict
+
+    class TTLCache(OrderedDict):
+        """Lightweight stand-in for cachetools.TTLCache.
+
+        The implementation covers the subset of the API used by this module:
+        membership checks, item retrieval and assignment with TTL-based
+        eviction. It preserves insertion order so the oldest item is evicted
+        when the cache exceeds *maxsize*.
+        """
+
+        def __init__(self, maxsize: int, ttl: int):
+            super().__init__()
+            self.maxsize = maxsize
+            self.ttl = ttl
+
+        def _evict_expired(self) -> None:
+            now = time.monotonic()
+            expired_keys = [key for key, (_, expires) in super().items() if expires <= now]
+            for key in expired_keys:
+                super().__delitem__(key)
+
+        def __contains__(self, key: object) -> bool:  # type: ignore[override]
+            self._evict_expired()
+            return super().__contains__(key)
+
+        def __getitem__(self, key):  # type: ignore[override]
+            self._evict_expired()
+            value, expires = super().__getitem__(key)
+            if expires <= time.monotonic():
+                super().__delitem__(key)
+                raise KeyError(key)
+            return value
+
+        def __setitem__(self, key, value) -> None:  # type: ignore[override]
+            self._evict_expired()
+            if key in self:
+                super().__delitem__(key)
+            elif len(self) >= self.maxsize:
+                super().popitem(last=False)
+            super().__setitem__(key, (value, time.monotonic() + self.ttl))
 
 from ..core.config import settings
 from ..core.auth import require_bearer

@@ -5,7 +5,8 @@ import logging
 import time
 from datetime import datetime
 from typing import Dict, List
-import psutil
+
+import psutil  # type: ignore[import-untyped]
 import requests
 
 logger = logging.getLogger(__name__)
