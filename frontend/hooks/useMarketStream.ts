@@ -12,7 +12,9 @@
  * Phase 2.A - Real-Time Data Implementation
  */
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { useSSE } from "./useSSE";
 
 export interface PriceData {
   price: number;
@@ -64,11 +66,11 @@ export function useMarketStream(
   const {
     autoReconnect = true,
     maxReconnectAttempts = 5,
-    heartbeatTimeout = 45, // 45 seconds default (3x heartbeat interval)
+    heartbeatTimeout = 45,
     debug = false,
   } = options;
 
-  const [state, setState] = useState<MarketStreamState>({
+  const initialState = useRef<MarketStreamState>({
     prices: {},
     connected: false,
     connecting: false,
@@ -77,225 +79,234 @@ export function useMarketStream(
     lastHeartbeat: null,
   });
 
-  const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectAttemptsRef = useRef(0);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const heartbeatCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [state, setState] = useState<MarketStreamState>(initialState.current);
+  const [cacheBuster, setCacheBuster] = useState(() => Date.now());
+
+  const normalizedSymbols = useMemo(() => {
+    return Array.from(
+      new Set(
+        symbols.map((symbol) => symbol.trim().toUpperCase()).filter((symbol) => symbol.length > 0)
+      )
+    ).sort();
+  }, [symbols]);
+
+  const normalizedSymbolsKey = useMemo(() => normalizedSymbols.join(","), [normalizedSymbols]);
+
+  useEffect(() => {
+    setCacheBuster(Date.now());
+  }, [normalizedSymbolsKey]);
+
+  const streamUrl = useMemo(() => {
+    if (normalizedSymbols.length === 0) {
+      return null;
+    }
+    const params = new URLSearchParams({
+      symbols: normalizedSymbols.join(","),
+      t: String(cacheBuster),
+    });
+    return `/api/proxy/api/stream/prices?${params.toString()}`;
+  }, [cacheBuster, normalizedSymbols]);
 
   const log = useCallback(
-    (...args: any[]) => {
+    (...args: unknown[]) => {
       if (debug) {
+        // eslint-disable-next-line no-console
         console.info("[useMarketStream]", ...args);
       }
     },
     [debug]
   );
 
-  const connect = useCallback(() => {
-    // Clean up existing connection
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
-    }
+  const handlePriceUpdate = useCallback(
+    (event: MessageEvent) => {
+      try {
+        const newPrices = JSON.parse(event.data) as Record<string, PriceData>;
+        log("📈 Price update:", Object.keys(newPrices).length, "symbols");
+        setState((prev) => ({
+          ...prev,
+          prices: { ...prev.prices, ...newPrices },
+          lastUpdate: new Date(),
+        }));
+      } catch (error) {
+        console.error("[useMarketStream] Error parsing price update:", error);
+      }
+    },
+    [log]
+  );
 
-    // Clear any pending reconnect
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
+  const handleHeartbeat = useCallback(() => {
+    const now = new Date();
+    log("💓 Heartbeat received");
+    setState((prev) => ({
+      ...prev,
+      lastHeartbeat: now,
+    }));
+  }, [log]);
 
-    // Clear heartbeat check interval
-    if (heartbeatCheckIntervalRef.current) {
-      clearInterval(heartbeatCheckIntervalRef.current);
-      heartbeatCheckIntervalRef.current = null;
-    }
+  const handleServerError = useCallback(
+    (event: MessageEvent) => {
+      try {
+        const payload = JSON.parse(event.data) as { error?: string };
+        if (payload?.error) {
+          console.error("[useMarketStream] Server error:", payload.error);
+          setState((prev) => ({
+            ...prev,
+            error: payload.error ?? null,
+            connected: false,
+          }));
+        }
+      } catch (err) {
+        log("Received non-JSON error event", err);
+      }
+    },
+    [log]
+  );
 
-    // Don't connect if no symbols
-    if (symbols.length === 0) {
-      log("No symbols to subscribe to");
+  const {
+    connected,
+    connecting,
+    error: connectionError,
+    lastHeartbeatAt,
+    reconnect: sseReconnect,
+  } = useSSE(streamUrl, {
+    events: {
+      price_update: handlePriceUpdate,
+      heartbeat: handleHeartbeat,
+      error: handleServerError,
+    },
+    heartbeatEvent: "heartbeat",
+    autoReconnect,
+    maxReconnectAttempts,
+    debug,
+  });
+
+  useEffect(() => {
+    if (!streamUrl) {
+      setState(() => ({
+        ...initialState.current,
+        prices: {},
+      }));
+    }
+  }, [streamUrl]);
+
+  useEffect(() => {
+    setState((prev) => {
+      if (prev.connected === connected && prev.connecting === connecting) {
+        return prev;
+      }
+      return {
+        ...prev,
+        connected,
+        connecting,
+      };
+    });
+  }, [connected, connecting]);
+
+  useEffect(() => {
+    if (connectionError) {
+      setState((prev) => {
+        if (prev.error === connectionError) {
+          return prev;
+        }
+        return {
+          ...prev,
+          error: connectionError,
+        };
+      });
+    } else if (connected) {
+      setState((prev) => {
+        if (prev.error === null) {
+          return prev;
+        }
+        return {
+          ...prev,
+          error: null,
+        };
+      });
+    }
+  }, [connectionError, connected]);
+
+  useEffect(() => {
+    setState((prev) => {
+      const prevTimestamp = prev.lastHeartbeat?.getTime() ?? null;
+      const nextTimestamp = lastHeartbeatAt ? lastHeartbeatAt.getTime() : null;
+      if (prevTimestamp === nextTimestamp) {
+        return prev;
+      }
+      return {
+        ...prev,
+        lastHeartbeat: lastHeartbeatAt ?? null,
+      };
+    });
+  }, [lastHeartbeatAt]);
+
+  useEffect(() => {
+    if (normalizedSymbols.length === 0) {
+      setState((prev) => ({
+        ...prev,
+        prices: {},
+      }));
       return;
     }
 
-    setState((prev) => ({ ...prev, connecting: true, error: null }));
-    log("Connecting to price stream:", symbols);
-
-    try {
-      // Build SSE URL
-      const symbolsParam = symbols.join(",");
-      const url = `/api/proxy/api/stream/prices?symbols=${symbolsParam}`;
-
-      // Create EventSource
-      const eventSource = new EventSource(url);
-      eventSourceRef.current = eventSource;
-
-      // Handle connection open
-      eventSource.onopen = () => {
-        log("✅ Connected to price stream");
-        const now = new Date();
-        setState((prev) => ({
-          ...prev,
-          connected: true,
-          connecting: false,
-          error: null,
-          lastHeartbeat: now, // Initialize heartbeat timestamp on connect
-        }));
-        reconnectAttemptsRef.current = 0; // Reset reconnect counter on success
-
-        // Start heartbeat timeout checker
-        heartbeatCheckIntervalRef.current = setInterval(() => {
-          setState((currentState) => {
-            if (!currentState.lastHeartbeat || !currentState.connected) {
-              return currentState;
-            }
-
-            const timeSinceHeartbeat = (Date.now() - currentState.lastHeartbeat.getTime()) / 1000;
-
-            if (timeSinceHeartbeat > heartbeatTimeout) {
-              log(`⚠️ Heartbeat timeout (${timeSinceHeartbeat.toFixed(0)}s since last heartbeat)`);
-
-              // Trigger reconnect
-              if (eventSourceRef.current) {
-                eventSourceRef.current.close();
-                eventSourceRef.current = null;
-              }
-
-              if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
-                reconnectAttemptsRef.current++;
-                log(
-                  `🔄 Reconnecting due to heartbeat timeout (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
-                );
-                connect();
-              }
-
-              return {
-                ...currentState,
-                connected: false,
-                error: "Heartbeat timeout - reconnecting...",
-              };
-            }
-
-            return currentState;
-          });
-        }, 10000); // Check every 10 seconds
-      };
-
-      // Handle price updates
-      eventSource.addEventListener("price_update", (event) => {
-        try {
-          const newPrices = JSON.parse(event.data) as Record<string, PriceData>;
-          log("📈 Price update:", Object.keys(newPrices).length, "symbols");
-
-          setState((prev) => ({
-            ...prev,
-            prices: { ...prev.prices, ...newPrices },
-            lastUpdate: new Date(),
-          }));
-        } catch (error) {
-          console.error("[useMarketStream] Error parsing price update:", error);
-        }
-      });
-
-      // Handle heartbeat (keep-alive and timeout detection)
-      eventSource.addEventListener("heartbeat", (_event) => {
-        const now = new Date();
-        log("💓 Heartbeat received");
-        setState((prev) => ({
-          ...prev,
-          lastHeartbeat: now,
-        }));
-      });
-
-      // Handle errors
-      eventSource.addEventListener("error", (event) => {
-        try {
-          const errorData = JSON.parse((event as MessageEvent).data);
-          console.error("[useMarketStream] Server error:", errorData.error);
-          setState((prev) => ({
-            ...prev,
-            error: errorData.error,
-            connected: false,
-          }));
-        } catch {
-          // Not a formatted error event, just log it
-          log("Error event (likely connection issue)");
-        }
-      });
-
-      // Handle connection errors/close
-      eventSource.onerror = (_error) => {
-        log("❌ Connection error or closed");
-
-        setState((prev) => ({
-          ...prev,
-          connected: false,
-          connecting: false,
-          error: "Connection lost",
-        }));
-
-        // Close the connection
-        eventSource.close();
-        eventSourceRef.current = null;
-
-        // Attempt reconnect if enabled
-        if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
-          reconnectAttemptsRef.current++;
-          const backoffTime = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Max 30s
-
-          log(
-            `⏳ Reconnecting in ${backoffTime / 1000}s (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
-          );
-
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
-          }, backoffTime);
-        } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
-          setState((prev) => ({
-            ...prev,
-            error: "Max reconnect attempts reached. Please refresh the page.",
-          }));
-        }
-      };
-    } catch (error: any) {
-      console.error("[useMarketStream] Connection error:", error);
-      setState((prev) => ({
+    setState((prev) => {
+      const allowed = new Set(normalizedSymbols);
+      const filteredEntries = Object.entries(prev.prices).filter(([symbol]) => allowed.has(symbol));
+      if (filteredEntries.length === Object.keys(prev.prices).length) {
+        return prev;
+      }
+      return {
         ...prev,
-        connected: false,
-        connecting: false,
-        error: error.message || "Failed to connect",
-      }));
-    }
-  }, [symbols, autoReconnect, maxReconnectAttempts, log]);
+        prices: Object.fromEntries(filteredEntries),
+      };
+    });
+  }, [normalizedSymbols]);
 
-  // Manual reconnect method
+  useEffect(() => {
+    if (heartbeatTimeout <= 0) {
+      return;
+    }
+
+    const interval = setInterval(
+      () => {
+        let shouldReconnect = false;
+        setState((prev) => {
+          if (!prev.lastHeartbeat || !prev.connected) {
+            return prev;
+          }
+
+          const secondsSinceHeartbeat = (Date.now() - prev.lastHeartbeat.getTime()) / 1000;
+          if (secondsSinceHeartbeat <= heartbeatTimeout) {
+            return prev;
+          }
+
+          log(`⚠️ Heartbeat timeout (${secondsSinceHeartbeat.toFixed(0)}s)`);
+          shouldReconnect = true;
+          return {
+            ...prev,
+            connected: false,
+            error: "Heartbeat timeout - reconnecting...",
+          };
+        });
+
+        if (shouldReconnect) {
+          setCacheBuster(Date.now());
+          sseReconnect();
+        }
+      },
+      Math.min(Math.max(heartbeatTimeout * 500, 1000), 10000)
+    );
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [heartbeatTimeout, log, sseReconnect]);
+
   const reconnect = useCallback(() => {
     log("🔄 Manual reconnect triggered");
-    reconnectAttemptsRef.current = 0; // Reset counter on manual reconnect
-    connect();
-  }, [connect, log]);
-
-  // Connect on mount or when symbols change
-  useEffect(() => {
-    if (symbols.length > 0) {
-      connect();
-    }
-
-    // Cleanup on unmount
-    return () => {
-      log("🧹 Cleaning up market stream");
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
-      if (heartbeatCheckIntervalRef.current) {
-        clearInterval(heartbeatCheckIntervalRef.current);
-        heartbeatCheckIntervalRef.current = null;
-      }
-    };
-  }, [symbols.join(","), connect, log]); // Re-connect when symbols change
+    setCacheBuster(Date.now());
+    sseReconnect();
+  }, [log, sseReconnect]);
 
   return {
     ...state,

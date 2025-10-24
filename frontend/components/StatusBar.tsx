@@ -38,12 +38,13 @@ export default function StatusBar() {
         `✓ System operational • Backend: Online • Redis: ${redisStatus} • Market Data: ${streamStatus}`
       );
       setLastCheck(new Date());
-    } catch (error: any) {
+    } catch (error) {
       console.error("Health check failed:", error);
+      const messageText = error instanceof Error ? error.message : "Cannot connect";
       setStatus("error");
-      setMessage(`Backend error: ${error.message || "Cannot connect"}`);
+      setMessage(`Backend error: ${messageText}`);
     }
-  }, []);
+  }, [marketStreamConnected]);
 
   useEffect(() => {
     // eslint-disable-next-line no-console
