@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
 from ..db.session import get_db
 from ..models.database import User
 
@@ -49,7 +49,7 @@ class UserPreferencesUpdate(BaseModel):
 
 @router.get("/users/preferences")
 def get_user_preferences(
-    _=Depends(require_bearer), db: Session = Depends(get_db)
+    _: object = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> UserPreferencesResponse:
     """
     Get user preferences including risk tolerance
@@ -58,7 +58,7 @@ def get_user_preferences(
     """
     try:
         # For now, use a default user (user_id=1) until auth is fully implemented
-        # TODO: Get actual user_id from JWT token in require_bearer
+        # TODO: Replace hardcoded user_id with value from get_current_user dependency
         user = db.query(User).filter(User.id == 1).first()
 
         if not user:
@@ -91,7 +91,7 @@ def get_user_preferences(
 
 @router.patch("/users/preferences")
 def update_user_preferences(
-    updates: UserPreferencesUpdate, _=Depends(require_bearer), db: Session = Depends(get_db)
+    updates: UserPreferencesUpdate, _: object = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> UserPreferencesResponse:
     """
     Update user preferences
@@ -195,7 +195,7 @@ def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
 
 
 @router.get("/users/risk-limits")
-def get_user_risk_limits(_=Depends(require_bearer), db: Session = Depends(get_db)):
+def get_user_risk_limits(_: object = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Get calculated risk limits based on user's risk tolerance
 

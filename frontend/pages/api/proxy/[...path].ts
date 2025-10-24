@@ -15,92 +15,162 @@ if (!API_TOKEN) {
   console.info(`[PROXY] ✅ API_TOKEN loaded: ${API_TOKEN.substring(0, 10)}...`);
 }
 
+type HttpMethod = "GET" | "POST" | "DELETE" | "PATCH";
+
 // Exact endpoints our UI uses (paths without /api prefix - added in URL construction)
-const ALLOW_GET = new Set<string>([
-  "health",
-  "settings",
-  "portfolio/positions",
-  "ai/recommendations",
-  "ai/signals",
-  "ai/analyze-symbol",
-  "market/historical",
-  "screening/opportunities",
-  "screening/strategies",
-  "market/conditions",
-  "market/indices",
-  "market/sectors",
-  "market/status", // Market hours detection
-  // Live market data endpoints
-  "market/quote",
-  "market/quotes",
-  "market/scanner/under4",
-  "market/bars",
-  // Options endpoints
-  "options/greeks",
-  "options/chain",
-  // News endpoints
-  "news/providers",
-  "news/company",
-  "news/market",
-  "news/sentiment/market",
-  "news/cache/stats",
-  // Alpaca endpoints
-  "account",
-  "positions",
-  "orders",
-  "assets",
-  "clock",
-  "calendar",
-  "watchlists",
-  // Order templates
-  "order-templates",
-  // Claude AI endpoints
-  "claude/chat",
-  "claude/health",
-  // Analytics endpoints
-  "portfolio/summary",
-  "portfolio/history",
-  "analytics/performance",
-  // Backtesting endpoints
-  "backtesting/run",
-  "backtesting/quick-test",
-  "backtesting/strategy-templates",
-  // Strategy endpoints
-  "strategies/templates",
-  // SSE streaming endpoints
-  "stream/market-indices",
-  "stream/positions",
-]);
+const ROUTE_ALLOW_LIST: Record<HttpMethod, readonly string[]> = {
+  GET: [
+    "health",
+    "health/detailed",
+    "health/readiness",
+    "health/liveness",
+    "settings",
+    "account",
+    "portfolio/positions",
+    "portfolio/summary",
+    "portfolio/history",
+    "ai/recommendations",
+    "ai/signals",
+    "ai/analyze-symbol",
+    "ai/analyze-symbol/{symbol}",
+    "ai/analyze-portfolio",
+    "analytics",
+    "analytics/performance",
+    "market/historical",
+    "screening/opportunities",
+    "screening/strategies",
+    "market/conditions",
+    "market/indices",
+    "market/sectors",
+    "market/status",
+    "market/quote",
+    "market/quote/{symbol}",
+    "market/quotes",
+    "market/scanner/under4",
+    "market/bars",
+    "market/bars/{symbol}",
+    "options/greeks",
+    "options/chain",
+    "options/chain/{symbol}",
+    "options/expirations/{symbol}",
+    "options/contract/{option_symbol}",
+    "news/providers",
+    "news/company",
+    "news/company/{symbol}",
+    "news/market",
+    "news/sentiment/market",
+    "news/cache/stats",
+    "positions",
+    "positions/greeks",
+    "positions/{symbol}",
+    "orders",
+    "orders/history",
+    "orders/{order_id}",
+    "assets",
+    "assets/{symbol}",
+    "clock",
+    "calendar",
+    "watchlists",
+    "order-templates",
+    "order-templates/{template_id}",
+    "claude/health",
+    "quotes/{symbol}",
+    "stock/{symbol}/info",
+    "stock/{symbol}/news",
+    "stock/{symbol}/complete",
+    "strategies/templates",
+    "stream/market-indices",
+    "stream/positions",
+    "stream/prices",
+    "users/preferences",
+    "users/risk-limits",
+    "scheduler/schedules",
+    "scheduler/executions",
+    "scheduler/pending-approvals",
+    "scheduler/status",
+  ],
+  POST: [
+    "trading/execute",
+    "settings",
+    "admin/kill",
+    "orders",
+    "watchlists",
+    "order-templates",
+    "order-templates/{template_id}/use",
+    "claude/chat",
+    "chat",
+    "telemetry",
+    "news/cache/clear",
+    "backtesting/run",
+    "ai/analyze-news",
+    "ai/analyze-news-batch",
+    "ai/analyze-portfolio",
+    "ai/analyze-symbol",
+    "positions/{position_id}/close",
+    "scheduler/pause-all",
+    "scheduler/resume-all",
+    "scheduler/schedules",
+    "scheduler/approvals/{approval_id}/approve",
+    "scheduler/approvals/{approval_id}/reject",
+    "proposals/create",
+    "proposals/execute",
+  ],
+  DELETE: [
+    "positions",
+    "positions/{symbol}",
+    "orders",
+    "orders/{order_id}",
+    "watchlists",
+    "order-templates",
+    "order-templates/{template_id}",
+    "scheduler/schedules/{schedule_id}",
+  ],
+  PATCH: [
+    "scheduler/schedules/{schedule_id}",
+    "users/preferences",
+  ],
+};
 
-const ALLOW_POST = new Set<string>([
-  "trading/execute",
-  "settings",
-  "admin/kill",
-  // Alpaca endpoints
-  "orders",
-  "watchlists",
-  // Order templates
-  "order-templates",
-  // Claude AI endpoints (both full and simplified paths)
-  "claude/chat",
-  "claude/health",
-  "chat",
-  // Telemetry
-  "telemetry",
-  // News cache management
-  "news/cache/clear",
-  // Backtesting endpoints
-  "backtesting/run",
-]);
+type CompiledPattern = { raw: string; regex: RegExp };
 
-const ALLOW_DELETE = new Set<string>([
-  // Alpaca endpoints
-  "positions",
-  "orders",
-  "watchlists",
-  // Order templates
-  "order-templates",
-]);
+function normalizeRoutePath(path: string): string {
+  return path.replace(/^\/+/u, "").replace(/\/+/gu, "/").replace(/\/$/u, "");
+}
+
+function buildRouteRegex(pattern: string): RegExp {
+  const normalized = normalizeRoutePath(pattern);
+  const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const withWildcards = escaped.replace(/\\\{[^/]+\\\}/g, "[^/]+");
+  return new RegExp(`^${withWildcards}$`);
+}
+
+function compileAllowList(
+  allowList: Record<HttpMethod, readonly string[]>
+): Record<HttpMethod, CompiledPattern[]> {
+  return Object.fromEntries(
+    Object.entries(allowList).map(([method, patterns]) => [
+      method,
+      patterns.map((pattern) => ({ raw: pattern, regex: buildRouteRegex(pattern) })),
+    ])
+  ) as Record<HttpMethod, CompiledPattern[]>;
+}
+
+const COMPILED_ALLOW_LIST = compileAllowList(ROUTE_ALLOW_LIST);
+
+function isSupportedMethod(method: string): method is HttpMethod {
+  return method === "GET" || method === "POST" || method === "DELETE" || method === "PATCH";
+}
+
+function findAllowedPattern(method: HttpMethod, path: string): string | undefined {
+  const normalizedPath = normalizeRoutePath(path);
+  const patterns = COMPILED_ALLOW_LIST[method];
+  for (const candidate of patterns) {
+    if (candidate.regex.test(normalizedPath)) {
+      return candidate.raw;
+    }
+  }
+  return undefined;
+}
 
 // Allowed origins for CORS (production and development only)
 const ALLOWED_ORIGINS = new Set<string>([
@@ -162,7 +232,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Only allow preflight from authorized origins
     if (origin && isAllowedOrigin(req)) {
       res.setHeader("access-control-allow-origin", origin);
-      res.setHeader("access-control-allow-methods", "GET,POST,DELETE,OPTIONS");
+      res.setHeader("access-control-allow-methods", "GET,POST,DELETE,PATCH,OPTIONS");
       res.setHeader("access-control-allow-headers", "content-type,x-request-id,authorization");
       res.setHeader("access-control-allow-credentials", "true");
       res.status(204).end();
@@ -196,40 +266,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.info(`[PROXY] ✅ Origin check passed, proceeding with request`);
 
   const parts = (req.query.path as string[]) || [];
-  let path = parts.join("/");
+  let path = normalizeRoutePath(parts.join("/"));
 
   // Handle legacy URLs with /api/ prefix (e.g., /api/proxy/api/health)
-  // Strip leading "api/" if present
   if (path.startsWith("api/")) {
-    path = path.substring(4);
+    path = normalizeRoutePath(path.substring(4));
   }
 
-  // Check if path is allowed based on method
-  if (req.method === "GET" && !ALLOW_GET.has(path)) {
-    // Allow wildcard patterns for dynamic routes
-    const isAllowedPattern = Array.from(ALLOW_GET).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
-    }
+  const rawMethod = (req.method || "GET").toUpperCase();
+  const normalizedMethod = rawMethod === "HEAD" ? "GET" : rawMethod;
+
+  if (!isSupportedMethod(normalizedMethod)) {
+    console.warn(`[PROXY] ⛔ Unsupported method: ${req.method}`);
+    res.status(405).json({ error: "Not allowed" });
+    return;
   }
-  if (req.method === "POST" && !ALLOW_POST.has(path)) {
-    const isAllowedPattern = Array.from(ALLOW_POST).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
-    }
+
+  const matchedPattern = findAllowedPattern(normalizedMethod, path);
+  if (!matchedPattern) {
+    console.warn(`[PROXY] ⛔ Route blocked (${normalizedMethod} ${path})`);
+    res.status(405).json({ error: "Not allowed" });
+    return;
   }
-  if (req.method === "DELETE" && !ALLOW_DELETE.has(path)) {
-    const isAllowedPattern = Array.from(ALLOW_DELETE).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
-    }
-  }
+
+  console.info(`[PROXY] ✅ Route allowed via pattern: ${matchedPattern}`);
 
   // Preserve query parameters from original request
   const queryString = req.url?.split("?")[1] || "";
@@ -252,7 +312,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.info(`[PROXY] Constructed URL: ${url}`);
   console.info(`[PROXY] Auth header: Bearer ${API_TOKEN?.substring(0, 8)}...`);
   console.info(`[PROXY] Backend: ${BACKEND}`);
-  if (req.method === "POST") {
+  if (req.method === "POST" || req.method === "PATCH") {
     console.info(`[PROXY] Body:`, JSON.stringify(req.body, null, 2));
   }
 
@@ -261,7 +321,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       method: req.method,
       headers,
       body:
-        req.method === "POST" || req.method === "DELETE"
+        req.method && ["POST", "DELETE", "PATCH", "PUT"].includes(req.method)
           ? JSON.stringify(req.body ?? {})
           : undefined,
       // avoid any CDN caching at the edge

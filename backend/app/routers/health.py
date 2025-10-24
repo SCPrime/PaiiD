@@ -4,7 +4,7 @@ Enhanced health check endpoints with metrics
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.auth import require_bearer
+from app.core.jwt import get_current_user
 from app.services.health_monitor import health_monitor
 
 router = APIRouter(prefix="/api/health", tags=["health"])
@@ -19,7 +19,7 @@ async def health_check():
     }
 
 
-@router.get("/detailed", dependencies=[Depends(require_bearer)])
+@router.get("/detailed", dependencies=[Depends(get_current_user)])
 async def detailed_health():
     """Detailed health metrics - requires auth"""
     return health_monitor.get_system_health()

@@ -22,6 +22,7 @@ os.environ["API_TOKEN"] = "test-token-12345"
 os.environ["TRADIER_API_KEY"] = "test-tradier-key"
 os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
+from app.core.jwt import create_token_pair
 from app.db.session import Base, get_db
 from app.main import app
 
@@ -101,7 +102,7 @@ def client(test_db):
 
 
 @pytest.fixture(scope="function")
-def auth_headers():
+def auth_headers(test_db, sample_user):
     """
     Authentication headers for API requests
 
@@ -110,7 +111,8 @@ def auth_headers():
             response = client.get("/api/positions", headers=auth_headers)
             assert response.status_code == 200
     """
-    return {"Authorization": "Bearer test-token-12345"}
+    tokens = create_token_pair(sample_user, test_db)
+    return {"Authorization": f"Bearer {tokens['access_token']}"}
 
 
 # ==================== MOCK CACHE FIXTURES ====================
@@ -166,7 +168,7 @@ def sample_user(test_db):
         email="test@example.com",
         password_hash=TEST_PASSWORD_HASH,
         alpaca_account_id="TEST123",
-        preferences={"risk_tolerance": "moderate"},
+        preferences={"risk_tolerance": 50},
     )
     test_db.add(user)
     test_db.commit()

@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 from cachetools import TTLCache
 
 from ..core.config import settings
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
 from ..services.tradier_client import get_tradier_client
 
 router = APIRouter(prefix="/options", tags=["options"])
@@ -96,7 +96,7 @@ class ExpirationDate(BaseModel):
 # ============================================================================
 
 
-@router.get("/chains/{symbol}", response_model=OptionsChainResponse, dependencies=[Depends(require_bearer)])
+@router.get("/chains/{symbol}", response_model=OptionsChainResponse, dependencies=[Depends(get_current_user)])
 async def get_options_chain(
     symbol: str,
     expiration: Optional[str] = Query(None, description="Expiration date (YYYY-MM-DD). If not provided, uses nearest expiration."),
@@ -231,7 +231,7 @@ async def get_options_chain(
 
 
 @router.get("/expirations/{symbol}", response_model=List[ExpirationDate])
-def get_expiration_dates(symbol: str, authorization: str = Depends(require_bearer)):
+def get_expiration_dates(symbol: str, _: object = Depends(get_current_user)):
     """
     Get available expiration dates for a symbol
 
@@ -282,7 +282,7 @@ def get_expiration_dates(symbol: str, authorization: str = Depends(require_beare
         )
 
 
-@router.post("/greeks", dependencies=[Depends(require_bearer)])
+@router.post("/greeks", dependencies=[Depends(get_current_user)])
 async def calculate_greeks(
     symbol: str = Query(..., description="Option symbol"),
     underlying_price: float = Query(..., description="Current price of underlying asset"),
@@ -302,7 +302,7 @@ async def calculate_greeks(
     raise HTTPException(status_code=501, detail="Greeks calculation endpoint not yet implemented - Phase 1 scaffold")
 
 
-@router.get("/contract/{option_symbol}", response_model=OptionContract, dependencies=[Depends(require_bearer)])
+@router.get("/contract/{option_symbol}", response_model=OptionContract, dependencies=[Depends(get_current_user)])
 async def get_option_contract(option_symbol: str):
     """
     Get details for a specific option contract
