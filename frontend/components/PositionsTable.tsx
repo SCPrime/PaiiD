@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
 import { useMarketStream } from "../hooks/useMarketStream";
@@ -21,30 +22,54 @@ export default function PositionsTable() {
   const [loading, setLoading] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
 
-  async function load() {
+  const refreshToastRef = useRef<string | null>(null);
+  const lastRefreshedRef = useRef<string | null>(null);
+  const streamStatusRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    lastRefreshedRef.current = lastRefreshed;
+  }, [lastRefreshed]);
+
+  useEffect(() => {
+    return () => {
+      if (refreshToastRef.current) {
+        toast.dismiss(refreshToastRef.current);
+      }
+    };
+  }, []);
+
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+
+    const previousTimestamp = lastRefreshedRef.current;
+    const toastId = toast.loading("Refreshing positions…");
+    refreshToastRef.current = toastId;
+
+    const optimisticTimestamp = new Date().toLocaleTimeString();
+    setLastRefreshed(optimisticTimestamp);
+
     try {
       const res = await fetch("/api/proxy/api/positions", {
         method: "GET",
         headers: { "cache-control": "no-store" },
       });
+
       if (!res.ok) {
         const text = await res.text();
         throw new Error(`Positions failed: ${res.status} ${text}`);
       }
+
       const data = await res.json();
       // eslint-disable-next-line no-console
       console.info("API response data:", data);
 
-      // Accept either {positions:[...]} or plain array
       const rawPositions = Array.isArray(data)
         ? data
         : Array.isArray(data?.positions)
           ? data.positions
           : [];
 
-      // Calculate enhanced metrics
       const enhanced: Position[] = rawPositions.map((p: any) => {
         const qty = p.qty || p.quantity || 0;
         const avgPrice = p.avgPrice || p.average_price || p.avg_entry_price || 0;
@@ -69,18 +94,24 @@ export default function PositionsTable() {
       // eslint-disable-next-line no-console
       console.info("Enhanced positions:", enhanced);
       setPositions(enhanced);
-      setLastRefreshed(new Date().toLocaleTimeString());
-    } catch (e: any) {
-      setError(e?.message || String(e));
+      const completedTimestamp = new Date().toLocaleTimeString();
+      setLastRefreshed(completedTimestamp);
+      toast.success(`Positions updated (${enhanced.length})`, { id: toastId });
+    } catch (err: any) {
+      const message = err?.message || String(err);
+      setError(message);
+      setLastRefreshed(previousTimestamp ?? null);
+      toast.error(`Refresh failed: ${message}`, { id: toastId });
     } finally {
+      refreshToastRef.current = null;
       setLoading(false);
     }
-  }
+  }, []);
 
   // Load initial positions on mount
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   // Extract symbols from positions for live price streaming
   const symbols = useMemo(() => positions.map((p) => p.symbol), [positions]);
@@ -89,6 +120,27 @@ export default function PositionsTable() {
   const { prices: livePrices, connected: streamConnected } = useMarketStream(symbols, {
     debug: false,
   });
+
+  useEffect(() => {
+    if (symbols.length === 0) {
+      streamStatusRef.current = streamConnected;
+      return;
+    }
+
+    const previous = streamStatusRef.current;
+    if (previous === null) {
+      streamStatusRef.current = streamConnected;
+      return;
+    }
+
+    if (previous && !streamConnected) {
+      toast.error("Live price stream disconnected. Showing cached prices.");
+    } else if (!previous && streamConnected) {
+      toast.success("Live price stream reconnected.");
+    }
+
+    streamStatusRef.current = streamConnected;
+  }, [streamConnected, symbols.length]);
 
   // Update positions with live prices
   const livePositions = useMemo(() => {
@@ -121,12 +173,14 @@ export default function PositionsTable() {
       <div
         style={{
           display: "flex",
+          flexWrap: "wrap",
+          gap: theme.spacing.md,
           justifyContent: "space-between",
           alignItems: "flex-start",
           marginBottom: theme.spacing.lg,
         }}
       >
-        <div>
+        <div style={{ flex: "1 1 240px", minWidth: "220px" }}>
           <h2
             style={{
               margin: 0,
@@ -150,7 +204,17 @@ export default function PositionsTable() {
             {totalMarketValue.toFixed(2)}
           </p>
         </div>
-        <div style={{ display: "flex", gap: theme.spacing.md, alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: theme.spacing.md,
+            alignItems: "center",
+            justifyContent: "flex-end",
+            flex: "1 1 240px",
+            minWidth: "220px",
+          }}
+        >
           {/* Stream Status Indicator */}
           {symbols.length > 0 && (
             <div
@@ -195,7 +259,7 @@ export default function PositionsTable() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
           gap: theme.spacing.md,
           marginBottom: theme.spacing.lg,
         }}

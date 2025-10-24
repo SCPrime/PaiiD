@@ -1,4 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { pipeline } from "node:stream";
+import { Readable } from "node:stream";
+import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 
 // NOTE: API routes run server-side and use NON-PREFIXED env vars
 // NEXT_PUBLIC_* is for client-side code only!
@@ -69,6 +72,7 @@ const ALLOW_GET = new Set<string>([
   "strategies/templates",
   // SSE streaming endpoints
   "stream/market-indices",
+  "stream/prices",
   "stream/positions",
 ]);
 
@@ -237,8 +241,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const headers: Record<string, string> = {
     authorization: `Bearer ${API_TOKEN}`,
-    "content-type": "application/json",
   };
+
+  if (req.method && req.method !== "GET") {
+    headers["content-type"] = "application/json";
+  }
 
   // propagate request id if client set one
   const rid = (req.headers["x-request-id"] as string) || "";
@@ -254,6 +261,67 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.info(`[PROXY] Backend: ${BACKEND}`);
   if (req.method === "POST") {
     console.info(`[PROXY] Body:`, JSON.stringify(req.body, null, 2));
+  }
+
+  const isSSEEndpoint = req.method === "GET" && path.startsWith("stream/");
+
+  if (isSSEEndpoint) {
+    console.info(`[PROXY] 📡 SSE passthrough detected for ${path}`);
+    const controller = new AbortController();
+
+    try {
+      const upstream = await fetch(url, {
+        method: "GET",
+        headers: { ...headers, accept: "text/event-stream" },
+        signal: controller.signal,
+        cache: "no-store",
+      });
+
+      if (!upstream.body) {
+        console.warn("[PROXY] ⚠️ SSE upstream has no body stream");
+        const fallbackText = await upstream.text();
+        res
+          .status(upstream.status)
+          .setHeader("content-type", upstream.headers.get("content-type") || "text/plain")
+          .send(fallbackText);
+        return;
+      }
+
+      res.status(upstream.status);
+      res.setHeader("content-type", upstream.headers.get("content-type") || "text/event-stream");
+      res.setHeader("cache-control", "no-cache, no-transform");
+      res.setHeader("connection", "keep-alive");
+      res.setHeader("transfer-encoding", "chunked");
+      if (typeof res.flushHeaders === "function") {
+        res.flushHeaders();
+      }
+
+      const upstreamBody = upstream.body as unknown as NodeReadableStream<Uint8Array>;
+      const nodeStream = Readable.fromWeb(upstreamBody);
+      pipeline(nodeStream, res, (error) => {
+        if (error) {
+          console.error("[PROXY] SSE pipeline error", error);
+        } else {
+          console.info("[PROXY] SSE pipeline closed cleanly");
+        }
+        controller.abort();
+      });
+
+      const cleanup = () => {
+        console.info("[PROXY] Client closed SSE connection");
+        controller.abort();
+        nodeStream.destroy();
+      };
+
+      req.on("close", cleanup);
+      req.on("aborted", cleanup);
+      return;
+    } catch (err) {
+      console.error("[PROXY] SSE upstream error", err);
+      controller.abort();
+      res.status(502).json({ error: "Upstream SSE error", detail: String(err) });
+      return;
+    }
   }
 
   try {
