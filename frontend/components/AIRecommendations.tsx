@@ -1,85 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { TrendingUp, Shield, Target, AlertTriangle } from "lucide-react";
+
 import { Card, Button } from "./ui";
-import { theme } from "../styles/theme";
 import StockLookup from "./StockLookup";
 import { useWorkflow } from "../contexts/WorkflowContext";
-import { showSuccess } from "../lib/toast";
-import { TrendingUp, Shield, Target, AlertTriangle } from "lucide-react";
 import { useIsMobile } from "../hooks/useBreakpoint";
-
-interface TradeData {
-  symbol: string;
-  side: "buy" | "sell";
-  quantity: number;
-  orderType: "market" | "limit";
-  entryPrice?: number;
-  stopLoss?: number;
-  takeProfit?: number;
-}
-
-interface Recommendation {
-  symbol: string;
-  action: "BUY" | "SELL" | "HOLD";
-  confidence: number;
-  score: number; // 1-10 AI score
-  reason: string;
-  targetPrice: number;
-  currentPrice: number;
-  timeframe?: string;
-  risk?: string;
-  entryPrice?: number;
-  stopLoss?: number;
-  takeProfit?: number;
-  riskRewardRatio?: number;
-  tradeData?: TradeData;
-  portfolioFit?: string;
-  momentum?: {
-    sma_20: number;
-    sma_50: number;
-    sma_200: number;
-    price_vs_sma_20: number;
-    price_vs_sma_50: number;
-    price_vs_sma_200: number;
-    avg_volume_20d: number;
-    volume_strength: string; // "High", "Normal", "Low"
-    volume_ratio: number;
-    trend_alignment: string; // "Bullish", "Bearish", "Mixed"
-  };
-  volatility?: {
-    atr: number;
-    atr_percent: number;
-    bb_width: number;
-    volatility_class: string; // "Low", "Medium", "High"
-    volatility_score: number; // 0-10
-  };
-  sector?: string; // "Technology", "Healthcare", etc.
-  sectorPerformance?: {
-    name: string;
-    changePercent: number;
-    rank: number;
-    isLeader: boolean;
-    isLaggard: boolean;
-  };
-  explanation?: string; // Detailed "Why?" explanation
-  indicators?: {
-    rsi?: number;
-    macd?: { macd: number; signal: number; histogram: number };
-    bollinger_bands?: { upper: number; middle: number; lower: number };
-    moving_averages?: { sma_20?: number; sma_50?: number; sma_200?: number; ema_12?: number };
-    trend?: { direction: string; strength: number; support: number; resistance: number };
-  };
-}
-
-interface PortfolioAnalysis {
-  totalPositions: number;
-  totalValue: number;
-  topSectors: Array<{ name: string; percentage: number }>;
-  riskScore: number; // 1-10
-  diversificationScore: number; // 1-10
-  recommendations: string[];
-}
+import { showSuccess } from "../lib/toast";
+import { theme } from "../styles/theme";
+import {
+  Recommendation,
+  PortfolioAnalysis,
+  RecommendationFilters as FiltersPanel,
+  RecommendationTable,
+  exportRecommendationsToCsv,
+  useRecommendationFilters,
+} from "@/src/features/recommendations";
 
 export default function AIRecommendations() {
   const isMobile = useIsMobile();
@@ -95,6 +32,23 @@ export default function AIRecommendations() {
 
   // Workflow context for 1-click execution
   const { navigateToWorkflow } = useWorkflow();
+  const {
+    filters,
+    setSearch,
+    setMinConfidence,
+    toggleAction,
+    toggleRiskLevel,
+    setVolatilityClass,
+    setMomentumTrend,
+    setSort,
+    resetFilters,
+    applyFiltersAndSort,
+  } = useRecommendationFilters();
+
+  const filteredRecommendations = useMemo(
+    () => applyFiltersAndSort(recommendations),
+    [recommendations, applyFiltersAndSort]
+  );
 
   const fetchRecommendations = async () => {
     setLoading(true);
@@ -111,6 +65,7 @@ export default function AIRecommendations() {
       const data = await res.json();
       setRecommendations(data.recommendations || []);
       setPortfolioAnalysis(data.portfolioAnalysis || null);
+      setSelectedRec(null);
     } catch (err: unknown) {
       console.error("Error fetching recommendations:", err);
       setError(
@@ -123,6 +78,16 @@ export default function AIRecommendations() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleExport = () => {
+    if (!filteredRecommendations.length) {
+      showSuccess("No recommendations available to export");
+      return;
+    }
+
+    exportRecommendationsToCsv(filteredRecommendations);
+    showSuccess(`📄 Exported ${filteredRecommendations.length} recommendations to CSV`);
   };
 
   const handleExecuteTrade = (rec: Recommendation) => {
@@ -274,6 +239,19 @@ export default function AIRecommendations() {
           ❌ {error}
         </div>
       )}
+
+      <FiltersPanel
+        filters={filters}
+        onSearchChange={setSearch}
+        onConfidenceChange={setMinConfidence}
+        onToggleAction={toggleAction}
+        onToggleRisk={toggleRiskLevel}
+        onVolatilityChange={setVolatilityClass}
+        onMomentumChange={setMomentumTrend}
+        onSortChange={setSort}
+        onReset={resetFilters}
+        onExport={handleExport}
+      />
 
       {/* Portfolio Analysis Panel */}
       {portfolioAnalysis && (
@@ -475,8 +453,17 @@ export default function AIRecommendations() {
         </Card>
       )}
 
+      <RecommendationTable
+        recommendations={filteredRecommendations}
+        onResearch={(symbol) => {
+          setResearchSymbol(symbol);
+          setShowStockLookup(true);
+        }}
+        onExecute={handleExecuteTrade}
+      />
+
       {/* Market Context Banner */}
-      {recommendations.length > 0 && (
+      {filteredRecommendations.length > 0 && (
         <Card glow="cyan" style={{ marginBottom: theme.spacing.lg }}>
           <div
             style={{
@@ -508,21 +495,21 @@ export default function AIRecommendations() {
                 }}
               >
                 {(() => {
-                  const highVolCount = recommendations.filter(
+                  const highVolCount = filteredRecommendations.filter(
                     (r) => r.volatility?.volatility_class === "High"
                   ).length;
                   const leadingSectors = Array.from(
                     new Set(
-                      recommendations
+                      filteredRecommendations
                         .filter((r) => r.sectorPerformance?.isLeader)
                         .map((r) => r.sector)
                     )
                   );
                   const avgVolatility =
-                    recommendations.reduce(
+                    filteredRecommendations.reduce(
                       (sum, r) => sum + (r.volatility?.volatility_score || 0),
                       0
-                    ) / recommendations.length;
+                    ) / filteredRecommendations.length;
 
                   return (
                     <>
@@ -564,8 +551,25 @@ export default function AIRecommendations() {
         </Card>
       )}
 
+      {recommendations.length > 0 && filteredRecommendations.length === 0 && (
+        <Card>
+          <div
+            style={{
+              textAlign: "center",
+              padding: theme.spacing.xl,
+              color: theme.colors.textMuted,
+            }}
+          >
+            <div style={{ fontSize: "48px", marginBottom: theme.spacing.md }}>🧭</div>
+            <div style={{ fontSize: "16px" }}>
+              No recommendations match the current filters. Adjust your filters to see more results.
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div style={{ display: "grid", gap: theme.spacing.md }}>
-        {recommendations.map((rec, idx) => (
+        {filteredRecommendations.map((rec, idx) => (
           <Card key={idx} glow="purple">
             {/* Main Recommendation Header */}
             <div

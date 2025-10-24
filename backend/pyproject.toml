@@ -128,11 +128,20 @@ unfixable = []
 # Allow unused variables when underscore-prefixed
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = [
+    "classmethod",
+    "pydantic.validator",
+    "validator",
+]
+
 [tool.ruff.lint.per-file-ignores]
 # Ignore all security checks in tests
 "tests/**/*.py" = ["S", "B"]
 # Allow print statements in scripts
 "scripts/**/*.py" = ["T201"]
+"app/routers/ai.py" = ["N815"]
+"app/routers/options.py" = ["E501", "B904", "DTZ007"]
 
 [tool.ruff.lint.isort]
 # Compatible with Black

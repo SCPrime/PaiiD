@@ -27,6 +27,7 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 from slowapi.errors import RateLimitExceeded
 
 from .core.config import settings
+from .recommendations.router import router as recommendations_router
 from .routers import (
     ai,
     analytics,
@@ -407,3 +408,4 @@ app.include_router(scheduler.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(backtesting.router, prefix="/api")
 app.include_router(telemetry.router)
+app.include_router(recommendations_router, prefix="/api")

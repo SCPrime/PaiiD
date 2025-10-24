@@ -58,7 +58,7 @@
     "coverage/**",
     "*.config.js",
     "*.config.ts",
-    "jest.config.js",
+    "!jest.config.js",
     "next-env.d.ts"
   ],
   "settings": {
