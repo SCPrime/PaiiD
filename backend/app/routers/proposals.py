@@ -91,7 +91,7 @@ async def create_proposal(request: CreateProposalRequest):
 
         return {
             "success": True,
-            "proposal": proposal.dict(),
+            "proposal": proposal.model_dump(),
             "message": f"Proposal created for {request.quantity} contract(s) of {request.option_symbol}",
         }
 

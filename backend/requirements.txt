@@ -34,9 +34,6 @@ py_vollib>=1.0.1
 # Resilience (Phase 5.C)
 tenacity>=8.2.0
 
-# System Monitoring & Health Checks (Phase 7: Production Monitoring)
-psutil>=5.9.0
-
 # Rate Limiting (Phase 3: Bulletproof Reliability)
 slowapi>=0.1.9
 

@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ...core.time_utils import ensure_utc, utc_now, utc_now_isoformat
 
 logger = logging.getLogger(__name__)
 
@@ -119,9 +120,11 @@ class NewsCache:
                 cache_data = json.load(f)
 
             # Check TTL
-            cached_at = datetime.fromisoformat(cache_data["cached_at"])
+            cached_at = ensure_utc(
+                datetime.fromisoformat(cache_data["cached_at"].replace("Z", "+00:00"))
+            )
             ttl = MARKET_NEWS_TTL if cache_type == "market" else COMPANY_NEWS_TTL
-            age_seconds = (datetime.utcnow() - cached_at).total_seconds()
+            age_seconds = (utc_now() - cached_at).total_seconds()
 
             if age_seconds > ttl:
                 logger.debug(f"Cache expired: {cache_key} (age: {age_seconds:.0f}s, TTL: {ttl}s)")
@@ -150,7 +153,7 @@ class NewsCache:
             cache_path = self._get_cache_path(cache_key)
 
             cache_data = {
-                "cached_at": datetime.utcnow().isoformat(),
+                "cached_at": utc_now_isoformat(),
                 "params": params,
                 "count": len(articles),
                 "articles": articles,
@@ -215,10 +218,12 @@ class NewsCache:
                 try:
                     with open(cache_file) as f:
                         cache_data = json.load(f)
-                    cached_at = datetime.fromisoformat(cache_data["cached_at"])
+                    cached_at = ensure_utc(
+                        datetime.fromisoformat(cache_data["cached_at"].replace("Z", "+00:00"))
+                    )
                     cache_type = "market" if cache_file.name.startswith("market_") else "company"
                     ttl = MARKET_NEWS_TTL if cache_type == "market" else COMPANY_NEWS_TTL
-                    age = (datetime.utcnow() - cached_at).total_seconds()
+                    age = (utc_now() - cached_at).total_seconds()
                     if age > ttl:
                         expired += 1
                 except (OSError, json.JSONDecodeError, KeyError, ValueError) as e:

@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from ..core.auth import require_bearer
 from ..core.config import settings
+from ..core.time_utils import utc_now_isoformat
 from ..services.cache import CacheService, get_cache
 
 
@@ -219,7 +220,7 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
 
         result = {
             "conditions": [cond.model_dump() for cond in conditions],
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": utc_now_isoformat(),
             "overallSentiment": overall_sentiment,
             "recommendedActions": recommended_actions,
             "source": "tradier",
@@ -244,7 +245,7 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
         ]
         return {
             "conditions": [cond.model_dump() for cond in fallback_conditions],
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": utc_now_isoformat(),
             "overallSentiment": "neutral",
             "recommendedActions": ["Wait for market data to become available"],
             "source": "fallback",
@@ -472,7 +473,7 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
 
             result = {
                 "sectors": sectors,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": utc_now_isoformat(),
                 "leader": leader,
                 "laggard": laggard,
                 "source": "tradier",
@@ -495,7 +496,7 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
         ]
         return {
             "sectors": fallback_sectors,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": utc_now_isoformat(),
             "leader": "Unavailable",
             "laggard": "Unavailable",
             "source": "fallback",
@@ -552,7 +553,7 @@ async def get_market_status(cache: CacheService = Depends(get_cache)) -> dict:
                 "is_open": is_open,
                 "next_change": next_change,
                 "description": description,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": utc_now_isoformat(),
                 "source": "tradier",
             }
 
@@ -572,7 +573,7 @@ async def get_market_status(cache: CacheService = Depends(get_cache)) -> dict:
             "is_open": False,
             "next_change": "",
             "description": "Market status unavailable",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": utc_now_isoformat(),
             "source": "fallback",
             "error": str(e),
         }

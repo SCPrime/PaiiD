@@ -18,6 +18,7 @@ from ..core.auth import require_bearer
 from ..core.config import settings
 from ..core.idempotency import check_and_store
 from ..core.kill_switch import is_killed, set_kill
+from ..core.time_utils import utc_now
 from ..db.session import get_db
 from ..middleware.validation import (
     validate_limit_price,
@@ -76,7 +77,7 @@ class AlpacaCircuitBreaker:
     def record_failure(self):
         """Record failed call - increment counter and potentially open circuit"""
         self.failure_count += 1
-        self.last_failure_time = datetime.utcnow()
+        self.last_failure_time = utc_now()
 
         if self.failure_count >= self.failure_threshold:
             self.state = "OPEN"
@@ -93,7 +94,7 @@ class AlpacaCircuitBreaker:
         if self.state == "OPEN":
             # Check if cooldown period has elapsed
             if self.last_failure_time:
-                elapsed = (datetime.utcnow() - self.last_failure_time).total_seconds()
+                elapsed = (utc_now() - self.last_failure_time).total_seconds()
                 if elapsed >= self.cooldown_seconds:
                     # Move to HALF_OPEN to test Alpaca
                     self.state = "HALF_OPEN"
@@ -351,7 +352,11 @@ async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer))
         # Respect LIVE_TRADING setting
         if req.dryRun or not settings.LIVE_TRADING:
             logger.info(f"[Trading Execute] Dry-run mode: {len(req.orders)} orders")
-            return {"accepted": True, "dryRun": True, "orders": [o.dict() for o in req.orders]}
+            return {
+                "accepted": True,
+                "dryRun": True,
+                "orders": [o.model_dump() for o in req.orders],
+            }
 
         # Execute real trades via Alpaca API with circuit breaker and retry logic
         logger.info(f"[Trading Execute] Executing {len(req.orders)} live orders")
@@ -361,7 +366,7 @@ async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer))
             alpaca_order = execute_alpaca_order_with_retry(order)
             executed_orders.append(
                 {
-                    **order.dict(),
+                    **order.model_dump(),
                     "alpaca_order_id": alpaca_order.get("id"),
                     "status": alpaca_order.get("status"),
                 }
@@ -546,7 +551,7 @@ def update_order_template(
     if template_update.limit_price is not None:
         db_template.limit_price = template_update.limit_price
 
-    db_template.updated_at = datetime.utcnow()
+    db_template.updated_at = utc_now()
     db.commit()
     db.refresh(db_template)
     return db_template
@@ -573,7 +578,7 @@ def use_order_template(template_id: int, db: Session = Depends(get_db), _=Depend
     if not db_template:
         raise HTTPException(status_code=404, detail="Order template not found")
 
-    db_template.last_used_at = datetime.utcnow()
+    db_template.last_used_at = utc_now()
     db.commit()
     db.refresh(db_template)
     return db_template

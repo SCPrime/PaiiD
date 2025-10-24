@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.auth import require_bearer
+from app.core.time_utils import utc_now, utc_now_isoformat
 
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
@@ -54,7 +55,7 @@ async def get_quote(
             "ask": float(quote.get("ask", 0)),
             "last": float(quote.get("last", 0)),
             "volume": int(quote.get("volume", 0)),
-            "timestamp": quote.get("trade_date", datetime.now().isoformat()),
+            "timestamp": quote.get("trade_date", utc_now_isoformat()),
         }
 
         # Cache for 15 seconds
@@ -83,7 +84,7 @@ async def get_quotes(symbols: str, _=Depends(require_bearer)):
                     "bid": float(q.get("bid", 0)),
                     "ask": float(q.get("ask", 0)),
                     "last": float(q.get("last", 0)),
-                    "timestamp": q.get("trade_date", datetime.now().isoformat()),
+                    "timestamp": q.get("trade_date", utc_now_isoformat()),
                 }
 
         logger.info(f"✅ Retrieved {len(result)} quotes from Tradier")
@@ -116,7 +117,7 @@ async def get_bars(
         interval = interval_map.get(timeframe, "daily")
 
         # Calculate date range based on limit
-        end_date = datetime.now()
+        end_date = utc_now()
         if interval in ["1min", "5min", "15min"]:
             start_date = end_date - timedelta(days=min(limit // 78, 30))  # Market hours limit
         elif interval == "1hour":
@@ -190,7 +191,7 @@ async def scan_under_4(_=Depends(require_bearer)):
                             "bid": float(q.get("bid", 0)),
                             "ask": ask_price,
                             "volume": int(q.get("volume", 0)),
-                            "timestamp": q.get("trade_date", datetime.now().isoformat()),
+                            "timestamp": q.get("trade_date", utc_now_isoformat()),
                         }
                     )
 

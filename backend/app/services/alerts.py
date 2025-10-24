@@ -3,10 +3,11 @@ Production alert system
 """
 import logging
 import os
-from datetime import datetime
 from typing import Optional
 
 import requests
+
+from app.core.time_utils import utc_now_isoformat
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ class AlertService:
             "severity": severity,
             "title": title,
             "message": message,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": utc_now_isoformat(),
             "details": details or {}
         }
         

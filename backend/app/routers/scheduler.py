@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from ..core.auth import require_bearer
+from ..core.time_utils import ensure_utc, utc_now, utc_now_isoformat
 from ..scheduler import APPROVALS_DIR, EXECUTIONS_DIR, SCHEDULES_DIR, get_scheduler
 
 
@@ -148,14 +149,16 @@ def _load_executions(limit: int = 20, schedule_id: str | None = None) -> list[di
 def _load_pending_approvals() -> list[dict]:
     """Load pending approvals from files"""
     approvals = []
-    now = datetime.utcnow()
+    now = utc_now()
 
     for approval_file in APPROVALS_DIR.glob("*.json"):
         with open(approval_file) as f:
             approval = json.load(f)
             # Only include pending and not expired
             if approval["status"] == "pending":
-                expires_at = datetime.fromisoformat(approval["expires_at"])
+                expires_at = ensure_utc(
+                    datetime.fromisoformat(approval["expires_at"].replace("Z", "+00:00"))
+                )
                 if expires_at > now:
                     approvals.append(approval)
 
@@ -227,7 +230,7 @@ async def create_schedule(schedule_data: ScheduleCreate, _=Depends(require_beare
         "requires_approval": schedule_data.requires_approval,
         "enabled": schedule_data.enabled,
         "status": "active" if schedule_data.enabled else "paused",
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": utc_now_isoformat(),
         "last_run": None,
     }
 
@@ -395,13 +398,16 @@ async def approve_trade(approval_id: str, _=Depends(require_bearer)):
         raise HTTPException(status_code=400, detail="Approval already processed")
 
     # Check expiration
-    expires_at = datetime.fromisoformat(approval["expires_at"])
-    if expires_at < datetime.utcnow():
+    expires_at = ensure_utc(
+        datetime.fromisoformat(approval["expires_at"].replace("Z", "+00:00"))
+    )
+    if expires_at < utc_now():
         raise HTTPException(status_code=400, detail="Approval has expired")
 
     # Update approval status
     _update_approval(
-        approval_id, {"status": "approved", "approved_at": datetime.utcnow().isoformat()}
+        approval_id,
+        {"status": "approved", "approved_at": utc_now_isoformat()},
     )
 
     # TODO: Execute the trade via trading engine
@@ -428,7 +434,7 @@ async def reject_trade(approval_id: str, decision: ApprovalDecision, _=Depends(r
         approval_id,
         {
             "status": "rejected",
-            "approved_at": datetime.utcnow().isoformat(),
+            "approved_at": utc_now_isoformat(),
             "rejection_reason": decision.reason,
         },
     )

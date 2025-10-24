@@ -13,6 +13,7 @@ from pathlib import Path
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+from app.core.time_utils import to_isoformat, utc_now, utc_now_isoformat
 
 logger = logging.getLogger(__name__)
 
@@ -346,7 +347,7 @@ class TradingScheduler:
             "schedule_name": schedule_name,
             "execution_type": execution_type,
             "status": "running",
-            "started_at": datetime.utcnow().isoformat(),
+            "started_at": utc_now_isoformat(),
             "completed_at": None,
             "result": None,
             "error": None,
@@ -370,7 +371,7 @@ class TradingScheduler:
             execution.update(
                 {
                     "status": status,
-                    "completed_at": datetime.utcnow().isoformat(),
+                    "completed_at": utc_now_isoformat(),
                     "result": result,
                     "error": error,
                 }
@@ -408,8 +409,8 @@ class TradingScheduler:
                 "ai_confidence": rec.get("confidence", 0.5) * 100,
                 "supporting_data": rec.get("supporting_data", {}),
                 "status": "pending",
-                "created_at": datetime.utcnow().isoformat(),
-                "expires_at": (datetime.utcnow() + timedelta(hours=4)).isoformat(),
+                "created_at": utc_now_isoformat(),
+                "expires_at": to_isoformat(utc_now() + timedelta(hours=4)),
                 "approved_at": None,
                 "approved_by": None,
                 "rejection_reason": None,

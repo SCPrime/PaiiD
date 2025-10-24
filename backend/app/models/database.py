@@ -5,12 +5,13 @@ SQLAlchemy models for PostgreSQL database.
 Defines schema for users, strategies, trades, performance tracking, and equity snapshots.
 """
 
-from datetime import datetime
-
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from ..db.session import Base
+from ..core.time_utils import utc_now
+
+UTCDateTime = DateTime(timezone=True)
 
 
 class User(Base):
@@ -33,9 +34,9 @@ class User(Base):
     alpaca_account_id = Column(String(100), unique=True, nullable=True, index=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    last_login_at = Column(DateTime, nullable=True)
+    created_at = Column(UTCDateTime, default=utc_now, nullable=False)
+    updated_at = Column(UTCDateTime, default=utc_now, onupdate=utc_now, nullable=False)
+    last_login_at = Column(UTCDateTime, nullable=True)
 
     # Preferences (stored as JSON for flexibility)
     # Example: {
@@ -71,15 +72,15 @@ class UserSession(Base):
     refresh_token_jti = Column(String(100), unique=True, nullable=False, index=True)
 
     # Session metadata
-    expires_at = Column(DateTime, nullable=False, index=True)  # Refresh token expiry
-    last_activity_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(UTCDateTime, nullable=False, index=True)  # Refresh token expiry
+    last_activity_at = Column(UTCDateTime, default=utc_now, nullable=False)
 
     # Audit trail
     ip_address = Column(String(45), nullable=True)  # IPv6 max length
     user_agent = Column(String(500), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(UTCDateTime, default=utc_now, nullable=False)
 
     # Relationship
     user = relationship("User", back_populates="sessions")
@@ -116,7 +117,7 @@ class ActivityLog(Base):
     user_agent = Column(String(500), nullable=True)
 
     # Timestamp
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(UTCDateTime, default=utc_now, nullable=False, index=True)
 
     # Relationship
     user = relationship("User", back_populates="activity_logs")
@@ -155,9 +156,9 @@ class Strategy(Base):
     max_drawdown = Column(Float, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    last_backtest_at = Column(DateTime, nullable=True)
+    created_at = Column(UTCDateTime, default=utc_now, nullable=False)
+    updated_at = Column(UTCDateTime, default=utc_now, onupdate=utc_now, nullable=False)
+    last_backtest_at = Column(UTCDateTime, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="strategies")
@@ -204,9 +205,9 @@ class Trade(Base):
     is_dry_run = Column(Boolean, default=False, nullable=False)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    filled_at = Column(DateTime, nullable=True)
-    cancelled_at = Column(DateTime, nullable=True)
+    created_at = Column(UTCDateTime, default=utc_now, nullable=False, index=True)
+    filled_at = Column(UTCDateTime, nullable=True)
+    cancelled_at = Column(UTCDateTime, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="trades")
@@ -223,7 +224,7 @@ class Performance(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
-    date = Column(DateTime, nullable=False, index=True)
+    date = Column(UTCDateTime, nullable=False, index=True)
 
     # Portfolio metrics
     portfolio_value = Column(Float, nullable=False)
@@ -250,7 +251,7 @@ class Performance(Base):
     win_rate = Column(Float, nullable=True)
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(UTCDateTime, default=utc_now, nullable=False)
 
     def __repr__(self):
         return f"<Performance(id={self.id}, date={self.date}, value=${self.portfolio_value:.2f}, pnl=${self.day_pnl:.2f})>"
@@ -263,7 +264,7 @@ class EquitySnapshot(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(UTCDateTime, default=utc_now, nullable=False, index=True)
 
     # Snapshot data
     equity = Column(Float, nullable=False)
@@ -301,9 +302,9 @@ class OrderTemplate(Base):
     limit_price = Column(Float, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    last_used_at = Column(DateTime, nullable=True)
+    created_at = Column(UTCDateTime, default=utc_now, nullable=False)
+    updated_at = Column(UTCDateTime, default=utc_now, onupdate=utc_now, nullable=False)
+    last_used_at = Column(UTCDateTime, nullable=True)
 
     def __repr__(self):
         return f"<OrderTemplate(id={self.id}, name='{self.name}', symbol='{self.symbol}', side='{self.side}')>"
@@ -345,7 +346,7 @@ class AIRecommendation(Base):
     status = Column(
         String(20), default="pending", nullable=False, index=True
     )  # pending, executed, ignored, expired
-    executed_at = Column(DateTime, nullable=True)
+    executed_at = Column(UTCDateTime, nullable=True)
     execution_price = Column(Float, nullable=True)
 
     # Performance tracking (if recommendation was executed)
@@ -354,8 +355,8 @@ class AIRecommendation(Base):
     accuracy_score = Column(Float, nullable=True)  # 0-100, based on outcome vs prediction
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    expires_at = Column(DateTime, nullable=True)  # Recommendation expiry
+    created_at = Column(UTCDateTime, default=utc_now, nullable=False, index=True)
+    expires_at = Column(UTCDateTime, nullable=True)  # Recommendation expiry
 
     def __repr__(self):
         return f"<AIRecommendation(id={self.id}, symbol='{self.symbol}', type='{self.recommendation_type}', confidence={self.confidence_score:.1f}%, status='{self.status}')>"
