@@ -15,10 +15,51 @@ from typing import List, Optional
 import requests
 import asyncio
 import logging
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+
+try:  # pragma: no cover - exercised implicitly during imports
+    from cachetools import TTLCache  # type: ignore
+except ImportError:  # Fallback for environments without cachetools installed
+
+    class TTLCache(dict):
+        """Minimal TTL cache implementation used when cachetools is unavailable."""
+
+        def __init__(self, maxsize: int, ttl: int):
+            super().__init__()
+            self.maxsize = maxsize
+            self.ttl = ttl
+            self._expiry: dict[str, float] = {}
+
+        def __contains__(self, key: object) -> bool:
+            self._purge()
+            return super().__contains__(key)
+
+        def __getitem__(self, key):
+            self._purge()
+            return super().__getitem__(key)
+
+        def __setitem__(self, key, value):
+            self._purge()
+            if len(self) >= self.maxsize:
+                # Remove the oldest key to preserve maxsize
+                oldest = min(self._expiry, key=self._expiry.get, default=None)
+                if oldest is not None and oldest in self:
+                    super().__delitem__(oldest)
+                    self._expiry.pop(oldest, None)
+
+            super().__setitem__(key, value)
+            self._expiry[key] = time.time() + self.ttl
+
+        def _purge(self):
+            now = time.time()
+            expired = [key for key, expiry in self._expiry.items() if expiry <= now]
+            for key in expired:
+                self._expiry.pop(key, None)
+                if key in self:
+                    super().__delitem__(key)
 
 from ..core.config import settings
 from ..core.auth import require_bearer
