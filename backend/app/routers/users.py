@@ -7,7 +7,7 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from ..core.auth import require_bearer
@@ -40,8 +40,9 @@ class UserPreferencesUpdate(BaseModel):
     watchlist: list | None = None
     notifications_enabled: bool | None = None
 
-    @validator("risk_tolerance")
-    def validate_risk_tolerance(cls, v):
+    @field_validator("risk_tolerance")
+    @classmethod
+    def validate_risk_tolerance(cls, v: int | None) -> int | None:
         if v is not None and (v < 0 or v > 100):
             raise ValueError("risk_tolerance must be between 0 and 100")
         return v

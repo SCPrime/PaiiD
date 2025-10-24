@@ -1,10 +1,9 @@
 import logging
-import os
-from datetime import datetime
+from datetime import UTC, datetime
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 from tenacity import (
     before_sleep_log,
@@ -35,16 +34,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Alpaca API configuration
-ALPACA_API_KEY = os.getenv("ALPACA_API_KEY")
-ALPACA_SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
 ALPACA_BASE_URL = "https://paper-api.alpaca.markets"  # Paper trading
 
 
 def get_alpaca_headers():
     """Get headers for Alpaca API requests"""
     return {
-        "APCA-API-KEY-ID": ALPACA_API_KEY,
-        "APCA-API-SECRET-KEY": ALPACA_SECRET_KEY,
+        "APCA-API-KEY-ID": settings.ALPACA_API_KEY,
+        "APCA-API-SECRET-KEY": settings.ALPACA_SECRET_KEY,
     }
 
 
@@ -76,7 +73,7 @@ class AlpacaCircuitBreaker:
     def record_failure(self):
         """Record failed call - increment counter and potentially open circuit"""
         self.failure_count += 1
-        self.last_failure_time = datetime.utcnow()
+        self.last_failure_time = datetime.now(UTC)
 
         if self.failure_count >= self.failure_threshold:
             self.state = "OPEN"
@@ -93,7 +90,7 @@ class AlpacaCircuitBreaker:
         if self.state == "OPEN":
             # Check if cooldown period has elapsed
             if self.last_failure_time:
-                elapsed = (datetime.utcnow() - self.last_failure_time).total_seconds()
+                elapsed = (datetime.now(UTC) - self.last_failure_time).total_seconds()
                 if elapsed >= self.cooldown_seconds:
                     # Move to HALF_OPEN to test Alpaca
                     self.state = "HALF_OPEN"
@@ -121,12 +118,19 @@ class Order(BaseModel):
         description="Stock symbol (1-5 uppercase letters)",
         examples=["AAPL", "SPY"],
     )
-    side: str = Field(..., pattern=r"^(buy|sell)$", description="Order side: 'buy' or 'sell'")
+    side: str = Field(
+        ..., pattern=r"^(buy|sell)$", description="Order side: 'buy' or 'sell'"
+    )
     qty: float = Field(
-        ..., gt=0, le=10000, description="Order quantity (0.01 to 10,000 shares/contracts)"
+        ...,
+        gt=0,
+        le=10000,
+        description="Order quantity (0.01 to 10,000 shares/contracts)",
     )
     type: str = Field(
-        default="market", pattern=r"^(market|limit|stop|stop_limit)$", description="Order type"
+        default="market",
+        pattern=r"^(market|limit|stop|stop_limit)$",
+        description="Order type",
     )
     limit_price: float | None = Field(
         default=None,
@@ -137,7 +141,9 @@ class Order(BaseModel):
 
     # Options-specific fields
     asset_class: str = Field(
-        default="stock", pattern=r"^(stock|option)$", description="Asset class: 'stock' or 'option'"
+        default="stock",
+        pattern=r"^(stock|option)$",
+        description="Asset class: 'stock' or 'option'",
     )
     option_type: str | None = Field(
         default=None,
@@ -153,54 +159,64 @@ class Order(BaseModel):
         description="Expiration date in YYYY-MM-DD format (required for options)",
     )
 
-    @validator("symbol")
-    def validate_symbol_format(cls, v):
+    @field_validator("symbol")
+    @classmethod
+    def validate_symbol_format(cls, v, info=None):
         """Validate and normalize symbol"""
         return validate_symbol(v)
 
-    @validator("side")
-    def validate_side_value(cls, v):
+    @field_validator("side")
+    @classmethod
+    def validate_side_value(cls, v, info=None):
         """Validate order side"""
         return validate_side(v)
 
-    @validator("qty")
-    def validate_quantity_value(cls, v):
+    @field_validator("qty")
+    @classmethod
+    def validate_quantity_value(cls, v, info=None):
         """Validate order quantity"""
         return validate_quantity(v)
 
-    @validator("type")
-    def validate_order_type_value(cls, v):
+    @field_validator("type")
+    @classmethod
+    def validate_order_type_value(cls, v, info=None):
         """Validate order type"""
         return validate_order_type(v)
 
-    @validator("limit_price", always=True)
-    def validate_limit_price_value(cls, v, values):
+    @field_validator("limit_price", mode="before")
+    @classmethod
+    def validate_limit_price_value(cls, v, info=None):
         """Validate limit price based on order type"""
-        order_type = values.get("type", "market")
+        order_type = info.data.get("type", "market")
         return validate_limit_price(v, order_type)
 
-    @validator("option_type", always=True)
-    def validate_option_type_required(cls, v, values):
+    @field_validator("option_type", mode="before")
+    @classmethod
+    def validate_option_type_required(cls, v, info=None):
         """Validate that option_type is provided for options orders"""
-        asset_class = values.get("asset_class", "stock")
+        asset_class = info.data.get("asset_class", "stock")
         if asset_class == "option" and not v:
             raise ValueError("option_type is required for options orders (call or put)")
         return v
 
-    @validator("strike_price", always=True)
-    def validate_strike_price_required(cls, v, values):
+    @field_validator("strike_price", mode="before")
+    @classmethod
+    def validate_strike_price_required(cls, v, info=None):
         """Validate that strike_price is provided for options orders"""
-        asset_class = values.get("asset_class", "stock")
+        asset_class = info.data.get("asset_class", "stock")
         if asset_class == "option" and not v:
             raise ValueError("strike_price is required for options orders")
         return v
 
-    @validator("expiration_date", always=True)
-    def validate_expiration_date_required(cls, v, values):
+    @field_validator("expiration_date", mode="before")
+    @classmethod
+    def validate_expiration_date_required(cls, v, info=None):
         """Validate that expiration_date is provided for options orders"""
-        asset_class = values.get("asset_class", "stock")
+        asset_class = info.data.get("asset_class", "stock")
         if asset_class == "option" and not v:
-            raise ValueError("expiration_date is required for options orders (YYYY-MM-DD format)")
+            raise ValueError(
+                "expiration_date is required for options orders (YYYY-MM-DD format)"
+            )
         return v
 
 
@@ -229,7 +245,8 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
     if not alpaca_circuit_breaker.is_available():
         logger.error("[Alpaca Circuit] Circuit is OPEN - refusing request")
         raise HTTPException(
-            status_code=503, detail="Alpaca API temporarily unavailable. Please try again later."
+            status_code=503,
+            detail="Alpaca API temporarily unavailable. Please try again later.",
         )
 
     try:
@@ -262,7 +279,9 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
                 f"({order.symbol} ${order.strike_price} {order.option_type} exp:{order.expiration_date})"
             )
         else:
-            logger.info(f"[Alpaca] Submitting STOCK order: {order.symbol} {order.qty} {order.side}")
+            logger.info(
+                f"[Alpaca] Submitting STOCK order: {order.symbol} {order.qty} {order.side}"
+            )
 
         # Execute order via Alpaca API
         response = requests.post(
@@ -288,7 +307,9 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
         )
 
         # Re-raise for retry logic (if retryable exception)
-        if isinstance(e, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)):
+        if isinstance(
+            e, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)
+        ):
             raise
 
         # For non-retryable errors (4xx, 5xx), fail immediately
@@ -309,21 +330,28 @@ class ExecRequest(BaseModel):
         description="Unique request ID for idempotency (8-64 alphanumeric + hyphens/underscores)",
     )
     orders: list[Order] = Field(
-        ..., min_items=1, max_items=10, description="List of orders to execute (max 10 per request)"
+        ...,
+        min_items=1,
+        max_items=10,
+        description="List of orders to execute (max 10 per request)",
     )
 
-    @validator("requestId")
-    def validate_request_id_format(cls, v):
+    @field_validator("requestId")
+    @classmethod
+    def validate_request_id_format(cls, v, info=None):
         """Validate request ID format"""
         return validate_request_id(v)
 
-    @validator("orders")
-    def validate_orders_list(cls, v):
+    @field_validator("orders")
+    @classmethod
+    def validate_orders_list(cls, v, info=None):
         """Validate orders list"""
         if not v:
             raise ValueError("At least one order is required")
         if len(v) > 10:
-            raise ValueError("Cannot execute more than 10 orders per request (safety limit)")
+            raise ValueError(
+                "Cannot execute more than 10 orders per request (safety limit)"
+            )
         return v
 
 
@@ -346,12 +374,18 @@ async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer))
             return {"accepted": False, "duplicate": True}
 
         if is_killed():
-            raise HTTPException(status_code=status.HTTP_423_LOCKED, detail="trading halted")
+            raise HTTPException(
+                status_code=status.HTTP_423_LOCKED, detail="trading halted"
+            )
 
         # Respect LIVE_TRADING setting
         if req.dryRun or not settings.LIVE_TRADING:
             logger.info(f"[Trading Execute] Dry-run mode: {len(req.orders)} orders")
-            return {"accepted": True, "dryRun": True, "orders": [o.dict() for o in req.orders]}
+            return {
+                "accepted": True,
+                "dryRun": True,
+                "orders": [o.dict() for o in req.orders],
+            }
 
         # Execute real trades via Alpaca API with circuit breaker and retry logic
         logger.info(f"[Trading Execute] Executing {len(req.orders)} live orders")
@@ -373,7 +407,8 @@ async def execute(request: Request, req: ExecRequest, _=Depends(require_bearer))
         raise  # Re-raise HTTP exceptions as-is
     except Exception as e:
         logger.error(
-            f"[Trading Execute] UNEXPECTED ERROR: {type(e).__name__}: {e!s}", exc_info=True
+            f"[Trading Execute] UNEXPECTED ERROR: {type(e).__name__}: {e!s}",
+            exc_info=True,
         )
         raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}")
 
@@ -389,36 +424,49 @@ class OrderTemplateCreate(BaseModel):
     """Create order template with validation"""
 
     name: str = Field(..., min_length=1, max_length=100, description="Template name")
-    description: str | None = Field(None, max_length=500, description="Template description")
+    description: str | None = Field(
+        None, max_length=500, description="Template description"
+    )
     symbol: str = Field(
-        ..., min_length=1, max_length=5, pattern=r"^[A-Z]{1,5}$", description="Stock symbol"
+        ...,
+        min_length=1,
+        max_length=5,
+        pattern=r"^[A-Z]{1,5}$",
+        description="Stock symbol",
     )
     side: str = Field(..., pattern=r"^(buy|sell)$", description="Order side")
     quantity: float = Field(..., gt=0, le=10000, description="Order quantity")
     order_type: str = Field(
-        default="market", pattern=r"^(market|limit|stop|stop_limit)$", description="Order type"
+        default="market",
+        pattern=r"^(market|limit|stop|stop_limit)$",
+        description="Order type",
     )
     limit_price: float | None = Field(None, gt=0, le=1000000, description="Limit price")
 
-    @validator("symbol")
-    def validate_symbol_format(cls, v):
+    @field_validator("symbol")
+    @classmethod
+    def validate_symbol_format(cls, v, info=None):
         return validate_symbol(v)
 
-    @validator("side")
-    def validate_side_value(cls, v):
+    @field_validator("side")
+    @classmethod
+    def validate_side_value(cls, v, info=None):
         return validate_side(v)
 
-    @validator("quantity")
-    def validate_quantity_value(cls, v):
+    @field_validator("quantity")
+    @classmethod
+    def validate_quantity_value(cls, v, info=None):
         return validate_quantity(v)
 
-    @validator("order_type")
-    def validate_order_type_value(cls, v):
+    @field_validator("order_type")
+    @classmethod
+    def validate_order_type_value(cls, v, info=None):
         return validate_order_type(v)
 
-    @validator("limit_price", always=True)
-    def validate_limit_price_value(cls, v, values):
-        order_type = values.get("order_type", "market")
+    @field_validator("limit_price", mode="before")
+    @classmethod
+    def validate_limit_price_value(cls, v, info=None):
+        order_type = info.data.get("order_type", "market")
         return validate_limit_price(v, order_type)
 
 
@@ -427,32 +475,38 @@ class OrderTemplateUpdate(BaseModel):
 
     name: str | None = Field(None, min_length=1, max_length=100)
     description: str | None = Field(None, max_length=500)
-    symbol: str | None = Field(None, min_length=1, max_length=5, pattern=r"^[A-Z]{1,5}$")
+    symbol: str | None = Field(
+        None, min_length=1, max_length=5, pattern=r"^[A-Z]{1,5}$"
+    )
     side: str | None = Field(None, pattern=r"^(buy|sell)$")
     quantity: float | None = Field(None, gt=0, le=10000)
     order_type: str | None = Field(None, pattern=r"^(market|limit|stop|stop_limit)$")
     limit_price: float | None = Field(None, gt=0, le=1000000)
 
-    @validator("symbol")
-    def validate_symbol_format(cls, v):
+    @field_validator("symbol")
+    @classmethod
+    def validate_symbol_format(cls, v, info=None):
         if v is not None:
             return validate_symbol(v)
         return v
 
-    @validator("side")
-    def validate_side_value(cls, v):
+    @field_validator("side")
+    @classmethod
+    def validate_side_value(cls, v, info=None):
         if v is not None:
             return validate_side(v)
         return v
 
-    @validator("quantity")
-    def validate_quantity_value(cls, v):
+    @field_validator("quantity")
+    @classmethod
+    def validate_quantity_value(cls, v, info=None):
         if v is not None:
             return validate_quantity(v)
         return v
 
-    @validator("order_type")
-    def validate_order_type_value(cls, v):
+    @field_validator("order_type")
+    @classmethod
+    def validate_order_type_value(cls, v, info=None):
         if v is not None:
             return validate_order_type(v)
         return v
@@ -478,10 +532,14 @@ class OrderTemplateResponse(BaseModel):
 
 # Order Template CRUD Endpoints
 @router.post(
-    "/order-templates", response_model=OrderTemplateResponse, status_code=status.HTTP_201_CREATED
+    "/order-templates",
+    response_model=OrderTemplateResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 def create_order_template(
-    template: OrderTemplateCreate, db: Session = Depends(get_db), _=Depends(require_bearer)
+    template: OrderTemplateCreate,
+    db: Session = Depends(get_db),
+    _=Depends(require_bearer),
 ):
     """Create a new order template"""
     db_template = OrderTemplate(
@@ -502,7 +560,10 @@ def create_order_template(
 
 @router.get("/order-templates", response_model=list[OrderTemplateResponse])
 def list_order_templates(
-    skip: int = 0, limit: int = 100, db: Session = Depends(get_db), _=Depends(require_bearer)
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    _=Depends(require_bearer),
 ):
     """List all order templates"""
     templates = db.query(OrderTemplate).offset(skip).limit(limit).all()
@@ -510,7 +571,9 @@ def list_order_templates(
 
 
 @router.get("/order-templates/{template_id}", response_model=OrderTemplateResponse)
-def get_order_template(template_id: int, db: Session = Depends(get_db), _=Depends(require_bearer)):
+def get_order_template(
+    template_id: int, db: Session = Depends(get_db), _=Depends(require_bearer)
+):
     """Get a specific order template by ID"""
     template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
     if not template:
@@ -526,7 +589,9 @@ def update_order_template(
     _=Depends(require_bearer),
 ):
     """Update an existing order template"""
-    db_template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    db_template = (
+        db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    )
     if not db_template:
         raise HTTPException(status_code=404, detail="Order template not found")
 
@@ -546,7 +611,7 @@ def update_order_template(
     if template_update.limit_price is not None:
         db_template.limit_price = template_update.limit_price
 
-    db_template.updated_at = datetime.utcnow()
+    db_template.updated_at = datetime.now(UTC)
     db.commit()
     db.refresh(db_template)
     return db_template
@@ -557,7 +622,9 @@ def delete_order_template(
     template_id: int, db: Session = Depends(get_db), _=Depends(require_bearer)
 ):
     """Delete an order template"""
-    db_template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    db_template = (
+        db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    )
     if not db_template:
         raise HTTPException(status_code=404, detail="Order template not found")
 
@@ -567,13 +634,17 @@ def delete_order_template(
 
 
 @router.post("/order-templates/{template_id}/use", response_model=OrderTemplateResponse)
-def use_order_template(template_id: int, db: Session = Depends(get_db), _=Depends(require_bearer)):
+def use_order_template(
+    template_id: int, db: Session = Depends(get_db), _=Depends(require_bearer)
+):
     """Mark template as used (updates last_used_at timestamp)"""
-    db_template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    db_template = (
+        db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    )
     if not db_template:
         raise HTTPException(status_code=404, detail="Order template not found")
 
-    db_template.last_used_at = datetime.utcnow()
+    db_template.last_used_at = datetime.now(UTC)
     db.commit()
     db.refresh(db_template)
     return db_template

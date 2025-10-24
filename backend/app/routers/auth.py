@@ -9,7 +9,7 @@ import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy.orm import Session
 
 from ..core.jwt import (
@@ -39,8 +39,9 @@ class UserRegister(BaseModel):
     full_name: str | None = None
     invite_code: str | None = Field(None, description="Required for beta tester registration")
 
-    @validator("password")
-    def validate_password_strength(cls, v):
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
         """Ensure password has minimum security requirements"""
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")

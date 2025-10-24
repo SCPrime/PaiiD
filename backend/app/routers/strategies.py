@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from ..core.auth import require_bearer
@@ -51,7 +51,8 @@ class StrategyConfigRequest(BaseModel):
     )
     config: dict = Field(..., description="Strategy configuration parameters")
 
-    @validator("strategy_type")
+    @field_validator("strategy_type")
+    @classmethod
     def validate_strategy_type(cls, v):
         """Validate strategy type"""
         allowed_types = [
@@ -80,7 +81,8 @@ class StrategyRunRequest(BaseModel):
         default=True, description="Dry run mode (no actual execution, default: true)"
     )
 
-    @validator("strategy_type")
+    @field_validator("strategy_type")
+    @classmethod
     def validate_strategy_type(cls, v):
         """Validate strategy type"""
         allowed_types = [
@@ -420,7 +422,8 @@ class CloneTemplateRequest(BaseModel):
         None, description="Manual config overrides (key-value pairs)"
     )
 
-    @validator("custom_name")
+    @field_validator("custom_name")
+    @classmethod
     def validate_custom_name(cls, v):
         """Validate custom name"""
         if v is not None:
