@@ -340,3 +340,13 @@ def get_template_compatibility_score(
         score += 10  # Can handle any number of positions
 
     return min(100.0, max(0.0, score))
+
+
+def get_all_strategy_templates() -> list[StrategyTemplate]:
+    """
+    Get all available strategy templates
+    
+    Returns:
+        List of all strategy templates
+    """
+    return STRATEGY_TEMPLATES

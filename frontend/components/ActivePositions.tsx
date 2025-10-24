@@ -1,6 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, DollarSign, RefreshCw, Brain, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  RefreshCw,
+  Brain,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
 import { alpaca, formatPosition } from "../lib/alpaca";
@@ -170,19 +178,27 @@ export default function ActivePositions() {
       // Transform the analyze-symbol response to position analysis format
       const analysis: AIPositionAnalysis = {
         symbol: data.symbol,
-        recommendation: data.momentum?.toLowerCase().includes('bullish') ? 'ADD' :
-                       data.momentum?.toLowerCase().includes('bearish') ? 'TRIM' : 'HOLD',
+        recommendation: data.momentum?.toLowerCase().includes("bullish")
+          ? "ADD"
+          : data.momentum?.toLowerCase().includes("bearish")
+            ? "TRIM"
+            : "HOLD",
         confidence: data.confidence_score || 0,
-        riskScore: data.risk_assessment?.toLowerCase().includes('low') ? 'LOW' :
-                  data.risk_assessment?.toLowerCase().includes('high') ? 'HIGH' : 'MEDIUM',
-        sentiment: data.momentum || 'Neutral',
-        suggestedAction: data.entry_suggestion || data.summary || '',
-        exitStrategy: data.take_profit_suggestion ? {
-          profitTarget: data.take_profit_suggestion,
-          stopLoss: data.stop_loss_suggestion
-        } : undefined,
+        riskScore: data.risk_assessment?.toLowerCase().includes("low")
+          ? "LOW"
+          : data.risk_assessment?.toLowerCase().includes("high")
+            ? "HIGH"
+            : "MEDIUM",
+        sentiment: data.momentum || "Neutral",
+        suggestedAction: data.entry_suggestion || data.summary || "",
+        exitStrategy: data.take_profit_suggestion
+          ? {
+              profitTarget: data.take_profit_suggestion,
+              stopLoss: data.stop_loss_suggestion,
+            }
+          : undefined,
         currentPrice: data.current_price,
-        analysis: data.analysis || data.summary || ''
+        analysis: data.analysis || data.summary || "",
       };
 
       setAiAnalysisMap((prev) => ({ ...prev, [symbol]: analysis }));
@@ -217,13 +233,25 @@ export default function ActivePositions() {
       case "HOLD":
         return { bg: "rgba(59, 130, 246, 0.2)", border: "#3B82F6", text: "#3B82F6" };
       case "ADD":
-        return { bg: "rgba(16, 185, 129, 0.2)", border: theme.colors.primary, text: theme.colors.primary };
+        return {
+          bg: "rgba(16, 185, 129, 0.2)",
+          border: theme.colors.primary,
+          text: theme.colors.primary,
+        };
       case "TRIM":
         return { bg: "rgba(245, 158, 11, 0.2)", border: "#F59E0B", text: "#F59E0B" };
       case "EXIT":
-        return { bg: "rgba(239, 68, 68, 0.2)", border: theme.colors.danger, text: theme.colors.danger };
+        return {
+          bg: "rgba(239, 68, 68, 0.2)",
+          border: theme.colors.danger,
+          text: theme.colors.danger,
+        };
       default:
-        return { bg: "rgba(100, 116, 139, 0.2)", border: theme.colors.textMuted, text: theme.colors.textMuted };
+        return {
+          bg: "rgba(100, 116, 139, 0.2)",
+          border: theme.colors.textMuted,
+          text: theme.colors.textMuted,
+        };
     }
   };
 
@@ -231,21 +259,33 @@ export default function ActivePositions() {
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case "LOW":
-        return { bg: "rgba(16, 185, 129, 0.2)", border: theme.colors.primary, text: theme.colors.primary };
+        return {
+          bg: "rgba(16, 185, 129, 0.2)",
+          border: theme.colors.primary,
+          text: theme.colors.primary,
+        };
       case "MEDIUM":
         return { bg: "rgba(245, 158, 11, 0.2)", border: "#F59E0B", text: "#F59E0B" };
       case "HIGH":
-        return { bg: "rgba(239, 68, 68, 0.2)", border: theme.colors.danger, text: theme.colors.danger };
+        return {
+          bg: "rgba(239, 68, 68, 0.2)",
+          border: theme.colors.danger,
+          text: theme.colors.danger,
+        };
       default:
-        return { bg: "rgba(100, 116, 139, 0.2)", border: theme.colors.textMuted, text: theme.colors.textMuted };
+        return {
+          bg: "rgba(100, 116, 139, 0.2)",
+          border: theme.colors.textMuted,
+          text: theme.colors.textMuted,
+        };
     }
   };
 
   // Add keyframes animation to document head (only once)
   useEffect(() => {
-    const styleId = 'spinner-keyframes';
+    const styleId = "spinner-keyframes";
     if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
+      const style = document.createElement("style");
       style.id = styleId;
       style.textContent = `
         @keyframes spin {
@@ -845,10 +885,9 @@ export default function ActivePositions() {
                               color: theme.colors.textMuted,
                               lineHeight: "1.6",
                               borderLeft: `3px solid ${theme.colors.primary}`,
-                              marginBottom:
-                                aiAnalysisMap[position.symbol].exitStrategy
-                                  ? theme.spacing.md
-                                  : 0,
+                              marginBottom: aiAnalysisMap[position.symbol].exitStrategy
+                                ? theme.spacing.md
+                                : 0,
                             }}
                           >
                             <div
@@ -906,7 +945,10 @@ export default function ActivePositions() {
                                       color: theme.colors.primary,
                                     }}
                                   >
-                                    ${aiAnalysisMap[position.symbol].exitStrategy!.profitTarget.toFixed(2)}
+                                    $
+                                    {aiAnalysisMap[
+                                      position.symbol
+                                    ].exitStrategy!.profitTarget.toFixed(2)}
                                   </div>
                                 </div>
                                 <div>
@@ -925,7 +967,10 @@ export default function ActivePositions() {
                                       color: theme.colors.danger,
                                     }}
                                   >
-                                    ${aiAnalysisMap[position.symbol].exitStrategy!.stopLoss.toFixed(2)}
+                                    $
+                                    {aiAnalysisMap[position.symbol].exitStrategy!.stopLoss.toFixed(
+                                      2
+                                    )}
                                   </div>
                                 </div>
                               </div>

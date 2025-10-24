@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 /**
  * 🔒 LOCKED FINAL PaiiD CHAT BOX 🔒
@@ -16,8 +16,8 @@ interface CompletePaiiDLogoProps {
 
 const CompletePaiiDLogo: React.FC<CompletePaiiDLogoProps> = ({ size = 80, enableModal = true }) => {
   const [showModal, setShowModal] = useState(false);
-  const [query, setQuery] = useState('');
-  const [response, setResponse] = useState('');
+  const [query, setQuery] = useState("");
+  const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
 
   const iPiWidth = size * 0.56;
@@ -32,72 +32,73 @@ const CompletePaiiDLogo: React.FC<CompletePaiiDLogoProps> = ({ size = 80, enable
   const rightDotOffsetX = 15 * scaleFactor;
   const dotOffsetY = -75 * scaleFactor;
   const dotRadius = 6 * scaleFactor;
-  const piCenterX = size * 0.55 + size * 0.5 + leftSpacingGap + (iPiWidth / 2);
+  const piCenterX = size * 0.55 + size * 0.5 + leftSpacingGap + iPiWidth / 2;
 
   const capabilitiesLeft = [
-    'Morning Routine',
-    'Active Positions',
-    'Execute Trade',
-    'P&L Dashboard',
-    'News Review'
+    "Morning Routine",
+    "Active Positions",
+    "Execute Trade",
+    "P&L Dashboard",
+    "News Review",
   ];
 
   const capabilitiesRight = [
-    'Recommendations',
-    'Strategy Builder',
-    'Backtesting',
-    'Research',
-    'Settings'
+    "Recommendations",
+    "Strategy Builder",
+    "Backtesting",
+    "Research",
+    "Settings",
   ];
 
   const handleQuerySubmit = async () => {
     if (query.trim()) {
-      console.log('User query:', query);
+      console.log("User query:", query);
       const userMessage = query.trim();
-      setQuery('');
+      setQuery("");
       setLoading(true);
 
       try {
         // Call the chat API
-        const apiResponse = await fetch('/api/chat', {
-          method: 'POST',
+        const apiResponse = await fetch("/api/chat", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             messages: [
               {
-                role: 'user',
+                role: "user",
                 content: userMessage,
               },
             ],
             max_tokens: 2000,
-            system: 'You are PaiiD AI, a helpful trading assistant. Provide concise, actionable trading insights.',
+            system:
+              "You are PaiiD AI, a helpful trading assistant. Provide concise, actionable trading insights.",
           }),
         });
 
         if (!apiResponse.ok) {
           const errorData = await apiResponse.json();
-          console.error('Chat API error:', errorData);
-          setResponse(`Error: ${errorData.detail || 'Failed to get response from AI'}`);
+          console.error("Chat API error:", errorData);
+          setResponse(`Error: ${errorData.detail || "Failed to get response from AI"}`);
           setLoading(false);
           return;
         }
 
         const data = await apiResponse.json();
-        console.log('AI Response:', data);
+        console.log("AI Response:", data);
         setResponse(data.response || data.content || JSON.stringify(data));
         setLoading(false);
       } catch (error: any) {
-        console.error('Chat submission error:', error);
-        setResponse(`Error: ${error.message || 'Failed to submit chat message'}`);
+        console.error("Chat submission error:", error);
+        setResponse(`Error: ${error.message || "Failed to submit chat message"}`);
         setLoading(false);
       }
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleQuerySubmit();
     }
   };
@@ -111,7 +112,12 @@ const CompletePaiiDLogo: React.FC<CompletePaiiDLogoProps> = ({ size = 80, enable
   return (
     <>
       <div
-        style={{ position: 'relative', display: 'inline-block', verticalAlign: 'middle', cursor: enableModal ? 'pointer' : 'default' }}
+        style={{
+          position: "relative",
+          display: "inline-block",
+          verticalAlign: "middle",
+          cursor: enableModal ? "pointer" : "default",
+        }}
         onClick={handleLogoClick}
       >
         <style>{`
@@ -131,115 +137,115 @@ const CompletePaiiDLogo: React.FC<CompletePaiiDLogoProps> = ({ size = 80, enable
         }
       `}</style>
 
-      <svg
-        width={viewBoxWidth}
-        height={viewBoxHeight}
-        viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
-        style={{ display: 'block', overflow: 'visible' }}
-      >
-        <defs>
-          <linearGradient id={`paiid-blue-${size}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#1a7560', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: '#0d5a4a', stopOpacity: 1 }} />
-          </linearGradient>
-        </defs>
-
-        <text
-          x={0}
-          y={baseline}
-          fontFamily="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
-          fontSize={size}
-          fontWeight="bold"
-          fill={`url(#paiid-blue-${size})`}
+        <svg
+          width={viewBoxWidth}
+          height={viewBoxHeight}
+          viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
+          style={{ display: "block", overflow: "visible" }}
         >
-          P
-        </text>
+          <defs>
+            <linearGradient id={`paiid-blue-${size}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style={{ stopColor: "#1a7560", stopOpacity: 1 }} />
+              <stop offset="100%" style={{ stopColor: "#0d5a4a", stopOpacity: 1 }} />
+            </linearGradient>
+          </defs>
 
-        <text
-          x={size * 0.55}
-          y={baseline}
-          fontFamily="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
-          fontSize={size}
-          fontWeight="bold"
-          fill={`url(#paiid-blue-${size})`}
-        >
-          a
-        </text>
+          <text
+            x={0}
+            y={baseline}
+            fontFamily="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+            fontSize={size}
+            fontWeight="bold"
+            fill={`url(#paiid-blue-${size})`}
+          >
+            P
+          </text>
 
-        <circle
-          cx={piCenterX + leftDotOffsetX}
-          cy={baseline + dotOffsetY}
-          r={dotRadius}
-          fill="#45f0c0"
-        />
+          <text
+            x={size * 0.55}
+            y={baseline}
+            fontFamily="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+            fontSize={size}
+            fontWeight="bold"
+            fill={`url(#paiid-blue-${size})`}
+          >
+            a
+          </text>
 
-        <circle
-          cx={piCenterX + rightDotOffsetX}
-          cy={baseline + dotOffsetY}
-          r={dotRadius}
-          fill="#45f0c0"
-        />
+          <circle
+            cx={piCenterX + leftDotOffsetX}
+            cy={baseline + dotOffsetY}
+            r={dotRadius}
+            fill="#45f0c0"
+          />
 
-        <text
-          x={piCenterX}
-          y={baseline}
-          textAnchor="middle"
-          fontFamily="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
-          fontSize={size}
-          fontWeight="bold"
-          fill="#45f0c0"
-          className={`ipi-glow-pi-${size}`}
-        >
-          π
-        </text>
+          <circle
+            cx={piCenterX + rightDotOffsetX}
+            cy={baseline + dotOffsetY}
+            r={dotRadius}
+            fill="#45f0c0"
+          />
 
-        <text
-          x={size * 0.55 + size * 0.5 + leftSpacingGap + iPiWidth + rightSpacingGap}
-          y={baseline}
-          fontFamily="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
-          fontSize={size}
-          fontWeight="bold"
-          fill={`url(#paiid-blue-${size})`}
-        >
-          D
-        </text>
-      </svg>
-    </div>
+          <text
+            x={piCenterX}
+            y={baseline}
+            textAnchor="middle"
+            fontFamily="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+            fontSize={size}
+            fontWeight="bold"
+            fill="#45f0c0"
+            className={`ipi-glow-pi-${size}`}
+          >
+            π
+          </text>
 
-    {/* Modal - Shows when logo is clicked */}
-    {showModal && (
-      <div
-        onClick={() => setShowModal(false)}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.75)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}
-      >
+          <text
+            x={size * 0.55 + size * 0.5 + leftSpacingGap + iPiWidth + rightSpacingGap}
+            y={baseline}
+            fontFamily="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+            fontSize={size}
+            fontWeight="bold"
+            fill={`url(#paiid-blue-${size})`}
+          >
+            D
+          </text>
+        </svg>
+      </div>
+
+      {/* Modal - Shows when logo is clicked */}
+      {showModal && (
         <div
-          onClick={(e) => e.stopPropagation()}
+          onClick={() => setShowModal(false)}
           style={{
-            width: '95%',
-            minWidth: '800px',
-            maxWidth: '1100px',
-            backgroundColor: '#0f172a',
-            borderRadius: '16px',
-            padding: '32px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-            border: '2px solid #45f0c0',
-            animation: 'slideUp 0.3s ease-out',
-            position: 'relative'
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
           }}
         >
-          <style>{`
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "95%",
+              minWidth: "800px",
+              maxWidth: "1100px",
+              backgroundColor: "#0f172a",
+              borderRadius: "16px",
+              padding: "32px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+              border: "2px solid #45f0c0",
+              animation: "slideUp 0.3s ease-out",
+              position: "relative",
+            }}
+          >
+            <style>{`
             @keyframes slideUp {
               from {
                 opacity: 0;
@@ -252,351 +258,380 @@ const CompletePaiiDLogo: React.FC<CompletePaiiDLogoProps> = ({ size = 80, enable
             }
           `}</style>
 
-          <button
-            onClick={() => setShowModal(false)}
-            style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              background: 'transparent',
-              border: 'none',
-              color: '#94a3b8',
-              fontSize: '24px',
-              cursor: 'pointer',
-              padding: '8px',
-              lineHeight: 1
-            }}
-          >
-            ×
-          </button>
+            <button
+              onClick={() => setShowModal(false)}
+              style={{
+                position: "absolute",
+                top: "16px",
+                right: "16px",
+                background: "transparent",
+                border: "none",
+                color: "#94a3b8",
+                fontSize: "24px",
+                cursor: "pointer",
+                padding: "8px",
+                lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            marginBottom: '24px'
-          }}>
-            <span style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#45f0c0'
-            }}>
-              10 Active
-            </span>
-            <CompletePaiiDLogo size={32} enableModal={false} />
-            <span style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#cbd5e1',
-              fontStyle: 'italic'
-            }}>
-              Abilities
-            </span>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '24px',
-            marginBottom: '32px'
-          }}>
-            <div>
-              <div style={{
-                marginBottom: '12px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#cbd5e1',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <CompletePaiiDLogo size={21} enableModal={false} />
-                <span style={{ fontStyle: 'italic' }}>Abilities</span>
-              </div>
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px'
-              }}>
-                {capabilitiesLeft.map((capability, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      padding: '12px 16px',
-                      backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(69, 240, 192, 0.3)',
-                      color: '#cbd5e1',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px'
-                    }}
-                  >
-                    <span style={{ color: '#45f0c0', fontSize: '18px' }}>•</span>
-                    {capability}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div style={{
-                marginBottom: '12px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#cbd5e1',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <CompletePaiiDLogo size={21} enableModal={false} />
-                <span style={{ fontStyle: 'italic' }}>Abilities</span>
-              </div>
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px'
-              }}>
-                {capabilitiesRight.map((capability, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      padding: '12px 16px',
-                      backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(69, 240, 192, 0.3)',
-                      color: '#cbd5e1',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px'
-                    }}
-                  >
-                    <span style={{ color: '#45f0c0', fontSize: '18px' }}>•</span>
-                    {capability}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <div style={{
-              marginBottom: '12px',
-              textAlign: 'center',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              fontSize: '16px',
-              fontWeight: 'bold'
-            }}>
-              <span style={{ color: '#45f0c0' }}>Ask</span>
-              <CompletePaiiDLogo size={21} enableModal={false} />
-            </div>
-
-            <div style={{ position: 'relative' }}>
-              {!query && (
-                <div style={{
-                  position: 'absolute',
-                  top: '16px',
-                  left: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  pointerEvents: 'none',
-                  color: '#64748b',
-                  fontSize: '16px'
-                }}>
-                  <span>Investment questions? Ask here to get</span>
-                  <CompletePaiiDLogo size={21} enableModal={false} />
-                  <span>! ...</span>
-                </div>
-              )}
-
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                marginBottom: "24px",
+              }}
+            >
+              <span
                 style={{
-                  width: '100%',
-                  padding: '16px',
-                  background: '#0f172a',
-                  border: '2px solid #45f0c0',
-                  borderRadius: '8px',
-                  color: '#45f0c0',
-                  fontSize: '16px',
-                  fontFamily: '"Inter", sans-serif',
-                  outline: 'none',
-                  boxSizing: 'border-box'
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: "#45f0c0",
                 }}
-                placeholder="Ask PaiiD AI..."
-              />
-
-              {loading && (
-                <div style={{
-                  marginTop: '16px',
-                  padding: '16px',
-                  background: 'rgba(69, 240, 192, 0.1)',
-                  borderRadius: '8px',
-                  color: '#45f0c0',
-                  fontSize: '14px',
-                  textAlign: 'center'
-                }}>
-                  Loading response...
-                </div>
-              )}
-
-              {response && !loading && (
-                <div style={{
-                  marginTop: '16px',
-                  padding: '16px',
-                  background: '#0f172a',
-                  borderRadius: '8px',
-                  border: '1px solid #45f0c0',
-                  color: '#45f0c0',
-                  fontSize: '14px',
-                  lineHeight: '1.6',
-                  maxHeight: '300px',
-                  overflowY: 'auto'
-                }}>
-                  {response}
-                </div>
-              )}
+              >
+                10 Active
+              </span>
+              <CompletePaiiDLogo size={32} enableModal={false} />
+              <span
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: "#cbd5e1",
+                  fontStyle: "italic",
+                }}
+              >
+                Abilities
+              </span>
             </div>
 
-            <div style={{
-              marginTop: '8px',
-              fontSize: '12px',
-              color: '#94a3b8',
-              textAlign: 'center'
-            }}>
-              Press Enter to submit
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "24px",
+                marginBottom: "32px",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    marginBottom: "12px",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "#cbd5e1",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <CompletePaiiDLogo size={21} enableModal={false} />
+                  <span style={{ fontStyle: "italic" }}>Abilities</span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  {capabilitiesLeft.map((capability, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        padding: "12px 16px",
+                        backgroundColor: "rgba(15, 23, 42, 0.6)",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(69, 240, 192, 0.3)",
+                        color: "#cbd5e1",
+                        fontSize: "14px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                      }}
+                    >
+                      <span style={{ color: "#45f0c0", fontSize: "18px" }}>•</span>
+                      {capability}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div
+                  style={{
+                    marginBottom: "12px",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "#cbd5e1",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <CompletePaiiDLogo size={21} enableModal={false} />
+                  <span style={{ fontStyle: "italic" }}>Abilities</span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  {capabilitiesRight.map((capability, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        padding: "12px 16px",
+                        backgroundColor: "rgba(15, 23, 42, 0.6)",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(69, 240, 192, 0.3)",
+                        color: "#cbd5e1",
+                        fontSize: "14px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                      }}
+                    >
+                      <span style={{ color: "#45f0c0", fontSize: "18px" }}>•</span>
+                      {capability}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div
+                style={{
+                  marginBottom: "12px",
+                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                }}
+              >
+                <span style={{ color: "#45f0c0" }}>Ask</span>
+                <CompletePaiiDLogo size={21} enableModal={false} />
+              </div>
+
+              <div style={{ position: "relative" }}>
+                {!query && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "16px",
+                      left: "16px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      pointerEvents: "none",
+                      color: "#64748b",
+                      fontSize: "16px",
+                    }}
+                  >
+                    <span>Investment questions? Ask here to get</span>
+                    <CompletePaiiDLogo size={21} enableModal={false} />
+                    <span>! ...</span>
+                  </div>
+                )}
+
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  style={{
+                    width: "100%",
+                    padding: "16px",
+                    background: "#0f172a",
+                    border: "2px solid #45f0c0",
+                    borderRadius: "8px",
+                    color: "#45f0c0",
+                    fontSize: "16px",
+                    fontFamily: '"Inter", sans-serif',
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                  placeholder="Ask PaiiD AI..."
+                />
+
+                {loading && (
+                  <div
+                    style={{
+                      marginTop: "16px",
+                      padding: "16px",
+                      background: "rgba(69, 240, 192, 0.1)",
+                      borderRadius: "8px",
+                      color: "#45f0c0",
+                      fontSize: "14px",
+                      textAlign: "center",
+                    }}
+                  >
+                    Loading response...
+                  </div>
+                )}
+
+                {response && !loading && (
+                  <div
+                    style={{
+                      marginTop: "16px",
+                      padding: "16px",
+                      background: "#0f172a",
+                      borderRadius: "8px",
+                      border: "1px solid #45f0c0",
+                      color: "#45f0c0",
+                      fontSize: "14px",
+                      lineHeight: "1.6",
+                      maxHeight: "300px",
+                      overflowY: "auto",
+                    }}
+                  >
+                    {response}
+                  </div>
+                )}
+              </div>
+
+              <div
+                style={{
+                  marginTop: "8px",
+                  fontSize: "12px",
+                  color: "#94a3b8",
+                  textAlign: "center",
+                }}
+              >
+                Press Enter to submit
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    )}
-  </>
+      )}
+    </>
   );
 };
 
 const PaiiDChatBoxWithLogo = () => {
   const [isOpen, setIsOpen] = useState(true);
-  const [query, setQuery] = useState('');
-  const [response, setResponse] = useState('');
+  const [query, setQuery] = useState("");
+  const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
 
   const capabilitiesLeft = [
-    'Morning Routine',
-    'Active Positions',
-    'Execute Trade',
-    'P&L Dashboard',
-    'News Review'
+    "Morning Routine",
+    "Active Positions",
+    "Execute Trade",
+    "P&L Dashboard",
+    "News Review",
   ];
 
   const capabilitiesRight = [
-    'Recommendations',
-    'Strategy Builder',
-    'Backtesting',
-    'Research',
-    'Settings'
+    "Recommendations",
+    "Strategy Builder",
+    "Backtesting",
+    "Research",
+    "Settings",
   ];
 
   const handleQuerySubmit = async () => {
     if (query.trim()) {
-      console.log('User query:', query);
+      console.log("User query:", query);
       const userMessage = query.trim();
-      setQuery('');
+      setQuery("");
       setLoading(true);
 
       try {
         // Call the chat API
-        const apiResponse = await fetch('/api/chat', {
-          method: 'POST',
+        const apiResponse = await fetch("/api/chat", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             messages: [
               {
-                role: 'user',
+                role: "user",
                 content: userMessage,
               },
             ],
             max_tokens: 2000,
-            system: 'You are PaiiD AI, a helpful trading assistant. Provide concise, actionable trading insights.',
+            system:
+              "You are PaiiD AI, a helpful trading assistant. Provide concise, actionable trading insights.",
           }),
         });
 
         if (!apiResponse.ok) {
           const errorData = await apiResponse.json();
-          console.error('Chat API error:', errorData);
-          setResponse(`Error: ${errorData.detail || 'Failed to get response from AI'}`);
+          console.error("Chat API error:", errorData);
+          setResponse(`Error: ${errorData.detail || "Failed to get response from AI"}`);
           setLoading(false);
           return;
         }
 
         const data = await apiResponse.json();
-        console.log('AI Response:', data);
+        console.log("AI Response:", data);
         setResponse(data.response || data.content || JSON.stringify(data));
         setLoading(false);
       } catch (error: any) {
-        console.error('Chat submission error:', error);
-        setResponse(`Error: ${error.message || 'Failed to submit chat message'}`);
+        console.error("Chat submission error:", error);
+        setResponse(`Error: ${error.message || "Failed to submit chat message"}`);
         setLoading(false);
       }
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleQuerySubmit();
     }
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#0a0e12',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative'
-    }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#0a0e12",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+      }}
+    >
       {isOpen && (
         <div
           onClick={() => setIsOpen(false)}
           style={{
-            position: 'fixed',
+            position: "fixed",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
           }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: '95%',
-              minWidth: '800px',
-              maxWidth: '1100px',
-              backgroundColor: '#0f172a',
-              borderRadius: '16px',
-              padding: '32px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-              border: '2px solid #45f0c0',
-              animation: 'slideUp 0.3s ease-out',
-              position: 'relative'
+              width: "95%",
+              minWidth: "800px",
+              maxWidth: "1100px",
+              backgroundColor: "#0f172a",
+              borderRadius: "16px",
+              padding: "32px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+              border: "2px solid #45f0c0",
+              animation: "slideUp 0.3s ease-out",
+              position: "relative",
             }}
           >
             <style>{`
@@ -615,137 +650,157 @@ const PaiiDChatBoxWithLogo = () => {
             <button
               onClick={() => setIsOpen(false)}
               style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'transparent',
-                border: 'none',
-                color: '#94a3b8',
-                fontSize: '24px',
-                cursor: 'pointer',
-                padding: '8px',
-                lineHeight: 1
+                position: "absolute",
+                top: "16px",
+                right: "16px",
+                background: "transparent",
+                border: "none",
+                color: "#94a3b8",
+                fontSize: "24px",
+                cursor: "pointer",
+                padding: "8px",
+                lineHeight: 1,
               }}
             >
               ×
             </button>
 
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              marginBottom: '24px'
-            }}>
-              <span style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#45f0c0'
-              }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                marginBottom: "24px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: "#45f0c0",
+                }}
+              >
                 5 Active
               </span>
               <CompletePaiiDLogo size={32} />
-              <span style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#cbd5e1',
-                fontStyle: 'italic'
-              }}>
+              <span
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: "#cbd5e1",
+                  fontStyle: "italic",
+                }}
+              >
                 Abilities
               </span>
             </div>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '24px',
-              marginBottom: '32px'
-            }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "24px",
+                marginBottom: "32px",
+              }}
+            >
               <div>
-                <div style={{
-                  marginBottom: '12px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: '#cbd5e1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
+                <div
+                  style={{
+                    marginBottom: "12px",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "#cbd5e1",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
                   <CompletePaiiDLogo size={21} />
-                  <span style={{ fontStyle: 'italic' }}>Abilities</span>
+                  <span style={{ fontStyle: "italic" }}>Abilities</span>
                 </div>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
-                }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
                   {capabilitiesLeft.map((capability, index) => (
                     <div
                       key={index}
                       style={{
-                        padding: '12px 16px',
-                        backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(69, 240, 192, 0.3)',
-                        color: '#cbd5e1',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px'
+                        padding: "12px 16px",
+                        backgroundColor: "rgba(15, 23, 42, 0.6)",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(69, 240, 192, 0.3)",
+                        color: "#cbd5e1",
+                        fontSize: "14px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
                       }}
                     >
-                      <span style={{ color: '#45f0c0', fontSize: '18px' }}>•</span>
+                      <span style={{ color: "#45f0c0", fontSize: "18px" }}>•</span>
                       {index === 0 ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                           <CompletePaiiDLogo size={21} />
                           <span>{capability}</span>
                         </div>
-                      ) : capability}
+                      ) : (
+                        capability
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
 
               <div>
-                <div style={{
-                  marginBottom: '12px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: '#cbd5e1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
+                <div
+                  style={{
+                    marginBottom: "12px",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "#cbd5e1",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
                   <CompletePaiiDLogo size={21} />
-                  <span style={{ fontStyle: 'italic' }}>Abilities</span>
+                  <span style={{ fontStyle: "italic" }}>Abilities</span>
                 </div>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
-                }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
                   {capabilitiesRight.map((capability, index) => (
                     <div
                       key={index}
                       style={{
-                        padding: '12px 16px',
-                        backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(69, 240, 192, 0.3)',
-                        color: '#cbd5e1',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px'
+                        padding: "12px 16px",
+                        backgroundColor: "rgba(15, 23, 42, 0.6)",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(69, 240, 192, 0.3)",
+                        color: "#cbd5e1",
+                        fontSize: "14px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
                       }}
                     >
-                      <span style={{ color: '#45f0c0', fontSize: '18px' }}>•</span>
+                      <span style={{ color: "#45f0c0", fontSize: "18px" }}>•</span>
                       {index === 0 ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                           <CompletePaiiDLogo size={21} />
                           <span>{capability}</span>
                         </div>
-                      ) : capability}
+                      ) : (
+                        capability
+                      )}
                     </div>
                   ))}
                 </div>
@@ -753,33 +808,37 @@ const PaiiDChatBoxWithLogo = () => {
             </div>
 
             <div>
-              <div style={{
-                marginBottom: '12px',
-                textAlign: 'center',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                fontSize: '16px',
-                fontWeight: 'bold'
-              }}>
-                <span style={{ color: '#45f0c0' }}>Ask</span>
+              <div
+                style={{
+                  marginBottom: "12px",
+                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                }}
+              >
+                <span style={{ color: "#45f0c0" }}>Ask</span>
                 <CompletePaiiDLogo size={21} />
               </div>
 
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: "relative" }}>
                 {!query && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '16px',
-                    left: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    pointerEvents: 'none',
-                    color: '#64748b',
-                    fontSize: '16px'
-                  }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "16px",
+                      left: "16px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      pointerEvents: "none",
+                      color: "#64748b",
+                      fontSize: "16px",
+                    }}
+                  >
                     <span>Investment questions? Ask here to get</span>
                     <CompletePaiiDLogo size={21} />
                     <span>! ...</span>
@@ -792,58 +851,64 @@ const PaiiDChatBoxWithLogo = () => {
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
                   style={{
-                    width: '100%',
-                    padding: '16px',
-                    background: '#0f172a',
-                    border: '2px solid #45f0c0',
-                    borderRadius: '8px',
-                    color: '#45f0c0',
-                    fontSize: '16px',
+                    width: "100%",
+                    padding: "16px",
+                    background: "#0f172a",
+                    border: "2px solid #45f0c0",
+                    borderRadius: "8px",
+                    color: "#45f0c0",
+                    fontSize: "16px",
                     fontFamily: '"Inter", sans-serif',
-                    outline: 'none',
-                    boxSizing: 'border-box'
+                    outline: "none",
+                    boxSizing: "border-box",
                   }}
                   placeholder="Ask PaiiD AI..."
                 />
 
                 {loading && (
-                  <div style={{
-                    marginTop: '16px',
-                    padding: '16px',
-                    background: 'rgba(69, 240, 192, 0.1)',
-                    borderRadius: '8px',
-                    color: '#45f0c0',
-                    fontSize: '14px',
-                    textAlign: 'center'
-                  }}>
+                  <div
+                    style={{
+                      marginTop: "16px",
+                      padding: "16px",
+                      background: "rgba(69, 240, 192, 0.1)",
+                      borderRadius: "8px",
+                      color: "#45f0c0",
+                      fontSize: "14px",
+                      textAlign: "center",
+                    }}
+                  >
                     Loading response...
                   </div>
                 )}
 
                 {response && !loading && (
-                  <div style={{
-                    marginTop: '16px',
-                    padding: '16px',
-                    background: '#0f172a',
-                    borderRadius: '8px',
-                    border: '1px solid #45f0c0',
-                    color: '#45f0c0',
-                    fontSize: '14px',
-                    lineHeight: '1.6',
-                    maxHeight: '300px',
-                    overflowY: 'auto'
-                  }}>
+                  <div
+                    style={{
+                      marginTop: "16px",
+                      padding: "16px",
+                      background: "#0f172a",
+                      borderRadius: "8px",
+                      border: "1px solid #45f0c0",
+                      color: "#45f0c0",
+                      fontSize: "14px",
+                      lineHeight: "1.6",
+                      maxHeight: "300px",
+                      overflowY: "auto",
+                    }}
+                  >
                     {response}
                   </div>
                 )}
               </div>
 
-              <div style={{
-                marginTop: '8px',
-                fontSize: '12px',
-                color: '#94a3b8',
-                textAlign: 'center'
-              }}>
+              <div
+                style={{
+                  marginTop: "8px",
+                  fontSize: "12px",
+                  color: "#94a3b8",
+                  textAlign: "center",
+                }}
+              >
                 Press Enter to submit
               </div>
             </div>
@@ -851,36 +916,38 @@ const PaiiDChatBoxWithLogo = () => {
         </div>
       )}
 
-      <div style={{
-        textAlign: 'center',
-        color: 'rgba(255, 255, 255, 0.8)',
-        maxWidth: '600px',
-        padding: '2rem'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          marginBottom: '1rem'
-        }}>
+      <div
+        style={{
+          textAlign: "center",
+          color: "rgba(255, 255, 255, 0.8)",
+          maxWidth: "600px",
+          padding: "2rem",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "1rem",
+          }}
+        >
           <CompletePaiiDLogo size={80} />
         </div>
-        <h1 style={{ color: '#45f0c0', marginBottom: '1rem', fontSize: '2rem' }}>
+        <h1 style={{ color: "#45f0c0", marginBottom: "1rem", fontSize: "2rem" }}>
           🔒 Chat Box with Full Logo - LOCKED FINAL
         </h1>
-        <p style={{ marginBottom: '2rem' }}>
-          Complete integration ready for implementation
-        </p>
+        <p style={{ marginBottom: "2rem" }}>Complete integration ready for implementation</p>
         <button
           onClick={() => setIsOpen(true)}
           style={{
-            padding: '14px 28px',
-            backgroundColor: '#45f0c0',
-            color: '#0a0e12',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: 'pointer'
+            padding: "14px 28px",
+            backgroundColor: "#45f0c0",
+            color: "#0a0e12",
+            border: "none",
+            borderRadius: "8px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            cursor: "pointer",
           }}
         >
           Open Chat Box

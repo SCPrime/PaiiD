@@ -21,6 +21,7 @@ When running `npm run dev`, the onboarding screen is automatically bypassed base
 **Shortcut:** `Ctrl+Shift+A` (Windows/Linux) or `Cmd+Shift+A` (Mac)
 
 Activates admin bypass anytime, setting:
+
 - `localStorage['user-setup-complete'] = 'true'`
 - `localStorage['admin-bypass'] = 'true'`
 - `localStorage['bypass-timestamp'] = <current ISO timestamp>`
@@ -35,7 +36,7 @@ If you need to manually control the bypass:
 // Browser Console (F12)
 
 // Bypass onboarding
-localStorage.setItem('user-setup-complete', 'true');
+localStorage.setItem("user-setup-complete", "true");
 location.reload();
 
 // Reset to onboarding (for testing)
@@ -47,13 +48,13 @@ location.reload();
 
 The application uses these localStorage keys:
 
-| Key | Values | Purpose |
-|-----|--------|---------|
-| `user-setup-complete` | `'true'` \| `null` | Controls onboarding gate |
-| `admin-bypass` | `'true'` \| `null` | Indicates manual bypass used |
-| `bypass-timestamp` | ISO timestamp | When bypass was activated |
-| `trading-preferences` | JSON object | User's trading preferences |
-| `watchlist` | JSON array | User's stock watchlist |
+| Key                   | Values             | Purpose                      |
+| --------------------- | ------------------ | ---------------------------- |
+| `user-setup-complete` | `'true'` \| `null` | Controls onboarding gate     |
+| `admin-bypass`        | `'true'` \| `null` | Indicates manual bypass used |
+| `bypass-timestamp`    | ISO timestamp      | When bypass was activated    |
+| `trading-preferences` | JSON object        | User's trading preferences   |
+| `watchlist`           | JSON array         | User's stock watchlist       |
 
 ## Logo System
 
@@ -61,6 +62,7 @@ The application uses these localStorage keys:
 
 **Component:** `CompletePaiiDLogo.tsx`
 **Used In:**
+
 - `RadialMenu.tsx` (main navigation)
 - `UserSetupAI.tsx` (onboarding header - size 60)
 - `UserSetup.tsx` (manual form header - size 60)
@@ -73,12 +75,14 @@ The application uses these localStorage keys:
 **Problem:** "Logo not showing despite successful deployment"
 
 **Root Cause:** If you see the onboarding screen (UserSetupAI) instead of RadialMenu:
+
 - The new logo IS deployed correctly
 - UserSetupAI shows CompletePaiiDLogo at size 60
 - RadialMenu (with larger logo) never renders due to onboarding gate
 - Use bypass methods above to see RadialMenu
 
 **Verification:**
+
 1. Check for dev banner (orange bar) → bypass is working
 2. No banner → Enable dev bypass (Ctrl+Shift+A)
 3. See RadialMenu → CompletePaiiDLogo is visible
@@ -88,6 +92,7 @@ The application uses these localStorage keys:
 ### "Old logo still showing"
 
 1. **Clear Next.js cache:**
+
    ```bash
    cd frontend
    rm -rf .next
@@ -95,6 +100,7 @@ The application uses these localStorage keys:
    ```
 
 2. **Clear browser cache:**
+
    ```javascript
    // Browser Console
    location.reload(true); // Hard reload
@@ -111,6 +117,7 @@ The application uses these localStorage keys:
 **Symptom:** Stuck on UserSetupAI screen
 
 **Solution:**
+
 1. Check dev banner is visible (should auto-bypass in dev mode)
 2. If no banner, press `Ctrl+Shift+A`
 3. If still stuck, run: `localStorage.setItem('user-setup-complete', 'true'); location.reload();`
@@ -128,10 +135,10 @@ Check which component is rendering:
 
 ## Production vs Development Behavior
 
-| Environment | Onboarding | Logo Visibility | Banner |
-|-------------|-----------|-----------------|--------|
-| **Development** (`npm run dev`) | Bypassed automatically | RadialMenu logo visible immediately | Orange dev banner shown |
-| **Production** (`npm start`) | Required first time | UserSetupAI logo → RadialMenu logo after completion | No banner |
+| Environment                     | Onboarding             | Logo Visibility                                     | Banner                  |
+| ------------------------------- | ---------------------- | --------------------------------------------------- | ----------------------- |
+| **Development** (`npm run dev`) | Bypassed automatically | RadialMenu logo visible immediately                 | Orange dev banner shown |
+| **Production** (`npm start`)    | Required first time    | UserSetupAI logo → RadialMenu logo after completion | No banner               |
 
 ## Testing Onboarding Flow
 
@@ -149,33 +156,41 @@ After completing onboarding, `user-setup-complete` will be set to `'true'` and y
 ## Environment Variables
 
 **Development Detection:**
+
 ```typescript
-const ENABLE_DEV_BYPASS = process.env.NODE_ENV === 'development';
+const ENABLE_DEV_BYPASS = process.env.NODE_ENV === "development";
 ```
 
 **Values:**
+
 - `npm run dev` → `NODE_ENV='development'` → Bypass active
 - `npm run build && npm start` → `NODE_ENV='production'` → Normal flow
 
 ## Quick Reference
 
 **Immediate RadialMenu Access:**
+
 ```bash
 npm run dev  # Auto-bypass in development
 ```
 
 **Test Onboarding Flow:**
+
 ```javascript
-localStorage.clear(); location.reload();  // Reset
+localStorage.clear();
+location.reload(); // Reset
 ```
 
 **Manual Bypass:**
+
 ```javascript
-localStorage.setItem('user-setup-complete', 'true'); location.reload();
+localStorage.setItem("user-setup-complete", "true");
+location.reload();
 // OR press Ctrl+Shift+A
 ```
 
 **Verify Logo Component:**
+
 ```bash
 ls -lh components/CompletePaiiDLogo.tsx  # Should exist (18KB)
 ls -lh components/PaiiDLogo.tsx 2>/dev/null  # Should NOT exist (deleted)

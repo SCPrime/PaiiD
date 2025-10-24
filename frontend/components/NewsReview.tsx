@@ -234,17 +234,17 @@ const NewsReview: React.FC = () => {
     setSelectedArticle(article);
 
     try {
-      const response = await fetch('/api/proxy/api/ai/analyze-news', {
-        method: 'POST',
+      const response = await fetch("/api/proxy/api/ai/analyze-news", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title: article.headline || article.title,
           content: article.summary || article.content || article.description,
-          source: article.source || 'Unknown',
-          published_at: article.created_at || article.updated_at || new Date().toISOString()
-        })
+          source: article.source || "Unknown",
+          published_at: article.created_at || article.updated_at || new Date().toISOString(),
+        }),
       });
 
       if (!response.ok) {
@@ -255,8 +255,8 @@ const NewsReview: React.FC = () => {
       setAiAnalysis(data);
       setShowAiPanel(true);
     } catch (error: any) {
-      console.error('AI News Analysis error:', error);
-      setAiError(error.message || 'Failed to analyze news');
+      console.error("AI News Analysis error:", error);
+      setAiError(error.message || "Failed to analyze news");
     } finally {
       setAiLoading(false);
     }
@@ -264,20 +264,28 @@ const NewsReview: React.FC = () => {
 
   // AI Sentiment Helper Functions
   const getAiSentimentColor = (sentiment: string) => {
-    switch(sentiment) {
-      case 'bullish': return '#10B981';
-      case 'bearish': return '#EF4444';
-      case 'neutral': return '#F59E0B';
-      default: return '#94A3B8';
+    switch (sentiment) {
+      case "bullish":
+        return "#10B981";
+      case "bearish":
+        return "#EF4444";
+      case "neutral":
+        return "#F59E0B";
+      default:
+        return "#94A3B8";
     }
   };
 
   const getAiSentimentEmoji = (sentiment: string) => {
-    switch(sentiment) {
-      case 'bullish': return '📈';
-      case 'bearish': return '📉';
-      case 'neutral': return '➖';
-      default: return '❓';
+    switch (sentiment) {
+      case "bullish":
+        return "📈";
+      case "bearish":
+        return "📉";
+      case "neutral":
+        return "➖";
+      default:
+        return "❓";
     }
   };
 
@@ -767,17 +775,17 @@ const NewsReview: React.FC = () => {
                       }}
                       disabled={aiLoading}
                       style={{
-                        padding: '8px 16px',
-                        backgroundColor: aiLoading ? '#4B5563' : '#8B5CF6',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: aiLoading ? 'not-allowed' : 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
+                        padding: "8px 16px",
+                        backgroundColor: aiLoading ? "#4B5563" : "#8B5CF6",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: aiLoading ? "not-allowed" : "pointer",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
                       }}
                     >
                       🤖 AI Analysis
@@ -829,43 +837,60 @@ const NewsReview: React.FC = () => {
 
       {/* AI Analysis Panel */}
       {showAiPanel && aiAnalysis && (
-        <div style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '90%',
-          maxWidth: '800px',
-          maxHeight: '90vh',
-          overflow: 'auto',
-          padding: '24px',
-          background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15))',
-          border: '1px solid rgba(139, 92, 246, 0.4)',
-          borderRadius: '16px',
-          backdropFilter: 'blur(20px)',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-          zIndex: 1000
-        }}>
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "90%",
+            maxWidth: "800px",
+            maxHeight: "90vh",
+            overflow: "auto",
+            padding: "24px",
+            background:
+              "linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15))",
+            border: "1px solid rgba(139, 92, 246, 0.4)",
+            borderRadius: "16px",
+            backdropFilter: "blur(20px)",
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+            zIndex: 1000,
+          }}
+        >
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '20px' }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "start",
+              marginBottom: "20px",
+            }}
+          >
             <div>
-              <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#E2E8F0', marginBottom: '8px' }}>
+              <h3
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: "#E2E8F0",
+                  marginBottom: "8px",
+                }}
+              >
                 🤖 AI News Analysis
               </h3>
-              <div style={{ fontSize: '14px', color: '#94A3B8' }}>
+              <div style={{ fontSize: "14px", color: "#94A3B8" }}>
                 {aiAnalysis.article_info?.title}
               </div>
             </div>
             <button
               onClick={() => setShowAiPanel(false)}
               style={{
-                background: 'none',
-                border: 'none',
-                color: '#94A3B8',
-                cursor: 'pointer',
-                fontSize: '32px',
-                lineHeight: '1',
-                padding: '0'
+                background: "none",
+                border: "none",
+                color: "#94A3B8",
+                cursor: "pointer",
+                fontSize: "32px",
+                lineHeight: "1",
+                padding: "0",
               }}
             >
               ×
@@ -873,82 +898,104 @@ const NewsReview: React.FC = () => {
           </div>
 
           {/* Sentiment & Impact Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '12px',
-            marginBottom: '20px'
-          }}>
-            <div style={{
-              padding: '16px',
-              background: 'rgba(15, 23, 42, 0.7)',
-              borderRadius: '8px',
-              border: '1px solid rgba(148, 163, 184, 0.2)'
-            }}>
-              <div style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '6px' }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: "12px",
+              marginBottom: "20px",
+            }}
+          >
+            <div
+              style={{
+                padding: "16px",
+                background: "rgba(15, 23, 42, 0.7)",
+                borderRadius: "8px",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+              }}
+            >
+              <div style={{ fontSize: "12px", color: "#94A3B8", marginBottom: "6px" }}>
                 Sentiment
               </div>
-              <div style={{
-                fontSize: '20px',
-                fontWeight: 'bold',
-                color: getAiSentimentColor(aiAnalysis.ai_analysis?.sentiment),
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
+              <div
+                style={{
+                  fontSize: "20px",
+                  fontWeight: "bold",
+                  color: getAiSentimentColor(aiAnalysis.ai_analysis?.sentiment),
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
                 {getAiSentimentEmoji(aiAnalysis.ai_analysis?.sentiment)}
                 {aiAnalysis.ai_analysis?.sentiment}
               </div>
             </div>
 
-            <div style={{
-              padding: '16px',
-              background: 'rgba(15, 23, 42, 0.7)',
-              borderRadius: '8px',
-              border: '1px solid rgba(148, 163, 184, 0.2)'
-            }}>
-              <div style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '6px' }}>
+            <div
+              style={{
+                padding: "16px",
+                background: "rgba(15, 23, 42, 0.7)",
+                borderRadius: "8px",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+              }}
+            >
+              <div style={{ fontSize: "12px", color: "#94A3B8", marginBottom: "6px" }}>
                 Confidence
               </div>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#3B82F6' }}>
+              <div style={{ fontSize: "28px", fontWeight: "bold", color: "#3B82F6" }}>
                 {aiAnalysis.ai_analysis?.confidence}%
               </div>
             </div>
 
-            <div style={{
-              padding: '16px',
-              background: 'rgba(15, 23, 42, 0.7)',
-              borderRadius: '8px',
-              border: '1px solid rgba(148, 163, 184, 0.2)'
-            }}>
-              <div style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '6px' }}>
+            <div
+              style={{
+                padding: "16px",
+                background: "rgba(15, 23, 42, 0.7)",
+                borderRadius: "8px",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+              }}
+            >
+              <div style={{ fontSize: "12px", color: "#94A3B8", marginBottom: "6px" }}>
                 Portfolio Impact
               </div>
-              <div style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: aiAnalysis.ai_analysis?.portfolio_impact === 'high' ? '#EF4444' :
-                       aiAnalysis.ai_analysis?.portfolio_impact === 'medium' ? '#F59E0B' : '#10B981'
-              }}>
+              <div
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  color:
+                    aiAnalysis.ai_analysis?.portfolio_impact === "high"
+                      ? "#EF4444"
+                      : aiAnalysis.ai_analysis?.portfolio_impact === "medium"
+                        ? "#F59E0B"
+                        : "#10B981",
+                }}
+              >
                 {aiAnalysis.ai_analysis?.portfolio_impact}
               </div>
             </div>
 
-            <div style={{
-              padding: '16px',
-              background: 'rgba(15, 23, 42, 0.7)',
-              borderRadius: '8px',
-              border: '1px solid rgba(148, 163, 184, 0.2)'
-            }}>
-              <div style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '6px' }}>
-                Urgency
-              </div>
-              <div style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: aiAnalysis.ai_analysis?.urgency === 'critical' ? '#EF4444' :
-                       aiAnalysis.ai_analysis?.urgency === 'high' ? '#F59E0B' : '#10B981'
-              }}>
+            <div
+              style={{
+                padding: "16px",
+                background: "rgba(15, 23, 42, 0.7)",
+                borderRadius: "8px",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+              }}
+            >
+              <div style={{ fontSize: "12px", color: "#94A3B8", marginBottom: "6px" }}>Urgency</div>
+              <div
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  color:
+                    aiAnalysis.ai_analysis?.urgency === "critical"
+                      ? "#EF4444"
+                      : aiAnalysis.ai_analysis?.urgency === "high"
+                        ? "#F59E0B"
+                        : "#10B981",
+                }}
+              >
                 {aiAnalysis.ai_analysis?.urgency}
               </div>
             </div>
@@ -956,27 +1003,39 @@ const NewsReview: React.FC = () => {
 
           {/* Tickers Mentioned */}
           {aiAnalysis.ai_analysis?.tickers_mentioned?.length > 0 && (
-            <div style={{
-              padding: '16px',
-              background: 'rgba(15, 23, 42, 0.7)',
-              borderRadius: '8px',
-              border: '1px solid rgba(148, 163, 184, 0.2)',
-              marginBottom: '16px'
-            }}>
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#E2E8F0', marginBottom: '10px' }}>
+            <div
+              style={{
+                padding: "16px",
+                background: "rgba(15, 23, 42, 0.7)",
+                borderRadius: "8px",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+                marginBottom: "16px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  color: "#E2E8F0",
+                  marginBottom: "10px",
+                }}
+              >
                 🏷️ Tickers Mentioned
               </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 {aiAnalysis.ai_analysis.tickers_mentioned.map((ticker: string) => (
-                  <span key={ticker} style={{
-                    padding: '6px 12px',
-                    background: 'rgba(59, 130, 246, 0.2)',
-                    border: '1px solid rgba(59, 130, 246, 0.4)',
-                    borderRadius: '6px',
-                    color: '#60A5FA',
-                    fontSize: '14px',
-                    fontWeight: '600'
-                  }}>
+                  <span
+                    key={ticker}
+                    style={{
+                      padding: "6px 12px",
+                      background: "rgba(59, 130, 246, 0.2)",
+                      border: "1px solid rgba(59, 130, 246, 0.4)",
+                      borderRadius: "6px",
+                      color: "#60A5FA",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                    }}
+                  >
                     ${ticker}
                   </span>
                 ))}
@@ -986,27 +1045,39 @@ const NewsReview: React.FC = () => {
 
           {/* Affected Positions */}
           {aiAnalysis.ai_analysis?.affected_positions?.length > 0 && (
-            <div style={{
-              padding: '16px',
-              background: 'rgba(239, 68, 68, 0.1)',
-              borderRadius: '8px',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              marginBottom: '16px'
-            }}>
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#EF4444', marginBottom: '10px' }}>
+            <div
+              style={{
+                padding: "16px",
+                background: "rgba(239, 68, 68, 0.1)",
+                borderRadius: "8px",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                marginBottom: "16px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  color: "#EF4444",
+                  marginBottom: "10px",
+                }}
+              >
                 ⚠️ Your Affected Positions
               </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 {aiAnalysis.ai_analysis.affected_positions.map((ticker: string) => (
-                  <span key={ticker} style={{
-                    padding: '6px 12px',
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    border: '1px solid rgba(239, 68, 68, 0.4)',
-                    borderRadius: '6px',
-                    color: '#FCA5A5',
-                    fontSize: '14px',
-                    fontWeight: '600'
-                  }}>
+                  <span
+                    key={ticker}
+                    style={{
+                      padding: "6px 12px",
+                      background: "rgba(239, 68, 68, 0.2)",
+                      border: "1px solid rgba(239, 68, 68, 0.4)",
+                      borderRadius: "6px",
+                      color: "#FCA5A5",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                    }}
+                  >
                     ${ticker}
                   </span>
                 ))}
@@ -1015,35 +1086,61 @@ const NewsReview: React.FC = () => {
           )}
 
           {/* AI Summary */}
-          <div style={{
-            padding: '16px',
-            background: 'rgba(15, 23, 42, 0.7)',
-            borderRadius: '8px',
-            border: '1px solid rgba(148, 163, 184, 0.2)',
-            marginBottom: '16px'
-          }}>
-            <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#E2E8F0', marginBottom: '10px' }}>
+          <div
+            style={{
+              padding: "16px",
+              background: "rgba(15, 23, 42, 0.7)",
+              borderRadius: "8px",
+              border: "1px solid rgba(148, 163, 184, 0.2)",
+              marginBottom: "16px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "14px",
+                fontWeight: "bold",
+                color: "#E2E8F0",
+                marginBottom: "10px",
+              }}
+            >
               📊 AI Summary
             </div>
-            <div style={{ fontSize: '14px', color: '#CBD5E1', lineHeight: '1.7' }}>
+            <div style={{ fontSize: "14px", color: "#CBD5E1", lineHeight: "1.7" }}>
               {aiAnalysis.ai_analysis?.summary}
             </div>
           </div>
 
           {/* Key Points */}
-          <div style={{
-            padding: '16px',
-            background: 'rgba(15, 23, 42, 0.7)',
-            borderRadius: '8px',
-            border: '1px solid rgba(148, 163, 184, 0.2)',
-            marginBottom: '16px'
-          }}>
-            <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#E2E8F0', marginBottom: '10px' }}>
+          <div
+            style={{
+              padding: "16px",
+              background: "rgba(15, 23, 42, 0.7)",
+              borderRadius: "8px",
+              border: "1px solid rgba(148, 163, 184, 0.2)",
+              marginBottom: "16px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "14px",
+                fontWeight: "bold",
+                color: "#E2E8F0",
+                marginBottom: "10px",
+              }}
+            >
               🔑 Key Points
             </div>
-            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+            <ul style={{ margin: 0, paddingLeft: "20px" }}>
               {aiAnalysis.ai_analysis?.key_points?.map((point: string, idx: number) => (
-                <li key={idx} style={{ fontSize: '14px', color: '#CBD5E1', marginBottom: '8px', lineHeight: '1.6' }}>
+                <li
+                  key={idx}
+                  style={{
+                    fontSize: "14px",
+                    color: "#CBD5E1",
+                    marginBottom: "8px",
+                    lineHeight: "1.6",
+                  }}
+                >
                   {point}
                 </li>
               ))}
@@ -1051,16 +1148,25 @@ const NewsReview: React.FC = () => {
           </div>
 
           {/* Trading Implications */}
-          <div style={{
-            padding: '16px',
-            background: 'rgba(59, 130, 246, 0.1)',
-            borderRadius: '8px',
-            border: '1px solid rgba(59, 130, 246, 0.3)'
-          }}>
-            <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#60A5FA', marginBottom: '10px' }}>
+          <div
+            style={{
+              padding: "16px",
+              background: "rgba(59, 130, 246, 0.1)",
+              borderRadius: "8px",
+              border: "1px solid rgba(59, 130, 246, 0.3)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "14px",
+                fontWeight: "bold",
+                color: "#60A5FA",
+                marginBottom: "10px",
+              }}
+            >
               💡 Trading Implications
             </div>
-            <div style={{ fontSize: '14px', color: '#93C5FD', lineHeight: '1.7' }}>
+            <div style={{ fontSize: "14px", color: "#93C5FD", lineHeight: "1.7" }}>
               {aiAnalysis.ai_analysis?.trading_implications}
             </div>
           </div>
@@ -1072,27 +1178,29 @@ const NewsReview: React.FC = () => {
         <div
           onClick={() => setShowAiPanel(false)}
           style={{
-            position: 'fixed',
+            position: "fixed",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
-            zIndex: 999
+            background: "rgba(0, 0, 0, 0.7)",
+            zIndex: 999,
           }}
         />
       )}
 
       {/* Error Display */}
       {aiError && (
-        <div style={{
-          marginTop: '16px',
-          padding: '16px',
-          background: 'rgba(239, 68, 68, 0.1)',
-          border: '1px solid rgba(239, 68, 68, 0.3)',
-          borderRadius: '8px',
-          color: '#FCA5A5'
-        }}>
+        <div
+          style={{
+            marginTop: "16px",
+            padding: "16px",
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.3)",
+            borderRadius: "8px",
+            color: "#FCA5A5",
+          }}
+        >
           ⚠️ {aiError}
         </div>
       )}

@@ -95,16 +95,14 @@ export const workflows: Workflow[] = [
 ];
 
 // Memoized logo component - prevents re-renders from parent state changes
-const MemoizedCenterLogo = memo(
-  ({ isMobile }: { isMobile: boolean }) => (
-    <CompletePaiiDLogo size={isMobile ? 38 : 58} enableModal={true} />
-  )
-);
+const MemoizedCenterLogo = memo(({ isMobile }: { isMobile: boolean }) => (
+  <CompletePaiiDLogo size={isMobile ? 38 : 58} enableModal={true} />
+));
 MemoizedCenterLogo.displayName = "MemoizedCenterLogo";
 
 const MemoizedHeaderLogo = memo(
   ({ isMobile, setShowAIChat }: { isMobile: boolean; setShowAIChat: (val: boolean) => void }) => (
-    <div onClick={() => setShowAIChat(true)} style={{ cursor: 'pointer' }}>
+    <div onClick={() => setShowAIChat(true)} style={{ cursor: "pointer" }}>
       <CompletePaiiDLogo size={isMobile ? 64 : 96} />
     </div>
   )
@@ -824,7 +822,17 @@ function RadialMenuComponent({
           .style("opacity", 1)
           .on("end", repeat);
       });
-  }, [menuSize, fontSizes, onWorkflowSelect, onWorkflowHover, isMarketDataLoading, marketData.dow.value, marketData.dow.change, marketData.nasdaq.value, marketData.nasdaq.change]); // Re-render when menu size or loading state changes
+  }, [
+    menuSize,
+    fontSizes,
+    onWorkflowSelect,
+    onWorkflowHover,
+    isMarketDataLoading,
+    marketData.dow.value,
+    marketData.dow.change,
+    marketData.nasdaq.value,
+    marketData.nasdaq.change,
+  ]); // Re-render when menu size or loading state changes
 
   // Separate effect for market data updates - only update text when data changes
   useEffect(() => {

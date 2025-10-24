@@ -47,12 +47,12 @@
 
 ### **Base URL**: `https://paiid-backend.onrender.com/api/ml`
 
-| Endpoint | Method | Purpose | Auth |
-|----------|--------|---------|------|
-| `/sentiment/{symbol}` | GET | Get sentiment analysis | JWT ✅ |
-| `/signals/{symbol}` | GET | Get trade signal | JWT ✅ |
-| `/signals/batch` | POST | Batch analysis (10 symbols) | JWT ✅ |
-| `/health` | GET | Service health check | None |
+| Endpoint              | Method | Purpose                     | Auth  |
+| --------------------- | ------ | --------------------------- | ----- |
+| `/sentiment/{symbol}` | GET    | Get sentiment analysis      | JWT ✅ |
+| `/signals/{symbol}`   | GET    | Get trade signal            | JWT ✅ |
+| `/signals/batch`      | POST   | Batch analysis (10 symbols) | JWT ✅ |
+| `/health`             | GET    | Service health check        | None  |
 
 ---
 
@@ -276,12 +276,12 @@ curl -H "Authorization: Bearer YOUR_JWT" \
 
 ## 🤝 TEAM STAR CONTRIBUTIONS
 
-| Member | Role | Status |
-|--------|------|--------|
-| **Dr. SC Prime** | Vision, Authority, "GOGOGOGOGO!" | ✅ |
-| **Dr. Cursor Claude** | Execution, No Questions Asked | ✅ |
-| **Dr. Desktop Claude** | Strategic Guidance | 📋 |
-| **Anthropic Claude** | AI Sentiment Engine | ✅ |
+| Member                 | Role                             | Status |
+| ---------------------- | -------------------------------- | ------ |
+| **Dr. SC Prime**       | Vision, Authority, "GOGOGOGOGO!" | ✅      |
+| **Dr. Cursor Claude**  | Execution, No Questions Asked    | ✅      |
+| **Dr. Desktop Claude** | Strategic Guidance               | 📋      |
+| **Anthropic Claude**   | AI Sentiment Engine              | ✅      |
 
 ---
 

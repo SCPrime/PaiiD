@@ -38,10 +38,7 @@ function killPort(port: number): void {
 function cleanupPidFiles(): void {
   console.log("[Global Setup] Cleaning up PID files...");
 
-  const pidDirs = [
-    join(__dirname, "..", "..", "backend", ".run"),
-    join(__dirname, "..", ".run"),
-  ];
+  const pidDirs = [join(__dirname, "..", "..", "backend", ".run"), join(__dirname, "..", ".run")];
 
   let cleaned = 0;
 
@@ -74,10 +71,7 @@ function validateEnvironment(): void {
   console.log("[Global Setup] Validating environment...");
 
   // Check critical environment variables
-  const requiredVars = [
-    "NEXT_PUBLIC_BACKEND_API_BASE_URL",
-    "NEXT_PUBLIC_API_TOKEN",
-  ];
+  const requiredVars = ["NEXT_PUBLIC_BACKEND_API_BASE_URL", "NEXT_PUBLIC_API_TOKEN"];
 
   const missing: string[] = [];
 
@@ -88,9 +82,7 @@ function validateEnvironment(): void {
   }
 
   if (missing.length > 0) {
-    console.warn(
-      `  Warning: Missing environment variables: ${missing.join(", ")}`
-    );
+    console.warn(`  Warning: Missing environment variables: ${missing.join(", ")}`);
     console.warn("  Tests may fail without proper configuration");
   } else {
     console.log("  Environment configuration valid");

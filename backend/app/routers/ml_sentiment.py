@@ -80,7 +80,9 @@ async def get_sentiment(
 
             if news_articles:
                 # Analyze news sentiment
-                sentiment = await sentiment_analyzer.analyze_news_batch(symbol, news_articles)
+                sentiment = await sentiment_analyzer.analyze_news_batch(
+                    symbol, news_articles
+                )
             else:
                 # No news available - return neutral
                 from ..ml.sentiment_analyzer import SentimentScore
@@ -120,7 +122,9 @@ async def get_sentiment(
 
     except Exception as e:
         logger.error(f"Error getting sentiment for {symbol}: {e}")
-        raise HTTPException(status_code=500, detail=f"Sentiment analysis failed: {e!s}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Sentiment analysis failed: {e!s}"
+        ) from e
 
 
 @router.get("/signals/{symbol}", response_model=SignalResponse)
@@ -189,7 +193,9 @@ async def get_trade_signal(
         raise
     except Exception as e:
         logger.error(f"Error generating signal for {symbol}: {e}")
-        raise HTTPException(status_code=500, detail=f"Signal generation failed: {e!s}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Signal generation failed: {e!s}"
+        ) from e
 
 
 @router.post("/signals/batch", response_model=list[SignalResponse])
@@ -301,4 +307,3 @@ async def ml_sentiment_health_check():
             "error": str(e),
             "timestamp": datetime.utcnow().isoformat(),
         }
-

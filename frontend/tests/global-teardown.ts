@@ -41,10 +41,7 @@ function stopTestServers(): void {
 function removePidFiles(): void {
   console.log("[Global Teardown] Removing PID files...");
 
-  const pidDirs = [
-    join(__dirname, "..", "..", "backend", ".run"),
-    join(__dirname, "..", ".run"),
-  ];
+  const pidDirs = [join(__dirname, "..", "..", "backend", ".run"), join(__dirname, "..", ".run")];
 
   let removed = 0;
 
