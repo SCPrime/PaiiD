@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from ..core.auth import get_current_user_id, require_bearer
+from ..core.jwt import get_current_user
 from ..db.session import get_db
 from ..models.database import User
 
@@ -23,7 +23,9 @@ router = APIRouter()
 class UserPreferencesResponse(BaseModel):
     """Response model for user preferences"""
 
-    risk_tolerance: int | None = Field(None, ge=0, le=100, description="Risk tolerance (0-100)")
+    risk_tolerance: int | None = Field(
+        None, ge=0, le=100, description="Risk tolerance (0-100)"
+    )
     default_position_size: float | None = None
     watchlist: list | None = None
     notifications_enabled: bool | None = None
@@ -33,7 +35,9 @@ class UserPreferencesResponse(BaseModel):
 class UserPreferencesUpdate(BaseModel):
     """Request model for updating user preferences"""
 
-    risk_tolerance: int | None = Field(None, ge=0, le=100, description="Risk tolerance (0-100)")
+    risk_tolerance: int | None = Field(
+        None, ge=0, le=100, description="Risk tolerance (0-100)"
+    )
     default_position_size: float | None = Field(
         None, gt=0, description="Default position size in dollars"
     )
@@ -50,7 +54,7 @@ class UserPreferencesUpdate(BaseModel):
 
 @router.get("/users/preferences")
 def get_user_preferences(
-    _=Depends(require_bearer), db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> UserPreferencesResponse:
     """
     Get user preferences including risk tolerance
@@ -58,23 +62,12 @@ def get_user_preferences(
     Returns current user preferences or default values if not set.
     """
     try:
-        # MULTI-USER FUTURE: Extract user_id from JWT token in require_bearer
-        # Current: Single-user MVP always returns user_id=1
-        user_id = get_current_user_id(token)
-        user = db.query(User).filter(User.id == user_id).first()
+        # JWT authentication now provides actual user object with user.id
+        user = db.query(User).filter(User.id == current_user.id).first()
 
         if not user:
-            # Create default user if doesn't exist
-            user = User(
-                id=1,
-                email="default@paiid.com",
-                alpaca_account_id=None,
-                preferences={"risk_tolerance": 50},  # Default to moderate risk
-            )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            logger.info("✅ Created default user with preferences")
+            logger.error(f"❌ User {current_user.id} not found in database")
+            raise HTTPException(status_code=404, detail="User not found")
 
         preferences = user.preferences or {}
 
@@ -86,14 +79,20 @@ def get_user_preferences(
             preferences=preferences,
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Failed to fetch user preferences: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch user preferences: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch user preferences: {e!s}"
+        )
 
 
 @router.patch("/users/preferences")
 def update_user_preferences(
-    updates: UserPreferencesUpdate, _=Depends(require_bearer), db: Session = Depends(get_db)
+    updates: UserPreferencesUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> UserPreferencesResponse:
     """
     Update user preferences
@@ -102,14 +101,12 @@ def update_user_preferences(
     Validates risk_tolerance is between 0-100.
     """
     try:
-        # Get or create default user
-        user = db.query(User).filter(User.id == 1).first()
+        # Get authenticated user from JWT
+        user = db.query(User).filter(User.id == current_user.id).first()
 
         if not user:
-            user = User(id=1, email="default@paiid.com", alpaca_account_id=None, preferences={})
-            db.add(user)
-            db.commit()
-            db.refresh(user)
+            logger.error(f"❌ User {current_user.id} not found in database")
+            raise HTTPException(status_code=404, detail="User not found")
 
         # Get current preferences
         preferences = user.preferences or {}
@@ -157,7 +154,9 @@ def update_user_preferences(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to update user preferences: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to update user preferences: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update user preferences: {e!s}"
+        )
 
 
 def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
@@ -197,16 +196,19 @@ def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
 
 
 @router.get("/users/risk-limits")
-def get_user_risk_limits(_=Depends(require_bearer), db: Session = Depends(get_db)):
+def get_user_risk_limits(
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
     """
     Get calculated risk limits based on user's risk tolerance
 
     Returns position sizing limits and maximum concurrent positions.
     """
     try:
-        user = db.query(User).filter(User.id == 1).first()
+        user = db.query(User).filter(User.id == current_user.id).first()
 
         if not user:
+            logger.error(f"❌ User {current_user.id} not found in database")
             raise HTTPException(status_code=404, detail="User not found")
 
         preferences = user.preferences or {}
@@ -218,4 +220,6 @@ def get_user_risk_limits(_=Depends(require_bearer), db: Session = Depends(get_db
 
     except Exception as e:
         logger.error(f"❌ Failed to calculate risk limits: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to calculate risk limits: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to calculate risk limits: {e!s}"
+        )

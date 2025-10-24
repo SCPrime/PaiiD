@@ -47,6 +47,49 @@ try {
     $hasGitHubCli = $false
 }
 
+# Pre-flight: Check for port conflicts
+Write-Host "🔍 Checking for port conflicts..." -ForegroundColor Yellow
+$PORT = $env:PORT ?? "8001"
+$PortInUse = Get-NetTCPConnection -LocalPort $PORT -ErrorAction SilentlyContinue
+if ($PortInUse) {
+    Write-Host "⚠️  Port $PORT is in use" -ForegroundColor Yellow
+    Write-Host "   Zombie processes detected. Run cleanup:" -ForegroundColor Gray
+    Write-Host "   bash backend/scripts/cleanup.sh $PORT" -ForegroundColor Cyan
+    if (-not $AutoApprove) {
+        $continue = Read-Host "Continue anyway? (y/N)"
+        if ($continue -ne "y") { exit 0 }
+    }
+}
+
+# Pre-flight: Validate Render configurations
+Write-Host "🔍 Validating Render configurations..." -ForegroundColor Yellow
+$validationErrors = @()
+$result = python infra/render/validate.py backend/render.yaml infra/render/backend.json
+if ($LASTEXITCODE -ne 0) {
+    $validationErrors += "Backend config drift detected"
+}
+$result = python infra/render/validate.py render.yaml
+if ($LASTEXITCODE -ne 0) {
+    $validationErrors += "Root config validation failed"
+}
+if ($validationErrors.Count -gt 0) {
+    Write-Host "❌ Configuration validation failed:" -ForegroundColor Red
+    $validationErrors | ForEach-Object { Write-Host "   • $_" -ForegroundColor Red }
+    exit 1
+}
+Write-Host "✅ Render configurations validated" -ForegroundColor Green
+
+# Pre-flight: Check git hold points
+Write-Host "🔍 Validating git hold points..." -ForegroundColor Yellow
+$result = python scripts/check_hold_points.py
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "❌ Hold point validation failed" -ForegroundColor Red
+    Write-Host "   Locked files may have been modified" -ForegroundColor Yellow
+    Write-Host "   Review .cursorrules and get approval" -ForegroundColor Gray
+    exit 1
+}
+Write-Host "✅ Hold point validation passed" -ForegroundColor Green
+
 # Check for Render API key
 if (-not $env:RENDER_API_KEY) {
     Write-Host "  ⚠ RENDER_API_KEY not set" -ForegroundColor Yellow

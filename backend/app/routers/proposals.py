@@ -3,12 +3,12 @@ Options Proposals Router - Create and execute options trade proposals
 """
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.core.auth import require_bearer
+from app.core.jwt import get_current_user
+from app.models.database import User
 from app.services.order_execution import OptionsProposal, get_order_execution_service
 
 
@@ -30,11 +30,14 @@ class ExecuteProposalRequest(BaseModel):
     """Request to execute an approved proposal"""
 
     proposal: OptionsProposal
-    limit_price: Optional[float] = None
+    limit_price: float | None = None
 
 
-@router.post("/create", dependencies=[Depends(require_bearer)])
-async def create_proposal(request: CreateProposalRequest):
+@router.post("/create")
+async def create_proposal(
+    request: CreateProposalRequest,
+    current_user: User = Depends(get_current_user),
+):
     """
     Create a detailed options trade proposal with risk analysis
 
@@ -103,8 +106,11 @@ async def create_proposal(request: CreateProposalRequest):
         raise HTTPException(status_code=500, detail="Failed to create proposal")
 
 
-@router.post("/execute", dependencies=[Depends(require_bearer)])
-async def execute_proposal(request: ExecuteProposalRequest):
+@router.post("/execute")
+async def execute_proposal(
+    request: ExecuteProposalRequest,
+    current_user: User = Depends(get_current_user),
+):
     """
     Execute an approved options trade proposal
 
@@ -161,8 +167,8 @@ async def execute_proposal(request: ExecuteProposalRequest):
         raise HTTPException(status_code=500, detail="Failed to execute order")
 
 
-@router.get("/history", dependencies=[Depends(require_bearer)])
-async def get_proposal_history():
+@router.get("/history")
+async def get_proposal_history(current_user: User = Depends(get_current_user)):
     """
     Get history of created proposals
 

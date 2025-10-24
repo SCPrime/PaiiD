@@ -13,8 +13,10 @@ load_dotenv(env_path)
 print("\n===== BACKEND STARTUP =====")
 print(f".env path: {env_path}")
 print(f".env exists: {env_path.exists()}")
-print(f"API_TOKEN from env: {os.getenv('API_TOKEN', 'NOT_SET')}")
-print(f"TRADIER_API_KEY configured: {'YES' if os.getenv('TRADIER_API_KEY') else 'NO'}")
+print("API_TOKEN from env: " + ("***" if os.getenv("API_TOKEN") else "NOT_SET"))
+print(
+    "TRADIER_API_KEY configured: " + ("YES" if os.getenv("TRADIER_API_KEY") else "NO")
+)
 print("Deployed from: main branch - Tradier integration active")
 print("===========================\n", flush=True)
 
@@ -91,7 +93,7 @@ else:
     print("[WARNING] SENTRY_DSN not configured - error tracking disabled", flush=True)
 
 print("\n===== SETTINGS LOADED =====")
-print(f"settings.API_TOKEN: {settings.API_TOKEN}")
+print(f"settings.API_TOKEN: {'***' if settings.API_TOKEN else 'NOT_SET'}")
 print("===========================\n", flush=True)
 
 # Register signal handlers for graceful shutdown BEFORE creating app
@@ -105,6 +107,14 @@ app = FastAPI(
     description="Personal Artificial Intelligence Investment Dashboard",
     version="1.0.0",
 )
+
+# Add Request ID middleware early for correlation
+from .middleware.kill_switch import KillSwitchMiddleware
+from .middleware.request_id import RequestIDMiddleware
+
+
+app.add_middleware(RequestIDMiddleware)
+app.add_middleware(KillSwitchMiddleware)
 
 # Configure rate limiting (Phase 3: Bulletproof Reliability)
 # Skip rate limiting in test environment to avoid middleware conflicts with TestClient
@@ -217,6 +227,20 @@ async def startup_event():
                 logger.info("✅ Pre-launch validation passed")
     except Exception as e:
         logger.error(f"❌ Pre-launch validation error: {e}")
+        raise
+
+    # Verify database connectivity early
+    try:
+        async with monitor.phase("database_check", timeout=5.0):
+            from sqlalchemy import text
+
+            from .db.session import engine
+
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            logger.info("[OK] Database connection verified")
+    except Exception as e:
+        logger.error(f"[DB] Connection failed: {e}")
         raise
 
     # Initialize cache service
@@ -368,10 +392,12 @@ if settings.SENTRY_DSN:
 # Add Cache-Control headers for SWR support (Phase 2: Performance)
 from .middleware.cache_control import CacheControlMiddleware
 from .middleware.metrics import metrics_middleware
+from .middleware.security_headers import SecurityHeadersMiddleware
 
 
 app.add_middleware(CacheControlMiddleware)
 app.middleware("http")(metrics_middleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

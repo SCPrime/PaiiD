@@ -20,9 +20,9 @@ from pydantic import BaseModel, Field
 
 from ..core.jwt import get_current_user
 from ..models.database import User
-from ..services.tradier_client import get_tradier_client
 from ..services.alpaca_options import get_alpaca_options_client
 from ..services.cache import get_cache
+from ..services.tradier_client import get_tradier_client
 
 
 router = APIRouter(prefix="/options", tags=["options"])
@@ -193,7 +193,9 @@ async def get_options_chain(
             logger.info(f"✅ CACHE HIT: {cache_key}")
         else:
             logger.info(f"❌ CACHE MISS: {cache_key} - Fetching from Tradier API")
-            chain_data = await asyncio.to_thread(client.get_option_chains, symbol, expiration)
+            chain_data = await asyncio.to_thread(
+                client.get_option_chains, symbol, expiration
+            )
             cache.set(cache_key, chain_data, ttl=300)
             logger.info(f"💾 CACHED: {cache_key} (TTL: 5 minutes)")
 
@@ -262,7 +264,9 @@ async def get_options_chain(
             quote = client.get_quote(symbol)
             if quote and "last" in quote:
                 underlying_price = float(quote["last"])
-                logger.info(f"📈 Underlying price for {symbol}: ${underlying_price:.2f}")
+                logger.info(
+                    f"📈 Underlying price for {symbol}: ${underlying_price:.2f}"
+                )
         except Exception as e:
             logger.warning(f"⚠️ Failed to fetch underlying price for {symbol}: {e}")
 
@@ -286,9 +290,7 @@ async def get_options_chain(
 
 
 @router.get("/expirations/{symbol}", response_model=list[ExpirationDate])
-def get_expiration_dates(
-    symbol: str, current_user: User = Depends(get_current_user)
-):
+def get_expiration_dates(symbol: str, current_user: User = Depends(get_current_user)):
     """
     Get available expiration dates for a symbol
 

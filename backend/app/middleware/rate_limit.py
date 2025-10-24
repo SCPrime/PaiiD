@@ -13,6 +13,8 @@ from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
+from ..core.config import settings
+
 
 # Check if running in test mode
 TESTING = os.getenv("TESTING", "false").lower() == "true"
@@ -29,12 +31,16 @@ if TESTING:
         enabled=False,  # Disable rate limiting entirely in tests
     )
 else:
+    storage_uri = "memory://"
+    # Prefer Redis-backed storage if available
+    if settings.REDIS_URL:
+        storage_uri = settings.REDIS_URL
     limiter = Limiter(
         key_func=get_remote_address,
-        default_limits=["100/minute"],  # Global default: 100 requests per minute per IP
-        storage_uri="memory://",  # Use in-memory storage (can upgrade to Redis for production)
-        strategy="fixed-window",  # Fixed window strategy
-        headers_enabled=True,  # Enable rate limit headers (X-RateLimit-*)
+        default_limits=["100/minute"],
+        storage_uri=storage_uri,
+        strategy="fixed-window",
+        headers_enabled=True,
     )
 
 
@@ -50,7 +56,9 @@ async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExc
 
     # Extract retry-after from exception
     retry_after = (
-        exc.detail.split("Retry after ")[1] if "Retry after" in exc.detail else "60 seconds"
+        exc.detail.split("Retry after ")[1]
+        if "Retry after" in exc.detail
+        else "60 seconds"
     )
 
     return JSONResponse(

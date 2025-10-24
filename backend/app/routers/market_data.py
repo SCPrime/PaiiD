@@ -11,7 +11,8 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.auth import require_bearer
+from app.core.jwt import get_current_user
+from app.models.database import User
 
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
@@ -29,9 +30,43 @@ router = APIRouter()
 
 @router.get("/market/quote/{symbol}")
 async def get_quote(
-    symbol: str, _=Depends(require_bearer), cache: CacheService = Depends(get_cache)
+    symbol: str,
+    current_user: User = Depends(get_current_user),
+    cache: CacheService = Depends(get_cache),
 ):
-    """Get real-time quote for a symbol using Tradier (cached for 15s)"""
+    """Get real-time quote for a symbol using Tradier (cached for 15s)
+
+    Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
+    """
+    # Check if we should use test fixtures
+    from ..core.config import settings
+
+    if settings.USE_TEST_FIXTURES:
+        logger.info("Using test fixtures for quote data")
+        from ..services.fixture_loader import get_fixture_loader
+
+        fixture_loader = get_fixture_loader()
+        quotes_data = fixture_loader.load_market_quotes([symbol])
+
+        if not quotes_data or symbol.upper() not in quotes_data:
+            raise HTTPException(
+                status_code=404, detail=f"No fixture data available for symbol {symbol}"
+            )
+
+        quote = quotes_data[symbol.upper()]
+
+        result = {
+            "symbol": symbol.upper(),
+            "bid": float(quote.get("bid", 0)),
+            "ask": float(quote.get("ask", 0)),
+            "last": float(quote.get("last", 0)),
+            "volume": int(quote.get("volume", 0)),
+            "timestamp": quote.get("timestamp", datetime.now().isoformat()),
+            "test_fixture": True,  # Mark as fixture data
+        }
+
+        return result
+
     # Check cache first
     cache_key = f"quote:{symbol.upper()}"
     cached_quote = cache.get(cache_key)
@@ -68,8 +103,37 @@ async def get_quote(
 
 
 @router.get("/market/quotes")
-async def get_quotes(symbols: str, _=Depends(require_bearer)):
-    """Get quotes for multiple symbols (comma-separated) using Tradier"""
+async def get_quotes(symbols: str, current_user: User = Depends(get_current_user)):
+    """Get quotes for multiple symbols (comma-separated) using Tradier
+
+    Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
+    """
+    # Check if we should use test fixtures
+    from ..core.config import settings
+
+    if settings.USE_TEST_FIXTURES:
+        logger.info("Using test fixtures for quotes data")
+        from ..services.fixture_loader import get_fixture_loader
+
+        fixture_loader = get_fixture_loader()
+        symbol_list = [s.strip().upper() for s in symbols.split(",")]
+        quotes_data = fixture_loader.load_market_quotes(symbol_list)
+
+        result = {}
+        for symbol in symbol_list:
+            if symbol in quotes_data:
+                q = quotes_data[symbol]
+                result[symbol] = {
+                    "bid": float(q.get("bid", 0)),
+                    "ask": float(q.get("ask", 0)),
+                    "last": float(q.get("last", 0)),
+                    "timestamp": q.get("timestamp", datetime.now().isoformat()),
+                    "test_fixture": True,  # Mark as fixture data
+                }
+
+        logger.info(f"✅ Retrieved {len(result)} fixture quotes")
+        return result
+
     try:
         client = get_tradier_client()
         symbol_list = [s.strip().upper() for s in symbols.split(",")]
@@ -95,7 +159,10 @@ async def get_quotes(symbols: str, _=Depends(require_bearer)):
 
 @router.get("/market/bars/{symbol}")
 async def get_bars(
-    symbol: str, timeframe: str = "daily", limit: int = 100, _=Depends(require_bearer)
+    symbol: str,
+    timeframe: str = "daily",
+    limit: int = 100,
+    current_user: User = Depends(get_current_user),
 ):
     """Get historical price bars using Tradier"""
     try:
@@ -118,7 +185,9 @@ async def get_bars(
         # Calculate date range based on limit
         end_date = datetime.now()
         if interval in ["1min", "5min", "15min"]:
-            start_date = end_date - timedelta(days=min(limit // 78, 30))  # Market hours limit
+            start_date = end_date - timedelta(
+                days=min(limit // 78, 30)
+            )  # Market hours limit
         elif interval == "1hour":
             start_date = end_date - timedelta(days=min(limit // 6, 90))
         else:  # daily, weekly, monthly
@@ -152,7 +221,7 @@ async def get_bars(
 
 
 @router.get("/market/scanner/under4")
-async def scan_under_4(_=Depends(require_bearer)):
+async def scan_under_4(current_user: User = Depends(get_current_user)):
     """Scan for stocks under $4 with volume using Tradier"""
     try:
         # Pre-defined list of liquid stocks that trade near/under $4
@@ -190,7 +259,9 @@ async def scan_under_4(_=Depends(require_bearer)):
                             "bid": float(q.get("bid", 0)),
                             "ask": ask_price,
                             "volume": int(q.get("volume", 0)),
-                            "timestamp": q.get("trade_date", datetime.now().isoformat()),
+                            "timestamp": q.get(
+                                "trade_date", datetime.now().isoformat()
+                            ),
                         }
                     )
 

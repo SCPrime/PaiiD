@@ -13,7 +13,8 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
+from ..models.database import User
 from ..services.tradier_client import get_tradier_client
 
 
@@ -68,8 +69,10 @@ class PerformanceMetrics(BaseModel):
     worst_day: float
 
 
-@router.get("/portfolio/summary", dependencies=[Depends(require_bearer)])
-async def get_portfolio_summary() -> PortfolioSummary:
+@router.get("/portfolio/summary")
+async def get_portfolio_summary(
+    current_user: User = Depends(get_current_user),
+) -> PortfolioSummary:
     """
     Get real-time portfolio summary with P&L metrics
 
@@ -143,7 +146,9 @@ async def get_portfolio_summary() -> PortfolioSummary:
         # Guard against division by zero when positions_value == total_pl (break-even after gains)
         cost_basis = positions_value - total_pl
         total_pl_percent = (
-            (total_pl / cost_basis * 100) if cost_basis != 0 and positions_value != 0 else 0
+            (total_pl / cost_basis * 100)
+            if cost_basis != 0 and positions_value != 0
+            else 0
         )
         day_pl_percent = (day_pl / positions_value * 100) if positions_value != 0 else 0
 
@@ -166,12 +171,15 @@ async def get_portfolio_summary() -> PortfolioSummary:
 
     except Exception as e:
         logger.error(f"❌ Failed to get portfolio summary: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to get portfolio summary: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get portfolio summary: {e!s}"
+        )
 
 
-@router.get("/portfolio/history", dependencies=[Depends(require_bearer)])
+@router.get("/portfolio/history")
 async def get_portfolio_history(
     period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M"),
+    current_user: User = Depends(get_current_user),
 ) -> dict:
     """
     Get historical portfolio equity data
@@ -241,7 +249,9 @@ async def get_portfolio_history(
                     timestamp=now.isoformat(),
                     equity=round(current_equity, 2),
                     cash=round(float(account.get("cash", 0)), 2),
-                    positions_value=round(current_equity - float(account.get("cash", 0)), 2),
+                    positions_value=round(
+                        current_equity - float(account.get("cash", 0)), 2
+                    ),
                 ).model_dump()
             ]
 
@@ -259,12 +269,15 @@ async def get_portfolio_history(
 
     except Exception as e:
         logger.error(f"❌ Failed to get portfolio history: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to get portfolio history: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get portfolio history: {e!s}"
+        )
 
 
-@router.get("/analytics/performance", dependencies=[Depends(require_bearer)])
+@router.get("/analytics/performance")
 async def get_performance_metrics(
     period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M"),
+    current_user: User = Depends(get_current_user),
 ) -> PerformanceMetrics:
     """
     Get comprehensive performance metrics and risk analytics
@@ -304,8 +317,12 @@ async def get_performance_metrics(
         total_pl = sum(float(p.get("unrealized_pl", 0)) for p in positions)
         total_cost = sum(float(p.get("cost_basis", 0)) for p in positions)
 
-        winning_positions = [p for p in positions if float(p.get("unrealized_pl", 0)) > 0]
-        losing_positions = [p for p in positions if float(p.get("unrealized_pl", 0)) < 0]
+        winning_positions = [
+            p for p in positions if float(p.get("unrealized_pl", 0)) > 0
+        ]
+        losing_positions = [
+            p for p in positions if float(p.get("unrealized_pl", 0)) < 0
+        ]
 
         num_wins = len(winning_positions)
         num_losses = len(losing_positions)
@@ -328,12 +345,16 @@ async def get_performance_metrics(
 
         # Profit factor
         gross_profit = sum(float(p.get("unrealized_pl", 0)) for p in winning_positions)
-        gross_loss = abs(sum(float(p.get("unrealized_pl", 0)) for p in losing_positions))
+        gross_loss = abs(
+            sum(float(p.get("unrealized_pl", 0)) for p in losing_positions)
+        )
         profit_factor = gross_profit / gross_loss if gross_loss > 0 else 0
 
         # Total return
         total_return = total_pl
-        total_return_percent = (total_return / total_cost * 100) if total_cost > 0 else 0
+        total_return_percent = (
+            (total_return / total_cost * 100) if total_cost > 0 else 0
+        )
 
         # Sharpe ratio - calculate actual volatility from equity history
         from ..services.equity_tracker import get_equity_tracker
@@ -355,7 +376,9 @@ async def get_performance_metrics(
             if len(daily_returns) > 1:
                 # Calculate actual volatility (standard deviation of returns)
                 mean_return = sum(daily_returns) / len(daily_returns)
-                variance = sum((r - mean_return) ** 2 for r in daily_returns) / len(daily_returns)
+                variance = sum((r - mean_return) ** 2 for r in daily_returns) / len(
+                    daily_returns
+                )
                 volatility = (variance**0.5) * 100  # Convert to percentage
 
                 # Use actual average return
@@ -369,7 +392,9 @@ async def get_performance_metrics(
             volatility = 1.5
             avg_return = total_return_percent / 252
 
-        sharpe_ratio = (avg_return / volatility * math.sqrt(252)) if volatility > 0 else 0
+        sharpe_ratio = (
+            (avg_return / volatility * math.sqrt(252)) if volatility > 0 else 0
+        )
 
         # Max drawdown - calculate from actual equity history
         if len(equity_history) > 1:
@@ -400,7 +425,9 @@ async def get_performance_metrics(
             # Insufficient historical data - set to 0
             max_drawdown = 0.0
             max_drawdown_percent = 0.0
-            logger.warning("⚠️ Insufficient historical data to calculate max drawdown. Returning 0.")
+            logger.warning(
+                "⚠️ Insufficient historical data to calculate max drawdown. Returning 0."
+            )
 
         # Current streak
         # Check if last position was win or loss
@@ -454,4 +481,6 @@ async def get_performance_metrics(
 
     except Exception as e:
         logger.error(f"❌ Failed to get performance metrics: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to get performance metrics: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get performance metrics: {e!s}"
+        )

@@ -7,8 +7,10 @@ services:
     region: oregon
     branch: main
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r requirements.txt && python -m app.core.prelaunch --check-only
+    startCommand: bash start.sh
+    healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: API_TOKEN
         sync: false # Set via Render dashboard for security
@@ -37,6 +39,17 @@ services:
         value: paper
       - key: REDIS_URL
         generateValue: true
+      # Sentry Error Tracking - REQUIRED for production monitoring
+      - key: SENTRY_DSN
+        sync: false # REQUIRED for production - create free account at sentry.io
+      - key: SENTRY_ENVIRONMENT
+        value: production # Options: development, staging, production
+      # Logging Configuration
+      - key: LOG_LEVEL
+        value: INFO # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+      # Test Configuration (for deterministic Playwright tests)
+      - key: USE_TEST_FIXTURES
+        value: 'false'
 
   # Frontend - Next.js Docker service
   - type: web
@@ -64,4 +77,10 @@ services:
         value: production
       - key: PORT
         value: '3000'
+      # Frontend Sentry Configuration
+      - key: NEXT_PUBLIC_SENTRY_DSN
+        sync: false # Set via Render dashboard
+      - key: NEXT_PUBLIC_SENTRY_ENVIRONMENT
+        value: production
     healthCheckPath: /
+    autoDeploy: true

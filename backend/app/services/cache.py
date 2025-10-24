@@ -11,6 +11,7 @@ from typing import Any
 import redis
 
 from ..core.config import settings
+from .health_monitor import health_monitor
 
 
 class CacheService:
@@ -39,7 +40,9 @@ class CacheService:
             self.available = True
             print("[OK] Redis cache connected", flush=True)
         except Exception as e:
-            print(f"[WARNING] Redis connection failed: {e} - caching disabled", flush=True)
+            print(
+                f"[WARNING] Redis connection failed: {e} - caching disabled", flush=True
+            )
             self.client = None
             self.available = False
 
@@ -59,7 +62,9 @@ class CacheService:
         try:
             value = self.client.get(key)
             if value:
+                health_monitor.record_cache_hit()
                 return json.loads(value)
+            health_monitor.record_cache_miss()
             return None
         except Exception as e:
             print(f"[WARNING] Cache GET error for key '{key}': {e}", flush=True)
@@ -147,7 +152,10 @@ class CacheService:
                 return self.client.delete(*keys)
             return 0
         except Exception as e:
-            print(f"[WARNING] Cache CLEAR_PATTERN error for pattern '{pattern}': {e}", flush=True)
+            print(
+                f"[WARNING] Cache CLEAR_PATTERN error for pattern '{pattern}': {e}",
+                flush=True,
+            )
             return 0
 
 

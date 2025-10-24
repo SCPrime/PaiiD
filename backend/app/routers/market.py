@@ -12,8 +12,9 @@ import requests
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
 from ..core.config import settings
+from ..core.jwt import get_current_user
+from ..models.database import User
 from ..services.cache import CacheService, get_cache
 
 
@@ -36,8 +37,11 @@ class MarketCondition(BaseModel):
     details: str | None = None
 
 
-@router.get("/market/conditions", dependencies=[Depends(require_bearer)])
-async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dict:
+@router.get("/market/conditions")
+async def get_market_conditions(
+    current_user: User = Depends(get_current_user),
+    cache: CacheService = Depends(get_cache),
+) -> dict:
     """
     Get current market conditions for trading analysis using real Tradier data
 
@@ -93,7 +97,9 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
                     positive_signals += 1
                 elif vix_value < 20:
                     vix_status = "favorable"
-                    vix_details = f"Low volatility ({vix_value:.2f}) - stable market conditions"
+                    vix_details = (
+                        f"Low volatility ({vix_value:.2f}) - stable market conditions"
+                    )
                     positive_signals += 1
                 elif vix_value < 30:
                     vix_status = "neutral"
@@ -230,7 +236,9 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
         # Cache for 60 seconds
         cache.set(cache_key, result, ttl=60)
 
-        print(f"[Market Conditions] ✅ Fetched {len(conditions)} real conditions from Tradier")
+        print(
+            f"[Market Conditions] ✅ Fetched {len(conditions)} real conditions from Tradier"
+        )
         return result
 
     except Exception as e:
@@ -254,8 +262,11 @@ async def get_market_conditions(cache: CacheService = Depends(get_cache)) -> dic
         }
 
 
-@router.get("/market/indices", dependencies=[Depends(require_bearer)])
-async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
+@router.get("/market/indices")
+async def get_major_indices(
+    current_user: User = Depends(get_current_user),
+    cache: CacheService = Depends(get_cache),
+) -> dict:
     """
     Get current prices for Dow Jones Industrial and NASDAQ Composite
 
@@ -328,7 +339,8 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
                 print("[Market] ✅ Fetched live data from Tradier for Dow/NASDAQ")
                 result = {
                     "dow": dow_data or {"last": 0, "change": 0, "changePercent": 0},
-                    "nasdaq": nasdaq_data or {"last": 0, "change": 0, "changePercent": 0},
+                    "nasdaq": nasdaq_data
+                    or {"last": 0, "change": 0, "changePercent": 0},
                     "source": "tradier",
                 }
                 # Cache for 60 seconds
@@ -391,8 +403,11 @@ async def get_major_indices(cache: CacheService = Depends(get_cache)) -> dict:
             )
 
 
-@router.get("/market/sectors", dependencies=[Depends(require_bearer)])
-async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> dict:
+@router.get("/market/sectors")
+async def get_sector_performance(
+    current_user: User = Depends(get_current_user),
+    cache: CacheService = Depends(get_cache),
+) -> dict:
     """
     Get performance of major market sectors using real Tradier data
 
@@ -483,7 +498,9 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
             # Cache for 60 seconds
             cache.set(cache_key, result, ttl=60)
 
-            print(f"[Sector Performance] ✅ Fetched {len(sectors)} real sector ETFs from Tradier")
+            print(
+                f"[Sector Performance] ✅ Fetched {len(sectors)} real sector ETFs from Tradier"
+            )
             return result
 
         else:
@@ -505,8 +522,11 @@ async def get_sector_performance(cache: CacheService = Depends(get_cache)) -> di
         }
 
 
-@router.get("/market/status", dependencies=[Depends(require_bearer)])
-async def get_market_status(cache: CacheService = Depends(get_cache)) -> dict:
+@router.get("/market/status")
+async def get_market_status(
+    current_user: User = Depends(get_current_user),
+    cache: CacheService = Depends(get_cache),
+) -> dict:
     """
     Get current market status (open/closed) and trading hours
 

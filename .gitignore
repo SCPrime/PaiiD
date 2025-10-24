@@ -88,6 +88,14 @@ pids/
 *.seed
 *.pid.lock
 
+# Process management directories and logs
+backend/.run/
+backend/.logs/
+frontend/.run/
+frontend/.logs/
+**/process-manager.log
+**/cleanup.log
+
 # Coverage directory used by tools like istanbul
 coverage/
 .nyc_output/

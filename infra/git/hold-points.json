@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "description": "Git workflow hold points and validation rules",
+  "locked_files": ["frontend/components/CompletePaiiDLogo.tsx"],
+  "branch_protection": {
+    "main": {
+      "require_pr": true,
+      "require_approvals": 1,
+      "require_status_checks": ["test-backend", "test-frontend"]
+    }
+  },
+  "commit_message_rules": {
+    "pattern": "^(feat|fix|docs|style|refactor|test|chore):",
+    "examples": [
+      "feat: add pre-launch validation",
+      "fix: resolve options endpoint 500 error",
+      "docs: update deployment guide"
+    ]
+  },
+  "cursorrules_compliance": {
+    "locked_file_marker": "🔒 LOCKED FINAL",
+    "require_approval_for": ["locked_files", "deployment_configs", "security_files"]
+  }
+}

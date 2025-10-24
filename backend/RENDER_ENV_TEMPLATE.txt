@@ -1,37 +1,88 @@
-# PaiiD Backend - Render Environment Variables
-# Copy these to Render Dashboard → Environment section
+# PaiiD Backend Environment Variables Template
+# Copy this to your Render service environment variables
 
-API_TOKEN=<from-backend-dot-env>
-TRADIER_API_KEY=<from-backend-dot-env>
-TRADIER_ACCOUNT_ID=<from-backend-dot-env>
-TRADIER_USE_SANDBOX=false
-TRADIER_API_BASE_URL=https://api.tradier.com/v1
-ANTHROPIC_API_KEY=<from-backend-dot-env>
-ALLOW_ORIGIN=https://frontend-scprimes-projects.vercel.app
-TRADING_MODE=live
-SUPERVISOR_MODE=suggest
+# =============================================================================
+# REQUIRED VARIABLES (Application will fail without these)
+# =============================================================================
 
-# Optional (can use defaults):
-AI_MODEL=claude-3-sonnet-20240229
-USE_AI_ANALYSIS=true
-MAX_POSITIONS=5
-POSITION_SIZE=0.02
-STOP_LOSS_PCT=0.02
-TAKE_PROFIT_PCT=0.04
-MAX_DAILY_TRADES=20
-MAX_POSITION_SIZE=100
-MAX_DAILY_LOSS=25
-MAX_TRADES_PER_DAY=10
-MAX_PORTFOLIO_RISK=0.10
-REQUIRE_CONFIRMATION=true
+# API Authentication
+API_TOKEN=your-secure-api-token-here
 
-# News API Keys (Optional):
-ALPHA_VANTAGE_API_KEY=<from-backend-dot-env>
-POLYGON_API_KEY=<from-backend-dot-env>
-FINNHUB_API_KEY=<from-backend-dot-env>
+# Alpaca API - PAPER TRADING EXECUTION ONLY
+ALPACA_PAPER_API_KEY=your-alpaca-paper-api-key
+ALPACA_PAPER_SECRET_KEY=your-alpaca-paper-secret-key
 
-# Instructions:
-# 1. Open backend/.env file
-# 2. Copy each value after the = sign
-# 3. Paste into Render dashboard
-# 4. Ensure ALLOW_ORIGIN matches your actual Vercel URL
+# Tradier API - MARKET DATA, NEWS, QUOTES (Primary data source)
+TRADIER_API_KEY=your-tradier-api-key
+TRADIER_ACCOUNT_ID=your-tradier-account-id
+
+# Sentry Error Tracking - REQUIRED for production monitoring
+SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
+SENTRY_ENVIRONMENT=production
+
+# =============================================================================
+# OPTIONAL VARIABLES (Application will work with defaults)
+# =============================================================================
+
+# Anthropic API (AI fallback for market data)
+ANTHROPIC_API_KEY=your-anthropic-api-key
+
+# Database (PostgreSQL)
+DATABASE_URL=postgresql://user:password@host:port/database
+
+# Redis Cache
+REDIS_URL=redis://user:password@host:port
+
+# Logging Configuration
+LOG_LEVEL=INFO
+
+# CORS Configuration
+ALLOW_ORIGIN=https://your-frontend-domain.com
+
+# Trading Mode
+LIVE_TRADING=false
+TRADING_MODE=paper
+
+# Test Configuration (for deterministic Playwright tests)
+USE_TEST_FIXTURES=false
+
+# =============================================================================
+# RENDER-SPECIFIC VARIABLES (Auto-configured by Render)
+# =============================================================================
+
+# These are automatically set by Render, don't override:
+# - PORT (automatically assigned)
+# - RENDER_EXTERNAL_URL (your service URL)
+# - RENDER_SERVICE_ID (unique service identifier)
+
+# =============================================================================
+# SETUP INSTRUCTIONS
+# =============================================================================
+
+# 1. Go to your Render dashboard
+# 2. Select your backend service
+# 3. Go to Environment tab
+# 4. Add each variable above with your actual values
+# 5. Make sure to mark sensitive variables as "Secret"
+# 6. Click "Save Changes"
+# 7. Redeploy your service
+
+# =============================================================================
+# SECURITY NOTES
+# =============================================================================
+
+# - Never commit actual API keys to git
+# - Use strong, unique API tokens
+# - Rotate keys regularly
+# - Monitor usage in your API provider dashboards
+# - Enable 2FA on all API accounts
+
+# =============================================================================
+# TROUBLESHOOTING
+# =============================================================================
+
+# If deployment fails:
+# 1. Check all REQUIRED variables are set
+# 2. Verify API keys are valid and active
+# 3. Check service logs for specific error messages
+# 4. Run pre-launch validation: python scripts/prelaunch.py --strict

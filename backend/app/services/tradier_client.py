@@ -5,6 +5,7 @@ Handles: Account, Positions, Orders, Market Data, Options
 
 import logging
 import os
+from datetime import datetime, timedelta
 
 import requests
 
@@ -19,6 +20,11 @@ class TradierClient:
         self.api_key = os.getenv("TRADIER_API_KEY")
         self.account_id = os.getenv("TRADIER_ACCOUNT_ID")
         self.base_url = os.getenv("TRADIER_API_BASE_URL", "https://api.tradier.com/v1")
+        # Connection pooling
+        self.session = requests.Session()
+        adapter = requests.adapters.HTTPAdapter(pool_connections=8, pool_maxsize=16)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
 
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -27,9 +33,44 @@ class TradierClient:
         }
 
         if not self.api_key or not self.account_id:
-            raise ValueError("TRADIER_API_KEY and TRADIER_ACCOUNT_ID must be set in .env")
+            raise ValueError(
+                "TRADIER_API_KEY and TRADIER_ACCOUNT_ID must be set in .env"
+            )
 
         logger.info(f"Tradier client initialized for account {self.account_id}")
+
+    # Simple circuit breaker
+    _state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
+    _failures = 0
+    _cooldown_seconds = 30
+    _last_failure_at: datetime | None = None
+
+    def _is_available(self) -> bool:
+        if self._state == "CLOSED":
+            return True
+        if self._state == "OPEN":
+            if (
+                self._last_failure_at
+                and datetime.utcnow() - self._last_failure_at
+                > timedelta(seconds=self._cooldown_seconds)
+            ):
+                self._state = "HALF_OPEN"
+                return True
+            return False
+        # HALF_OPEN
+        return True
+
+    def _record_success(self) -> None:
+        self._state = "CLOSED"
+        self._failures = 0
+        self._last_failure_at = None
+
+    def _record_failure(self) -> None:
+        self._failures += 1
+        self._last_failure_at = datetime.utcnow()
+        if self._failures >= 3:
+            self._state = "OPEN"
+            logger.warning("[Tradier Circuit] OPEN (3 consecutive failures)")
 
     def _request(self, method: str, endpoint: str, **kwargs) -> dict:
         """Make authenticated request to Tradier API with compression and timeouts"""
@@ -40,15 +81,26 @@ class TradierClient:
             kwargs["timeout"] = 5  # Reduced from 10s to 5s for faster failures
 
         try:
-            response = requests.request(method=method, url=url, headers=self.headers, **kwargs)
+            if not self._is_available():
+                raise Exception("Tradier temporarily unavailable (circuit open)")
+
+            response = self.session.request(
+                method=method, url=url, headers=self.headers, **kwargs
+            )
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            self._record_success()
+            return data
 
         except requests.exceptions.HTTPError as e:
-            logger.error(f"Tradier API error: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                f"Tradier API error: {e.response.status_code} - {e.response.text}"
+            )
+            self._record_failure()
             raise Exception(f"Tradier API error: {e.response.text}")
 
         except Exception as e:
+            self._record_failure()
             logger.error(f"Tradier request failed: {e!s}")
             raise
 

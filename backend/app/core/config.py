@@ -26,7 +26,9 @@ class Settings(BaseModel):
     # Tradier API credentials (MARKET DATA, NEWS, QUOTES)
     TRADIER_API_KEY: str = os.getenv("TRADIER_API_KEY", "")
     TRADIER_ACCOUNT_ID: str = os.getenv("TRADIER_ACCOUNT_ID", "")
-    TRADIER_API_BASE_URL: str = os.getenv("TRADIER_API_BASE_URL", "https://api.tradier.com/v1")
+    TRADIER_API_BASE_URL: str = os.getenv(
+        "TRADIER_API_BASE_URL", "https://api.tradier.com/v1"
+    )
 
     # Anthropic API (AI FALLBACK for market data)
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
@@ -37,8 +39,15 @@ class Settings(BaseModel):
     # Redis (Phase 2.5)
     REDIS_URL: str | None = os.getenv("REDIS_URL")
 
-    # Sentry Error Tracking (Phase 2.5)
-    SENTRY_DSN: str | None = os.getenv("SENTRY_DSN")
+    # Sentry Error Tracking (Phase 2.5) - REQUIRED for production
+    SENTRY_DSN: str = os.getenv("SENTRY_DSN", "")
+    SENTRY_ENVIRONMENT: str = os.getenv("SENTRY_ENVIRONMENT", "development")
+
+    # Logging Configuration
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+    # Test Fixtures (for Playwright deterministic testing)
+    USE_TEST_FIXTURES: bool = os.getenv("USE_TEST_FIXTURES", "false").lower() == "true"
 
     # JWT Authentication (Week 2-4: Multi-User System)
     JWT_SECRET_KEY: str = os.getenv(

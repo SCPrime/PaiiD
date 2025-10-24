@@ -1,41 +1,53 @@
 services:
-- type: web
-  name: paiid-backend
-  runtime: python
-  plan: free
-  region: oregon
-  branch: main
-  rootDir: backend
-  buildCommand: pip install -r requirements.txt
-  startCommand: bash start.sh
-  envVars:
-    - key: API_TOKEN
-      sync: false  # Set via Render dashboard for security
-    # Alpaca API - PAPER TRADING EXECUTION ONLY (not for market data)
-    - key: ALPACA_PAPER_API_KEY
-      sync: false  # Set via Render dashboard
-    - key: ALPACA_PAPER_SECRET_KEY
-      sync: false  # Set via Render dashboard
-    - key: APCA_API_BASE_URL
-      value: https://paper-api.alpaca.markets
-    # Tradier API - MARKET DATA, NEWS, QUOTES (primary data source)
-    - key: TRADIER_API_KEY
-      sync: false  # Set via Render dashboard
-    - key: TRADIER_ACCOUNT_ID
-      sync: false  # Set via Render dashboard
-    - key: TRADIER_API_BASE_URL
-      value: https://api.tradier.com/v1
-    # Anthropic API - AI FALLBACK for market data when Tradier unavailable
-    - key: ANTHROPIC_API_KEY
-      sync: false  # Set via Render dashboard for security - NEVER commit API keys!
-    - key: ALLOW_ORIGIN
-      value: https://paiid-frontend.onrender.com
-    - key: LIVE_TRADING
-      value: "false"
-    - key: TRADING_MODE
-      value: paper
-    - key: REDIS_URL
-      generateValue: true
-    # PostgreSQL Database - Required for auth and data persistence
-    - key: DATABASE_URL
-      sync: false  # Set via Render dashboard (connect to Render Postgres)
+  - type: web
+    name: paiid-backend
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python -m app.core.prelaunch --check-only
+    startCommand: bash start.sh
+    healthCheckPath: /api/health
+    envVars:
+      - key: API_TOKEN
+        sync: false # Set via Render dashboard for security
+      # Alpaca API - PAPER TRADING EXECUTION ONLY (not for market data)
+      - key: ALPACA_PAPER_API_KEY
+        sync: false # Set via Render dashboard
+      - key: ALPACA_PAPER_SECRET_KEY
+        sync: false # Set via Render dashboard
+      - key: APCA_API_BASE_URL
+        value: https://paper-api.alpaca.markets
+      # Tradier API - MARKET DATA, NEWS, QUOTES (primary data source)
+      - key: TRADIER_API_KEY
+        sync: false # Set via Render dashboard
+      - key: TRADIER_ACCOUNT_ID
+        sync: false # Set via Render dashboard
+      - key: TRADIER_API_BASE_URL
+        value: https://api.tradier.com/v1
+      # Anthropic API - AI FALLBACK for market data when Tradier unavailable
+      - key: ANTHROPIC_API_KEY
+        sync: false # Set via Render dashboard for security - NEVER commit API keys!
+      - key: ALLOW_ORIGIN
+        value: https://paiid-frontend.onrender.com
+      - key: LIVE_TRADING
+        value: 'false'
+      - key: TRADING_MODE
+        value: paper
+      - key: REDIS_URL
+        generateValue: true
+      # PostgreSQL Database - Required for auth and data persistence
+      - key: DATABASE_URL
+        sync: false # Set via Render dashboard (connect to Render Postgres)
+      # Sentry Error Tracking - REQUIRED for production monitoring
+      - key: SENTRY_DSN
+        sync: false # Set via Render dashboard
+      - key: SENTRY_ENVIRONMENT
+        value: production
+      # Logging Configuration
+      - key: LOG_LEVEL
+        value: INFO
+      # Test Configuration (for deterministic Playwright tests)
+      - key: USE_TEST_FIXTURES
+        value: 'false'

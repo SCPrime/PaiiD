@@ -38,6 +38,7 @@ const ALLOW_GET = new Set<string>([
   // Options endpoints
   "options/greeks",
   "options/chain",
+  "options/expirations",
   // News endpoints
   "news/providers",
   "news/company",
@@ -205,30 +206,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Check if path is allowed based on method
-  if (req.method === "GET" && !ALLOW_GET.has(path)) {
-    // Allow wildcard patterns for dynamic routes
-    const isAllowedPattern = Array.from(ALLOW_GET).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
+  // Supports both exact matches and path parameters (e.g., market/quote/AAPL)
+  function isPathAllowed(path: string, allowedSet: Set<string>): boolean {
+    // Check exact match first
+    if (allowedSet.has(path)) {
+      return true;
     }
+
+    // Check if path matches any allowed pattern with parameters
+    // Examples:
+    //   path: "market/quote/AAPL" matches "market/quote"
+    //   path: "options/chain/AAPL" matches "options/chain"
+    //   path: "news/company/AAPL" matches "news/company"
+    for (const allowed of allowedSet) {
+      if (path.startsWith(allowed + "/")) {
+        // Path has additional segments after allowed base
+        return true;
+      }
+    }
+
+    return false;
   }
-  if (req.method === "POST" && !ALLOW_POST.has(path)) {
-    const isAllowedPattern = Array.from(ALLOW_POST).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
-    }
+
+  if (req.method === "GET" && !isPathAllowed(path, ALLOW_GET)) {
+    console.error(`[PROXY] ⛔ GET path not allowed: "${path}"`);
+    return res.status(405).json({
+      error: "Not allowed",
+      path,
+      method: req.method,
+      hint: "Check allowed paths in proxy configuration",
+    });
   }
-  if (req.method === "DELETE" && !ALLOW_DELETE.has(path)) {
-    const isAllowedPattern = Array.from(ALLOW_DELETE).some(
-      (allowed) => path.startsWith(allowed + "/") || path === allowed
-    );
-    if (!isAllowedPattern) {
-      return res.status(405).json({ error: "Not allowed" });
-    }
+  if (req.method === "POST" && !isPathAllowed(path, ALLOW_POST)) {
+    console.error(`[PROXY] ⛔ POST path not allowed: "${path}"`);
+    return res.status(405).json({
+      error: "Not allowed",
+      path,
+      method: req.method,
+    });
+  }
+  if (req.method === "DELETE" && !isPathAllowed(path, ALLOW_DELETE)) {
+    console.error(`[PROXY] ⛔ DELETE path not allowed: "${path}"`);
+    return res.status(405).json({
+      error: "Not allowed",
+      path,
+      method: req.method,
+    });
   }
 
   // Preserve query parameters from original request

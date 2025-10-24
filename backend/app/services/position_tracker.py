@@ -65,8 +65,8 @@ class PositionTrackerService:
                 if pos.asset_class != "option":
                     continue
 
-                # Get current market data from Tradier
-                quote = self.tradier.get_option_quote(pos.symbol)
+                # Get current market data from Tradier (use underlying quote)
+                quote = self.tradier.get_quote(self._parse_underlying(pos.symbol))
 
                 # Calculate Greeks
                 greeks = self._calculate_position_greeks(pos, quote)

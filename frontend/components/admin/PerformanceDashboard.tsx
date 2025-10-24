@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
 
 interface HealthMetrics {
   status: string;
@@ -33,11 +33,11 @@ export default function PerformanceDashboard() {
 
   const fetchMetrics = async () => {
     try {
-      const res = await fetch('/api/proxy/health/detailed');
+      const res = await fetch("/api/proxy/health/detailed");
       const data = await res.json();
       setMetrics(data);
     } catch (error) {
-      console.error('Failed to fetch metrics:', error);
+      console.error("Failed to fetch metrics:", error);
     } finally {
       setLoading(false);
     }
@@ -54,9 +54,9 @@ export default function PerformanceDashboard() {
   };
 
   const getStatusColor = (value: number, thresholds: [number, number]) => {
-    if (value < thresholds[0]) return 'text-green-400';
-    if (value < thresholds[1]) return 'text-yellow-400';
-    return 'text-red-400';
+    if (value < thresholds[0]) return "text-green-400";
+    if (value < thresholds[1]) return "text-yellow-400";
+    return "text-red-400";
   };
 
   return (
@@ -65,33 +65,39 @@ export default function PerformanceDashboard() {
 
       {/* Status Badge */}
       <div className="flex items-center gap-3">
-        <div className={`px-4 py-2 rounded-full font-semibold ${
-          metrics.status === 'healthy' ? 'bg-green-900 text-green-100' : 'bg-red-900 text-red-100'
-        }`}>
+        <div
+          className={`px-4 py-2 rounded-full font-semibold ${
+            metrics.status === "healthy" ? "bg-green-900 text-green-100" : "bg-red-900 text-red-100"
+          }`}
+        >
           {metrics.status.toUpperCase()}
         </div>
-        <div className="text-gray-400">
-          Uptime: {formatUptime(metrics.uptime_seconds)}
-        </div>
+        <div className="text-gray-400">Uptime: {formatUptime(metrics.uptime_seconds)}</div>
       </div>
 
       {/* System Metrics */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-gray-800 rounded-lg p-4">
           <div className="text-sm text-gray-400">CPU Usage</div>
-          <div className={`text-3xl font-bold ${getStatusColor(metrics.system.cpu_percent, [70, 85])}`}>
+          <div
+            className={`text-3xl font-bold ${getStatusColor(metrics.system.cpu_percent, [70, 85])}`}
+          >
             {metrics.system.cpu_percent.toFixed(1)}%
           </div>
         </div>
         <div className="bg-gray-800 rounded-lg p-4">
           <div className="text-sm text-gray-400">Memory Usage</div>
-          <div className={`text-3xl font-bold ${getStatusColor(metrics.system.memory_percent, [75, 90])}`}>
+          <div
+            className={`text-3xl font-bold ${getStatusColor(metrics.system.memory_percent, [75, 90])}`}
+          >
             {metrics.system.memory_percent.toFixed(1)}%
           </div>
         </div>
         <div className="bg-gray-800 rounded-lg p-4">
           <div className="text-sm text-gray-400">Disk Usage</div>
-          <div className={`text-3xl font-bold ${getStatusColor(metrics.system.disk_percent, [80, 95])}`}>
+          <div
+            className={`text-3xl font-bold ${getStatusColor(metrics.system.disk_percent, [80, 95])}`}
+          >
             {metrics.system.disk_percent.toFixed(1)}%
           </div>
         </div>
@@ -103,21 +109,29 @@ export default function PerformanceDashboard() {
         <div className="grid grid-cols-2 gap-6">
           <div>
             <div className="text-sm text-gray-400">Total Requests</div>
-            <div className="text-2xl font-bold">{metrics.application.total_requests.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {metrics.application.total_requests.toLocaleString()}
+            </div>
           </div>
           <div>
             <div className="text-sm text-gray-400">Requests/Min</div>
-            <div className="text-2xl font-bold">{metrics.application.requests_per_minute.toFixed(1)}</div>
+            <div className="text-2xl font-bold">
+              {metrics.application.requests_per_minute.toFixed(1)}
+            </div>
           </div>
           <div>
             <div className="text-sm text-gray-400">Error Rate</div>
-            <div className={`text-2xl font-bold ${getStatusColor(metrics.application.error_rate_percent, [1, 5])}`}>
+            <div
+              className={`text-2xl font-bold ${getStatusColor(metrics.application.error_rate_percent, [1, 5])}`}
+            >
               {metrics.application.error_rate_percent.toFixed(2)}%
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-400">Avg Response Time</div>
-            <div className={`text-2xl font-bold ${getStatusColor(metrics.application.avg_response_time_ms, [200, 500])}`}>
+            <div
+              className={`text-2xl font-bold ${getStatusColor(metrics.application.avg_response_time_ms, [200, 500])}`}
+            >
               {metrics.application.avg_response_time_ms.toFixed(0)}ms
             </div>
           </div>
@@ -129,16 +143,17 @@ export default function PerformanceDashboard() {
         <h3 className="text-xl font-bold mb-4">External Services</h3>
         <div className="space-y-3">
           {Object.entries(metrics.dependencies).map(([name, dep]: [string, any]) => (
-            <div key={name} className="flex justify-between items-center border-b border-gray-700 pb-2">
+            <div
+              key={name}
+              className="flex justify-between items-center border-b border-gray-700 pb-2"
+            >
               <div className="font-semibold capitalize">{name}</div>
               <div className="flex items-center gap-3">
-                <div className={dep.status === 'up' ? 'text-green-400' : 'text-red-400'}>
+                <div className={dep.status === "up" ? "text-green-400" : "text-red-400"}>
                   {dep.status.toUpperCase()}
                 </div>
                 {dep.response_time_ms && (
-                  <div className="text-sm text-gray-400">
-                    {dep.response_time_ms.toFixed(0)}ms
-                  </div>
+                  <div className="text-sm text-gray-400">{dep.response_time_ms.toFixed(0)}ms</div>
                 )}
               </div>
             </div>

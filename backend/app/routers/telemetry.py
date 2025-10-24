@@ -3,6 +3,7 @@ Telemetry Router - Tracks user interactions and system events
 """
 
 import json
+import logging
 from datetime import datetime
 from typing import Any
 
@@ -11,6 +12,7 @@ from pydantic import BaseModel
 
 
 router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
+logger = logging.getLogger(__name__)
 
 # In-memory storage (replace with database in production)
 telemetry_events: list[dict[str, Any]] = []
@@ -67,22 +69,27 @@ async def get_telemetry_events(
     """
     Retrieve telemetry events with optional filters
     """
-    filtered_events = telemetry_events
+    try:
+        filtered_events = telemetry_events
 
-    # Apply filters
-    if user_id:
-        filtered_events = [e for e in filtered_events if e.get("userId") == user_id]
-    if component:
-        filtered_events = [e for e in filtered_events if e.get("component") == component]
-    if action:
-        filtered_events = [e for e in filtered_events if e.get("action") == action]
-    if user_role:
-        filtered_events = [e for e in filtered_events if e.get("userRole") == user_role]
+        if user_id:
+            filtered_events = [e for e in filtered_events if e.get("userId") == user_id]
+        if component:
+            filtered_events = [
+                e for e in filtered_events if e.get("component") == component
+            ]
+        if action:
+            filtered_events = [e for e in filtered_events if e.get("action") == action]
+        if user_role:
+            filtered_events = [
+                e for e in filtered_events if e.get("userRole") == user_role
+            ]
 
-    # Sort by timestamp (newest first)
-    filtered_events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
-
-    return {"total": len(filtered_events), "events": filtered_events[:limit]}
+        filtered_events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+        return {"total": len(filtered_events), "events": filtered_events[:limit]}
+    except Exception as e:
+        logger.error(f"Failed to get telemetry events: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get telemetry events")
 
 
 @router.get("/stats")
@@ -90,49 +97,53 @@ async def get_telemetry_stats():
     """
     Get aggregate statistics from telemetry data
     """
-    if not telemetry_events:
+    try:
+        if not telemetry_events:
+            return {
+                "total_events": 0,
+                "unique_users": 0,
+                "unique_sessions": 0,
+                "top_components": [],
+                "top_actions": [],
+                "users_by_role": {},
+            }
+
+        unique_users = set(e.get("userId") for e in telemetry_events)
+        unique_sessions = set(e.get("sessionId") for e in telemetry_events)
+
+        component_counts = {}
+        for event in telemetry_events:
+            comp = event.get("component", "Unknown")
+            component_counts[comp] = component_counts.get(comp, 0) + 1
+
+        action_counts = {}
+        for event in telemetry_events:
+            action = event.get("action", "Unknown")
+            action_counts[action] = action_counts.get(action, 0) + 1
+
+        role_counts = {}
+        for event in telemetry_events:
+            role = event.get("userRole", "unknown")
+            role_counts[role] = role_counts.get(role, 0) + 1
+
+        top_components = sorted(
+            component_counts.items(), key=lambda x: x[1], reverse=True
+        )[:10]
+        top_actions = sorted(action_counts.items(), key=lambda x: x[1], reverse=True)[
+            :10
+        ]
+
         return {
-            "total_events": 0,
-            "unique_users": 0,
-            "unique_sessions": 0,
-            "top_components": [],
-            "top_actions": [],
-            "users_by_role": {},
+            "total_events": len(telemetry_events),
+            "unique_users": len(unique_users),
+            "unique_sessions": len(unique_sessions),
+            "top_components": [{"component": c, "count": n} for c, n in top_components],
+            "top_actions": [{"action": a, "count": n} for a, n in top_actions],
+            "users_by_role": role_counts,
         }
-
-    unique_users = set(e.get("userId") for e in telemetry_events)
-    unique_sessions = set(e.get("sessionId") for e in telemetry_events)
-
-    # Count by component
-    component_counts = {}
-    for event in telemetry_events:
-        comp = event.get("component", "Unknown")
-        component_counts[comp] = component_counts.get(comp, 0) + 1
-
-    # Count by action
-    action_counts = {}
-    for event in telemetry_events:
-        action = event.get("action", "Unknown")
-        action_counts[action] = action_counts.get(action, 0) + 1
-
-    # Count by role
-    role_counts = {}
-    for event in telemetry_events:
-        role = event.get("userRole", "unknown")
-        role_counts[role] = role_counts.get(role, 0) + 1
-
-    # Sort and get top 10
-    top_components = sorted(component_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-    top_actions = sorted(action_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-
-    return {
-        "total_events": len(telemetry_events),
-        "unique_users": len(unique_users),
-        "unique_sessions": len(unique_sessions),
-        "top_components": [{"component": c, "count": n} for c, n in top_components],
-        "top_actions": [{"action": a, "count": n} for a, n in top_actions],
-        "users_by_role": role_counts,
-    }
+    except Exception as e:
+        logger.error(f"Failed to get telemetry stats: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get telemetry stats")
 
 
 @router.delete("/events")
@@ -140,11 +151,14 @@ async def clear_telemetry_events():
     """
     Clear all telemetry events (admin only)
     """
-    global telemetry_events
-    count = len(telemetry_events)
-    telemetry_events = []
-
-    return {"success": True, "message": f"Cleared {count} telemetry events"}
+    try:
+        global telemetry_events
+        count = len(telemetry_events)
+        telemetry_events = []
+        return {"success": True, "message": f"Cleared {count} telemetry events"}
+    except Exception as e:
+        logger.error(f"Failed to clear telemetry events: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to clear telemetry events")
 
 
 @router.get("/export")
@@ -152,8 +166,12 @@ async def export_telemetry():
     """
     Export all telemetry events as JSON
     """
-    return {
-        "events": telemetry_events,
-        "exported_at": datetime.now().isoformat(),
-        "total": len(telemetry_events),
-    }
+    try:
+        return {
+            "events": telemetry_events,
+            "exported_at": datetime.now().isoformat(),
+            "total": len(telemetry_events),
+        }
+    except Exception as e:
+        logger.error(f"Failed to export telemetry: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to export telemetry")

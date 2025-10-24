@@ -1,0 +1,1776 @@
+{
+  "Performance": {
+    "NetworkConnectivity": {},
+    "Issues": [],
+    "CPUUsage": {},
+    "MemoryUsage": {
+      "PercentUsed": 20.44,
+      "Used": 26.150000000000006,
+      "Free": 101.77,
+      "Total": 127.92
+    },
+    "DiskSpace": [
+      {
+        "PercentUsed": 32.54,
+        "Drive": "C:",
+        "Used": 151.26,
+        "Free": 313.56,
+        "Total": 464.82
+      }
+    ]
+  },
+  "WindowsPowerShell": {
+    "Modules": [
+      {
+        "Name": "CimCmdlets",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Archive",
+        "Version": {
+          "Major": 1,
+          "Minor": 2,
+          "Build": 5,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Diagnostics",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Host",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Management",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.PSResourceGet",
+        "Version": {
+          "Major": 1,
+          "Minor": 1,
+          "Build": 1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Security",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Utility",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.WSMan.Management",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PackageManagement",
+        "Version": {
+          "Major": 1,
+          "Minor": 4,
+          "Build": 8,
+          "Revision": 1,
+          "MajorRevision": 0,
+          "MinorRevision": 1
+        }
+      },
+      {
+        "Name": "PowerShellGet",
+        "Version": {
+          "Major": 2,
+          "Minor": 2,
+          "Build": 5,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "PSDiagnostics",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PSReadLine",
+        "Version": {
+          "Major": 2,
+          "Minor": 3,
+          "Build": 6,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "ThreadJob",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 3,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Operation.Validation",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "PackageManagement",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 1,
+          "MajorRevision": 0,
+          "MinorRevision": 1
+        }
+      },
+      {
+        "Name": "Pester",
+        "Version": {
+          "Major": 3,
+          "Minor": 4,
+          "Build": 0,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "PowerShellGet",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 1,
+          "MajorRevision": 0,
+          "MinorRevision": 1
+        }
+      },
+      {
+        "Name": "PSReadLine",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "AppBackgroundTask",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Appx",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 1,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "AssignedAccess",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "BitLocker",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "BitsTransfer",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "BranchCache",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "ConfigDefenderPerformance",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "DefenderPerformance",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "DeliveryOptimization",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 3,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "DirectAccessClientComponents",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Dism",
+        "Version": {
+          "Major": 3,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "DnsClient",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "EventTracingManagement",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Get-NetView",
+        "Version": {
+          "Major": 2023,
+          "Minor": 2,
+          "Build": 7,
+          "Revision": 226,
+          "MajorRevision": 0,
+          "MinorRevision": 226
+        }
+      },
+      {
+        "Name": "International",
+        "Version": {
+          "Major": 2,
+          "Minor": 1,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Kds",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "LanguagePackManagement",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "LAPS",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.LocalAccounts",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.Windows.Bcd.Cmdlets",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "MMAgent",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "NetAdapter",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetConnection",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetEventPacketCapture",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetLbfo",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetNat",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetQos",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetSecurity",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetSwitchTeam",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetTCPIP",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetworkConnectivityStatus",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetworkSwitchManager",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetworkTransition",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "OsConfiguration",
+        "Version": {
+          "Major": 1,
+          "Minor": 1,
+          "Build": 3,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PcsvDevice",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PKI",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PnpDevice",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PrintManagement",
+        "Version": {
+          "Major": 1,
+          "Minor": 1,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "ProcessMitigations",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 12,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "Provisioning",
+        "Version": {
+          "Major": 3,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "ScheduledTasks",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "SecureBoot",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "SmbShare",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "SmbWitness",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "StartLayout",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 1,
+          "MajorRevision": 0,
+          "MinorRevision": 1
+        }
+      },
+      {
+        "Name": "Storage",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "TLS",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "TroubleshootingPack",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "TrustedPlatformModule",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "UEV",
+        "Version": {
+          "Major": 2,
+          "Minor": 1,
+          "Build": 639,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "VpnClient",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Wdac",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Whea",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "WindowsDeveloperLicense",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "WindowsErrorReporting",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "WindowsSearch",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "WindowsUpdate",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      }
+    ],
+    "Version": "7.5.3",
+    "Performance": {
+      "StartupTime": 0
+    },
+    "Issues": [],
+    "ExecutionPolicy": 4
+  },
+  "Issues": [],
+  "Timestamp": "2025-10-23 15:56:35",
+  "OverallHealth": "HEALTHY",
+  "Recommendations": [],
+  "PowerShellCore": {
+    "Modules": [
+      {
+        "Name": "CimCmdlets",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Archive",
+        "Version": {
+          "Major": 1,
+          "Minor": 2,
+          "Build": 5,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Diagnostics",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Host",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Management",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.PSResourceGet",
+        "Version": {
+          "Major": 1,
+          "Minor": 1,
+          "Build": 1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Security",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Utility",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.WSMan.Management",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PackageManagement",
+        "Version": {
+          "Major": 1,
+          "Minor": 4,
+          "Build": 8,
+          "Revision": 1,
+          "MajorRevision": 0,
+          "MinorRevision": 1
+        }
+      },
+      {
+        "Name": "PowerShellGet",
+        "Version": {
+          "Major": 2,
+          "Minor": 2,
+          "Build": 5,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "PSDiagnostics",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PSReadLine",
+        "Version": {
+          "Major": 2,
+          "Minor": 3,
+          "Build": 6,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "ThreadJob",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 3,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.Operation.Validation",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "PackageManagement",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 1,
+          "MajorRevision": 0,
+          "MinorRevision": 1
+        }
+      },
+      {
+        "Name": "Pester",
+        "Version": {
+          "Major": 3,
+          "Minor": 4,
+          "Build": 0,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "PowerShellGet",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 1,
+          "MajorRevision": 0,
+          "MinorRevision": 1
+        }
+      },
+      {
+        "Name": "PSReadLine",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "AppBackgroundTask",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Appx",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 1,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "AssignedAccess",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "BitLocker",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "BitsTransfer",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "BranchCache",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "ConfigDefenderPerformance",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "DefenderPerformance",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "DeliveryOptimization",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 3,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "DirectAccessClientComponents",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Dism",
+        "Version": {
+          "Major": 3,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "DnsClient",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "EventTracingManagement",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Get-NetView",
+        "Version": {
+          "Major": 2023,
+          "Minor": 2,
+          "Build": 7,
+          "Revision": 226,
+          "MajorRevision": 0,
+          "MinorRevision": 226
+        }
+      },
+      {
+        "Name": "International",
+        "Version": {
+          "Major": 2,
+          "Minor": 1,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Kds",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "LanguagePackManagement",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "LAPS",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.PowerShell.LocalAccounts",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Microsoft.Windows.Bcd.Cmdlets",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "MMAgent",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "NetAdapter",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetConnection",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetEventPacketCapture",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetLbfo",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetNat",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetQos",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetSecurity",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetSwitchTeam",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetTCPIP",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetworkConnectivityStatus",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetworkSwitchManager",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "NetworkTransition",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "OsConfiguration",
+        "Version": {
+          "Major": 1,
+          "Minor": 1,
+          "Build": 3,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PcsvDevice",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PKI",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PnpDevice",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "PrintManagement",
+        "Version": {
+          "Major": 1,
+          "Minor": 1,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "ProcessMitigations",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 12,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "Provisioning",
+        "Version": {
+          "Major": 3,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "ScheduledTasks",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "SecureBoot",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "SmbShare",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "SmbWitness",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "StartLayout",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 1,
+          "MajorRevision": 0,
+          "MinorRevision": 1
+        }
+      },
+      {
+        "Name": "Storage",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "TLS",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "TroubleshootingPack",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "TrustedPlatformModule",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "UEV",
+        "Version": {
+          "Major": 2,
+          "Minor": 1,
+          "Build": 639,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "VpnClient",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Wdac",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "Whea",
+        "Version": {
+          "Major": 2,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "WindowsDeveloperLicense",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "WindowsErrorReporting",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        }
+      },
+      {
+        "Name": "WindowsSearch",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      },
+      {
+        "Name": "WindowsUpdate",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        }
+      }
+    ],
+    "Version": "PowerShell 7.5.3",
+    "Performance": {
+      "StartupTime": 448
+    },
+    "Installed": true,
+    "ExecutionPolicy": "Bypass",
+    "Path": "c:\\Program Files\\PowerShell\\7\\pwsh.exe",
+    "Issues": []
+  },
+  "Environment": {
+    "Issues": [],
+    "PowerShellPaths": [
+      "c:\\Program Files\\PowerShell\\7",
+      "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\",
+      "c:\\Program Files\\PowerShell\\7\\"
+    ],
+    "PATH": {
+      "TotalEntries": 17,
+      "Entries": [
+        "c:\\Program Files\\PowerShell\\7",
+        "C:\\WINDOWS\\system32",
+        "C:\\WINDOWS",
+        "C:\\WINDOWS\\System32\\Wbem",
+        "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\",
+        "C:\\WINDOWS\\System32\\OpenSSH\\",
+        "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common",
+        "C:\\Program Files\\nodejs\\",
+        "C:\\Program Files\\GitHub CLI\\",
+        "c:\\Program Files\\PowerShell\\7\\",
+        "C:\\Program Files\\Docker\\Docker\\resources\\bin",
+        "C:\\Program Files\\cursor\\resources\\app\\bin",
+        "C:\\Users\\SSaint-Cyr\\AppData\\Local\\Microsoft\\WindowsApps",
+        "C:\\Users\\SSaint-Cyr\\AppData\\Local\\GitHubDesktop\\bin",
+        "C:\\Users\\SSaint-Cyr\\AppData\\Local\\Programs\\Microsoft VS Code\\bin",
+        "C:\\Users\\SSaint-Cyr\\AppData\\Roaming\\npm",
+        "C:\\Users\\SSaint-Cyr\\AppData\\Local\\Programs\\Git\\cmd"
+      ]
+    },
+    "EnvironmentVariables": {
+      "PSModulePath": "C:\\Users\\SSaint-Cyr\\Documents\\PowerShell\\Modules;C:\\Program Files\\PowerShell\\Modules;c:\\program files\\powershell\\7\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules",
+      "PSDefaultParameterValues": null,
+      "PSExecutionPolicyPreference": "Bypass"
+    }
+  },
+  "SystemInfo": {
+    "TotalMemory": 127.92,
+    "ComputerName": "SPENCE105",
+    "Username": "SSaint-Cyr",
+    "Architecture": "64-bit",
+    "FreeMemory": 101.77,
+    "OSName": "Microsoft Windows 11 Enterprise",
+    "OSVersion": "10.0.26100"
+  },
+  "Security": {
+    "ExecutionPolicies": {
+      "Process": 4,
+      "CurrentUser": 5,
+      "LocalMachine": 1
+    },
+    "Issues": [],
+    "Antivirus": {},
+    "ScriptSigning": {
+      "Certificates": 0
+    }
+  }
+}

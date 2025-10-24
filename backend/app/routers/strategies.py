@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from ..core.auth import get_current_user_id_str, require_bearer
+from ..core.jwt import get_current_user
 from ..db.session import get_db
 from ..models.database import Strategy, User
 from ..services.strategy_templates import (
@@ -28,7 +28,10 @@ from ..services.strategy_templates import (
 backend_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_root))
 
-from strategies.under4_multileg import Under4MultilegConfig, create_under4_multileg_strategy
+from strategies.under4_multileg import (
+    Under4MultilegConfig,
+    create_under4_multileg_strategy,
+)
 
 
 router = APIRouter()
@@ -63,7 +66,9 @@ class StrategyConfigRequest(BaseModel):
             "custom",
         ]
         if v not in allowed_types:
-            raise ValueError(f"Invalid strategy type. Allowed: {', '.join(allowed_types)}")
+            raise ValueError(
+                f"Invalid strategy type. Allowed: {', '.join(allowed_types)}"
+            )
         return v
 
 
@@ -93,12 +98,16 @@ class StrategyRunRequest(BaseModel):
             "custom",
         ]
         if v not in allowed_types:
-            raise ValueError(f"Invalid strategy type. Allowed: {', '.join(allowed_types)}")
+            raise ValueError(
+                f"Invalid strategy type. Allowed: {', '.join(allowed_types)}"
+            )
         return v
 
 
 @router.post("/strategies/save")
-async def save_strategy(request: StrategyConfigRequest, _=Depends(require_bearer)):
+async def save_strategy(
+    request: StrategyConfigRequest, current_user: User = Depends(get_current_user)
+):
     """
     Save strategy configuration
 
@@ -108,7 +117,7 @@ async def save_strategy(request: StrategyConfigRequest, _=Depends(require_bearer
         "config": { ... }
     }
     """
-    user_id = get_current_user_id_str(token)  # Single-user MVP: returns "default"
+    user_id = str(current_user.id)  # Use authenticated user ID from JWT
     strategy_file = STRATEGIES_DIR / f"{user_id}_{request.strategy_type}.json"
 
     try:
@@ -119,13 +128,16 @@ async def save_strategy(request: StrategyConfigRequest, _=Depends(require_bearer
             validated_config = config.model_dump()
         else:
             raise HTTPException(
-                status_code=400, detail=f"Unknown strategy type: {request.strategy_type}"
+                status_code=400,
+                detail=f"Unknown strategy type: {request.strategy_type}",
             )
 
         # Save to file
         with open(strategy_file, "w") as f:
             json.dump(
-                {"strategy_type": request.strategy_type, "config": validated_config}, f, indent=2
+                {"strategy_type": request.strategy_type, "config": validated_config},
+                f,
+                indent=2,
             )
 
         return {
@@ -138,13 +150,15 @@ async def save_strategy(request: StrategyConfigRequest, _=Depends(require_bearer
 
 
 @router.get("/strategies/load/{strategy_type}")
-async def load_strategy(strategy_type: str, _=Depends(require_bearer)):
+async def load_strategy(
+    strategy_type: str, current_user: User = Depends(get_current_user)
+):
     """
     Load strategy configuration
 
     GET /api/strategies/load/under4-multileg
     """
-    user_id = get_current_user_id_str(token)  # Single-user MVP: returns "default"
+    user_id = str(current_user.id)  # Use authenticated user ID from JWT
     strategy_file = STRATEGIES_DIR / f"{user_id}_{strategy_type}.json"
 
     if not strategy_file.exists():
@@ -157,7 +171,9 @@ async def load_strategy(strategy_type: str, _=Depends(require_bearer)):
                 "is_default": True,
             }
         else:
-            raise HTTPException(status_code=404, detail=f"Strategy '{strategy_type}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Strategy '{strategy_type}' not found"
+            )
 
     try:
         with open(strategy_file) as f:
@@ -170,13 +186,13 @@ async def load_strategy(strategy_type: str, _=Depends(require_bearer)):
 
 
 @router.get("/strategies/list")
-async def list_strategies(_=Depends(require_bearer)):
+async def list_strategies(current_user: User = Depends(get_current_user)):
     """
     List all available strategies
 
     GET /api/strategies/list
     """
-    user_id = get_current_user_id_str(token)  # Single-user MVP: returns "default"
+    user_id = str(current_user.id)  # Use authenticated user ID from JWT
 
     strategies = []
 
@@ -185,7 +201,9 @@ async def list_strategies(_=Depends(require_bearer)):
         try:
             with open(strategy_file) as f:
                 data = json.load(f)
-            strategies.append({"strategy_type": data["strategy_type"], "has_config": True})
+            strategies.append(
+                {"strategy_type": data["strategy_type"], "has_config": True}
+            )
         except:
             continue
 
@@ -199,7 +217,9 @@ async def list_strategies(_=Depends(require_bearer)):
 
 
 @router.post("/strategies/run")
-async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
+async def run_strategy(
+    request: StrategyRunRequest, current_user: User = Depends(get_current_user)
+):
     """
     Run a strategy (execute morning routine)
 
@@ -209,7 +229,7 @@ async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
         "dry_run": true
     }
     """
-    user_id = get_current_user_id_str(token)  # Single-user MVP: returns "default"
+    user_id = str(current_user.id)  # Use authenticated user ID from JWT
 
     try:
         # Load strategy configuration
@@ -227,7 +247,8 @@ async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
             strategy = create_under4_multileg_strategy(config_dict)
         else:
             raise HTTPException(
-                status_code=400, detail=f"Unknown strategy type: {request.strategy_type}"
+                status_code=400,
+                detail=f"Unknown strategy type: {request.strategy_type}",
             )
 
         # PHASE 1: Get Alpaca client from user credentials (stored in settings)
@@ -263,28 +284,37 @@ async def run_strategy(request: StrategyRunRequest, _=Depends(require_bearer)):
             }
         else:
             # PHASE 1: Implement actual execution via order_execution.py
-            raise HTTPException(status_code=501, detail="Live execution not yet implemented")
+            raise HTTPException(
+                status_code=501, detail="Live execution not yet implemented"
+            )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/strategies/{strategy_type}")
-async def delete_strategy(strategy_type: str, _=Depends(require_bearer)):
+async def delete_strategy(
+    strategy_type: str, current_user: User = Depends(get_current_user)
+):
     """
     Delete a saved strategy configuration
 
     DELETE /api/strategies/under4-multileg
     """
-    user_id = get_current_user_id_str(token)  # Single-user MVP: returns "default"
+    user_id = str(current_user.id)  # Use authenticated user ID from JWT
     strategy_file = STRATEGIES_DIR / f"{user_id}_{strategy_type}.json"
 
     if not strategy_file.exists():
-        raise HTTPException(status_code=404, detail=f"Strategy '{strategy_type}' not found")
+        raise HTTPException(
+            status_code=404, detail=f"Strategy '{strategy_type}' not found"
+        )
 
     try:
         strategy_file.unlink()
-        return {"success": True, "message": f"Strategy '{strategy_type}' deleted successfully"}
+        return {
+            "success": True,
+            "message": f"Strategy '{strategy_type}' deleted successfully",
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -296,7 +326,9 @@ async def delete_strategy(strategy_type: str, _=Depends(require_bearer)):
 
 @router.get("/strategies/templates")
 async def get_strategy_templates(
-    filter_by_risk: bool | None = True, _=Depends(require_bearer), db: Session = Depends(get_db)
+    filter_by_risk: bool | None = True,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Get all available strategy templates
@@ -307,8 +339,8 @@ async def get_strategy_templates(
     Returns list of templates with metadata and compatibility scores.
     """
     try:
-        # Get user preferences
-        user = db.query(User).filter(User.id == 1).first()
+        # Get user preferences from authenticated user
+        user = db.query(User).filter(User.id == current_user.id).first()
         preferences = user.preferences if user else {}
         risk_tolerance = preferences.get("risk_tolerance", 50)
 
@@ -356,14 +388,16 @@ async def get_strategy_templates(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch strategy templates: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch strategy templates: {e!s}"
+        )
 
 
 @router.get("/strategies/templates/{template_id}")
 async def get_strategy_template(
     template_id: str,
     customize: bool | None = True,
-    _=Depends(require_bearer),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -378,10 +412,10 @@ async def get_strategy_template(
         # Get template
         template = get_template_by_id(template_id)
 
-        # Get user preferences for customization
+        # Get user preferences for customization from authenticated user
         config = template.config
         if customize:
-            user = db.query(User).filter(User.id == 1).first()
+            user = db.query(User).filter(User.id == current_user.id).first()
             preferences = user.preferences if user else {}
             risk_tolerance = preferences.get("risk_tolerance", 50)
             config = customize_template_for_risk(template, risk_tolerance)
@@ -439,7 +473,7 @@ class CloneTemplateRequest(BaseModel):
 async def clone_strategy_template(
     template_id: str,
     request: CloneTemplateRequest,
-    _=Depends(require_bearer),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -458,13 +492,10 @@ async def clone_strategy_template(
         # Get template
         template = get_template_by_id(template_id)
 
-        # Get or create user
-        user = db.query(User).filter(User.id == 1).first()
+        # Use authenticated user from JWT
+        user = db.query(User).filter(User.id == current_user.id).first()
         if not user:
-            user = User(id=1, email="default@paiid.com", preferences={"risk_tolerance": 50})
-            db.add(user)
-            db.commit()
-            db.refresh(user)
+            raise HTTPException(status_code=404, detail="User not found")
 
         # Prepare config
         config = template.config.copy()

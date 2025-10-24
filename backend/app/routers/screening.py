@@ -8,7 +8,8 @@ from typing import Literal
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
+from ..models.database import User
 
 
 router = APIRouter(tags=["screening"])
@@ -25,8 +26,11 @@ class Opportunity(BaseModel):
     risk: Literal["low", "medium", "high"]
 
 
-@router.get("/screening/opportunities", dependencies=[Depends(require_bearer)])
-async def get_opportunities(max_price: float | None = None) -> dict:
+@router.get("/screening/opportunities")
+async def get_opportunities(
+    max_price: float | None = None,
+    current_user: User = Depends(get_current_user),
+) -> dict:
     """
     Get strategy-based trading opportunities
 
@@ -226,9 +230,15 @@ async def get_opportunities(max_price: float | None = None) -> dict:
     ]
 
     # Randomly select opportunities from each category
-    selected_stocks = random.sample(stock_opportunities, min(2, len(stock_opportunities)))
-    selected_options = random.sample(option_opportunities, min(2, len(option_opportunities)))
-    selected_multileg = random.sample(multileg_opportunities, min(2, len(multileg_opportunities)))
+    selected_stocks = random.sample(
+        stock_opportunities, min(2, len(stock_opportunities))
+    )
+    selected_options = random.sample(
+        option_opportunities, min(2, len(option_opportunities))
+    )
+    selected_multileg = random.sample(
+        multileg_opportunities, min(2, len(multileg_opportunities))
+    )
 
     all_opportunities: list[Opportunity] = []
 
@@ -243,9 +253,13 @@ async def get_opportunities(max_price: float | None = None) -> dict:
                 reason=stock["reason"],
                 currentPrice=round(stock["current"] * (1 + price_var), 2),
                 targetPrice=(
-                    round(stock["target"] * (1 + price_var), 2) if stock["target"] else None
+                    round(stock["target"] * (1 + price_var), 2)
+                    if stock["target"]
+                    else None
                 ),
-                confidence=max(60, min(95, stock["confidence"] + random.randint(-5, 5))),
+                confidence=max(
+                    60, min(95, stock["confidence"] + random.randint(-5, 5))
+                ),
                 risk=stock["risk"],
             )
         )
@@ -261,9 +275,13 @@ async def get_opportunities(max_price: float | None = None) -> dict:
                 reason=option["reason"],
                 currentPrice=round(option["current"] * (1 + price_var), 2),
                 targetPrice=(
-                    round(option["target"] * (1 + price_var), 2) if option["target"] else None
+                    round(option["target"] * (1 + price_var), 2)
+                    if option["target"]
+                    else None
                 ),
-                confidence=max(60, min(95, option["confidence"] + random.randint(-5, 5))),
+                confidence=max(
+                    60, min(95, option["confidence"] + random.randint(-5, 5))
+                ),
                 risk=option["risk"],
             )
         )
@@ -279,9 +297,13 @@ async def get_opportunities(max_price: float | None = None) -> dict:
                 reason=multileg["reason"],
                 currentPrice=round(multileg["current"] * (1 + price_var), 2),
                 targetPrice=(
-                    round(multileg["target"] * (1 + price_var), 2) if multileg["target"] else None
+                    round(multileg["target"] * (1 + price_var), 2)
+                    if multileg["target"]
+                    else None
                 ),
-                confidence=max(60, min(95, multileg["confidence"] + random.randint(-5, 5))),
+                confidence=max(
+                    60, min(95, multileg["confidence"] + random.randint(-5, 5))
+                ),
                 risk=multileg["risk"],
             )
         )
@@ -289,7 +311,9 @@ async def get_opportunities(max_price: float | None = None) -> dict:
     # Filter by max price if provided
     opportunities = all_opportunities
     if max_price is not None:
-        opportunities = [opp for opp in all_opportunities if opp.currentPrice <= max_price]
+        opportunities = [
+            opp for opp in all_opportunities if opp.currentPrice <= max_price
+        ]
 
     # Ensure we have diverse investment types in the results
     # Group by type to show variety
@@ -312,8 +336,10 @@ async def get_opportunities(max_price: float | None = None) -> dict:
     }
 
 
-@router.get("/screening/strategies", dependencies=[Depends(require_bearer)])
-async def get_available_strategies() -> dict:
+@router.get("/screening/strategies")
+async def get_available_strategies(
+    current_user: User = Depends(get_current_user),
+) -> dict:
     """
     Get list of available screening strategies
 

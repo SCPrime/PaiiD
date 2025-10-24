@@ -1,0 +1,16 @@
+{
+  "service_type": "web",
+  "name": "paiid-backend",
+  "runtime": "python",
+  "buildCommand": "pip install -r requirements.txt && python -m app.core.prelaunch --check-only",
+  "startCommand": "bash start.sh",
+  "healthCheckPath": "/api/health",
+  "required_env_vars": [
+    "API_TOKEN",
+    "ALPACA_PAPER_API_KEY",
+    "ALPACA_PAPER_SECRET_KEY",
+    "TRADIER_API_KEY",
+    "SENTRY_DSN"
+  ],
+  "optional_env_vars": ["ANTHROPIC_API_KEY", "DATABASE_URL", "REDIS_URL"]
+}

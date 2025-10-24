@@ -10,7 +10,8 @@ from anthropic import Anthropic
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
+from ..models.database import User
 
 
 # Set UTF-8 encoding for console output on Windows
@@ -48,8 +49,11 @@ class ChatResponse(BaseModel):
     role: str = "assistant"
 
 
-@router.post("/chat", response_model=ChatResponse, dependencies=[Depends(require_bearer)])
-async def claude_chat(request: ChatRequest):
+@router.post("/chat", response_model=ChatResponse)
+async def claude_chat(
+    request: ChatRequest,
+    current_user: User = Depends(get_current_user),
+):
     """
     Proxy Claude API chat requests from frontend
 
@@ -63,11 +67,17 @@ async def claude_chat(request: ChatRequest):
 
     try:
         # Convert Pydantic models to dicts for Anthropic SDK
-        messages = [{"role": msg.role, "content": msg.content} for msg in request.messages]
+        messages = [
+            {"role": msg.role, "content": msg.content} for msg in request.messages
+        ]
 
         # Call Anthropic API
         # Build kwargs to avoid passing None for system
-        kwargs = {"model": request.model, "max_tokens": request.max_tokens, "messages": messages}
+        kwargs = {
+            "model": request.model,
+            "max_tokens": request.max_tokens,
+            "messages": messages,
+        }
         # System prompt should be a list of content blocks in newer API versions
         if request.system:
             if isinstance(request.system, str):
@@ -102,4 +112,8 @@ async def claude_health():
     if not anthropic_client:
         return {"status": "unavailable", "message": "ANTHROPIC_API_KEY not configured"}
 
-    return {"status": "ok", "message": "Claude API ready", "model": "claude-sonnet-4-5-20250929"}
+    return {
+        "status": "ok",
+        "message": "Claude API ready",
+        "model": "claude-sonnet-4-5-20250929",
+    }

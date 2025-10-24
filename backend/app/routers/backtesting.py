@@ -10,7 +10,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
+from ..models.database import User
 from ..services.backtesting_engine import BacktestingEngine, StrategyRules
 from ..services.historical_data import HistoricalDataService
 
@@ -26,7 +27,9 @@ class BacktestRequest(BaseModel):
     symbol: str = Field(..., description="Stock symbol to backtest")
     start_date: str = Field(..., description="Start date (YYYY-MM-DD)")
     end_date: str = Field(..., description="End date (YYYY-MM-DD)")
-    initial_capital: float = Field(10000.0, ge=1000, le=1000000, description="Initial capital")
+    initial_capital: float = Field(
+        10000.0, ge=1000, le=1000000, description="Initial capital"
+    )
 
     # Strategy rules
     entry_rules: list[dict[str, Any]] = Field(..., description="Entry conditions")
@@ -62,8 +65,11 @@ class BacktestResponse(BaseModel):
     error: str | None = None
 
 
-@router.post("/run", response_model=BacktestResponse, dependencies=[Depends(require_bearer)])
-async def run_backtest(request: BacktestRequest):
+@router.post("/run", response_model=BacktestResponse)
+async def run_backtest(
+    request: BacktestRequest,
+    current_user: User = Depends(get_current_user),
+):
     """
     Execute a backtest on historical data
 
@@ -97,7 +103,9 @@ async def run_backtest(request: BacktestRequest):
     try:
         # Validate dates
         historical_service = HistoricalDataService()
-        if not historical_service.validate_date_range(request.start_date, request.end_date):
+        if not historical_service.validate_date_range(
+            request.start_date, request.end_date
+        ):
             raise HTTPException(
                 status_code=400,
                 detail="Invalid date range. Ensure start_date < end_date and range <= 5 years",
@@ -106,12 +114,15 @@ async def run_backtest(request: BacktestRequest):
         # Fetch historical data
         logger.info(f"Fetching historical data for {request.symbol}")
         prices = await historical_service.get_historical_bars(
-            symbol=request.symbol, start_date=request.start_date, end_date=request.end_date
+            symbol=request.symbol,
+            start_date=request.start_date,
+            end_date=request.end_date,
         )
 
         if not prices or len(prices) < 20:
             raise HTTPException(
-                status_code=400, detail="Insufficient historical data. Need at least 20 bars."
+                status_code=400,
+                detail="Insufficient historical data. Need at least 20 bars.",
             )
 
         # Create strategy rules
@@ -125,7 +136,9 @@ async def run_backtest(request: BacktestRequest):
         # Run backtest
         logger.info(f"Running backtest for {request.symbol} with {len(prices)} bars")
         engine = BacktestingEngine(initial_capital=request.initial_capital)
-        result = engine.execute_backtest(symbol=request.symbol, prices=prices, strategy=strategy)
+        result = engine.execute_backtest(
+            symbol=request.symbol, prices=prices, strategy=strategy
+        )
 
         # Convert dataclass to dict
         result_dict = {
@@ -156,7 +169,9 @@ async def run_backtest(request: BacktestRequest):
                 "end_date": result.end_date,
             },
             "equity_curve": result.equity_curve,
-            "trade_history": result.trade_history[:100],  # Limit to 100 most recent trades
+            "trade_history": result.trade_history[
+                :100
+            ],  # Limit to 100 most recent trades
         }
 
         logger.info(
@@ -173,10 +188,11 @@ async def run_backtest(request: BacktestRequest):
         return BacktestResponse(success=False, error=f"Backtest failed: {e!s}")
 
 
-@router.get("/quick-test", dependencies=[Depends(require_bearer)])
+@router.get("/quick-test")
 async def quick_backtest(
     symbol: str = Query("SPY", description="Symbol to test"),
     months_back: int = Query(6, ge=1, le=60, description="Months of history"),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Run a quick backtest with default RSI strategy
@@ -188,7 +204,9 @@ async def quick_backtest(
         from datetime import datetime, timedelta
 
         end_date = datetime.now().strftime("%Y-%m-%d")
-        start_date = (datetime.now() - timedelta(days=months_back * 30)).strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=months_back * 30)).strftime(
+            "%Y-%m-%d"
+        )
 
         request = BacktestRequest(
             symbol=symbol,
@@ -196,7 +214,10 @@ async def quick_backtest(
             end_date=end_date,
             initial_capital=10000,
             entry_rules=[{"indicator": "RSI", "operator": "<", "value": 30}],
-            exit_rules=[{"type": "take_profit", "value": 5}, {"type": "stop_loss", "value": 2}],
+            exit_rules=[
+                {"type": "take_profit", "value": 5},
+                {"type": "stop_loss", "value": 2},
+            ],
             position_size_percent=10,
             max_positions=1,
         )
@@ -220,7 +241,10 @@ async def get_strategy_templates():
             "name": "RSI Oversold",
             "description": "Buy when RSI < 30, sell at 5% profit or 2% stop loss",
             "entry_rules": [{"indicator": "RSI", "operator": "<", "value": 30}],
-            "exit_rules": [{"type": "take_profit", "value": 5}, {"type": "stop_loss", "value": 2}],
+            "exit_rules": [
+                {"type": "take_profit", "value": 5},
+                {"type": "stop_loss", "value": 2},
+            ],
             "position_size_percent": 10,
             "max_positions": 1,
         },
@@ -228,7 +252,10 @@ async def get_strategy_templates():
             "name": "RSI Overbought Short",
             "description": "Short when RSI > 70, cover at 5% profit or 2% stop loss",
             "entry_rules": [{"indicator": "RSI", "operator": ">", "value": 70}],
-            "exit_rules": [{"type": "take_profit", "value": 5}, {"type": "stop_loss", "value": 2}],
+            "exit_rules": [
+                {"type": "take_profit", "value": 5},
+                {"type": "stop_loss", "value": 2},
+            ],
             "position_size_percent": 10,
             "max_positions": 1,
         },
@@ -236,7 +263,10 @@ async def get_strategy_templates():
             "name": "SMA Crossover",
             "description": "Buy when price crosses above 20-day SMA",
             "entry_rules": [{"indicator": "SMA", "operator": ">", "period": 20}],
-            "exit_rules": [{"type": "take_profit", "value": 10}, {"type": "stop_loss", "value": 5}],
+            "exit_rules": [
+                {"type": "take_profit", "value": 10},
+                {"type": "stop_loss", "value": 5},
+            ],
             "position_size_percent": 15,
             "max_positions": 1,
         },
@@ -244,7 +274,10 @@ async def get_strategy_templates():
             "name": "Conservative RSI",
             "description": "More conservative RSI strategy with tighter stops",
             "entry_rules": [{"indicator": "RSI", "operator": "<", "value": 25}],
-            "exit_rules": [{"type": "take_profit", "value": 3}, {"type": "stop_loss", "value": 1}],
+            "exit_rules": [
+                {"type": "take_profit", "value": 3},
+                {"type": "stop_loss", "value": 1},
+            ],
             "position_size_percent": 5,
             "max_positions": 2,
         },

@@ -35,6 +35,47 @@ $VERCEL_URL = $envVars["ALLOW_ORIGIN"]
 if (-not $SkipChecks) {
     Write-Host "✓ Pre-flight checks..." -ForegroundColor Yellow
 
+    # Pre-flight: Check for port conflicts
+    Write-Host "🔍 Checking for port conflicts..." -ForegroundColor Yellow
+    $PORT = $env:PORT ?? "8001"
+    $PortInUse = Get-NetTCPConnection -LocalPort $PORT -ErrorAction SilentlyContinue
+    if ($PortInUse) {
+        Write-Host "⚠️  Port $PORT is in use" -ForegroundColor Yellow
+        Write-Host "   Zombie processes detected. Run cleanup:" -ForegroundColor Gray
+        Write-Host "   bash backend/scripts/cleanup.sh $PORT" -ForegroundColor Cyan
+        $continue = Read-Host "Continue anyway? (y/N)"
+        if ($continue -ne "y") { exit 0 }
+    }
+
+    # Pre-flight: Validate Render configurations
+    Write-Host "🔍 Validating Render configurations..." -ForegroundColor Yellow
+    $validationErrors = @()
+    $result = python infra/render/validate.py backend/render.yaml infra/render/backend.json
+    if ($LASTEXITCODE -ne 0) {
+        $validationErrors += "Backend config drift detected"
+    }
+    $result = python infra/render/validate.py render.yaml
+    if ($LASTEXITCODE -ne 0) {
+        $validationErrors += "Root config validation failed"
+    }
+    if ($validationErrors.Count -gt 0) {
+        Write-Host "❌ Configuration validation failed:" -ForegroundColor Red
+        $validationErrors | ForEach-Object { Write-Host "   • $_" -ForegroundColor Red }
+        exit 1
+    }
+    Write-Host "✅ Render configurations validated" -ForegroundColor Green
+
+    # Pre-flight: Check git hold points
+    Write-Host "🔍 Validating git hold points..." -ForegroundColor Yellow
+    $result = python scripts/check_hold_points.py
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "❌ Hold point validation failed" -ForegroundColor Red
+        Write-Host "   Locked files may have been modified" -ForegroundColor Yellow
+        Write-Host "   Review .cursorrules and get approval" -ForegroundColor Gray
+        exit 1
+    }
+    Write-Host "✅ Hold point validation passed" -ForegroundColor Green
+
     # Check git status
     $gitStatus = git status --porcelain
     if ($gitStatus -and ($gitStatus | Measure-Object).Count -gt 0) {
@@ -63,6 +104,38 @@ if (-not $SkipChecks) {
             Write-Host "     Install: npm i -g $($check.Name)" -ForegroundColor Gray
             exit 1
         }
+    }
+
+    # Test backend pre-launch validation
+    Write-Host "🔍 Testing backend pre-launch validation..." -ForegroundColor Yellow
+    Push-Location backend
+    try {
+        python -m app.core.prelaunch --check-only
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Backend pre-launch validation passed" -ForegroundColor Green
+        } else {
+            Write-Host "  ❌ Backend pre-launch validation failed" -ForegroundColor Red
+            Pop-Location
+            exit 1
+        }
+    } finally {
+        Pop-Location
+    }
+
+    # Test frontend build
+    Write-Host "🔍 Testing frontend build..." -ForegroundColor Yellow
+    Push-Location frontend
+    try {
+        npm run build
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Frontend build successful" -ForegroundColor Green
+        } else {
+            Write-Host "  ❌ Frontend build failed" -ForegroundColor Red
+            Pop-Location
+            exit 1
+        }
+    } finally {
+        Pop-Location
     }
 }
 
@@ -161,6 +234,23 @@ $tests = @(
     }
 )
 
+# Run comprehensive verification if script exists
+if (Test-Path "scripts/verify-deployment.ps1") {
+    Write-Host "`n🔍 Running Comprehensive Verification..." -ForegroundColor Cyan
+    try {
+        & "scripts/verify-deployment.ps1" -BackendUrl $BACKEND_URL -FrontendUrl $VERCEL_URL
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "✓ Comprehensive verification passed" -ForegroundColor Green
+        } else {
+            Write-Host "⚠ Comprehensive verification had issues" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "⚠ Comprehensive verification failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "⚠ Verification script not found, skipping comprehensive verification" -ForegroundColor Yellow
+}
+
 $passed = 0
 $failed = 0
 
@@ -208,6 +298,62 @@ if ($failed -eq 0) {
     Write-Host "  1. Open $VERCEL_URL in your browser" -ForegroundColor White
     Write-Host "  2. Click Health / Settings / Positions / Execute (Dry)" -ForegroundColor White
     Write-Host "  3. Verify all buttons return JSON" -ForegroundColor White
+    
+    # Generate deployment report
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $reportFile = "deployment-report-$timestamp.md"
+    
+    $reportContent = @"
+# 🚀 Deployment Report
+
+**Date:** $(Get-Date)
+**Deployed by:** $env:USERNAME
+**Branch:** $(git branch --show-current)
+**Commit:** $(git rev-parse HEAD)
+
+## Services Deployed
+
+- **Backend:** $BACKEND_URL
+- **Frontend:** $VERCEL_URL
+
+## Configuration
+
+- Skip Render: $SkipRender
+- Skip Vercel: $SkipVercel
+- Skip Checks: $SkipChecks
+
+## Health Status
+
+- Backend: $(try { $null = Invoke-RestMethod -Uri "$BACKEND_URL/api/health" -Method GET -TimeoutSec 5; "✅ Healthy" } catch { "❌ Unhealthy" })
+- Frontend: $(try { $null = Invoke-RestMethod -Uri $VERCEL_URL -Method GET -TimeoutSec 5; "✅ Healthy" } catch { "❌ Unhealthy" })
+
+## Smoke Test Results
+
+- Passed: $passed
+- Failed: $failed
+
+## Next Steps
+
+1. Verify all endpoints are responding
+2. Run full test suite
+3. Monitor logs for any issues
+4. Update documentation if needed
+
+## Rollback Procedure
+
+If issues are detected:
+
+1. Run: `./rollback-production.sh --current-tag v1.0.X --previous-tag v1.0.Y`
+2. Verify rollback deployment
+3. Investigate root cause
+4. Create incident report
+
+---
+*Generated by PaiiD deployment script*
+"@
+    
+    $reportContent | Out-File -FilePath $reportFile -Encoding UTF8
+    Write-Host "`n📄 Deployment report generated: $reportFile" -ForegroundColor Green
 } else {
     Write-Host "`n⚠️  Deployment completed with errors" -ForegroundColor Yellow
     Write-Host "   Check the failed tests above and verify environment variables" -ForegroundColor Gray

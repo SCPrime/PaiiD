@@ -8,7 +8,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
+from ..models.database import User
 from ..services.tradier_client import get_tradier_client
 
 
@@ -55,8 +56,11 @@ class StockInfoResponse(BaseModel):
     news: list[NewsArticle] = []
 
 
-@router.get("/{symbol}/info", dependencies=[Depends(require_bearer)])
-async def get_stock_info(symbol: str) -> CompanyInfo:
+@router.get("/{symbol}/info")
+async def get_stock_info(
+    symbol: str,
+    current_user: User = Depends(get_current_user),
+) -> CompanyInfo:
     """
     Get comprehensive company information for a symbol
 
@@ -85,16 +89,24 @@ async def get_stock_info(symbol: str) -> CompanyInfo:
         # For more detailed company info, would need additional API or database
         company_info = CompanyInfo(
             symbol=symbol,
-            name=quote.get("description", symbol),  # Tradier includes company name in "description"
+            name=quote.get(
+                "description", symbol
+            ),  # Tradier includes company name in "description"
             description=f"{quote.get('description', symbol)} - Real-time stock quote",
             sector=None,  # Tradier doesn't provide sector in quote
             industry=None,
             market_cap=None,  # Would need fundamental data API
             pe_ratio=None,
             dividend_yield=None,
-            week_52_high=float(quote.get("week_52_high", 0)) if quote.get("week_52_high") else None,
-            week_52_low=float(quote.get("week_52_low", 0)) if quote.get("week_52_low") else None,
-            avg_volume=int(quote.get("average_volume", 0)) if quote.get("average_volume") else None,
+            week_52_high=float(quote.get("week_52_high", 0))
+            if quote.get("week_52_high")
+            else None,
+            week_52_low=float(quote.get("week_52_low", 0))
+            if quote.get("week_52_low")
+            else None,
+            avg_volume=int(quote.get("average_volume", 0))
+            if quote.get("average_volume")
+            else None,
             current_price=current_price,
             change=change,
             change_percent=change_percent,
@@ -110,10 +122,13 @@ async def get_stock_info(symbol: str) -> CompanyInfo:
         raise HTTPException(status_code=500, detail=f"Failed to get stock info: {e!s}")
 
 
-@router.get("/{symbol}/news", dependencies=[Depends(require_bearer)])
+@router.get("/{symbol}/news")
 async def get_stock_news(
     symbol: str,
-    limit: int = Query(default=10, ge=1, le=50, description="Number of news articles to return"),
+    limit: int = Query(
+        default=10, ge=1, le=50, description="Number of news articles to return"
+    ),
+    current_user: User = Depends(get_current_user),
 ) -> list[NewsArticle]:
     """
     Get recent news articles for a specific stock
@@ -139,7 +154,9 @@ async def get_stock_news(
         # Current: Returns empty array with warning log (news feature disabled until Phase 2)
 
         # Mock news structure - in production, replace with API call
-        logger.warning(f"⚠️ News API not yet integrated. Returning empty news feed for {symbol}")
+        logger.warning(
+            f"⚠️ News API not yet integrated. Returning empty news feed for {symbol}"
+        )
 
         news_articles = []
 
@@ -163,8 +180,11 @@ async def get_stock_news(
         raise HTTPException(status_code=500, detail=f"Failed to get stock news: {e!s}")
 
 
-@router.get("/{symbol}/complete", dependencies=[Depends(require_bearer)])
-async def get_complete_stock_info(symbol: str) -> StockInfoResponse:
+@router.get("/{symbol}/complete")
+async def get_complete_stock_info(
+    symbol: str,
+    current_user: User = Depends(get_current_user),
+) -> StockInfoResponse:
     """
     Get complete stock information including company info, technicals, and news
 
@@ -207,4 +227,6 @@ async def get_complete_stock_info(symbol: str) -> StockInfoResponse:
         raise
     except Exception as e:
         logger.error(f"❌ Failed to get complete stock info for {symbol}: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to get complete stock info: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get complete stock info: {e!s}"
+        )

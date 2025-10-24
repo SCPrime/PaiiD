@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.core.auth import require_bearer
+from app.core.jwt import get_current_user
+from app.models.database import User
 
 
 router = APIRouter()
@@ -28,7 +29,7 @@ async def get_company_news(
     sentiment: str | None = Query(default=None, regex="^(bullish|bearish|neutral)$"),
     provider: str | None = None,
     use_cache: bool = Query(default=True),
-    _: str = Depends(require_bearer),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get aggregated news for specific company
@@ -59,7 +60,9 @@ async def get_company_news(
                     "symbol": symbol,
                     "articles": cached_filtered,
                     "count": len(cached_filtered),
-                    "sources": [p.get_provider_name() for p in news_aggregator.providers],
+                    "sources": [
+                        p.get_provider_name() for p in news_aggregator.providers
+                    ],
                     "cached": True,
                 }
 
@@ -98,7 +101,7 @@ async def get_market_news(
     sentiment: str | None = Query(default=None, regex="^(bullish|bearish|neutral)$"),
     provider: str | None = None,
     use_cache: bool = Query(default=True),
-    _: str = Depends(require_bearer),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get aggregated market news
@@ -117,7 +120,11 @@ async def get_market_news(
         # Check cache first (cache key includes filters)
         if use_cache and news_cache:
             cached_filtered = news_cache.get(
-                "market", category=category, limit=limit, sentiment=sentiment, provider=provider
+                "market",
+                category=category,
+                limit=limit,
+                sentiment=sentiment,
+                provider=provider,
             )
             if cached_filtered is not None:
                 # Cached results are already filtered - no need to re-filter
@@ -125,7 +132,9 @@ async def get_market_news(
                     "category": category,
                     "articles": cached_filtered[:limit],
                     "count": len(cached_filtered[:limit]),
-                    "sources": [p.get_provider_name() for p in news_aggregator.providers],
+                    "sources": [
+                        p.get_provider_name() for p in news_aggregator.providers
+                    ],
                     "cached": True,
                 }
 
@@ -158,21 +167,22 @@ async def get_market_news(
 
 
 @router.get("/news/providers")
-async def get_news_providers(_: str = Depends(require_bearer)):
+async def get_news_providers(current_user: User = Depends(get_current_user)):
     """List active news providers"""
     if not news_aggregator:
         return {"providers": [], "status": "unavailable"}
 
     return {
         "providers": [
-            {"name": p.get_provider_name(), "status": "active"} for p in news_aggregator.providers
+            {"name": p.get_provider_name(), "status": "active"}
+            for p in news_aggregator.providers
         ],
         "total": len(news_aggregator.providers),
     }
 
 
 @router.get("/news/health")
-async def get_news_health(_: str = Depends(require_bearer)):
+async def get_news_health(current_user: User = Depends(get_current_user)):
     """
     Get health status of all news providers including circuit breaker states.
 
@@ -191,14 +201,16 @@ async def get_news_health(_: str = Depends(require_bearer)):
         health = news_aggregator.get_provider_health()
         return health
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get health status: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get health status: {e!s}"
+        )
 
 
 @router.get("/news/sentiment/market")
 async def get_market_sentiment(
     category: str = Query(default="general"),
     days_back: int = Query(default=7, ge=1, le=30),
-    _: str = Depends(require_bearer),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get aggregated market sentiment analytics
@@ -248,7 +260,11 @@ async def get_market_sentiment(
                 ),
             },
             "overall_sentiment": (
-                "bullish" if avg_score > 0.15 else "bearish" if avg_score < -0.15 else "neutral"
+                "bullish"
+                if avg_score > 0.15
+                else "bearish"
+                if avg_score < -0.15
+                else "neutral"
             ),
         }
 
@@ -257,7 +273,7 @@ async def get_market_sentiment(
 
 
 @router.get("/news/cache/stats")
-async def get_cache_stats(_: str = Depends(require_bearer)):
+async def get_cache_stats(current_user: User = Depends(get_current_user)):
     """Get news cache statistics"""
     if not news_cache:
         return {"status": "unavailable"}
@@ -266,7 +282,7 @@ async def get_cache_stats(_: str = Depends(require_bearer)):
 
 
 @router.post("/news/cache/clear")
-async def clear_news_cache(_: str = Depends(require_bearer)):
+async def clear_news_cache(current_user: User = Depends(get_current_user)):
     """Clear all cached news"""
     if not news_cache:
         raise HTTPException(status_code=503, detail="Cache unavailable")
@@ -276,7 +292,9 @@ async def clear_news_cache(_: str = Depends(require_bearer)):
 
 
 # Helper functions
-def _apply_filters(articles: list[dict], sentiment: str | None, provider: str | None) -> list[dict]:
+def _apply_filters(
+    articles: list[dict], sentiment: str | None, provider: str | None
+) -> list[dict]:
     """Apply sentiment and provider filters to articles"""
     filtered = articles
 
@@ -284,6 +302,8 @@ def _apply_filters(articles: list[dict], sentiment: str | None, provider: str | 
         filtered = [a for a in filtered if a.get("sentiment") == sentiment]
 
     if provider:
-        filtered = [a for a in filtered if provider.lower() in a.get("provider", "").lower()]
+        filtered = [
+            a for a in filtered if provider.lower() in a.get("provider", "").lower()
+        ]
 
     return filtered
