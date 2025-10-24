@@ -99,9 +99,10 @@ class UsageRecord(Base):
     )  # ml_prediction, backtest, strategy_create, etc.
     quantity = Column(Integer, default=1, nullable=False)  # Usually 1 per event
 
-    # Metadata (stored as JSON for flexibility)
+    # Usage metadata (stored as JSON for flexibility)
     # Example: {"model_id": "regime_detector", "symbol": "AAPL", "accuracy": 0.85}
-    metadata = Column(JSON, default=dict, nullable=False)
+    # Renamed from 'metadata' to avoid conflict with SQLAlchemy's built-in metadata attribute
+    usage_metadata = Column(JSON, default=dict, nullable=False)
 
     # Timestamps
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
