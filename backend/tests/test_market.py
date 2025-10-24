@@ -50,7 +50,7 @@ def test_get_quote_for_symbol(client):
             assert "volume" in data
 
 
-def test_get_quotes_multiple_symbols():
+def test_get_quotes_multiple_symbols(client):
     """Test GET /api/market/quotes with multiple symbols"""
     response = client.get("/api/market/quotes?symbols=AAPL,MSFT,GOOGL", headers=HEADERS)
 
@@ -64,7 +64,7 @@ def test_get_quotes_multiple_symbols():
                 assert "price" in data[symbol]
 
 
-def test_invalid_symbol_handling():
+def test_invalid_symbol_handling(client):
     """Test handling of invalid stock symbols"""
     response = client.get("/api/market/quote/INVALID123", headers=HEADERS)
 
@@ -72,7 +72,7 @@ def test_invalid_symbol_handling():
     assert response.status_code in [404, 400, 500]
 
 
-def test_market_data_price_validation():
+def test_market_data_price_validation(client):
     """Test that market data prices are valid numbers"""
     try:
         response = client.get("/api/market/indices", headers=HEADERS)
@@ -93,7 +93,7 @@ def test_market_data_price_validation():
         pass
 
 
-def test_market_data_change_percent():
+def test_market_data_change_percent(client):
     """Test that change percent is in valid range"""
     try:
         response = client.get("/api/market/indices", headers=HEADERS)
@@ -115,7 +115,7 @@ def test_market_data_change_percent():
         pass
 
 
-def test_market_hours_status():
+def test_market_hours_status(client):
     """Test market hours status endpoint (if exists)"""
     response = client.get("/api/market/status", headers=HEADERS)
 
@@ -125,10 +125,11 @@ def test_market_hours_status():
         assert "is_open" in data or "isOpen" in data or "marketStatus" in data
 
 
-def test_historical_bars_endpoint():
+def test_historical_bars_endpoint(client):
     """Test historical bars/candles endpoint"""
     response = client.get(
-        "/api/market/bars?symbol=AAPL&timeframe=1D&start=2024-01-01&end=2024-01-31", headers=HEADERS
+        "/api/market/bars?symbol=AAPL&timeframe=1D&start=2024-01-01&end=2024-01-31",
+        headers=HEADERS,
     )
 
     if response.status_code == 200:
@@ -144,20 +145,21 @@ def test_historical_bars_endpoint():
                     assert isinstance(bar[field], (int, float, str))
 
 
-def test_intraday_bars():
+def test_intraday_bars(client):
     """Test intraday bar data (1min, 5min, 15min)"""
     timeframes = ["1Min", "5Min", "15Min"]
 
     for timeframe in timeframes:
         response = client.get(
-            f"/api/market/bars?symbol=SPY&timeframe={timeframe}&start=2024-01-01", headers=HEADERS
+            f"/api/market/bars?symbol=SPY&timeframe={timeframe}&start=2024-01-01",
+            headers=HEADERS,
         )
 
         # Should return data or error, not crash
         assert response.status_code in [200, 400, 404, 500]
 
 
-def test_realtime_quote_freshness():
+def test_realtime_quote_freshness(client):
     """Test that quotes are reasonably recent"""
     response = client.get("/api/market/quote/SPY", headers=HEADERS)
 
@@ -170,7 +172,7 @@ def test_realtime_quote_freshness():
             assert timestamp is not None
 
 
-def test_volume_data_validation():
+def test_volume_data_validation(client):
     """Test that volume data is valid"""
     response = client.get("/api/market/quote/AAPL", headers=HEADERS)
 
@@ -184,7 +186,7 @@ def test_volume_data_validation():
             assert volume >= 0
 
 
-def test_market_data_caching():
+def test_market_data_caching(client):
     """Test that market data responses are cached appropriately"""
     try:
         # Make first request
@@ -205,7 +207,7 @@ def test_market_data_caching():
         pass
 
 
-def test_bid_ask_spread():
+def test_bid_ask_spread(client):
     """Test bid/ask data if available"""
     response = client.get("/api/market/quote/AAPL", headers=HEADERS)
 
@@ -223,10 +225,11 @@ def test_bid_ask_spread():
             assert ask > 0
 
 
-def test_ohlc_data_validation():
+def test_ohlc_data_validation(client):
     """Test OHLC data integrity"""
     response = client.get(
-        "/api/market/bars?symbol=SPY&timeframe=1D&start=2024-01-01&end=2024-01-31", headers=HEADERS
+        "/api/market/bars?symbol=SPY&timeframe=1D&start=2024-01-01&end=2024-01-31",
+        headers=HEADERS,
     )
 
     if response.status_code == 200:
@@ -246,9 +249,11 @@ def test_ohlc_data_validation():
                     assert bar["low"] <= bar["close"]
 
 
-def test_extended_hours_data():
+def test_extended_hours_data(client):
     """Test pre-market and after-hours data availability"""
-    response = client.get("/api/market/quote/AAPL?includeExtendedHours=true", headers=HEADERS)
+    response = client.get(
+        "/api/market/quote/AAPL?includeExtendedHours=true", headers=HEADERS
+    )
 
     if response.status_code == 200:
         data = response.json()
@@ -256,7 +261,7 @@ def test_extended_hours_data():
         assert isinstance(data, dict)
 
 
-def test_market_data_rate_limiting():
+def test_market_data_rate_limiting(client):
     """Test that excessive requests are handled gracefully"""
     # Make multiple rapid requests
     for _ in range(10):
@@ -265,7 +270,7 @@ def test_market_data_rate_limiting():
         assert response.status_code in [200, 429, 500]
 
 
-def test_cryptocurrency_symbols():
+def test_cryptocurrency_symbols(client):
     """Test cryptocurrency symbol handling (if supported)"""
     crypto_symbols = ["BTCUSD", "ETHUSD"]
 
@@ -275,7 +280,7 @@ def test_cryptocurrency_symbols():
         assert response.status_code in [200, 400, 404, 500]
 
 
-def test_forex_symbols():
+def test_forex_symbols(client):
     """Test forex symbol handling (if supported)"""
     forex_symbols = ["EURUSD", "GBPUSD"]
 
