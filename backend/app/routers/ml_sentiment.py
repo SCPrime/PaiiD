@@ -18,7 +18,7 @@ from ..models.user import User
 
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/ml", tags=["ML Sentiment & Signals"])
+router = APIRouter(prefix="/api/sentiment", tags=["ML Sentiment & Signals"])
 settings = get_settings()
 
 
