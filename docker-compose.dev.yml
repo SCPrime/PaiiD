@@ -1,0 +1,143 @@
+# Docker Compose for PaiiD Local Development
+# Usage: docker-compose -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  # Internal PyPI Mirror for Security Auditing
+  pypi-mirror:
+    image: python:3.11-slim
+    container_name: paiid-pypi-mirror
+    working_dir: /mirror
+    volumes:
+      - ./backend/pypi-mirror:/mirror
+    command: python /mirror/scripts/serve-mirror.py --port 8080 --host 0.0.0.0
+    ports:
+      - "8080:8080"
+    networks:
+      - paiid-dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        # Use internal mirror for faster builds and offline support
+        PIP_INDEX_URL: http://pypi-mirror:8080/
+        PIP_TRUSTED_HOST: pypi-mirror
+    container_name: paiid-backend
+    environment:
+      # App configuration
+      - API_TOKEN=${API_TOKEN:-rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl}
+      - ALLOW_ORIGIN=http://localhost:3000
+
+      # Trading APIs
+      - ALPACA_PAPER_API_KEY=${ALPACA_PAPER_API_KEY}
+      - ALPACA_PAPER_SECRET_KEY=${ALPACA_PAPER_SECRET_KEY}
+      - TRADIER_API_KEY=${TRADIER_API_KEY}
+      - TRADIER_ACCOUNT_ID=${TRADIER_ACCOUNT_ID}
+      - TRADIER_API_BASE_URL=https://api.tradier.com/v1
+
+      # AI
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+
+      # Database (optional)
+      - DATABASE_URL=${DATABASE_URL:-}
+
+      # Redis (optional)
+      - REDIS_URL=${REDIS_URL:-}
+
+      # Sentry (optional)
+      - SENTRY_DSN=${SENTRY_DSN:-}
+
+      # PyPI Mirror configuration (for runtime use)
+      - PIP_INDEX_URL=http://pypi-mirror:8080/
+      - PIP_TRUSTED_HOST=pypi-mirror
+      - PYPI_MIRROR_ENABLED=true
+    ports:
+      - "8001:8001"
+    depends_on:
+      pypi-mirror:
+        condition: service_healthy
+    networks:
+      - paiid-dev
+    volumes:
+      # Mount source code for hot-reload in development
+      - ./backend/app:/app/app:ro
+      # Mount .env file
+      - ./backend/.env:/app/.env:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: paiid-frontend
+    environment:
+      - NEXT_PUBLIC_API_TOKEN=rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl
+      - NEXT_PUBLIC_BACKEND_API_BASE_URL=http://backend:8001
+      - NEXT_PUBLIC_ANTHROPIC_API_KEY=${NEXT_PUBLIC_ANTHROPIC_API_KEY}
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - paiid-dev
+    volumes:
+      # Mount source code for hot-reload in development
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
+      - ./frontend/.env.local:/app/.env.local:ro
+    restart: unless-stopped
+
+networks:
+  paiid-dev:
+    driver: bridge
+    name: paiid-dev-network
+
+# Usage Examples:
+#
+# 1. Start all services:
+#    docker-compose -f docker-compose.dev.yml up
+#
+# 2. Start specific service:
+#    docker-compose -f docker-compose.dev.yml up backend
+#
+# 3. Build and start:
+#    docker-compose -f docker-compose.dev.yml up --build
+#
+# 4. Run in background:
+#    docker-compose -f docker-compose.dev.yml up -d
+#
+# 5. View logs:
+#    docker-compose -f docker-compose.dev.yml logs -f backend
+#
+# 6. Stop all services:
+#    docker-compose -f docker-compose.dev.yml down
+#
+# 7. Stop and remove volumes:
+#    docker-compose -f docker-compose.dev.yml down -v
+#
+# 8. Rebuild specific service:
+#    docker-compose -f docker-compose.dev.yml build --no-cache backend
+#
+# 9. Run security audit:
+#    docker-compose -f docker-compose.dev.yml exec backend pip-audit -r requirements.txt
+#
+# 10. Access backend shell:
+#     docker-compose -f docker-compose.dev.yml exec backend bash
