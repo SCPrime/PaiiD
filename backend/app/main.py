@@ -1,4 +1,6 @@
+import logging
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -8,13 +10,35 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
 
-print("\n===== BACKEND STARTUP =====")
-print(f".env path: {env_path}")
-print(f".env exists: {env_path.exists()}")
-print(f"API_TOKEN from env: {os.getenv('API_TOKEN', 'NOT_SET')}")
-print(f"TRADIER_API_KEY configured: {'YES' if os.getenv('TRADIER_API_KEY') else 'NO'}")
-print("Deployed from: main branch - Tradier integration active")
-print("===========================\n", flush=True)
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+    stream=sys.stdout,
+)
+
+logger = logging.getLogger("paiid.main")
+
+
+def _mask_secret(value: str | None) -> str:
+    if not value:
+        return "<unset>"
+    return "****" if len(value) <= 4 else f"****{value[-4:]}"
+
+
+logger.info("===== BACKEND STARTUP =====")
+logger.info(".env path: %s (exists=%s)", env_path, env_path.exists())
+logger.info(
+    "Render deployment: %s",
+    "yes" if os.getenv("RENDER_EXTERNAL_URL") else "no",
+)
+logger.info("API_TOKEN configured: %s", _mask_secret(os.getenv("API_TOKEN")))
+logger.info(
+    "TRADIER_API_KEY configured: %s",
+    "yes" if os.getenv("TRADIER_API_KEY") else "no",
+)
+logger.info("Branch reference: main | Tradier integration active")
 
 
 import sentry_sdk
@@ -25,6 +49,7 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 from slowapi.errors import RateLimitExceeded
 
 from .core.config import settings
+from .core.prelaunch import PrelaunchError, run_prelaunch_checks
 from .routers import (
     ai,
     analytics,
@@ -50,6 +75,21 @@ from .routers import (
 )
 from .routers import settings as settings_router
 from .scheduler import init_scheduler
+
+
+try:
+    prelaunch_report = run_prelaunch_checks(
+        emit_json=False,
+        raise_on_error=True,
+        context="uvicorn-import",
+    )
+    logger.info("Pre-launch checks status=%s", prelaunch_report["status"])
+except PrelaunchError as exc:
+    logger.critical("Pre-launch checks failed during import: %s", exc)
+    raise
+except Exception as exc:  # pragma: no cover - defensive guard
+    logger.exception("Unexpected error running pre-launch checks: %s", exc)
+    raise
 
 
 # Initialize Sentry if DSN is configured
@@ -84,13 +124,13 @@ if settings.SENTRY_DSN:
             }
         ),
     )
-    print("[OK] Sentry error tracking initialized", flush=True)
+    logger.info("[Sentry] Error tracking initialized")
 else:
-    print("[WARNING] SENTRY_DSN not configured - error tracking disabled", flush=True)
+    logger.warning("[Sentry] DSN not configured - error tracking disabled")
 
-print("\n===== SETTINGS LOADED =====")
-print(f"settings.API_TOKEN: {settings.API_TOKEN}")
-print("===========================\n", flush=True)
+logger.info("===== SETTINGS LOADED =====")
+logger.info("settings.API_TOKEN configured: %s", _mask_secret(settings.API_TOKEN))
+logger.info("===========================")
 
 app = FastAPI(
     title="PaiiD Trading API",
@@ -105,9 +145,9 @@ if not settings.TESTING:
 
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
-    print("[OK] Rate limiting enabled", flush=True)
+    logger.info("[RateLimit] Enabled")
 else:
-    print("[TEST MODE] Rate limiting disabled for tests", flush=True)
+    logger.info("[RateLimit] Test mode - disabled")
 
 
 # Initialize scheduler, cache, and streaming on startup
@@ -118,68 +158,101 @@ async def startup_event():
     monitor = get_startup_monitor()
     monitor.start()
 
-    # Initialize cache service
+    startup_failures: list[tuple[str, str]] = []
+    critical_failures: list[tuple[str, str]] = []
+    metrics: dict | None = None
+
     try:
-        async with monitor.phase("cache_init", timeout=5.0):
-            from .services.cache import init_cache
+        # Initialize cache service
+        try:
+            async with monitor.phase("cache_init", timeout=5.0):
+                from .services.cache import init_cache
 
-            init_cache()
-    except Exception as e:
-        print(f"[ERROR] Failed to initialize cache: {e!s}", flush=True)
+                init_cache()
+                logger.info("[startup][cache_init] Cache initialized")
+        except Exception as exc:
+            logger.exception("[startup][cache_init] Failed: %s", exc)
+            startup_failures.append(("cache_init", str(exc)))
+            critical_failures.append(("cache_init", str(exc)))
 
-    # Initialize scheduler
-    try:
-        async with monitor.phase("scheduler_init", timeout=5.0):
-            scheduler_instance = init_scheduler()
-            print("[OK] Scheduler initialized and started", flush=True)
-    except Exception as e:
-        print(f"[ERROR] Failed to initialize scheduler: {e!s}", flush=True)
-
-    # ⚠️ ARCHITECTURE NOTE: Tradier provides ALL market data (quotes, streaming, analysis)
-    # Alpaca is used ONLY for paper trade execution (orders, positions, account)
-    # Future: Tradier will also handle live trading post-MVP
-    print(
-        "[INFO] Market data: Tradier API | Trade execution: Alpaca Paper Trading",
-        flush=True,
-    )
-
-    # Start Tradier streaming service (non-blocking background task)
-    # The streaming service runs independently and should NOT block application startup
-    # If circuit breaker is active, it will wait in the background without blocking HTTP requests
-    try:
-        async with monitor.phase("tradier_stream_init", timeout=10.0):
-            from .services.tradier_stream import (
-                get_tradier_stream,
-                start_tradier_stream,
-            )
-
-            # Start returns immediately - WebSocket connection happens in background
-            await start_tradier_stream()
-            print(
-                "[OK] Tradier streaming service started (running in background)",
-                flush=True,
-            )
-
-            # Queue subscription request (non-blocking) - will be sent when WebSocket connects
-            stream = get_tradier_stream()
-            if stream:
-                # Add symbols to active set - they'll be subscribed when WebSocket connects
-                stream.active_symbols.update(["$DJI", "COMP:GIDS"])
-                print(
-                    "[INFO] Queued subscription to $DJI and COMP (will connect when circuit breaker clears)",
-                    flush=True,
+        # Initialize scheduler
+        try:
+            async with monitor.phase("scheduler_init", timeout=5.0):
+                scheduler_instance = init_scheduler()
+                logger.info(
+                    "[startup][scheduler_init] Scheduler initialized", extra={"scheduler": str(scheduler_instance)}
                 )
-    except Exception as e:
-        print(
-            f"[WARNING] Tradier stream startup failed (non-blocking): {e}", flush=True
-        )
-        print(
-            "[INFO] Application will continue - streaming will retry automatically",
-            flush=True,
+        except Exception as exc:
+            logger.exception("[startup][scheduler_init] Failed: %s", exc)
+            startup_failures.append(("scheduler_init", str(exc)))
+            critical_failures.append(("scheduler_init", str(exc)))
+
+        # ⚠️ ARCHITECTURE NOTE: Tradier provides ALL market data (quotes, streaming, analysis)
+        # Alpaca is used ONLY for paper trade execution (orders, positions, account)
+        # Future: Tradier will also handle live trading post-MVP
+        logger.info(
+            "[startup] Market data provider=Tradier API | Trade execution=Alpaca Paper Trading"
         )
 
-    # Finish monitoring and log summary
-    monitor.finish()
+        # Start Tradier streaming service (non-blocking background task)
+        # The streaming service runs independently and should NOT block application startup
+        # If circuit breaker is active, it will wait in the background without blocking HTTP requests
+        try:
+            async with monitor.phase("tradier_stream_init", timeout=10.0):
+                from .services.tradier_stream import (
+                    get_tradier_stream,
+                    start_tradier_stream,
+                )
+
+                # Start returns immediately - WebSocket connection happens in background
+                await start_tradier_stream()
+                logger.info(
+                    "[startup][tradier_stream] Streaming service started (background)",
+                )
+
+                # Queue subscription request (non-blocking) - will be sent when WebSocket connects
+                stream = get_tradier_stream()
+                if stream:
+                    stream.active_symbols.update(["$DJI", "COMP:GIDS"])
+                    logger.info(
+                        "[startup][tradier_stream] Subscription queued for $DJI and COMP",
+                        extra={"symbols": list(stream.active_symbols)},
+                    )
+        except Exception as exc:
+            logger.warning(
+                "[startup][tradier_stream] Non-blocking failure: %s", exc, exc_info=True
+            )
+            startup_failures.append(("tradier_stream_init", str(exc)))
+    finally:
+        monitor.finish()
+        metrics = monitor.get_metrics()
+
+    summary_status = "ok"
+    if critical_failures:
+        summary_status = "failed"
+    elif startup_failures:
+        summary_status = "degraded"
+
+    summary_payload = {
+        "status": summary_status,
+        "failures": startup_failures,
+        "critical_failures": critical_failures,
+        "metrics": metrics,
+    }
+    logger.info("[startup] summary %s", summary_payload)
+
+    allow_degraded = os.getenv("ALLOW_DEGRADED_STARTUP", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+    if critical_failures and not allow_degraded:
+        logger.error("[startup] Critical failures detected: %s", critical_failures)
+        raise RuntimeError(
+            "Critical startup steps failed: "
+            + ", ".join(f"{name}: {reason}" for name, reason in critical_failures)
+        )
 
 
 # Shutdown scheduler and streaming gracefully
@@ -191,18 +264,18 @@ async def shutdown_event():
 
         scheduler_instance = get_scheduler()
         scheduler_instance.shutdown()
-        print("[OK] Scheduler shut down gracefully", flush=True)
+        logger.info("[shutdown] Scheduler shut down gracefully")
     except Exception as e:
-        print(f"[ERROR] Scheduler shutdown error: {e!s}", flush=True)
+        logger.exception("[shutdown] Scheduler error: %s", e)
 
     # Stop Tradier streaming
     try:
         from .services.tradier_stream import stop_tradier_stream
 
         await stop_tradier_stream()
-        print("[OK] Tradier stream stopped", flush=True)
+        logger.info("[shutdown] Tradier stream stopped")
     except Exception as e:
-        print(f"[ERROR] Tradier shutdown error: {e}", flush=True)
+        logger.exception("[shutdown] Tradier stream error: %s", e)
 
 
 # Add Sentry context middleware if Sentry is enabled

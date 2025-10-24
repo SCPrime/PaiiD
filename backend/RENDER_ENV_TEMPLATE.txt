@@ -10,6 +10,10 @@ ANTHROPIC_API_KEY=<from-backend-dot-env>
 ALLOW_ORIGIN=https://frontend-scprimes-projects.vercel.app
 TRADING_MODE=live
 SUPERVISOR_MODE=suggest
+SENTRY_DSN=<copy-from-sentry-dashboard>
+LOG_LEVEL=INFO
+# Set to true if deploying without Sentry temporarily; pre-launch checks will warn instead of fail
+PRELAUNCH_ALLOW_MISSING_SENTRY=false
 
 # Optional (can use defaults):
 AI_MODEL=claude-3-sonnet-20240229
@@ -35,3 +39,4 @@ FINNHUB_API_KEY=<from-backend-dot-env>
 # 2. Copy each value after the = sign
 # 3. Paste into Render dashboard
 # 4. Ensure ALLOW_ORIGIN matches your actual Vercel URL
+

@@ -24,7 +24,7 @@
 **Target:** 100% MVP before starting Phase 1
 
 - [x] Verify SSE in production ✅ (Oct 22 - Code review confirms implementation ready)
-- [x] Sentry DSN configuration ✅ (Oct 22 - Code ready, DSN needs adding to Render)
+- [x] Sentry DSN configuration ✅ (Oct 22 - Render manifests/templates updated; secrets managed via Render dashboard)
 - [x] Recommendation history tracking ✅ (Oct 22 - Backend complete, frontend integration pending)
 - [ ] Test chart export on mobile (Requires physical device)
 - [ ] Mobile device testing (iPhone + Android - Requires physical devices)
