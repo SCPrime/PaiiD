@@ -6,8 +6,6 @@ Tests for critical API endpoints: health, portfolio, orders, market data
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 
 class TestHealthEndpoints:
     """Test health check endpoints"""
@@ -18,24 +16,33 @@ class TestHealthEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "ok"
-        assert "time" in data
+        assert "timestamp" in data
 
-    def test_ready_endpoint(self, client):
-        """Test /api/ready returns 200"""
-        response = client.get("/api/ready")
+    def test_readiness_endpoint(self, client):
+        """Test /api/health/readiness returns 200"""
+        response = client.get("/api/health/readiness")
         assert response.status_code == 200
         data = response.json()
         assert data["ready"] is True
 
-    def test_sentry_test_endpoint(self, client):
-        """Test /api/sentry-test raises error (for Sentry capture)"""
-        # This endpoint intentionally raises an exception for Sentry testing
-        # The TestClient will propagate the exception instead of returning 500
-        with pytest.raises(Exception) as excinfo:
-            response = client.get("/api/sentry-test")
+    def test_sentry_test_endpoint_without_dsn(self, client):
+        """Sentry test endpoint returns 503 when DSN is missing"""
+        response = client.get("/api/health/sentry-test")
+        assert response.status_code == 503
+        assert "Sentry DSN is not configured" in response.json()["detail"]
 
-        # Verify it's the intentional test exception
-        assert "SENTRY TEST" in str(excinfo.value)
+    def test_sentry_test_endpoint_triggers_capture(self, client, monkeypatch):
+        """Sentry test endpoint captures an error when DSN is configured"""
+        from app.core import config
+
+        monkeypatch.setattr(config.settings, "SENTRY_DSN", "test-dsn")
+
+        with patch("app.routers.health.sentry_sdk.capture_exception") as mock_capture:
+            response = client.get("/api/health/sentry-test")
+
+        assert response.status_code == 500
+        assert response.json()["detail"] == "This is a test error to verify Sentry integration is working"
+        mock_capture.assert_called_once()
 
 
 class TestAuthenticationProtection:

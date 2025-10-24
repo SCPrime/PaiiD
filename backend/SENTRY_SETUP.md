@@ -67,15 +67,22 @@ If SENTRY_DSN not set:
 
 1. **Trigger test error**:
    ```bash
-   curl http://localhost:8001/api/sentry-test
+   curl http://localhost:8001/api/health/sentry-test
    ```
 
-   Expected response:
-   ```json
-   {
-     "detail": "This is a test error to verify Sentry integration is working"
-   }
-   ```
+   - If `SENTRY_DSN` is **missing**, the endpoint returns **503** with:
+     ```json
+     {
+       "detail": "Sentry DSN is not configured. Set SENTRY_DSN before running the test."
+     }
+     ```
+
+   - When `SENTRY_DSN` is configured, the endpoint raises a controlled error captured by Sentry and FastAPI returns **500** with:
+     ```json
+     {
+       "detail": "This is a test error to verify Sentry integration is working"
+     }
+     ```
 
 2. **Check Sentry Dashboard**:
    - Go to https://sentry.io/organizations/your-org/issues/
@@ -202,9 +209,29 @@ These breadcrumbs appear in error reports, showing the sequence of events leadin
    - **Then**: Send a notification
 
 3. **Actions**:
-   - **Email**: Your email
+   - **Email**: Your email (default fallback)
    - **Slack** (optional): Connect Slack workspace
-   - **Webhook** (optional): For custom integrations
+   - **Webhook** (optional): For custom integrations (see routing matrix below)
+
+## Alert Routing & Escalation
+
+| Severity | Trigger | Primary Channel | Secondary Channel | Escalation Window |
+|----------|---------|-----------------|-------------------|-------------------|
+| Critical | `level:error` or `level:fatal` in production | Slack `#paiid-alerts` | On-call SMS via PagerDuty | 15 minutes |
+| High | >10 errors in 5 minutes OR transaction.duration > 2s | Email `trading-ops@paiid.ai` | Slack `#paiid-alerts` | 60 minutes |
+| Medium | Performance regression (Apdex < 0.8) | Email digest (daily) | - | Review in weekly ops sync |
+
+### Escalation Flow
+
+1. **Alert fires** → Sentry notifies the primary channel above.
+2. **On-call acknowledgement**:
+   - Critical: On-call engineer acknowledges in PagerDuty within 15 minutes.
+   - High: Trading Ops acknowledges via Slack thread within 1 hour.
+3. **Triage owner** documents root cause in the incident tracker.
+4. **If no acknowledgement** within the escalation window, Sentry routes to the secondary channel and the engineering manager is pinged via email.
+5. **Resolution**: Once fixed, mark the issue as resolved in Sentry and post-mortem summary in `#paiid-alerts`.
+
+> **Tip:** Add multiple email recipients in Sentry alert actions to mirror the table above if Slack or PagerDuty are unavailable.
 
 ### Recommended Alert Rules
 

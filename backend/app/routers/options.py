@@ -11,14 +11,15 @@ Phase 1 Implementation:
 """
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple, Any
 import requests
 import asyncio
 import logging
+import time
+from collections import OrderedDict
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
 
 from ..core.config import settings
 from ..core.auth import require_bearer
@@ -26,6 +27,42 @@ from ..services.tradier_client import get_tradier_client
 
 router = APIRouter(prefix="/options", tags=["options"])
 logger = logging.getLogger(__name__)
+
+
+class TTLCache:
+    """Minimal TTL cache to avoid optional third-party dependency."""
+
+    def __init__(self, maxsize: int, ttl: float) -> None:
+        self.maxsize = maxsize
+        self.ttl = ttl
+        self._store: "OrderedDict[str, Tuple[float, Any]]" = OrderedDict()
+
+    def _purge_expired(self) -> None:
+        now = time.monotonic()
+        expired_keys = [key for key, (expires_at, _) in self._store.items() if expires_at <= now]
+        for key in expired_keys:
+            self._store.pop(key, None)
+
+    def __contains__(self, key: str) -> bool:  # pragma: no cover - small helper
+        self._purge_expired()
+        return key in self._store
+
+    def __getitem__(self, key: str) -> Any:
+        self._purge_expired()
+        expires_at, value = self._store[key]
+        if expires_at <= time.monotonic():
+            self._store.pop(key, None)
+            raise KeyError(key)
+        self._store.move_to_end(key)
+        return value
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self._purge_expired()
+        self._store[key] = (time.monotonic() + self.ttl, value)
+        self._store.move_to_end(key)
+        while len(self._store) > self.maxsize:
+            self._store.popitem(last=False)
+
 
 # 5-minute cache for options chain data
 # maxsize=100 allows caching up to 100 different symbol+expiration combinations
