@@ -1,11 +1,9 @@
-"""
-Sentry Error Context Middleware
+"""Sentry error context middleware with structured logging support."""
 
-Adds custom context and breadcrumbs to Sentry error reports for better debugging.
-"""
-
+import logging
 import time
 from collections.abc import Callable
+from typing import Any
 
 import sentry_sdk
 from fastapi import Request
@@ -14,73 +12,76 @@ from starlette.responses import Response
 
 
 class SentryContextMiddleware(BaseHTTPMiddleware):
-    """
-    Adds request context to Sentry error reports
-    """
+    """Adds request context to Sentry with structured logging."""
+
+    def __init__(self, app: Any) -> None:
+        super().__init__(app)
+        self.logger = logging.getLogger("paiid.sentry.middleware")
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Add request context to Sentry
-        with sentry_sdk.push_scope() as scope:
-            # Add request metadata
-            scope.set_context(
-                "request",
-                {
-                    "method": request.method,
-                    "url": str(request.url),
-                    "path": request.url.path,
-                    "query_params": dict(request.query_params),
-                    "client_host": request.client.host if request.client else None,
-                },
-            )
+        request_meta = {
+            "method": request.method,
+            "url": str(request.url),
+            "path": request.url.path,
+            "query_params": dict(request.query_params),
+            "client_host": request.client.host if request.client else None,
+        }
 
-            # Add custom tags for filtering in Sentry
+        start_time = time.time()
+        self.logger.debug("sentry_scope_open", extra={"request": request_meta})
+
+        with sentry_sdk.push_scope() as scope:
+            scope.set_context("request", request_meta)
             scope.set_tag("endpoint", request.url.path)
             scope.set_tag("method", request.method)
 
-            # Add breadcrumb for request
             sentry_sdk.add_breadcrumb(
                 category="request",
                 message=f"{request.method} {request.url.path}",
                 level="info",
             )
 
-            # Time the request
-            start_time = time.time()
-
             try:
                 response = await call_next(request)
 
-                # Add response status to context
+                duration_ms = round((time.time() - start_time) * 1000, 2)
                 scope.set_context(
                     "response",
                     {
                         "status_code": response.status_code,
-                        "duration_ms": round((time.time() - start_time) * 1000, 2),
+                        "duration_ms": duration_ms,
                     },
                 )
 
-                # Add breadcrumb for response
                 sentry_sdk.add_breadcrumb(
                     category="response",
                     message=f"Status {response.status_code}",
                     level="info" if response.status_code < 400 else "warning",
-                    data={"duration_ms": round((time.time() - start_time) * 1000, 2)},
+                    data={"duration_ms": duration_ms},
+                )
+
+                self.logger.debug(
+                    "sentry_scope_close",
+                    extra={
+                        "request": request_meta,
+                        "status_code": response.status_code,
+                        "duration_ms": duration_ms,
+                    },
                 )
 
                 return response
 
             except Exception as exc:
-                # Add error context
+                duration_ms = round((time.time() - start_time) * 1000, 2)
                 scope.set_context(
                     "error",
                     {
                         "type": type(exc).__name__,
                         "message": str(exc),
-                        "duration_ms": round((time.time() - start_time) * 1000, 2),
+                        "duration_ms": duration_ms,
                     },
                 )
 
-                # Add breadcrumb for error
                 sentry_sdk.add_breadcrumb(
                     category="error",
                     message=f"Exception: {type(exc).__name__}",
@@ -88,11 +89,27 @@ class SentryContextMiddleware(BaseHTTPMiddleware):
                     data={"error_message": str(exc)},
                 )
 
-                # Capture exception in Sentry
-                sentry_sdk.capture_exception(exc)
+                self.logger.error(
+                    "sentry_scope_error",
+                    extra={
+                        "request": request_meta,
+                        "duration_ms": duration_ms,
+                        "error_type": type(exc).__name__,
+                    },
+                    exc_info=exc,
+                )
 
-                # Re-raise to let FastAPI handle it
+                sentry_sdk.capture_exception(exc)
                 raise
+
+            finally:
+                self.logger.debug(
+                    "sentry_scope_finalized",
+                    extra={
+                        "request": request_meta,
+                        "duration_ms": round((time.time() - start_time) * 1000, 2),
+                    },
+                )
 
 
 def capture_trading_event(event_type: str, symbol: str = None, **kwargs):

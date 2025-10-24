@@ -55,21 +55,67 @@ from .scheduler import init_scheduler
 
 
 # Initialize Sentry if DSN is configured
-if settings.SENTRY_DSN:
+
+
+def _resolve_sentry_dsn() -> str | None:
+    return (
+        settings.SENTRY_DSN
+        or os.getenv("RENDER_SENTRY_DSN")
+        or os.getenv("SENTRY_BACKEND_DSN")
+    )
+
+
+def _coerce_sample_rate(*values: str | float | None, fallback: float) -> float:
+    for value in values:
+        if value is None:
+            continue
+
+        try:
+            numeric_value = float(value)
+        except (TypeError, ValueError):
+            continue
+
+        if 0.0 <= numeric_value <= 1.0:
+            return numeric_value
+
+    return fallback
+
+
+resolved_sentry_dsn = _resolve_sentry_dsn()
+sentry_environment = settings.SENTRY_ENVIRONMENT
+render_commit = (
+    settings.SENTRY_RELEASE
+    or os.getenv("RENDER_GIT_COMMIT")
+    or os.getenv("GIT_COMMIT")
+    or os.getenv("SOURCE_VERSION")
+)
+sentry_release = (
+    f"paiid-backend@{render_commit}"
+    if render_commit
+    else "paiid-backend@dev"
+)
+traces_sample_rate = _coerce_sample_rate(
+    os.getenv("RENDER_SENTRY_TRACES_SAMPLE_RATE"),
+    settings.SENTRY_TRACES_SAMPLE_RATE,
+    fallback=0.1,
+)
+profiles_sample_rate = _coerce_sample_rate(
+    os.getenv("RENDER_SENTRY_PROFILES_SAMPLE_RATE"),
+    settings.SENTRY_PROFILES_SAMPLE_RATE,
+    fallback=traces_sample_rate,
+)
+
+if resolved_sentry_dsn:
     sentry_sdk.init(
-        dsn=settings.SENTRY_DSN,
+        dsn=resolved_sentry_dsn,
         integrations=[
             StarletteIntegration(transaction_style="endpoint"),
             FastApiIntegration(transaction_style="endpoint"),
         ],
-        traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
-        profiles_sample_rate=0.1,  # 10% profiling
-        environment=(
-            "production"
-            if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "")
-            else "development"
-        ),
-        release="paiid-backend@1.0.0",
+        traces_sample_rate=traces_sample_rate,
+        profiles_sample_rate=profiles_sample_rate,
+        environment=sentry_environment,
+        release=sentry_release,
         send_default_pii=False,  # Don't send personally identifiable info
         before_send=lambda event, hint: (
             event
@@ -143,13 +189,13 @@ async def startup_event():
     # Enhanced startup logging with comprehensive telemetry
     logger.info("=" * 70)
     logger.info(f"🚀 Backend startup initiated at {datetime.utcnow().isoformat()}")
-    logger.info(f"   Environment: {settings.SENTRY_ENVIRONMENT}")
+    logger.info(f"   Environment: {sentry_environment}")
     logger.info(f"   Port: {os.getenv('PORT', '8001')}")
     logger.info(f"   Hostname: {os.getenv('HOSTNAME', 'unknown')}")
     logger.info(f"   Python Version: {sys.version}")
     logger.info(f"   OS: {os.name} - {os.getenv('OS', 'unknown')}")
     logger.info(
-        f"   Sentry DSN: {'✅ Configured' if settings.SENTRY_DSN else '❌ Missing'}"
+        f"   Sentry DSN: {'✅ Configured' if resolved_sentry_dsn else '❌ Missing'}"
     )
     logger.info(
         f"   Test Fixtures: {'✅ Enabled' if settings.USE_TEST_FIXTURES else '❌ Disabled'}"
@@ -183,14 +229,17 @@ async def startup_event():
         "TRADIER_API_KEY": "***" if settings.TRADIER_API_KEY else "NOT_SET",
         "ALPACA_API_KEY": "***" if settings.ALPACA_API_KEY else "NOT_SET",
         "ANTHROPIC_API_KEY": "***" if settings.ANTHROPIC_API_KEY else "NOT_SET",
-        "SENTRY_DSN": "***" if settings.SENTRY_DSN else "NOT_SET",
+        "SENTRY_DSN": "***" if resolved_sentry_dsn else "NOT_SET",
+        "SENTRY_RELEASE": settings.SENTRY_RELEASE or sentry_release,
+        "SENTRY_TRACES_SAMPLE_RATE": str(traces_sample_rate),
+        "SENTRY_PROFILES_SAMPLE_RATE": str(profiles_sample_rate),
         "REDIS_URL": "***" if settings.REDIS_URL else "NOT_SET",
         "DATABASE_URL": "***" if settings.DATABASE_URL else "NOT_SET",
         "USE_TEST_FIXTURES": str(settings.USE_TEST_FIXTURES),
         "LIVE_TRADING": str(settings.LIVE_TRADING),
         "TESTING": str(settings.TESTING),
         "LOG_LEVEL": settings.LOG_LEVEL,
-        "SENTRY_ENVIRONMENT": settings.SENTRY_ENVIRONMENT,
+        "SENTRY_ENVIRONMENT": sentry_environment,
     }
 
     logger.info("   Environment Variables:")
@@ -360,7 +409,7 @@ async def shutdown_event():
 
 
 # Add Sentry context middleware if Sentry is enabled
-if settings.SENTRY_DSN:
+if resolved_sentry_dsn:
     from .middleware.sentry import SentryContextMiddleware
 
     app.add_middleware(SentryContextMiddleware)
