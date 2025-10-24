@@ -19,12 +19,14 @@ import {
   BookOpen,
   Clock,
   Target,
+  Brain,
 } from "lucide-react";
 import TradingJournal from "./TradingJournal";
 import RiskDashboard from "./RiskDashboard";
 import SchedulerSettings from "./SchedulerSettings";
 import ApprovalQueue from "./ApprovalQueue";
 import KillSwitchToggle from "./KillSwitchToggle";
+import MLTrainingDashboard from "./MLTrainingDashboard";
 import { getCurrentUser, getUserAnalytics, clearUserData } from "../lib/userManagement";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
@@ -461,6 +463,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     { id: "personal", label: "Personal Settings", icon: SettingsIcon, alwaysShow: true },
     { id: "journal", label: "Trading Journal", icon: BookOpen, alwaysShow: true },
     { id: "risk", label: "Risk Control", icon: Shield, alwaysShow: true },
+    { id: "ml-training", label: "ML Training", icon: Brain, alwaysShow: true },
     { id: "automation", label: "Automation", icon: Clock, alwaysShow: true },
     { id: "approvals", label: "Approvals", icon: CheckCircle2, alwaysShow: true },
     { id: "users", label: "User Management", icon: Users, adminOnly: true },
@@ -1018,6 +1021,11 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
           {activeTab === "journal" && <TradingJournal />}
           {activeTab === "risk" && <RiskDashboard />}
+          {activeTab === "ml-training" && (
+            <div className="min-h-[500px]">
+              <MLTrainingDashboard />
+            </div>
+          )}
           {activeTab === "automation" && (
             <div className="min-h-[500px]">
               <SchedulerSettings />
