@@ -19,7 +19,7 @@ export default function EnhancedDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUserSetup, setIsUserSetup] = useState(ENABLE_DEV_BYPASS);
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>("");
-  const [hoveredWorkflow, setHoveredWorkflow] = useState<any>(null);
+  const [hoveredWorkflow, setHoveredWorkflow] = useState<unknown>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const isMobile = useIsMobile();

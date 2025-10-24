@@ -71,7 +71,7 @@ export const withPerformanceOptimization = <P extends object>(
   // Apply performance optimizations
   if (debounceMs || throttleMs) {
     const OriginalComponent = WrappedComponent;
-    WrappedComponent = React.forwardRef<any, P>((props, ref) => {
+    WrappedComponent = React.forwardRef<unknown, P>((props, ref) => {
       const [optimizedProps, setOptimizedProps] = useState(props);
 
       const updateProps = useCallback(
@@ -94,7 +94,7 @@ export const withPerformanceOptimization = <P extends object>(
 
 // Virtual scrolling hook
 export const useVirtualScrolling = (
-  items: any[],
+  items: unknown[],
   itemHeight: number,
   containerHeight: number,
   overscan: number = 5

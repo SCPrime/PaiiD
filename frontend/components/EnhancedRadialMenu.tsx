@@ -126,7 +126,7 @@ const EnhancedRadialMenu: React.FC<EnhancedRadialMenuProps> = ({
     // Create gradient definitions
     const defs = svg.append("defs");
 
-    enhancedWorkflows.forEach((workflow, index) => {
+    enhancedWorkflows.forEach((workflow, _index) => {
       const gradient = defs
         .append("linearGradient")
         .attr("id", `gradient-${workflow.id}`)
