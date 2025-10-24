@@ -9,9 +9,20 @@ echo "======================================"
 echo "PaiiD Backend Startup"
 echo "======================================"
 
+# Pre-launch validation (environment + secrets)
+echo ""
+echo "[1/3] Running pre-launch checks..."
+echo "--------------------------------------"
+if python scripts/prelaunch.py --context render-start; then
+    echo "✅ Pre-launch checks passed"
+else
+    echo "❌ Pre-launch checks failed!"
+    exit 1
+fi
+
 # Run database migrations
 echo ""
-echo "[1/2] Running database migrations..."
+echo "[2/3] Running database migrations..."
 echo "--------------------------------------"
 
 if alembic upgrade head; then
@@ -23,7 +34,7 @@ fi
 
 # Start the FastAPI server
 echo ""
-echo "[2/2] Starting FastAPI server..."
+echo "[3/3] Starting FastAPI server..."
 echo "--------------------------------------"
 
 exec uvicorn app.main:app --host 0.0.0.0 --port $PORT

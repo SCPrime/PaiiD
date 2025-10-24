@@ -39,3 +39,11 @@ services:
     # PostgreSQL Database - Required for auth and data persistence
     - key: DATABASE_URL
       sync: false  # Set via Render dashboard (connect to Render Postgres)
+    # Sentry - backend error monitoring (Phase 2.5)
+    - key: SENTRY_DSN
+      sync: false  # Add PaiiD backend DSN from Sentry dashboard
+    - key: PRELAUNCH_ALLOW_MISSING_SENTRY
+      value: 'false'  # Set to true for temporary deployments without Sentry (warns instead of failing)
+    - key: LOG_LEVEL
+      value: INFO
+
