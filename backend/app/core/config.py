@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from pydantic import BaseModel, RedisDsn, field_validator
 
 
 # Load .env file BEFORE reading env vars (works even when imported directly)
@@ -35,7 +35,7 @@ class Settings(BaseModel):
     DATABASE_URL: str | None = os.getenv("DATABASE_URL")
 
     # Redis (Phase 2.5)
-    REDIS_URL: str | None = os.getenv("REDIS_URL")
+    REDIS_URL: RedisDsn | None = os.getenv("REDIS_URL")
 
     # Sentry Error Tracking (Phase 2.5)
     SENTRY_DSN: str | None = os.getenv("SENTRY_DSN")
@@ -47,6 +47,13 @@ class Settings(BaseModel):
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # 15 minutes
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days
+
+    @field_validator("REDIS_URL", mode="before")
+    def validate_redis_url(cls, value: str | None) -> str | None:
+        """Normalize empty values and ensure Redis URLs validate at runtime."""
+        if value in {None, "", "null", "None"}:
+            return None
+        return value
 
 
 settings = Settings()
