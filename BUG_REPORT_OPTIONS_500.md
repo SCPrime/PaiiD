@@ -200,6 +200,14 @@ curl http://127.0.0.1:8001/api/expirations/AAPL
 
 ---
 
+## 📡 Monitoring & QA Linkage
+
+- **Dashboards:** Track fix impact through the routines in `DUAL_AI_MONITORING_WORKFLOW.md` and the alerting guidance outlined in `instructions/13-monitoring-maintenance.md`. Ensure Sentry DSN provisioning (Batch 2 follow-up) is complete so error rates are visible in real time.
+- **QA SOPs:** Follow regression steps from `instructions/12-testing-framework.md`, prioritizing `test_options_endpoint.py` and Playwright options chain specs once the endpoint is restored. Document results in the QA log before closing this bug.
+- **Stakeholder Updates:** Reference the messaging templates in `COMMUNICATION_UPDATES_2025-10-22.md` when sharing status on Slack or Notion so blockers remain transparent.
+
+---
+
 ## ✅ Resolution Criteria
 
 Bug is fixed when:
