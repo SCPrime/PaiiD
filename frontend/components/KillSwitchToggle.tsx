@@ -1,42 +1,102 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, Shield, Power, CheckCircle2 } from "lucide-react";
 import { showSuccess, showError } from "../lib/toast";
+import { useAuth } from "../hooks/useAuth";
 
 interface KillSwitchToggleProps {
   /** Whether component is standalone or embedded in Settings */
   standalone?: boolean;
 }
 
+interface KillSwitchStatus {
+  tradingHalted: boolean;
+  updatedAt: string | null;
+  updatedBy: {
+    id: number;
+    email: string;
+    role: string;
+  } | null;
+  reason: string | null;
+}
+
 export default function KillSwitchToggle({ standalone = false }: KillSwitchToggleProps) {
+  const { user, accessToken } = useAuth();
+  const isAdmin = user?.role === "owner" || user?.role === "admin";
   const [tradingHalted, setTradingHalted] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingState, setPendingState] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const [statusMeta, setStatusMeta] = useState<KillSwitchStatus | null>(null);
+  const lastUpdatedAt = statusMeta?.updatedAt ? new Date(statusMeta.updatedAt) : null;
+  const lastUpdatedBy = statusMeta?.updatedBy;
 
   // Fetch current kill-switch status
   const fetchStatus = async () => {
+    if (!accessToken) {
+      setTradingHalted(null);
+      setStatusMeta(null);
+      setError("Sign in with an admin account to view kill switch status.");
+      return;
+    }
+
     try {
-      const res = await fetch("/api/proxy/api/orders");
-      if (res.ok) {
-        // If orders endpoint works, trading is active
-        setTradingHalted(false);
-        setLastChecked(new Date());
+      const res = await fetch("/api/proxy/api/admin/kill", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: "no-store",
+      });
+
+      if (res.status === 403) {
+        setTradingHalted(null);
+        setStatusMeta(null);
+        setError("Admin access required to view kill switch status.");
+        return;
       }
+
+      if (res.status === 401) {
+        setTradingHalted(null);
+        setStatusMeta(null);
+        setError("Session expired. Please sign in again.");
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch kill-switch status: ${res.status}`);
+      }
+
+      const data: KillSwitchStatus = await res.json();
+      setTradingHalted(data.tradingHalted);
+      setStatusMeta(data);
+      setLastChecked(new Date());
+      setError(null);
     } catch (err: any) {
       console.error("Error fetching kill-switch status:", err);
-      setError("Unable to determine status");
+      setError(err.message || "Unable to determine status");
     }
   };
 
   useEffect(() => {
     fetchStatus();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]);
 
   const handleToggle = async () => {
+    if (!isAdmin) {
+      showError("Admin access required to change trading status.");
+      return;
+    }
+
+    if (!accessToken) {
+      showError("Missing access token. Please sign in again.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -45,16 +105,23 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(pendingState),
+        body: JSON.stringify({
+          halt: pendingState,
+          reason: pendingState
+            ? "Manual halt initiated from admin dashboard"
+            : "Manual resume initiated from admin dashboard",
+        }),
       });
 
       if (!res.ok) {
         throw new Error(`Failed to update kill-switch: ${res.status}`);
       }
 
-      const data = await res.json();
+      const data: KillSwitchStatus = await res.json();
       setTradingHalted(data.tradingHalted);
+      setStatusMeta(data);
       setShowConfirmation(false);
       setLastChecked(new Date());
 
@@ -76,6 +143,10 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
   };
 
   const openConfirmation = (newState: boolean) => {
+    if (!isAdmin) {
+      showError("Admin access required to change trading status.");
+      return;
+    }
     setPendingState(newState);
     setShowConfirmation(true);
   };
@@ -127,21 +198,36 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
           {tradingHalted !== null && (
             <button
               onClick={() => openConfirmation(!tradingHalted)}
-              disabled={loading}
+              disabled={loading || !isAdmin}
               className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                 tradingHalted
                   ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border-2 border-green-500"
                   : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border-2 border-red-500"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              } ${
+                loading || !isAdmin
+                  ? "opacity-50 cursor-not-allowed"
+                  : "cursor-pointer"
+              }`}
             >
               {loading ? "Updating..." : tradingHalted ? "▶ Resume Trading" : "⏸ Halt Trading"}
             </button>
           )}
         </div>
 
-        {lastChecked && (
-          <div className="text-xs text-slate-500">
-            Last checked: {lastChecked.toLocaleTimeString()}
+        {(lastChecked || lastUpdatedAt || statusMeta?.reason) && (
+          <div className="text-xs text-slate-500 space-y-1">
+            {lastChecked && <div>Last checked: {lastChecked.toLocaleTimeString()}</div>}
+            {lastUpdatedAt && (
+              <div>
+                Last change: {lastUpdatedAt.toLocaleString()}
+                {lastUpdatedBy
+                  ? ` by ${lastUpdatedBy.email} (${lastUpdatedBy.role})`
+                  : ""}
+              </div>
+            )}
+            {statusMeta?.reason && (
+              <div className="text-slate-400">Reason: {statusMeta.reason}</div>
+            )}
           </div>
         )}
       </div>
@@ -180,6 +266,9 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
         <div className="text-sm text-purple-400">
           <strong>Admin Only:</strong> Only system administrators can toggle the kill switch. This
           immediately affects all users.
+          <span className="block text-xs text-purple-300 mt-1">
+            Current role: {user?.role ?? "guest"}
+          </span>
         </div>
       </div>
 

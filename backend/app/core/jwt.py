@@ -166,8 +166,15 @@ def get_current_user(
         )
 
     # Get user_id from payload
-    user_id: int = payload.get("sub")
-    if user_id is None:
+    raw_user_id = payload.get("sub")
+    if raw_user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token missing user identifier"
+        )
+
+    try:
+        user_id = int(raw_user_id)
+    except (TypeError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token missing user identifier"
         )
@@ -226,6 +233,14 @@ def require_owner(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
+def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """FastAPI dependency to require admin or owner role."""
+
+    if current_user.role not in {"owner", "admin"}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return current_user
+
+
 def create_token_pair(
     user: User, db: Session, ip_address: str | None = None, user_agent: str | None = None
 ) -> dict[str, str]:
@@ -242,8 +257,8 @@ def create_token_pair(
         Dictionary with access_token, refresh_token, token_type
     """
     # Create token payloads
-    access_payload = {"sub": user.id, "role": user.role, "email": user.email}
-    refresh_payload = {"sub": user.id}
+    access_payload = {"sub": str(user.id), "role": user.role, "email": user.email}
+    refresh_payload = {"sub": str(user.id)}
 
     # Generate tokens
     access_token = create_access_token(access_payload)

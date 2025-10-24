@@ -61,6 +61,7 @@ const ALLOW_GET = new Set<string>([
   "portfolio/summary",
   "portfolio/history",
   "analytics/performance",
+  "admin/kill",
   // Backtesting endpoints
   "backtesting/run",
   "backtesting/quick-test",
@@ -101,6 +102,8 @@ const ALLOW_DELETE = new Set<string>([
   // Order templates
   "order-templates",
 ]);
+
+const USER_AUTH_PREFIXES = ["auth/", "admin/"];
 
 // Allowed origins for CORS (production and development only)
 const ALLOWED_ORIGINS = new Set<string>([
@@ -236,9 +239,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const url = `${BACKEND}/api/${path}${queryString ? "?" + queryString : ""}`;
 
   const headers: Record<string, string> = {
-    authorization: `Bearer ${API_TOKEN}`,
     "content-type": "application/json",
   };
+
+  const incomingAuth = req.headers.authorization;
+  const requiresUserAuth =
+    typeof incomingAuth === "string" &&
+    USER_AUTH_PREFIXES.some((prefix) => path.startsWith(prefix));
+
+  headers.authorization = requiresUserAuth
+    ? (incomingAuth as string)
+    : `Bearer ${API_TOKEN}`;
 
   // propagate request id if client set one
   const rid = (req.headers["x-request-id"] as string) || "";
