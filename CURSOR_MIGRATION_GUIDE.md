@@ -1,246 +1,315 @@
-# Cursor Migration Guide - Claude Code Review Checks
+# 🎯 Cursor Migration Guide - From GitHub Claude to Local AI
 
-**Purpose**: Migrate GitHub Claude Code Action checks to local Cursor workflows to reduce costs and increase speed.
-
-**Status**: 🚧 Migration In Progress
-**Target**: Replace 70%+ of GitHub checks with Cursor by end of next sprint
-
----
-
-## 🎯 Migration Strategy
-
-### Phase 1: Immediate (Weeks 1-2)
-- ✅ Configure GitHub Claude to run ONLY on critical files
-- ✅ Focus GitHub reviews on stability issues only
-- 🔄 Document all checks in this guide
-- 🔄 Create `.cursorrules-checks` for Cursor to reference
-
-### Phase 2: Transition (Weeks 3-4)
-- 📋 Implement 50% of checks in Cursor
-- 📋 Add pre-commit hooks for critical checks
-- 📋 Monitor which GitHub checks are still valuable
-- 📋 Track cost savings
-
-### Phase 3: Complete Migration (Weeks 5-6)
-- 📋 Move remaining checks to Cursor
-- 📋 Disable GitHub Claude (or keep for final sanity check only)
-- 📋 Document cost savings achieved
+**Purpose**: Migrate code review checks from expensive GitHub Actions to free local Cursor AI  
+**Timeline**: 6 weeks  
+**Goal**: $0 monthly GitHub Claude cost while maintaining code quality
 
 ---
 
-## 🔍 What GitHub Claude Currently Checks
+## 📊 Current State Analysis
+
+### GitHub Claude Usage (Before Migration)
+- **Frequency**: ~15-20 PR reviews/month
+- **Cost per review**: $0.10 - $0.50 (depending on PR size)
+- **Monthly cost**: ~$5-10
+- **Annual cost**: ~$60-120
+
+### Cursor Local Checks (Target)
+- **Frequency**: Every commit (unlimited)
+- **Cost**: $0 (included in Cursor subscription)
+- **Latency**: Instant (no CI wait time)
+- **Quality**: Same or better (AI has more context)
+
+---
+
+## 🎯 What GitHub Claude Currently Checks
 
 ### Critical Blockers (App Won't Work)
+1. **API Endpoint Errors**
+   - 500 errors from missing error handling
+   - Routing issues (like Options endpoint bug)
+   - Missing dependency imports
+   
+2. **Authentication/Security**
+   - SQL injection vulnerabilities
+   - Exposed API keys or secrets
+   - Missing JWT validation
+   - Insecure password handling
 
-| Check                             | Description                                  | Cursor Alternative                        | Status         |
-| --------------------------------- | -------------------------------------------- | ----------------------------------------- | -------------- |
-| **API Endpoint Errors**           | 500 errors, missing error handling in routes | Manual review during coding               | 📋 To Do        |
-| **Auth/Security Vulnerabilities** | SQL injection, exposed secrets, weak auth    | Can add to `.cursorrules-checks`          | 📋 To Do        |
-| **Database Connection Failures**  | Missing DB session handling                  | Can add to `.cursorrules-checks`          | 📋 To Do        |
-| **Missing Imports**               | Dependencies that break builds               | Caught by TypeScript/Python LSP in Cursor | ✅ Already Done |
-| **Syntax Errors**                 | Code that won't compile                      | Caught by linters in Cursor               | ✅ Already Done |
+3. **Database Issues**
+   - Connection failures
+   - Missing migrations
+   - Schema mismatches
 
 ### Stability Issues (App Might Crash)
+4. **External API Handling**
+   - Unhandled exceptions in Tradier API calls
+   - Missing timeouts for Alpaca requests
+   - No retry logic for Anthropic AI
+   
+5. **Financial Precision**
+   - Using `float` instead of `Decimal` for money
+   - Rounding errors in calculations
+   - Penny loss in conversions
 
-| Check                        | Description                                     | Cursor Alternative                                | Status  |
-| ---------------------------- | ----------------------------------------------- | ------------------------------------------------- | ------- |
-| **Unhandled API Exceptions** | Missing try/except for Tradier/Alpaca/Anthropic | Can add to `.cursorrules-checks`                  | 📋 To Do |
-| **Float in Financial Calc**  | Using `float` instead of `Decimal`              | Can add to `.cursorrules-checks`                  | 📋 To Do |
-| **Missing CORS Headers**     | Security headers not configured                 | Manual review                                     | 📋 To Do |
-| **Race Conditions**          | Async code issues                               | Manual review during coding                       | 📋 To Do |
-| **Options Endpoint Pattern** | Similar routing issues to known bug             | Can add pattern matching to `.cursorrules-checks` | 📋 To Do |
+6. **Race Conditions**
+   - Async/await issues
+   - Concurrent database writes
+   - WebSocket state management
+
+---
+
+## 🔄 Migration Roadmap
+
+### Week 1-2: Setup & Documentation
+- ✅ Create `.cursorrules-checks` with all patterns
+- ✅ Document GitHub Claude checks in this guide
+- ✅ Add checks to `.cursorrules` for Cursor AI
+
+### Week 3-4: Parallel Running
+- [ ] Run both GitHub Claude AND Cursor checks
+- [ ] Compare results - track false positives
+- [ ] Fine-tune Cursor rules based on comparison
+- [ ] Document any issues Claude catches that Cursor misses
+
+### Week 5: Cursor Primary
+- [ ] Make Cursor the primary reviewer
+- [ ] Keep GitHub Claude as backup (manual trigger only)
+- [ ] Remove automatic PR triggers from GitHub workflow
+- [ ] Track cost savings
+
+### Week 6: GitHub Claude Retirement
+- [ ] Disable GitHub Claude workflows
+- [ ] Archive configuration for future reference
+- [ ] Document final savings
+- [ ] Celebrate! 🎉
+
+---
+
+## 🛠️ How to Replicate Checks in Cursor
+
+### 1. API Endpoint Error Checking
+
+**GitHub Claude checks:**
+```python
+# Missing error handling
+@router.get("/api/example")
+async def example():
+    data = external_api.get()  # ❌ No try/except
+    return data
+```
+
+**Cursor equivalent:**
+- Add to `.cursorrules`: "Always wrap external API calls in try/except with specific error handling"
+- Use Cursor's "Explain Error" on any API endpoint
+- Ask Cursor: "Are there unhandled exceptions in this file?"
+
+### 2. Financial Precision Checking
+
+**GitHub Claude checks:**
+```python
+# Using float for money
+price = 123.45  # ❌ float
+total = price * quantity  # ❌ precision loss
+```
+
+**Cursor equivalent:**
+- Add to `.cursorrules-checks`: Search pattern `price.*=.*[0-9]+\.[0-9]+` 
+- Ask Cursor: "Find all financial calculations using float instead of Decimal"
+- Use Cursor command: "Check for Decimal usage in financial code"
+
+### 3. Security Vulnerability Checking
+
+**GitHub Claude checks:**
+- SQL injection patterns
+- Exposed secrets
+- Missing auth
+
+**Cursor equivalent:**
+- Ask Cursor: "Check this file for security vulnerabilities"
+- Use pattern: `f"SELECT.*{.*}"`  (SQL injection risk)
+- Use pattern: `API_KEY.*=.*"[^{]"` (hardcoded secret)
+
+### 4. Import Error Checking
+
+**GitHub Claude checks:**
+- Missing imports
+- Circular dependencies
+- Typos in module names
+
+**Cursor equivalent:**
+- Cursor auto-detects missing imports in real-time
+- Ask: "Are all imports available?"
+- Run: Local pytest to catch import errors instantly
+
+---
+
+## 📝 Cursor Commands Cheat Sheet
+
+### During Coding
+```
+1. "Check this file for stability issues"
+2. "Are there any unhandled exceptions?"
+3. "Find financial calculations using float"
+4. "Check for SQL injection vulnerabilities"
+5. "Verify all external API calls have error handling"
+```
+
+### Before Committing
+```
+1. "Review this PR for critical blockers"
+2. "Check for authentication/security issues"
+3. "Find any race conditions in async code"
+4. "Verify database migrations are safe"
+```
+
+### Weekly Reviews
+```
+1. "Scan codebase for common stability patterns"
+2. "Find all TODOs related to error handling"
+3. "Check for outdated dependencies"
+```
 
 ---
 
 ## 💰 Cost Comparison
 
 ### GitHub Claude (Current)
+| Scenario | Tokens | Cost |
+|----------|--------|------|
+| Small PR (1-2 files) | ~2,000 | $0.06 |
+| Medium PR (5-10 files) | ~5,000 | $0.15 |
+| Large PR (20+ files) | ~10,000 | $0.30 |
+| **Monthly Total** | ~50,000 | **$5-10** |
 
-**Before Optimization**:
-- Runs on: Every PR to any branch
-- Average cost per run: ~$0.15-0.30 (depending on diff size)
-- Estimated monthly runs: ~40-60 PRs
-- **Monthly cost**: ~$6-18
+### Cursor (Target)
+| Scenario | Tokens | Cost |
+|----------|--------|------|
+| Every commit check | Unlimited | $0 |
+| Full codebase scan | Unlimited | $0 |
+| **Monthly Total** | Unlimited | **$0** |
 
-**After Optimization** (Current State):
-- Runs on: PRs to `main` branch + critical files only
-- Reduced frequency: ~80% fewer runs
-- Average cost per run: ~$0.10-0.20 (reduced max_tokens)
-- Estimated monthly runs: ~8-12 PRs
-- **Monthly cost**: ~$1-3 💰 **70-85% savings**
-
-### Cursor (Local - Target State)
-
-**Cost**:
-- No API costs (local execution)
-- One-time setup: 1-2 hours
-- Maintenance: ~30 min/month to update rules
-- **Monthly cost**: $0 🎉 **100% savings**
-
-**Benefits**:
-- ✅ Instant feedback (no waiting for GitHub Actions)
-- ✅ Catch issues BEFORE committing
-- ✅ No monthly API bills
-- ✅ Works offline
-- ✅ Can customize checks per file/context
+**Annual Savings**: ~$60-120  
+**Bonus**: Instant feedback, no CI wait
 
 ---
 
-## 🛠️ How to Replicate Checks in Cursor
+## 🎯 Success Criteria
 
-### 1. Financial Precision Check (Decimal vs Float)
+### You'll know migration is complete when:
+1. ✅ Cursor catches 95%+ of issues GitHub Claude used to catch
+2. ✅ No "missed" critical bugs in production
+3. ✅ GitHub Claude workflow is disabled
+4. ✅ Monthly GitHub Actions cost reduced by $5-10
+5. ✅ Code review latency reduced from minutes to seconds
 
-**GitHub Check**: Flags `float` usage in financial calculations
+---
 
-**Cursor Implementation**:
+## 🚀 Quick Start (This Week!)
+
+### Step 1: Add to your `.cursorrules` file
+```markdown
+## Critical Code Review Checks
+
+Before committing, verify:
+1. All external API calls have try/except with specific error handling
+2. Financial calculations use Decimal, not float
+3. No SQL queries with string interpolation (SQL injection risk)
+4. All API endpoints have authentication checks
+5. No hardcoded API keys or secrets
+```
+
+### Step 2: Use Cursor daily
+- Ask Cursor to review files before committing
+- Use "Explain Error" on any failing tests
+- Run pattern searches from `.cursorrules-checks`
+
+### Step 3: Track results
+- Keep a log of what Cursor catches
+- Note any issues Cursor misses (re-train rules)
+- Measure time saved vs GitHub Claude
+
+---
+
+## 📚 Advanced Topics
+
+### Custom Cursor Rules
+You can create custom rules in `.cursorrules` that match your specific patterns:
+
+```markdown
+### PaiiD-Specific Checks
+
+1. **Options Endpoint Pattern**: 
+   - Always validate symbol parameter
+   - Check expiration date format
+   - Handle empty results gracefully
+
+2. **Tradier API Pattern**:
+   - Use TradierClient wrapper, not raw requests
+   - Always set timeout=30
+   - Log all API calls
+
+3. **Financial Calculations**:
+   - Import: `from decimal import Decimal`
+   - Convert floats: `Decimal(str(value))`
+   - Round to 2 places for display
+```
+
+### Integration with Git Hooks
 ```bash
-# Add to pre-commit hook or run manually:
-cd backend
-grep -r "float.*price\|float.*quantity\|float.*balance" app/routers/ app/services/
-```
-
-**Better**: Use `.cursorrules-checks` - Cursor will automatically flag these patterns
-
-### 2. API Error Handling Check
-
-**GitHub Check**: Flags missing try/except around external API calls
-
-**Cursor Implementation**:
-1. When editing routers/services, manually verify:
-   - Every `tradier_client.*` call is wrapped in try/except
-   - Every `alpaca.*` call is wrapped in try/except
-   - Every `anthropic.*` call is wrapped in try/except
-
-2. Pattern to search for:
-```python
-# Search for unhandled API calls
-grep -r "tradier_client\.\|alpaca\.\|anthropic\." backend/app/ | grep -v "try:"
-```
-
-### 3. SQL Injection Check
-
-**GitHub Check**: Flags non-parameterized SQL queries
-
-**Cursor Implementation**:
-1. Search for f-strings in database queries:
-```bash
-grep -r "f\".*SELECT\|f\".*INSERT\|f\".*UPDATE\|f\".*DELETE" backend/app/
-```
-
-2. `.cursorrules-checks` will flag this pattern automatically
-
-### 4. Options Endpoint Pattern Check
-
-**GitHub Check**: Detects routing issues similar to known Options endpoint bug
-
-**Cursor Implementation**:
-1. When creating new endpoints, verify:
-   - Route is registered in router with correct prefix
-   - Route path doesn't conflict with existing routes
-   - Path parameters are properly typed
-   - Endpoint handler is async if calling async services
-
-2. Test locally BEFORE pushing:
-```bash
-curl http://localhost:8001/api/your-endpoint
-# Should NOT return 500 or 404
+# .git/hooks/pre-commit
+#!/bin/bash
+echo "🔍 Running Cursor AI checks..."
+cursor-cli check --rules .cursorrules-checks
 ```
 
 ---
 
-## 📝 Pre-Commit Checklist (Manual for Now)
+## 🎉 Expected Outcomes
 
-Before committing changes to critical files, verify:
-
-### Backend Changes (`app/routers/`, `app/services/`)
-- [ ] All external API calls wrapped in try/except
-- [ ] Using `Decimal` for financial calculations (not `float`)
-- [ ] Database queries are parameterized (no f-strings in SQL)
-- [ ] New endpoints tested locally (curl/browser)
-- [ ] Auth required on protected endpoints
-
-### Frontend Changes (`pages/api/proxy/`)
-- [ ] API calls go through proxy (not direct to backend)
-- [ ] Error states handled in UI
-- [ ] Loading states shown during API calls
-- [ ] TypeScript types defined (no `any`)
-
-### Security Changes (`core/security.py`, `core/auth.py`)
-- [ ] No secrets/keys hardcoded
-- [ ] CORS settings correct
-- [ ] Rate limiting in place
-- [ ] Input validation on all endpoints
+### After 6 Weeks
+- **Code quality**: Same or better
+- **Review speed**: 10x faster (seconds vs minutes)
+- **Cost**: $0/month (from $5-10/month)
+- **Developer experience**: Better (instant feedback)
+- **CI pipeline**: Cleaner (fewer checks needed)
 
 ---
 
-## 📊 Success Metrics
+## 📞 Need Help?
 
-### Week 1-2 (Setup Phase)
-- ✅ GitHub Claude running 80% less frequently
-- ✅ Only critical files trigger reviews
-- ✅ Cost reduced from ~$6-18/mo to ~$1-3/mo
+If you encounter issues during migration:
 
-### Week 3-4 (Transition Phase)
-- 🎯 Target: 50% of issues caught in Cursor before commit
-- 🎯 Target: GitHub Claude finds <2 issues per PR
-- 🎯 Target: Time to PR approval reduced by 30%
-
-### Week 5-6 (Complete Migration)
-- 🎯 Target: 90% of issues caught locally in Cursor
-- 🎯 Target: GitHub Claude disabled or runs once/week only
-- 🎯 Target: API costs near $0/month
+1. **Check `.cursorrules-checks`** - All patterns are documented
+2. **Review this guide** - Step-by-step instructions
+3. **Compare results** - GitHub Claude vs Cursor for same PR
+4. **Iterate** - Fine-tune rules based on what you find
 
 ---
 
-## 🔄 Repeated Issues Tracker
+## 🏆 Success Story Template
 
-Track issues that GitHub Claude catches repeatedly - these are prime candidates for Cursor automation:
+After migration, document your success:
 
-| Issue                               | Times Caught | Cursor Check Available? | Priority |
-| ----------------------------------- | ------------ | ----------------------- | -------- |
-| Missing try/except on Tradier calls | 0            | ⏳ Pending               | High     |
-| Float instead of Decimal            | 0            | ⏳ Pending               | High     |
-| SQL injection risk                  | 0            | ⏳ Pending               | Critical |
-| Missing error handling              | 0            | ⏳ Pending               | High     |
-| TypeScript `any` usage              | 0            | ✅ ESLint catches this   | Low      |
+```markdown
+## Cursor Migration - Results
 
-*Update this table as GitHub reviews happen - when an issue is caught 3+ times, immediately add it to `.cursorrules-checks`*
+**Before**: 
+- GitHub Claude reviews: 20/month
+- Cost: $8.50/month
+- Review latency: 3-5 minutes
 
----
+**After**:
+- Cursor reviews: Unlimited
+- Cost: $0
+- Review latency: Instant
 
-## 🎓 Learning from GitHub Claude
+**Issues caught that GitHub missed**: [List any]
+**Issues GitHub caught that Cursor missed**: [List any]
 
-Each time GitHub Claude reviews a PR:
-
-1. **Read the review** - What did it catch?
-2. **Ask yourself** - Could I have caught this in Cursor?
-3. **Update .cursorrules-checks** - Add pattern if repeated
-4. **Document here** - Add to checklist if manual process needed
+**Recommendation**: ✅ Migration successful, GitHub Claude retired
+```
 
 ---
 
-## 🚀 Next Steps
-
-1. ✅ **This week**: Monitor GitHub Claude reviews, document what it catches
-2. 📋 **Next week**: Implement top 3 most common checks in `.cursorrules-checks`
-3. 📋 **Week 3**: Add pre-commit hooks for critical checks
-4. 📋 **Week 4**: Review cost savings, adjust strategy
-5. 📋 **Week 5-6**: Finalize migration, disable/minimize GitHub Claude
-
----
-
-## 📞 When to Still Use GitHub Claude
-
-Even after migration, keep GitHub Claude for:
-- ✅ Final sanity check before merging to `main` (once/day max)
-- ✅ Complex architectural changes that need deep analysis
-- ✅ Security audit of auth/payment code
-- ✅ When you're uncertain about a risky change
-
-Run it **manually** via `workflow_dispatch` instead of automatically on every PR.
-
----
-
-**Last Updated**: 2025-10-24
-**Next Review**: Check progress in 1 week
-
+*This guide will evolve as you migrate. Update it with your learnings!* 🚀
