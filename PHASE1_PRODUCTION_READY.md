@@ -6,10 +6,12 @@
 **File:** `backend/app/routers/options.py`
 
 **Changes Made:**
-- ✅ Implemented TradierClient class for API integration
-- ✅ Added `/api/chain/{symbol}` endpoint with Greeks
-- ✅ Added `/api/expirations/{symbol}` endpoint
-- ✅ Implemented 5-minute TTL caching (TTLCache)
+- ✅ Implemented TradierClient class for API integration with mock fallbacks for TESTING mode
+- ✅ Added `/api/options/chain/{symbol}` endpoint with Greeks and contract list
+- ✅ Added `/api/options/expirations/{symbol}` endpoint
+- ✅ Added `/api/options/greeks` endpoint that calculates theoretical pricing + Greeks on demand
+- ✅ Implemented 5-minute in-memory TTL caching for options chains
+- ✅ Added backend smoke-check script for Alpaca credentials
 - ✅ Fixed import paths (settings, require_bearer)
 - ✅ Tested with SPY, AAPL, TSLA symbols
 
@@ -28,15 +30,19 @@
 - ✅ Color-coded Greeks formatting
 - ✅ Call/Put/Both filter toggle
 - ✅ Expiration dropdown with days-to-expiry
+- ✅ Trade workflow buttons that pre-fill Execute Trade form with contract details
 - ✅ Full error handling
 
 **API Calls (via Next.js proxy):**
 ```typescript
 // Expirations endpoint
-fetch(`/api/proxy/expirations/${symbol}`)
+fetch(`/api/proxy/options/expirations/${symbol}`)
 
 // Options chain endpoint
-fetch(`/api/proxy/chain/${symbol}?expiration=${selectedExpiration}`)
+fetch(`/api/proxy/options/chain/${symbol}?expiration=${selectedExpiration}`)
+
+// Greeks endpoint
+fetch(`/api/proxy/options/greeks?symbol=${symbol}&strike=${strike}&expiration=${selectedExpiration}&option_type=call`)
 ```
 
 ### 3. Test Page
@@ -56,9 +62,9 @@ fetch(`/api/proxy/chain/${symbol}?expiration=${selectedExpiration}`)
 - ✅ Added "expirations" to ALLOW_GET list
 
 **Routing:**
-- Frontend calls: `/api/proxy/chain/SPY`
-- Proxy forwards to: `http://localhost:8001/api/chain/SPY`
-- Backend handles: `/api/chain/SPY` (router prefix `/api`)
+- Frontend calls: `/api/proxy/options/chain/SPY`
+- Proxy forwards to: `http://localhost:8001/api/options/chain/SPY`
+- Backend handles: `/api/options/chain/SPY` (router prefix `/api`)
 
 ## 🎯 Production Deployment Checklist
 
@@ -139,7 +145,7 @@ Frontend MUST use proxy routes to avoid:
 fetch(`/api/proxy/chain/SPY`)
 
 // ❌ Wrong (direct backend)
-fetch(`http://localhost:8001/api/chain/SPY`)
+   fetch(`http://localhost:8001/api/options/chain/SPY`)
 ```
 
 ### Cache Strategy

@@ -63,7 +63,7 @@ except Exception as e:
 **Request:**
 ```bash
 curl -H "Authorization: Bearer {token}" \
-  "http://localhost:8001/api/expirations/OPTT"
+  "http://localhost:8001/api/options/expirations/OPTT"
 ```
 
 **Response:**
@@ -89,7 +89,7 @@ curl -H "Authorization: Bearer {token}" \
 **Request:**
 ```bash
 curl -H "Authorization: Bearer {token}" \
-  "http://localhost:8001/api/chain/OPTT?expiration=2025-11-21"
+  "http://localhost:8001/api/options/chain/OPTT?expiration=2025-11-21"
 ```
 
 **Response Summary:**
@@ -178,21 +178,21 @@ curl -H "Authorization: Bearer {token}" \
 
 **Request 1 (Cache Miss):**
 ```bash
-curl http://localhost:8001/api/chain/OPTT?expiration=2025-11-21
+curl http://localhost:8001/api/options/chain/OPTT?expiration=2025-11-21
 Response: 200 OK (14 contracts)
 ```
 
 **Request 2 (Cache Hit):**
 ```bash
-curl http://localhost:8001/api/chain/OPTT?expiration=2025-11-21
+curl http://localhost:8001/api/options/chain/OPTT?expiration=2025-11-21
 Response: 200 OK (14 contracts, from cache)
 ```
 
 **Backend Logs:**
 ```
-INFO: 127.0.0.1:58200 - "GET /api/chain/OPTT?expiration=2025-11-21 HTTP/1.1" 200 OK
-INFO: 127.0.0.1:58229 - "GET /api/chain/OPTT?expiration=2025-11-21 HTTP/1.1" 200 OK
-INFO: 127.0.0.1:58269 - "GET /api/chain/OPTT?expiration=2025-11-21 HTTP/1.1" 200 OK
+INFO: 127.0.0.1:58200 - "GET /api/options/chain/OPTT?expiration=2025-11-21 HTTP/1.1" 200 OK
+INFO: 127.0.0.1:58229 - "GET /api/options/chain/OPTT?expiration=2025-11-21 HTTP/1.1" 200 OK
+INFO: 127.0.0.1:58269 - "GET /api/options/chain/OPTT?expiration=2025-11-21 HTTP/1.1" 200 OK
 ```
 
 **✅ VERIFICATION:**
@@ -211,7 +211,7 @@ INFO: 127.0.0.1:58269 - "GET /api/chain/OPTT?expiration=2025-11-21 HTTP/1.1" 200
 
 **Request:**
 ```bash
-curl http://localhost:8001/api/chain/SPY?expiration=2025-01-17
+curl http://localhost:8001/api/options/chain/SPY?expiration=2025-01-17
 ```
 
 **Previous Test Results:**
@@ -227,7 +227,7 @@ curl http://localhost:8001/api/chain/SPY?expiration=2025-01-17
 
 **Request:**
 ```bash
-curl http://localhost:8001/api/chain/SPY?expiration=2025-10-24
+curl http://localhost:8001/api/options/chain/SPY?expiration=2025-10-24
 ```
 
 **Result:**
@@ -257,8 +257,8 @@ const ALLOW_GET = new Set([
 
 **Routing Logic:**
 ```typescript
-// Frontend calls: /api/proxy/chain/OPTT
-// Proxy constructs: http://localhost:8001/api/chain/OPTT
+// Frontend calls: /api/proxy/options/chain/OPTT
+// Proxy constructs: http://localhost:8001/api/options/chain/OPTT
 const url = `${BACKEND}/api/${path}${queryString}`;
 ```
 
@@ -275,8 +275,8 @@ const url = `${BACKEND}/api/${path}${queryString}`;
 **API Calls:**
 ```typescript
 // ✅ PRODUCTION-READY PROXY ROUTES
-fetch(`/api/proxy/expirations/${symbol}`)
-fetch(`/api/proxy/chain/${symbol}?expiration=${selectedExpiration}`)
+fetch(`/api/proxy/options/expirations/${symbol}`)
+fetch(`/api/proxy/options/chain/${symbol}?expiration=${selectedExpiration}`)
 ```
 
 **✅ VERIFICATION:**
@@ -454,7 +454,7 @@ cd backend && python -m uvicorn app.main:app --reload --port 8001
 cd frontend && npm run dev
 
 # Verify
-curl http://localhost:8001/api/expirations/OPTT
+curl http://localhost:8001/api/options/expirations/OPTT
 ```
 
 ### Step 3: Deploy to Production

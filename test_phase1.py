@@ -102,13 +102,13 @@ def main():
     # Test 2: Expirations Endpoint
     results.append(test_endpoint(
         f"Expirations for {TEST_SYMBOL}",
-        f"{BACKEND_URL}/api/expirations/{TEST_SYMBOL}",
+        f"{BACKEND_URL}/api/options/expirations/{TEST_SYMBOL}",
         expected_keys=None  # Returns list
     ))
 
     # Test 3: Options Chain Endpoint
     expirations_response = requests.get(
-        f"{BACKEND_URL}/api/expirations/{TEST_SYMBOL}",
+        f"{BACKEND_URL}/api/options/expirations/{TEST_SYMBOL}",
         headers=HEADERS
     )
     expirations = expirations_response.json()
@@ -116,7 +116,7 @@ def main():
     if expirations:
         test_expiration = expirations[0]["date"]
         chain_response = requests.get(
-            f"{BACKEND_URL}/api/chain/{TEST_SYMBOL}?expiration={test_expiration}",
+            f"{BACKEND_URL}/api/options/chain/{TEST_SYMBOL}?expiration={test_expiration}",
             headers=HEADERS
         )
 
@@ -125,7 +125,7 @@ def main():
 
             results.append(test_endpoint(
                 f"Options Chain for {TEST_SYMBOL} {test_expiration}",
-                f"{BACKEND_URL}/api/chain/{TEST_SYMBOL}?expiration={test_expiration}",
+                f"{BACKEND_URL}/api/options/chain/{TEST_SYMBOL}?expiration={test_expiration}",
                 expected_keys=["symbol", "expiration_date", "calls", "puts", "total_contracts"]
             ))
 

@@ -125,10 +125,16 @@ export default function ExecuteTradeForm() {
       // eslint-disable-next-line no-console
       console.info("[ExecuteTradeForm] Pre-filling form with trade data:", tradeData);
 
+      if (tradeData.assetClass) setAssetClass(tradeData.assetClass);
+
       // Pre-fill form fields
       if (tradeData.symbol) setSymbol(tradeData.symbol);
       if (tradeData.side) setSide(tradeData.side);
       if (tradeData.quantity && tradeData.quantity > 0) setQty(tradeData.quantity);
+
+      if (tradeData.optionType) setOptionType(tradeData.optionType);
+      if (tradeData.expirationDate) setExpirationDate(tradeData.expirationDate);
+      if (tradeData.strikePrice) setStrikePrice(tradeData.strikePrice.toString());
 
       // Set order type and price based on available data
       if (tradeData.entryPrice && tradeData.entryPrice > 0) {
@@ -173,12 +179,13 @@ export default function ExecuteTradeForm() {
 
     setLoadingOptionsChain(true);
     try {
-      const response = await fetch(`/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}`);
+      const response = await fetch(`/api/proxy/options/expirations/${sym.toUpperCase()}`);
       if (response.ok) {
-        const data = await response.json();
-        setAvailableExpirations(data.expirations || []);
-        if (data.expirations && data.expirations.length > 0) {
-          setExpirationDate(data.expirations[0]); // Auto-select first expiration
+        const data: { date: string }[] = await response.json();
+        const expirationDates = data.map((item) => item.date);
+        setAvailableExpirations(expirationDates);
+        if (expirationDates.length > 0) {
+          setExpirationDate(expirationDates[0]);
         }
       }
     } catch (err) {
@@ -195,15 +202,16 @@ export default function ExecuteTradeForm() {
     setLoadingOptionsChain(true);
     try {
       const response = await fetch(
-        `/api/proxy/api/options/chain?symbol=${sym.toUpperCase()}&expiration=${expiry}`
+        `/api/proxy/options/chain/${sym.toUpperCase()}?expiration=${expiry}`
       );
       if (response.ok) {
         const data = await response.json();
-        setAvailableStrikes(data.strikes || []);
-        if (data.strikes && data.strikes.length > 0) {
+        const strikes: number[] = data.strikes || [];
+        setAvailableStrikes(strikes);
+        if (strikes.length > 0) {
           // Auto-select strike closest to ATM
-          const middleIndex = Math.floor(data.strikes.length / 2);
-          setStrikePrice(data.strikes[middleIndex].toString());
+          const middleIndex = Math.floor(strikes.length / 2);
+          setStrikePrice(strikes[middleIndex].toString());
         }
       }
     } catch (err) {

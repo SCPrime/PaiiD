@@ -9,9 +9,9 @@
 
 ## 📋 Issue Summary
 
-The `/api/expirations/{symbol}` endpoint consistently returns **500 Internal Server Error** with no error logs, preventing the Options Trading UI from loading expiration dates.
+The `/api/options/expirations/{symbol}` endpoint consistently returns **500 Internal Server Error** with no error logs, preventing the Options Trading UI from loading expiration dates.
 
-**Endpoint:** `GET /api/expirations/{symbol}`
+**Endpoint:** `GET /api/options/expirations/{symbol}`
 **Expected:** List of expiration dates with Greeks data
 **Actual:** 500 Internal Server Error (plain text, no JSON)
 
@@ -153,14 +153,14 @@ const mockExpirations = [
 ## 📊 Impact Assessment
 
 **Severity:** High (blocks Phase 1 options trading feature)
-**Scope:** Single endpoint (`/api/expirations/{symbol}`)
+**Scope:** Single endpoint (`/api/options/expirations/{symbol}`)
 **Workaround Available:** Yes (frontend can call Tradier directly)
 **Blocks Deployment:** No (other features work)
 
 **Affected Components:**
 - ✅ Options expiration dropdown (no data)
 - ✅ Options chain initial load (can't select expiration)
-- ❌ Other options endpoints (`/api/chain/{symbol}`) - **NOT tested** (may have same issue)
+- ❌ Other options endpoints (`/api/options/chain/{symbol}`) - **NOT tested** (may have same issue)
 
 ---
 
@@ -173,7 +173,7 @@ const mockExpirations = [
 
 **Test Command:**
 ```bash
-curl http://127.0.0.1:8001/api/expirations/AAPL
+curl http://127.0.0.1:8001/api/options/expirations/AAPL
 # Expected: JSON array of expiration dates
 # Actual: "Internal Server Error" (plain text)
 ```
@@ -203,7 +203,7 @@ curl http://127.0.0.1:8001/api/expirations/AAPL
 ## ✅ Resolution Criteria
 
 Bug is fixed when:
-1. `curl http://127.0.0.1:8001/api/expirations/AAPL` returns JSON array
+1. `curl http://127.0.0.1:8001/api/options/expirations/AAPL` returns JSON array
 2. Backend logs show "DEBUG: get_expiration_dates called for symbol=AAPL"
 3. Frontend OptionsChain component loads expiration dropdown
 4. No 500 errors in browser console or backend logs

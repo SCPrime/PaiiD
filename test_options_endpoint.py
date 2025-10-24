@@ -14,7 +14,7 @@ except Exception as e:
 # Test 2: Expirations endpoint (failing)
 print("\n==== TEST 2: Expirations Endpoint (No Auth) ====")
 try:
-    resp = requests.get("http://127.0.0.1:8001/api/expirations/AAPL", timeout=5)
+    resp = requests.get("http://127.0.0.1:8001/api/options/expirations/AAPL", timeout=5)
     print(f"Status: {resp.status_code}")
     print(f"Response: {resp.text}")
 except Exception as e:
@@ -24,7 +24,7 @@ except Exception as e:
 print("\n==== TEST 3: Expirations Endpoint (With Auth) ====")
 try:
     headers = {"Authorization": "Bearer tuGlKvrYEoiJcv7r7oIy7zXM9pqVnaxN_74obFz6lVo"}
-    resp = requests.get("http://127.0.0.1:8001/api/expirations/AAPL", headers=headers, timeout=5)
+    resp = requests.get("http://127.0.0.1:8001/api/options/expirations/AAPL", headers=headers, timeout=5)
     print(f"Status: {resp.status_code}")
     print(f"Response: {resp.text}")
 except Exception as e:

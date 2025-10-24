@@ -73,12 +73,12 @@
 
 **Available Requests:**
 1. **Health Check** - `GET /api/health`
-2. **OPTT Expirations** - `GET /api/expirations/OPTT`
-3. **OPTT Options Chain** - `GET /api/chain/OPTT?expiration=2025-11-21`
-4. **SPY Expirations** - `GET /api/expirations/SPY`
-5. **SPY Options Chain** - `GET /api/chain/SPY?expiration=2025-10-24`
-6. **OPTT Expirations (via Proxy)** - `GET /api/proxy/expirations/OPTT`
-7. **OPTT Chain (via Proxy)** - `GET /api/proxy/chain/OPTT`
+2. **OPTT Expirations** - `GET /api/options/expirations/OPTT`
+3. **OPTT Options Chain** - `GET /api/options/chain/OPTT?expiration=2025-11-21`
+4. **SPY Expirations** - `GET /api/options/expirations/SPY`
+5. **SPY Options Chain** - `GET /api/options/chain/SPY?expiration=2025-10-24`
+6. **OPTT Expirations (via Proxy)** - `GET /api/proxy/options/expirations/OPTT`
+7. **OPTT Chain (via Proxy)** - `GET /api/proxy/options/chain/OPTT`
 
 **Built-in Tests:**
 - Status code validation (200 OK)
@@ -241,7 +241,7 @@ npx playwright codegen http://localhost:3000/test-options
 2. Types "OPTT" in symbol input
 3. Clicks "Load Options Chain"
 4. Reads console for errors
-5. Inspects network request to `/api/proxy/chain/OPTT`
+5. Inspects network request to `/api/proxy/options/chain/OPTT`
 6. Verifies 14 contracts with Greeks returned
 7. Reports: "✅ OPTT loaded successfully, no errors found"
 
