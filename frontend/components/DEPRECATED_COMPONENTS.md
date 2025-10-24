@@ -1,47 +1,10 @@
-# Deprecated Components
+# Deprecated Components (Archived)
 
-This document tracks deprecated components that have been replaced with improved versions.
+All previously deprecated components have now been removed from the codebase and the document is kept for historical reference.
 
-## Deprecated on October 11, 2025
+## Removed on October 13, 2025
 
-### 1. StrategyBuilder.tsx → StrategyBuilderAI.tsx
+- `frontend/components/StrategyBuilder.deprecated.tsx` → `frontend/components/StrategyBuilderAI.tsx`
+- `frontend/components/MorningRoutine.deprecated.tsx` → `frontend/components/MorningRoutineAI.tsx`
 
-**Status:** Deprecated (renamed to `.deprecated.tsx`)
-**Reason:** Replaced by AI-powered version with Claude integration
-**Migration:** Use `StrategyBuilderAI` component instead
-**Removal date:** TBD (after verifying no imports remain)
-
-### 2. MorningRoutine.tsx → MorningRoutineAI.tsx
-
-**Status:** Deprecated (renamed to `.deprecated.tsx`)
-**Reason:** Replaced by AI-powered version with personalized morning routine generation
-**Migration:** Use `MorningRoutineAI` component instead
-**Removal date:** TBD (after verifying no imports remain)
-
-## Migration Guide
-
-If you have custom code importing these components:
-
-```typescript
-// OLD (deprecated):
-import StrategyBuilder from "../components/StrategyBuilder";
-import MorningRoutine from "../components/MorningRoutine";
-
-// NEW (recommended):
-import StrategyBuilderAI from "../components/StrategyBuilderAI";
-import MorningRoutineAI from "../components/MorningRoutineAI";
-```
-
-The AI versions provide:
-
-- Claude-powered natural language interaction
-- Personalized recommendations
-- Better UX with conversational interface
-- Same functionality + AI enhancements
-
-## Process for Deprecation
-
-1. Rename old component to `.deprecated.tsx`
-2. Update all imports to use new component
-3. Add entry to this file
-4. After 30 days with no usage, delete the deprecated file
+No additional action is required—new implementations should use the AI-based replacements listed above.
