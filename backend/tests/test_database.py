@@ -8,7 +8,7 @@ from datetime import datetime
 
 import pytest
 
-from app.models.database import EquitySnapshot, Performance, Strategy, Trade, User
+from app.models.database import EquitySnapshot, Performance, Position, Strategy, Trade, User
 
 
 # Test password hash (matches TEST_PASSWORD_HASH from conftest.py)
@@ -352,6 +352,63 @@ class TestEquitySnapshotModel:
         assert snapshots[4].equity == 100400.00
 
 
+class TestPositionModel:
+    """Test Position model CRUD operations"""
+
+    def test_create_position(self, test_db, sample_user):
+        """Test creating a new portfolio position"""
+        position = Position(
+            user_id=sample_user.id,
+            symbol="AAPL",
+            asset_class="stock",
+            quantity=5,
+            avg_entry_price=150.0,
+            current_price=152.0,
+            market_value=760.0,
+            cost_basis=750.0,
+            unrealized_pl=10.0,
+            unrealized_pl_percent=1.33,
+            greeks={},
+        )
+        test_db.add(position)
+        test_db.commit()
+        test_db.refresh(position)
+
+        assert position.id is not None
+        assert position.status == "open"
+        assert position.symbol == "AAPL"
+        assert position.user_id == sample_user.id
+
+    def test_position_relationship_to_user(self, test_db, sample_user, sample_position):
+        """Test User → Position relationship"""
+        test_db.refresh(sample_user)
+        assert len(sample_user.positions) == 1
+        assert sample_user.positions[0].symbol == "AAPL"
+
+    def test_attach_trade_to_position(
+        self, test_db, sample_user, sample_strategy, sample_position
+    ):
+        """Test linking a trade to an existing position"""
+        trade = Trade(
+            user_id=sample_user.id,
+            strategy_id=sample_strategy.id,
+            position_id=sample_position.id,
+            symbol="AAPL",
+            side="sell",
+            quantity=5,
+            price=155.0,
+            order_type="limit",
+            status="pending",
+        )
+        test_db.add(trade)
+        test_db.commit()
+        test_db.refresh(sample_position)
+
+        assert trade.position_id == sample_position.id
+        assert len(sample_position.trades) == 1
+        assert sample_position.trades[0].symbol == "AAPL"
+
+
 class TestModelRelationships:
     """Test relationships between models"""
 
@@ -365,6 +422,28 @@ class TestModelRelationships:
         # Note: Trade model doesn't have back_populates to Strategy
         # So we can only test the foreign key exists
         assert sample_trade.strategy_id is not None
+
+    def test_trade_to_position_relationship(
+        self, test_db, sample_user, sample_strategy, sample_position
+    ):
+        """Test Trade → Position relationship"""
+        trade = Trade(
+            user_id=sample_user.id,
+            strategy_id=sample_strategy.id,
+            position_id=sample_position.id,
+            symbol="AAPL",
+            side="sell",
+            quantity=5,
+            price=160.0,
+            order_type="market",
+            status="filled",
+        )
+        test_db.add(trade)
+        test_db.commit()
+        test_db.refresh(trade)
+
+        assert trade.position is not None
+        assert trade.position.symbol == "AAPL"
 
     def test_trade_set_null_on_strategy_delete(self, test_db, sample_trade, sample_strategy):
         """Test ON DELETE SET NULL for strategy_id"""
