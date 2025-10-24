@@ -18,7 +18,51 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from cachetools import TTLCache
+try:
+    from cachetools import TTLCache
+except ModuleNotFoundError:  # pragma: no cover - fallback for minimal environments
+    import time
+
+    class TTLCache(dict):  # type: ignore[override]
+        def __init__(self, maxsize: int, ttl: int):
+            super().__init__()
+            self.maxsize = maxsize
+            self.ttl = ttl
+            self._expiry: dict[str, float] = {}
+
+        def _prune(self) -> None:
+            now = time.monotonic()
+            expired_keys = [key for key, expiry in self._expiry.items() if expiry <= now]
+            for key in expired_keys:
+                super().pop(key, None)
+                self._expiry.pop(key, None)
+
+        def __getitem__(self, key: str):  # type: ignore[override]
+            self._prune()
+            value = super().__getitem__(key)
+            if key not in self._expiry:
+                raise KeyError(key)
+            return value
+
+        def get(self, key: str, default=None):  # type: ignore[override]
+            try:
+                return self[key]
+            except KeyError:
+                return default
+
+        def __setitem__(self, key: str, value) -> None:  # type: ignore[override]
+            self._prune()
+            if len(self) >= self.maxsize:
+                oldest_key = min(self._expiry, key=self._expiry.get, default=None)
+                if oldest_key is not None:
+                    super().pop(oldest_key, None)
+                    self._expiry.pop(oldest_key, None)
+            self._expiry[key] = time.monotonic() + self.ttl
+            super().__setitem__(key, value)
+
+        def pop(self, key: str, default=None):  # type: ignore[override]
+            self._expiry.pop(key, None)
+            return super().pop(key, default)
 
 from ..core.config import settings
 from ..core.auth import require_bearer

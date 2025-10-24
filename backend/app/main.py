@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 
@@ -8,23 +9,41 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
 
-print("\n===== BACKEND STARTUP =====")
-print(f".env path: {env_path}")
-print(f".env exists: {env_path.exists()}")
-print(f"API_TOKEN from env: {os.getenv('API_TOKEN', 'NOT_SET')}")
-print(f"TRADIER_API_KEY configured: {'YES' if os.getenv('TRADIER_API_KEY') else 'NO'}")
-print("Deployed from: main branch - Tradier integration active")
-print("===========================\n", flush=True)
+from .core.config import settings
+from .core.observability import (
+    configure_logging,
+    init_datadog,
+    init_sentry,
+    verify_error_ingestion,
+    wrap_with_new_relic,
+)
 
 
-import sentry_sdk
-from fastapi import FastAPI
+configure_logging(settings.LOG_LEVEL)
+logger = logging.getLogger("paiid.main")
+
+logger.info(
+    "Backend startup",
+    extra={
+        "event": "backend_startup",
+        "env_file": str(env_path),
+        "env_file_exists": env_path.exists(),
+        "app_env": settings.APP_ENV,
+        "tradier_api_key_configured": bool(os.getenv("TRADIER_API_KEY")),
+    },
+)
+
+lifecycle_logger = logging.getLogger("paiid.lifecycle")
+
+init_datadog(settings)
+init_sentry(settings)
+verify_error_ingestion(settings)
+
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.starlette import StarletteIntegration
 from slowapi.errors import RateLimitExceeded
 
-from .core.config import settings
 from .routers import (
     ai,
     analytics,
@@ -50,52 +69,22 @@ from .routers import (
 )
 from .routers import settings as settings_router
 from .scheduler import init_scheduler
-
-
-# Initialize Sentry if DSN is configured
-if settings.SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=settings.SENTRY_DSN,
-        integrations=[
-            StarletteIntegration(transaction_style="endpoint"),
-            FastApiIntegration(transaction_style="endpoint"),
-        ],
-        traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
-        profiles_sample_rate=0.1,  # 10% profiling
-        environment=(
-            "production"
-            if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "")
-            else "development"
-        ),
-        release="paiid-backend@1.0.0",
-        send_default_pii=False,  # Don't send personally identifiable info
-        before_send=lambda event, hint: (
-            event
-            if not event.get("request", {}).get("headers", {}).get("Authorization")
-            else {
-                **event,
-                "request": {
-                    **event.get("request", {}),
-                    "headers": {
-                        **event.get("request", {}).get("headers", {}),
-                        "Authorization": "[REDACTED]",
-                    },
-                },
-            }
-        ),
-    )
-    print("[OK] Sentry error tracking initialized", flush=True)
-else:
-    print("[WARNING] SENTRY_DSN not configured - error tracking disabled", flush=True)
-
-print("\n===== SETTINGS LOADED =====")
-print(f"settings.API_TOKEN: {settings.API_TOKEN}")
-print("===========================\n", flush=True)
+from .services.health_monitor import health_monitor
 
 app = FastAPI(
     title="PaiiD Trading API",
     description="Personal Artificial Intelligence Investment Dashboard",
     version="1.0.0",
+)
+
+app = wrap_with_new_relic(app, settings)
+
+logger.info(
+    "Settings loaded",
+    extra={
+        "event": "settings_loaded",
+        "api_token_configured": bool(settings.API_TOKEN and settings.API_TOKEN != "change-me"),
+    },
 )
 
 # Configure rate limiting (Phase 3: Bulletproof Reliability)
@@ -105,9 +94,12 @@ if not settings.TESTING:
 
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
-    print("[OK] Rate limiting enabled", flush=True)
+    lifecycle_logger.info("Rate limiting enabled", extra={"event": "rate_limit_enabled"})
 else:
-    print("[TEST MODE] Rate limiting disabled for tests", flush=True)
+    lifecycle_logger.info(
+        "Rate limiting disabled for test environment",
+        extra={"event": "rate_limit_disabled", "reason": "testing"},
+    )
 
 
 # Initialize scheduler, cache, and streaming on startup
@@ -125,22 +117,31 @@ async def startup_event():
 
             init_cache()
     except Exception as e:
-        print(f"[ERROR] Failed to initialize cache: {e!s}", flush=True)
+        lifecycle_logger.exception(
+            "Failed to initialize cache",
+            extra={"event": "cache_initialization_failed"},
+        )
 
     # Initialize scheduler
     try:
         async with monitor.phase("scheduler_init", timeout=5.0):
             scheduler_instance = init_scheduler()
-            print("[OK] Scheduler initialized and started", flush=True)
+            lifecycle_logger.info(
+                "Scheduler initialized and started",
+                extra={"event": "scheduler_started"},
+            )
     except Exception as e:
-        print(f"[ERROR] Failed to initialize scheduler: {e!s}", flush=True)
+        lifecycle_logger.exception(
+            "Failed to initialize scheduler",
+            extra={"event": "scheduler_initialization_failed"},
+        )
 
     # ⚠️ ARCHITECTURE NOTE: Tradier provides ALL market data (quotes, streaming, analysis)
     # Alpaca is used ONLY for paper trade execution (orders, positions, account)
     # Future: Tradier will also handle live trading post-MVP
-    print(
-        "[INFO] Market data: Tradier API | Trade execution: Alpaca Paper Trading",
-        flush=True,
+    lifecycle_logger.info(
+        "Market data sourced from Tradier API; Alpaca used for paper trading",
+        extra={"event": "market_data_overview"},
     )
 
     # Start Tradier streaming service (non-blocking background task)
@@ -165,17 +166,17 @@ async def startup_event():
             if stream:
                 # Add symbols to active set - they'll be subscribed when WebSocket connects
                 stream.active_symbols.update(["$DJI", "COMP:GIDS"])
-                print(
-                    "[INFO] Queued subscription to $DJI and COMP (will connect when circuit breaker clears)",
-                    flush=True,
+                lifecycle_logger.info(
+                    "Queued initial Tradier stream subscriptions",
+                    extra={
+                        "event": "tradier_stream_subscription_queued",
+                        "symbols": ["$DJI", "COMP:GIDS"],
+                    },
                 )
     except Exception as e:
-        print(
-            f"[WARNING] Tradier stream startup failed (non-blocking): {e}", flush=True
-        )
-        print(
-            "[INFO] Application will continue - streaming will retry automatically",
-            flush=True,
+        lifecycle_logger.warning(
+            "Tradier stream startup failed but will retry",
+            extra={"event": "tradier_stream_start_failed", "error": str(e)},
         )
 
     # Finish monitoring and log summary
@@ -191,18 +192,30 @@ async def shutdown_event():
 
         scheduler_instance = get_scheduler()
         scheduler_instance.shutdown()
-        print("[OK] Scheduler shut down gracefully", flush=True)
+        lifecycle_logger.info(
+            "Scheduler shut down gracefully",
+            extra={"event": "scheduler_shutdown"},
+        )
     except Exception as e:
-        print(f"[ERROR] Scheduler shutdown error: {e!s}", flush=True)
+        lifecycle_logger.exception(
+            "Scheduler shutdown error",
+            extra={"event": "scheduler_shutdown_failed"},
+        )
 
     # Stop Tradier streaming
     try:
         from .services.tradier_stream import stop_tradier_stream
 
         await stop_tradier_stream()
-        print("[OK] Tradier stream stopped", flush=True)
+        lifecycle_logger.info(
+            "Tradier stream stopped",
+            extra={"event": "tradier_stream_shutdown"},
+        )
     except Exception as e:
-        print(f"[ERROR] Tradier shutdown error: {e}", flush=True)
+        lifecycle_logger.exception(
+            "Tradier stream shutdown error",
+            extra={"event": "tradier_stream_shutdown_failed"},
+        )
 
 
 # Add Sentry context middleware if Sentry is enabled
@@ -231,7 +244,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(health.router, prefix="/api")
+app.include_router(health.router)
 app.include_router(auth.router, prefix="/api")  # Authentication endpoints
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(portfolio.router, prefix="/api")
@@ -253,3 +266,24 @@ app.include_router(scheduler.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(backtesting.router, prefix="/api")
 app.include_router(telemetry.router)
+
+
+@app.get("/api/sentry-test", include_in_schema=False)
+async def sentry_test_endpoint() -> None:
+    """Trigger a synthetic exception for Sentry integration testing."""
+
+    raise RuntimeError("SENTRY TEST: manual trigger")
+
+
+@app.get("/api/ready", include_in_schema=False)
+async def ready_endpoint() -> dict[str, bool | str]:
+    """Readiness probe compatible with the legacy /api/ready contract."""
+
+    system_health = health_monitor.get_system_health()
+    if system_health.get("status") == "healthy":
+        return {"ready": True}
+
+    raise HTTPException(
+        status_code=503,
+        detail={"ready": False, "reason": system_health.get("status", "unknown")},
+    )

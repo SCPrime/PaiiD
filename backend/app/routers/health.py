@@ -13,9 +13,11 @@ router = APIRouter(prefix="/api/health", tags=["health"])
 @router.get("")
 async def health_check():
     """Basic health check - public"""
+    current_time = datetime.now().isoformat()
     return {
         "status": "ok",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": current_time,
+        "time": current_time,
     }
 
 

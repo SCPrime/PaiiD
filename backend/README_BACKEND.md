@@ -30,6 +30,16 @@ This backend is designed to be deployed on Render or Fly.io.
 - `LIVE_TRADING`: Enable live trading (default: false)
 - `IDMP_TTL_SECONDS`: Idempotency key TTL in seconds (default: 600)
 - `ALLOW_ORIGIN`: Allowed CORS origin for frontend
+- Observability-related variables are documented in
+  [`docs/OBSERVABILITY_RUNBOOK.md`](docs/OBSERVABILITY_RUNBOOK.md).
+
+## Observability
+
+- Structured JSON logging is enabled by default and includes Datadog trace IDs
+  when tracing is active.
+- Sentry, Datadog, and New Relic can be enabled through environment variables;
+  see the [Observability Runbook](docs/OBSERVABILITY_RUNBOOK.md) for setup and
+  verification procedures.
 
 ## Endpoints
 
