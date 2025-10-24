@@ -13,6 +13,8 @@ import { Card, Button } from "./ui";
 import { theme } from "../styles/theme";
 import TradingViewChart from "./TradingViewChart";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import PortfolioPerformancePanel from "@/src/features/portfolio/components/PortfolioPerformancePanel";
+import PortfolioRiskOverview from "@/src/features/portfolio/components/PortfolioRiskOverview";
 import html2canvas from "html2canvas";
 
 interface PerformanceMetrics {
@@ -641,6 +643,19 @@ export default function Analytics() {
 
       {/* Portfolio Summary Card */}
       <PortfolioSummaryCard />
+
+      {/* Portfolio analytics powered by live Greeks */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "minmax(0, 2fr) minmax(0, 1fr)",
+          gap: theme.spacing.lg,
+          marginBottom: theme.spacing.lg,
+        }}
+      >
+        <PortfolioPerformancePanel />
+        <PortfolioRiskOverview />
+      </div>
 
       {/* AI Portfolio Health Check Button */}
       <div style={{ marginBottom: theme.spacing.lg }}>

@@ -6,6 +6,9 @@ Provides test fixtures for database, API client, and mocked services.
 
 import os
 
+import sys
+import types
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -21,6 +24,19 @@ os.environ["TESTING"] = "true"  # Disable rate limiting for tests
 os.environ["API_TOKEN"] = "test-token-12345"
 os.environ["TRADIER_API_KEY"] = "test-tradier-key"
 os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
+
+if "cachetools" not in sys.modules:
+    cachetools_stub = types.ModuleType("cachetools")
+
+    def _cached(*args, **kwargs):  # type: ignore[override]
+        def decorator(func):
+            return func
+
+        return decorator
+
+    cachetools_stub.TTLCache = dict  # type: ignore[attr-defined]
+    cachetools_stub.cached = _cached  # type: ignore[attr-defined]
+    sys.modules["cachetools"] = cachetools_stub
 
 from app.db.session import Base, get_db
 from app.main import app

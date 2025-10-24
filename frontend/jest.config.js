@@ -12,6 +12,7 @@ module.exports = {
     '^@/pages/(.*)$': '<rootDir>/pages/$1',
     '^@/styles/(.*)$': '<rootDir>/styles/$1',
     '^@/services/(.*)$': '<rootDir>/services/$1',
+    '^@/src/(.*)$': '<rootDir>/src/$1',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   collectCoverageFrom: [
