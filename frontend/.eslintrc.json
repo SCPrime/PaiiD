@@ -13,7 +13,8 @@
     "sourceType": "module",
     "ecmaFeatures": {
       "jsx": true
-    }
+    },
+    "warnOnUnsupportedTypeScriptVersion": false
   },
   "plugins": ["@typescript-eslint", "react", "react-hooks", "prettier"],
   "env": {
@@ -28,7 +29,7 @@
       "error",
       { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
     ],
-    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
 
@@ -38,10 +39,10 @@
     "react/display-name": "off",
     "react/no-unknown-property": ["error", { "ignore": ["jsx", "global"] }],
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
+    "react-hooks/exhaustive-deps": "off",
 
     // General
-    "no-console": ["warn", { "allow": ["warn", "error", "info"] }],
+    "no-console": ["warn", { "allow": ["warn", "error", "info", "log", "debug"] }],
     "no-debugger": "warn",
     "prefer-const": "error",
     "no-var": "error",

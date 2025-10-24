@@ -15,7 +15,7 @@ import { theme } from "../styles/theme";
 import ConfirmDialog from "./ConfirmDialog";
 import { addOrderToHistory } from "./OrderHistory";
 import { showSuccess, showError, showWarning } from "../lib/toast";
-import { useIsMobile } from "../hooks/useBreakpoint";
+import { useIsMobile, useIsTablet } from "../hooks/useBreakpoint";
 import { useWorkflow } from "../contexts/WorkflowContext";
 import StockLookup from "./StockLookup";
 import OptionsGreeksDisplay from "./OptionsGreeksDisplay";
@@ -58,18 +58,21 @@ interface OrderTemplate {
 export default function ExecuteTradeForm() {
   // Mobile detection
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
 
   // Workflow context
   const { pendingNavigation, clearPendingNavigation } = useWorkflow();
 
   // Responsive sizing
   const responsiveSizes = {
-    headerLogo: isMobile ? "32px" : "42px",
-    iconSize: isMobile ? 24 : 32,
-    titleSize: isMobile ? "20px" : "28px",
-    inputPadding: isMobile ? "14px 16px" : "12px 16px",
+    headerLogo: isMobile ? "32px" : isTablet ? "38px" : "42px",
+    iconSize: isMobile ? 24 : isTablet ? 28 : 32,
+    titleSize: isMobile ? "20px" : isTablet ? "24px" : "28px",
+    inputPadding: isMobile ? "14px 16px" : isTablet ? "12px 16px" : "12px 20px",
     inputFontSize: "16px", // Always 16px to prevent iOS zoom
   };
+
+  const formGridTemplate = isMobile ? "1fr" : "repeat(2, minmax(280px, 1fr))";
 
   const [symbol, setSymbol] = useState("SPY");
   const [side, setSide] = useState<"buy" | "sell">("buy");
@@ -588,15 +591,15 @@ export default function ExecuteTradeForm() {
       <div style={{ padding: theme.spacing.lg }}>
         <Card glow="green">
           {/* Header with PaiiD Logo */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: theme.spacing.md,
-              marginBottom: theme.spacing.xl,
-              flexWrap: isMobile ? "wrap" : "nowrap",
-            }}
-          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "flex-start" : "center",
+                gap: isMobile ? theme.spacing.sm : theme.spacing.md,
+                marginBottom: theme.spacing.xl,
+              }}
+            >
             {/* PaiiD Logo */}
             <div
               style={{ fontSize: responsiveSizes.headerLogo, fontWeight: "900", lineHeight: "1" }}
@@ -687,8 +690,10 @@ export default function ExecuteTradeForm() {
             <div
               style={{
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "flex-start" : "center",
+                justifyContent: isMobile ? "flex-start" : "space-between",
+                gap: isMobile ? theme.spacing.sm : 0,
                 marginBottom: theme.spacing.md,
               }}
             >
@@ -708,7 +713,11 @@ export default function ExecuteTradeForm() {
               <Button
                 variant="secondary"
                 onClick={() => setShowSaveTemplate(!showSaveTemplate)}
-                style={{ fontSize: "12px", padding: "6px 12px" }}
+                style={{
+                  fontSize: "12px",
+                  padding: "6px 12px",
+                  width: isMobile ? "100%" : "auto",
+                }}
               >
                 <Save size={14} style={{ marginRight: "4px" }} />
                 Save Current as Template
@@ -716,7 +725,13 @@ export default function ExecuteTradeForm() {
             </div>
 
             {/* Template Selector */}
-            <div style={{ display: "flex", gap: theme.spacing.sm }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: isMobile ? "column" : "row",
+                gap: theme.spacing.sm,
+              }}
+            >
               <select
                 value={selectedTemplateId}
                 onChange={(e) => handleTemplateSelect(e.target.value)}
@@ -741,7 +756,10 @@ export default function ExecuteTradeForm() {
                 <Button
                   variant="danger"
                   onClick={() => handleDeleteTemplate(parseInt(selectedTemplateId))}
-                  style={{ padding: "10px" }}
+                  style={{
+                    padding: "10px",
+                    width: isMobile ? "100%" : "auto",
+                  }}
                 >
                   <Trash2 size={16} />
                 </Button>
@@ -801,14 +819,24 @@ export default function ExecuteTradeForm() {
                     fontSize: "13px",
                   }}
                 />
-                <div style={{ display: "flex", gap: theme.spacing.sm }}>
-                  <Button variant="primary" onClick={handleSaveTemplate} style={{ flex: 1 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: isMobile ? "column" : "row",
+                    gap: theme.spacing.sm,
+                  }}
+                >
+                  <Button
+                    variant="primary"
+                    onClick={handleSaveTemplate}
+                    style={{ flex: 1, width: isMobile ? "100%" : "auto" }}
+                  >
                     Save
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={() => setShowSaveTemplate(false)}
-                    style={{ flex: 1 }}
+                    style={{ flex: 1, width: isMobile ? "100%" : "auto" }}
                   >
                     Cancel
                   </Button>
@@ -818,82 +846,90 @@ export default function ExecuteTradeForm() {
           </div>
 
           {/* Asset Class Toggle (Stock vs Options) */}
-          <div
-            style={{
-              marginBottom: theme.spacing.xl,
-              padding: theme.spacing.lg,
-              background: theme.background.input,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: theme.borderRadius.lg,
-            }}
-          >
-            <label
+            <div
               style={{
-                display: "block",
-                fontSize: "14px",
-                fontWeight: "600",
+                marginBottom: theme.spacing.xl,
+                padding: theme.spacing.lg,
+                background: theme.background.input,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: theme.borderRadius.lg,
+              }}
+            >
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: "600",
                 color: theme.colors.textMuted,
                 marginBottom: theme.spacing.md,
               }}
             >
               Asset Type
             </label>
-            <div style={{ display: "flex", gap: theme.spacing.sm }}>
-              <button
-                type="button"
-                onClick={() => setAssetClass("stock")}
+              <div
                 style={{
-                  flex: 1,
-                  padding: "12px",
-                  background: assetClass === "stock" ? theme.colors.primary : theme.background.card,
-                  border: `2px solid ${assetClass === "stock" ? theme.colors.primary : theme.colors.border}`,
-                  borderRadius: theme.borderRadius.md,
-                  color: assetClass === "stock" ? "#0f172a" : theme.colors.text,
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: theme.transitions.normal,
+                  display: "flex",
+                  flexDirection: isMobile ? "column" : "row",
+                  gap: theme.spacing.sm,
                 }}
               >
-                Stock
-              </button>
-              <button
-                type="button"
-                onClick={() => setAssetClass("option")}
-                style={{
-                  flex: 1,
-                  padding: "12px",
-                  background:
-                    assetClass === "option" ? theme.colors.primary : theme.background.card,
-                  border: `2px solid ${assetClass === "option" ? theme.colors.primary : theme.colors.border}`,
-                  borderRadius: theme.borderRadius.md,
-                  color: assetClass === "option" ? "#0f172a" : theme.colors.text,
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: theme.transitions.normal,
-                }}
-              >
-                Options
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setAssetClass("stock")}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    background: assetClass === "stock" ? theme.colors.primary : theme.background.card,
+                    border: `2px solid ${assetClass === "stock" ? theme.colors.primary : theme.colors.border}`,
+                    borderRadius: theme.borderRadius.md,
+                    color: assetClass === "stock" ? "#0f172a" : theme.colors.text,
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    transition: theme.transitions.normal,
+                    width: isMobile ? "100%" : "auto",
+                  }}
+                >
+                  Stock
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAssetClass("option")}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    background:
+                      assetClass === "option" ? theme.colors.primary : theme.background.card,
+                    border: `2px solid ${assetClass === "option" ? theme.colors.primary : theme.colors.border}`,
+                    borderRadius: theme.borderRadius.md,
+                    color: assetClass === "option" ? "#0f172a" : theme.colors.text,
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    transition: theme.transitions.normal,
+                    width: isMobile ? "100%" : "auto",
+                  }}
+                >
+                  Options
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Form */}
-          <form
-            onSubmit={handleSubmit}
-            style={{ display: "flex", flexDirection: "column", gap: theme.spacing.xl }}
-          >
-            {/* Form Grid */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-                gap: theme.spacing.xl,
-              }}
+            {/* Form */}
+            <form
+              onSubmit={handleSubmit}
+              style={{ display: "flex", flexDirection: "column", gap: theme.spacing.xl }}
             >
-              {/* Symbol */}
-              <div>
+              {/* Form Grid */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: formGridTemplate,
+                  gap: theme.spacing.xl,
+                }}
+              >
+                {/* Symbol */}
+                <div>
                 <label
                   style={{
                     display: "block",
@@ -905,12 +941,19 @@ export default function ExecuteTradeForm() {
                 >
                   Symbol
                 </label>
-                <div style={{ display: "flex", gap: theme.spacing.sm }}>
-                  <input
-                    type="text"
-                    value={symbol}
-                    onChange={(e) => setSymbol(e.target.value)}
-                    placeholder="SPY, AAPL, QQQ..."
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: isMobile ? "column" : "row",
+                      gap: theme.spacing.sm,
+                      alignItems: isMobile ? "stretch" : "center",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={symbol}
+                      onChange={(e) => setSymbol(e.target.value)}
+                      placeholder="SPY, AAPL, QQQ..."
                     disabled={loading}
                     required
                     style={{
@@ -935,19 +978,21 @@ export default function ExecuteTradeForm() {
                         showWarning("⚠️ Enter a symbol first");
                       }
                     }}
-                    disabled={loading}
-                    style={{
-                      padding: isMobile ? "12px" : "12px 16px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <Search size={18} />
-                    {!isMobile && <span>Research</span>}
-                  </Button>
+                      disabled={loading}
+                      style={{
+                        padding: isMobile ? "12px" : "12px 16px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        width: isMobile ? "100%" : "auto",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Search size={18} />
+                      {!isMobile && <span>Research</span>}
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
               {/* AI Analysis Section */}
               {symbol.trim() && (
@@ -995,14 +1040,16 @@ export default function ExecuteTradeForm() {
                   {aiAnalysis && !aiLoading && (
                     <div>
                       {/* Header with Risk Score Badge */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: theme.spacing.md,
-                        flexWrap: isMobile ? 'wrap' : 'nowrap',
-                        gap: theme.spacing.sm
-                      }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
+                            alignItems: isMobile ? 'flex-start' : 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: theme.spacing.md,
+                            gap: theme.spacing.sm
+                          }}
+                        >
                         <h4 style={{
                           margin: 0,
                           fontSize: '16px',
@@ -1145,14 +1192,21 @@ export default function ExecuteTradeForm() {
                         <div style={{ fontSize: '12px', fontWeight: '600', color: theme.colors.textMuted, marginBottom: theme.spacing.sm }}>
                           Key Levels
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: theme.spacing.md }}>
-                          <div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
+                            justifyContent: 'space-between',
+                            gap: theme.spacing.md
+                          }}
+                        >
+                          <div style={{ width: isMobile ? '100%' : 'auto' }}>
                             <div style={{ fontSize: '11px', color: theme.colors.textMuted }}>Support</div>
                             <div style={{ fontSize: '15px', fontWeight: '600', color: theme.colors.success }}>
                               ${aiAnalysis.support_level.toFixed(2)}
                             </div>
                           </div>
-                          <div>
+                          <div style={{ width: isMobile ? '100%' : 'auto' }}>
                             <div style={{ fontSize: '11px', color: theme.colors.textMuted }}>Resistance</div>
                             <div style={{ fontSize: '15px', fontWeight: '600', color: theme.colors.danger }}>
                               ${aiAnalysis.resistance_level.toFixed(2)}
@@ -1504,17 +1558,35 @@ export default function ExecuteTradeForm() {
             )}
 
             {/* Action Buttons */}
-            <div style={{ display: "flex", gap: theme.spacing.md, marginTop: theme.spacing.lg }}>
-              <Button type="submit" loading={loading} variant="primary" style={{ flex: 1 }}>
-                {loading ? "Processing..." : "Submit Order (Dry-Run)"}
-              </Button>
-
-              {lastRequestId && (
-                <Button type="button" onClick={testDuplicate} loading={loading} variant="secondary">
-                  Test Duplicate
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: isMobile ? "column" : "row",
+                  gap: theme.spacing.md,
+                  marginTop: theme.spacing.lg,
+                }}
+              >
+                <Button
+                  type="submit"
+                  loading={loading}
+                  variant="primary"
+                  style={{ flex: 1, width: isMobile ? "100%" : "auto" }}
+                >
+                  {loading ? "Processing..." : "Submit Order (Dry-Run)"}
                 </Button>
-              )}
-            </div>
+
+                {lastRequestId && (
+                  <Button
+                    type="button"
+                    onClick={testDuplicate}
+                    loading={loading}
+                    variant="secondary"
+                    style={{ width: isMobile ? "100%" : "auto" }}
+                  >
+                    Test Duplicate
+                  </Button>
+                )}
+              </div>
           </form>
 
           {/* Last Request ID */}
@@ -1538,24 +1610,31 @@ export default function ExecuteTradeForm() {
           {/* Success Response */}
           {response && !error && (
             <div style={{ marginTop: theme.spacing.lg }}>
-              <div
-                style={{
-                  padding: theme.spacing.lg,
-                  background: response.duplicate
-                    ? "rgba(255, 136, 0, 0.2)"
-                    : "rgba(16, 185, 129, 0.2)",
-                  border: `2px solid ${response.duplicate ? theme.colors.warning : theme.colors.primary}`,
-                  borderRadius: theme.borderRadius.md,
-                  boxShadow: response.duplicate ? theme.glow.orange : theme.glow.green,
-                  marginBottom: theme.spacing.md,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "flex-start", gap: theme.spacing.md }}>
+                <div
+                  style={{
+                    padding: theme.spacing.lg,
+                    background: response.duplicate
+                      ? "rgba(255, 136, 0, 0.2)"
+                      : "rgba(16, 185, 129, 0.2)",
+                    border: `2px solid ${response.duplicate ? theme.colors.warning : theme.colors.primary}`,
+                    borderRadius: theme.borderRadius.md,
+                    boxShadow: response.duplicate ? theme.glow.orange : theme.glow.green,
+                    marginBottom: theme.spacing.md,
+                  }}
+                >
                   <div
                     style={{
-                      padding: theme.spacing.sm,
-                      background: response.duplicate
-                        ? "rgba(255, 136, 0, 0.2)"
+                      display: "flex",
+                      flexDirection: isMobile ? "column" : "row",
+                      alignItems: isMobile ? "flex-start" : "center",
+                      gap: theme.spacing.md,
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: theme.spacing.sm,
+                        background: response.duplicate
+                          ? "rgba(255, 136, 0, 0.2)"
                         : "rgba(16, 185, 129, 0.2)",
                       borderRadius: theme.borderRadius.sm,
                     }}
@@ -1661,7 +1740,14 @@ export default function ExecuteTradeForm() {
                 boxShadow: theme.glow.red,
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: theme.spacing.md }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: isMobile ? "column" : "row",
+                  alignItems: isMobile ? "flex-start" : "center",
+                  gap: theme.spacing.md,
+                }}
+              >
                 <div
                   style={{
                     padding: theme.spacing.sm,

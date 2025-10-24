@@ -16,7 +16,7 @@ echo "🔍 Running pre-commit validation..."
 echo "🔒 Phase 1: Checking for LOCKED FINAL file modifications..."
 
 # Check if any LOCKED FINAL files are staged for commit
-LOCKED_FILES=$(git diff --cached --name-only | grep -E "LOCKED FINAL|Locked\.tsx|Locked\.svg|CompletePaiiDLogo|PaiiDChatBoxLocked|iPi-Symbol-Locked")
+LOCKED_FILES=$(git diff --cached --name-only | grep -E "LOCKED FINAL|Locked\.tsx|Locked\.svg|CompletePaiiDLogo|PaiiDChatBoxLocked|iPi-Symbol-Locked" || true)
 
 if [ -n "$LOCKED_FILES" ]; then
   echo ""
@@ -66,12 +66,22 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+cd ..
+
 # ====================================
 # PHASE 3: BACKEND VALIDATION
 # ====================================
 
+BACKEND_CHANGES=$(git diff --cached --name-only | grep '^backend/' || true)
+
+if [ -z "$BACKEND_CHANGES" ]; then
+  echo "🐍 Phase 3: Backend validation skipped (no backend changes detected)."
+  echo "✅ All pre-commit checks passed!"
+  exit 0
+fi
+
 echo "🐍 Phase 3: Backend validation..."
-cd ../backend
+cd backend
 ruff check . --fix
 if [ $? -ne 0 ]; then
   echo "❌ Backend Ruff linting failed! Fix Python errors before committing."
@@ -84,6 +94,8 @@ if [ $? -ne 0 ]; then
   echo "❌ Backend Ruff formatting failed!"
   exit 1
 fi
+
+cd ..
 
 # ====================================
 # SUCCESS

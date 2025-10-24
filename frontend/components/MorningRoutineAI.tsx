@@ -956,7 +956,7 @@ Provide:
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+                gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
                 gap: theme.spacing.md,
               }}
             >

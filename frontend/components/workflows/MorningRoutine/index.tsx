@@ -1,12 +1,42 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { paidTheme } from "../../../styles/paiid-theme";
 import { MarketStatus } from "./MarketStatus";
 import { PortfolioSummary } from "./PortfolioSummary";
 import { TodaySchedule } from "./TodaySchedule";
 import { MarketAlerts } from "./MarketAlerts";
 import { PreMarketMovers } from "./PreMarketMovers";
+import { useIsMobile, useIsTablet } from "@/hooks/useBreakpoint";
 
 export const MorningRoutine: React.FC = () => {
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+
+  const layoutColumns = useMemo(() => {
+    if (isMobile) return "repeat(1, minmax(0, 1fr))";
+    if (isTablet) return "repeat(8, minmax(0, 1fr))";
+    return "repeat(12, minmax(0, 1fr))";
+  }, [isMobile, isTablet]);
+
+  const leftColumnSpan = useMemo(() => {
+    if (isMobile) return "span 1";
+    if (isTablet) return "span 3";
+    return "span 3";
+  }, [isMobile, isTablet]);
+
+  const middleColumnSpan = useMemo(() => {
+    if (isMobile) return "span 1";
+    if (isTablet) return "span 5";
+    return "span 6";
+  }, [isMobile, isTablet]);
+
+  const rightColumnSpan = useMemo(() => {
+    if (isMobile) return "span 1";
+    if (isTablet) return "span 8";
+    return "span 3";
+  }, [isMobile, isTablet]);
+
+  const containerPadding = isMobile ? paidTheme.spacing.md : paidTheme.spacing.xl;
+
   return (
     <div
       style={{
@@ -14,20 +44,26 @@ export const MorningRoutine: React.FC = () => {
         background: paidTheme.colors.background,
         color: paidTheme.colors.text,
         fontFamily: paidTheme.typography.fontFamily.main,
-        padding: paidTheme.spacing.xl,
+        padding: containerPadding,
+        paddingTop: isMobile ? paidTheme.spacing.lg : paidTheme.spacing.xl,
       }}
     >
       {/* Header */}
       <div
         style={{
-          marginBottom: paidTheme.spacing.xl,
-          paddingBottom: paidTheme.spacing.lg,
+          marginBottom: isMobile ? paidTheme.spacing.lg : paidTheme.spacing.xl,
+          paddingBottom: isMobile ? paidTheme.spacing.md : paidTheme.spacing.lg,
           borderBottom: `1px solid ${paidTheme.colors.glassBorder}`,
+          display: "flex",
+          flexDirection: "column",
+          gap: isMobile ? paidTheme.spacing.xs : paidTheme.spacing.sm,
         }}
       >
         <h1
           style={{
-            fontSize: paidTheme.typography.fontSize["3xl"],
+            fontSize: isMobile
+              ? paidTheme.typography.fontSize["xl"]
+              : paidTheme.typography.fontSize["3xl"],
             fontWeight: 700,
             margin: 0,
             marginBottom: paidTheme.spacing.xs,
@@ -41,7 +77,9 @@ export const MorningRoutine: React.FC = () => {
         </h1>
         <p
           style={{
-            fontSize: paidTheme.typography.fontSize.base,
+            fontSize: isMobile
+              ? paidTheme.typography.fontSize.sm
+              : paidTheme.typography.fontSize.base,
             color: paidTheme.colors.textMuted,
             margin: 0,
           }}
@@ -54,17 +92,17 @@ export const MorningRoutine: React.FC = () => {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(12, 1fr)",
-          gap: paidTheme.spacing.lg,
+          gridTemplateColumns: layoutColumns,
+          gap: isMobile ? paidTheme.spacing.md : paidTheme.spacing.lg,
         }}
       >
         {/* Left Column - Market Status + Alerts */}
         <div
           style={{
-            gridColumn: "span 3",
+            gridColumn: leftColumnSpan,
             display: "flex",
             flexDirection: "column",
-            gap: paidTheme.spacing.lg,
+            gap: paidTheme.spacing.md,
           }}
         >
           <MarketStatus />
@@ -74,10 +112,10 @@ export const MorningRoutine: React.FC = () => {
         {/* Middle Column - Portfolio + Schedule */}
         <div
           style={{
-            gridColumn: "span 6",
+            gridColumn: middleColumnSpan,
             display: "flex",
             flexDirection: "column",
-            gap: paidTheme.spacing.lg,
+            gap: paidTheme.spacing.md,
           }}
         >
           <PortfolioSummary />
@@ -87,7 +125,7 @@ export const MorningRoutine: React.FC = () => {
         {/* Right Column - Pre-Market Movers */}
         <div
           style={{
-            gridColumn: "span 3",
+            gridColumn: rightColumnSpan,
           }}
         >
           <PreMarketMovers />
@@ -97,9 +135,10 @@ export const MorningRoutine: React.FC = () => {
       {/* Quick Actions Footer */}
       <div
         style={{
-          marginTop: paidTheme.spacing.xl,
+          marginTop: isMobile ? paidTheme.spacing.lg : paidTheme.spacing.xl,
           display: "flex",
-          gap: paidTheme.spacing.md,
+          flexWrap: "wrap",
+          gap: paidTheme.spacing.sm,
           justifyContent: "center",
         }}
       >
@@ -115,7 +154,7 @@ export const MorningRoutine: React.FC = () => {
               background: paidTheme.colors.glass,
               border: `1px solid ${paidTheme.colors.glassBorder}`,
               borderRadius: paidTheme.borderRadius.md,
-              padding: `${paidTheme.spacing.sm} ${paidTheme.spacing.lg}`,
+              padding: `${paidTheme.spacing.xs} ${paidTheme.spacing.md}`,
               color: paidTheme.colors.text,
               fontSize: paidTheme.typography.fontSize.sm,
               fontWeight: 500,
@@ -124,6 +163,8 @@ export const MorningRoutine: React.FC = () => {
               display: "flex",
               alignItems: "center",
               gap: paidTheme.spacing.sm,
+              width: isMobile ? "100%" : "auto",
+              justifyContent: "center",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = paidTheme.colors.glassHover;
