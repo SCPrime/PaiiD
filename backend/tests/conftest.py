@@ -4,13 +4,39 @@ Pytest Configuration and Fixtures
 Provides test fixtures for database, API client, and mocked services.
 """
 
+import fnmatch
 import os
+import sys
+import time
+import types
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+
+try:
+    from cachetools import TTLCache as _TTLCache  # type: ignore
+except ImportError:  # pragma: no cover - fallback only exercised locally
+    class _TTLCache(dict):
+        """Minimal TTLCache replacement for tests when cachetools isn't installed."""
+
+        def __init__(self, maxsize: int = 128, ttl: int = 600):
+            super().__init__()
+            self.maxsize = maxsize
+            self.ttl = ttl
+
+        def __setitem__(self, key, value):  # pragma: no cover - simple eviction policy
+            if len(self) >= self.maxsize:
+                first_key = next(iter(self.keys()))
+                super().__delitem__(first_key)
+            super().__setitem__(key, value)
+
+    cachetools_stub = types.ModuleType("cachetools")
+    cachetools_stub.TTLCache = _TTLCache
+    sys.modules.setdefault("cachetools", cachetools_stub)
 
 
 # Set test environment variables
@@ -24,6 +50,70 @@ os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
 from app.db.session import Base, get_db
 from app.main import app
+
+
+class FakeRedis:
+    """Lightweight Redis replacement for tests."""
+
+    def __init__(self):
+        self._data: dict[str, str] = {}
+        self._expiry: dict[str, float] = {}
+
+    def _purge(self) -> None:
+        now = time.time()
+        expired_keys = [key for key, expires_at in self._expiry.items() if expires_at <= now]
+        for key in expired_keys:
+            self._data.pop(key, None)
+            self._expiry.pop(key, None)
+
+    # --- Core Redis commands -------------------------------------------------
+    def ping(self) -> bool:  # pragma: no cover - trivial passthrough
+        return True
+
+    def setnx(self, key: str, value: str) -> bool:
+        self._purge()
+        if key in self._data:
+            return False
+        self._data[key] = value
+        return True
+
+    def expire(self, key: str, ttl: int) -> bool:
+        if key not in self._data:
+            return False
+        self._expiry[key] = time.time() + ttl
+        return True
+
+    def setex(self, key: str, ttl: int, value: str) -> bool:
+        self._data[key] = value
+        self._expiry[key] = time.time() + ttl
+        return True
+
+    def get(self, key: str) -> str | None:
+        self._purge()
+        return self._data.get(key)
+
+    def delete(self, *keys: str) -> int:
+        removed = 0
+        for key in keys:
+            if key in self._data:
+                removed += 1
+                self._data.pop(key, None)
+            self._expiry.pop(key, None)
+        return removed
+
+    def ttl(self, key: str) -> int:
+        self._purge()
+        if key not in self._data:
+            return -2  # Redis semantics: key does not exist
+        expires_at = self._expiry.get(key)
+        if expires_at is None:
+            return -1  # Redis semantics: key exists but has no expiry
+        remaining = int(expires_at - time.time())
+        return remaining if remaining >= 0 else -2
+
+    def keys(self, pattern: str) -> list[str]:
+        self._purge()
+        return [key for key in self._data if fnmatch.fnmatch(key, pattern)]
 
 
 # ===========================================
@@ -152,6 +242,44 @@ def mock_cache():
             assert mock_cache.get("test_key") == {"data": "value"}
     """
     return MockCacheService()
+
+
+@pytest.fixture()
+def fake_redis(monkeypatch):
+    """Provide a fake Redis client and patch application modules to use it."""
+
+    from app.core import idempotency, store
+    from app.core.config import settings
+    from app.services import cache as cache_module
+
+    fake = FakeRedis()
+    monkeypatch.setenv("REDIS_URL", "redis://tests")
+    monkeypatch.setattr(settings, "REDIS_URL", "redis://tests", raising=False)
+
+    # Reset cached globals before patching
+    store._redis = None
+    if hasattr(store.idem_check_and_store, "_mem"):
+        store.idem_check_and_store._mem.clear()  # type: ignore[attr-defined]
+    idempotency._redis = None
+    idempotency._seen.clear()
+    cache_module._cache_service = None
+
+    class _RedisStub:
+        @staticmethod
+        def from_url(*_args, **_kwargs):
+            return fake
+
+    monkeypatch.setattr(store, "Redis", _RedisStub, raising=False)
+    monkeypatch.setattr(idempotency, "Redis", _RedisStub, raising=False)
+    monkeypatch.setattr(cache_module.redis, "from_url", lambda *a, **kw: fake)
+    monkeypatch.setattr(cache_module.redis, "Redis", _RedisStub, raising=False)
+
+    yield fake
+
+    # Ensure globals reset after use
+    store._redis = None
+    idempotency._redis = None
+    cache_module._cache_service = None
 
 
 # ==================== DATABASE MODEL FIXTURES ====================
