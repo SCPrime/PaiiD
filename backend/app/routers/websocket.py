@@ -1,4 +1,4 @@
-from backend.services.websocket_service import WebSocketService
+from app.services.websocket_service import WebSocketService
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPBearer
 import json
