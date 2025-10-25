@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-25T00:08:26.956792+00:00",
+  "last_updated": "2025-10-25T00:17:43.056542+00:00",
   "overall_progress": 87,
   "milestones_complete": 33,
   "milestones_total": 38,
@@ -13,7 +13,7 @@
     "open_issues": 0,
     "closed_issues": 0,
     "deployments": 10,
-    "workflow_runs": 462,
-    "errors": 1
+    "workflow_runs": 471,
+    "errors": 2
   }
 }
