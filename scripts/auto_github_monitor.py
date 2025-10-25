@@ -1,4 +1,9 @@
-    import asyncio
+#!/usr/bin/env python3
+"""
+🔍 Auto GitHub Monitor
+Automatically tracks GitHub events and updates counters.
+"""
+import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
 from rich.console import Console
@@ -6,12 +11,6 @@ import httpx
 import json
 import os
 import sys
-
-#!/usr/bin/env python3
-"""
-🔍 Auto GitHub Monitor
-Automatically tracks GitHub events and updates counters.
-"""
 
 
 console = Console()
