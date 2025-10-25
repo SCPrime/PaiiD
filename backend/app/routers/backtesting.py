@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.backtesting_engine import BacktestingEngine, StrategyRules
 from ..services.historical_data import HistoricalDataService
@@ -66,7 +66,7 @@ class BacktestResponse(BaseModel):
 @router.post("/run", response_model=BacktestResponse)
 async def run_backtest(
     request: BacktestRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Execute a backtest on historical data
@@ -184,7 +184,7 @@ async def run_backtest(
 async def quick_backtest(
     symbol: str = Query("SPY", description="Symbol to test"),
     months_back: int = Query(6, ge=1, le=60, description="Months of history"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Run a quick backtest with default RSI strategy

@@ -1,7 +1,5 @@
-"use client";
-
-import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
+import { Card } from "./ui";
 
 /**
  * GitHub Repository Monitor Dashboard

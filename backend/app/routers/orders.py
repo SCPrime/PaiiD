@@ -15,7 +15,7 @@ from tenacity import (
 
 from ..core.config import settings
 from ..core.idempotency import check_and_store
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..core.kill_switch import is_killed, set_kill
 from ..db.session import get_db
 from ..middleware.validation import (
@@ -357,7 +357,7 @@ class ExecRequest(BaseModel):
 
 @router.post("/trading/execute")
 async def execute(
-    request: Request, req: ExecRequest, current_user: User = Depends(get_current_user)
+    request: Request, req: ExecRequest, current_user: User = Depends(get_current_user_unified)
 ):
     """
     Execute trading orders with idempotency and dry-run support.
@@ -416,7 +416,7 @@ async def execute(
 
 
 @router.post("/admin/kill")
-def kill(state: bool, current_user: User = Depends(get_current_user)):
+def kill(state: bool, current_user: User = Depends(get_current_user_unified)):
     set_kill(state)
     return {"tradingHalted": state}
 
@@ -541,7 +541,7 @@ class OrderTemplateResponse(BaseModel):
 def create_order_template(
     template: OrderTemplateCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Create a new order template"""
     db_template = OrderTemplate(
@@ -565,7 +565,7 @@ def list_order_templates(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """List all order templates"""
     templates = db.query(OrderTemplate).offset(skip).limit(limit).all()
@@ -576,7 +576,7 @@ def list_order_templates(
 def get_order_template(
     template_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Get a specific order template by ID"""
     template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
@@ -590,7 +590,7 @@ def update_order_template(
     template_id: int,
     template_update: OrderTemplateUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Update an existing order template"""
     db_template = (
@@ -625,7 +625,7 @@ def update_order_template(
 def delete_order_template(
     template_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Delete an order template"""
     db_template = (
@@ -643,7 +643,7 @@ def delete_order_template(
 def use_order_template(
     template_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Mark template as used (updates last_used_at timestamp)"""
     db_template = (

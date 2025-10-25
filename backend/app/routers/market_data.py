@@ -11,7 +11,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.jwt import get_current_user
+from app.core.unified_auth import get_current_user_unified
 from app.models.database import User
 
 from ..services.cache import CacheService, get_cache
@@ -29,7 +29,7 @@ router = APIRouter()
 @router.get("/market/quote/{symbol}")
 async def get_quote(
     symbol: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
     """Get real-time quote for a symbol using Tradier (cached for 15s)
@@ -101,7 +101,7 @@ async def get_quote(
 
 
 @router.get("/market/quotes")
-async def get_quotes(symbols: str, current_user: User = Depends(get_current_user)):
+async def get_quotes(symbols: str, current_user: User = Depends(get_current_user_unified)):
     """Get quotes for multiple symbols (comma-separated) using Tradier
 
     Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
@@ -160,7 +160,7 @@ async def get_bars(
     symbol: str,
     timeframe: str = "daily",
     limit: int = 100,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Get historical price bars using Tradier"""
     try:
@@ -219,7 +219,7 @@ async def get_bars(
 
 
 @router.get("/market/scanner/under4")
-async def scan_under_4(current_user: User = Depends(get_current_user)):
+async def scan_under_4(current_user: User = Depends(get_current_user_unified)):
     """Scan for stocks under $4 with volume using Tradier"""
     try:
         # Pre-defined list of liquid stocks that trade near/under $4

@@ -13,7 +13,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.tradier_client import get_tradier_client
 
@@ -71,7 +71,7 @@ class PerformanceMetrics(BaseModel):
 
 @router.get("/portfolio/summary")
 async def get_portfolio_summary(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ) -> PortfolioSummary:
     """
     Get real-time portfolio summary with P&L metrics
@@ -175,7 +175,7 @@ async def get_portfolio_summary(
 @router.get("/portfolio/history")
 async def get_portfolio_history(
     period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ) -> dict:
     """
     Get historical portfolio equity data
@@ -263,7 +263,7 @@ async def get_portfolio_history(
 @router.get("/analytics/performance")
 async def get_performance_metrics(
     period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ) -> PerformanceMetrics:
     """
     Get comprehensive performance metrics and risk analytics
