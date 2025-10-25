@@ -1,4 +1,5 @@
-from backend.config import settings
+from backend.app.core.config import settings
+from backend.app.services.cache import CacheService
 from datetime import UTC, datetime, timedelta
 from typing import Any
 import aiohttp
@@ -17,11 +18,14 @@ class MarketDataService:
     """Service for aggregating real-time market data from multiple sources"""
 
     def __init__(self):
-        self.redis_client = redis.Redis(
-            host="localhost", port=6379, db=0, decode_responses=True
-        )
-        self.alpha_vantage_key = settings.ALPHA_VANTAGE_API_KEY
-        self.tradier_token = settings.TRADIER_ACCESS_TOKEN
+        # Use shared cache service with graceful fallback
+        cache_service = CacheService()
+        self.redis_client = cache_service.client if cache_service.available else None
+
+        # Alpha Vantage not configured in settings - use fallback
+        self.alpha_vantage_key = getattr(settings, 'ALPHA_VANTAGE_API_KEY', None)
+        # Use correct Tradier setting name
+        self.tradier_token = settings.TRADIER_API_KEY
         self.session = None
 
     async def __aenter__(self):
@@ -35,8 +39,14 @@ class MarketDataService:
     async def get_real_time_quote(self, symbol: str) -> dict[str, Any] | None:
         """Get real-time quote for a symbol from multiple sources"""
         try:
-            # Check cache first
-            cached_data = self.redis_client.get(f"quote:{symbol}")
+            # Check cache first (if Redis available)
+            cached_data = None
+            if self.redis_client:
+                try:
+                    cached_data = self.redis_client.get(f"quote:{symbol}")
+                except Exception as e:
+                    logger.warning(f"Redis cache read error: {e}")
+
             if cached_data:
                 data = json.loads(cached_data)
                 # Check if cache is still valid (less than 30 seconds old)
@@ -59,8 +69,12 @@ class MarketDataService:
                 # Add cache timestamp
                 quote_data["cache_timestamp"] = datetime.now(UTC).isoformat()
 
-                # Cache for 30 seconds
-                self.redis_client.setex(f"quote:{symbol}", 30, json.dumps(quote_data))
+                # Cache for 30 seconds (if Redis available)
+                if self.redis_client:
+                    try:
+                        self.redis_client.setex(f"quote:{symbol}", 30, json.dumps(quote_data))
+                    except Exception as e:
+                        logger.warning(f"Redis cache write error: {e}")
 
                 return quote_data
 
@@ -155,8 +169,14 @@ class MarketDataService:
     async def get_market_status(self) -> dict[str, Any]:
         """Get overall market status"""
         try:
-            # Check cache first
-            cached_status = self.redis_client.get("market_status")
+            # Check cache first (if Redis available)
+            cached_status = None
+            if self.redis_client:
+                try:
+                    cached_status = self.redis_client.get("market_status")
+                except Exception as e:
+                    logger.warning(f"Redis cache read error: {e}")
+
             if cached_status:
                 return json.loads(cached_status)
 
@@ -180,8 +200,12 @@ class MarketDataService:
                 else:
                     market_status["is_open"] = False
 
-            # Cache for 1 minute
-            self.redis_client.setex("market_status", 60, json.dumps(market_status))
+            # Cache for 1 minute (if Redis available)
+            if self.redis_client:
+                try:
+                    self.redis_client.setex("market_status", 60, json.dumps(market_status))
+                except Exception as e:
+                    logger.warning(f"Redis cache write error: {e}")
 
             return market_status
 

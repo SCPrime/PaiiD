@@ -1,4 +1,5 @@
 from backend.services.market_data_service import MarketDataService
+from backend.app.services.cache import CacheService
 from datetime import UTC, datetime
 from fastapi import WebSocket
 import asyncio
@@ -20,9 +21,11 @@ class WebSocketManager:
         self.active_connections: dict[str, WebSocket] = {}
         self.user_subscriptions: dict[str, set[str]] = {}  # user_id -> set of symbols
         self.symbol_subscribers: dict[str, set[str]] = {}  # symbol -> set of user_ids
-        self.redis_client = redis.Redis(
-            host="localhost", port=6379, db=0, decode_responses=True
-        )
+
+        # Use shared cache service with graceful fallback
+        cache_service = CacheService()
+        self.redis_client = cache_service.client if cache_service.available else None
+
         self.market_data_service = MarketDataService()
         self.broadcast_interval = 1.0  # seconds
         self._broadcast_task = None
@@ -167,18 +170,27 @@ class WebSocketManager:
         # Get real-time data for all subscribed symbols
         for symbol in all_subscribed_symbols:
             try:
-                # Check cache first
-                cached_data = self.redis_client.get(f"market_data:{symbol}")
+                # Check cache first (if Redis available)
+                cached_data = None
+                if self.redis_client:
+                    try:
+                        cached_data = self.redis_client.get(f"market_data:{symbol}")
+                    except Exception as e:
+                        logger.warning(f"Redis cache read error: {e}")
+
                 if cached_data:
                     data = json.loads(cached_data)
                 else:
                     # Fetch fresh data
                     data = await self.market_data_service.get_real_time_quote(symbol)
-                    if data:
-                        # Cache for 30 seconds
-                        self.redis_client.setex(
-                            f"market_data:{symbol}", 30, json.dumps(data)
-                        )
+                    if data and self.redis_client:
+                        try:
+                            # Cache for 30 seconds
+                            self.redis_client.setex(
+                                f"market_data:{symbol}", 30, json.dumps(data)
+                            )
+                        except Exception as e:
+                            logger.warning(f"Redis cache write error: {e}")
 
                 if data:
                     await self.broadcast_to_symbol_subscribers(symbol, data)

@@ -52,6 +52,7 @@ from .routers import (
     stream,
     telemetry,
     users,
+    websocket,  # WebSocket router for real-time streaming
 )
 from .routers import settings as settings_router
 
@@ -463,3 +464,4 @@ else:
     )
 # app.include_router(monitor.router)  # GitHub Repository Monitor - Disabled
 app.include_router(telemetry.router)
+app.include_router(websocket.router)  # WebSocket real-time streaming (no prefix - router has /ws)
