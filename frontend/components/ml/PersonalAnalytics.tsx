@@ -214,7 +214,7 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
         <div className="flex items-center space-x-3">
           <select
             value={timeRange}
-            onChange={(e) => {/* Handle time range change */}}
+            onChange={(_e) => {/* Handle time range change */}}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             aria-label="Select time range for analytics"
           >
