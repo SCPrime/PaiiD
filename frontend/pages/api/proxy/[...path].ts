@@ -258,8 +258,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const queryString = req.url?.split("?")[1] || "";
   const url = `${BACKEND}/api/${path}${queryString ? "?" + queryString : ""}`;
 
+  // Use JWT token from client request instead of hardcoded API_TOKEN
+  // This allows the frontend to send user-specific JWT tokens
+  const clientAuth = req.headers.authorization as string;
+
   const headers: Record<string, string> = {
-    authorization: `Bearer ${API_TOKEN}`,
+    authorization: clientAuth || `Bearer ${API_TOKEN}`, // Fallback to API_TOKEN if no client auth
     "content-type": "application/json",
   };
 
@@ -291,16 +295,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cache: "no-store",
     });
 
+    const contentType = upstream.headers.get("content-type") || "";
+    const isJson = contentType.includes("application/json");
     const text = await upstream.text();
     console.info(`[PROXY] Response status: ${upstream.status}`);
+    console.info(`[PROXY] Content-Type: ${contentType || "(none)"}`);
     console.info(
       `[PROXY] Response body: ${text.substring(0, 200)}${text.length > 200 ? "..." : ""}`
     );
+
+    // Normalize non-JSON error responses so the client does not attempt JSON.parse on HTML
+    if (upstream.status >= 500 && !isJson) {
+      res.status(upstream.status).json({
+        error: "Backend service error",
+        status: upstream.status,
+        message: upstream.statusText,
+        detail: "Backend returned non-JSON response",
+      });
+      console.info(`[PROXY] ====== End Request (Normalized 5xx) ======\n`);
+      return;
+    }
+    if (upstream.status >= 400 && upstream.status < 500 && !isJson) {
+      res.status(upstream.status).json({
+        error: "Bad request",
+        status: upstream.status,
+        message: upstream.statusText,
+      });
+      console.info(`[PROXY] ====== End Request (Normalized 4xx) ======\n`);
+      return;
+    }
+
     console.info(`[PROXY] ====== End Request ======\n`);
 
     res
       .status(upstream.status)
-      .setHeader("content-type", upstream.headers.get("content-type") || "application/json")
+      .setHeader("content-type", contentType || "application/json")
       .setHeader("cache-control", "no-store")
       .send(text);
   } catch (err) {

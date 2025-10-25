@@ -92,12 +92,14 @@ import CommandPalette from "../components/CommandPalette";
 import CompletePaiiDLogo from "../components/CompletePaiiDLogo";
 import HelpPanel from "../components/HelpPanel";
 import KeyboardShortcuts from "../components/KeyboardShortcuts";
+import LoginForm from "../components/LoginForm";
 import MarketScanner from "../components/MarketScanner";
 import TradingModeIndicator from "../components/TradingModeIndicator";
 import RiskCalculator from "../components/trading/RiskCalculator";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { HelpProvider, useHelp } from "../hooks/useHelp";
+import { isAuthenticated } from "../lib/auth";
 import { initializeSession } from "../lib/userManagement";
 
 export default function Dashboard() {
@@ -111,6 +113,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [tradingMode, setTradingMode] = useState<"paper" | "live">("paper");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Help system
   const { isHelpPanelOpen, openHelpPanel, closeHelpPanel } = useHelp();
@@ -121,8 +124,13 @@ export default function Dashboard() {
   // Detect mobile viewport
   const isMobile = useIsMobile();
 
-  // Check if user is set up on mount
+  // Check authentication and user setup on mount
   useEffect(() => {
+    // Check JWT authentication first
+    const authStatus = isAuthenticated();
+    setIsLoggedIn(authStatus);
+
+    // Then check onboarding setup
     const setupComplete =
       typeof window !== "undefined"
         ? localStorage.getItem("user-setup-complete") === "true"
@@ -169,6 +177,14 @@ export default function Dashboard() {
   // Show loading state briefly
   if (isLoading) {
     return null;
+  }
+
+  // Show login form if not authenticated
+  if (!isLoggedIn) {
+    return <LoginForm onLoginSuccess={() => {
+      setIsLoggedIn(true);
+      initializeSession();
+    }} />;
   }
 
   // Show user setup modal if not set up (unless development bypass is enabled)
