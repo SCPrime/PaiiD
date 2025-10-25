@@ -1,9 +1,8 @@
+import json
+import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
-import json
-import os
-import shutil
+from typing import Dict
 
 #!/usr/bin/env python3
 """
@@ -20,7 +19,7 @@ class CodebaseOptimizer:
             "files_processed": 0,
             "files_optimized": 0,
             "space_saved": 0,
-            "warnings_fixed": 0
+            "warnings_fixed": 0,
         }
 
     def log(self, message: str, level: str = "INFO"):
@@ -29,7 +28,7 @@ class CodebaseOptimizer:
         log_entry = f"[{timestamp}] {level}: {message}"
         self.optimization_log.append(log_entry)
         # Use ASCII-safe printing
-        safe_message = message.encode('ascii', 'ignore').decode('ascii')
+        safe_message = message.encode("ascii", "ignore").decode("ascii")
         print(f"[{timestamp}] {level}: {safe_message}")
 
     def optimize_python_files(self) -> int:
@@ -42,14 +41,14 @@ class CodebaseOptimizer:
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 original_size = len(content)
                 optimized_content = self._optimize_python_content(content)
 
                 if len(optimized_content) < original_size:
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(optimized_content)
 
                     space_saved = original_size - len(optimized_content)
@@ -68,7 +67,7 @@ class CodebaseOptimizer:
 
     def _optimize_python_content(self, content: str) -> str:
         """Optimize Python code content"""
-        lines = content.split('\n')
+        lines = content.split("\n")
         optimized_lines = []
 
         for line in lines:
@@ -76,12 +75,16 @@ class CodebaseOptimizer:
             line = line.rstrip()
 
             # Remove empty lines at end of blocks
-            if line.strip() == "" and optimized_lines and optimized_lines[-1].strip() == "":
+            if (
+                line.strip() == ""
+                and optimized_lines
+                and optimized_lines[-1].strip() == ""
+            ):
                 continue
 
             optimized_lines.append(line)
 
-        return '\n'.join(optimized_lines)
+        return "\n".join(optimized_lines)
 
     def optimize_typescript_files(self) -> int:
         """Optimize TypeScript/JavaScript files"""
@@ -93,14 +96,14 @@ class CodebaseOptimizer:
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 original_size = len(content)
                 optimized_content = self._optimize_ts_content(content)
 
                 if len(optimized_content) < original_size:
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(optimized_content)
 
                     space_saved = original_size - len(optimized_content)
@@ -119,7 +122,7 @@ class CodebaseOptimizer:
 
     def _optimize_ts_content(self, content: str) -> str:
         """Optimize TypeScript/JavaScript content"""
-        lines = content.split('\n')
+        lines = content.split("\n")
         optimized_lines = []
 
         for line in lines:
@@ -127,12 +130,16 @@ class CodebaseOptimizer:
             line = line.rstrip()
 
             # Remove empty lines at end of blocks
-            if line.strip() == "" and optimized_lines and optimized_lines[-1].strip() == "":
+            if (
+                line.strip() == ""
+                and optimized_lines
+                and optimized_lines[-1].strip() == ""
+            ):
                 continue
 
             optimized_lines.append(line)
 
-        return '\n'.join(optimized_lines)
+        return "\n".join(optimized_lines)
 
     def clean_build_artifacts(self) -> int:
         """Clean build artifacts and temporary files"""
@@ -148,7 +155,7 @@ class CodebaseOptimizer:
             "**/*.pyc",
             "**/*.pyo",
             "**/.DS_Store",
-            "**/Thumbs.db"
+            "**/Thumbs.db",
         ]
 
         for pattern in artifact_patterns:
@@ -174,13 +181,13 @@ class CodebaseOptimizer:
                 continue
 
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 optimized_content = self._optimize_python_imports(content)
 
                 if optimized_content != content:
-                    with open(py_file, 'w', encoding='utf-8') as f:
+                    with open(py_file, "w", encoding="utf-8") as f:
                         f.write(optimized_content)
 
                     self.log(f"Optimized imports in {py_file.name}")
@@ -193,12 +200,12 @@ class CodebaseOptimizer:
 
     def _optimize_python_imports(self, content: str) -> str:
         """Optimize Python import statements"""
-        lines = content.split('\n')
+        lines = content.split("\n")
         import_lines = []
         other_lines = []
 
         for line in lines:
-            if line.strip().startswith(('import ', 'from ')):
+            if line.strip().startswith(("import ", "from ")):
                 import_lines.append(line)
             else:
                 other_lines.append(line)
@@ -210,10 +217,10 @@ class CodebaseOptimizer:
         result = []
         if import_lines:
             result.extend(import_lines)
-            result.append('')  # Empty line after imports
+            result.append("")  # Empty line after imports
 
         result.extend(other_lines)
-        return '\n'.join(result)
+        return "\n".join(result)
 
     def generate_optimization_report(self) -> Dict:
         """Generate optimization report"""
@@ -227,9 +234,14 @@ class CodebaseOptimizer:
                 "space_saved_bytes": self.stats["space_saved"],
                 "space_saved_kb": round(self.stats["space_saved"] / 1024, 2),
                 "optimization_rate": round(
-                    (self.stats["files_optimized"] / max(self.stats["files_processed"], 1)) * 100, 2
-                )
-            }
+                    (
+                        self.stats["files_optimized"]
+                        / max(self.stats["files_processed"], 1)
+                    )
+                    * 100,
+                    2,
+                ),
+            },
         }
 
         return report
@@ -264,7 +276,7 @@ class CodebaseOptimizer:
 
         # Save report
         report_path = self.root_dir / "optimization-report.json"
-        with open(report_path, 'w', encoding='utf-8') as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2)
 
         self.log("=" * 50)
@@ -277,6 +289,7 @@ class CodebaseOptimizer:
 
         return report
 
+
 def main():
     """Main optimization function"""
     optimizer = CodebaseOptimizer()
@@ -287,6 +300,7 @@ def main():
     print(f"   Files optimized: {report['summary']['files_optimized']}")
     print(f"   Space saved: {report['summary']['space_saved_kb']} KB")
     print(f"   Optimization rate: {report['summary']['optimization_rate']}%")
+
 
 if __name__ == "__main__":
     main()

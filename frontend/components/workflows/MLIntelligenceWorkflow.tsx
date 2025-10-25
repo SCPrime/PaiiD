@@ -15,8 +15,7 @@ import {
   RefreshCw,
   Zap,
   Shield,
-  TrendingUp,
-  Info
+  TrendingUp
 } from 'lucide-react';
 import { MLIntelligenceDashboard } from '../ml/MLIntelligenceDashboard';
 import { PatternRecognition } from '../ml/PatternRecognition';

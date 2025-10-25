@@ -12,13 +12,8 @@ import {
   TrendingDown, 
   Minus,
   Info,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  BarChart3,
-  Zap
+  XCircle
 } from 'lucide-react';
-import { HelpTooltip } from '../HelpTooltip';
 
 interface Pattern {
   pattern_type: string;
