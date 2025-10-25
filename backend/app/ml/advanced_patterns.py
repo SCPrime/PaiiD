@@ -359,6 +359,111 @@ class AdvancedPatternDetector:
 
         return patterns
 
+    def _detect_triple_tops_bottoms(
+        self, data: pd.DataFrame, indicators: dict
+    ) -> list[PatternSignal]:
+        """Detect Triple Top and Triple Bottom patterns"""
+        patterns = []
+
+        try:
+            high = data["high"].values
+            low = data["low"].values
+            close = data["close"].values
+
+            # Find peaks and troughs
+            peaks = self._find_peaks(high, min_distance=5)
+            troughs = self._find_troughs(low, min_distance=5)
+
+            # Triple Tops
+            for i in range(len(peaks) - 2):
+                peak1 = peaks[i]
+                peak2 = peaks[i + 1]
+                peak3 = peaks[i + 2]
+
+                # Check if all three peaks are at similar levels
+                if (
+                    abs(high[peak1] - high[peak2]) / high[peak1] < 0.02
+                    and abs(high[peak2] - high[peak3]) / high[peak2] < 0.02
+                    and peak3 - peak1 > 10
+                ):  # Minimum distance between peaks
+                    confidence = 0.7  # Base confidence for triple pattern
+
+                    if confidence >= self.min_confidence:
+                        patterns.append(
+                            PatternSignal(
+                                pattern_type=PatternType.TRIPLE_TOP,
+                                confidence=confidence,
+                                strength=self._get_strength(confidence),
+                                direction="bearish",
+                                target_price=high[peak1]
+                                - (high[peak1] - min(low[peak1:peak3])),
+                                stop_loss=high[peak1] * 1.015,
+                                risk_reward_ratio=self._calculate_risk_reward(
+                                    high[peak1],
+                                    min(low[peak1:peak3]),
+                                    high[peak1] - (high[peak1] - min(low[peak1:peak3])),
+                                ),
+                                timeframe="medium",
+                                volume_confirmation=self._check_volume_confirmation(
+                                    data, peak3
+                                ),
+                                trend_alignment=self._check_trend_alignment(
+                                    indicators, "bearish"
+                                ),
+                                key_levels=[high[peak1], high[peak2], high[peak3]],
+                                description="Triple Top reversal pattern detected",
+                                trading_suggestion="Consider short position with stop above peaks",
+                            )
+                        )
+
+            # Triple Bottoms
+            for i in range(len(troughs) - 2):
+                trough1 = troughs[i]
+                trough2 = troughs[i + 1]
+                trough3 = troughs[i + 2]
+
+                # Check if all three troughs are at similar levels
+                if (
+                    abs(low[trough1] - low[trough2]) / low[trough1] < 0.02
+                    and abs(low[trough2] - low[trough3]) / low[trough2] < 0.02
+                    and trough3 - trough1 > 10
+                ):  # Minimum distance between troughs
+                    confidence = 0.7  # Base confidence for triple pattern
+
+                    if confidence >= self.min_confidence:
+                        patterns.append(
+                            PatternSignal(
+                                pattern_type=PatternType.TRIPLE_BOTTOM,
+                                confidence=confidence,
+                                strength=self._get_strength(confidence),
+                                direction="bullish",
+                                target_price=low[trough1]
+                                + (max(high[trough1:trough3]) - low[trough1]),
+                                stop_loss=low[trough1] * 0.985,
+                                risk_reward_ratio=self._calculate_risk_reward(
+                                    low[trough1],
+                                    max(high[trough1:trough3]),
+                                    low[trough1]
+                                    + (max(high[trough1:trough3]) - low[trough1]),
+                                ),
+                                timeframe="medium",
+                                volume_confirmation=self._check_volume_confirmation(
+                                    data, trough3
+                                ),
+                                trend_alignment=self._check_trend_alignment(
+                                    indicators, "bullish"
+                                ),
+                                key_levels=[low[trough1], low[trough2], low[trough3]],
+                                description="Triple Bottom reversal pattern detected",
+                                trading_suggestion="Consider long position with stop below troughs",
+                            )
+                        )
+
+        except Exception as e:
+            logger.error(f"Error detecting triple patterns: {e}")
+
+        return patterns
+
     def _detect_continuation_patterns(
         self, data: pd.DataFrame, indicators: dict
     ) -> list[PatternSignal]:
@@ -370,6 +475,100 @@ class AdvancedPatternDetector:
 
         # Flag and Pennant patterns
         patterns.extend(self._detect_flag_pennant_patterns(data, indicators))
+
+        return patterns
+
+    def _detect_flag_pennant_patterns(
+        self, data: pd.DataFrame, indicators: dict
+    ) -> list[PatternSignal]:
+        """Detect Flag and Pennant continuation patterns"""
+        patterns = []
+
+        try:
+            high = data["high"].values
+            low = data["low"].values
+            close = data["close"].values
+
+            # Look for flag/pennant formations in recent data
+            window_size = 15
+            if len(data) >= window_size:
+                recent_highs = high[-window_size:]
+                recent_lows = low[-window_size:]
+                recent_close = close[-window_size:]
+
+                # Check for consolidation after strong move
+                recent_volatility = np.std(recent_close)
+                prior_volatility = np.std(close[-window_size * 2 : -window_size])
+
+                # Flag/Pennant typically shows reduced volatility after strong move
+                if recent_volatility < prior_volatility * 0.7:
+                    # Determine if prior move was bullish or bearish
+                    prior_move = close[-window_size] - close[-window_size * 2]
+
+                    if prior_move > 0:
+                        # Bullish flag/pennant
+                        confidence = 0.65
+
+                        if confidence >= self.min_confidence:
+                            patterns.append(
+                                PatternSignal(
+                                    pattern_type=PatternType.FLAG,
+                                    confidence=confidence,
+                                    strength=self._get_strength(confidence),
+                                    direction="bullish",
+                                    target_price=close[-1] + abs(prior_move),
+                                    stop_loss=min(recent_lows) * 0.98,
+                                    risk_reward_ratio=self._calculate_risk_reward(
+                                        close[-1],
+                                        min(recent_lows),
+                                        close[-1] + abs(prior_move),
+                                    ),
+                                    timeframe="short",
+                                    volume_confirmation=self._check_volume_confirmation(
+                                        data, -1
+                                    ),
+                                    trend_alignment=self._check_trend_alignment(
+                                        indicators, "bullish"
+                                    ),
+                                    key_levels=[max(recent_highs), min(recent_lows)],
+                                    description="Bullish Flag continuation pattern detected",
+                                    trading_suggestion="Consider long position on upside breakout",
+                                )
+                            )
+
+                    elif prior_move < 0:
+                        # Bearish flag/pennant
+                        confidence = 0.65
+
+                        if confidence >= self.min_confidence:
+                            patterns.append(
+                                PatternSignal(
+                                    pattern_type=PatternType.FLAG,
+                                    confidence=confidence,
+                                    strength=self._get_strength(confidence),
+                                    direction="bearish",
+                                    target_price=close[-1] - abs(prior_move),
+                                    stop_loss=max(recent_highs) * 1.02,
+                                    risk_reward_ratio=self._calculate_risk_reward(
+                                        close[-1],
+                                        max(recent_highs),
+                                        close[-1] - abs(prior_move),
+                                    ),
+                                    timeframe="short",
+                                    volume_confirmation=self._check_volume_confirmation(
+                                        data, -1
+                                    ),
+                                    trend_alignment=self._check_trend_alignment(
+                                        indicators, "bearish"
+                                    ),
+                                    key_levels=[max(recent_highs), min(recent_lows)],
+                                    description="Bearish Flag continuation pattern detected",
+                                    trading_suggestion="Consider short position on downside breakdown",
+                                )
+                            )
+
+        except Exception as e:
+            logger.error(f"Error detecting flag/pennant patterns: {e}")
 
         return patterns
 

@@ -32,7 +32,7 @@ import { clearUserData, getCurrentUser, getUserAnalytics } from "../lib/userMana
 import PerformanceDashboard from "./admin/PerformanceDashboard";
 import ApprovalQueue from "./ApprovalQueue";
 import ClaudeAIChat from "./ClaudeAIChat";
-// import { GitHubActionsMonitor } from "./GitHubActionsMonitor";
+import { GitHubActionsMonitor } from "./GitHubActionsMonitor";
 import KillSwitchToggle from "./KillSwitchToggle";
 import MLAnalyticsDashboard from "./MLAnalyticsDashboard";
 import MLModelManagement from "./MLModelManagement";
@@ -1234,7 +1234,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
           {activeTab === "github-monitor" && isAdmin && (
             <div className="min-h-[500px]">
-              {/*               <GitHubActionsMonitor repository="SCPrime/PaiiD" /> */}
+              <GitHubActionsMonitor repository="SCPrime/PaiiD" />
             </div>
           )}
         </div>

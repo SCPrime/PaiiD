@@ -39,6 +39,7 @@ from .routers import (
     market,
     market_data,
     ml,
+    ml_advanced,
     ml_sentiment,
     monitor,
     news,
@@ -455,6 +456,7 @@ app.include_router(scheduler.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(backtesting.router, prefix="/api")
 app.include_router(ml.router)  # Machine Learning (Phase 2)
+app.include_router(ml_advanced.router)  # Advanced ML (Pattern & Regime Detection)
 app.include_router(ml_sentiment.router)  # ML Sentiment & Signals (Phase 2 - Active)
 if SUBSCRIPTION_AVAILABLE:
     app.include_router(
