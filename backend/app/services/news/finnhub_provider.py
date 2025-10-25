@@ -3,9 +3,6 @@ from datetime import datetime, timedelta
 import finnhub
 import os
 
-
-
-
 class FinnhubProvider(BaseNewsProvider):
     def __init__(self):
         api_key = os.getenv("FINNHUB_API_KEY")

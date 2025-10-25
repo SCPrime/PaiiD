@@ -10,8 +10,6 @@ AI Router for Market Analysis and Trading Recommendations
 Handles AI-powered endpoints for sentiment analysis, recommendations, and chat
 """
 
-
-
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 security = HTTPBearer()

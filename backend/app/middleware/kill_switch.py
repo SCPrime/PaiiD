@@ -9,8 +9,6 @@ Kill Switch Middleware
 Blocks mutating HTTP methods when the global kill switch is active.
 """
 
-
-
 class KillSwitchMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)

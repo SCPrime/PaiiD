@@ -8,8 +8,6 @@ import time
 Production Health Monitoring Service
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class HealthMonitor:

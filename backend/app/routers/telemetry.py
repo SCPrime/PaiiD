@@ -9,8 +9,6 @@ import logging
 Telemetry Router - Tracks user interactions and system events
 """
 
-
-
 router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
 logger = logging.getLogger(__name__)
 

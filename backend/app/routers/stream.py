@@ -23,9 +23,6 @@ Phase 2.A - Real-Time Data Implementation (Tradier WebSocket streaming)
 Phase 5.C - Heartbeat mechanism for connection monitoring
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["streaming"])

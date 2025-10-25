@@ -17,9 +17,6 @@ Provides secure JWT token creation, validation, and refresh functionality
 for multi-user authentication system.
 """
 
-
-
-
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

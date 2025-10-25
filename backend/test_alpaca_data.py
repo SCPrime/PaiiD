@@ -4,8 +4,6 @@ from pathlib import Path
 import os
 import requests
 
-
-
 # Load environment variables
 load_dotenv(Path(".env"))
 

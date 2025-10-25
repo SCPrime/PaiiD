@@ -8,8 +8,6 @@ Tradier API Client - Production Integration
 Handles: Account, Positions, Orders, Market Data, Options
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class TradierClient:

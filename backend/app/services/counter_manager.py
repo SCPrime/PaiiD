@@ -9,8 +9,6 @@ Counter Manager Service
 Manages all monitoring counters with Redis backend for real-time tracking
 """
 
-
-
 logger = logging.getLogger(__name__)
 settings = get_settings()
 

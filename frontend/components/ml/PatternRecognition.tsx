@@ -1,6 +1,6 @@
 /**
  * Pattern Recognition Component
- * 
+ *
  * Visual pattern recognition with explanations for friends and family.
  * Makes complex technical analysis accessible and understandable.
  */
@@ -32,9 +32,9 @@ interface PatternRecognitionProps {
   onPatternSelect?: (pattern: Pattern) => void;
 }
 
-export const PatternRecognition: React.FC<PatternRecognitionProps> = ({ 
+export const PatternRecognition: React.FC<PatternRecognitionProps> = ({
   symbol = 'SPY',
-  onPatternSelect 
+  onPatternSelect
 }) => {
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   const [loading, setLoading] = useState(true);
@@ -175,13 +175,13 @@ export const PatternRecognition: React.FC<PatternRecognitionProps> = ({
             <p className="text-sm text-gray-600">AI-detected chart patterns with explanations</p>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setShowExplanations(!showExplanations)}
             className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-              showExplanations 
-                ? 'bg-blue-100 text-blue-700' 
+              showExplanations
+                ? 'bg-blue-100 text-blue-700'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -210,7 +210,7 @@ export const PatternRecognition: React.FC<PatternRecognitionProps> = ({
                     <p className="text-sm text-gray-600">{pattern.description}</p>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
                   <div className={`font-semibold ${getConfidenceColor(pattern.confidence)}`}>
                     {Math.round(pattern.confidence * 100)}%
@@ -307,7 +307,7 @@ export const PatternRecognition: React.FC<PatternRecognitionProps> = ({
                 <XCircle className="w-6 h-6" />
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 {getPatternIcon(selectedPattern.pattern_type)}
@@ -361,7 +361,7 @@ export const PatternRecognition: React.FC<PatternRecognitionProps> = ({
                     <div>🛡️ <strong>Stop Loss:</strong> ${selectedPattern.stop_loss.toFixed(2)}</div>
                   )}
                   <div>📊 <strong>Risk/Reward:</strong> {
-                    selectedPattern.target_price && selectedPattern.stop_loss 
+                    selectedPattern.target_price && selectedPattern.stop_loss
                       ? ((selectedPattern.target_price - selectedPattern.stop_loss) / selectedPattern.stop_loss * 100).toFixed(1) + '%'
                       : 'Calculate based on your entry'
                   }</div>

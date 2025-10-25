@@ -10,8 +10,6 @@ Assigns and propagates a request correlation ID for tracing across logs.
 Uses X-Request-ID header if provided; otherwise generates a UUID4.
 """
 
-
-
 class RequestIDMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, header_name: str = "X-Request-ID"):
         super().__init__(app)

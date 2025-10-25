@@ -9,9 +9,6 @@ import logging
 Options Proposals Router - Create and execute options trade proposals
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/proposals", tags=["proposals"])

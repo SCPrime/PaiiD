@@ -20,9 +20,6 @@ This module uses Tradier API for ALL market data.
 Alpaca is ONLY used for paper trading execution.
 """
 
-
-
-
 # LOUD LOGGING TO VERIFY NEW CODE IS DEPLOYED
 print("=" * 80)
 print("[TRADIER] TRADIER INTEGRATION CODE LOADED - market.py")
@@ -352,7 +349,6 @@ async def get_major_indices(
         try:
             if not settings.ANTHROPIC_API_KEY:
                 raise ValueError("Anthropic API key not configured")
-
 
             client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 

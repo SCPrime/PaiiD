@@ -27,9 +27,6 @@ Phase 1 Implementation:
 - Multi-leg order support
 """
 
-
-
-
 router = APIRouter(prefix="/options", tags=["options"])
 logger = logging.getLogger(__name__)
 

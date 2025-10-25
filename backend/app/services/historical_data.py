@@ -9,7 +9,6 @@ Fetches historical OHLCV data for backtesting using Tradier API.
 NO mock data - all data comes from real market sources.
 """
 
-
 logger = logging.getLogger(__name__)
 
 class HistoricalDataService:

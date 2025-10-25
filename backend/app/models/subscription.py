@@ -15,7 +15,6 @@ SQLAlchemy models for subscription management, usage tracking, and payment histo
 Phase 2: Monetization Engine
 """
 
-
     JSON,
     Boolean,
     Column,
@@ -25,7 +24,6 @@ Phase 2: Monetization Engine
     Integer,
     String,
 )
-
 
 class Subscription(Base):
     """User subscription and billing information"""
@@ -294,7 +292,6 @@ def get_monthly_usage(subscription_id: int, feature: str, month_start: datetime)
     Usage:
         usage = get_monthly_usage(subscription_id, "ml_prediction", month_start)
     """
-
 
     db = SessionLocal()
     try:

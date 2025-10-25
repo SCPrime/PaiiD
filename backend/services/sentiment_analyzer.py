@@ -12,8 +12,6 @@ Sentiment Analysis Service
 Analyzes news articles, social media, and market data for sentiment indicators
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class SentimentAnalyzer:

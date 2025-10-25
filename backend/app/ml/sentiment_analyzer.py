@@ -9,9 +9,6 @@ Sentiment Analysis Service using Anthropic Claude
 Analyzes market news and social media sentiment for trading insights
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 settings = get_settings()
 

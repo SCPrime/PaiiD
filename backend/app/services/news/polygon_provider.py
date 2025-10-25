@@ -2,9 +2,6 @@ from .base_provider import BaseNewsProvider, NewsArticle
 import os
 import requests
 
-
-
-
 class PolygonProvider(BaseNewsProvider):
     def __init__(self):
         self.api_key = os.getenv("POLYGON_API_KEY")

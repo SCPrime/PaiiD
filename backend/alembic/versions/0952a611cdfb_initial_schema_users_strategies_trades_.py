@@ -10,9 +10,6 @@ Create Date: 2025-10-13 02:27:06.525843
 
 """
 
-
-
-
 # revision identifiers, used by Alembic.
 revision: str = "0952a611cdfb"
 down_revision: str | Sequence[str] | None = None

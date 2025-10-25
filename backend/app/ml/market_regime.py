@@ -17,9 +17,6 @@ This enables the strategy selector to recommend different strategies
 based on the current market regime.
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 # Market regime types

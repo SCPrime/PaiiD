@@ -10,8 +10,6 @@ import logging
 Position Management API
 """
 
-
-
     PortfolioGreeks,
     Position,
     PositionTrackerService,

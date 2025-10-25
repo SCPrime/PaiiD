@@ -5,7 +5,6 @@ Under-$4 Multileg Strategy
 Scans for stocks <= $4.00 and executes Buy Call + Sell Put legs
 """
 
-
 class Under4MultilegConfig(BaseModel):
     """Configuration for Under-$4 Multileg strategy"""
 

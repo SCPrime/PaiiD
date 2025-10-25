@@ -12,7 +12,6 @@ Calculates common technical indicators for trading signals:
 - Volume indicators
 """
 
-
 logger = logging.getLogger(__name__)
 
 class TechnicalIndicators:

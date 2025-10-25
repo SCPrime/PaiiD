@@ -6,7 +6,6 @@ API Endpoint Tests
 Tests for critical API endpoints: health, portfolio, orders, market data
 """
 
-
 class TestHealthEndpoints:
     """Test health check endpoints"""
 

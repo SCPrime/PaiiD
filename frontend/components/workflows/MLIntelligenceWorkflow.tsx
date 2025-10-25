@@ -1,6 +1,6 @@
 /**
  * ML Intelligence Workflow
- * 
+ *
  * Comprehensive ML-powered trading intelligence for friends and family.
  * Integrates pattern recognition, market regime detection, and personal analytics.
  */
@@ -97,7 +97,7 @@ export const MLIntelligenceWorkflow: React.FC<MLIntelligenceWorkflowProps> = ({ 
               <p className="text-sm text-gray-600">AI-powered trading insights and analysis</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <select
               value={selectedSymbol}
@@ -113,7 +113,7 @@ export const MLIntelligenceWorkflow: React.FC<MLIntelligenceWorkflowProps> = ({ 
               <option value="GOOGL">GOOGL (Google)</option>
               <option value="TSLA">TSLA (Tesla)</option>
             </select>
-            
+
             <button
               onClick={handleRefresh}
               disabled={refreshing}
@@ -122,7 +122,7 @@ export const MLIntelligenceWorkflow: React.FC<MLIntelligenceWorkflowProps> = ({ 
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
-            
+
             {onClose && (
               <button
                 onClick={onClose}
@@ -183,7 +183,7 @@ export const MLIntelligenceWorkflow: React.FC<MLIntelligenceWorkflowProps> = ({ 
               <span>Performance Focused</span>
             </div>
           </div>
-          
+
           <div className="text-xs text-gray-500">
             Last updated: {new Date().toLocaleTimeString()}
           </div>

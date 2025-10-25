@@ -269,7 +269,7 @@ function RadialMenuComponent({
           const marketVolatility = Math.abs(newData.dow.change) + Math.abs(newData.nasdaq.change);
           const stabilityScore = Math.max(0, 100 - marketVolatility * 10); // Lower volatility = higher confidence
           const connectionScore = retryAttempt === 0 ? 100 : Math.max(0, 100 - retryAttempt * 10);
-          
+
           const confidence = Math.round((dataFreshness * 0.4 + stabilityScore * 0.4 + connectionScore * 0.2));
           setForceFieldConfidence(Math.min(100, Math.max(0, confidence)));
 
@@ -859,9 +859,9 @@ function RadialMenuComponent({
       .style("pointer-events", "none")
       .text("FORCE FIELD");
 
-    const confidenceColor = 
-      forceFieldConfidence >= 80 ? "#45f0c0" : 
-      forceFieldConfidence >= 60 ? "#fbbf24" : 
+    const confidenceColor =
+      forceFieldConfidence >= 80 ? "#45f0c0" :
+      forceFieldConfidence >= 60 ? "#fbbf24" :
       forceFieldConfidence >= 40 ? "#fb923c" : "#ef4444";
 
     forceFieldGroup

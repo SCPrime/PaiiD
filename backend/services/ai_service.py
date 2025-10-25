@@ -11,8 +11,6 @@ AI Service for Market Analysis and Trading Recommendations
 Integrates Claude API for natural language processing and market insights
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class AIService:

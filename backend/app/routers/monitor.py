@@ -13,9 +13,6 @@ GitHub Repository Monitor API Router
 Provides endpoints for monitoring dashboard and counters
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/monitor", tags=["Repository Monitor"])
 settings = get_settings()

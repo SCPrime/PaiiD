@@ -8,8 +8,6 @@ Optimization Router
 API endpoints for backend optimization and performance monitoring
 """
 
-
-
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/optimization", tags=["optimization"])
 

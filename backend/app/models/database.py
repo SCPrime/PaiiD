@@ -10,9 +10,6 @@ SQLAlchemy models for PostgreSQL database.
 Defines schema for users, strategies, trades, performance tracking, and equity snapshots.
 """
 
-
-
-
 class User(Base):
     """User account and preferences"""
 

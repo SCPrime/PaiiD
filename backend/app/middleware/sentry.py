@@ -11,8 +11,6 @@ Sentry Error Context Middleware
 Adds custom context and breadcrumbs to Sentry error reports for better debugging.
 """
 
-
-
 class SentryContextMiddleware(BaseHTTPMiddleware):
     """
     Adds request context to Sentry error reports

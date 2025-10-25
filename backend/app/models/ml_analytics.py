@@ -12,9 +12,6 @@ and training analytics. Enables long-term ML system monitoring.
 Phase 1E: Production Hardening - Database Schema
 """
 
-
-
-
 class MLPredictionHistory(Base):
     """History of ML predictions for accuracy tracking and analysis"""
 

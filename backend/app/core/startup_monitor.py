@@ -10,7 +10,6 @@ Tracks startup timing and detects hanging operations to prevent production issue
 Learned from: 2025-10-17 - Tradier stream blocking startup for 360s causing 500 errors.
 """
 
-
 logger = logging.getLogger(__name__)
 
 class StartupMonitor:

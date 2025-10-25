@@ -5,7 +5,6 @@ Test analytics and portfolio calculations
 Tests P&L calculation, risk metrics, portfolio summary
 """
 
-
 HEADERS = {"Authorization": "Bearer test-token-12345"}
 
 def test_portfolio_summary_endpoint(client):

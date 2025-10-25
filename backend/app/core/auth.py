@@ -2,9 +2,6 @@ from .config import settings
 from fastapi import Header, HTTPException, status
 import logging
 
-
-
-
 # Add logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)

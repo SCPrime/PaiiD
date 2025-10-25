@@ -25,9 +25,6 @@ Endpoints for ML-powered features:
 - Pattern recognition
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/ml", tags=["Machine Learning"])
@@ -348,7 +345,6 @@ async def backtest_patterns(
     """
     try:
         logger.info(f"Pattern backtesting requested for {symbol} ({lookback_days} days)")
-
 
         # Get historical data
         end_date = datetime.now()
@@ -1120,7 +1116,6 @@ async def get_ensemble_prediction(
     """
     try:
         logger.info(f"Ensemble prediction requested for {symbol}")
-
 
         ensemble = get_regime_ensemble()
 

@@ -9,9 +9,6 @@ import logging
 Position Tracking Service - Monitor open positions and calculate P&L
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 class PositionGreeks(BaseModel):

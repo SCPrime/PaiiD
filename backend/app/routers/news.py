@@ -4,8 +4,6 @@ from app.core.jwt import get_current_user
 from app.models.database import User
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-
-
 router = APIRouter()
 
 # Initialize news aggregator at module level

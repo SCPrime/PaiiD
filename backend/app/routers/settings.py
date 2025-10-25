@@ -7,9 +7,6 @@ from fastapi import APIRouter, Depends
 import os
 import sys
 
-
-
-
 router = APIRouter()
 
 _settings = {

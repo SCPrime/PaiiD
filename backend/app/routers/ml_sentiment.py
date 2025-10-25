@@ -23,9 +23,6 @@ Real sentiment analysis and trade signal endpoints
 WITH REDIS CACHING for performance
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/sentiment", tags=["ML Sentiment & Signals"])
 settings = get_settings()
@@ -395,7 +392,6 @@ async def analyze_sentiment(
         GET /api/sentiment/analyze?symbol=AAPL&lookback_hours=24
     """
     try:
-
 
         logger.info(f"Sentiment analysis requested for {symbol} ({lookback_hours}h)")
 

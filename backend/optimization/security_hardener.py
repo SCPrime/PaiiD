@@ -12,8 +12,6 @@ Security Hardener
 Implements comprehensive security hardening and input validation for maximum protection
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class SecurityHardener:

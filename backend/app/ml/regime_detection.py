@@ -14,8 +14,6 @@ Advanced Market Regime Detection Module
 ML-powered market regime classification for PaiiD
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class MarketRegime(Enum):

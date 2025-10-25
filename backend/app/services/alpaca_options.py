@@ -13,9 +13,6 @@ Handles: Options chains, contract details, and options-specific data
 Integrates with Greeks calculation for enriched options data
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 class AlpacaOptionsClient:

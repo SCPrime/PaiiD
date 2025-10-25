@@ -11,9 +11,6 @@ Trade Signal Generator
 Combines technical indicators with sentiment analysis to generate trade signals
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 class SignalType(str, Enum):

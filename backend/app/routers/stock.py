@@ -10,9 +10,6 @@ Stock Information and News Router
 Provides stock lookup, company info, and news endpoints for the StockLookup feature
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/stock", tags=["stock"])

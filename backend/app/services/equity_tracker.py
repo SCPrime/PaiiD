@@ -11,8 +11,6 @@ Tracks daily portfolio equity for historical performance analysis.
 Stores equity snapshots in JSON files for P&L Dashboard.
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 # Data storage path

@@ -14,8 +14,6 @@ Handles user registration, login, logout, token refresh, and profile management.
 Supports owner and beta tester registration with invite codes.
 """
 
-
-
     create_token_pair,
     decode_token,
     get_current_user,

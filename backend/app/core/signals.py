@@ -12,7 +12,6 @@ Ensures proper cleanup of resources and PID files on process termination
 Version: 1.0.0
 """
 
-
 logger = logging.getLogger(__name__)
 
 # Track if shutdown is in progress

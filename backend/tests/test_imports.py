@@ -27,8 +27,6 @@ Prevents incidents like commit 2e048fe by verifying:
 These tests run in CI to catch import issues before deployment.
 """
 
-
-
 class TestPackageStructure:
     """Verify Python package structure is valid"""
 

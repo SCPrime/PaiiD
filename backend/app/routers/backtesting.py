@@ -14,9 +14,6 @@ Backtesting API Router
 Endpoints for running strategy backtests and retrieving results.
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/backtesting", tags=["backtesting"])

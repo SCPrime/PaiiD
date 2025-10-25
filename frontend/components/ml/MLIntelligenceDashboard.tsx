@@ -1,6 +1,6 @@
 /**
  * ML Intelligence Dashboard
- * 
+ *
  * Enterprise-grade ML features made accessible for friends and family:
  * - Pattern recognition with visual explanations
  * - Market regime detection with strategy recommendations
@@ -79,7 +79,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL}/api/ml/market-regime?symbol=${selectedSymbol}&lookback_days=90`
       );
       const regimeData = await regimeResponse.json();
-      
+
       if (regimeData.regime) {
         setMarketRegime(regimeData);
       }
@@ -89,7 +89,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL}/api/ml/detect-patterns?symbol=${selectedSymbol}&lookback_days=90&min_confidence=0.6`
       );
       const patternsData = await patternsResponse.json();
-      
+
       if (patternsData.patterns) {
         setPatterns(patternsData.patterns);
       }
@@ -167,10 +167,10 @@ export const MLIntelligenceDashboard: React.FC = () => {
       'ranging': 'Market is moving sideways with no clear direction.',
       'high_volatility': 'Market is experiencing high volatility with large price swings.',
     };
-    
+
     const baseDescription = descriptions[regime as keyof typeof descriptions] || 'Market state is unclear.';
     const confidenceText = confidence > 0.8 ? 'High confidence' : confidence > 0.6 ? 'Moderate confidence' : 'Low confidence';
-    
+
     return `${baseDescription} (${confidenceText}: ${Math.round(confidence * 100)}%)`;
   };
 
@@ -223,7 +223,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
             <p className="text-gray-600">AI-powered market analysis for smarter decisions</p>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           <select
             value={selectedSymbol}
@@ -237,7 +237,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
             <option value="AAPL">AAPL (Apple)</option>
             <option value="MSFT">MSFT (Microsoft)</option>
           </select>
-          
+
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -267,9 +267,9 @@ export const MLIntelligenceDashboard: React.FC = () => {
               <div className="text-sm text-gray-500">Confidence</div>
             </div>
           </div>
-          
+
           <p className="mt-3 text-gray-700">{getRegimeDescription(marketRegime.regime, marketRegime.confidence)}</p>
-          
+
           {marketRegime.recommended_strategies?.length > 0 && (
             <div className="mt-4">
               <h4 className="text-sm font-medium text-gray-900 mb-2">Recommended Strategies:</h4>
@@ -307,9 +307,9 @@ export const MLIntelligenceDashboard: React.FC = () => {
                 </span>
               </div>
             </div>
-            
+
             <p className="text-sm text-gray-700 mb-3">{insight.description}</p>
-            
+
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">
                 {new Date(insight.timestamp).toLocaleTimeString()}
@@ -332,13 +332,13 @@ export const MLIntelligenceDashboard: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900">Detected Patterns</h3>
             <HelpTooltip content="Technical analysis patterns detected in recent price action. These can signal potential trading opportunities." />
           </div>
-          
+
           <div className="space-y-3">
             {patterns.map((pattern, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${
-                    pattern.signal === 'bullish' ? 'bg-green-500' : 
+                    pattern.signal === 'bullish' ? 'bg-green-500' :
                     pattern.signal === 'bearish' ? 'bg-red-500' : 'bg-gray-500'
                   }`} />
                   <div>

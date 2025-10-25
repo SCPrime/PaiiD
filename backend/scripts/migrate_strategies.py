@@ -20,7 +20,6 @@ Prerequisites:
     - Database tables must be created (run alembic upgrade head first)
 """
 
-
 # Fix Windows console encoding for emoji support
 if sys.platform == "win32":
     os.environ["PYTHONIOENCODING"] = "utf-8"
@@ -28,7 +27,6 @@ if sys.platform == "win32":
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
-
 
 def migrate_strategies_from_directory():
     """Migrate strategies from strategies/ directory"""

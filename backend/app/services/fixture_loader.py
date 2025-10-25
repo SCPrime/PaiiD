@@ -11,7 +11,6 @@ Provides deterministic test data for Playwright testing when USE_TEST_FIXTURES=t
 This ensures consistent test results regardless of external API availability.
 """
 
-
 logger = logging.getLogger(__name__)
 
 class FixtureLoader:

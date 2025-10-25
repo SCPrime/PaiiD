@@ -12,8 +12,6 @@ Model Persistence Service
 Handles saving/loading trained ML models to/from disk
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 # Model storage directory

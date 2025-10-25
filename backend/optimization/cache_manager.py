@@ -10,8 +10,6 @@ Advanced Cache Manager
 Implements intelligent caching strategies with Redis for optimal performance
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class CacheManager:

@@ -23,8 +23,6 @@ Usage:
     python -m app.core.prelaunch --check-only
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class ValidationResult(BaseModel):

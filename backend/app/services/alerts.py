@@ -8,8 +8,6 @@ import requests
 Production alert system
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class AlertService:

@@ -11,8 +11,6 @@ Market Data Service for Real-Time Data Aggregation
 Handles data fetching from multiple sources (Alpha Vantage, Tradier, etc.)
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class MarketDataService:

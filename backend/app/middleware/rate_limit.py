@@ -14,9 +14,6 @@ Protects API from abuse and DoS attacks using SlowAPI.
 Phase 3: Bulletproof Reliability
 """
 
-
-
-
 # Check if running in test mode
 TESTING = os.getenv("TESTING", "false").lower() == "true"
 

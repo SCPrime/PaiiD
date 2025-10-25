@@ -20,9 +20,6 @@ The model learns from backtesting results: which strategies performed best
 in which market regimes and feature combinations.
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 class StrategySelector:

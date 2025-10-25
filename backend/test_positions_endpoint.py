@@ -4,7 +4,6 @@ import requests
 Test script for the new /api/ai/analyze-positions endpoint
 """
 
-
 # Backend URL
 BASE_URL = "http://127.0.0.1:8001"
 

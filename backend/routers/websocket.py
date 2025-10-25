@@ -9,8 +9,6 @@ WebSocket Router for Real-Time Data Streaming
 Handles WebSocket connections and real-time data broadcasting
 """
 
-
-
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ws", tags=["websocket"])
 security = HTTPBearer()

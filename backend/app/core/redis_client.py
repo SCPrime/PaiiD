@@ -10,8 +10,6 @@ Redis Client for ML Prediction Caching
 High-performance caching layer for expensive ML operations
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 # Global Redis client

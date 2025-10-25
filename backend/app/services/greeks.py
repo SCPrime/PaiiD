@@ -7,7 +7,6 @@ Keeps the same class name and method signatures expected by callers while delega
 to the production implementation in options_greeks.
 """
 
-
 class GreeksCalculator:
     def __init__(self, risk_free_rate: float = 0.05):
         self._impl = _BSCalculator(risk_free_rate=risk_free_rate)

@@ -10,8 +10,6 @@ Provides SQLAlchemy engine, session, and base for models.
 Falls back to SQLite in-memory if DATABASE_URL not configured.
 """
 
-
-
 # Create engine based on configuration
 if settings.DATABASE_URL:
     # Production: Use PostgreSQL

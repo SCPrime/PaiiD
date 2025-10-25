@@ -19,8 +19,6 @@ Automatically tracks feature usage for subscription metering.
 Phase 2: Monetization Engine - Usage Metering
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 # Feature tracking configuration
@@ -138,7 +136,6 @@ async def check_usage_limit(
     """
     try:
 
-
         # Get current billing period start
         now = lambda: datetime.now(UTC)()
         month_start = datetime(now.year, now.month, 1)
@@ -237,7 +234,6 @@ def get_usage_summary(user_id: int, tier: str) -> dict:
         Dictionary with usage for each feature
     """
     try:
-
 
         stripe_service = get_stripe_service()
         limits = stripe_service.get_tier_limits(tier)

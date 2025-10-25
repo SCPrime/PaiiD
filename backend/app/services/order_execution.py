@@ -11,9 +11,6 @@ import logging
 Order Execution Service - Handles options trade proposal and execution
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 class OptionsProposal(BaseModel):

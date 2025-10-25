@@ -14,8 +14,6 @@ Uses voting, averaging, and stacking techniques.
 Phase 3A: Advanced ML Features - Ensemble Models
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class EnsemblePredictor:

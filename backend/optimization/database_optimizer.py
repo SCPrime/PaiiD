@@ -10,8 +10,6 @@ Database Performance Optimizer
 Optimizes PostgreSQL queries, indexes, and connection pooling for maximum performance
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class DatabaseOptimizer:

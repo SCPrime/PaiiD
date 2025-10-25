@@ -5,7 +5,6 @@ from .validation import *
 
 # Middleware package
 
-
 __all__ = [
     "CacheControlMiddleware",
     "SentryContextMiddleware",

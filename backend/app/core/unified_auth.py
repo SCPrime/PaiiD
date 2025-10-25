@@ -19,9 +19,6 @@ This module provides a clean, unified authentication system that supports:
 STABILITY: Gibraltar-level - bulletproof error handling and clear auth flow
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 security = HTTPBearer()
 

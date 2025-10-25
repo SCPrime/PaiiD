@@ -19,9 +19,6 @@ Sends alerts via:
 - Database logging for dashboard display
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 class AlertSeverity(str, Enum):

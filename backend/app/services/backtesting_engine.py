@@ -11,7 +11,6 @@ Simulates strategy execution on historical market data to evaluate performance.
 Calculates key metrics: Sharpe ratio, max drawdown, win rate, profit factor.
 """
 
-
 logger = logging.getLogger(__name__)
 
 @dataclass

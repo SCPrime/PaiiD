@@ -9,8 +9,6 @@ Rate Limiting Middleware
 Prevents API throttling and implements rate limiting for market data requests
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class RateLimiter:

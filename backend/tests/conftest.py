@@ -21,8 +21,6 @@ Pytest Configuration and Fixtures
 Provides test fixtures for database, API client, and mocked services.
 """
 
-
-
 # Set test environment variables
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["REDIS_URL"] = ""  # Disable Redis for tests
@@ -31,7 +29,6 @@ os.environ["TESTING"] = "true"  # Disable rate limiting for tests
 os.environ["API_TOKEN"] = "test-token-12345"
 os.environ["TRADIER_API_KEY"] = "test-tradier-key"
 os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
-
 
 # ===========================================
 # TEST AUTHENTICATION

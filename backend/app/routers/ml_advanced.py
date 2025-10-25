@@ -16,9 +16,6 @@ Advanced ML API Endpoints
 Enhanced ML features for PaiiD trading platform
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/ml/advanced", tags=["ml-advanced"])

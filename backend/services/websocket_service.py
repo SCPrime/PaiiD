@@ -11,8 +11,6 @@ WebSocket Service for Real-Time Market Data Streaming
 Handles WebSocket connections, market data broadcasting, and client management
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class WebSocketManager:

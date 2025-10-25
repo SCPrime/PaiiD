@@ -17,9 +17,6 @@ Provides portfolio performance metrics, historical equity tracking,
 and risk analytics for the P&L Dashboard.
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["analytics"])

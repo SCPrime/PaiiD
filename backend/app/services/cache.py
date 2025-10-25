@@ -12,9 +12,6 @@ Provides Redis caching with graceful fallback when Redis is unavailable.
 Implements common cache operations with TTL support.
 """
 
-
-
-
 class CacheService:
     """Redis cache service with graceful degradation"""
 

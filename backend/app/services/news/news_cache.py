@@ -12,7 +12,6 @@ Provides caching layer for news articles to reduce API calls
 and improve response times. Uses file-based storage with TTL.
 """
 
-
 logger = logging.getLogger(__name__)
 
 # Cache directory

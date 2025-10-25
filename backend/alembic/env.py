@@ -8,10 +8,7 @@ import sys
 
 # Import settings and models
 
-
-
 sys.path.append(str(Path(__file__).parent.parent))
-
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

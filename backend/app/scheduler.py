@@ -13,8 +13,6 @@ Trading Scheduler Service (Simplified - File-based)
 Handles automated execution of trading routines using APScheduler
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 # Data storage paths

@@ -11,9 +11,6 @@ Claude API Proxy Router
 Proxies Anthropic API calls from frontend to avoid exposing API key in browser
 """
 
-
-
-
 # Set UTF-8 encoding for console output on Windows
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")

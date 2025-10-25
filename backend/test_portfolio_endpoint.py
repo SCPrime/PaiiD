@@ -6,11 +6,9 @@ import sys
 Test script for the /api/ai/analyze-portfolio endpoint
 """
 
-
 sys.path.insert(0, ".")
 
 # Test by directly importing and calling the function
-
 
 async def test_portfolio_endpoint():
     """Test the portfolio analysis endpoint"""

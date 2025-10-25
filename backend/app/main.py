@@ -41,8 +41,6 @@ import sentry_sdk
 import sys
 import time
 
-
-
 # Load .env file before importing settings
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
@@ -56,7 +54,6 @@ print(
 )
 print("Deployed from: main branch - Tradier integration active")
 print("===========================\n", flush=True)
-
 
     ai,
     analytics,
@@ -146,7 +143,6 @@ app = FastAPI(
 
 # Add Request ID middleware early for correlation
 
-
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(KillSwitchMiddleware)
 app.add_middleware(UsageTrackingMiddleware)  # Phase 2: Monetization - Usage metering
@@ -173,8 +169,6 @@ async def startup_event():
     if settings.TESTING:
         print("[TEST MODE] Skipping startup event initialization", flush=True)
         return
-
-
 
     # Configure structured logging
     logging.basicConfig(
@@ -262,7 +256,6 @@ async def startup_event():
     # Verify database connectivity early
     try:
         async with monitor.phase("database_check", timeout=5.0):
-
 
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
@@ -353,7 +346,6 @@ async def shutdown_event():
     if settings.TESTING:
         print("[TEST MODE] Skipping shutdown event", flush=True)
         return
-
 
     shutdown_start = time.time()
 

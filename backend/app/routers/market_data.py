@@ -18,10 +18,6 @@ This module uses Tradier API for ALL market data.
 Alpaca is ONLY used for paper trading execution (see orders.py).
 """
 
-
-
-
-
 logger = logging.getLogger(__name__)
 
 # Runtime notice (kept minimal)

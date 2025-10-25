@@ -13,8 +13,6 @@ API Performance Optimizer
 Optimizes API response times, caching, and rate limiting for maximum performance
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class APIOptimizer:

@@ -13,9 +13,6 @@ Scheduler API Router (Simplified - File-based)
 REST endpoints for managing scheduled trading tasks
 """
 
-
-
-
 router = APIRouter(prefix="/scheduler", tags=["scheduler"])
 logger = logging.getLogger(__name__)
 

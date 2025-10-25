@@ -6,9 +6,6 @@ import time
 Middleware to track request metrics
 """
 
-
-
-
 async def metrics_middleware(request: Request, call_next):
     """Track request metrics"""
     start_time = time.time()

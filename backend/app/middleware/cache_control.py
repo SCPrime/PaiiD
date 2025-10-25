@@ -11,8 +11,6 @@ Adds intelligent cache headers to API responses to support SWR (stale-while-reva
 Phase 2: Performance Optimization
 """
 
-
-
 class CacheControlMiddleware(BaseHTTPMiddleware):
     """
     Add Cache-Control headers to API responses based on endpoint patterns

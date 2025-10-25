@@ -12,8 +12,6 @@ Advanced Pattern Recognition Module
 Enhanced ML-powered pattern detection for PaiiD
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class PatternType(Enum):

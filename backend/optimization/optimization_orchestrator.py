@@ -12,8 +12,6 @@ Optimization Orchestrator
 Coordinates all backend optimization processes for maximum performance
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class OptimizationOrchestrator:

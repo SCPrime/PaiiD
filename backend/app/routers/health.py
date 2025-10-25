@@ -8,9 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException
 Enhanced health check endpoints with metrics
 """
 
-
-
-
 router = APIRouter(prefix="/health", tags=["health"])
 
 @router.get("")

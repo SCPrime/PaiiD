@@ -4,7 +4,6 @@ from typing import Optional
 import os
 import time
 
-
 try:
 except ImportError:
     Redis = None  # type: ignore

@@ -12,8 +12,6 @@ Handles subscription lifecycle, usage metering, and payment processing.
 Phase 2: Monetization Engine
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 # Initialize Stripe

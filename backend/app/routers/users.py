@@ -12,9 +12,6 @@ User Preferences API Routes
 Endpoints for managing user preferences including risk tolerance
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter()

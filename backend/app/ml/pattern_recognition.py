@@ -19,9 +19,6 @@ Patterns detected:
 - Support/resistance breaks
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 # Pattern types

@@ -2,9 +2,6 @@ from .base_provider import BaseNewsProvider, NewsArticle
 import os
 import requests
 
-
-
-
 class AlphaVantageProvider(BaseNewsProvider):
     def __init__(self):
         self.api_key = os.getenv("ALPHA_VANTAGE_API_KEY")

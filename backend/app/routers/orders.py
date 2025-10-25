@@ -14,7 +14,6 @@ from tenacity import (
 import logging
 import requests
 
-
     before_sleep_log,
     retry,
     retry_if_exception_type,

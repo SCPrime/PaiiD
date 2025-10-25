@@ -27,9 +27,6 @@ IMPLEMENTATION:
 - Reconnects automatically on connection loss
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 class TradierStreamService:

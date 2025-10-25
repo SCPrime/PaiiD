@@ -6,7 +6,6 @@ Strategy Templates Service
 Pre-built trading strategy templates with risk classifications
 """
 
-
 @dataclass
 class StrategyTemplate:
     """Template for a trading strategy"""

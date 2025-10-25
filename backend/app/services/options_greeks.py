@@ -17,8 +17,6 @@ Implements Black-Scholes-Merton model for calculating option Greeks:
 Uses scipy for numerical calculations and supports both call and put options.
 """
 
-
-
 @dataclass
 class OptionsGreeks:
     """Container for all calculated Greeks"""

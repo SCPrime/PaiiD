@@ -13,7 +13,6 @@ and market regime detection using scikit-learn and technical analysis.
 Phase 2: ML Strategy Engine
 """
 
-
 __all__ = [
     "FeatureEngineer",
     "MLDataPipeline",

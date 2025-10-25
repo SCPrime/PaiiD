@@ -7,7 +7,6 @@ Security Headers Middleware
 Adds common security headers (CSP, HSTS, X-Frame-Options, etc.).
 """
 
-
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)

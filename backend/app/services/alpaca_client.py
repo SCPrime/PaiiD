@@ -12,8 +12,6 @@ Handles: Account, Positions, Orders for Paper Trading ONLY
 Market Data comes from Tradier API
 """
 
-
-
 logger = logging.getLogger(__name__)
 
 class AlpacaClient:

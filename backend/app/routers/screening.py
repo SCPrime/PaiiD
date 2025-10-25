@@ -9,9 +9,6 @@ import random
 Strategy-based opportunity screening endpoints
 """
 
-
-
-
 router = APIRouter(tags=["screening"])
 
 class Opportunity(BaseModel):

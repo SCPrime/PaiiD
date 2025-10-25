@@ -40,9 +40,6 @@ AI Recommendations Router
 Provides AI-generated trading recommendations based on market analysis
 """
 
-
-
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -1163,7 +1160,6 @@ async def _fetch_sector_performance() -> dict:
     """
     try:
 
-
         # Make internal API call to market/sectors endpoint
         # In production, we could call the function directly, but using HTTP ensures consistency
         response = requests.get(
@@ -1751,7 +1747,6 @@ async def save_recommendation(
     """
     try:
 
-
         # Calculate expiry (recommendations expire after 7 days)
         expires_at = datetime.now(UTC) + timedelta(days=7)
 
@@ -1918,7 +1913,6 @@ async def analyze_portfolio(current_user: User = Depends(get_current_user)):
     Returns comprehensive analysis with actionable insights
     """
     try:
-
 
         logger.info("🤖 AI Portfolio Analysis - Starting...")
 
@@ -2234,7 +2228,6 @@ Base your analysis on:
 - Urgency for action"""
 
         logger.info("🤖 Sending request to Claude API...")
-
 
         anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
         if not anthropic_api_key:

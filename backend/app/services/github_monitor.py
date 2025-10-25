@@ -11,8 +11,6 @@ GitHub Monitor Service
 Handles GitHub webhook events and tracks repository activity
 """
 
-
-
 logger = logging.getLogger(__name__)
 settings = get_settings()
 

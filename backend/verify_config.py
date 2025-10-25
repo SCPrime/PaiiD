@@ -12,8 +12,6 @@ Usage:
     python verify_config.py
 """
 
-
-
 # Load .env file
 env_path = Path(__file__).parent / ".env"
 if not env_path.exists():

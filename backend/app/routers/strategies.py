@@ -16,8 +16,6 @@ Strategy API Routes
 Endpoints for managing trading strategies
 """
 
-
-
     customize_template_for_risk,
     filter_templates_by_risk,
     get_all_templates,

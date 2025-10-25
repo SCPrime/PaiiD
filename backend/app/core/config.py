@@ -3,8 +3,6 @@ from pathlib import Path
 from pydantic import BaseModel
 import os
 
-
-
 # Load .env file BEFORE reading env vars (works even when imported directly)
 ENV_PATH = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(ENV_PATH)
