@@ -100,6 +100,13 @@ export const workflows: Workflow[] = [
     description: "AI-powered market analysis, pattern recognition, and personal trading insights.",
   },
   {
+    id: "github-monitor",
+    name: "GITHUB\nMONITOR",
+    color: "#10B981",
+    icon: "🔧",
+    description: "Real-time GitHub Actions monitoring with workflow status and logs.",
+  },
+  {
     id: "settings",
     name: "SETTINGS",
     color: "#64748b",
