@@ -24,24 +24,23 @@ const AIRecommendations = dynamic(() => import("../components/AIRecommendations"
     </div>
   ),
 });
-// Disabled - using iframes instead
-// const MonitorDashboard = dynamic(
-//   () => import("../components/MonitorDashboard").then((mod) => ({ default: mod.MonitorDashboard })),
-//   {
-//     loading: () => (
-//       <div className="flex items-center justify-center p-8">
-//         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-//       </div>
-//     ),
-//   }
-// );
-// const Analytics = dynamic(() => import("../components/Analytics"), {
-//   loading: () => (
-//     <div className="flex items-center justify-center p-8">
-//       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-//     </div>
-//   ),
-// });
+const MonitorDashboard = dynamic(
+  () => import("../components/MonitorDashboard").then((mod) => ({ default: mod.MonitorDashboard })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    ),
+  }
+);
+const Analytics = dynamic(() => import("../components/Analytics"), {
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
+  ),
+});
 const Backtesting = dynamic(() => import("../components/Backtesting"), {
   loading: () => (
     <div className="flex items-center justify-center p-8">
@@ -93,14 +92,12 @@ import CommandPalette from "../components/CommandPalette";
 import CompletePaiiDLogo from "../components/CompletePaiiDLogo";
 import HelpPanel from "../components/HelpPanel";
 import KeyboardShortcuts from "../components/KeyboardShortcuts";
-import LoginForm from "../components/LoginForm";
 import MarketScanner from "../components/MarketScanner";
 import TradingModeIndicator from "../components/TradingModeIndicator";
 import RiskCalculator from "../components/trading/RiskCalculator";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { HelpProvider, useHelp } from "../hooks/useHelp";
-import { isAuthenticated } from "../lib/auth";
 import { initializeSession } from "../lib/userManagement";
 
 export default function Dashboard() {
@@ -114,7 +111,6 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [tradingMode, setTradingMode] = useState<"paper" | "live">("paper");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Help system
   const { isHelpPanelOpen, openHelpPanel, closeHelpPanel } = useHelp();
@@ -125,13 +121,8 @@ export default function Dashboard() {
   // Detect mobile viewport
   const isMobile = useIsMobile();
 
-  // Check authentication and user setup on mount
+  // Check if user is set up on mount
   useEffect(() => {
-    // Check JWT authentication first
-    const authStatus = isAuthenticated();
-    setIsLoggedIn(authStatus);
-
-    // Then check onboarding setup
     const setupComplete =
       typeof window !== "undefined"
         ? localStorage.getItem("user-setup-complete") === "true"
@@ -178,14 +169,6 @@ export default function Dashboard() {
   // Show loading state briefly
   if (isLoading) {
     return null;
-  }
-
-  // Show login form if not authenticated
-  if (!isLoggedIn) {
-    return <LoginForm onLoginSuccess={() => {
-      setIsLoggedIn(true);
-      initializeSession();
-    }} />;
   }
 
   // Show user setup modal if not set up (unless development bypass is enabled)
