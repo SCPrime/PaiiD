@@ -12,7 +12,9 @@ import pandas as pd
 import talib
 from scipy.signal import find_peaks
 
+
 logger = logging.getLogger(__name__)
+
 
 class PatternType(Enum):
     """Advanced pattern types for detection"""
@@ -49,6 +51,7 @@ class PatternType(Enum):
     RESISTANCE_BREAK = "resistance_break"
     TREND_LINE_BREAK = "trend_line_break"
 
+
 @dataclass
 class PatternSignal:
     """Enhanced pattern signal with confidence scoring"""
@@ -66,6 +69,7 @@ class PatternSignal:
     key_levels: list[float]
     description: str
     trading_suggestion: str
+
 
 class AdvancedPatternDetector:
     """Enhanced pattern detection with ML algorithms"""

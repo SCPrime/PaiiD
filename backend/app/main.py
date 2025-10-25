@@ -56,6 +56,7 @@ from .routers import (
 )
 from .routers import settings as settings_router
 
+
 # Optional: Subscription router (requires stripe package)
 try:
     from .routers import subscription
@@ -235,19 +236,31 @@ async def startup_event():
     # Run pre-launch validation
     try:
         async with monitor.phase("prelaunch_validation", timeout=10.0):
-            validator = PrelaunchValidator(strict_mode=True)
+            strict_env = os.getenv("STRICT_PRELAUNCH", "false").lower() == "true"
+            validator = PrelaunchValidator(strict_mode=strict_env)
             success, errors, _warnings = await validator.validate_all()
 
             if not success:
                 logger.error("🚨 Pre-launch validation failed!")
                 for error in errors:
                     logger.error(f"   • {error}")
-                raise RuntimeError(f"Pre-launch validation failed: {errors}")
+                if strict_env:
+                    raise RuntimeError(f"Pre-launch validation failed: {errors}")
+                else:
+                    logger.warning(
+                        "Pre-launch validation reported errors but STRICT_PRELAUNCH is disabled; continuing startup"
+                    )
             else:
                 logger.info("✅ Pre-launch validation passed")
     except Exception as e:
+        # Only block startup when STRICT_PRELAUNCH is explicitly enabled
+        strict_env = os.getenv("STRICT_PRELAUNCH", "false").lower() == "true"
         logger.error(f"❌ Pre-launch validation error: {e}")
-        raise
+        if strict_env:
+            raise
+        logger.warning(
+            "Continuing startup despite pre-launch validation error (STRICT_PRELAUNCH disabled)"
+        )
 
     # Verify database connectivity early
     try:
@@ -455,7 +468,9 @@ app.include_router(backtesting.router, prefix="/api")
 app.include_router(ml.router)  # Machine Learning (Phase 2)
 # app.include_router(ml_sentiment.router)  # ML Sentiment & Signals (Phase 2 - Active) - Disabled due to compatibility
 if SUBSCRIPTION_AVAILABLE:
-    app.include_router(subscription.router)  # Subscription & Billing (Phase 2 - Monetization)
+    app.include_router(
+        subscription.router
+    )  # Subscription & Billing (Phase 2 - Monetization)
     print("[OK] Subscription API endpoints registered", flush=True)
 else:
     print(

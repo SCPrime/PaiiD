@@ -72,5 +72,26 @@
     "**/iPi-Symbol-Locked.svg"
   ],
   "reader-mode.readOnly": true,
-  "reader-mode.showDecorations": true
+  "reader-mode.showDecorations": true,
+
+  // Browser DevTools Integration
+  "vscode-edge-devtools.webhint": false,
+  "vscode-edge-devtools.mirrorEdits": true,
+
+  // Extension Auto-Activation
+  "extensions.autoUpdate": true,
+  "extensions.autoCheckUpdates": true,
+  "github.copilot.enable": {
+    "*": true,
+    "typescript": true,
+    "typescriptreact": true,
+    "javascript": true,
+    "python": true
+  },
+  "github.copilot.editor.enableAutoCompletions": true,
+  "continue.enableTabAutocomplete": true,
+  "errorLens.enabled": true,
+  "errorLens.followCursor": "allLines",
+  "console-ninja.featureSet": "Community",
+  "console-ninja.toolsToShow": ["console", "errors", "network"]
 }

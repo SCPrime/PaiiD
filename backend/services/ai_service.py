@@ -1,11 +1,13 @@
-from backend.app.core.config import settings
-from backend.app.services.cache import CacheService
-from datetime import datetime, timedelta
-from typing import Any
-import aiohttp
 import json
 import logging
+from datetime import datetime, timedelta
+from typing import Any
+
+import aiohttp
 import redis
+
+from app.core.config import settings
+
 
 """
 AI Service for Market Analysis and Trading Recommendations
@@ -14,15 +16,14 @@ Integrates Claude API for natural language processing and market insights
 
 logger = logging.getLogger(__name__)
 
+
 class AIService:
     """Service for AI-powered market analysis and trading recommendations"""
 
     def __init__(self):
-        # Use shared cache service with graceful fallback
-        cache_service = CacheService()
-        self.redis_client = cache_service.client if cache_service.available else None
-
-        # Use correct Anthropic API key setting
+        self.redis_client = redis.Redis(
+            host="localhost", port=6379, db=3, decode_responses=True
+        )
         self.claude_api_key = settings.ANTHROPIC_API_KEY
         self.claude_base_url = "https://api.anthropic.com/v1/messages"
         self.session = None
@@ -90,15 +91,11 @@ class AIService:
                 "timestamp": datetime.now().isoformat(),
             }
 
-            # Cache the analysis (if Redis available)
-            if self.redis_client:
-                try:
-                    cache_key = f"sentiment_analysis:{':'.join(symbols)}"
-                    self.redis_client.setex(
-                        cache_key, 300, json.dumps(sentiment_analysis)
-                    )  # 5 min cache
-                except Exception as e:
-                    logger.warning(f"Redis cache write error: {e}")
+            # Cache the analysis
+            cache_key = f"sentiment_analysis:{':'.join(symbols)}"
+            self.redis_client.setex(
+                cache_key, 300, json.dumps(sentiment_analysis)
+            )  # 5 min cache
 
             return sentiment_analysis
 

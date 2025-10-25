@@ -15,9 +15,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..core.auth import require_bearer
-from ..core.jwt import get_current_user
-from ..core.auth import get_current_user_id
+from ..core.auth import get_current_user_id, require_bearer
 from ..db.session import get_db
 from ..models.database import User
 from ..services.technical_indicators import TechnicalIndicators
@@ -512,7 +510,9 @@ class SymbolAnalysis(BaseModel):
     "/analyze-symbol/{symbol}",
     response_model=SymbolAnalysis,
 )
-async def analyze_symbol(symbol: str, current_user: User = Depends(get_current_user_id)):
+async def analyze_symbol(
+    symbol: str, current_user: User = Depends(get_current_user_id)
+):
     """
     Comprehensive AI analysis of a stock symbol using Tradier data
 

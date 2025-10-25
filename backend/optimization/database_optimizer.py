@@ -1,10 +1,12 @@
-from backend.app.core.config import settings
-from backend.app.services.cache import CacheService
+import logging
 from datetime import datetime
 from typing import Any
+
 import asyncpg
-import logging
 import redis
+
+from app.core.config import settings
+
 
 """
 Database Performance Optimizer
@@ -13,14 +15,14 @@ Optimizes PostgreSQL queries, indexes, and connection pooling for maximum perfor
 
 logger = logging.getLogger(__name__)
 
+
 class DatabaseOptimizer:
     """Optimizes database performance with indexing, query optimization, and connection pooling"""
 
     def __init__(self):
-        # Use shared cache service with graceful fallback
-        cache_service = CacheService()
-        self.redis_client = cache_service.client if cache_service.available else None
-
+        self.redis_client = redis.Redis(
+            host="localhost", port=6379, db=5, decode_responses=True
+        )
         self.connection_pool = None
         self.performance_metrics = {
             "query_times": [],

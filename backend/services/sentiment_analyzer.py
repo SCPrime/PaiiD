@@ -1,12 +1,14 @@
-from backend.app.core.config import settings
-from backend.app.services.cache import CacheService
-from datetime import datetime
-from typing import Any
-import aiohttp
 import json
 import logging
 import re
+from datetime import datetime
+from typing import Any
+
+import aiohttp
 import redis
+
+from app.core.config import settings
+
 
 """
 Sentiment Analysis Service
@@ -15,17 +17,16 @@ Analyzes news articles, social media, and market data for sentiment indicators
 
 logger = logging.getLogger(__name__)
 
+
 class SentimentAnalyzer:
     """Service for analyzing market sentiment from various sources"""
 
     def __init__(self):
-        # Use shared cache service with graceful fallback
-        cache_service = CacheService()
-        self.redis_client = cache_service.client if cache_service.available else None
-
-        # Optional API keys - use fallback if not configured
-        self.news_api_key = getattr(settings, 'NEWS_API_KEY', None)
-        self.twitter_bearer_token = getattr(settings, 'TWITTER_BEARER_TOKEN', None)
+        self.redis_client = redis.Redis(
+            host="localhost", port=6379, db=4, decode_responses=True
+        )
+        self.news_api_key = settings.NEWS_API_KEY
+        self.twitter_bearer_token = settings.TWITTER_BEARER_TOKEN
         self.session = None
 
         # Sentiment keywords and weights

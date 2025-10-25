@@ -1,9 +1,11 @@
-from backend.app.core.config import settings
-from backend.app.services.cache import CacheService
+import logging
+
+import redis
 from fastapi import Request
 from fastapi.responses import JSONResponse
-import logging
-import redis
+
+from app.core.config import settings
+
 
 """
 Rate Limiting Middleware
@@ -12,13 +14,17 @@ Prevents API throttling and implements rate limiting for market data requests
 
 logger = logging.getLogger(__name__)
 
+
 class RateLimiter:
     """Rate limiter using Redis for distributed rate limiting"""
 
     def __init__(self):
-        # Use shared cache service with graceful fallback
-        cache_service = CacheService()
-        self.redis_client = cache_service.client if cache_service.available else None
+        self.redis_client = redis.Redis(
+            host=getattr(settings, "REDIS_HOST", "localhost"),
+            port=getattr(settings, "REDIS_PORT", 6379),
+            db=1,  # Use different DB for rate limiting
+            decode_responses=True,
+        )
 
         # Rate limits (requests per minute)
         self.limits = {
@@ -31,10 +37,6 @@ class RateLimiter:
     async def check_rate_limit(self, request: Request, endpoint_type: str) -> bool:
         """Check if request is within rate limit"""
         try:
-            # If Redis not available, allow all requests (no rate limiting)
-            if not self.redis_client:
-                return True
-
             # Get client identifier (IP address or user ID)
             client_id = self._get_client_id(request)
 
@@ -96,8 +98,10 @@ class RateLimiter:
             logger.error(f"Error getting remaining requests: {e}")
             return 0
 
+
 # Global rate limiter instance
 rate_limiter = RateLimiter()
+
 
 class RateLimitMiddleware:
     """FastAPI middleware for rate limiting"""
@@ -152,6 +156,7 @@ class RateLimitMiddleware:
             return "websocket"
         else:
             return "general"
+
 
 class MarketDataRateLimiter:
     """Specialized rate limiter for market data endpoints"""
@@ -209,6 +214,7 @@ class MarketDataRateLimiter:
         except Exception as e:
             logger.error(f"Error getting symbol remaining: {e}")
             return 0
+
 
 # Global market data rate limiter
 market_data_rate_limiter = MarketDataRateLimiter()

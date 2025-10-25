@@ -35,9 +35,13 @@ class FeatureEngineer:
     def __init__(self):
         """Initialize feature engineer"""
         if ta is None:
-            logger.warning("TA library not installed. Install with: pip install ta>=0.11.0")
+            logger.warning(
+                "TA library not installed. Install with: pip install ta>=0.11.0"
+            )
 
-    def extract_features(self, df: pd.DataFrame, symbol: str = "UNKNOWN") -> pd.DataFrame:
+    def extract_features(
+        self, df: pd.DataFrame, symbol: str = "UNKNOWN"
+    ) -> pd.DataFrame:
         """
         Extract all features from OHLCV dataframe
 
@@ -71,7 +75,9 @@ class FeatureEngineer:
             # Drop rows with NaN (from indicator warmup periods)
             features_df = features_df.dropna()
 
-            logger.info(f"✅ Extracted {len(features_df.columns)} features for {symbol}")
+            logger.info(
+                f"✅ Extracted {len(features_df.columns)} features for {symbol}"
+            )
 
             return features_df
 
@@ -162,10 +168,14 @@ class FeatureEngineer:
             df["bb_width"] = bb.bollinger_wband()
 
             # Price position relative to Bollinger Bands
-            df["price_vs_bb"] = (close - df["bb_lower"]) / (df["bb_upper"] - df["bb_lower"])
+            df["price_vs_bb"] = (close - df["bb_lower"]) / (
+                df["bb_upper"] - df["bb_lower"]
+            )
 
             # Historical volatility (20-day)
-            df["volatility_20"] = close.pct_change().rolling(window=20).std() * np.sqrt(252)
+            df["volatility_20"] = close.pct_change().rolling(window=20).std() * np.sqrt(
+                252
+            )
 
             return df
 

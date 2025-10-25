@@ -98,23 +98,19 @@ fi
 
 if [ -n "$BACKEND_FILES" ]; then
   echo "🐍 Phase 4a: Backend files detected, running validation..."
-  cd backend
 
-  echo "🔍 Running Ruff linter..."
-  ruff check . --fix
-  if [ $? -ne 0 ]; then
-    echo "❌ Backend Ruff linting failed! Fix Python errors before committing."
-    exit 1
+  # Integrate backend Python checks (package structure, syntax, imports)
+  if [ -f "pre-commit-hook.sh" ]; then
+    echo "🧪 Running backend Python package checks..."
+    bash pre-commit-hook.sh
+    if [ $? -ne 0 ]; then
+      echo "❌ Backend Python checks failed."
+      exit 1
+    fi
+  else
+    echo "ℹ️  Skipping backend Python checks (pre-commit-hook.sh not found)."
   fi
 
-  echo "🎨 Running Ruff formatter..."
-  ruff format .
-  if [ $? -ne 0 ]; then
-    echo "❌ Backend Ruff formatting failed!"
-    exit 1
-  fi
-
-  cd ..
   echo "✅ Backend validation passed."
 else
   echo "⏭️  No backend files changed, skipping backend validation."

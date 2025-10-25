@@ -118,7 +118,9 @@ class Order(BaseModel):
         description="Stock symbol (1-5 uppercase letters)",
         examples=["AAPL", "SPY"],
     )
-    side: str = Field(..., pattern=r"^(buy|sell)$", description="Order side: 'buy' or 'sell'")
+    side: str = Field(
+        ..., pattern=r"^(buy|sell)$", description="Order side: 'buy' or 'sell'"
+    )
     qty: float = Field(
         ...,
         gt=0,
@@ -212,7 +214,9 @@ class Order(BaseModel):
         """Validate that expiration_date is provided for options orders"""
         asset_class = info.data.get("asset_class", "stock")
         if asset_class == "option" and not v:
-            raise ValueError("expiration_date is required for options orders (YYYY-MM-DD format)")
+            raise ValueError(
+                "expiration_date is required for options orders (YYYY-MM-DD format)"
+            )
         return v
 
 
@@ -275,7 +279,9 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
                 f"({order.symbol} ${order.strike_price} {order.option_type} exp:{order.expiration_date})"
             )
         else:
-            logger.info(f"[Alpaca] Submitting STOCK order: {order.symbol} {order.qty} {order.side}")
+            logger.info(
+                f"[Alpaca] Submitting STOCK order: {order.symbol} {order.qty} {order.side}"
+            )
 
         # Execute order via Alpaca API
         response = requests.post(
@@ -301,7 +307,9 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
         )
 
         # Re-raise for retry logic (if retryable exception)
-        if isinstance(e, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)):
+        if isinstance(
+            e, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)
+        ):
             raise
 
         # For non-retryable errors (4xx, 5xx), fail immediately
@@ -341,7 +349,9 @@ class ExecRequest(BaseModel):
         if not v:
             raise ValueError("At least one order is required")
         if len(v) > 10:
-            raise ValueError("Cannot execute more than 10 orders per request (safety limit)")
+            raise ValueError(
+                "Cannot execute more than 10 orders per request (safety limit)"
+            )
         return v
 
 
@@ -366,7 +376,9 @@ async def execute(
             return {"accepted": False, "duplicate": True}
 
         if is_killed():
-            raise HTTPException(status_code=status.HTTP_423_LOCKED, detail="trading halted")
+            raise HTTPException(
+                status_code=status.HTTP_423_LOCKED, detail="trading halted"
+            )
 
         # Respect LIVE_TRADING setting
         if req.dryRun or not settings.LIVE_TRADING:
@@ -414,7 +426,9 @@ class OrderTemplateCreate(BaseModel):
     """Create order template with validation"""
 
     name: str = Field(..., min_length=1, max_length=100, description="Template name")
-    description: str | None = Field(None, max_length=500, description="Template description")
+    description: str | None = Field(
+        None, max_length=500, description="Template description"
+    )
     symbol: str = Field(
         ...,
         min_length=1,
@@ -463,7 +477,9 @@ class OrderTemplateUpdate(BaseModel):
 
     name: str | None = Field(None, min_length=1, max_length=100)
     description: str | None = Field(None, max_length=500)
-    symbol: str | None = Field(None, min_length=1, max_length=5, pattern=r"^[A-Z]{1,5}$")
+    symbol: str | None = Field(
+        None, min_length=1, max_length=5, pattern=r"^[A-Z]{1,5}$"
+    )
     side: str | None = Field(None, pattern=r"^(buy|sell)$")
     quantity: float | None = Field(None, gt=0, le=10000)
     order_type: str | None = Field(None, pattern=r"^(market|limit|stop|stop_limit)$")
@@ -577,7 +593,9 @@ def update_order_template(
     current_user: User = Depends(get_current_user),
 ):
     """Update an existing order template"""
-    db_template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    db_template = (
+        db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    )
     if not db_template:
         raise HTTPException(status_code=404, detail="Order template not found")
 
@@ -610,7 +628,9 @@ def delete_order_template(
     current_user: User = Depends(get_current_user),
 ):
     """Delete an order template"""
-    db_template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    db_template = (
+        db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    )
     if not db_template:
         raise HTTPException(status_code=404, detail="Order template not found")
 
@@ -626,7 +646,9 @@ def use_order_template(
     current_user: User = Depends(get_current_user),
 ):
     """Mark template as used (updates last_used_at timestamp)"""
-    db_template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    db_template = (
+        db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+    )
     if not db_template:
         raise HTTPException(status_code=404, detail="Order template not found")
 

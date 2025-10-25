@@ -9,8 +9,8 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
-from ..core.jwt import get_current_user
 from ..core.config import settings
+from ..core.jwt import get_current_user
 from ..models.user import User
 from ..services.counter_manager import get_counter_manager
 from ..services.github_monitor import get_github_handler
@@ -282,4 +282,3 @@ async def monitor_health_check():
             "error": str(e),
             "timestamp": datetime.now(UTC).isoformat(),
         }
-

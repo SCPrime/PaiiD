@@ -55,9 +55,7 @@ class CircuitBreaker:
         """Record failed call - increment counter and potentially open circuit"""
         # If we're in HALF_OPEN, reset count to allow gradual recovery
         if self.state == "HALF_OPEN":
-            self.failure_count = (
-                1  # Gradual recovery: start with 1 failure instead of keeping full count
-            )
+            self.failure_count = 1  # Gradual recovery: start with 1 failure instead of keeping full count
             logger.info(
                 "[Circuit Breaker] HALF_OPEN test failed - resetting to 1 failure for gradual recovery"
             )
@@ -97,7 +95,9 @@ class CircuitBreaker:
         return {
             "state": self.state,
             "failure_count": self.failure_count,
-            "last_failure": self.last_failure_time.isoformat() if self.last_failure_time else None,
+            "last_failure": self.last_failure_time.isoformat()
+            if self.last_failure_time
+            else None,
         }
 
 
@@ -171,7 +171,9 @@ class NewsAggregator:
 
         # Check circuit breaker
         if breaker and not breaker.is_available():
-            logger.warning(f"[Circuit Breaker] {provider_name} circuit is OPEN - skipping")
+            logger.warning(
+                f"[Circuit Breaker] {provider_name} circuit is OPEN - skipping"
+            )
             return []
 
         try:
@@ -246,7 +248,9 @@ class NewsAggregator:
 
         return [article.to_dict() for article in aggregated]
 
-    def get_market_news(self, category: str = "general", limit: int = 50) -> list[dict[str, Any]]:
+    def get_market_news(
+        self, category: str = "general", limit: int = 50
+    ) -> list[dict[str, Any]]:
         """
         Aggregate market news from all providers.
 
@@ -264,7 +268,9 @@ class NewsAggregator:
 
         # Try each provider with retry logic and circuit breaker
         for provider in self.providers:
-            articles = self._call_provider_with_retry(provider, "get_market_news", category)
+            articles = self._call_provider_with_retry(
+                provider, "get_market_news", category
+            )
             all_articles.extend(articles)
 
         # If no articles found from any provider, return empty list
@@ -285,7 +291,9 @@ class NewsAggregator:
             [
                 p
                 for p in self.providers
-                if self.circuit_breakers.get(p.get_provider_name(), CircuitBreaker()).state
+                if self.circuit_breakers.get(
+                    p.get_provider_name(), CircuitBreaker()
+                ).state
                 != "OPEN"
             ]
         )
@@ -329,7 +337,8 @@ class NewsAggregator:
         deduplicated = []
         for group in groups:
             best = max(
-                group, key=lambda x: (abs(x.sentiment_score), len(x.summary), x.published_at)
+                group,
+                key=lambda x: (abs(x.sentiment_score), len(x.summary), x.published_at),
             )
             deduplicated.append(best)
 
@@ -372,7 +381,9 @@ class NewsAggregator:
             try:
                 age_hours = (
                     datetime.now()
-                    - datetime.fromisoformat(article.published_at.replace("Z", "+00:00"))
+                    - datetime.fromisoformat(
+                        article.published_at.replace("Z", "+00:00")
+                    )
                 ).total_seconds() / 3600
                 score += max(0, 100 - age_hours)
             except (ValueError, AttributeError):
@@ -418,8 +429,12 @@ class NewsAggregator:
             health_status["providers"].append(provider_info)
 
         # Calculate overall health
-        active_count = sum(1 for p in health_status["providers"] if p["status"] == "healthy")
-        degraded_count = sum(1 for p in health_status["providers"] if p["status"] == "degraded")
+        active_count = sum(
+            1 for p in health_status["providers"] if p["status"] == "healthy"
+        )
+        degraded_count = sum(
+            1 for p in health_status["providers"] if p["status"] == "degraded"
+        )
         down_count = sum(1 for p in health_status["providers"] if p["status"] == "down")
 
         health_status["summary"] = {
