@@ -3,6 +3,7 @@
 🗑️ Documentation Cleanup Script
 Archives redundant deployment documentation while preserving essential files.
 """
+
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -114,11 +115,11 @@ These files were redundant with the new single source of truth:
 ## What Was Kept:
 
 Essential documentation files ({kept_count} files):
-{chr(10).join(f'- {f}' for f in sorted(ESSENTIAL_FILES) if (root / f).exists())}
+{chr(10).join(f"- {f}" for f in sorted(ESSENTIAL_FILES) if (root / f).exists())}
 
 ## Files Archived:
 
-{chr(10).join(f'- {f}' for f in TO_ARCHIVE if (archive_dir / f).exists())}
+{chr(10).join(f"- {f}" for f in TO_ARCHIVE if (archive_dir / f).exists())}
 
 ---
 
@@ -133,4 +134,3 @@ Essential documentation files ({kept_count} files):
 
 if __name__ == "__main__":
     main()
-
