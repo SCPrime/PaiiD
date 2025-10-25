@@ -24,23 +24,24 @@ const AIRecommendations = dynamic(() => import("../components/AIRecommendations"
     </div>
   ),
 });
-const MonitorDashboard = dynamic(
-  () => import("../components/MonitorDashboard").then((mod) => ({ default: mod.MonitorDashboard })),
-  {
-    loading: () => (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    ),
-  }
-);
-const Analytics = dynamic(() => import("../components/Analytics"), {
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
-  ),
-});
+// Disabled - using iframes instead
+// const MonitorDashboard = dynamic(
+//   () => import("../components/MonitorDashboard").then((mod) => ({ default: mod.MonitorDashboard })),
+//   {
+//     loading: () => (
+//       <div className="flex items-center justify-center p-8">
+//         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+//       </div>
+//     ),
+//   }
+// );
+// const Analytics = dynamic(() => import("../components/Analytics"), {
+//   loading: () => (
+//     <div className="flex items-center justify-center p-8">
+//       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+//     </div>
+//   ),
+// });
 const Backtesting = dynamic(() => import("../components/Backtesting"), {
   loading: () => (
     <div className="flex items-center justify-center p-8">
