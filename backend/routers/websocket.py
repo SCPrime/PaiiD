@@ -1,20 +1,19 @@
+from backend.services.websocket_service import WebSocketService
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi.security import HTTPBearer
+import json
+import logging
+
 """
 WebSocket Router for Real-Time Data Streaming
 Handles WebSocket connections and real-time data broadcasting
 """
 
-import json
-import logging
-
-from backend.services.websocket_service import WebSocketService
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from fastapi.security import HTTPBearer
 
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ws", tags=["websocket"])
 security = HTTPBearer()
-
 
 @router.websocket("/")
 async def websocket_endpoint(websocket: WebSocket, user_id: str | None = None):
@@ -60,7 +59,6 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str | None = None):
         except:
             pass
 
-
 @router.websocket("/portfolio/{user_id}")
 async def portfolio_websocket(websocket: WebSocket, user_id: str):
     """
@@ -94,7 +92,6 @@ async def portfolio_websocket(websocket: WebSocket, user_id: str):
             await websocket.close(code=1011, reason="Internal server error")
         except:
             pass
-
 
 @router.websocket("/market-data")
 async def market_data_websocket(websocket: WebSocket):

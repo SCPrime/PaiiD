@@ -1,17 +1,18 @@
+            from .services.equity_tracker import get_equity_tracker
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+import asyncio
+import json
+import logging
+import uuid
+
 """
 Trading Scheduler Service (Simplified - File-based)
 Handles automated execution of trading routines using APScheduler
 """
 
-import asyncio
-import json
-import logging
-import uuid
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
-
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,6 @@ APPROVALS_DIR = Path("data/approvals")
 SCHEDULES_DIR.mkdir(parents=True, exist_ok=True)
 EXECUTIONS_DIR.mkdir(parents=True, exist_ok=True)
 APPROVALS_DIR.mkdir(parents=True, exist_ok=True)
-
 
 class TradingScheduler:
     """Main scheduler service for automated trading operations"""
@@ -206,7 +206,6 @@ class TradingScheduler:
     async def _track_equity_snapshot(self):
         """Record daily equity snapshot"""
         try:
-            from .services.equity_tracker import get_equity_tracker
 
             tracker = get_equity_tracker()
             snapshot = tracker.record_snapshot()
@@ -436,10 +435,8 @@ class TradingScheduler:
             with open(APPROVALS_DIR / f"{approval_id}.json", "w") as f:
                 json.dump(approval, f, indent=2)
 
-
 # Global scheduler instance
 _scheduler_instance: TradingScheduler | None = None
-
 
 def get_scheduler() -> TradingScheduler:
     """Get the global scheduler instance"""
@@ -447,7 +444,6 @@ def get_scheduler() -> TradingScheduler:
     if _scheduler_instance is None:
         raise RuntimeError("Scheduler not initialized")
     return _scheduler_instance
-
 
 def init_scheduler():
     """Initialize the global scheduler instance"""

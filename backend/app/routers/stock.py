@@ -1,22 +1,21 @@
+from ..core.jwt import get_current_user
+from ..models.database import User
+from ..services.tradier_client import get_tradier_client
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+import logging
+
 """
 Stock Information and News Router
 Provides stock lookup, company info, and news endpoints for the StockLookup feature
 """
 
-import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-
-from ..core.jwt import get_current_user
-from ..models.database import User
-from ..services.tradier_client import get_tradier_client
 
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/stock", tags=["stock"])
-
 
 class CompanyInfo(BaseModel):
     """Company information model"""
@@ -36,7 +35,6 @@ class CompanyInfo(BaseModel):
     change: float
     change_percent: float
 
-
 class NewsArticle(BaseModel):
     """News article model"""
 
@@ -47,14 +45,12 @@ class NewsArticle(BaseModel):
     published_at: str
     sentiment: str | None = None  # "positive", "negative", "neutral"
 
-
 class StockInfoResponse(BaseModel):
     """Complete stock information response"""
 
     company: CompanyInfo
     technicals: dict
     news: list[NewsArticle] = []
-
 
 @router.get("/{symbol}/info")
 async def get_stock_info(
@@ -113,7 +109,6 @@ async def get_stock_info(
         logger.error(f"❌ Failed to get stock info for {symbol}: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to get stock info: {e!s}")
 
-
 @router.get("/{symbol}/news")
 async def get_stock_news(
     symbol: str,
@@ -166,7 +161,6 @@ async def get_stock_news(
     except Exception as e:
         logger.error(f"❌ Failed to get news for {symbol}: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to get stock news: {e!s}")
-
 
 @router.get("/{symbol}/complete")
 async def get_complete_stock_info(

@@ -1,3 +1,8 @@
+from collections.abc import Callable
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+import uuid
+
 """
 Request ID Middleware
 
@@ -5,11 +10,6 @@ Assigns and propagates a request correlation ID for tracing across logs.
 Uses X-Request-ID header if provided; otherwise generates a UUID4.
 """
 
-import uuid
-from collections.abc import Callable
-
-from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):

@@ -12,13 +12,10 @@ import {
   Brain, 
   TrendingUp, 
   Target, 
-  BarChart3, 
   Zap, 
   Shield,
-  Info,
   RefreshCw,
   CheckCircle,
-  AlertTriangle,
   Loader2
 } from 'lucide-react';
 import { useToast } from '../ui/Toast';

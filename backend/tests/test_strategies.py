@@ -5,7 +5,6 @@ Tests strategy creation, retrieval, update, deletion
 
 HEADERS = {"Authorization": "Bearer test-token-12345"}
 
-
 def test_get_strategies_endpoint(client):
     """Test GET /api/strategies endpoint"""
     response = client.get("/api/strategies/list", headers=HEADERS)
@@ -18,13 +17,11 @@ def test_get_strategies_endpoint(client):
         assert "strategies" in data
         assert isinstance(data["strategies"], list)
 
-
 def test_strategies_requires_auth(client):
     """Test strategies endpoint requires authentication (MVP fallback may apply)"""
     response = client.get("/api/strategies/list")
     # MVP fallback may allow (403) or block (401)
     assert response.status_code in [401, 403, 500]
-
 
 def test_create_strategy(client):
     """Test POST /api/strategies to create new strategy"""
@@ -51,7 +48,6 @@ def test_create_strategy(client):
     # Accept validation errors or unsupported methods
     assert response.status_code in [201, 404, 405, 422]
 
-
 def test_get_strategy_by_id(client):
     """Test GET /api/strategies/:id"""
     # First create a strategy
@@ -73,7 +69,6 @@ def test_get_strategy_by_id(client):
             data = get_response.json()
             assert data["id"] == strategy_id
             assert data["name"] == "Test Strategy for GET"
-
 
 def test_update_strategy(client):
     """Test PUT /api/strategies/:id to update strategy"""
@@ -108,7 +103,6 @@ def test_update_strategy(client):
             assert data["name"] == "Updated Strategy Name"
             assert data["rules"]["rsiPeriod"] == 21
 
-
 def test_delete_strategy(client):
     """Test DELETE /api/strategies/:id"""
     # First create a strategy
@@ -131,7 +125,6 @@ def test_delete_strategy(client):
             get_response = client.get(f"/api/strategies/{strategy_id}", headers=HEADERS)
             assert get_response.status_code == 404
 
-
 def test_create_strategy_validation(client):
     """Test strategy creation with invalid data"""
     # Missing required fields
@@ -143,7 +136,6 @@ def test_create_strategy_validation(client):
     response = client.post("/api/strategies/save", json=invalid_strategy, headers=HEADERS)
     # Should return validation error
     assert response.status_code in [400, 422]
-
 
 def test_strategy_with_multiple_entry_conditions(client):
     """Test strategy with multiple entry conditions"""
@@ -165,7 +157,6 @@ def test_strategy_with_multiple_entry_conditions(client):
         data = response.json()
         assert len(data["rules"]["entryConditions"]) == 3
         assert len(data["rules"]["exitConditions"]) == 2
-
 
 def test_strategy_with_risk_parameters(client):
     """Test strategy creation with risk management parameters"""
@@ -192,7 +183,6 @@ def test_strategy_with_risk_parameters(client):
         assert data["riskParams"]["stopLoss"] == 0.03
         assert data["riskParams"]["takeProfit"] == 0.06
 
-
 def test_list_strategies_pagination(client):
     """Test listing strategies with pagination (if supported)"""
     response = client.get("/api/strategies/list?limit=10&offset=0", headers=HEADERS)
@@ -203,7 +193,6 @@ def test_list_strategies_pagination(client):
         assert "strategies" in data
         # Should return at most 10 items
         assert len(data["strategies"]) <= 10
-
 
 def test_strategy_duplicate_name_handling(client):
     """Test creating two strategies with the same name"""
@@ -228,7 +217,6 @@ def test_strategy_duplicate_name_handling(client):
         # Should either allow duplicates or return conflict
         assert response2.status_code in [201, 409]
 
-
 def test_update_nonexistent_strategy(client):
     """Test updating a strategy that doesn't exist"""
     fake_id = "00000000-0000-0000-0000-000000000000"
@@ -242,7 +230,6 @@ def test_update_nonexistent_strategy(client):
     response = client.put(f"/api/strategies/{fake_id}", json=updated_strategy, headers=HEADERS)
     # Should return 404 or 405 (method not supported)
     assert response.status_code in [404, 405]
-
 
 def test_delete_nonexistent_strategy(client):
     """Test deleting a strategy that doesn't exist"""

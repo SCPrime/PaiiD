@@ -1,3 +1,14 @@
+from app.core.config import settings
+from app.services.cache import get_cache
+from datetime import datetime
+from typing import Any
+import asyncio
+import httpx
+import json
+import logging
+import time
+import websockets
+
 """
 Tradier Real-Time Streaming Service
 
@@ -16,22 +27,10 @@ IMPLEMENTATION:
 - Reconnects automatically on connection loss
 """
 
-import asyncio
-import json
-import logging
-import time
-from datetime import datetime
-from typing import Any
 
-import httpx
-import websockets
-
-from app.core.config import settings
-from app.services.cache import get_cache
 
 
 logger = logging.getLogger(__name__)
-
 
 class TradierStreamService:
     """
@@ -519,10 +518,8 @@ class TradierStreamService:
         """Get currently subscribed symbols"""
         return self.active_symbols.copy()
 
-
 # Singleton instance
 _tradier_stream_service: TradierStreamService | None = None
-
 
 def get_tradier_stream() -> TradierStreamService:
     """Get singleton Tradier stream service"""
@@ -531,13 +528,11 @@ def get_tradier_stream() -> TradierStreamService:
         _tradier_stream_service = TradierStreamService()
     return _tradier_stream_service
 
-
 async def start_tradier_stream():
     """Helper to start the stream (call from main.py startup)"""
     service = get_tradier_stream()
     await service.start()
     logger.info("🚀 Tradier streaming service started in background")
-
 
 async def stop_tradier_stream():
     """Helper to stop the stream (call from main.py shutdown)"""

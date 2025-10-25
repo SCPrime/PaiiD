@@ -1,3 +1,9 @@
+from dataclasses import dataclass
+from datetime import datetime
+from scipy.stats import norm
+from typing import Literal
+import math
+
 """
 Options Greeks Calculation Service
 
@@ -11,12 +17,6 @@ Implements Black-Scholes-Merton model for calculating option Greeks:
 Uses scipy for numerical calculations and supports both call and put options.
 """
 
-import math
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Literal
-
-from scipy.stats import norm
 
 
 @dataclass
@@ -33,7 +33,6 @@ class OptionsGreeks:
     intrinsic_value: float
     extrinsic_value: float
     probability_itm: float  # Probability of finishing in-the-money
-
 
 class GreeksCalculator:
     """
@@ -288,7 +287,6 @@ class GreeksCalculator:
             probability_itm=1.0 if intrinsic > 0 else 0.0,
         )
 
-
 def days_to_expiry_in_years(expiry_date: datetime) -> float:
     """
     Convert expiration date to time in years
@@ -303,10 +301,8 @@ def days_to_expiry_in_years(expiry_date: datetime) -> float:
     days_remaining = (expiry_date - now).total_seconds() / 86400
     return max(0, days_remaining / 365.0)
 
-
 # Singleton calculator instance
 _calculator = GreeksCalculator()
-
 
 def calculate_option_greeks(
     spot_price: float,

@@ -42,10 +42,10 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [indicators, setIndicators] = useState<TechnicalIndicator[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_isLoading, _setIsLoading] = useState(false);
+  const [_error, _setError] = useState<string | null>(null);
 
-  const { isConnected, marketData } = useWebSocket({
+  const { isConnected, marketData: _marketData } = useWebSocket({
     url: process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws",
     userId,
     autoConnect: true,

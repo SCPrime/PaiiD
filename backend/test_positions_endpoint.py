@@ -1,8 +1,8 @@
+import requests
+
 """
 Test script for the new /api/ai/analyze-positions endpoint
 """
-
-import requests
 
 
 # Backend URL
@@ -12,7 +12,6 @@ BASE_URL = "http://127.0.0.1:8001"
 API_TOKEN = "rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl"
 
 headers = {"Authorization": f"Bearer {API_TOKEN}", "Content-Type": "application/json"}
-
 
 def test_analyze_positions():
     """Test the analyze-positions endpoint"""
@@ -74,7 +73,6 @@ def test_analyze_positions():
         print(f"\n[ERROR] EXCEPTION: {e!s}")
         return False
 
-
 def test_endpoint_exists():
     """Test that the endpoint is registered"""
     print("\n" + "=" * 80)
@@ -96,7 +94,6 @@ def test_endpoint_exists():
     except Exception as e:
         print(f"\n[ERROR] Cannot connect to backend: {e!s}")
         return False
-
 
 if __name__ == "__main__":
     print("\n[TEST] Testing ActivePositions AI Analysis Endpoint")

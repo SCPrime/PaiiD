@@ -1,3 +1,10 @@
+        from fastapi import Depends
+from ..core.config import settings
+from .health_monitor import health_monitor
+from typing import Any
+import json
+import redis
+
 """
 Redis Cache Service
 
@@ -5,13 +12,7 @@ Provides Redis caching with graceful fallback when Redis is unavailable.
 Implements common cache operations with TTL support.
 """
 
-import json
-from typing import Any
 
-import redis
-
-from ..core.config import settings
-from .health_monitor import health_monitor
 
 
 class CacheService:
@@ -156,17 +157,14 @@ class CacheService:
             )
             return 0
 
-
 # Global cache instance
 _cache_service: CacheService | None = None
-
 
 def get_cache() -> CacheService:
     """
     Get or create cache service instance
 
     Usage in FastAPI routes:
-        from fastapi import Depends
 
         @router.get("/endpoint")
         def endpoint(cache: CacheService = Depends(get_cache)):
@@ -180,7 +178,6 @@ def get_cache() -> CacheService:
     if _cache_service is None:
         _cache_service = CacheService()
     return _cache_service
-
 
 def init_cache():
     """Initialize cache service on application startup"""

@@ -243,15 +243,15 @@ main.py → ml_advanced router → MarketDataService
 
 ## 📝 Technical Debt Addressed
 
-| Issue | Status | Details |
-|-------|--------|---------|
-| ML router not registered | ✅ Fixed | Added to main.py imports and app registration |
-| MarketDataService import mismatch | ✅ Fixed | Moved to app/services with proper path |
-| Missing get_historical_data() | ✅ Fixed | Fully implemented with dual-source support |
-| Missing get_market_indicators() | ✅ Fixed | VIX, indices, market sentiment |
-| Hardcoded Redis localhost | ✅ Fixed | Environment-aware connection |
-| Missing _detect_triple_tops_bottoms() | ✅ Fixed | Implemented with confidence scoring |
-| Missing _detect_flag_pennant_patterns() | ✅ Fixed | Implemented with volatility analysis |
+| Issue                                   | Status  | Details                                       |
+| --------------------------------------- | ------- | --------------------------------------------- |
+| ML router not registered                | ✅ Fixed | Added to main.py imports and app registration |
+| MarketDataService import mismatch       | ✅ Fixed | Moved to app/services with proper path        |
+| Missing get_historical_data()           | ✅ Fixed | Fully implemented with dual-source support    |
+| Missing get_market_indicators()         | ✅ Fixed | VIX, indices, market sentiment                |
+| Hardcoded Redis localhost               | ✅ Fixed | Environment-aware connection                  |
+| Missing _detect_triple_tops_bottoms()   | ✅ Fixed | Implemented with confidence scoring           |
+| Missing _detect_flag_pennant_patterns() | ✅ Fixed | Implemented with volatility analysis          |
 
 ---
 

@@ -1,20 +1,22 @@
-"""
-Advanced ML API Endpoints
-Enhanced ML features for PaiiD trading platform
-"""
-
-import logging
-from datetime import datetime, timedelta
-from typing import Any
-
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-
+            import numpy as np
+            import pandas as pd
 from ..core.unified_auth import get_current_user_unified
 from ..ml.advanced_patterns import AdvancedPatternDetector, PatternType
 from ..ml.regime_detection import AdvancedRegimeDetector, MarketRegime
 from ..models.database import User
 from ..services.market_data import MarketDataService
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from typing import Any
+import logging
+
+"""
+Advanced ML API Endpoints
+Enhanced ML features for PaiiD trading platform
+"""
+
+
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +28,6 @@ pattern_detector = AdvancedPatternDetector()
 regime_detector = AdvancedRegimeDetector()
 market_data_service = MarketDataService()
 
-
 class PatternDetectionRequest(BaseModel):
     """Request model for pattern detection"""
 
@@ -36,7 +37,6 @@ class PatternDetectionRequest(BaseModel):
     min_confidence: float = Field(
         default=0.6, description="Minimum confidence threshold"
     )
-
 
 class PatternDetectionResponse(BaseModel):
     """Response model for pattern detection"""
@@ -48,7 +48,6 @@ class PatternDetectionResponse(BaseModel):
     timeframe: str
     confidence_summary: dict[str, int]
 
-
 class RegimeDetectionRequest(BaseModel):
     """Request model for regime detection"""
 
@@ -58,7 +57,6 @@ class RegimeDetectionRequest(BaseModel):
     include_market_data: bool = Field(
         default=True, description="Include market-wide data"
     )
-
 
 class RegimeDetectionResponse(BaseModel):
     """Response model for regime detection"""
@@ -78,7 +76,6 @@ class RegimeDetectionResponse(BaseModel):
     recommended_strategies: list[str]
     analysis_timestamp: datetime
 
-
 class MLInsightsRequest(BaseModel):
     """Request model for comprehensive ML insights"""
 
@@ -92,7 +89,6 @@ class MLInsightsRequest(BaseModel):
         default=True, description="Include sentiment analysis"
     )
 
-
 class MLInsightsResponse(BaseModel):
     """Response model for comprehensive ML insights"""
 
@@ -105,7 +101,6 @@ class MLInsightsResponse(BaseModel):
     trading_recommendation: str
     risk_assessment: str
     key_insights: list[str]
-
 
 @router.post("/patterns/detect", response_model=PatternDetectionResponse)
 async def detect_patterns(
@@ -197,7 +192,6 @@ async def detect_patterns(
         logger.error(f"Error in pattern detection: {e}")
         raise HTTPException(status_code=500, detail=f"Pattern detection failed: {e!s}")
 
-
 @router.post("/regime/detect", response_model=RegimeDetectionResponse)
 async def detect_regime(
     request: RegimeDetectionRequest,
@@ -273,7 +267,6 @@ async def detect_regime(
     except Exception as e:
         logger.error(f"Error in regime detection: {e}")
         raise HTTPException(status_code=500, detail=f"Regime detection failed: {e!s}")
-
 
 @router.post("/insights/comprehensive", response_model=MLInsightsResponse)
 async def get_comprehensive_insights(
@@ -453,7 +446,6 @@ async def get_comprehensive_insights(
             status_code=500, detail=f"Comprehensive analysis failed: {e!s}"
         )
 
-
 @router.get("/patterns/types")
 async def get_pattern_types(current_user: User = Depends(get_current_user_unified)):
     """Get list of available pattern types for detection"""
@@ -481,7 +473,6 @@ async def get_pattern_types(current_user: User = Depends(get_current_user_unifie
         ]
     }
 
-
 @router.get("/regime/types")
 async def get_regime_types(current_user: User = Depends(get_current_user_unified)):
     """Get list of available market regime types"""
@@ -506,7 +497,6 @@ async def get_regime_types(current_user: User = Depends(get_current_user_unified
         ]
     }
 
-
 @router.get("/health")
 async def ml_health_check():
     """Health check for ML services"""
@@ -515,8 +505,6 @@ async def ml_health_check():
         pattern_status = "healthy"
         try:
             # Simple test with dummy data
-            import numpy as np
-            import pandas as pd
 
             test_data = pd.DataFrame(
                 {

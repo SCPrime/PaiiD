@@ -5,7 +5,6 @@ Tests news fetching, filtering, caching, and multiple providers
 
 HEADERS = {"Authorization": "Bearer test-token-12345"}
 
-
 def test_get_news_endpoint(client):
     """Test GET /api/news endpoint returns news articles"""
     response = client.get("/api/news/market", headers=HEADERS)
@@ -24,12 +23,10 @@ def test_get_news_endpoint(client):
             assert "source" in article
             assert "published_at" in article  # API uses snake_case
 
-
 def test_news_requires_auth(client):
     """Test news endpoint requires authentication (MVP fallback may apply)"""
     response = client.get("/api/news/market")
     assert response.status_code in [401, 403, 500]
-
 
 def test_news_with_symbol_filter(client):
     """Test filtering news by stock symbol"""
@@ -48,7 +45,6 @@ def test_news_with_symbol_filter(client):
                 # Check that at least some articles exist
                 assert isinstance(articles, list)
 
-
 def test_news_with_limit_parameter(client):
     """Test limiting number of news articles returned"""
     limits = [5, 10, 20, 50]
@@ -62,7 +58,6 @@ def test_news_with_limit_parameter(client):
             assert "articles" in data
             assert len(data["articles"]) <= limit, f"Returned more than {limit} articles"
 
-
 def test_news_with_date_range(client):
     """Test filtering news by date range"""
     response = client.get(
@@ -74,7 +69,6 @@ def test_news_with_date_range(client):
         assert isinstance(data, dict)
         assert "articles" in data
         assert isinstance(data["articles"], list)
-
 
 def test_news_caching(client):
     """Test that news responses are cached"""
@@ -88,7 +82,6 @@ def test_news_caching(client):
         # Both should succeed
         assert response1.json() == response2.json()
 
-
 def test_news_multiple_symbols(client):
     """Test fetching news for multiple symbols"""
     response = client.get("/api/news/market?symbol=AAPL,MSFT,GOOGL", headers=HEADERS)
@@ -98,7 +91,6 @@ def test_news_multiple_symbols(client):
         assert isinstance(data, dict)
         assert "articles" in data
         assert isinstance(data["articles"], list)
-
 
 def test_news_invalid_symbol(client):
     """Test handling of invalid stock symbols"""
@@ -117,7 +109,6 @@ def test_news_invalid_symbol(client):
         # Accept failures gracefully (external API may be down)
         assert True, f"Test passed with exception: {e!s}"
 
-
 def test_news_providers_aggregation(client):
     """Test that news comes from multiple providers"""
     response = client.get("/api/news/market?limit=50", headers=HEADERS)
@@ -135,7 +126,6 @@ def test_news_providers_aggregation(client):
             # Should have news from multiple sources (if configured)
             # This validates the aggregation is working
             assert isinstance(sources, set)
-
 
 def test_news_article_structure(client):
     """Test that news articles have required fields"""
@@ -161,7 +151,6 @@ def test_news_article_structure(client):
             present_fields = [field for field in expected_fields if field in article]
             assert len(present_fields) > 0
 
-
 def test_news_sorting_by_date(client):
     """Test that news articles are sorted by publication date"""
     response = client.get("/api/news/market?limit=20", headers=HEADERS)
@@ -184,7 +173,6 @@ def test_news_sorting_by_date(client):
                     assert isinstance(date1, str)
                     assert isinstance(date2, str)
 
-
 def test_news_url_validation(client):
     """Test that news URLs are valid"""
     response = client.get("/api/news/market?limit=10", headers=HEADERS)
@@ -200,7 +188,6 @@ def test_news_url_validation(client):
                 url = article["url"]
                 # URL should start with http:// or https://
                 assert url.startswith("http://") or url.startswith("https://")
-
 
 def test_news_cache_expiration(client):
     """Test that cache respects TTL settings"""
@@ -220,7 +207,6 @@ def test_news_cache_expiration(client):
             # Cache should return same data
             assert data1 == data2
 
-
 def test_news_empty_result_handling(client):
     """Test handling when no news is available"""
     # Use very restrictive filters to potentially get no results
@@ -234,7 +220,6 @@ def test_news_empty_result_handling(client):
         assert isinstance(data, dict)
         assert "articles" in data
         assert isinstance(data["articles"], list)
-
 
 def test_news_concurrent_requests(client):
     """Test that multiple concurrent requests don't cause issues"""

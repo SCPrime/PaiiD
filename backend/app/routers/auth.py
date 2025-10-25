@@ -1,3 +1,12 @@
+from ..core.jwt import (
+from ..db.session import get_db
+from ..models.database import ActivityLog, User, UserSession
+from datetime import UTC, datetime
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, EmailStr, Field, field_validator
+from sqlalchemy.orm import Session
+import logging
+
 """
 Authentication API Routes
 
@@ -5,23 +14,14 @@ Handles user registration, login, logout, token refresh, and profile management.
 Supports owner and beta tester registration with invite codes.
 """
 
-import logging
-from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, EmailStr, Field, field_validator
-from sqlalchemy.orm import Session
 
-from ..core.jwt import (
     create_token_pair,
     decode_token,
     get_current_user,
     hash_password,
     verify_password,
 )
-from ..db.session import get_db
-from ..models.database import ActivityLog, User, UserSession
-
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,6 @@ router = APIRouter(tags=["auth"])
 
 # Invite codes for beta testing (store these securely in production, e.g., environment variables or database)
 BETA_INVITE_CODES = {"PAIID_BETA_2025", "TRADING_BETA_ACCESS"}  # Example invite code
-
 
 class UserRegister(BaseModel):
     """User registration request"""
@@ -55,13 +54,11 @@ class UserRegister(BaseModel):
             raise ValueError("Password must contain at least one uppercase letter")
         return v
 
-
 class UserLogin(BaseModel):
     """User login request"""
 
     email: EmailStr
     password: str
-
 
 class TokenResponse(BaseModel):
     """Token response for login/refresh"""
@@ -70,12 +67,10 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
 
-
 class RefreshTokenRequest(BaseModel):
     """Refresh token request"""
 
     refresh_token: str
-
 
 class UserProfile(BaseModel):
     """User profile response"""
@@ -91,7 +86,6 @@ class UserProfile(BaseModel):
 
     class Config:
         from_attributes = True
-
 
 @router.post(
     "/auth/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
@@ -170,7 +164,6 @@ async def register(
 
     return tokens
 
-
 @router.post("/auth/login", response_model=TokenResponse)
 async def login(
     credentials: UserLogin, request: Request, db: Session = Depends(get_db)
@@ -228,7 +221,6 @@ async def login(
 
     return tokens
 
-
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
     current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
@@ -257,7 +249,6 @@ async def logout(
     logger.info(f"✅ User logged out: {current_user.email}")
 
     return None  # 204 No Content
-
 
 @router.post("/auth/refresh", response_model=TokenResponse)
 async def refresh_token(
@@ -341,7 +332,6 @@ async def refresh_token(
     )
 
     return tokens
-
 
 @router.get("/auth/me", response_model=UserProfile)
 async def get_current_user_profile(current_user: User = Depends(get_current_user)):

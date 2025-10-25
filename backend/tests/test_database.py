@@ -1,20 +1,19 @@
+from app.models.database import EquitySnapshot, Performance, Strategy, Trade, User
+from datetime import UTC, datetime
+import pytest
+
 """
 Database Model Tests
 
 Tests for SQLAlchemy models: User, Strategy, Trade, Performance, EquitySnapshot
 """
 
-from datetime import UTC, datetime
 
-import pytest
-
-from app.models.database import EquitySnapshot, Performance, Strategy, Trade, User
 
 
 # Test password hash (matches TEST_PASSWORD_HASH from conftest.py)
 # Pre-computed bcrypt hash for "TestPassword123!"
 TEST_PASSWORD_HASH = "$2b$12$LQ3JzqjX7Y8ZHnVc9r5MHOfWw8L4vQy8QWxK0X1y0HdTYJKRQ6qKK"
-
 
 class TestUserModel:
     """Test User model CRUD operations and relationships"""
@@ -88,7 +87,6 @@ class TestUserModel:
         # Strategy should be deleted too
         assert test_db.query(Strategy).filter_by(id=strategy_id).first() is None
 
-
 class TestStrategyModel:
     """Test Strategy model CRUD operations"""
 
@@ -151,7 +149,6 @@ class TestStrategyModel:
         test_db.refresh(sample_strategy)
 
         assert sample_strategy.last_backtest_at == now
-
 
 class TestTradeModel:
     """Test Trade model CRUD operations"""
@@ -235,7 +232,6 @@ class TestTradeModel:
         with pytest.raises(Exception):  # IntegrityError
             test_db.commit()
 
-
 class TestPerformanceModel:
     """Test Performance model for daily snapshots"""
 
@@ -298,7 +294,6 @@ class TestPerformanceModel:
         assert perf.volatility == 0.15
         assert perf.max_drawdown_percent == -5.00
 
-
 class TestEquitySnapshotModel:
     """Test EquitySnapshot model for intraday tracking"""
 
@@ -350,7 +345,6 @@ class TestEquitySnapshotModel:
         assert snapshots[0].equity == 100000.00
         assert snapshots[4].equity == 100400.00
 
-
 class TestModelRelationships:
     """Test relationships between models"""
 
@@ -377,7 +371,6 @@ class TestModelRelationships:
         trade = test_db.query(Trade).filter_by(id=trade_id).first()
         assert trade is not None
         assert trade.strategy_id is None  # SET NULL
-
 
 class TestModelConstraints:
     """Test model constraints and validation"""

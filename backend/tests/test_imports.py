@@ -1,3 +1,21 @@
+            from app.core.config import settings
+            from app.main import app
+            from app.middleware.cache_control import CacheControlMiddleware
+            from app.middleware.cache_control import CacheControlMiddleware
+            from app.middleware.rate_limit import custom_rate_limit_exceeded_handler, limiter
+            from app.middleware.rate_limit import limiter
+            from app.middleware.sentry import SentryContextMiddleware
+            from app.middleware.sentry import SentryContextMiddleware
+            from app.routers import (
+            from app.services.cache import init_cache
+            from app.services.cache import init_cache
+            from app.services.tradier_stream import start_tradier_stream
+            from app.services.tradier_stream import start_tradier_stream, stop_tradier_stream
+        from app import middleware
+        from app import services
+from pathlib import Path
+import pytest
+
 """
 Import Verification Tests
 
@@ -9,9 +27,6 @@ Prevents incidents like commit 2e048fe by verifying:
 These tests run in CI to catch import issues before deployment.
 """
 
-from pathlib import Path
-
-import pytest
 
 
 class TestPackageStructure:
@@ -64,16 +79,12 @@ class TestPackageStructure:
             f"Every Python package directory must have an __init__.py file."
         )
 
-
 class TestCriticalImports:
     """Verify critical imports work correctly"""
 
     def test_middleware_imports(self):
         """Verify middleware imports work"""
         try:
-            from app.middleware.cache_control import CacheControlMiddleware
-            from app.middleware.rate_limit import custom_rate_limit_exceeded_handler, limiter
-            from app.middleware.sentry import SentryContextMiddleware
 
             # Verify objects exist
             assert limiter is not None
@@ -86,8 +97,6 @@ class TestCriticalImports:
     def test_services_imports(self):
         """Verify services imports work"""
         try:
-            from app.services.cache import init_cache
-            from app.services.tradier_stream import start_tradier_stream, stop_tradier_stream
 
             # Verify functions exist
             assert init_cache is not None
@@ -99,7 +108,6 @@ class TestCriticalImports:
     def test_routers_imports(self):
         """Verify all routers can be imported"""
         try:
-            from app.routers import (
                 ai,
                 claude,
                 health,
@@ -124,7 +132,6 @@ class TestCriticalImports:
     def test_main_app_imports(self):
         """Verify main FastAPI app can be imported"""
         try:
-            from app.main import app
 
             assert app is not None
             assert hasattr(app, "routes")
@@ -134,12 +141,10 @@ class TestCriticalImports:
     def test_config_imports(self):
         """Verify config can be imported"""
         try:
-            from app.core.config import settings
 
             assert settings is not None
         except ImportError as e:
             pytest.fail(f"Failed to import config: {e}")
-
 
 class TestImportOrdering:
     """Verify imports don't have circular dependencies"""
@@ -148,9 +153,6 @@ class TestImportOrdering:
         """Verify middleware imports don't create circular dependencies"""
         try:
             # Import in the order main.py does
-            from app.middleware.cache_control import CacheControlMiddleware
-            from app.middleware.rate_limit import limiter
-            from app.middleware.sentry import SentryContextMiddleware
 
             # If we get here, no circular imports
             assert True
@@ -163,8 +165,6 @@ class TestImportOrdering:
     def test_services_has_no_circular_imports(self):
         """Verify services imports don't create circular dependencies"""
         try:
-            from app.services.cache import init_cache
-            from app.services.tradier_stream import start_tradier_stream
 
             assert True
         except ImportError as e:
@@ -173,13 +173,11 @@ class TestImportOrdering:
             else:
                 pytest.fail(f"Import error in services: {e}")
 
-
 class TestExportLists:
     """Verify __all__ exports are defined correctly"""
 
     def test_middleware_exports(self):
         """Verify middleware __init__.py exports correct items"""
-        from app import middleware
 
         # Check __all__ is defined
         assert hasattr(middleware, "__all__"), "middleware/__init__.py should define __all__ list"
@@ -198,7 +196,6 @@ class TestExportLists:
 
     def test_services_exports(self):
         """Verify services __init__.py exports correct items"""
-        from app import services
 
         # Check __all__ is defined
         assert hasattr(services, "__all__"), "services/__init__.py should define __all__ list"
@@ -209,7 +206,6 @@ class TestExportLists:
         for export in expected_exports:
             assert export in services.__all__, f"'{export}' should be in services.__all__"
             assert hasattr(services, export), f"services.{export} should be importable"
-
 
 if __name__ == "__main__":
     # Run tests with verbose output

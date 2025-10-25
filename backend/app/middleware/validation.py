@@ -1,3 +1,8 @@
+from datetime import datetime, time
+from fastapi import HTTPException
+from pydantic import Field
+import re
+
 """
 Input Validation Middleware
 
@@ -6,17 +11,11 @@ Provides comprehensive validation utilities for API inputs.
 Phase 3: Bulletproof Reliability
 """
 
-import re
-from datetime import datetime, time
-
-from fastapi import HTTPException
-from pydantic import Field
 
 
 # Regex Patterns
 SYMBOL_PATTERN = re.compile(r"^[A-Z]{1,5}$")  # 1-5 uppercase letters
 REQUEST_ID_PATTERN = re.compile(r"^[a-zA-Z0-9\-_]{8,64}$")  # Alphanumeric + hyphens/underscores
-
 
 def validate_symbol(symbol: str) -> str:
     """
@@ -41,7 +40,6 @@ def validate_symbol(symbol: str) -> str:
 
     return symbol
 
-
 def validate_quantity(qty: float, min_qty: float = 0.01, max_qty: float = 10000) -> float:
     """
     Validate order quantity.
@@ -65,7 +63,6 @@ def validate_quantity(qty: float, min_qty: float = 0.01, max_qty: float = 10000)
 
     return qty
 
-
 def validate_side(side: str) -> str:
     """
     Validate order side (buy/sell).
@@ -79,7 +76,6 @@ def validate_side(side: str) -> str:
         raise ValueError(f"Invalid side '{side}'. Must be 'buy' or 'sell'")
 
     return side
-
 
 def validate_order_type(order_type: str) -> str:
     """
@@ -99,7 +95,6 @@ def validate_order_type(order_type: str) -> str:
 
     return order_type
 
-
 def validate_limit_price(limit_price: float | None, order_type: str) -> float | None:
     """
     Validate limit price (required for limit/stop_limit orders).
@@ -118,7 +113,6 @@ def validate_limit_price(limit_price: float | None, order_type: str) -> float | 
             raise ValueError("Limit price cannot exceed $1,000,000")
 
     return limit_price
-
 
 def validate_request_id(request_id: str) -> str:
     """
@@ -142,7 +136,6 @@ def validate_request_id(request_id: str) -> str:
         )
 
     return request_id
-
 
 def is_market_open() -> bool:
     """
@@ -172,7 +165,6 @@ def is_market_open() -> bool:
 
     return market_open <= current_time <= market_close
 
-
 def validate_market_hours(allow_after_hours: bool = False) -> None:
     """
     Validate that trading is allowed based on market hours.
@@ -189,9 +181,7 @@ def validate_market_hours(allow_after_hours: bool = False) -> None:
             detail="Market is currently closed. Trading hours: 9:30 AM - 4:00 PM ET, Monday-Friday",
         )
 
-
 # Pydantic Field Validators (use with Field() in models)
-
 
 def symbol_field(description: str = "Stock symbol") -> Field:
     """Create a validated symbol field for Pydantic models"""
@@ -204,7 +194,6 @@ def symbol_field(description: str = "Stock symbol") -> Field:
         examples=["AAPL", "SPY", "TSLA"],
     )
 
-
 def quantity_field(min_value: float = 0.01, max_value: float = 10000) -> Field:
     """Create a validated quantity field for Pydantic models"""
     return Field(
@@ -216,11 +205,9 @@ def quantity_field(min_value: float = 0.01, max_value: float = 10000) -> Field:
         examples=[100, 10.5, 1],
     )
 
-
 def price_field(description: str = "Price") -> Field:
     """Create a validated price field for Pydantic models"""
     return Field(..., description=description, gt=0, le=1000000, examples=[150.50, 50.00, 1000.00])
-
 
 __all__ = [
     "is_market_open",

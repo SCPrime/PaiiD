@@ -1,3 +1,7 @@
+from datetime import datetime
+from typing import Any
+import logging
+
 """
 Historical Data Service
 
@@ -5,13 +9,8 @@ Fetches historical OHLCV data for backtesting using Tradier API.
 NO mock data - all data comes from real market sources.
 """
 
-import logging
-from datetime import datetime
-from typing import Any
-
 
 logger = logging.getLogger(__name__)
-
 
 class HistoricalDataService:
     """Service for fetching historical market data from Tradier"""

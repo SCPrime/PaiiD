@@ -1,10 +1,10 @@
+from unittest.mock import MagicMock, patch
+
 """
 API Endpoint Tests
 
 Tests for critical API endpoints: health, portfolio, orders, market data
 """
-
-from unittest.mock import MagicMock, patch
 
 
 class TestHealthEndpoints:
@@ -39,7 +39,6 @@ class TestHealthEndpoints:
         # Verify it's identified as a server error (not 404 not found)
         assert response.status_code >= 500
 
-
 class TestAuthenticationProtection:
     """Test API authentication requirements"""
 
@@ -65,7 +64,6 @@ class TestAuthenticationProtection:
         response = client.get("/api/positions", headers={"Authorization": "Bearer invalid-token"})
         # May get 401 (invalid token) or 403 (MVP fallback) or 500 (external API)
         assert response.status_code in [401, 403, 500]
-
 
 class TestMarketEndpoints:
     """Test market data endpoints"""
@@ -127,7 +125,6 @@ class TestMarketEndpoints:
                 # Accept validation errors (API returned None)
                 pass
 
-
 class TestPortfolioEndpoints:
     """Test portfolio and positions endpoints"""
 
@@ -185,7 +182,6 @@ class TestPortfolioEndpoints:
         if response.status_code == 200:
             data = response.json()
             assert "account_number" in data or "buying_power" in data
-
 
 class TestMarketDataEndpoints:
     """Test market data quote endpoints"""
@@ -250,7 +246,6 @@ class TestMarketDataEndpoints:
             data = response.json()
             assert isinstance(data, dict)
 
-
 class TestCacheIntegration:
     """Test cache integration in endpoints"""
 
@@ -293,7 +288,6 @@ class TestCacheIntegration:
                     cached_quote = mock_cache.get("quote:TSLA")
                     if cached_quote:
                         assert "symbol" in cached_quote or "last" in cached_quote
-
 
 class TestErrorHandling:
     """Test error handling in endpoints"""

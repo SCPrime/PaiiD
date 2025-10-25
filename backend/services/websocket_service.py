@@ -1,20 +1,19 @@
+from backend.services.market_data_service import MarketDataService
+from datetime import UTC, datetime
+from fastapi import WebSocket
+import asyncio
+import json
+import logging
+import redis
+
 """
 WebSocket Service for Real-Time Market Data Streaming
 Handles WebSocket connections, market data broadcasting, and client management
 """
 
-import asyncio
-import json
-import logging
-from datetime import UTC, datetime
-
-import redis
-from backend.services.market_data_service import MarketDataService
-from fastapi import WebSocket
 
 
 logger = logging.getLogger(__name__)
-
 
 class WebSocketManager:
     """Manages WebSocket connections and real-time data broadcasting"""
@@ -189,10 +188,8 @@ class WebSocketManager:
             except Exception as e:
                 logger.error(f"Error updating market data for {symbol}: {e}")
 
-
 # Global WebSocket manager instance
 websocket_manager = WebSocketManager()
-
 
 class WebSocketService:
     """Service class for WebSocket operations"""

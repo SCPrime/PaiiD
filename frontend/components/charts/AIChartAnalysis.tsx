@@ -35,13 +35,13 @@ const AIChartAnalysis: React.FC<AIChartAnalysisProps> = ({
   userId,
   className,
   showPatterns = true,
-  showPredictions = true,
-  showAlerts = true,
+  showPredictions: _showPredictions = true,
+  showAlerts: _showAlerts = true,
 }) => {
   const [patterns, setPatterns] = useState<ChartPattern[]>([]);
   const [insights, setInsights] = useState<AIInsight[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_isLoading, _setIsLoading] = useState(false);
+  const [_error, _setError] = useState<string | null>(null);
 
   const { isConnected } = useWebSocket({
     url: process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws",

@@ -1,3 +1,7 @@
+from alembic import op
+from sqlalchemy.dialects import postgresql
+import sqlalchemy as sa
+
 """add_ai_recommendations_table
 
 Revision ID: c8e4f9b52d31
@@ -6,10 +10,6 @@ Create Date: 2025-10-15 04:30:00.000000
 
 """
 
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
-
-from alembic import op
 
 
 # revision identifiers, used by Alembic.
@@ -17,7 +17,6 @@ revision = "c8e4f9b52d31"
 down_revision = "ad76030fa92e"
 branch_labels = None
 depends_on = None
-
 
 def upgrade() -> None:
     """Create ai_recommendations table"""
@@ -62,7 +61,6 @@ def upgrade() -> None:
     op.create_index(
         op.f("ix_ai_recommendations_created_at"), "ai_recommendations", ["created_at"], unique=False
     )
-
 
 def downgrade() -> None:
     """Drop ai_recommendations table"""

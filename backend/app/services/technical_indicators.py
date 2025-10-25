@@ -1,3 +1,6 @@
+from typing import Any
+import logging
+
 """
 Technical Indicators Service
 
@@ -9,12 +12,8 @@ Calculates common technical indicators for trading signals:
 - Volume indicators
 """
 
-import logging
-from typing import Any
-
 
 logger = logging.getLogger(__name__)
-
 
 class TechnicalIndicators:
     """Calculate technical indicators from price data"""

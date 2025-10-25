@@ -1,3 +1,7 @@
+import json
+import sys
+import yaml
+
 #!/usr/bin/env python3
 """
 Render Configuration Validator
@@ -6,10 +10,6 @@ Validates render.yaml files against expected configuration schema.
 Detects config drift and missing required environment variables.
 """
 
-import json
-import sys
-
-import yaml
 
 
 def validate_render_config(render_yaml_path: str, expected_config_path: str = None):
@@ -38,7 +38,6 @@ def validate_render_config(render_yaml_path: str, expected_config_path: str = No
 
     print(f"✅ {render_yaml_path} validation passed")
     return True
-
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

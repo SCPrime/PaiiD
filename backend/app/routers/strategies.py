@@ -1,21 +1,23 @@
+from ..core.jwt import get_current_user
+from ..db.session import get_db
+from ..models.database import Strategy, User
+from ..services.strategy_templates import (
+from fastapi import APIRouter, Depends, HTTPException
+from pathlib import Path
+from pydantic import BaseModel, Field, field_validator
+from sqlalchemy.orm import Session
+from strategies.under4_multileg import (
+from typing import Any
+import json
+import sys
+
 """
 Strategy API Routes
 Endpoints for managing trading strategies
 """
 
-import json
-import sys
-from pathlib import Path
-from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, field_validator
-from sqlalchemy.orm import Session
 
-from ..core.jwt import get_current_user
-from ..db.session import get_db
-from ..models.database import Strategy, User
-from ..services.strategy_templates import (
     customize_template_for_risk,
     filter_templates_by_risk,
     get_all_templates,
@@ -23,23 +25,19 @@ from ..services.strategy_templates import (
     get_template_compatibility_score,
 )
 
-
 # Add backend root to path for strategies import
 backend_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_root))
 
-from strategies.under4_multileg import (
     Under4MultilegConfig,
     create_under4_multileg_strategy,
 )
-
 
 router = APIRouter()
 
 # Strategy storage path
 STRATEGIES_DIR = Path("data/strategies")
 STRATEGIES_DIR.mkdir(parents=True, exist_ok=True)
-
 
 class StrategyConfigRequest(BaseModel):
     """Request model for saving strategy configuration with validation"""
@@ -69,7 +67,6 @@ class StrategyConfigRequest(BaseModel):
             raise ValueError(f"Invalid strategy type. Allowed: {', '.join(allowed_types)}")
         return v
 
-
 class StrategyRunRequest(BaseModel):
     """Request model for running a strategy with validation"""
 
@@ -98,7 +95,6 @@ class StrategyRunRequest(BaseModel):
         if v not in allowed_types:
             raise ValueError(f"Invalid strategy type. Allowed: {', '.join(allowed_types)}")
         return v
-
 
 @router.post("/strategies/save")
 async def save_strategy(
@@ -144,7 +140,6 @@ async def save_strategy(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
 @router.get("/strategies/load/{strategy_type}")
 async def load_strategy(strategy_type: str, current_user: User = Depends(get_current_user)):
     """
@@ -176,7 +171,6 @@ async def load_strategy(strategy_type: str, current_user: User = Depends(get_cur
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/strategies/list")
 async def list_strategies(current_user: User = Depends(get_current_user)):
     """
@@ -204,7 +198,6 @@ async def list_strategies(current_user: User = Depends(get_current_user)):
             strategies.append({"strategy_type": strategy_type, "has_config": False})
 
     return {"strategies": strategies}
-
 
 @router.post("/strategies/run")
 async def run_strategy(request: StrategyRunRequest, current_user: User = Depends(get_current_user)):
@@ -277,7 +270,6 @@ async def run_strategy(request: StrategyRunRequest, current_user: User = Depends
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.delete("/strategies/{strategy_type}")
 async def delete_strategy(strategy_type: str, current_user: User = Depends(get_current_user)):
     """
@@ -300,11 +292,9 @@ async def delete_strategy(strategy_type: str, current_user: User = Depends(get_c
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # ========================================
 # STRATEGY TEMPLATES ENDPOINTS
 # ========================================
-
 
 @router.get("/strategies/templates")
 async def get_strategy_templates(
@@ -372,7 +362,6 @@ async def get_strategy_templates(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch strategy templates: {e!s}")
 
-
 @router.get("/strategies/templates/{template_id}")
 async def get_strategy_template(
     template_id: str,
@@ -419,7 +408,6 @@ async def get_strategy_template(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch template: {e!s}")
 
-
 class CloneTemplateRequest(BaseModel):
     """Request model for cloning a template with validation"""
 
@@ -447,7 +435,6 @@ class CloneTemplateRequest(BaseModel):
             if len(v) > 100:
                 raise ValueError("Custom name cannot exceed 100 characters")
         return v
-
 
 @router.post("/strategies/templates/{template_id}/clone")
 async def clone_strategy_template(

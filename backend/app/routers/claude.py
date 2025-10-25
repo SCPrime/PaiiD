@@ -1,17 +1,17 @@
+from ..core.jwt import get_current_user
+from ..models.database import User
+from anthropic import Anthropic
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+import os
+import sys
+
 """
 Claude API Proxy Router
 Proxies Anthropic API calls from frontend to avoid exposing API key in browser
 """
 
-import os
-import sys
 
-from anthropic import Anthropic
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-
-from ..core.jwt import get_current_user
-from ..models.database import User
 
 
 # Set UTF-8 encoding for console output on Windows
@@ -30,11 +30,9 @@ if api_key:
 else:
     print("[Claude] WARNING: ANTHROPIC_API_KEY not found in environment")
 
-
 class Message(BaseModel):
     role: str
     content: str
-
 
 class ChatRequest(BaseModel):
     messages: list[Message]
@@ -42,12 +40,10 @@ class ChatRequest(BaseModel):
     max_tokens: int = 2000
     model: str = "claude-sonnet-4-5-20250929"
 
-
 class ChatResponse(BaseModel):
     content: str
     model: str
     role: str = "assistant"
-
 
 @router.post("/chat", response_model=ChatResponse)
 async def claude_chat(
@@ -102,7 +98,6 @@ async def claude_chat(
             print(f"[Claude API Error]: {error_msg}")
 
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/health")
 async def claude_health():

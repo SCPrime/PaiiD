@@ -1,21 +1,20 @@
+from backend.config import settings
+from datetime import datetime
+from typing import Any
+import aiohttp
+import json
+import logging
+import re
+import redis
+
 """
 Sentiment Analysis Service
 Analyzes news articles, social media, and market data for sentiment indicators
 """
 
-import json
-import logging
-import re
-from datetime import datetime
-from typing import Any
-
-import aiohttp
-import redis
-from backend.config import settings
 
 
 logger = logging.getLogger(__name__)
-
 
 class SentimentAnalyzer:
     """Service for analyzing market sentiment from various sources"""

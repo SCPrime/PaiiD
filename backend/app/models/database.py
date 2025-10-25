@@ -1,3 +1,8 @@
+from ..db.session import Base
+from datetime import datetime
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
+
 """
 Database Models
 
@@ -5,12 +10,7 @@ SQLAlchemy models for PostgreSQL database.
 Defines schema for users, strategies, trades, performance tracking, and equity snapshots.
 """
 
-from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import relationship
-
-from ..db.session import Base
 
 
 class User(Base):
@@ -55,7 +55,6 @@ class User(Base):
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, role={self.role})>"
 
-
 class UserSession(Base):
     """User session tracking for JWT tokens"""
 
@@ -86,7 +85,6 @@ class UserSession(Base):
 
     def __repr__(self):
         return f"<UserSession(id={self.id}, user_id={self.user_id}, expires={self.expires_at})>"
-
 
 class ActivityLog(Base):
     """Comprehensive activity log for owner dashboard"""
@@ -123,7 +121,6 @@ class ActivityLog(Base):
 
     def __repr__(self):
         return f"<ActivityLog(id={self.id}, user_id={self.user_id}, action={self.action_type}, timestamp={self.timestamp})>"
-
 
 class Strategy(Base):
     """Trading strategy configuration"""
@@ -165,7 +162,6 @@ class Strategy(Base):
 
     def __repr__(self):
         return f"<Strategy(id={self.id}, name='{self.name}', type='{self.strategy_type}')>"
-
 
 class Trade(Base):
     """Trade execution record"""
@@ -215,7 +211,6 @@ class Trade(Base):
     def __repr__(self):
         return f"<Trade(id={self.id}, symbol='{self.symbol}', side='{self.side}', qty={self.quantity}, status='{self.status}')>"
 
-
 class Performance(Base):
     """Daily performance snapshot"""
 
@@ -255,7 +250,6 @@ class Performance(Base):
     def __repr__(self):
         return f"<Performance(id={self.id}, date={self.date}, value=${self.portfolio_value:.2f}, pnl=${self.day_pnl:.2f})>"
 
-
 class EquitySnapshot(Base):
     """Intraday equity snapshots for charting"""
 
@@ -279,7 +273,6 @@ class EquitySnapshot(Base):
         return (
             f"<EquitySnapshot(id={self.id}, timestamp={self.timestamp}, equity=${self.equity:.2f})>"
         )
-
 
 class OrderTemplate(Base):
     """Saved order templates for quick execution"""
@@ -307,7 +300,6 @@ class OrderTemplate(Base):
 
     def __repr__(self):
         return f"<OrderTemplate(id={self.id}, name='{self.name}', symbol='{self.symbol}', side='{self.side}')>"
-
 
 class AIRecommendation(Base):
     """AI-generated trading recommendations history"""

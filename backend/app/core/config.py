@@ -1,14 +1,13 @@
-import os
-from pathlib import Path
-
 from dotenv import load_dotenv
+from pathlib import Path
 from pydantic import BaseModel
+import os
+
 
 
 # Load .env file BEFORE reading env vars (works even when imported directly)
 ENV_PATH = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(ENV_PATH)
-
 
 class Settings(BaseModel):
     # Read directly from environment variables (loaded above)
@@ -59,6 +58,5 @@ class Settings(BaseModel):
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # 15 minutes
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days
-
 
 settings = Settings()

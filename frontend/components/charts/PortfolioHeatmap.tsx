@@ -28,15 +28,15 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
   className,
   symbols = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA", "AMZN", "META", "NFLX"],
   showVolume = true,
-  showPerformance = true,
+  showPerformance: _showPerformance = true,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_isLoading, _setIsLoading] = useState(false);
+  const [_error, _setError] = useState<string | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<"change" | "volume" | "marketCap">("change");
 
-  const { isConnected, marketData } = useWebSocket({
+  const { isConnected, marketData: _marketData } = useWebSocket({
     url: process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws",
     userId,
     autoConnect: true,
@@ -135,11 +135,11 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
       .attr("stroke", "#374151")
       .attr("stroke-width", 1)
       .style("cursor", "pointer")
-      .on("mouseover", function (event, d) {
+      .on("mouseover", function () {
         // Highlight on hover
         d3.select(this).attr("stroke", "#60a5fa").attr("stroke-width", 2);
       })
-      .on("mouseout", function (event, d) {
+      .on("mouseout", function () {
         // Remove highlight
         d3.select(this).attr("stroke", "#374151").attr("stroke-width", 1);
       });

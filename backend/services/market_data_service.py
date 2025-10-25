@@ -1,20 +1,19 @@
+from backend.config import settings
+from datetime import UTC, datetime, timedelta
+from typing import Any
+import aiohttp
+import json
+import logging
+import redis
+
 """
 Market Data Service for Real-Time Data Aggregation
 Handles data fetching from multiple sources (Alpha Vantage, Tradier, etc.)
 """
 
-import json
-import logging
-from datetime import UTC, datetime, timedelta
-from typing import Any
-
-import aiohttp
-import redis
-from backend.config import settings
 
 
 logger = logging.getLogger(__name__)
-
 
 class MarketDataService:
     """Service for aggregating real-time market data from multiple sources"""

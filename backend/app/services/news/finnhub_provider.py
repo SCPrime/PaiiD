@@ -1,9 +1,9 @@
-import os
-from datetime import datetime, timedelta
-
-import finnhub
-
 from .base_provider import BaseNewsProvider, NewsArticle
+from datetime import datetime, timedelta
+import finnhub
+import os
+
+
 
 
 class FinnhubProvider(BaseNewsProvider):

@@ -1,21 +1,22 @@
+        from scipy.stats import kurtosis
+        from scipy.stats import skew
+from dataclasses import dataclass
+from enum import Enum
+from sklearn.ensemble import IsolationForest, RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+import logging
+import numpy as np
+import pandas as pd
+import talib
+
 """
 Advanced Market Regime Detection Module
 ML-powered market regime classification for PaiiD
 """
 
-import logging
-from dataclasses import dataclass
-from enum import Enum
-
-import numpy as np
-import pandas as pd
-import talib
-from sklearn.ensemble import IsolationForest, RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
 
 
 logger = logging.getLogger(__name__)
-
 
 class MarketRegime(Enum):
     """Market regime classifications"""
@@ -29,7 +30,6 @@ class MarketRegime(Enum):
     REVERSAL = "reversal"
     ACCUMULATION = "accumulation"
     DISTRIBUTION = "distribution"
-
 
 @dataclass
 class RegimeAnalysis:
@@ -47,7 +47,6 @@ class RegimeAnalysis:
     trading_implications: list[str]
     risk_level: str  # "low", "medium", "high", "extreme"
     recommended_strategies: list[str]
-
 
 class AdvancedRegimeDetector:
     """Advanced market regime detection using ML"""
@@ -402,13 +401,11 @@ class AdvancedRegimeDetector:
     # Helper methods for feature calculation
     def _calculate_skewness(self, returns: np.ndarray) -> float:
         """Calculate skewness of returns"""
-        from scipy.stats import skew
 
         return float(skew(returns))
 
     def _calculate_kurtosis(self, returns: np.ndarray) -> float:
         """Calculate kurtosis of returns"""
-        from scipy.stats import kurtosis
 
         return float(kurtosis(returns))
 

@@ -1,14 +1,15 @@
+    import argparse
+from datetime import datetime
+from pathlib import Path
+from typing import Dict
+import csv
+import json
+
 #!/usr/bin/env python3
 """
 Verification Helper Tool
 Interactive tool to process files marked as "needs verification" in the codebase inventory.
 """
-
-import csv
-import json
-from datetime import datetime
-from pathlib import Path
-from typing import Dict
 
 
 class VerificationHelper:
@@ -344,10 +345,8 @@ class VerificationHelper:
         # Generate report
         self.generate_action_report()
 
-
 def main():
     """Main execution."""
-    import argparse
 
     parser = argparse.ArgumentParser(description="Process files needing verification")
     parser.add_argument(
@@ -383,7 +382,6 @@ def main():
     helper.run(mode=args.mode, batch_size=args.batch_size)
 
     return 0
-
 
 if __name__ == "__main__":
     exit(main())

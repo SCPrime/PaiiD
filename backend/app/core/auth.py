@@ -1,14 +1,13 @@
+from .config import settings
+from fastapi import Header, HTTPException, status
 import logging
 
-from fastapi import Header, HTTPException, status
 
-from .config import settings
 
 
 # Add logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
-
 
 def require_bearer(authorization: str = Header(None)):
     logger.debug("=" * 50)
@@ -56,7 +55,6 @@ def require_bearer(authorization: str = Header(None)):
     print(f"{'=' * 50}\n", flush=True)
     return token
 
-
 def get_current_user_id(token: str | None = None) -> int:
     """
     Get the current user ID from the authenticated token.
@@ -77,7 +75,6 @@ def get_current_user_id(token: str | None = None) -> int:
     # MVP: Single user system - all authenticated requests map to user_id=1
     # This will be replaced with JWT decoding when multi-user support is added
     return 1
-
 
 def get_current_user_id_str(token: str | None = None) -> str:
     """

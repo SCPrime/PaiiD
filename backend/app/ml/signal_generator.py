@@ -1,21 +1,20 @@
+from .feature_engineering import FeatureEngineer
+from .sentiment_analyzer import SentimentAnalyzer
+from datetime import UTC, datetime
+from enum import Enum
+from pydantic import BaseModel
+import logging
+import pandas as pd
+
 """
 Trade Signal Generator
 Combines technical indicators with sentiment analysis to generate trade signals
 """
 
-import logging
-from datetime import UTC, datetime
-from enum import Enum
 
-import pandas as pd
-from pydantic import BaseModel
-
-from .feature_engineering import FeatureEngineer
-from .sentiment_analyzer import SentimentAnalyzer
 
 
 logger = logging.getLogger(__name__)
-
 
 class SignalType(str, Enum):
     """Trade signal types"""
@@ -24,14 +23,12 @@ class SignalType(str, Enum):
     SELL = "SELL"
     HOLD = "HOLD"
 
-
 class SignalStrength(str, Enum):
     """Signal strength levels"""
 
     STRONG = "STRONG"
     MODERATE = "MODERATE"
     WEAK = "WEAK"
-
 
 class TradeSignal(BaseModel):
     """Generated trade signal"""
@@ -49,7 +46,6 @@ class TradeSignal(BaseModel):
     combined_score: float  # -1.0 to 1.0
     timestamp: datetime
     indicators: dict[str, float]  # Key technical indicators
-
 
 class SignalGenerator:
     """Generates trade signals using ML and sentiment analysis"""
@@ -357,10 +353,8 @@ class SignalGenerator:
             indicators={},
         )
 
-
 # Global instance
 _signal_generator: SignalGenerator | None = None
-
 
 def get_signal_generator() -> SignalGenerator:
     """Get or create signal generator instance"""

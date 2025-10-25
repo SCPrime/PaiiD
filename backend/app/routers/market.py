@@ -1,3 +1,17 @@
+            from anthropic import Anthropic
+            import json
+    from datetime import UTC, datetime
+    from datetime import UTC, datetime
+    from datetime import UTC, datetime
+from ..core.config import settings
+from ..core.jwt import get_current_user
+from ..models.database import User
+from ..services.cache import CacheService, get_cache
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from typing import Literal
+import requests
+
 """
 Market conditions and analysis endpoints
 
@@ -6,16 +20,7 @@ This module uses Tradier API for ALL market data.
 Alpaca is ONLY used for paper trading execution.
 """
 
-from typing import Literal
 
-import requests
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-
-from ..core.config import settings
-from ..core.jwt import get_current_user
-from ..models.database import User
-from ..services.cache import CacheService, get_cache
 
 
 # LOUD LOGGING TO VERIFY NEW CODE IS DEPLOYED
@@ -29,13 +34,11 @@ print("=" * 80, flush=True)
 
 router = APIRouter(tags=["market"])
 
-
 class MarketCondition(BaseModel):
     name: str
     value: str
     status: Literal["favorable", "neutral", "unfavorable"]
     details: str | None = None
-
 
 @router.get("/market/conditions")
 async def get_market_conditions(
@@ -51,7 +54,6 @@ async def get_market_conditions(
     - Market breadth indicators (placeholder - requires additional data)
     - Overall sentiment and recommended actions
     """
-    from datetime import UTC, datetime
 
     # Check cache first (60s TTL)
     cache_key = "market:conditions"
@@ -257,7 +259,6 @@ async def get_market_conditions(
             "error": str(e),
         }
 
-
 @router.get("/market/indices")
 async def get_major_indices(
     current_user: User = Depends(get_current_user),
@@ -352,7 +353,6 @@ async def get_major_indices(
             if not settings.ANTHROPIC_API_KEY:
                 raise ValueError("Anthropic API key not configured")
 
-            from anthropic import Anthropic
 
             client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 
@@ -373,7 +373,6 @@ async def get_major_indices(
             )
 
             # Parse Claude's response
-            import json
 
             ai_text = message.content[0].text.strip()
             # Remove markdown code blocks if present
@@ -397,7 +396,6 @@ async def get_major_indices(
                 detail="Market data temporarily unavailable (Tradier and Claude AI both failed)",
             )
 
-
 @router.get("/market/sectors")
 async def get_sector_performance(
     current_user: User = Depends(get_current_user),
@@ -408,7 +406,6 @@ async def get_sector_performance(
 
     Fetches real-time quotes for sector ETFs and ranks by performance
     """
-    from datetime import UTC, datetime
 
     # Check cache first (60s TTL)
     cache_key = "market:sectors"
@@ -514,7 +511,6 @@ async def get_sector_performance(
             "error": str(e),
         }
 
-
 @router.get("/market/status")
 async def get_market_status(
     current_user: User = Depends(get_current_user),
@@ -532,7 +528,6 @@ async def get_market_status(
         - next_change: timestamp of next state change
         - description: human-readable status
     """
-    from datetime import UTC, datetime
 
     # Check cache first (60s TTL)
     cache_key = "market:status"

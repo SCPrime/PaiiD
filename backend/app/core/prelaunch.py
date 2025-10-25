@@ -1,3 +1,13 @@
+    import argparse
+from pydantic import BaseModel, Field
+from typing import Any
+import asyncio
+import httpx
+import logging
+import os
+import socket
+import sys
+
 """
 Pre-launch Validation Module
 
@@ -13,19 +23,9 @@ Usage:
     python -m app.core.prelaunch --check-only
 """
 
-import asyncio
-import logging
-import os
-import socket
-import sys
-from typing import Any
-
-import httpx
-from pydantic import BaseModel, Field
 
 
 logger = logging.getLogger(__name__)
-
 
 class ValidationResult(BaseModel):
     """Result of a validation check"""
@@ -34,7 +34,6 @@ class ValidationResult(BaseModel):
     success: bool
     message: str
     details: dict[str, Any] = Field(default_factory=dict)
-
 
 class PrelaunchValidator:
     """
@@ -400,10 +399,8 @@ class PrelaunchValidator:
 
         return success, self.errors, self.warnings
 
-
 async def main():
     """CLI entrypoint for pre-launch validation"""
-    import argparse
 
     parser = argparse.ArgumentParser(description="PaiiD Backend Pre-launch Validation")
     parser.add_argument("--strict", action="store_true", help="Fail on warnings (production mode)")
@@ -430,7 +427,6 @@ async def main():
     else:
         logger.info("Pre-launch validation completed successfully!")
         sys.exit(0)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

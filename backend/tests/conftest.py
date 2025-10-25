@@ -1,16 +1,26 @@
+    from app.core.jwt import get_current_user
+    from app.core.unified_auth import get_current_user_unified
+    from app.models.database import Strategy
+    from app.models.database import Strategy
+    from app.models.database import Trade
+    from app.models.database import User
+    from app.models.database import User
+    from app.models.database import User
+from app.db.session import Base, get_db
+from app.main import app
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+import os
+import pytest
+
 """
 Pytest Configuration and Fixtures
 
 Provides test fixtures for database, API client, and mocked services.
 """
 
-import os
-
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
 
 # Set test environment variables
@@ -21,9 +31,6 @@ os.environ["TESTING"] = "true"  # Disable rate limiting for tests
 os.environ["API_TOKEN"] = "test-token-12345"
 os.environ["TRADIER_API_KEY"] = "test-tradier-key"
 os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
-
-from app.db.session import Base, get_db
-from app.main import app
 
 
 # ===========================================
@@ -46,9 +53,7 @@ from app.main import app
 # Generated with: CryptContext(schemes=["bcrypt"]).hash("TestPassword123!")
 TEST_PASSWORD_HASH = "$2b$12$LQ3JzqjX7Y8ZHnVc9r5MHOfWw8L4vQy8QWxK0X1y0HdTYJKRQ6qKK"
 
-
 # ==================== DATABASE FIXTURES ====================
-
 
 @pytest.fixture(scope="function")
 def test_db():
@@ -74,7 +79,6 @@ def test_db():
         db.close()
         Base.metadata.drop_all(bind=engine)
 
-
 @pytest.fixture(scope="function")
 def client(test_db):
     """
@@ -89,9 +93,6 @@ def client(test_db):
     blocking test client initialization. This allows tests to run even if
     external services (Redis, Tradier, etc.) are unavailable.
     """
-    from app.core.jwt import get_current_user
-    from app.core.unified_auth import get_current_user_unified
-    from app.models.database import User
 
     def override_get_db():
         try:
@@ -128,7 +129,6 @@ def client(test_db):
 
     app.dependency_overrides.clear()
 
-
 @pytest.fixture(scope="function")
 def auth_headers():
     """
@@ -141,9 +141,7 @@ def auth_headers():
     """
     return {"Authorization": "Bearer test-token-12345"}
 
-
 # ==================== MOCK CACHE FIXTURES ====================
-
 
 class MockCacheService:
     """Mock cache service for testing without Redis"""
@@ -169,7 +167,6 @@ class MockCacheService:
             del self.cache[key]
         return len(keys_to_delete)
 
-
 @pytest.fixture(scope="function")
 def mock_cache():
     """
@@ -182,14 +179,11 @@ def mock_cache():
     """
     return MockCacheService()
 
-
 # ==================== DATABASE MODEL FIXTURES ====================
-
 
 @pytest.fixture
 def sample_user(test_db):
     """Create a sample user for testing"""
-    from app.models.database import User
 
     user = User(
         email="test@example.com",
@@ -202,11 +196,9 @@ def sample_user(test_db):
     test_db.refresh(user)
     return user
 
-
 @pytest.fixture
 def sample_strategy(test_db, sample_user):
     """Create a sample strategy for testing"""
-    from app.models.database import Strategy
 
     strategy = Strategy(
         user_id=sample_user.id,
@@ -226,11 +218,9 @@ def sample_strategy(test_db, sample_user):
     test_db.refresh(strategy)
     return strategy
 
-
 @pytest.fixture
 def sample_trade(test_db, sample_user, sample_strategy):
     """Create a sample trade for testing"""
-    from app.models.database import Trade
 
     trade = Trade(
         user_id=sample_user.id,
@@ -249,9 +239,7 @@ def sample_trade(test_db, sample_user, sample_strategy):
     test_db.refresh(trade)
     return trade
 
-
 # ==================== MOCK API RESPONSES ====================
-
 
 @pytest.fixture
 def mock_tradier_quotes():
@@ -283,7 +271,6 @@ def mock_tradier_quotes():
         }
     }
 
-
 @pytest.fixture
 def mock_market_indices():
     """Mock market indices data"""
@@ -293,13 +280,10 @@ def mock_market_indices():
         "source": "tradier",
     }
 
-
 # ==================== HELPER FUNCTIONS ====================
-
 
 def create_test_user(db, email="test@example.com"):
     """Helper to create test user"""
-    from app.models.database import User
 
     user = User(email=email, password_hash=TEST_PASSWORD_HASH, preferences={})
     db.add(user)
@@ -307,10 +291,8 @@ def create_test_user(db, email="test@example.com"):
     db.refresh(user)
     return user
 
-
 def create_test_strategy(db, user_id, name="Test Strategy"):
     """Helper to create test strategy"""
-    from app.models.database import Strategy
 
     strategy = Strategy(
         user_id=user_id,

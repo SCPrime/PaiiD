@@ -1,15 +1,16 @@
+    import argparse
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List
+import csv
+import json
+import shutil
+
 #!/usr/bin/env python3
 """
 Codebase Archival Tool
 Safely archives redundant files identified by the inventory analyzer.
 """
-
-import csv
-import json
-import shutil
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List
 
 
 class ArchivalTool:
@@ -247,10 +248,8 @@ class ArchivalTool:
 
         return manifest_data
 
-
 def main():
     """Main execution."""
-    import argparse
 
     parser = argparse.ArgumentParser(description="Archive redundant codebase files")
     parser.add_argument(
@@ -279,7 +278,6 @@ def main():
     tool.run(inventory_path)
 
     return 0
-
 
 if __name__ == "__main__":
     exit(main())

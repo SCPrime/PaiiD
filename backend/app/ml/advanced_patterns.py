@@ -1,19 +1,20 @@
+        from scipy.signal import find_peaks
+        from scipy.signal import find_peaks
+from dataclasses import dataclass
+from enum import Enum
+import logging
+import numpy as np
+import pandas as pd
+import talib
+
 """
 Advanced Pattern Recognition Module
 Enhanced ML-powered pattern detection for PaiiD
 """
 
-import logging
-from dataclasses import dataclass
-from enum import Enum
-
-import numpy as np
-import pandas as pd
-import talib
 
 
 logger = logging.getLogger(__name__)
-
 
 class PatternType(Enum):
     """Advanced pattern types for detection"""
@@ -50,7 +51,6 @@ class PatternType(Enum):
     RESISTANCE_BREAK = "resistance_break"
     TREND_LINE_BREAK = "trend_line_break"
 
-
 @dataclass
 class PatternSignal:
     """Enhanced pattern signal with confidence scoring"""
@@ -68,7 +68,6 @@ class PatternSignal:
     key_levels: list[float]
     description: str
     trading_suggestion: str
-
 
 class AdvancedPatternDetector:
     """Enhanced pattern detection with ML algorithms"""
@@ -857,14 +856,12 @@ class AdvancedPatternDetector:
     # Helper methods
     def _find_peaks(self, data: np.ndarray, min_distance: int = 5) -> list[int]:
         """Find peaks in data"""
-        from scipy.signal import find_peaks
 
         peaks, _ = find_peaks(data, distance=min_distance)
         return peaks.tolist()
 
     def _find_troughs(self, data: np.ndarray, min_distance: int = 5) -> list[int]:
         """Find troughs in data"""
-        from scipy.signal import find_peaks
 
         troughs, _ = find_peaks(-data, distance=min_distance)
         return troughs.tolist()

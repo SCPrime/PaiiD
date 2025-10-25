@@ -1,6 +1,5 @@
 HEAD = {"Authorization": "Bearer test-token-12345"}
 
-
 def test_duplicate_idempotency(client):
     body = {
         "dryRun": True,

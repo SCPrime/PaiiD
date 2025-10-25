@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-
+    from app.services.news.news_aggregator import NewsAggregator
+    from app.services.news.news_cache import get_news_cache
 from app.core.jwt import get_current_user
 from app.models.database import User
+from fastapi import APIRouter, Depends, HTTPException, Query
+
 
 
 router = APIRouter()
@@ -11,8 +13,6 @@ news_aggregator = None
 news_cache = None
 
 try:
-    from app.services.news.news_aggregator import NewsAggregator
-    from app.services.news.news_cache import get_news_cache
 
     news_aggregator = NewsAggregator()
     news_cache = get_news_cache()
@@ -20,7 +20,6 @@ try:
     print("[OK] News cache initialized")
 except Exception as e:
     print(f"[WARNING] News aggregator failed to initialize: {e}")
-
 
 @router.get("/news/company/{symbol}")
 async def get_company_news(
@@ -91,7 +90,6 @@ async def get_company_news(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/news/market")
 async def get_market_news(
     category: str = Query(default="general"),
@@ -161,7 +159,6 @@ async def get_market_news(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/news/providers")
 async def get_news_providers(current_user: User = Depends(get_current_user)):
     """List active news providers"""
@@ -174,7 +171,6 @@ async def get_news_providers(current_user: User = Depends(get_current_user)):
         ],
         "total": len(news_aggregator.providers),
     }
-
 
 @router.get("/news/health")
 async def get_news_health(current_user: User = Depends(get_current_user)):
@@ -197,7 +193,6 @@ async def get_news_health(current_user: User = Depends(get_current_user)):
         return health
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get health status: {e!s}")
-
 
 @router.get("/news/sentiment/market")
 async def get_market_sentiment(
@@ -260,7 +255,6 @@ async def get_market_sentiment(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/news/cache/stats")
 async def get_cache_stats(current_user: User = Depends(get_current_user)):
     """Get news cache statistics"""
@@ -268,7 +262,6 @@ async def get_cache_stats(current_user: User = Depends(get_current_user)):
         return {"status": "unavailable"}
 
     return news_cache.get_stats()
-
 
 @router.post("/news/cache/clear")
 async def clear_news_cache(current_user: User = Depends(get_current_user)):
@@ -278,7 +271,6 @@ async def clear_news_cache(current_user: User = Depends(get_current_user)):
 
     news_cache.clear_all()
     return {"status": "cleared"}
-
 
 # Helper functions
 def _apply_filters(articles: list[dict], sentiment: str | None, provider: str | None) -> list[dict]:

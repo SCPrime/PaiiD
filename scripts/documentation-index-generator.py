@@ -1,13 +1,14 @@
+    import argparse
+from datetime import datetime
+from pathlib import Path
+from typing import Dict
+import csv
+
 #!/usr/bin/env python3
 """
 Documentation Index Generator
 Creates a comprehensive index of all active documentation in the codebase.
 """
-
-import csv
-from datetime import datetime
-from pathlib import Path
-from typing import Dict
 
 
 class DocumentationIndexGenerator:
@@ -274,7 +275,7 @@ class DocumentationIndexGenerator:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         content = f"""# Documentation Index
-**Generated**: {timestamp}  
+**Generated**: {timestamp}
 **Total Active Documents**: {len(self.active_docs)}
 
 This index provides a comprehensive overview of all active documentation in the PaiiD project. Documents are organized by category for easy navigation.
@@ -437,10 +438,8 @@ python scripts/documentation-index-generator.py
         print(f"Categories: {len([c for c in self.categories.values() if c])}")
         print(f"Output: {index_path}")
 
-
 def main():
     """Main execution."""
-    import argparse
 
     parser = argparse.ArgumentParser(description="Generate documentation index")
     parser.add_argument(
@@ -464,7 +463,6 @@ def main():
     generator.run()
 
     return 0
-
 
 if __name__ == "__main__":
     exit(main())

@@ -1,9 +1,46 @@
+            from .db.session import engine
+            from .services.cache import init_cache
+            from .services.tradier_stream import (
+            from sqlalchemy import text
+        from .scheduler import get_scheduler
+        from .services.tradier_stream import stop_tradier_stream
+        import fastapi
+        import sentry_sdk
+        import uvicorn
+    from .core.prelaunch import PrelaunchValidator
+    from .core.startup_monitor import get_startup_monitor
+    from .middleware.rate_limit import custom_rate_limit_exceeded_handler, limiter
+    from .middleware.sentry import SentryContextMiddleware
+    from .routers import subscription
+    from datetime import UTC, datetime
+    from pathlib import Path
+    import logging
+    import logging
+    import time
+from .core.config import settings
+from .core.signals import setup_shutdown_handlers
+from .middleware.cache_control import CacheControlMiddleware
+from .middleware.kill_switch import KillSwitchMiddleware
+from .middleware.metrics import metrics_middleware
+from .middleware.request_id import RequestIDMiddleware
+from .middleware.security_headers import SecurityHeadersMiddleware
+from .middleware.usage_tracking import UsageTrackingMiddleware
+from .routers import (
+from .routers import settings as settings_router
+from .scheduler import init_scheduler
+from dotenv import load_dotenv
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
+from slowapi.errors import RateLimitExceeded
+from starlette.middleware.gzip import GZIPMiddleware
 import os
+import sentry_sdk
 import sys
 import time
-from pathlib import Path
 
-from dotenv import load_dotenv
 
 
 # Load .env file before importing settings
@@ -21,15 +58,6 @@ print("Deployed from: main branch - Tradier integration active")
 print("===========================\n", flush=True)
 
 
-import sentry_sdk
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.starlette import StarletteIntegration
-from slowapi.errors import RateLimitExceeded
-
-from .core.config import settings
-from .routers import (
     ai,
     analytics,
     auth,
@@ -56,20 +84,15 @@ from .routers import (
     telemetry,
     users,
 )
-from .routers import settings as settings_router
-
 
 # Optional: Subscription router (requires stripe package)
 try:
-    from .routers import subscription
 
     SUBSCRIPTION_AVAILABLE = True
 except ImportError as e:
     print(f"[WARNING] Subscription router not available: {e}", flush=True)
     SUBSCRIPTION_AVAILABLE = False
     subscription = None
-from .scheduler import init_scheduler
-
 
 # Initialize Sentry if DSN is configured
 if settings.SENTRY_DSN:
@@ -112,8 +135,6 @@ print(f"settings.API_TOKEN: {'***' if settings.API_TOKEN else 'NOT_SET'}")
 print("===========================\n", flush=True)
 
 # Register signal handlers for graceful shutdown BEFORE creating app
-from .core.signals import setup_shutdown_handlers
-
 
 setup_shutdown_handlers()
 
@@ -124,11 +145,6 @@ app = FastAPI(
 )
 
 # Add Request ID middleware early for correlation
-from starlette.middleware.gzip import GZIPMiddleware
-
-from .middleware.kill_switch import KillSwitchMiddleware
-from .middleware.request_id import RequestIDMiddleware
-from .middleware.usage_tracking import UsageTrackingMiddleware
 
 
 app.add_middleware(RequestIDMiddleware)
@@ -142,14 +158,12 @@ print("[OK] Usage tracking middleware enabled", flush=True)
 # Configure rate limiting (Phase 3: Bulletproof Reliability)
 # Skip rate limiting in test environment to avoid middleware conflicts with TestClient
 if not settings.TESTING:
-    from .middleware.rate_limit import custom_rate_limit_exceeded_handler, limiter
 
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
     print("[OK] Rate limiting enabled", flush=True)
 else:
     print("[TEST MODE] Rate limiting disabled for tests", flush=True)
-
 
 # Initialize scheduler, cache, and streaming on startup
 @app.on_event("startup")
@@ -160,11 +174,7 @@ async def startup_event():
         print("[TEST MODE] Skipping startup event initialization", flush=True)
         return
 
-    import logging
-    from datetime import UTC, datetime
 
-    from .core.prelaunch import PrelaunchValidator
-    from .core.startup_monitor import get_startup_monitor
 
     # Configure structured logging
     logging.basicConfig(
@@ -200,9 +210,6 @@ async def startup_event():
 
     # Log key package versions
     try:
-        import fastapi
-        import sentry_sdk
-        import uvicorn
 
         logger.info(f"   FastAPI: {fastapi.__version__}")
         logger.info(f"   Uvicorn: {uvicorn.__version__}")
@@ -255,9 +262,7 @@ async def startup_event():
     # Verify database connectivity early
     try:
         async with monitor.phase("database_check", timeout=5.0):
-            from sqlalchemy import text
 
-            from .db.session import engine
 
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
@@ -269,7 +274,6 @@ async def startup_event():
     # Initialize cache service
     try:
         async with monitor.phase("cache_init", timeout=5.0):
-            from .services.cache import init_cache
 
             init_cache()
     except Exception as e:
@@ -296,7 +300,6 @@ async def startup_event():
     # If circuit breaker is active, it will wait in the background without blocking HTTP requests
     try:
         async with monitor.phase("tradier_stream_init", timeout=10.0):
-            from .services.tradier_stream import (
                 get_tradier_stream,
                 start_tradier_stream,
             )
@@ -339,7 +342,6 @@ async def startup_event():
     logger.info("   Ready to accept requests")
     logger.info("=" * 70)
 
-
 # Shutdown scheduler and streaming gracefully
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -352,11 +354,8 @@ async def shutdown_event():
         print("[TEST MODE] Skipping shutdown event", flush=True)
         return
 
-    import time
-    from pathlib import Path
 
     shutdown_start = time.time()
-    import logging
 
     logger = logging.getLogger(__name__)
 
@@ -366,7 +365,6 @@ async def shutdown_event():
 
     # Shutdown scheduler
     try:
-        from .scheduler import get_scheduler
 
         scheduler_instance = get_scheduler()
         scheduler_instance.shutdown(wait=False)  # Don't wait indefinitely
@@ -376,7 +374,6 @@ async def shutdown_event():
 
     # Stop Tradier streaming
     try:
-        from .services.tradier_stream import stop_tradier_stream
 
         await stop_tradier_stream()
         logger.info("[OK] Tradier stream stopped")
@@ -405,18 +402,12 @@ async def shutdown_event():
     logger.info("Shutdown complete")
     logger.info("=" * 70)
 
-
 # Add Sentry context middleware if Sentry is enabled
 if settings.SENTRY_DSN:
-    from .middleware.sentry import SentryContextMiddleware
 
     app.add_middleware(SentryContextMiddleware)
 
 # Add Cache-Control headers for SWR support (Phase 2: Performance)
-from .middleware.cache_control import CacheControlMiddleware
-from .middleware.metrics import metrics_middleware
-from .middleware.security_headers import SecurityHeadersMiddleware
-
 
 app.add_middleware(CacheControlMiddleware)
 app.middleware("http")(metrics_middleware)

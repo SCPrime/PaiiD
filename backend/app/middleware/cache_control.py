@@ -1,3 +1,8 @@
+from collections.abc import Callable
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
+
 """
 Cache-Control Middleware
 
@@ -6,11 +11,6 @@ Adds intelligent cache headers to API responses to support SWR (stale-while-reva
 Phase 2: Performance Optimization
 """
 
-from collections.abc import Callable
-
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import Response
 
 
 class CacheControlMiddleware(BaseHTTPMiddleware):

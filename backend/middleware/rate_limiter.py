@@ -1,18 +1,17 @@
+from backend.config import settings
+from fastapi import Request
+from fastapi.responses import JSONResponse
+import logging
+import redis
+
 """
 Rate Limiting Middleware
 Prevents API throttling and implements rate limiting for market data requests
 """
 
-import logging
-
-import redis
-from backend.config import settings
-from fastapi import Request
-from fastapi.responses import JSONResponse
 
 
 logger = logging.getLogger(__name__)
-
 
 class RateLimiter:
     """Rate limiter using Redis for distributed rate limiting"""
@@ -97,10 +96,8 @@ class RateLimiter:
             logger.error(f"Error getting remaining requests: {e}")
             return 0
 
-
 # Global rate limiter instance
 rate_limiter = RateLimiter()
-
 
 class RateLimitMiddleware:
     """FastAPI middleware for rate limiting"""
@@ -155,7 +152,6 @@ class RateLimitMiddleware:
             return "websocket"
         else:
             return "general"
-
 
 class MarketDataRateLimiter:
     """Specialized rate limiter for market data endpoints"""
@@ -213,7 +209,6 @@ class MarketDataRateLimiter:
         except Exception as e:
             logger.error(f"Error getting symbol remaining: {e}")
             return 0
-
 
 # Global market data rate limiter
 market_data_rate_limiter = MarketDataRateLimiter()

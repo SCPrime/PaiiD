@@ -1,14 +1,15 @@
+from collections import defaultdict
+from pathlib import Path
+import csv
+import os
+import re
+
 #!/usr/bin/env python3
 """
 Codebase Inventory Analyzer
 Analyzes the PaiiD codebase to classify files and detect usage patterns.
 """
 
-import csv
-import os
-import re
-from collections import defaultdict
-from pathlib import Path
 
 # Base directory
 BASE_DIR = Path(r"C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD")
@@ -66,7 +67,6 @@ EXCLUDE_DIRS = {
     ".next",
     "archive",
 }
-
 
 class CodebaseAnalyzer:
     def __init__(self):
@@ -395,7 +395,7 @@ These files match redundancy patterns and have no active references:
 
 ## Files Needing Verification
 
-These files have no clear references but don't match redundancy patterns. 
+These files have no clear references but don't match redundancy patterns.
 They may be entry points, standalone scripts, or truly orphaned files.
 
 ### High Priority (Code Files - {len([f for f in needs_verification if f["category"] == "Code"])})
@@ -487,7 +487,6 @@ For detailed information on each file, refer to: `codebase-inventory.csv`
 
         print(f"Report generated: {output_path}")
 
-
 def main():
     """Main execution function."""
     print("=" * 70)
@@ -511,7 +510,6 @@ def main():
     print(f"CSV: {csv_path}")
     print(f"Report: {report_path}")
     print("=" * 70)
-
 
 if __name__ == "__main__":
     main()

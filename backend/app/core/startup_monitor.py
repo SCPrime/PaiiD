@@ -1,3 +1,8 @@
+from contextlib import asynccontextmanager
+import asyncio
+import logging
+import time
+
 """
 Startup Performance Monitor
 
@@ -5,14 +10,8 @@ Tracks startup timing and detects hanging operations to prevent production issue
 Learned from: 2025-10-17 - Tradier stream blocking startup for 360s causing 500 errors.
 """
 
-import asyncio
-import logging
-import time
-from contextlib import asynccontextmanager
-
 
 logger = logging.getLogger(__name__)
-
 
 class StartupMonitor:
     """
@@ -124,10 +123,8 @@ class StartupMonitor:
             ],
         }
 
-
 # Global singleton instance
 _startup_monitor: StartupMonitor | None = None
-
 
 def get_startup_monitor() -> StartupMonitor:
     """Get the global startup monitor instance"""
@@ -135,7 +132,6 @@ def get_startup_monitor() -> StartupMonitor:
     if _startup_monitor is None:
         _startup_monitor = StartupMonitor()
     return _startup_monitor
-
 
 async def timeout_wrapper(coro, timeout: float, operation_name: str):
     """

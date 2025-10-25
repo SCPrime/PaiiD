@@ -1,12 +1,13 @@
+import json
+import requests
+import sys
+
 #!/usr/bin/env python3
 """
 Phase 1 Options Trading - End-to-End Verification Test
 Tests backend endpoints and validates Greeks data
 """
 
-import requests
-import json
-import sys
 
 # Configuration
 BACKEND_URL = "http://localhost:8001"

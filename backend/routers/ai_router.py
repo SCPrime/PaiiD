@@ -1,43 +1,38 @@
-"""
-AI Router for Market Analysis and Trading Recommendations
-Handles AI-powered endpoints for sentiment analysis, recommendations, and chat
-"""
-
-import logging
-
 from backend.services.ai_service import AIService
 from backend.services.sentiment_analyzer import SentimentAnalyzer
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel
+import logging
+
+"""
+AI Router for Market Analysis and Trading Recommendations
+Handles AI-powered endpoints for sentiment analysis, recommendations, and chat
+"""
+
 
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 security = HTTPBearer()
 
-
 class SentimentAnalysisRequest(BaseModel):
     symbols: list[str]
     days_back: int | None = 7
-
 
 class TradingRecommendationsRequest(BaseModel):
     user_id: str
     symbols: list[str]
     risk_tolerance: str | None = "medium"
 
-
 class ChatRequest(BaseModel):
     user_id: str
     message: str
     context: dict | None = None
 
-
 class NewsSentimentRequest(BaseModel):
     symbols: list[str]
     days_back: int | None = 7
-
 
 @router.post("/sentiment/analyze")
 async def analyze_market_sentiment(request: SentimentAnalysisRequest):
@@ -51,7 +46,6 @@ async def analyze_market_sentiment(request: SentimentAnalysisRequest):
     except Exception as e:
         logger.error(f"Error analyzing market sentiment: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/sentiment/news")
 async def analyze_news_sentiment(request: NewsSentimentRequest):
@@ -68,7 +62,6 @@ async def analyze_news_sentiment(request: NewsSentimentRequest):
         logger.error(f"Error analyzing news sentiment: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/sentiment/social")
 async def analyze_social_sentiment(
     symbols: list[str] = Query(..., description="List of symbols to analyze"),
@@ -84,7 +77,6 @@ async def analyze_social_sentiment(
     except Exception as e:
         logger.error(f"Error analyzing social sentiment: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/recommendations")
 async def get_trading_recommendations(request: TradingRecommendationsRequest):
@@ -117,7 +109,6 @@ async def get_trading_recommendations(request: TradingRecommendationsRequest):
         logger.error(f"Error getting trading recommendations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/chat")
 async def chat_with_ai(request: ChatRequest):
     """
@@ -138,7 +129,6 @@ async def chat_with_ai(request: ChatRequest):
         logger.error(f"Error in AI chat: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/insights/{symbols}")
 async def get_ai_insights(
     symbols: str,
@@ -157,7 +147,6 @@ async def get_ai_insights(
         logger.error(f"Error getting AI insights: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/sentiment/trending")
 async def get_trending_sentiment():
     """
@@ -173,7 +162,6 @@ async def get_trending_sentiment():
     except Exception as e:
         logger.error(f"Error getting trending sentiment: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/health")
 async def ai_health_check():

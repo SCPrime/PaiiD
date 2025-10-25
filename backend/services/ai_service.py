@@ -1,20 +1,19 @@
+from backend.config import settings
+from datetime import datetime, timedelta
+from typing import Any
+import aiohttp
+import json
+import logging
+import redis
+
 """
 AI Service for Market Analysis and Trading Recommendations
 Integrates Claude API for natural language processing and market insights
 """
 
-import json
-import logging
-from datetime import datetime, timedelta
-from typing import Any
-
-import aiohttp
-import redis
-from backend.config import settings
 
 
 logger = logging.getLogger(__name__)
-
 
 class AIService:
     """Service for AI-powered market analysis and trading recommendations"""
@@ -64,10 +63,10 @@ class AIService:
             # Prepare context for Claude
             context = f"""
             Analyze the market sentiment for these symbols: {", ".join(symbols)}
-            
+
             News Articles:
             {json.dumps(news_articles[:10], indent=2)}  # Limit to 10 articles
-            
+
             Provide:
             1. Overall sentiment (bullish, bearish, neutral)
             2. Confidence score (0-100)
@@ -113,13 +112,13 @@ class AIService:
             # Prepare context for Claude
             context = f"""
             Generate trading recommendations based on:
-            
+
             User Portfolio:
             {json.dumps(user_portfolio, indent=2)}
-            
+
             Current Market Data:
             {json.dumps(market_data, indent=2)}
-            
+
             Provide:
             1. Buy recommendations with reasoning
             2. Sell recommendations with reasoning
@@ -166,9 +165,9 @@ class AIService:
             # Prepare context for Claude
             context = f"""
             Analyze the sentiment of these news articles:
-            
+
             {json.dumps(news_articles[:20], indent=2)}  # Limit to 20 articles
-            
+
             For each article, provide:
             1. Sentiment score (-100 to +100)
             2. Confidence level (0-100)
@@ -209,10 +208,10 @@ class AIService:
             # Prepare context for Claude
             context_str = f"""
             You are PaiiD AI, a trading assistant. User message: {user_message}
-            
+
             Current Context:
             {json.dumps(context, indent=2)}
-            
+
             Provide helpful, accurate trading advice and market insights.
             Be concise but informative.
             """
@@ -296,7 +295,7 @@ class AIService:
             # Prepare context for Claude
             context = f"""
             Provide AI insights for these trading symbols: {", ".join(symbols)}
-            
+
             Include:
             1. Technical analysis summary
             2. Fundamental analysis highlights

@@ -1,9 +1,9 @@
+from pydantic import BaseModel, Field
+
 """
 Under-$4 Multileg Strategy
 Scans for stocks <= $4.00 and executes Buy Call + Sell Put legs
 """
-
-from pydantic import BaseModel, Field
 
 
 class Under4MultilegConfig(BaseModel):
@@ -59,7 +59,6 @@ class Under4MultilegConfig(BaseModel):
     sell_put: SellPut = Field(default_factory=SellPut)
     sizing: Sizing = Field(default_factory=Sizing)
     notifications: Notifications = Field(default_factory=Notifications)
-
 
 class Under4MultilegStrategy:
     """
@@ -243,7 +242,6 @@ class Under4MultilegStrategy:
         """
         # TODO: Implement position management logic
         pass
-
 
 def create_under4_multileg_strategy(config_dict: dict | None = None) -> Under4MultilegStrategy:
     """

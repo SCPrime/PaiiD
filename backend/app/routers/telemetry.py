@@ -1,14 +1,14 @@
+from datetime import datetime
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from typing import Any
+import json
+import logging
+
 """
 Telemetry Router - Tracks user interactions and system events
 """
 
-import json
-import logging
-from datetime import datetime
-from typing import Any
-
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 
 
 router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 # In-memory storage (replace with database in production)
 telemetry_events: list[dict[str, Any]] = []
-
 
 class TelemetryEvent(BaseModel):
     userId: str
@@ -27,10 +26,8 @@ class TelemetryEvent(BaseModel):
     metadata: dict[str, Any]
     userRole: str
 
-
 class TelemetryBatch(BaseModel):
     events: list[TelemetryEvent]
-
 
 @router.post("")
 async def log_telemetry(batch: TelemetryBatch):
@@ -56,7 +53,6 @@ async def log_telemetry(batch: TelemetryBatch):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/events")
 async def get_telemetry_events(
@@ -86,7 +82,6 @@ async def get_telemetry_events(
     except Exception as e:
         logger.error(f"Failed to get telemetry events: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get telemetry events")
-
 
 @router.get("/stats")
 async def get_telemetry_stats():
@@ -137,7 +132,6 @@ async def get_telemetry_stats():
         logger.error(f"Failed to get telemetry stats: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get telemetry stats")
 
-
 @router.delete("/events")
 async def clear_telemetry_events():
     """
@@ -151,7 +145,6 @@ async def clear_telemetry_events():
     except Exception as e:
         logger.error(f"Failed to clear telemetry events: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to clear telemetry events")
-
 
 @router.get("/export")
 async def export_telemetry():

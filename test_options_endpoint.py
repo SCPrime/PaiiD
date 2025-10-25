@@ -1,6 +1,7 @@
-"""Test script to diagnose options endpoint issue"""
 import requests
 import sys
+
+"""Test script to diagnose options endpoint issue"""
 
 # Test1: Health endpoint (should work)
 print("\n==== TEST 1: Health Endpoint ====")

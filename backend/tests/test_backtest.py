@@ -5,7 +5,6 @@ Tests backtest execution, performance metrics, trade simulation
 
 HEADERS = {"Authorization": "Bearer test-token-12345"}
 
-
 def test_backtest_endpoint_exists(client):
     """Test that backtest endpoint is accessible"""
     # POST with minimal strategy should work
@@ -27,14 +26,12 @@ def test_backtest_endpoint_exists(client):
     # Should return 200, 500, or validation error
     assert response.status_code in [200, 400, 422, 500, 503]
 
-
 def test_backtest_requires_auth(client):
     """Test backtest requires authentication (MVP fallback may apply)"""
     strategy = {"symbol": "SPY", "startDate": "2024-01-01", "endDate": "2024-06-01"}
     response = client.post("/api/backtesting/run", json=strategy)
     # MVP fallback may allow (403) or block (401)
     assert response.status_code in [401, 403, 500]
-
 
 def test_backtest_returns_performance_metrics(client):
     """Test backtest returns required performance metrics"""
@@ -65,7 +62,6 @@ def test_backtest_returns_performance_metrics(client):
         for key in expected_keys:
             assert key in data, f"Missing {key} in backtest results"
 
-
 def test_backtest_with_different_symbols(client):
     """Test backtesting with different stock symbols"""
     symbols = ["SPY", "AAPL", "MSFT", "GOOGL"]
@@ -87,7 +83,6 @@ def test_backtest_with_different_symbols(client):
         # Should complete or return error, not crash
         assert response.status_code in [200, 400, 422, 500], f"Unexpected status for {symbol}"
 
-
 def test_backtest_validates_date_range(client):
     """Test that invalid date ranges are rejected"""
     # End date before start date
@@ -106,7 +101,6 @@ def test_backtest_validates_date_range(client):
     # Should return validation error
     assert response.status_code in [400, 422]
 
-
 def test_backtest_validates_initial_capital(client):
     """Test that invalid initial capital is rejected"""
     # Negative capital
@@ -124,7 +118,6 @@ def test_backtest_validates_initial_capital(client):
     response = client.post("/api/backtesting/run", json=strategy, headers=HEADERS)
     # Should return validation error
     assert response.status_code in [400, 422]
-
 
 def test_backtest_rsi_strategy(client):
     """Test RSI-based strategy backtesting"""
@@ -156,7 +149,6 @@ def test_backtest_rsi_strategy(client):
             assert "pnl" in trade
             assert "pnlPercent" in trade
 
-
 def test_backtest_sma_crossover_strategy(client):
     """Test SMA crossover strategy"""
     strategy = {
@@ -179,7 +171,6 @@ def test_backtest_sma_crossover_strategy(client):
         422,
         500,
     ]  # 422 for validation, 500 if data unavailable
-
 
 def test_backtest_performance_metrics_validation(client):
     """Test that performance metrics are within expected ranges"""
@@ -211,7 +202,6 @@ def test_backtest_performance_metrics_validation(client):
         # Total return should be a number
         if "totalReturn" in data:
             assert isinstance(data["totalReturn"], (int, float))
-
 
 def test_backtest_handles_no_trades(client):
     """Test backtest when strategy generates no trades"""

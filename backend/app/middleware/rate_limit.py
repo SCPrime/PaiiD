@@ -1,3 +1,11 @@
+    from fastapi.responses import JSONResponse
+from ..core.config import settings
+from fastapi import Request
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+import os
+
 """
 Rate Limiting Middleware
 
@@ -6,14 +14,7 @@ Protects API from abuse and DoS attacks using SlowAPI.
 Phase 3: Bulletproof Reliability
 """
 
-import os
 
-from fastapi import Request
-from slowapi import Limiter
-from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
-
-from ..core.config import settings
 
 
 # Check if running in test mode
@@ -43,7 +44,6 @@ else:
         headers_enabled=True,
     )
 
-
 # Custom rate limit exceeded handler
 async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
     """
@@ -52,7 +52,6 @@ async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExc
     Returns:
         429 Too Many Requests with Retry-After header
     """
-    from fastapi.responses import JSONResponse
 
     # Extract retry-after from exception
     retry_after = (
@@ -74,29 +73,23 @@ async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExc
         },
     )
 
-
 # Decorators for different endpoint types
-
 
 def rate_limit_standard(func):
     """Standard rate limit: 60 req/min"""
     return limiter.limit("60/minute")(func)
 
-
 def rate_limit_strict(func):
     """Strict rate limit for expensive operations: 10 req/min"""
     return limiter.limit("10/minute")(func)
-
 
 def rate_limit_relaxed(func):
     """Relaxed rate limit for read-heavy operations: 100 req/min"""
     return limiter.limit("100/minute")(func)
 
-
 def rate_limit_very_strict(func):
     """Very strict for auth/sensitive endpoints: 5 req/min"""
     return limiter.limit("5/minute")(func)
-
 
 # Export limiter and handlers
 __all__ = [

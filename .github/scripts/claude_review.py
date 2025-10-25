@@ -1,15 +1,15 @@
+from pathlib import Path
+import anthropic
+import os
+import requests
+import sys
+
 #!/usr/bin/env python3
 """
 Custom Claude Code Review Script for GitHub Actions
 Uses Anthropic API to review PR changes based on .github/CLAUDE.md standards
 """
 
-import os
-import sys
-from pathlib import Path
-
-import anthropic
-import requests
 
 
 def load_review_standards():
@@ -18,7 +18,6 @@ def load_review_standards():
     if claude_md_path.exists():
         return claude_md_path.read_text(encoding="utf-8")
     return ""
-
 
 def get_pr_diff(github_token, repo, pr_number):
     """Fetch PR diff from GitHub API"""
@@ -34,7 +33,6 @@ def get_pr_diff(github_token, repo, pr_number):
         return None
 
     return response.text
-
 
 def get_changed_files_content(changed_files):
     """Read content of changed files"""
@@ -52,7 +50,6 @@ def get_changed_files_content(changed_files):
             print(f"Warning: Could not read {file_path}: {e}")
 
     return files_content
-
 
 def review_code_with_claude(api_key, review_standards, pr_diff, files_content):
     """Send code to Claude for review - FOCUSED ON STABILITY ONLY"""
@@ -144,7 +141,6 @@ PR DIFF:
         print(f"Error calling Claude API: {e}")
         return None
 
-
 def post_review_comment(github_token, repo, pr_number, review_text):
     """Post the review as a PR comment"""
     url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
@@ -170,7 +166,6 @@ def post_review_comment(github_token, repo, pr_number, review_text):
         print(f"❌ Failed to post comment: {response.status_code}")
         print(response.text)
         return False
-
 
 def main():
     # Get environment variables
@@ -227,7 +222,6 @@ def main():
     else:
         print("❌ Failed to post review comment")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

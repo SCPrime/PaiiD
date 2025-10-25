@@ -1,22 +1,22 @@
+            import re
+from .greeks import GreeksCalculator
+from alpaca.data.historical import OptionHistoricalDataClient
+from alpaca.data.requests import OptionChainRequest, OptionSnapshotRequest
+from alpaca.trading.client import TradingClient
+from datetime import UTC, datetime
+import logging
+import os
+
 """
 Alpaca Options API Client
 Handles: Options chains, contract details, and options-specific data
 Integrates with Greeks calculation for enriched options data
 """
 
-import logging
-import os
-from datetime import UTC, datetime
 
-from alpaca.data.historical import OptionHistoricalDataClient
-from alpaca.data.requests import OptionChainRequest, OptionSnapshotRequest
-from alpaca.trading.client import TradingClient
-
-from .greeks import GreeksCalculator
 
 
 logger = logging.getLogger(__name__)
-
 
 class AlpacaOptionsClient:
     """Alpaca Options client for options chains and contract details"""
@@ -286,7 +286,6 @@ class AlpacaOptionsClient:
             # Everything after C/P is strike
 
             # Simple regex approach for common cases
-            import re
 
             # Match pattern: {letters}{YYMMDD}{C|P}{8digits}
             match = re.match(r"([A-Z]+)(\d{6})([CP])(\d{8})", option_symbol)
@@ -336,10 +335,8 @@ class AlpacaOptionsClient:
         else:  # put
             return underlying_price < strike
 
-
 # Singleton instance
 _alpaca_options_client: AlpacaOptionsClient | None = None
-
 
 def get_alpaca_options_client() -> AlpacaOptionsClient:
     """Get or create Alpaca Options client singleton"""

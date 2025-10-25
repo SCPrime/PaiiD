@@ -1,16 +1,16 @@
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+import hashlib
+import json
+import logging
+
 """
 News Caching Service
 
 Provides caching layer for news articles to reduce API calls
 and improve response times. Uses file-based storage with TTL.
 """
-
-import hashlib
-import json
-import logging
-from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,6 @@ CACHE_DIR.mkdir(parents=True, exist_ok=True)
 # Cache TTL (5 minutes for market news, 15 minutes for company news)
 MARKET_NEWS_TTL = 300  # 5 minutes
 COMPANY_NEWS_TTL = 900  # 15 minutes
-
 
 class NewsCache:
     """File-based caching for news articles"""
@@ -247,10 +246,8 @@ class NewsCache:
             logger.error(f"❌ Stats error: {e!s}")
             return {}
 
-
 # Singleton instance
 _news_cache = None
-
 
 def get_news_cache() -> NewsCache:
     """Get singleton NewsCache instance"""

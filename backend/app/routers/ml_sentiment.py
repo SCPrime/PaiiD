@@ -1,17 +1,8 @@
-"""
-ML Sentiment & Signals API Router
-Real sentiment analysis and trade signal endpoints
-WITH REDIS CACHING for performance
-"""
-
-import hashlib
-import json
-import logging
-from datetime import UTC, datetime, timedelta
-
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-
+                from ..ml.sentiment_analyzer import SentimentScore
+            from ..ml.sentiment_analyzer import SentimentScore
+        from ..services.news_aggregator import get_news_aggregator
+        from collections import Counter
+        import random
 from ..core.auth import get_current_user
 from ..core.config import get_settings
 from ..core.redis_client import get_redis
@@ -19,6 +10,20 @@ from ..ml.data_pipeline import DataPipeline
 from ..ml.sentiment_analyzer import get_sentiment_analyzer
 from ..ml.signal_generator import SignalType, get_signal_generator
 from ..models.user import User
+from datetime import UTC, datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+import hashlib
+import json
+import logging
+
+"""
+ML Sentiment & Signals API Router
+Real sentiment analysis and trade signal endpoints
+WITH REDIS CACHING for performance
+"""
+
+
 
 
 logger = logging.getLogger(__name__)
@@ -29,14 +34,12 @@ settings = get_settings()
 SENTIMENT_CACHE_TTL = 900  # 15 minutes
 SIGNAL_CACHE_TTL = 300  # 5 minutes
 
-
 def generate_cache_key(prefix: str, **kwargs) -> str:
     """Generate a cache key from parameters"""
     # Sort kwargs for consistent key generation
     params_str = json.dumps(kwargs, sort_keys=True)
     hash_digest = hashlib.md5(params_str.encode()).hexdigest()[:8]
     return f"{prefix}:{hash_digest}"
-
 
 # Response Models
 class SentimentResponse(BaseModel):
@@ -49,7 +52,6 @@ class SentimentResponse(BaseModel):
     reasoning: str
     timestamp: datetime
     source: str
-
 
 class SignalResponse(BaseModel):
     """Trade signal response"""
@@ -66,7 +68,6 @@ class SignalResponse(BaseModel):
     sentiment_score: float
     combined_score: float
     timestamp: datetime
-
 
 # Endpoints
 @router.get("/sentiment/{symbol}", response_model=SentimentResponse)
@@ -118,7 +119,6 @@ async def get_sentiment(
                 )
             else:
                 # No news available - return neutral
-                from ..ml.sentiment_analyzer import SentimentScore
 
                 sentiment = SentimentScore(
                     symbol=symbol,
@@ -131,7 +131,6 @@ async def get_sentiment(
                 )
         else:
             # Return neutral if not analyzing news
-            from ..ml.sentiment_analyzer import SentimentScore
 
             sentiment = SentimentScore(
                 symbol=symbol,
@@ -168,7 +167,6 @@ async def get_sentiment(
         raise HTTPException(
             status_code=500, detail=f"Sentiment analysis failed: {e!s}"
         ) from e
-
 
 @router.get("/signals/{symbol}", response_model=SignalResponse)
 async def get_trade_signal(
@@ -265,7 +263,6 @@ async def get_trade_signal(
             status_code=500, detail=f"Signal generation failed: {e!s}"
         ) from e
 
-
 @router.post("/signals/batch", response_model=list[SignalResponse])
 async def get_batch_signals(
     symbols: list[str],
@@ -350,7 +347,6 @@ async def get_batch_signals(
 
     return results
 
-
 @router.get("/health")
 async def ml_sentiment_health_check():
     """Check ML sentiment service health"""
@@ -376,7 +372,6 @@ async def ml_sentiment_health_check():
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-
 @router.get("/analyze")
 async def analyze_sentiment(
     symbol: str = Query(..., description="Stock symbol to analyze"),
@@ -400,9 +395,7 @@ async def analyze_sentiment(
         GET /api/sentiment/analyze?symbol=AAPL&lookback_hours=24
     """
     try:
-        import random
 
-        from ..services.news_aggregator import get_news_aggregator
 
         logger.info(f"Sentiment analysis requested for {symbol} ({lookback_hours}h)")
 
@@ -527,7 +520,6 @@ async def analyze_sentiment(
         )
 
         # Get top 5 trending topics
-        from collections import Counter
 
         topic_counts = Counter(all_topics)
         top_topics = [topic for topic, count in topic_counts.most_common(5)]

@@ -1,10 +1,11 @@
+import re
+
 #!/usr/bin/env python3
 """
 Apply Premium Glass Morphism Enhancement to RadialMenu.tsx
 Batch implementation of all visual improvements
 """
 
-import re
 
 def apply_enhancements():
     file_path = 'frontend/components/RadialMenu.tsx'

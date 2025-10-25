@@ -1,3 +1,10 @@
+            from .regime_detector import get_regime_detector
+            from .strategy_selector import get_strategy_selector
+from sklearn.ensemble import VotingClassifier, VotingRegressor
+from typing import Any
+import logging
+import numpy as np
+
 """
 Ensemble ML Models
 
@@ -7,15 +14,9 @@ Uses voting, averaging, and stacking techniques.
 Phase 3A: Advanced ML Features - Ensemble Models
 """
 
-import logging
-from typing import Any
-
-import numpy as np
-from sklearn.ensemble import VotingClassifier, VotingRegressor
 
 
 logger = logging.getLogger(__name__)
-
 
 class EnsemblePredictor:
     """
@@ -245,7 +246,6 @@ class EnsemblePredictor:
             logger.error(f"Failed to calculate performance weights: {e}")
             return {name: 1.0 for name in performance_metrics}
 
-
 class MarketRegimeEnsemble:
     """
     Specialized ensemble for market regime detection
@@ -276,8 +276,6 @@ class MarketRegimeEnsemble:
             Ensemble regime prediction with confidence
         """
         try:
-            from .regime_detector import get_regime_detector
-            from .strategy_selector import get_strategy_selector
 
             # Add base models to ensemble
             regime_detector = get_regime_detector()
@@ -301,11 +299,9 @@ class MarketRegimeEnsemble:
             logger.error(f"Ensemble regime prediction failed: {e}")
             raise
 
-
 # Singleton instances
 _ensemble_predictor = None
 _regime_ensemble = None
-
 
 def get_ensemble_predictor() -> EnsemblePredictor:
     """Get or create ensemble predictor instance"""
@@ -313,7 +309,6 @@ def get_ensemble_predictor() -> EnsemblePredictor:
     if _ensemble_predictor is None:
         _ensemble_predictor = EnsemblePredictor()
     return _ensemble_predictor
-
 
 def get_regime_ensemble() -> MarketRegimeEnsemble:
     """Get or create market regime ensemble instance"""

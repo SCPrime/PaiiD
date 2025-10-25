@@ -1,3 +1,15 @@
+from ..db.session import get_db
+from ..models.database import User, UserSession
+from .config import settings
+from datetime import UTC, datetime, timedelta
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+from typing import Any
+import uuid
+
 """
 JWT Token Utilities
 
@@ -5,19 +17,7 @@ Provides secure JWT token creation, validation, and refresh functionality
 for multi-user authentication system.
 """
 
-import uuid
-from datetime import UTC, datetime, timedelta
-from typing import Any
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from sqlalchemy.orm import Session
-
-from ..db.session import get_db
-from ..models.database import User, UserSession
-from .config import settings
 
 
 # Password hashing context
@@ -25,7 +25,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # HTTP Bearer token scheme
 security = HTTPBearer()
-
 
 def hash_password(password: str) -> str:
     """
@@ -39,7 +38,6 @@ def hash_password(password: str) -> str:
     """
     return pwd_context.hash(password)
 
-
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verify a password against its hash
@@ -52,7 +50,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         True if password matches, False otherwise
     """
     return pwd_context.verify(plain_password, hashed_password)
-
 
 def create_access_token(
     data: dict[str, Any], expires_delta: timedelta | None = None
@@ -93,7 +90,6 @@ def create_access_token(
     )
     return encoded_jwt
 
-
 def create_refresh_token(data: dict[str, Any]) -> str:
     """
     Create a JWT refresh token (longer expiration)
@@ -125,7 +121,6 @@ def create_refresh_token(data: dict[str, Any]) -> str:
     )
     return encoded_jwt
 
-
 def decode_token(token: str) -> dict[str, Any]:
     """
     Decode and validate a JWT token
@@ -150,7 +145,6 @@ def decode_token(token: str) -> dict[str, Any]:
             detail=f"Invalid token: {e!s}",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -227,7 +221,6 @@ def get_current_user(
 
     return user
 
-
 def require_owner(current_user: User = Depends(get_current_user)) -> User:
     """
     FastAPI dependency to require owner role
@@ -246,7 +239,6 @@ def require_owner(current_user: User = Depends(get_current_user)) -> User:
             status_code=status.HTTP_403_FORBIDDEN, detail="Owner access required"
         )
     return current_user
-
 
 def create_token_pair(
     user: User,

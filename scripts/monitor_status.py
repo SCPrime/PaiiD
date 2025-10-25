@@ -1,3 +1,15 @@
+from datetime import datetime
+from pathlib import Path
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
+import argparse
+import asyncio
+import httpx
+import os
+import sys
+
 #!/usr/bin/env python3
 """
 PaiiD Repository Monitor - CLI Tool
@@ -11,25 +23,12 @@ Usage:
     python scripts/monitor_status.py --trend commits --hours 24  # Trend for commits
 """
 
-import argparse
-import asyncio
-import os
-import sys
-from datetime import datetime
-from pathlib import Path
 
-import httpx
-from rich.console import Console
-from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.table import Table
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-
 console = Console()
-
 
 class MonitorCLI:
     """CLI interface for PaiiD repository monitor"""
@@ -269,7 +268,6 @@ class MonitorCLI:
                 console.print(f"[red]❌ Counters fetch failed: {e}[/red]\n")
                 console.print("[yellow]Tip: Make sure API_TOKEN is set[/yellow]\n")
 
-
 async def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
@@ -329,7 +327,6 @@ Examples:
     except Exception as e:
         console.print(f"\n[red]❌ Error: {e}[/red]")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

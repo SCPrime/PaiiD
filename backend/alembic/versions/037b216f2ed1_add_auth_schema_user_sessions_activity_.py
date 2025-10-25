@@ -1,3 +1,7 @@
+from alembic import op
+from collections.abc import Sequence
+import sqlalchemy as sa
+
 """add_auth_schema_user_sessions_activity_log
 
 Revision ID: 037b216f2ed1
@@ -6,11 +10,7 @@ Create Date: 2025-10-15 22:11:24.035448
 
 """
 
-from collections.abc import Sequence
 
-import sqlalchemy as sa
-
-from alembic import op
 
 
 # revision identifiers, used by Alembic.
@@ -18,7 +18,6 @@ revision: str = "037b216f2ed1"
 down_revision: str | Sequence[str] | None = "c8e4f9b52d31"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
-
 
 def upgrade() -> None:
     """Upgrade schema."""
@@ -123,7 +122,6 @@ def upgrade() -> None:
     op.create_index(op.f("ix_users_is_active"), "users", ["is_active"], unique=False)
     op.create_index(op.f("ix_users_role"), "users", ["role"], unique=False)
     # ### end Alembic commands ###
-
 
 def downgrade() -> None:
     """Downgrade schema."""

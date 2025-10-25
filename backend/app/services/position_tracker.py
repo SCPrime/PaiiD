@@ -1,26 +1,24 @@
+from app.services.alpaca_client import get_alpaca_client
+from app.services.greeks import GreeksCalculator
+from app.services.tradier_client import get_tradier_client
+from datetime import datetime
+from pydantic import BaseModel
+import logging
+
 """
 Position Tracking Service - Monitor open positions and calculate P&L
 """
 
-import logging
-from datetime import datetime
 
-from pydantic import BaseModel
-
-from app.services.alpaca_client import get_alpaca_client
-from app.services.greeks import GreeksCalculator
-from app.services.tradier_client import get_tradier_client
 
 
 logger = logging.getLogger(__name__)
-
 
 class PositionGreeks(BaseModel):
     delta: float
     gamma: float
     theta: float
     vega: float
-
 
 class Position(BaseModel):
     id: str
@@ -38,14 +36,12 @@ class Position(BaseModel):
     days_to_expiry: int
     status: str  # "open", "closing", "closed"
 
-
 class PortfolioGreeks(BaseModel):
     total_delta: float
     total_gamma: float
     total_theta: float
     total_vega: float
     position_count: int
-
 
 class PositionTrackerService:
     def __init__(self):

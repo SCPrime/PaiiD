@@ -35,8 +35,8 @@ const MarketVisualization: React.FC<MarketVisualizationProps> = ({
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [marketData, setMarketData] = useState<MarketData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_isLoading, _setIsLoading] = useState(false);
+  const [_error, _setError] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState(visualizationType);
 
   const { isConnected } = useWebSocket({
@@ -125,10 +125,10 @@ const MarketVisualization: React.FC<MarketVisualizationProps> = ({
       .attr("stroke", "#374151")
       .attr("stroke-width", 1)
       .style("cursor", "pointer")
-      .on("mouseover", function (event, d) {
+      .on("mouseover", function () {
         d3.select(this).attr("stroke", "#60a5fa").attr("stroke-width", 2);
       })
-      .on("mouseout", function (event, d) {
+      .on("mouseout", function () {
         d3.select(this).attr("stroke", "#374151").attr("stroke-width", 1);
       });
 
@@ -199,10 +199,10 @@ const MarketVisualization: React.FC<MarketVisualizationProps> = ({
       .attr("stroke", "#374151")
       .attr("stroke-width", 1)
       .style("cursor", "pointer")
-      .on("mouseover", function (event, d) {
+      .on("mouseover", function () {
         d3.select(this).attr("stroke", "#60a5fa").attr("stroke-width", 2);
       })
-      .on("mouseout", function (event, d) {
+      .on("mouseout", function () {
         d3.select(this).attr("stroke", "#374151").attr("stroke-width", 1);
       });
 

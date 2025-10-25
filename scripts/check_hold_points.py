@@ -1,3 +1,8 @@
+from pathlib import Path
+import json
+import subprocess
+import sys
+
 #!/usr/bin/env python3
 """
 Git Hold Point Validator
@@ -5,11 +10,6 @@ Git Hold Point Validator
 Checks compliance with .cursorrules and hold-points.json.
 Validates locked files haven't been modified without approval.
 """
-
-import json
-import subprocess
-import sys
-from pathlib import Path
 
 
 def check_locked_files(config):
@@ -36,7 +36,6 @@ def check_locked_files(config):
     print("✅ No locked files modified")
     return True
 
-
 def main():
     config_path = Path(__file__).parent.parent / "infra" / "git" / "hold-points.json"
 
@@ -45,7 +44,6 @@ def main():
 
     success = check_locked_files(config)
     sys.exit(0 if success else 1)
-
 
 if __name__ == "__main__":
     main()

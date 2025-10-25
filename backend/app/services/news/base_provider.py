@@ -35,7 +35,6 @@ class NewsArticle:
             "provider": self.provider,
         }
 
-
 class BaseNewsProvider(ABC):
     """Base class for all news providers"""
 

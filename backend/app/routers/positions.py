@@ -1,23 +1,24 @@
+        from ..services.fixture_loader import get_fixture_loader
+    from ..core.config import settings
+from app.core.jwt import get_current_user
+from app.models.database import User
+from app.services.position_tracker import (
+from fastapi import APIRouter, Depends, HTTPException
+import logging
+
 """
 Position Management API
 """
 
-import logging
 
-from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.jwt import get_current_user
-from app.models.database import User
-from app.services.position_tracker import (
     PortfolioGreeks,
     Position,
     PositionTrackerService,
 )
 
-
 router = APIRouter(prefix="/api/positions", tags=["positions"])
 logger = logging.getLogger(__name__)
-
 
 @router.get("", response_model=list[Position])
 async def get_positions(current_user: User = Depends(get_current_user)):
@@ -26,10 +27,8 @@ async def get_positions(current_user: User = Depends(get_current_user)):
     Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
     """
     # Check if we should use test fixtures
-    from ..core.config import settings
 
     if settings.USE_TEST_FIXTURES:
-        from ..services.fixture_loader import get_fixture_loader
 
         fixture_loader = get_fixture_loader()
         positions_data = fixture_loader.load_positions()
@@ -64,7 +63,6 @@ async def get_positions(current_user: User = Depends(get_current_user)):
         logger.error(f"Failed to get positions: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to fetch positions")
 
-
 @router.get("/greeks", response_model=PortfolioGreeks)
 async def get_portfolio_greeks(current_user: User = Depends(get_current_user)):
     """Get aggregate portfolio Greeks"""
@@ -76,7 +74,6 @@ async def get_portfolio_greeks(current_user: User = Depends(get_current_user)):
     except Exception as e:
         logger.error(f"Failed to get portfolio greeks: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to fetch portfolio greeks")
-
 
 @router.post("/{position_id}/close")
 async def close_position(

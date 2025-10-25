@@ -1,11 +1,11 @@
+from .options_greeks import GreeksCalculator as _BSCalculator
+
 """
 Adapter around options_greeks to provide the existing interface used across the app.
 
 Keeps the same class name and method signatures expected by callers while delegating
 to the production implementation in options_greeks.
 """
-
-from .options_greeks import GreeksCalculator as _BSCalculator
 
 
 class GreeksCalculator:
@@ -99,7 +99,6 @@ class GreeksCalculator:
             days_to_expiry,
             implied_volatility,
         )["vega"]
-
 
 # Global instance retained for compatibility
 greeks_calculator = GreeksCalculator(risk_free_rate=0.05)

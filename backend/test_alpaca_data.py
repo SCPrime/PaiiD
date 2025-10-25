@@ -1,9 +1,9 @@
-import os
 from datetime import UTC, datetime
-from pathlib import Path
-
-import requests
 from dotenv import load_dotenv
+from pathlib import Path
+import os
+import requests
+
 
 
 # Load environment variables

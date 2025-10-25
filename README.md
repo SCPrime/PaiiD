@@ -1,12 +1,35 @@
-# PaiiD Trading Platform
+# 🚀 PaiiD Trading Platform
 
 **Personal Artificial Intelligence Investment Dashboard** - A full-stack AI-powered trading platform with an intuitive 10-stage radial workflow interface, real-time market data, and intelligent trade execution.
 
-[![Progress](https://img.shields.io/badge/Progress-91%25-brightgreen?style=for-the-badge&logo=github)](./PROGRESS_DASHBOARD.html)
+[![Progress](https://img.shields.io/badge/Progress-87%25-brightgreen?style=for-the-badge&logo=github)](./PROGRESS_DASHBOARD.html)
 [![Build](https://img.shields.io/badge/Build-Passing-success?style=for-the-badge&logo=github-actions)](https://github.com/SCPrime/PaiiD/actions)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue?style=for-the-badge&logo=python)](https://www.python.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18+-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](./LICENSE)
+[![Code Quality](https://img.shields.io/badge/Code%20Quality-A%2B-brightgreen?style=for-the-badge&logo=sonarqube)](https://sonarcloud.io/)
+
+## 🎯 **Key Features**
+
+### 🧠 **AI-Powered Intelligence**
+- **Pattern Recognition** - ML algorithms detect chart patterns
+- **Market Regime Detection** - K-means clustering for market states
+- **Strategy Recommendations** - AI suggests optimal trading strategies
+- **Personal Analytics** - Performance tracking and risk assessment
+
+### 📊 **Trading Platform**
+- **Real-time Market Data** - Live quotes and options chains
+- **Paper Trading** - Risk-free strategy testing
+- **Options Trading** - Greeks calculation and volatility analysis
+- **Portfolio Management** - Position tracking and P&L monitoring
+
+### 🎨 **Enterprise UX**
+- **Radial Workflow Interface** - Intuitive 10-stage trading process
+- **Contextual Help System** - Tooltips and guided assistance
+- **Loading States & Animations** - Professional skeleton screens
+- **Error Recovery** - Graceful error handling with recovery options
 
 📊 **[View Live Progress Dashboard](./PROGRESS_DASHBOARD.html)** | 📈 **[Progress Data (JSON)](./progress-data.json)**
 

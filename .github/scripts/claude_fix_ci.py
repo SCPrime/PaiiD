@@ -1,8 +1,9 @@
-import os
 import anthropic
-import requests
 import json
+import os
+import requests
 import sys
+
 
 GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
 ANTHROPIC_API_KEY = os.environ['ANTHROPIC_API_KEY']

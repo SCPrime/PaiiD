@@ -1,3 +1,15 @@
+        from ..services.fixture_loader import get_fixture_loader
+        from ..services.fixture_loader import get_fixture_loader
+    from ..core.config import settings
+    from ..core.config import settings
+from ..services.cache import CacheService, get_cache
+from ..services.tradier_client import get_tradier_client
+from app.core.jwt import get_current_user
+from app.models.database import User
+from datetime import UTC, datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException
+import logging
+
 """
 Market data endpoints using Tradier API
 
@@ -6,16 +18,8 @@ This module uses Tradier API for ALL market data.
 Alpaca is ONLY used for paper trading execution (see orders.py).
 """
 
-import logging
-from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.jwt import get_current_user
-from app.models.database import User
-
-from ..services.cache import CacheService, get_cache
-from ..services.tradier_client import get_tradier_client
 
 
 logger = logging.getLogger(__name__)
@@ -24,7 +28,6 @@ logger = logging.getLogger(__name__)
 logger.info("market_data router loaded (Tradier integration)")
 
 router = APIRouter()
-
 
 @router.get("/market/quote/{symbol}")
 async def get_quote(
@@ -37,11 +40,9 @@ async def get_quote(
     Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
     """
     # Check if we should use test fixtures
-    from ..core.config import settings
 
     if settings.USE_TEST_FIXTURES:
         logger.info("Using test fixtures for quote data")
-        from ..services.fixture_loader import get_fixture_loader
 
         fixture_loader = get_fixture_loader()
         quotes_data = fixture_loader.load_market_quotes([symbol])
@@ -99,7 +100,6 @@ async def get_quote(
         logger.error(f"❌ Tradier quote request failed for {symbol}: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch quote: {e!s}")
 
-
 @router.get("/market/quotes")
 async def get_quotes(symbols: str, current_user: User = Depends(get_current_user)):
     """Get quotes for multiple symbols (comma-separated) using Tradier
@@ -107,11 +107,9 @@ async def get_quotes(symbols: str, current_user: User = Depends(get_current_user
     Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
     """
     # Check if we should use test fixtures
-    from ..core.config import settings
 
     if settings.USE_TEST_FIXTURES:
         logger.info("Using test fixtures for quotes data")
-        from ..services.fixture_loader import get_fixture_loader
 
         fixture_loader = get_fixture_loader()
         symbol_list = [s.strip().upper() for s in symbols.split(",")]
@@ -153,7 +151,6 @@ async def get_quotes(symbols: str, current_user: User = Depends(get_current_user
     except Exception as e:
         logger.error(f"❌ Tradier quotes request failed: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch quotes: {e!s}")
-
 
 @router.get("/market/bars/{symbol}")
 async def get_bars(
@@ -216,7 +213,6 @@ async def get_bars(
     except Exception as e:
         logger.error(f"❌ Tradier bars request failed for {symbol}: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch bars: {e!s}")
-
 
 @router.get("/market/scanner/under4")
 async def scan_under_4(current_user: User = Depends(get_current_user)):

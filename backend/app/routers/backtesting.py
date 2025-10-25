@@ -1,25 +1,25 @@
+        from datetime import datetime, timedelta
+from ..core.jwt import get_current_user
+from ..models.database import User
+from ..services.backtesting_engine import BacktestingEngine, StrategyRules
+from ..services.historical_data import HistoricalDataService
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from typing import Any
+import logging
+
 """
 Backtesting API Router
 
 Endpoints for running strategy backtests and retrieving results.
 """
 
-import logging
-from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-
-from ..core.jwt import get_current_user
-from ..models.database import User
-from ..services.backtesting_engine import BacktestingEngine, StrategyRules
-from ..services.historical_data import HistoricalDataService
 
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/backtesting", tags=["backtesting"])
-
 
 class BacktestRequest(BaseModel):
     """Request model for backtest execution"""
@@ -54,14 +54,12 @@ class BacktestRequest(BaseModel):
             }
         }
 
-
 class BacktestResponse(BaseModel):
     """Response model for backtest results"""
 
     success: bool
     result: dict[str, Any] | None = None
     error: str | None = None
-
 
 @router.post("/run", response_model=BacktestResponse)
 async def run_backtest(
@@ -179,7 +177,6 @@ async def run_backtest(
         logger.error(f"Backtest execution error: {e!s}", exc_info=True)
         return BacktestResponse(success=False, error=f"Backtest failed: {e!s}")
 
-
 @router.get("/quick-test")
 async def quick_backtest(
     symbol: str = Query("SPY", description="Symbol to test"),
@@ -193,7 +190,6 @@ async def quick_backtest(
     Uses a simple RSI < 30 entry, 5% TP / 2% SL exit strategy.
     """
     try:
-        from datetime import datetime, timedelta
 
         end_date = datetime.now().strftime("%Y-%m-%d")
         start_date = (datetime.now() - timedelta(days=months_back * 30)).strftime("%Y-%m-%d")
@@ -217,7 +213,6 @@ async def quick_backtest(
     except Exception as e:
         logger.error(f"Quick backtest error: {e!s}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/strategy-templates")
 async def get_strategy_templates():

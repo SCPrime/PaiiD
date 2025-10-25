@@ -1,3 +1,11 @@
+from app.db.session import SessionLocal
+from app.models.database import Strategy
+from datetime import UTC, datetime
+from pathlib import Path
+import json
+import os
+import sys
+
 """
 Migrate Strategies from LocalStorage to PostgreSQL
 
@@ -12,12 +20,6 @@ Prerequisites:
     - Database tables must be created (run alembic upgrade head first)
 """
 
-import json
-import os
-import sys
-from datetime import UTC, datetime
-from pathlib import Path
-
 
 # Fix Windows console encoding for emoji support
 if sys.platform == "win32":
@@ -26,9 +28,6 @@ if sys.platform == "win32":
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
-
-from app.db.session import SessionLocal
-from app.models.database import Strategy
 
 
 def migrate_strategies_from_directory():
@@ -110,7 +109,6 @@ def migrate_strategies_from_directory():
 
     return migrated_count, failed_count
 
-
 def print_current_strategies():
     """Print all strategies currently in database"""
     db = SessionLocal()
@@ -131,7 +129,6 @@ def print_current_strategies():
         print("=" * 80)
     finally:
         db.close()
-
 
 def main():
     """Main migration function"""
@@ -169,7 +166,6 @@ def main():
     except Exception as e:
         print(f"\n❌ FATAL ERROR: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

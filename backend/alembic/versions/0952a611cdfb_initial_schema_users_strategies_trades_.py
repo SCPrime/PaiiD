@@ -1,3 +1,7 @@
+from alembic import op
+from collections.abc import Sequence
+import sqlalchemy as sa
+
 """Initial schema: users, strategies, trades, performance, equity_snapshots
 
 Revision ID: 0952a611cdfb
@@ -6,11 +10,7 @@ Create Date: 2025-10-13 02:27:06.525843
 
 """
 
-from collections.abc import Sequence
 
-import sqlalchemy as sa
-
-from alembic import op
 
 
 # revision identifiers, used by Alembic.
@@ -18,7 +18,6 @@ revision: str = "0952a611cdfb"
 down_revision: str | Sequence[str] | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
-
 
 def upgrade() -> None:
     """Upgrade schema."""
@@ -146,7 +145,6 @@ def upgrade() -> None:
     op.create_index(
         op.f("ix_equity_snapshots_timestamp"), "equity_snapshots", ["timestamp"], unique=False
     )
-
 
 def downgrade() -> None:
     """Downgrade schema."""

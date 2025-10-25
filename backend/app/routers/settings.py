@@ -1,13 +1,13 @@
-import os
-import sys
-from datetime import UTC, datetime
-
-from fastapi import APIRouter, Depends
-
 from ..core.config import settings
 from ..core.jwt import get_current_user
 from ..core.startup_monitor import get_startup_monitor
 from ..models.database import User
+from datetime import UTC, datetime
+from fastapi import APIRouter, Depends
+import os
+import sys
+
+
 
 
 router = APIRouter()
@@ -19,17 +19,14 @@ _settings = {
     "max_positions": 10,
 }
 
-
 @router.get("/settings")
 def get_settings():
     return _settings
-
 
 @router.post("/settings")
 def set_settings(payload: dict, current_user: User = Depends(get_current_user)):
     _settings.update({k: float(payload.get(k, v)) for k, v in _settings.items()})
     return _settings
-
 
 @router.get("/config")
 def get_config(current_user: User = Depends(get_current_user)):

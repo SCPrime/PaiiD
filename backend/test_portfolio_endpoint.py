@@ -1,16 +1,15 @@
+from app.routers.ai import analyze_portfolio
+import asyncio
+import sys
+
 """
 Test script for the /api/ai/analyze-portfolio endpoint
 """
-
-import sys
 
 
 sys.path.insert(0, ".")
 
 # Test by directly importing and calling the function
-import asyncio
-
-from app.routers.ai import analyze_portfolio
 
 
 async def test_portfolio_endpoint():
@@ -39,7 +38,6 @@ async def test_portfolio_endpoint():
         "   2. Run: curl -H 'Authorization: Bearer <token>' http://localhost:8001/api/ai/analyze-portfolio"
     )
     print("\n")
-
 
 if __name__ == "__main__":
     asyncio.run(test_portfolio_endpoint())

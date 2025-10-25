@@ -1,3 +1,8 @@
+from dotenv import load_dotenv
+from pathlib import Path
+import os
+import sys
+
 #!/usr/bin/env python3
 """
 Configuration Verification Script for PaiiD Backend
@@ -7,11 +12,6 @@ Usage:
     python verify_config.py
 """
 
-import os
-import sys
-from pathlib import Path
-
-from dotenv import load_dotenv
 
 
 # Load .env file
@@ -23,13 +23,11 @@ if not env_path.exists():
 
 load_dotenv(env_path)
 
-
 def mask_key(key: str) -> str:
     """Mask API key for safe display"""
     if not key or len(key) < 12:
         return "NOT SET"
     return f"{key[:8]}...{key[-4:]}"
-
 
 def verify_config():
     """Verify all required configuration is set"""
@@ -109,7 +107,6 @@ def verify_config():
         print("\nPlease check your .env file and add missing values.")
         print("Use .env.example as a template.")
         return False
-
 
 if __name__ == "__main__":
     success = verify_config()

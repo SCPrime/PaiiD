@@ -60,7 +60,7 @@ export default function TradingModeIndicator({
   };
 
   const isLive = mode === "live";
-  const isPaper = mode === "paper";
+  const _isPaper = mode === "paper";
 
   return (
     <>
@@ -170,7 +170,7 @@ export default function TradingModeIndicator({
 // Compact version for headers/toolbars
 export function CompactTradingModeIndicator({
   mode = "paper",
-  onModeChange,
+  onModeChange: _onModeChange,
   className = "",
 }: TradingModeIndicatorProps) {
   const isLive = mode === "live";

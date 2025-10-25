@@ -167,7 +167,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
           {messages.length === 0 ? (
             <div className="text-center text-slate-400 py-8">
               <div className="text-4xl mb-4">🤖</div>
-              <p className="text-lg font-medium">Hi! I'm your PaiiD AI assistant.</p>
+              <p className="text-lg font-medium">Hi! I&apos;m your PaiiD AI assistant.</p>
               <p className="text-sm mt-2">
                 Ask me about market conditions, trading strategies, or portfolio analysis.
               </p>

@@ -295,7 +295,7 @@ const SentimentDashboard: React.FC<SentimentDashboardProps> = ({
         <div className="flex items-center justify-between">
           <span className="text-slate-400">Symbols Analyzed</span>
           <div className="flex items-center gap-2">
-            {sentimentData.symbols.map((symbol, index) => (
+            {sentimentData.symbols.map((symbol, _index) => (
               <span
                 key={symbol}
                 className="bg-slate-700 text-white px-2 py-1 rounded text-sm font-mono"

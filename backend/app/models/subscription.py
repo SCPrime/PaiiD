@@ -1,3 +1,12 @@
+        from app.models.subscription import get_monthly_usage
+    from ..db.session import SessionLocal
+    from ..services.stripe_service import get_stripe_service
+    from sqlalchemy import func
+from ..db.session import Base
+from datetime import UTC, datetime
+from sqlalchemy import (
+from sqlalchemy.orm import relationship
+
 """
 Subscription Database Models
 
@@ -6,9 +15,7 @@ SQLAlchemy models for subscription management, usage tracking, and payment histo
 Phase 2: Monetization Engine
 """
 
-from datetime import UTC, datetime
 
-from sqlalchemy import (
     JSON,
     Boolean,
     Column,
@@ -18,9 +25,6 @@ from sqlalchemy import (
     Integer,
     String,
 )
-from sqlalchemy.orm import relationship
-
-from ..db.session import Base
 
 
 class Subscription(Base):
@@ -101,7 +105,6 @@ class Subscription(Base):
         delta = self.current_period_end - datetime.now(UTC)
         return max(0, delta.days)
 
-
 class UsageRecord(Base):
     """Track usage of subscription features"""
 
@@ -141,7 +144,6 @@ class UsageRecord(Base):
 
     def __repr__(self):
         return f"<UsageRecord(id={self.id}, subscription_id={self.subscription_id}, feature='{self.feature}', quantity={self.quantity})>"
-
 
 class Invoice(Base):
     """Payment and invoice history"""
@@ -206,7 +208,6 @@ class Invoice(Base):
     def __repr__(self):
         return f"<Invoice(id={self.id}, user_id={self.user_id}, amount=${self.amount:.2f}, status='{self.status}')>"
 
-
 class PaymentMethod(Base):
     """Stored payment methods for users"""
 
@@ -244,7 +245,6 @@ class PaymentMethod(Base):
 
     def __repr__(self):
         return f"<PaymentMethod(id={self.id}, user_id={self.user_id}, type='{self.type}', last4='{self.last4}')>"
-
 
 class SubscriptionEvent(Base):
     """Audit log for subscription events (upgrades, downgrades, cancellations)"""
@@ -285,21 +285,16 @@ class SubscriptionEvent(Base):
     def __repr__(self):
         return f"<SubscriptionEvent(id={self.id}, subscription_id={self.subscription_id}, event_type='{self.event_type}', timestamp={self.timestamp})>"
 
-
 # Usage aggregation queries helper functions
-
 
 def get_monthly_usage(subscription_id: int, feature: str, month_start: datetime) -> int:
     """
     Helper function to calculate monthly usage for a feature
 
     Usage:
-        from app.models.subscription import get_monthly_usage
         usage = get_monthly_usage(subscription_id, "ml_prediction", month_start)
     """
-    from sqlalchemy import func
 
-    from ..db.session import SessionLocal
 
     db = SessionLocal()
     try:
@@ -316,7 +311,6 @@ def get_monthly_usage(subscription_id: int, feature: str, month_start: datetime)
     finally:
         db.close()
 
-
 def check_feature_limit(
     subscription_id: int,
     feature: str,
@@ -332,7 +326,6 @@ def check_feature_limit(
     Usage:
         within_limit, usage, limit = check_feature_limit(sub_id, "ml_prediction", month, "pro")
     """
-    from ..services.stripe_service import get_stripe_service
 
     stripe_service = get_stripe_service()
     limits = stripe_service.get_tier_limits(tier)

@@ -1,22 +1,21 @@
+from ..core.config import settings
+from datetime import UTC, datetime, timedelta
+from typing import Any
+import aiohttp
+import json
+import logging
+import pandas as pd
+import redis
+
 """
 Market Data Service for Real-Time Data Aggregation
 Handles data fetching from multiple sources (Alpha Vantage, Tradier, etc.)
 """
 
-import json
-import logging
-from datetime import UTC, datetime, timedelta
-from typing import Any
 
-import aiohttp
-import pandas as pd
-import redis
-
-from ..core.config import settings
 
 
 logger = logging.getLogger(__name__)
-
 
 class MarketDataService:
     """Service for aggregating real-time market data from multiple sources"""
@@ -185,7 +184,9 @@ class MarketDataService:
             DataFrame with columns: open, high, low, close, volume
         """
         try:
-            cache_key = f"historical:{symbol}:{timeframe}:{start_date.date()}:{end_date.date()}"
+            cache_key = (
+                f"historical:{symbol}:{timeframe}:{start_date.date()}:{end_date.date()}"
+            )
 
             # Check cache
             cached_data = self.redis_client.get(cache_key)
@@ -199,9 +200,7 @@ class MarketDataService:
                 )
                 if not df.empty:
                     # Cache for 1 hour
-                    self.redis_client.setex(
-                        cache_key, 3600, df.to_json(orient="split")
-                    )
+                    self.redis_client.setex(cache_key, 3600, df.to_json(orient="split"))
                     return df
 
             # Fallback to Tradier
@@ -211,9 +210,7 @@ class MarketDataService:
                 )
                 if not df.empty:
                     # Cache for 1 hour
-                    self.redis_client.setex(
-                        cache_key, 3600, df.to_json(orient="split")
-                    )
+                    self.redis_client.setex(cache_key, 3600, df.to_json(orient="split"))
                     return df
 
             # Return empty DataFrame if no data available
@@ -387,7 +384,9 @@ class MarketDataService:
                     "level": (
                         "low"
                         if vix_quote["price"] < 15
-                        else "high" if vix_quote["price"] > 25 else "normal"
+                        else "high"
+                        if vix_quote["price"] > 25
+                        else "normal"
                     ),
                 }
 
@@ -513,4 +512,3 @@ class MarketDataService:
         except Exception as e:
             logger.error(f"Error getting market summary: {e}")
             return {"error": str(e)}
-

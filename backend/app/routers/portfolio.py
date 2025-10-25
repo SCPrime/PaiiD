@@ -1,19 +1,18 @@
-import logging
-from typing import Literal
-
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-
 from ..core.jwt import get_current_user
 from ..models.database import User
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from typing import Literal
+import logging
+
+
 
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
 
 class AlpacaAccount(BaseModel):
     """Alpaca account information"""
@@ -45,7 +44,6 @@ class AlpacaAccount(BaseModel):
     long_market_value_change: str | None = None
     short_market_value_change: str | None = None
 
-
 @router.get("/account")
 def get_account(current_user: User = Depends(get_current_user)):
     """Get Tradier account information"""
@@ -61,7 +59,6 @@ def get_account(current_user: User = Depends(get_current_user)):
     except Exception as e:
         logger.error(f"❌ Tradier account request failed: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier account: {e!s}")
-
 
 @router.get("/positions")
 def get_positions(
@@ -88,7 +85,6 @@ def get_positions(
     except Exception as e:
         logger.error(f"❌ Tradier positions request failed: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier positions: {e!s}")
-
 
 @router.get("/positions/{symbol}")
 def get_position(symbol: str, current_user: User = Depends(get_current_user)):

@@ -1,11 +1,20 @@
-import logging
+            from datetime import datetime
+from ..core.config import settings
+from ..core.idempotency import check_and_store
+from ..core.jwt import get_current_user
+from ..core.kill_switch import is_killed, set_kill
+from ..db.session import get_db
+from ..middleware.validation import (
+from ..models.database import OrderTemplate, User
 from datetime import UTC, datetime
-
-import requests
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 from tenacity import (
+import logging
+import requests
+
+
     before_sleep_log,
     retry,
     retry_if_exception_type,
@@ -13,12 +22,6 @@ from tenacity import (
     wait_exponential,
 )
 
-from ..core.config import settings
-from ..core.idempotency import check_and_store
-from ..core.jwt import get_current_user
-from ..core.kill_switch import is_killed, set_kill
-from ..db.session import get_db
-from ..middleware.validation import (
     validate_limit_price,
     validate_order_type,
     validate_quantity,
@@ -26,8 +29,6 @@ from ..middleware.validation import (
     validate_side,
     validate_symbol,
 )
-from ..models.database import OrderTemplate, User
-
 
 logger = logging.getLogger(__name__)
 
@@ -36,14 +37,12 @@ router = APIRouter()
 # Alpaca API configuration
 ALPACA_BASE_URL = "https://paper-api.alpaca.markets"  # Paper trading
 
-
 def get_alpaca_headers():
     """Get headers for Alpaca API requests"""
     return {
         "APCA-API-KEY-ID": settings.ALPACA_API_KEY,
         "APCA-API-SECRET-KEY": settings.ALPACA_SECRET_KEY,
     }
-
 
 # Circuit Breaker for Alpaca API (Phase 3: Bulletproof Reliability)
 class AlpacaCircuitBreaker:
@@ -101,10 +100,8 @@ class AlpacaCircuitBreaker:
         # HALF_OPEN state - allow one test request
         return True
 
-
 # Global circuit breaker instance
 alpaca_circuit_breaker = AlpacaCircuitBreaker(failure_threshold=3, cooldown_seconds=60)
-
 
 # Order Model (must be defined before use in function signatures)
 class Order(BaseModel):
@@ -215,7 +212,6 @@ class Order(BaseModel):
             raise ValueError("expiration_date is required for options orders (YYYY-MM-DD format)")
         return v
 
-
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=1, max=10),
@@ -259,7 +255,6 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
         if order.asset_class == "option":
             # Alpaca options symbol format: SPY251219C00450000
             # Format: SYMBOL + YYMMDD + C/P + 00000000 (strike * 1000, 8 digits)
-            from datetime import datetime
 
             expiry_dt = datetime.strptime(order.expiration_date, "%Y-%m-%d")
             expiry_str = expiry_dt.strftime("%y%m%d")  # YYMMDD
@@ -309,7 +304,6 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
             status_code=500, detail=f"Failed to execute order for {order.symbol}: {e!s}"
         )
 
-
 class ExecRequest(BaseModel):
     """Execute order request with idempotency and validation"""
 
@@ -343,7 +337,6 @@ class ExecRequest(BaseModel):
         if len(v) > 10:
             raise ValueError("Cannot execute more than 10 orders per request (safety limit)")
         return v
-
 
 @router.post("/trading/execute")
 async def execute(
@@ -402,12 +395,10 @@ async def execute(
         )
         raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}")
 
-
 @router.post("/admin/kill")
 def kill(state: bool, current_user: User = Depends(get_current_user)):
     set_kill(state)
     return {"tradingHalted": state}
-
 
 # Order Template Models with Validation
 class OrderTemplateCreate(BaseModel):
@@ -457,7 +448,6 @@ class OrderTemplateCreate(BaseModel):
         order_type = info.data.get("order_type", "market")
         return validate_limit_price(v, order_type)
 
-
 class OrderTemplateUpdate(BaseModel):
     """Update order template with validation"""
 
@@ -497,7 +487,6 @@ class OrderTemplateUpdate(BaseModel):
             return validate_order_type(v)
         return v
 
-
 class OrderTemplateResponse(BaseModel):
     id: int
     user_id: int | None
@@ -514,7 +503,6 @@ class OrderTemplateResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
 
 # Order Template CRUD Endpoints
 @router.post(
@@ -543,7 +531,6 @@ def create_order_template(
     db.refresh(db_template)
     return db_template
 
-
 @router.get("/order-templates", response_model=list[OrderTemplateResponse])
 def list_order_templates(
     skip: int = 0,
@@ -554,7 +541,6 @@ def list_order_templates(
     """List all order templates"""
     templates = db.query(OrderTemplate).offset(skip).limit(limit).all()
     return templates
-
 
 @router.get("/order-templates/{template_id}", response_model=OrderTemplateResponse)
 def get_order_template(
@@ -567,7 +553,6 @@ def get_order_template(
     if not template:
         raise HTTPException(status_code=404, detail="Order template not found")
     return template
-
 
 @router.put("/order-templates/{template_id}", response_model=OrderTemplateResponse)
 def update_order_template(
@@ -602,7 +587,6 @@ def update_order_template(
     db.refresh(db_template)
     return db_template
 
-
 @router.delete("/order-templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_order_template(
     template_id: int,
@@ -617,7 +601,6 @@ def delete_order_template(
     db.delete(db_template)
     db.commit()
     return
-
 
 @router.post("/order-templates/{template_id}/use", response_model=OrderTemplateResponse)
 def use_order_template(

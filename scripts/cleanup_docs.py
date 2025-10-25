@@ -1,12 +1,13 @@
+from datetime import datetime
+from pathlib import Path
+import shutil
+
 #!/usr/bin/env python3
 """
 🗑️ Documentation Cleanup Script
 Archives redundant deployment documentation while preserving essential files.
 """
 
-import shutil
-from datetime import datetime
-from pathlib import Path
 
 # Essential files to KEEP (never touch these!)
 ESSENTIAL_FILES = {
@@ -42,7 +43,6 @@ ARCHIVE_PATTERNS = [
     "**/BATCH_*_COMPLETE*.md",  # Old batch reports
     "**/PHASE_*_REPORT.md",  # Old phase reports
 ]
-
 
 def main():
     """Main cleanup function"""
@@ -102,7 +102,7 @@ def main():
     summary_file.write_text(
         f"""# Documentation Cleanup Archive
 
-**Date**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}  
+**Date**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 **Files Archived**: {archived_count}
 
 ## Why These Were Archived:
@@ -123,14 +123,13 @@ Essential documentation files ({kept_count} files):
 
 ---
 
-**Archived by**: Documentation Cleanup Script  
-**Purpose**: Eliminate redundancy after deployment audit  
+**Archived by**: Documentation Cleanup Script
+**Purpose**: Eliminate redundancy after deployment audit
 **Safe to delete**: Yes (if no longer needed after 30 days)
 """
     )
 
     print(f"\n[SUMMARY] Archive summary: {summary_file}")
-
 
 if __name__ == "__main__":
     main()

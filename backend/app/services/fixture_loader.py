@@ -1,3 +1,9 @@
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import Any
+import json
+import logging
+
 """
 Fixture Loader Service
 
@@ -5,15 +11,8 @@ Provides deterministic test data for Playwright testing when USE_TEST_FIXTURES=t
 This ensures consistent test results regardless of external API availability.
 """
 
-import json
-import logging
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
-from typing import Any
-
 
 logger = logging.getLogger(__name__)
-
 
 class FixtureLoader:
     """
@@ -463,10 +462,8 @@ class FixtureLoader:
 
         logger.info(f"Created account fixture: {file_path}")
 
-
 # Global fixture loader instance
 _fixture_loader: FixtureLoader | None = None
-
 
 def get_fixture_loader() -> FixtureLoader:
     """Get the global fixture loader instance"""

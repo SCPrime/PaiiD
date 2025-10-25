@@ -1,3 +1,12 @@
+from .data_pipeline import get_data_pipeline
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from typing import Literal
+import joblib
+import logging
+import numpy as np
+import pandas as pd
+
 """
 Market Regime Detection
 
@@ -8,23 +17,13 @@ This enables the strategy selector to recommend different strategies
 based on the current market regime.
 """
 
-import logging
-from typing import Literal
 
-import joblib
-import numpy as np
-import pandas as pd
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-
-from .data_pipeline import get_data_pipeline
 
 
 logger = logging.getLogger(__name__)
 
 # Market regime types
 MarketRegime = Literal["trending_bullish", "trending_bearish", "ranging", "high_volatility"]
-
 
 class MarketRegimeDetector:
     """
@@ -399,10 +398,8 @@ class MarketRegimeDetector:
             logger.error(f"❌ Model load failed: {e}")
             return False
 
-
 # Singleton instance
 _regime_detector = None
-
 
 def get_regime_detector() -> MarketRegimeDetector:
     """Get or create market regime detector singleton"""

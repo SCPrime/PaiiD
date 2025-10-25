@@ -1,11 +1,11 @@
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+
 """
 Security Headers Middleware
 
 Adds common security headers (CSP, HSTS, X-Frame-Options, etc.).
 """
-
-from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

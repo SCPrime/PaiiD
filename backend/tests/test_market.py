@@ -5,7 +5,6 @@ Tests quotes, indices, real-time data, and market data API integration
 
 HEADERS = {"Authorization": "Bearer test-token-12345"}
 
-
 def test_market_indices_endpoint(client):
     """Test GET /api/market/indices for SPY and QQQ data"""
     try:
@@ -28,12 +27,10 @@ def test_market_indices_endpoint(client):
         # Accept validation errors (API returned None)
         pass
 
-
 def test_market_indices_requires_auth(client):
     """Test market indices endpoint requires authentication (MVP fallback may apply)"""
     response = client.get("/api/market/indices")
     assert response.status_code in [401, 403, 500]
-
 
 def test_get_quote_for_symbol(client):
     """Test GET /api/market/quote/:symbol"""
@@ -49,7 +46,6 @@ def test_get_quote_for_symbol(client):
             assert "price" in data
             assert "volume" in data
 
-
 def test_get_quotes_multiple_symbols(client):
     """Test GET /api/market/quotes with multiple symbols"""
     response = client.get("/api/market/quotes?symbols=AAPL,MSFT,GOOGL", headers=HEADERS)
@@ -63,14 +59,12 @@ def test_get_quotes_multiple_symbols(client):
             if symbol in data:
                 assert "price" in data[symbol]
 
-
 def test_invalid_symbol_handling(client):
     """Test handling of invalid stock symbols"""
     response = client.get("/api/market/quote/INVALID123", headers=HEADERS)
 
     # Should return 404 or 400 for invalid symbol
     assert response.status_code in [404, 400, 500]
-
 
 def test_market_data_price_validation(client):
     """Test that market data prices are valid numbers"""
@@ -91,7 +85,6 @@ def test_market_data_price_validation(client):
     except Exception:
         # Accept validation errors (API returned None)
         pass
-
 
 def test_market_data_change_percent(client):
     """Test that change percent is in valid range"""
@@ -114,7 +107,6 @@ def test_market_data_change_percent(client):
         # Accept validation errors (API returned None)
         pass
 
-
 def test_market_hours_status(client):
     """Test market hours status endpoint (if exists)"""
     response = client.get("/api/market/status", headers=HEADERS)
@@ -123,7 +115,6 @@ def test_market_hours_status(client):
         data = response.json()
         # Should indicate if market is open (accept both snake_case and camelCase)
         assert "is_open" in data or "isOpen" in data or "marketStatus" in data
-
 
 def test_historical_bars_endpoint(client):
     """Test historical bars/candles endpoint"""
@@ -144,7 +135,6 @@ def test_historical_bars_endpoint(client):
                 if field in bar:
                     assert isinstance(bar[field], (int, float, str))
 
-
 def test_intraday_bars(client):
     """Test intraday bar data (1min, 5min, 15min)"""
     timeframes = ["1Min", "5Min", "15Min"]
@@ -158,7 +148,6 @@ def test_intraday_bars(client):
         # Should return data or error, not crash
         assert response.status_code in [200, 400, 404, 500]
 
-
 def test_realtime_quote_freshness(client):
     """Test that quotes are reasonably recent"""
     response = client.get("/api/market/quote/SPY", headers=HEADERS)
@@ -170,7 +159,6 @@ def test_realtime_quote_freshness(client):
             timestamp = data["timestamp"]
             # Timestamp should exist and be a string or number
             assert timestamp is not None
-
 
 def test_volume_data_validation(client):
     """Test that volume data is valid"""
@@ -184,7 +172,6 @@ def test_volume_data_validation(client):
             # Volume should be a non-negative integer
             assert isinstance(volume, (int, float))
             assert volume >= 0
-
 
 def test_market_data_caching(client):
     """Test that market data responses are cached appropriately"""
@@ -206,7 +193,6 @@ def test_market_data_caching(client):
         # Accept validation errors (API returned None)
         pass
 
-
 def test_bid_ask_spread(client):
     """Test bid/ask data if available"""
     response = client.get("/api/market/quote/AAPL", headers=HEADERS)
@@ -223,7 +209,6 @@ def test_bid_ask_spread(client):
             assert ask >= bid
             assert bid > 0
             assert ask > 0
-
 
 def test_ohlc_data_validation(client):
     """Test OHLC data integrity"""
@@ -248,7 +233,6 @@ def test_ohlc_data_validation(client):
                     assert bar["low"] <= bar["high"]
                     assert bar["low"] <= bar["close"]
 
-
 def test_extended_hours_data(client):
     """Test pre-market and after-hours data availability"""
     response = client.get("/api/market/quote/AAPL?includeExtendedHours=true", headers=HEADERS)
@@ -258,7 +242,6 @@ def test_extended_hours_data(client):
         # Should return data structure
         assert isinstance(data, dict)
 
-
 def test_market_data_rate_limiting(client):
     """Test that excessive requests are handled gracefully"""
     # Make multiple rapid requests
@@ -266,7 +249,6 @@ def test_market_data_rate_limiting(client):
         response = client.get("/api/market/quote/SPY", headers=HEADERS)
         # Should not crash, may rate limit
         assert response.status_code in [200, 429, 500]
-
 
 def test_cryptocurrency_symbols(client):
     """Test cryptocurrency symbol handling (if supported)"""
@@ -276,7 +258,6 @@ def test_cryptocurrency_symbols(client):
         response = client.get(f"/api/market/quote/{symbol}", headers=HEADERS)
         # Should handle gracefully whether supported or not
         assert response.status_code in [200, 400, 404, 500]
-
 
 def test_forex_symbols(client):
     """Test forex symbol handling (if supported)"""
