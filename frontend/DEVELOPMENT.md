@@ -168,6 +168,38 @@ const ENABLE_DEV_BYPASS = process.env.NODE_ENV === "development";
 
 ## Quick Reference
 
+## Corporate npm registry & security audits
+
+The frontend uses a self-hosted npm-compatible registry for dependency installs and audit reports. This registry proxies the public advisory API so that `npm audit` can run entirely inside the corporate network.
+
+### One-time setup
+
+1. Make sure you can reach the internal registry (Verdaccio, Nexus, etc.) from the corporate VPN. The local developer sandbox exposes it at `http://127.0.0.1:4873/`.
+2. Populate `frontend/.npmrc` with the registry details:
+   ```ini
+   registry=http://127.0.0.1:4873/
+   audit=true
+   audit-level=moderate
+   audit-registry=http://127.0.0.1:4873/-/npm/v1/security
+   always-auth=true
+   //127.0.0.1:4873/:_authToken=<paste your corporate token>
+   ```
+   Replace the token with the credential issued by the platform team. The `.npmrc` file is committed so every audit invocation inherits these defaults.
+3. If you prefer storing credentials outside source control, delete the `_authToken` line from `.npmrc` and set it locally with:
+   ```bash
+   npm config set //127.0.0.1:4873/:_authToken "<token>" --location=project --prefix frontend
+   ```
+
+### Running security audits
+
+1. Start the internal registry or ensure the corporate proxy is reachable.
+2. Execute the audit from the repository root:
+   ```bash
+   npm audit --prefix frontend
+   ```
+   The command uses the registry and advisory proxy from `.npmrc` and reports vulnerabilities without leaving the network perimeter.
+3. Capture the report output in tickets or status updates as required by the security review process.
+
 **Immediate RadialMenu Access:**
 
 ```bash
