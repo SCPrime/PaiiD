@@ -7,19 +7,19 @@
  * - Personal analytics and insights
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Brain, 
-  TrendingUp, 
-  Target, 
-  Zap, 
-  Shield,
-  RefreshCw,
-  CheckCircle,
-  Loader2
+import {
+    Brain,
+    CheckCircle,
+    Loader2,
+    RefreshCw,
+    Shield,
+    Target,
+    TrendingUp,
+    Zap
 } from 'lucide-react';
-import { useToast } from '../ui/Toast';
+import React, { useEffect, useState } from 'react';
 import { HelpTooltip } from '../HelpTooltip';
+import { useToast } from '../ui/Toast';
 
 interface MLInsight {
   id: string;
@@ -30,7 +30,7 @@ interface MLInsight {
   actionable: boolean;
   impact: 'high' | 'medium' | 'low';
   timestamp: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 interface MarketRegime {
@@ -68,6 +68,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
   // Load ML insights on component mount
   useEffect(() => {
     loadMLInsights();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSymbol]);
 
   const loadMLInsights = async () => {
@@ -108,7 +109,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
     }
   };
 
-  const generateInsights = (regimeData: any, patterns: Pattern[]) => {
+  const generateInsights = (regimeData: MarketRegime | null, patterns: Pattern[]) => {
     const newInsights: MLInsight[] = [];
 
     // Market regime insight

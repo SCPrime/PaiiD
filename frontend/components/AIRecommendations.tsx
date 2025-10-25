@@ -85,6 +85,7 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
   // Fetch recommendations on mount
   useEffect(() => {
     fetchRecommendations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, symbols.join(",")]);
 
   // Auto-refresh
@@ -93,6 +94,7 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
 
     const interval = setInterval(fetchRecommendations, refreshInterval);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh, refreshInterval, userId, symbols.join(",")]);
 
   const getActionColor = (action: string) => {

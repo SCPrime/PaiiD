@@ -5,15 +5,15 @@
  * Makes complex technical analysis accessible and understandable.
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Target, 
-  TrendingUp, 
-  TrendingDown, 
-  Minus,
-  Info,
-  XCircle
+import {
+    Info,
+    Minus,
+    Target,
+    TrendingDown,
+    TrendingUp,
+    XCircle
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 interface Pattern {
   pattern_type: string;
@@ -43,6 +43,7 @@ export const PatternRecognition: React.FC<PatternRecognitionProps> = ({
 
   useEffect(() => {
     loadPatterns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol]);
 
   const loadPatterns = async () => {

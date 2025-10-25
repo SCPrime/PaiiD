@@ -962,7 +962,6 @@ function RadialMenuComponent({
     marketData.nasdaq.value,
     marketData.nasdaq.change,
     forceFieldConfidence,
-    centerContentSpacing,
   ]); // Re-render when menu size or loading state changes
 
   // Separate effect for market data updates - only update text when data changes

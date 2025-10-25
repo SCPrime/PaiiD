@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface WebSocketMessage {
   type: string;
-  data?: any;
+  data?: unknown;
   symbol?: string;
   timestamp: string;
 }
@@ -71,7 +71,7 @@ interface UseWebSocketReturn {
   tradingAlerts: TradingAlert[];
   subscribe: (symbols: string[]) => void;
   unsubscribe: (symbols: string[]) => void;
-  sendMessage: (message: any) => void;
+  sendMessage: (message: WebSocketMessage) => void;
   connect: () => void;
   disconnect: () => void;
 }

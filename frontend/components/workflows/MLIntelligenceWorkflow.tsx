@@ -5,23 +5,23 @@
  * Integrates pattern recognition, market regime detection, and personal analytics.
  */
 
-import React, { useState } from 'react';
-import { 
-  Brain, 
-  Target, 
-  BarChart3, 
-  User,
-  Settings,
-  RefreshCw,
-  Zap,
-  Shield,
-  TrendingUp
+import {
+    BarChart3,
+    Brain,
+    RefreshCw,
+    Settings,
+    Shield,
+    Target,
+    TrendingUp,
+    User,
+    Zap
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { HelpTooltip } from '../HelpTooltip';
+import { MarketRegimeDetector } from '../ml/MarketRegimeDetector';
 import { MLIntelligenceDashboard } from '../ml/MLIntelligenceDashboard';
 import { PatternRecognition } from '../ml/PatternRecognition';
-import { MarketRegimeDetector } from '../ml/MarketRegimeDetector';
 import { PersonalAnalytics } from '../ml/PersonalAnalytics';
-import { HelpTooltip } from '../HelpTooltip';
 
 interface MLIntelligenceWorkflowProps {
   onClose?: () => void;

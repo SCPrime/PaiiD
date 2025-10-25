@@ -296,7 +296,7 @@ const MarketVisualization: React.FC<MarketVisualizationProps> = ({
           <div className="flex items-center gap-2">
             <select
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as any)}
+              onChange={(e) => setSelectedType(e.target.value as typeof visualizationType)}
               className="bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-1 text-sm"
             >
               <option value="treemap">Treemap</option>

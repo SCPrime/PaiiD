@@ -81,6 +81,7 @@ const SentimentDashboard: React.FC<SentimentDashboardProps> = ({
   // Fetch sentiment data on mount
   useEffect(() => {
     fetchSentimentData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbols.join(",")]);
 
   // Auto-refresh
@@ -89,6 +90,7 @@ const SentimentDashboard: React.FC<SentimentDashboardProps> = ({
 
     const interval = setInterval(fetchSentimentData, refreshInterval);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh, refreshInterval, symbols.join(",")]);
 
   const getSentimentColor = (sentiment: string) => {
