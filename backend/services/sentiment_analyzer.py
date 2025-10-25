@@ -1,4 +1,5 @@
-from backend.config import settings
+from backend.app.core.config import settings
+from backend.app.services.cache import CacheService
 from datetime import datetime
 from typing import Any
 import aiohttp
@@ -18,11 +19,13 @@ class SentimentAnalyzer:
     """Service for analyzing market sentiment from various sources"""
 
     def __init__(self):
-        self.redis_client = redis.Redis(
-            host="localhost", port=6379, db=4, decode_responses=True
-        )
-        self.news_api_key = settings.NEWS_API_KEY
-        self.twitter_bearer_token = settings.TWITTER_BEARER_TOKEN
+        # Use shared cache service with graceful fallback
+        cache_service = CacheService()
+        self.redis_client = cache_service.client if cache_service.available else None
+
+        # Optional API keys - use fallback if not configured
+        self.news_api_key = getattr(settings, 'NEWS_API_KEY', None)
+        self.twitter_bearer_token = getattr(settings, 'TWITTER_BEARER_TOKEN', None)
         self.session = None
 
         # Sentiment keywords and weights

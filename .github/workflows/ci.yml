@@ -36,9 +36,15 @@ jobs:
           cd backend
           python -m py_compile app/main.py
 
+      - name: Import validation test
+        run: |
+          cd backend
+          python test_imports.py
+
       - name: Health check
         run: |
           echo "✅ Backend syntax validated"
+          echo "✅ Backend imports validated"
 
   # Frontend validation
   frontend-check:

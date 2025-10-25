@@ -1,4 +1,5 @@
-from backend.config import settings
+from backend.app.core.config import settings
+from backend.app.services.cache import CacheService
 from fastapi import Request
 from fastapi.responses import JSONResponse
 import logging
@@ -15,12 +16,9 @@ class RateLimiter:
     """Rate limiter using Redis for distributed rate limiting"""
 
     def __init__(self):
-        self.redis_client = redis.Redis(
-            host=getattr(settings, "REDIS_HOST", "localhost"),
-            port=getattr(settings, "REDIS_PORT", 6379),
-            db=1,  # Use different DB for rate limiting
-            decode_responses=True,
-        )
+        # Use shared cache service with graceful fallback
+        cache_service = CacheService()
+        self.redis_client = cache_service.client if cache_service.available else None
 
         # Rate limits (requests per minute)
         self.limits = {
@@ -33,6 +31,10 @@ class RateLimiter:
     async def check_rate_limit(self, request: Request, endpoint_type: str) -> bool:
         """Check if request is within rate limit"""
         try:
+            # If Redis not available, allow all requests (no rate limiting)
+            if not self.redis_client:
+                return True
+
             # Get client identifier (IP address or user ID)
             client_id = self._get_client_id(request)
 
