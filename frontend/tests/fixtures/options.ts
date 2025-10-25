@@ -83,7 +83,7 @@ export const generateTestOptionContract = (
   ...overrides,
 });
 
-export const generateTestOptionsChain = (symbol: string = "SPY", overrides: any = {}) => ({
+export const generateTestOptionsChain = (symbol: string = "SPY", overrides: Record<string, unknown> = {}) => ({
   symbol,
   expiration_date: "2025-11-15",
   underlying_price: 450.0,
@@ -131,19 +131,19 @@ export const SELECTORS = {
 } as const;
 
 // Test assertions helpers
-export const assertValidOptionsChain = (data: any) => {
+export const assertValidOptionsChain = (data: unknown) => {
   expect(data).toHaveProperty("symbol");
   expect(data).toHaveProperty("expiration_date");
   expect(data).toHaveProperty("underlying_price");
   expect(data).toHaveProperty("calls");
   expect(data).toHaveProperty("puts");
   expect(data).toHaveProperty("total_contracts");
-  expect(Array.isArray(data.calls)).toBe(true);
-  expect(Array.isArray(data.puts)).toBe(true);
-  expect(typeof data.total_contracts).toBe("number");
+  expect(Array.isArray((data as Record<string, unknown>).calls)).toBe(true);
+  expect(Array.isArray((data as Record<string, unknown>).puts)).toBe(true);
+  expect(typeof (data as Record<string, unknown>).total_contracts).toBe("number");
 };
 
-export const assertValidOptionContract = (contract: any) => {
+export const assertValidOptionContract = (contract: unknown) => {
   expect(contract).toHaveProperty("symbol");
   expect(contract).toHaveProperty("strike_price");
   expect(contract).toHaveProperty("option_type");
@@ -151,35 +151,43 @@ export const assertValidOptionContract = (contract: any) => {
   expect(contract).toHaveProperty("gamma");
   expect(contract).toHaveProperty("theta");
   expect(contract).toHaveProperty("vega");
-  expect(typeof contract.strike_price).toBe("number");
-  expect(typeof contract.delta).toBe("number");
+  expect(typeof (contract as Record<string, unknown>).strike_price).toBe("number");
+  expect(typeof (contract as Record<string, unknown>).delta).toBe("number");
 };
+
+// Playwright Page type (for test utilities)
+interface PlaywrightPage {
+  waitForResponse: (predicate: (response: { url: () => string }) => boolean, options?: { timeout?: number }) => Promise<unknown>;
+  fill: (selector: string, value: string) => Promise<void>;
+  click: (selector: string) => Promise<void>;
+  waitForSelector: (selector: string, options?: { timeout?: number; state?: string }) => Promise<unknown>;
+}
 
 // Test utilities
 export const waitForApiResponse = async (
-  page: any,
+  page: PlaywrightPage,
   timeout: number = TEST_CONFIG.TIMEOUTS.API_REQUEST
 ) => {
-  return page.waitForResponse((response: any) => response.url().includes("/api/options/"), {
+  return page.waitForResponse((response) => response.url().includes("/api/options/"), {
     timeout,
   });
 };
 
-export const fillSymbolInput = async (page: any, symbol: string) => {
+export const fillSymbolInput = async (page: PlaywrightPage, symbol: string) => {
   await page.fill(SELECTORS.SYMBOL_INPUT, symbol);
 };
 
-export const clickLoadButton = async (page: any) => {
+export const clickLoadButton = async (page: PlaywrightPage) => {
   await page.click(SELECTORS.LOAD_BUTTON);
 };
 
-export const waitForOptionsTable = async (page: any) => {
+export const waitForOptionsTable = async (page: PlaywrightPage) => {
   await page.waitForSelector(SELECTORS.OPTIONS_TABLE, {
     timeout: TEST_CONFIG.TIMEOUTS.ELEMENT_WAIT,
   });
 };
 
-export const waitForLoadingToComplete = async (page: any) => {
+export const waitForLoadingToComplete = async (page: PlaywrightPage) => {
   // Wait for loading spinner to disappear
   await page.waitForSelector(SELECTORS.LOADING_SPINNER, {
     state: "hidden",

@@ -63,6 +63,7 @@ export default function PLComparisonChart({
 
     return () => {
       // Store ref value before cleanup to avoid stale closure
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       const chart = chartRef.current;
       if (chart) {
         chart.remove();

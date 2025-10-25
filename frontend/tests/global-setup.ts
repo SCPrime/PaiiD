@@ -4,6 +4,7 @@
  * Version: 1.0.0
  */
 
+/* eslint-disable no-console */
 import { execSync } from "child_process";
 import { existsSync, readdirSync, unlinkSync } from "fs";
 import { join } from "path";

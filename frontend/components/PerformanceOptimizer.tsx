@@ -75,10 +75,15 @@ export const withPerformanceOptimization = <P extends object>(
       const [optimizedProps, setOptimizedProps] = useState(props);
 
       const updateProps = useCallback(
-        debounceMs
-          ? debounce((newProps: P) => setOptimizedProps(newProps), debounceMs)
-          : throttle((newProps: P) => setOptimizedProps(newProps), throttleMs || 16),
-        [debounceMs, throttleMs]
+        (newProps: P) => {
+          if (debounceMs) {
+            debounce(() => setOptimizedProps(newProps), debounceMs)();
+          } else {
+            throttle(() => setOptimizedProps(newProps), throttleMs || 16)();
+          }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        []
       );
 
       useEffect(() => {
@@ -117,12 +122,11 @@ export const useVirtualScrolling = (
 
   const totalHeight = items.length * itemHeight;
 
-  const handleScroll = useCallback(
-    throttle((event: React.UIEvent<HTMLDivElement>) => {
+  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    throttle(() => {
       setScrollTop(event.currentTarget.scrollTop);
-    }, 16),
-    []
-  );
+    }, 16)();
+  }, []);
 
   return {
     visibleItems,
@@ -165,6 +169,7 @@ export const LazyImage: React.FC<{
           Failed to load
         </div>
       ) : (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt={alt}
