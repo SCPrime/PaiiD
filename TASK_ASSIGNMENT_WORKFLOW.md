@@ -17,7 +17,7 @@ You must explicitly choose which AI to use for each task. Cursor/Claude does NOT
 
 ## 📍 Current State: Manual Labor Division
 
-### How It Works Right Now:
+### How It Works Right Now
 
 **You have multiple AI interfaces, and YOU decide which one to use:**
 
@@ -37,12 +37,14 @@ You must explicitly choose which AI to use for each task. Cursor/Claude does NOT
 ### Option 1: Manual Selection (CURRENT METHOD)
 
 **For Claude tasks → Use Terminal (Me)**
+
 ```
 Example: "Claude, integrate the new Tradier API endpoint"
 (You're doing this right now!)
 ```
 
 **For ChatGPT tasks → Use Cursor Chat**
+
 ```
 1. Open Cursor IDE
 2. Press Ctrl+L
@@ -51,6 +53,7 @@ Example: "Claude, integrate the new Tradier API endpoint"
 ```
 
 **For Quick Code → Use Copilot Inline**
+
 ```
 Just start typing in a file:
 // Function to calculate Greeks
@@ -61,12 +64,14 @@ Just start typing in a file:
 ### Option 2: Preface with Instructions (MANUAL)
 
 **In Cursor Chat (`Ctrl+L`), you can specify:**
+
 ```
 "Acting as an expert in React, create a component..."
 "Using TypeScript best practices, refactor..."
 ```
 
 **In Terminal (me), you preface naturally:**
+
 ```
 "Claude, please review this for security issues"
 "Can you help me debug this FastAPI endpoint?"
@@ -103,7 +108,7 @@ export function SimpleButton() {
 
 ## ❌ What Is NOT Automated
 
-### These Don't Work:
+### These Don't Work
 
 - ❌ Cursor doesn't auto-route "complex" tasks to Claude
 - ❌ No AI looks at task and says "I'll handle this"
@@ -111,9 +116,10 @@ export function SimpleButton() {
 - ❌ No shared task queue between AIs
 - ❌ File headers don't trigger specific AIs
 
-### Reality:
+### Reality
 
 **YOU are the task router.** You decide:
+
 - Which AI to ask
 - How to ask them
 - When to hand off between them
@@ -124,7 +130,7 @@ export function SimpleButton() {
 
 Based on your `dual-ai-template` docs, the workflow was designed as:
 
-### The Manual Process:
+### The Manual Process
 
 1. **You receive/identify a task**
 2. **You decide: Claude or ChatGPT?**
@@ -135,7 +141,7 @@ Based on your `dual-ai-template` docs, the workflow was designed as:
 4. **You assign the task explicitly**
 5. **You track it in CURRENT_WORK.md**
 
-### The Decision Tree (From Your Template):
+### The Decision Tree (From Your Template)
 
 ```
 New Task
@@ -152,7 +158,7 @@ Is it COMPLEX?
   NO → CHATGPT (Cursor chat)
 ```
 
-### Decision Table (From Your Template):
+### Decision Table (From Your Template)
 
 | Task Type | Use | Why |
 |-----------|-----|-----|
@@ -176,6 +182,7 @@ Is it COMPLEX?
 **You decide:** Complex + Critical → Claude
 
 **You do:**
+
 ```bash
 # In terminal (where I am):
 "Claude, help me integrate the Tradier Greeks endpoint into backend/app/routers/market.py"
@@ -192,6 +199,7 @@ Is it COMPLEX?
 **You decide:** Simple + UI → ChatGPT (Cursor)
 
 **You do:**
+
 ```
 1. Open Cursor IDE
 2. Press Ctrl+L
@@ -209,6 +217,7 @@ Is it COMPLEX?
 **You decide:** Well-defined + Repetitive → Copilot
 
 **You do:**
+
 ```typescript
 // In your .ts file, just start typing:
 interface TradierOptionsResponse {
@@ -226,7 +235,7 @@ interface TradierOptionsResponse {
 
 Location: `docs/CURRENT_WORK.md` (if you run setup script)
 
-### How It's Used:
+### How It's Used
 
 **You manually update it when assigning tasks:**
 
@@ -245,6 +254,7 @@ Location: `docs/CURRENT_WORK.md` (if you run setup script)
 ```
 
 **Purpose:**
+
 - Prevents both AIs from working on same file
 - Tracks what's in progress
 - Documents handoffs
@@ -255,7 +265,7 @@ Location: `docs/CURRENT_WORK.md` (if you run setup script)
 
 ## 🚨 Why Isn't It Automated?
 
-### Technical Reality:
+### Technical Reality
 
 1. **Separate AI Systems:**
    - Claude Code (me) = Separate terminal process
@@ -281,14 +291,16 @@ Location: `docs/CURRENT_WORK.md` (if you run setup script)
 
 ## 🎯 How to Actually Use Dual-AI Workflow
 
-### Real-World Process:
+### Real-World Process
 
 **Step 1: You identify work to be done**
+
 ```
 Example: "Need to add options Greeks display and fix the loading state"
 ```
 
 **Step 2: You break it into tasks**
+
 ```
 Task A: Add Greeks calculation logic (backend)
 Task B: Create Greeks display component (frontend)
@@ -296,6 +308,7 @@ Task C: Add loading spinner
 ```
 
 **Step 3: You assign each task**
+
 ```
 Task A → Claude Code (complex backend logic)
 Task B → Cursor AI (UI component)
@@ -305,6 +318,7 @@ Task C → Copilot inline (simple component)
 **Step 4: You execute sequentially or in parallel**
 
 **Sequential:**
+
 ```
 1. Ask me (Claude) to do Task A
 2. When done, open Cursor and do Task B
@@ -312,6 +326,7 @@ Task C → Copilot inline (simple component)
 ```
 
 **Parallel (if possible):**
+
 ```
 1. Ask me to start Task A in terminal
 2. While I'm working, switch to Cursor
@@ -321,6 +336,7 @@ Task C → Copilot inline (simple component)
 ```
 
 **Step 5: You integrate and verify**
+
 ```
 Ask me (Claude) to review all changes for consistency
 ```
@@ -329,7 +345,7 @@ Ask me (Claude) to review all changes for consistency
 
 ## 💡 Could It Be Automated? (Future)
 
-### Theoretically Yes, With:
+### Theoretically Yes, With
 
 1. **MCP Server Integration:**
    - Cursor Claude with MCP could potentially coordinate
@@ -353,7 +369,7 @@ Ask me (Claude) to review all changes for consistency
 
 ## ✅ Current Setup Summary
 
-### What You Have:
+### What You Have
 
 ✅ **Multiple AI interfaces** (Claude Code, Cursor AI, Copilot)
 ✅ **Decision framework** (which AI for which tasks)
@@ -361,16 +377,17 @@ Ask me (Claude) to review all changes for consistency
 ✅ **Code snippet markers** (to label file criticality)
 ✅ **MCP tools** (for browser automation)
 
-### What You DON'T Have:
+### What You DON'T Have
 
 ❌ **Automatic task routing**
 ❌ **Shared task queue**
 ❌ **AI-to-AI coordination**
 ❌ **Workflow automation**
 
-### What This Means:
+### What This Means
 
 **YOU are the orchestrator.**
+
 - You decide task assignment
 - You open the right AI interface
 - You track progress manually
@@ -380,9 +397,10 @@ Ask me (Claude) to review all changes for consistency
 
 ## 🎓 Recommended Workflow
 
-### For PaiiD Project Right Now:
+### For PaiiD Project Right Now
 
 **Use Me (Claude Code) For:**
+
 ```
 ✅ Backend changes (FastAPI, Python)
 ✅ API integrations (Tradier, Alpaca)
@@ -395,6 +413,7 @@ Ask me (Claude) to review all changes for consistency
 ```
 
 **Use Cursor AI (Ctrl+L) For:**
+
 ```
 ✅ React components (UI)
 ✅ TypeScript types
@@ -406,6 +425,7 @@ Ask me (Claude) to review all changes for consistency
 ```
 
 **Use Copilot (Inline) For:**
+
 ```
 ✅ Boilerplate code
 ✅ Repetitive patterns
@@ -421,6 +441,7 @@ Ask me (Claude) to review all changes for consistency
 ### Task: "Add real-time Greeks to options chain"
 
 **Your Mental Breakdown:**
+
 ```
 1. Backend: Add Greeks calculation endpoint (COMPLEX)
 2. Frontend: Update OptionsChain component (MEDIUM)
@@ -430,6 +451,7 @@ Ask me (Claude) to review all changes for consistency
 ```
 
 **Your Assignment:**
+
 ```
 Tasks 1, 5 → Claude Code (me, in terminal)
 Task 2 → Cursor AI (Ctrl+L)
@@ -439,6 +461,7 @@ Tasks 3, 4 → Copilot inline (as you code)
 **Your Execution:**
 
 **MORNING (9:00 AM):**
+
 ```bash
 # Terminal - Ask me (Claude):
 "Claude, add a new endpoint GET /api/greeks/{symbol} that calculates
@@ -448,6 +471,7 @@ option Greeks using the Black-Scholes model. Add it to backend/app/routers/marke
 ```
 
 **MORNING (9:30 AM) - While I'm "thinking":**
+
 ```
 # Switch to Cursor
 # Ctrl+L
@@ -459,6 +483,7 @@ data from /api/proxy/greeks endpoint and display delta, gamma, theta, vega"
 ```
 
 **MORNING (10:00 AM):**
+
 ```typescript
 // In OptionsChain.tsx, use Copilot inline:
 // Type:
@@ -473,6 +498,7 @@ interface GreeksData {
 ```
 
 **MORNING (10:30 AM):**
+
 ```bash
 # Back to terminal - Ask me:
 "Claude, test the Greeks endpoint with symbol AAPL and verify
@@ -482,6 +508,7 @@ the calculations are accurate"
 ```
 
 **RESULT:**
+
 - Task completed in ~1.5 hours
 - Used each AI optimally
 - YOU coordinated everything manually
@@ -490,15 +517,17 @@ the calculations are accurate"
 
 ## 📝 Setup Your Workflow Tracker (Optional)
 
-### If You Want the CURRENT_WORK.md System:
+### If You Want the CURRENT_WORK.md System
 
 **Run the setup script:**
+
 ```powershell
 cd C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD
 ..\dual-ai-template\setup-dual-ai.ps1
 ```
 
 **This creates:**
+
 - `docs/CURRENT_WORK.md` - Task tracker
 - `docs/CLAUDE_PROTOCOL.md` - Execution standards
 - `docs/HANDOFF_TEMPLATE.md` - Handoff format
@@ -509,14 +538,16 @@ cd C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD
 
 ## 🎯 Final Answer
 
-### Your Question:
+### Your Question
+>
 > "Do I just assign the task for either Claude or ChatGPT here by prefacing, or is the labor division workflow already configured?"
 
-### Answer:
+### Answer
 
 **NO, labor division is NOT automated. YES, you assign by prefacing/choosing.**
 
 **You must:**
+
 1. ✅ Decide which AI to use (manual judgment)
 2. ✅ Open the appropriate interface:
    - Claude → Terminal (me)
@@ -526,10 +557,12 @@ cd C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD
 4. ✅ (Optional) Track in CURRENT_WORK.md manually
 
 **The workflow is:**
+
 - **Configured** = Guidelines, decision framework, tools available ✅
 - **Automated** = No automatic routing or coordination ❌
 
 **YOU are the orchestrator** who routes tasks to the right AI based on:
+
 - Complexity (Claude for complex, ChatGPT for simple)
 - Criticality (Claude for critical always)
 - Type (backend→Claude, UI→ChatGPT)
@@ -538,13 +571,15 @@ cd C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD
 
 ## 🚀 Quick Start Commands
 
-### Assign to Claude Code (Me):
+### Assign to Claude Code (Me)
+
 ```bash
 # In terminal (where you are now):
 "Claude, [describe your task]"
 ```
 
-### Assign to ChatGPT (Cursor):
+### Assign to ChatGPT (Cursor)
+
 ```
 1. Open Cursor IDE
 2. Press Ctrl+L
@@ -552,7 +587,8 @@ cd C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD
 4. Hit Enter
 ```
 
-### Use Copilot:
+### Use Copilot
+
 ```typescript
 // Just start typing in any code file
 // Copilot automatically suggests
@@ -563,7 +599,8 @@ cd C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD
 
 ## 📊 Workflow Comparison
 
-### Manual (Current):
+### Manual (Current)
+
 ```
 You → Identify task
 You → Decide: Claude or ChatGPT?
@@ -573,7 +610,8 @@ You → Monitor progress
 You → Coordinate handoffs
 ```
 
-### Hypothetical Automated (Not Available):
+### Hypothetical Automated (Not Available)
+
 ```
 You → Describe all tasks to "orchestrator"
 Orchestrator → Analyzes complexity
@@ -592,6 +630,7 @@ Orchestrator → Reports back to you
 **Labor Division = MANUAL, not automatic**
 
 **How to assign tasks:**
+
 - **Claude Code (me):** Ask me here in terminal
 - **Cursor AI (GPT-4):** Press `Ctrl+L` in Cursor and ask
 - **Copilot:** Start typing, accept suggestions

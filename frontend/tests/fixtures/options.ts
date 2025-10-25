@@ -83,7 +83,10 @@ export const generateTestOptionContract = (
   ...overrides,
 });
 
-export const generateTestOptionsChain = (symbol: string = "SPY", overrides: Record<string, unknown> = {}) => ({
+export const generateTestOptionsChain = (
+  symbol: string = "SPY",
+  overrides: Record<string, unknown> = {}
+) => ({
   symbol,
   expiration_date: "2025-11-15",
   underlying_price: 450.0,
@@ -157,10 +160,16 @@ export const assertValidOptionContract = (contract: unknown) => {
 
 // Playwright Page type (for test utilities)
 interface PlaywrightPage {
-  waitForResponse: (predicate: (response: { url: () => string }) => boolean, options?: { timeout?: number }) => Promise<unknown>;
+  waitForResponse: (
+    predicate: (response: { url: () => string }) => boolean,
+    options?: { timeout?: number }
+  ) => Promise<unknown>;
   fill: (selector: string, value: string) => Promise<void>;
   click: (selector: string) => Promise<void>;
-  waitForSelector: (selector: string, options?: { timeout?: number; state?: string }) => Promise<unknown>;
+  waitForSelector: (
+    selector: string,
+    options?: { timeout?: number; state?: string }
+  ) => Promise<unknown>;
 }
 
 // Test utilities

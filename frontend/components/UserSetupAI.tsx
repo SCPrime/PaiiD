@@ -44,9 +44,10 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
   const [showReview, setShowReview] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
-  const [conversationStep, setConversationStep] = useState<"name" | "email" | "trading" | "done">(
-    "name"
+  const [conversationStep, setConversationStep] = useState<"intro" | "name" | "email" | "trading" | "done">(
+    "intro"
   );
+  const [_setupProgress, setSetupProgress] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Generate consistent particle positions (fixes hydration)
@@ -95,11 +96,12 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
   // Initialize AI setup
   const startAISetup = () => {
     setSetupMethod("ai");
-    setConversationStep("name");
+    setConversationStep("intro");
+    setSetupProgress(10);
     setMessages([
       {
         role: "assistant",
-        content: `Hi! I'm your AI trading assistant. I'll help you set up your PaiiD account.\n\nFirst, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
+        content: `🚀 **Welcome to PaiiD!**\n\nI'm your AI trading assistant, and I'll help you set up your personalized trading platform.\n\n**What is PaiiD?**\n• AI-powered trading insights and recommendations\n• Real-time market analysis and sentiment tracking\n• Options trading with Greeks analysis\n• Risk management and portfolio optimization\n• Paper trading to learn safely\n\nLet's get you set up! First, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
       },
     ]);
   };
@@ -113,11 +115,24 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
 
     // Handle empty input for skipping
     if (!userMessage) {
-      if (conversationStep === "name") {
+      if (conversationStep === "intro") {
+        // User pressed Enter - move to name step
+        setConversationStep("name");
+        setSetupProgress(20);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Great! Let's get started.\n\nFirst, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
+          },
+        ]);
+        return;
+      } else if (conversationStep === "name") {
         // User pressed Enter without typing - remain anonymous
         setMessages((prev) => [...prev, { role: "user", content: "(skip)" }]);
         setUserName("PaiiD User");
         setConversationStep("email");
+        setSetupProgress(40);
         setMessages((prev) => [
           ...prev,
           {
@@ -146,13 +161,25 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
     setIsProcessing(true);
 
     try {
-      if (conversationStep === "name") {
+      if (conversationStep === "intro") {
+        // Move to name step
+        setConversationStep("name");
+        setSetupProgress(20);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Great! Let's get started.\n\nFirst, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
+          },
+        ]);
+      } else if (conversationStep === "name") {
         // Handle name input
         const isSkip =
           userMessage.toLowerCase() === "skip" || userMessage.toLowerCase() === "anonymous";
         const name = isSkip ? "PaiiD User" : userMessage;
         setUserName(name);
         setConversationStep("email");
+        setSetupProgress(40);
 
         setMessages((prev) => [
           ...prev,
@@ -167,6 +194,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
         const email = isSkip ? "" : userMessage;
         setUserEmail(email);
         setConversationStep("trading");
+        setSetupProgress(60);
 
         setMessages((prev) => [
           ...prev,
@@ -179,6 +207,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
         // Extract trading preferences from user's message
         const prefs = await claudeAI.extractSetupPreferences(userMessage);
         setExtractedPrefs(prefs);
+        setSetupProgress(80);
 
         // Generate confirmation message
         const responseMessage = `Perfect! I've extracted your trading preferences. Let me show you what I understood so you can verify everything is correct.`;
@@ -529,6 +558,59 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
               </p>
             </div>
           </div>
+
+          {/* Progress Bar */}
+          {setupMethod === "ai" && setupProgress > 0 && (
+            <div style={{ marginBottom: theme.spacing.md }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: theme.spacing.xs,
+                }}
+              >
+                <span
+                  style={{
+                    color: theme.colors.textMuted,
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+                >
+                  Setup Progress
+                </span>
+                <span
+                  style={{
+                    color: theme.workflow.strategyBuilder,
+                    fontSize: "14px",
+                    fontWeight: "600",
+                  }}
+                >
+                  {setupProgress}%
+                </span>
+              </div>
+              <div
+                style={{
+                  width: "100%",
+                  height: "6px",
+                  background: theme.background.glass,
+                  borderRadius: theme.borderRadius.full,
+                  overflow: "hidden",
+                  border: `1px solid ${theme.colors.border}`,
+                }}
+              >
+                <div
+                  style={{
+                    width: `${setupProgress}%`,
+                    height: "100%",
+                    background: `linear-gradient(90deg, ${theme.workflow.strategyBuilder}, ${theme.colors.primary})`,
+                    borderRadius: theme.borderRadius.full,
+                    transition: "width 0.5s ease-in-out",
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Messages */}
           <div
