@@ -1,0 +1,232 @@
+name: 🏥 API Health Check & Uptime Monitoring
+
+on:
+  # Run every 15 minutes
+  schedule:
+    - cron: '*/15 * * * *'
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      notify_on_success:
+        description: 'Send notification even if all APIs are healthy'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+  # Run on push to main (after deployments)
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/api-health-check.yml'
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 📦 Install Dependencies
+        run: |
+          pip install httpx rich pydantic
+          echo "✅ Dependencies installed"
+
+      - name: 🔍 Run API Health Checks
+        id: health_check
+        env:
+          BACKEND_URL: https://paiid-backend.onrender.com
+          FRONTEND_URL: https://paiid-frontend.onrender.com
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          python scripts/test_all_apis.py
+          echo "health_status=$?" >> $GITHUB_OUTPUT
+
+      - name: 📊 Upload Health Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-health-report-${{ github.run_number }}
+          path: api-health-report.json
+          retention-days: 30
+
+      - name: 📈 Update API Status Badge
+        if: always()
+        run: |
+          # Parse health status from report
+          if [ -f api-health-report.json ]; then
+            SUCCESS_RATE=$(cat api-health-report.json | python -c "import sys, json; print(json.load(sys.stdin)['summary']['success_rate'])")
+            echo "API Success Rate: ${SUCCESS_RATE}%"
+
+            # Create status badge data
+            if [ $(echo "$SUCCESS_RATE >= 90" | bc) -eq 1 ]; then
+              STATUS="healthy"
+              COLOR="brightgreen"
+            elif [ $(echo "$SUCCESS_RATE >= 70" | bc) -eq 1 ]; then
+              STATUS="degraded"
+              COLOR="yellow"
+            else
+              STATUS="critical"
+              COLOR="red"
+            fi
+
+            echo "API_STATUS=${STATUS}" >> $GITHUB_ENV
+            echo "API_COLOR=${COLOR}" >> $GITHUB_ENV
+            echo "SUCCESS_RATE=${SUCCESS_RATE}" >> $GITHUB_ENV
+          fi
+
+      - name: 🚨 Create Issue on Failure
+        if: failure() || (success() && steps.health_check.outputs.health_status != '0')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let reportData = {};
+
+            try {
+              reportData = JSON.parse(fs.readFileSync('api-health-report.json', 'utf8'));
+            } catch (e) {
+              console.log('Could not read health report');
+            }
+
+            const failedEndpoints = reportData.endpoints?.filter(e => !e.success) || [];
+            const failedExternal = reportData.external_apis?.filter(e => !e.success) || [];
+
+            const issueTitle = `🚨 API Health Check Failed - ${reportData.summary?.success_rate?.toFixed(1)}% Success Rate`;
+
+            let issueBody = `## 🏥 API Health Check Report\n\n`;
+            issueBody += `**Time**: ${reportData.timestamp}\n`;
+            issueBody += `**Run**: [#${context.runNumber}](${context.payload.repository.html_url}/actions/runs/${context.runId})\n\n`;
+
+            if (reportData.summary) {
+              issueBody += `### 📊 Summary\n\n`;
+              issueBody += `| Metric | Value |\n`;
+              issueBody += `|--------|-------|\n`;
+              issueBody += `| Success Rate | ${reportData.summary.success_rate?.toFixed(1)}% |\n`;
+              issueBody += `| Successful | ${reportData.summary.successful}/${reportData.summary.total} |\n`;
+              issueBody += `| Failed | ${reportData.summary.failed} |\n`;
+              issueBody += `| Avg Latency | ${reportData.summary.avg_latency_ms?.toFixed(0)}ms |\n`;
+              issueBody += `| Overall Health | ${reportData.summary.health} |\n\n`;
+            }
+
+            if (failedEndpoints.length > 0) {
+              issueBody += `### ❌ Failed Endpoints (${failedEndpoints.length})\n\n`;
+              failedEndpoints.forEach(endpoint => {
+                issueBody += `- **${endpoint.name}**\n`;
+                issueBody += `  - URL: \`${endpoint.url}\`\n`;
+                issueBody += `  - Status: ${endpoint.status}\n`;
+                issueBody += `  - Code: ${endpoint.status_code || 'N/A'}\n`;
+                if (endpoint.error) {
+                  issueBody += `  - Error: \`${endpoint.error}\`\n`;
+                }
+                issueBody += `\n`;
+              });
+            }
+
+            if (failedExternal.length > 0) {
+              issueBody += `### 🌐 Failed External APIs (${failedExternal.length})\n\n`;
+              failedExternal.forEach(api => {
+                issueBody += `- **${api.name}**: ${api.status}\n`;
+              });
+              issueBody += `\n`;
+            }
+
+            issueBody += `### 🔧 Recommended Actions\n\n`;
+            issueBody += `1. Check [Render Dashboard](https://dashboard.render.com) for service status\n`;
+            issueBody += `2. Review backend logs for errors\n`;
+            issueBody += `3. Verify environment variables are set correctly\n`;
+            issueBody += `4. Test external API credentials (Tradier, Alpaca, Claude)\n\n`;
+            issueBody += `---\n`;
+            issueBody += `*This issue was automatically created by the API Health Check workflow.*`;
+
+            // Check if there's already an open issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'api-health,automated'
+            });
+
+            if (issues.data.length === 0) {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['api-health', 'automated', 'bug']
+              });
+            } else {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                title: issueTitle,
+                body: issueBody
+              });
+            }
+
+      - name: 📢 Post Summary
+        if: always()
+        run: |
+          echo "## 🏥 API Health Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f api-health-report.json ]; then
+            echo "**Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Extract key metrics using Python
+            python - <<EOF >> $GITHUB_STEP_SUMMARY
+import json
+with open('api-health-report.json') as f:
+    data = json.load(f)
+    summary = data.get('summary', {})
+
+    print("| Metric | Value |")
+    print("|--------|-------|")
+    print(f"| Success Rate | {summary.get('success_rate', 0):.1f}% |")
+    print(f"| Successful Endpoints | {summary.get('successful', 0)}/{summary.get('total', 0)} |")
+    print(f"| Failed Endpoints | {summary.get('failed', 0)} |")
+    print(f"| Avg Latency | {summary.get('avg_latency_ms', 0):.0f}ms |")
+    print(f"| External APIs | {summary.get('external_success', 0)}/{summary.get('external_total', 0)} |")
+    print(f"| Overall Health | {summary.get('health', 'Unknown')} |")
+EOF
+          else
+            echo "⚠️ Health report not generated" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 💾 Commit Health Report (if on main)
+        if: github.ref == 'refs/heads/main' && success()
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # Move report to monitoring directory
+          mkdir -p monitoring/api-health
+          cp api-health-report.json monitoring/api-health/latest.json
+          cp api-health-report.json "monitoring/api-health/$(date +%Y%m%d-%H%M%S).json"
+
+          if [[ -n $(git status --porcelain monitoring/) ]]; then
+            git add monitoring/api-health/
+            git commit -m "📊 auto: Update API health report [skip ci]" || echo "No changes to commit"
+            git push || echo "Nothing to push"
+          else
+            echo "✅ No health report changes"
+          fi

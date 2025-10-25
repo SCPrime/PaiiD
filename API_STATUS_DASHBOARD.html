@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaiiD API Status Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 16px;
+            border: 1px solid rgba(69, 240, 192, 0.2);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 36px;
+            background: linear-gradient(135deg, #45f0c0 0%, #0d5a4a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .status-card:hover {
+            border-color: rgba(69, 240, 192, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(69, 240, 192, 0.15);
+        }
+
+        .status-card h3 {
+            color: #45f0c0;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: #10b981;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+        }
+
+        .status-dot.checking {
+            background: #f59e0b;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .metric-value {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .metric-value.good {
+            color: #10b981;
+        }
+
+        .metric-value.warning {
+            color: #f59e0b;
+        }
+
+        .metric-value.bad {
+            color: #ef4444;
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, #45f0c0 0%, #0d5a4a 100%);
+            border: none;
+            color: #0f172a;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 20px auto;
+        }
+
+        .btn-refresh:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(69, 240, 192, 0.4);
+        }
+
+        .btn-refresh:active {
+            transform: scale(0.98);
+        }
+
+        .last-update {
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .endpoints-table {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            color: #45f0c0;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        tr:hover {
+            background: rgba(69, 240, 192, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏥 PaiiD API Status Dashboard</h1>
+            <p class="subtitle">Real-time monitoring of all APIs and external integrations</p>
+        </header>
+
+        <div class="status-grid">
+            <!-- Frontend Status -->
+            <div class="status-card">
+                <h3>🌐 Frontend Application</h3>
+                <div class="status-indicator">
+                    <div class="status-dot checking" id="frontend-dot"></div>
+                    <span id="frontend-status">Checking...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">URL</span>
+                    <span class="metric-value">
+                        <a href="https://paiid-frontend.onrender.com" target="_blank" style="color: #45f0c0; text-decoration: none;">
+                            paiid-frontend.onrender.com
+                        </a>
+                    </span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Latency</span>
+                    <span class="metric-value" id="frontend-latency">-</span>
+                </div>
+            </div>
+
+            <!-- Backend Status -->
+            <div class="status-card">
+                <h3>⚙️ Backend API</h3>
+                <div class="status-indicator">
+                    <div class="status-dot checking" id="backend-dot"></div>
+                    <span id="backend-status">Checking...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">URL</span>
+                    <span class="metric-value">
+                        <a href="https://paiid-backend.onrender.com/api/health" target="_blank" style="color: #45f0c0; text-decoration: none;">
+                            paiid-backend.onrender.com
+                        </a>
+                    </span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Latency</span>
+                    <span class="metric-value" id="backend-latency">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Redis</span>
+                    <span class="metric-value" id="backend-redis">-</span>
+                </div>
+            </div>
+
+            <!-- Tradier API Status -->
+            <div class="status-card">
+                <h3>📊 Tradier Market Data</h3>
+                <div class="status-indicator">
+                    <div class="status-dot checking" id="tradier-dot"></div>
+                    <span id="tradier-status">Checking...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Service</span>
+                    <span class="metric-value">Real-time Quotes & Options</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Test Endpoint</span>
+                    <span class="metric-value" id="tradier-test">-</span>
+                </div>
+            </div>
+
+            <!-- Alpaca API Status -->
+            <div class="status-card">
+                <h3>💼 Alpaca Trading</h3>
+                <div class="status-indicator">
+                    <div class="status-dot checking" id="alpaca-dot"></div>
+                    <span id="alpaca-status">Checking...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Service</span>
+                    <span class="metric-value">Paper Trading</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Test Endpoint</span>
+                    <span class="metric-value" id="alpaca-test">-</span>
+                </div>
+            </div>
+
+            <!-- Claude AI Status -->
+            <div class="status-card">
+                <h3>🤖 Claude AI</h3>
+                <div class="status-indicator">
+                    <div class="status-dot checking" id="claude-dot"></div>
+                    <span id="claude-status">Checking...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Service</span>
+                    <span class="metric-value">AI Recommendations</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Test Endpoint</span>
+                    <span class="metric-value" id="claude-test">-</span>
+                </div>
+            </div>
+
+            <!-- Overall Health -->
+            <div class="status-card">
+                <h3>🏥 Overall Health</h3>
+                <div class="status-indicator">
+                    <div class="status-dot checking" id="overall-dot"></div>
+                    <span id="overall-status">Checking...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Success Rate</span>
+                    <span class="metric-value" id="success-rate">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Avg Latency</span>
+                    <span class="metric-value" id="avg-latency">-</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-refresh" onclick="checkAllAPIs()">🔄 Refresh Status</button>
+
+        <div class="endpoints-table">
+            <h3 style="color: #45f0c0; margin-bottom: 20px;">📝 Detailed Endpoint Status</h3>
+            <table id="endpoints-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Endpoint</th>
+                        <th>Response Code</th>
+                        <th>Latency</th>
+                    </tr>
+                </thead>
+                <tbody id="endpoints-body">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #64748b;">
+                            Click "Refresh Status" to load endpoint data
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="last-update">
+            Last updated: <span id="last-update">Never</span>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://paiid-backend.onrender.com';
+        const FRONTEND_URL = 'https://paiid-frontend.onrender.com';
+        const API_TOKEN = 'rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl';
+
+        let checkResults = [];
+
+        async function checkEndpoint(name, url, dotId, statusId, latencyId, requireAuth = false) {
+            const start = Date.now();
+            const dot = document.getElementById(dotId);
+            const status = document.getElementById(statusId);
+
+            dot.className = 'status-dot checking';
+            status.textContent = 'Checking...';
+
+            try {
+                const headers = {};
+                if (requireAuth) {
+                    headers['Authorization'] = `Bearer ${API_TOKEN}`;
+                }
+
+                const response = await fetch(url, {
+                    headers,
+                    mode: 'cors'
+                });
+                const latency = Date.now() - start;
+
+                if (latencyId) {
+                    const latencyEl = document.getElementById(latencyId);
+                    latencyEl.textContent = `${latency}ms`;
+                    latencyEl.className = 'metric-value ' + (latency < 500 ? 'good' : latency < 1000 ? 'warning' : 'bad');
+                }
+
+                if (response.ok) {
+                    dot.className = 'status-dot online';
+                    status.textContent = `✅ Online (${response.status})`;
+
+                    // Parse Redis status for backend
+                    if (name === 'Backend' && url.includes('/health')) {
+                        try {
+                            const data = await response.json();
+                            if (data.redis) {
+                                const redisEl = document.getElementById('backend-redis');
+                                redisEl.textContent = data.redis.connected ? `✅ ${data.redis.latency_ms}ms` : '❌ Disconnected';
+                                redisEl.className = 'metric-value ' + (data.redis.connected ? 'good' : 'bad');
+                            }
+                        } catch (e) {
+                            console.error('Error parsing health data:', e);
+                        }
+                    }
+
+                    return { name, url, status: 'online', code: response.status, latency, success: true };
+                } else {
+                    dot.className = 'status-dot offline';
+                    status.textContent = `⚠️ Error (${response.status})`;
+                    return { name, url, status: 'error', code: response.status, latency, success: false };
+                }
+            } catch (error) {
+                dot.className = 'status-dot offline';
+                status.textContent = `❌ Offline`;
+                if (latencyId) {
+                    document.getElementById(latencyId).textContent = 'Timeout';
+                }
+                return { name, url, status: 'offline', code: 0, latency: 0, success: false, error: error.message };
+            }
+        }
+
+        async function checkAllAPIs() {
+            checkResults = [];
+
+            // Update timestamp
+            document.getElementById('last-update').textContent = new Date().toLocaleString();
+
+            // Check core services
+            const frontendResult = await checkEndpoint('Frontend', FRONTEND_URL, 'frontend-dot', 'frontend-status', 'frontend-latency');
+            checkResults.push(frontendResult);
+
+            const backendResult = await checkEndpoint('Backend', `${BACKEND_URL}/api/health`, 'backend-dot', 'backend-status', 'backend-latency');
+            checkResults.push(backendResult);
+
+            // Check Tradier integration (via backend)
+            const tradierResult = await checkEndpoint('Tradier', `${BACKEND_URL}/api/market/indices`, 'tradier-dot', 'tradier-status', null, true);
+            checkResults.push(tradierResult);
+            document.getElementById('tradier-test').textContent = tradierResult.success ? '✅ Market data OK' : '❌ Failed';
+
+            // Check Alpaca integration (via backend)
+            const alpacaResult = await checkEndpoint('Alpaca', `${BACKEND_URL}/api/portfolio`, 'alpaca-dot', 'alpaca-status', null, true);
+            checkResults.push(alpacaResult);
+            document.getElementById('alpaca-test').textContent = alpacaResult.success ? '✅ Portfolio OK' : '❌ Failed';
+
+            // Check Claude AI (via backend)
+            const claudeResult = await checkEndpoint('Claude', `${BACKEND_URL}/api/ai/recommendations`, 'claude-dot', 'claude-status', null, true);
+            checkResults.push(claudeResult);
+            document.getElementById('claude-test').textContent = claudeResult.success ? '✅ AI OK' : '❌ Failed';
+
+            // Calculate overall health
+            const successCount = checkResults.filter(r => r.success).length;
+            const totalCount = checkResults.length;
+            const successRate = (successCount / totalCount * 100).toFixed(1);
+            const avgLatency = Math.round(checkResults.reduce((sum, r) => sum + r.latency, 0) / totalCount);
+
+            const overallDot = document.getElementById('overall-dot');
+            const overallStatus = document.getElementById('overall-status');
+
+            if (successRate >= 90) {
+                overallDot.className = 'status-dot online';
+                overallStatus.textContent = '✅ All Systems Operational';
+            } else if (successRate >= 70) {
+                overallDot.className = 'status-dot checking';
+                overallStatus.textContent = '⚠️ Degraded Performance';
+            } else {
+                overallDot.className = 'status-dot offline';
+                overallStatus.textContent = '❌ System Issues Detected';
+            }
+
+            const successRateEl = document.getElementById('success-rate');
+            successRateEl.textContent = `${successRate}% (${successCount}/${totalCount})`;
+            successRateEl.className = 'metric-value ' + (successRate >= 90 ? 'good' : successRate >= 70 ? 'warning' : 'bad');
+
+            const avgLatencyEl = document.getElementById('avg-latency');
+            avgLatencyEl.textContent = `${avgLatency}ms`;
+            avgLatencyEl.className = 'metric-value ' + (avgLatency < 500 ? 'good' : avgLatency < 1000 ? 'warning' : 'bad');
+
+            // Update endpoints table
+            updateEndpointsTable();
+        }
+
+        function updateEndpointsTable() {
+            const tbody = document.getElementById('endpoints-body');
+            tbody.innerHTML = '';
+
+            checkResults.forEach(result => {
+                const row = tbody.insertRow();
+                const statusCell = row.insertCell();
+                const nameCell = row.insertCell();
+                const codeCell = row.insertCell();
+                const latencyCell = row.insertCell();
+
+                statusCell.textContent = result.success ? '✅' : '❌';
+                nameCell.textContent = result.name;
+                codeCell.textContent = result.code || 'N/A';
+                latencyCell.textContent = result.latency ? `${result.latency}ms` : 'Timeout';
+
+                if (!result.success) {
+                    row.style.background = 'rgba(239, 68, 68, 0.1)';
+                }
+            });
+        }
+
+        // Auto-refresh every 5 minutes
+        setInterval(checkAllAPIs, 5 * 60 * 1000);
+
+        // Initial check on load
+        checkAllAPIs();
+    </script>
+</body>
+</html>
