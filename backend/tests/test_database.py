@@ -4,7 +4,7 @@ Database Model Tests
 Tests for SQLAlchemy models: User, Strategy, Trade, Performance, EquitySnapshot
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 
@@ -144,7 +144,7 @@ class TestStrategyModel:
 
     def test_strategy_last_backtest_timestamp(self, test_db, sample_strategy):
         """Test updating last backtest timestamp"""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         sample_strategy.last_backtest_at = now
 
         test_db.commit()
@@ -185,7 +185,7 @@ class TestTradeModel:
         sample_trade.status = "filled"
         sample_trade.filled_quantity = 10
         sample_trade.filled_avg_price = 150.55
-        sample_trade.filled_at = datetime.utcnow()
+        sample_trade.filled_at = datetime.now(UTC)
 
         test_db.commit()
         test_db.refresh(sample_trade)
@@ -243,7 +243,7 @@ class TestPerformanceModel:
         """Test creating daily performance record"""
         perf = Performance(
             user_id=sample_user.id,
-            date=datetime.utcnow(),
+            date=datetime.now(UTC),
             portfolio_value=110000.00,
             cash=20000.00,
             positions_value=90000.00,
@@ -273,7 +273,7 @@ class TestPerformanceModel:
         """Test risk metrics fields"""
         perf = Performance(
             user_id=sample_user.id,
-            date=datetime.utcnow(),
+            date=datetime.now(UTC),
             portfolio_value=100000.00,
             cash=50000.00,
             positions_value=50000.00,
@@ -306,7 +306,7 @@ class TestEquitySnapshotModel:
         """Test creating intraday equity snapshot"""
         snapshot = EquitySnapshot(
             user_id=sample_user.id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             equity=105000.00,
             cash=25000.00,
             positions_value=80000.00,
@@ -328,7 +328,7 @@ class TestEquitySnapshotModel:
 
     def test_multiple_snapshots_per_day(self, test_db, sample_user):
         """Test creating multiple snapshots (for charting)"""
-        base_time = datetime.utcnow()
+        base_time = datetime.now(UTC)
 
         for i in range(5):
             snapshot = EquitySnapshot(

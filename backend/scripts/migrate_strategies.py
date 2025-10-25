@@ -15,7 +15,7 @@ Prerequisites:
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -79,8 +79,8 @@ def migrate_strategies_from_directory():
                     config=strategy_data,
                     is_active=False,
                     is_autopilot=False,
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
                 )
 
                 db.add(strategy)

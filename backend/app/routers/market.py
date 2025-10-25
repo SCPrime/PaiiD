@@ -51,7 +51,7 @@ async def get_market_conditions(
     - Market breadth indicators (placeholder - requires additional data)
     - Overall sentiment and recommended actions
     """
-    from datetime import datetime
+    from datetime import UTC, datetime
 
     # Check cache first (60s TTL)
     cache_key = "market:conditions"
@@ -225,7 +225,7 @@ async def get_market_conditions(
 
         result = {
             "conditions": [cond.model_dump() for cond in conditions],
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
             "overallSentiment": overall_sentiment,
             "recommendedActions": recommended_actions,
             "source": "tradier",
@@ -250,7 +250,7 @@ async def get_market_conditions(
         ]
         return {
             "conditions": [cond.model_dump() for cond in fallback_conditions],
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
             "overallSentiment": "neutral",
             "recommendedActions": ["Wait for market data to become available"],
             "source": "fallback",
@@ -408,7 +408,7 @@ async def get_sector_performance(
 
     Fetches real-time quotes for sector ETFs and ranks by performance
     """
-    from datetime import datetime
+    from datetime import UTC, datetime
 
     # Check cache first (60s TTL)
     cache_key = "market:sectors"
@@ -484,7 +484,7 @@ async def get_sector_performance(
 
             result = {
                 "sectors": sectors,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": datetime.now(UTC).isoformat() + "Z",
                 "leader": leader,
                 "laggard": laggard,
                 "source": "tradier",
@@ -507,7 +507,7 @@ async def get_sector_performance(
         ]
         return {
             "sectors": fallback_sectors,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
             "leader": "Unavailable",
             "laggard": "Unavailable",
             "source": "fallback",
@@ -532,7 +532,7 @@ async def get_market_status(
         - next_change: timestamp of next state change
         - description: human-readable status
     """
-    from datetime import datetime
+    from datetime import UTC, datetime
 
     # Check cache first (60s TTL)
     cache_key = "market:status"
@@ -567,7 +567,7 @@ async def get_market_status(
                 "is_open": is_open,
                 "next_change": next_change,
                 "description": description,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": datetime.now(UTC).isoformat() + "Z",
                 "source": "tradier",
             }
 
@@ -587,7 +587,7 @@ async def get_market_status(
             "is_open": False,
             "next_change": "",
             "description": "Market status unavailable",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
             "source": "fallback",
             "error": str(e),
         }

@@ -127,7 +127,7 @@ export default function ClaudeAIChat() {
           const strategyList = data.recommendations
             .map(
               (r: unknown, idx: number) =>
-                `${idx + 1}. **${r.strategy_id.replace(/-/g, " ").toUpperCase()}** - ${(r.probability * 100).toFixed(0)}% probability`
+                `${idx + 1}. **${(r as any).strategy_id.replace(/-/g, " ").toUpperCase()}** - ${((r as any).probability * 100).toFixed(0)}% probability`
             )
             .join("\n");
           const assistantMessage: Message = {

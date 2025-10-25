@@ -7,7 +7,7 @@ Phase 2: Monetization Engine - Usage Metering
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Callable
 
 from fastapi import Request, Response
@@ -85,7 +85,7 @@ class UsageTrackingMiddleware(BaseHTTPMiddleware):
                 user_id = 1  # Default for development
 
             # Get current billing period
-            now = datetime.utcnow()
+            now = lambda: datetime.now(UTC)()
             billing_period_start = datetime(now.year, now.month, 1)
 
             # Calculate period end (first day of next month)
@@ -137,7 +137,7 @@ async def check_usage_limit(
         from datetime import datetime
 
         # Get current billing period start
-        now = datetime.utcnow()
+        now = lambda: datetime.now(UTC)()
         month_start = datetime(now.year, now.month, 1)
 
         # TODO: Get subscription_id from user
@@ -211,7 +211,7 @@ def increment_usage(user_id: int, feature: str, quantity: int = 1) -> None:
     try:
         from datetime import datetime
 
-        now = datetime.utcnow()
+        now = lambda: datetime.now(UTC)()
         billing_period_start = datetime(now.year, now.month, 1)
 
         if now.month == 12:
@@ -244,7 +244,7 @@ def get_usage_summary(user_id: int, tier: str) -> dict:
         stripe_service = get_stripe_service()
         limits = stripe_service.get_tier_limits(tier)
 
-        now = datetime.utcnow()
+        now = lambda: datetime.now(UTC)()
         month_start = datetime(now.year, now.month, 1)
 
         # TODO: Get actual usage from database

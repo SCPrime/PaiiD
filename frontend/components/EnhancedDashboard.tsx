@@ -197,8 +197,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       </Split>
 
       {/* Global Components */}
-      <AIChat />
-      <CommandPalette />
+      <AIChat isOpen={false} onClose={() => {}} />
+      <CommandPalette onNavigate={() => {}} />
       <KeyboardShortcuts />
     </div>
   );
