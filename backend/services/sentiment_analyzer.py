@@ -3,16 +3,16 @@ Sentiment Analysis Service
 Analyzes news articles, social media, and market data for sentiment indicators
 """
 
-import asyncio
 import json
 import logging
 import re
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any
 
 import aiohttp
 import redis
 from backend.config import settings
+
 
 logger = logging.getLogger(__name__)
 
@@ -84,8 +84,8 @@ class SentimentAnalyzer:
             await self.session.close()
 
     async def analyze_news_sentiment(
-        self, symbols: List[str], days_back: int = 7
-    ) -> Dict[str, Any]:
+        self, symbols: list[str], days_back: int = 7
+    ) -> dict[str, Any]:
         """Analyze sentiment from news articles for given symbols"""
         try:
             # Check cache first
@@ -96,7 +96,7 @@ class SentimentAnalyzer:
 
             # Fetch news articles
             news_articles = await self._fetch_news_articles(symbols, days_back)
-            
+
             if not news_articles:
                 return {
                     "symbols": symbols,
@@ -110,16 +110,18 @@ class SentimentAnalyzer:
             sentiment_scores = []
             for article in news_articles:
                 score = self._calculate_sentiment_score(article.get("content", ""))
-                sentiment_scores.append({
-                    "title": article.get("title", ""),
-                    "sentiment_score": score,
-                    "url": article.get("url", ""),
-                    "published_at": article.get("published_at", ""),
-                })
+                sentiment_scores.append(
+                    {
+                        "title": article.get("title", ""),
+                        "sentiment_score": score,
+                        "url": article.get("url", ""),
+                        "published_at": article.get("published_at", ""),
+                    }
+                )
 
             # Calculate overall sentiment
             overall_sentiment = self._calculate_overall_sentiment(sentiment_scores)
-            
+
             result = {
                 "symbols": symbols,
                 "sentiment_score": overall_sentiment["score"],
@@ -140,8 +142,8 @@ class SentimentAnalyzer:
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
 
     async def analyze_social_sentiment(
-        self, symbols: List[str], hours_back: int = 24
-    ) -> Dict[str, Any]:
+        self, symbols: list[str], hours_back: int = 24
+    ) -> dict[str, Any]:
         """Analyze sentiment from social media for given symbols"""
         try:
             # Check cache first
@@ -152,7 +154,7 @@ class SentimentAnalyzer:
 
             # Fetch social media posts (simulated for now)
             social_posts = await self._fetch_social_posts(symbols, hours_back)
-            
+
             if not social_posts:
                 return {
                     "symbols": symbols,
@@ -166,16 +168,19 @@ class SentimentAnalyzer:
             sentiment_scores = []
             for post in social_posts:
                 score = self._calculate_sentiment_score(post.get("text", ""))
-                sentiment_scores.append({
-                    "text": post.get("text", "")[:100] + "...",  # Truncate for display
-                    "sentiment_score": score,
-                    "platform": post.get("platform", "unknown"),
-                    "created_at": post.get("created_at", ""),
-                })
+                sentiment_scores.append(
+                    {
+                        "text": post.get("text", "")[:100]
+                        + "...",  # Truncate for display
+                        "sentiment_score": score,
+                        "platform": post.get("platform", "unknown"),
+                        "created_at": post.get("created_at", ""),
+                    }
+                )
 
             # Calculate overall sentiment
             overall_sentiment = self._calculate_overall_sentiment(sentiment_scores)
-            
+
             result = {
                 "symbols": symbols,
                 "sentiment_score": overall_sentiment["score"],
@@ -195,7 +200,7 @@ class SentimentAnalyzer:
             logger.error(f"Error analyzing social sentiment: {e}")
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
 
-    async def get_market_sentiment_summary(self, symbols: List[str]) -> Dict[str, Any]:
+    async def get_market_sentiment_summary(self, symbols: list[str]) -> dict[str, Any]:
         """Get comprehensive market sentiment summary"""
         try:
             # Check cache first
@@ -206,17 +211,19 @@ class SentimentAnalyzer:
 
             # Get news sentiment
             news_sentiment = await self.analyze_news_sentiment(symbols, days_back=7)
-            
+
             # Get social sentiment
-            social_sentiment = await self.analyze_social_sentiment(symbols, hours_back=24)
-            
+            social_sentiment = await self.analyze_social_sentiment(
+                symbols, hours_back=24
+            )
+
             # Calculate combined sentiment
             news_score = news_sentiment.get("sentiment_score", 0)
             social_score = social_sentiment.get("sentiment_score", 0)
-            
+
             # Weighted average (news 70%, social 30%)
             combined_score = (news_score * 0.7) + (social_score * 0.3)
-            
+
             # Determine overall sentiment
             if combined_score > 20:
                 overall_sentiment = "bullish"
@@ -233,7 +240,7 @@ class SentimentAnalyzer:
                 "social_sentiment": social_sentiment,
                 "confidence": min(
                     news_sentiment.get("confidence", 0),
-                    social_sentiment.get("confidence", 0)
+                    social_sentiment.get("confidence", 0),
                 ),
                 "timestamp": datetime.now().isoformat(),
             }
@@ -268,27 +275,29 @@ class SentimentAnalyzer:
 
         # Calculate net score
         net_score = bullish_score - bearish_score
-        
+
         # Normalize to -100 to +100 range
         max_possible_score = len(text.split()) * 3  # Rough estimate
         if max_possible_score > 0:
             normalized_score = (net_score / max_possible_score) * 100
             return max(-100, min(100, normalized_score))
-        
+
         return 0.0
 
-    def _calculate_overall_sentiment(self, sentiment_scores: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _calculate_overall_sentiment(
+        self, sentiment_scores: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Calculate overall sentiment from individual scores"""
         if not sentiment_scores:
             return {"score": 0, "confidence": 0, "trend": "neutral"}
 
         scores = [item["sentiment_score"] for item in sentiment_scores]
         avg_score = sum(scores) / len(scores)
-        
+
         # Calculate confidence based on score distribution
         variance = sum((score - avg_score) ** 2 for score in scores) / len(scores)
         confidence = max(0, 100 - (variance / 10))  # Higher variance = lower confidence
-        
+
         # Determine trend
         if avg_score > 20:
             trend = "bullish"
@@ -303,7 +312,9 @@ class SentimentAnalyzer:
             "trend": trend,
         }
 
-    async def _fetch_news_articles(self, symbols: List[str], days_back: int) -> List[Dict[str, Any]]:
+    async def _fetch_news_articles(
+        self, symbols: list[str], days_back: int
+    ) -> list[dict[str, Any]]:
         """Fetch news articles for given symbols"""
         try:
             if not self.session:
@@ -335,7 +346,9 @@ class SentimentAnalyzer:
             logger.error(f"Error fetching news articles: {e}")
             return []
 
-    async def _fetch_social_posts(self, symbols: List[str], hours_back: int) -> List[Dict[str, Any]]:
+    async def _fetch_social_posts(
+        self, symbols: list[str], hours_back: int
+    ) -> list[dict[str, Any]]:
         """Fetch social media posts for given symbols"""
         try:
             # Simulate social media posts (replace with actual Twitter API)

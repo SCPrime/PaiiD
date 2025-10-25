@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
 
   // Output standalone for Docker deployments
-  output: 'standalone',
+  output: "standalone",
 
   // Skip type checking for deployment
   typescript: {
@@ -12,13 +12,8 @@ const nextConfig = {
 
   // Image optimization configuration (Phase 2: Performance)
   images: {
-    domains: [
-      'cdn.jsdelivr.net',
-      's3.tradingview.com',
-      'cdnjs.cloudflare.com',
-      'localhost'
-    ],
-    formats: ['image/avif', 'image/webp'], // Modern formats for better compression
+    domains: ["cdn.jsdelivr.net", "s3.tradingview.com", "cdnjs.cloudflare.com", "localhost"],
+    formats: ["image/avif", "image/webp"], // Modern formats for better compression
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60, // Cache images for at least 60 seconds
@@ -26,8 +21,8 @@ const nextConfig = {
 
   async headers() {
     // Environment-aware Content Security Policy
-    const isDev = process.env.NODE_ENV === 'development';
-    const devSources = isDev ? 'http://localhost:8001' : '';
+    const isDev = process.env.NODE_ENV === "development";
+    const devSources = isDev ? "http://localhost:8001" : "";
 
     // Production uses stricter CSP than development
     const ContentSecurityPolicy = `
@@ -42,7 +37,9 @@ const nextConfig = {
       base-uri 'self';
       form-action 'self';
       upgrade-insecure-requests;
-    `.replace(/\s+/g, ' ').trim();
+    `
+      .replace(/\s+/g, " ")
+      .trim();
 
     return [
       {
@@ -57,12 +54,15 @@ const nextConfig = {
           // XSS Protection (legacy, but doesn't hurt)
           { key: "X-XSS-Protection", value: "1; mode=block" },
           // Permissions Policy (restrict features)
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+          },
           // Content Security Policy
-          { key: "Content-Security-Policy", value: ContentSecurityPolicy }
-        ]
-      }
+          { key: "Content-Security-Policy", value: ContentSecurityPolicy },
+        ],
+      },
     ];
-  }
+  },
 };
 module.exports = nextConfig;

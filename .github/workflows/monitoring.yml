@@ -1,0 +1,285 @@
+name: 📊 Monitoring & Alerting
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      check_type:
+        description: 'Type of health check'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - backend
+          - frontend
+          - database
+          - api
+
+env:
+  BACKEND_URL: 'https://paiid-backend.onrender.com'
+  FRONTEND_URL: 'https://paiid-frontend.onrender.com'
+
+jobs:
+  # Backend Health Monitoring
+  backend-health:
+    name: 🐍 Backend Health Check
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'backend' || github.event.inputs.check_type == '' }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏥 Health Check
+        run: |
+          echo "## 🐍 Backend Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Test health endpoint
+          if curl -f ${{ env.BACKEND_URL }}/api/health; then
+            echo "✅ Health endpoint: OK" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Health endpoint: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Test ready endpoint
+          if curl -f ${{ env.BACKEND_URL }}/api/ready; then
+            echo "✅ Ready endpoint: OK" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Ready endpoint: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Test API docs
+          if curl -f ${{ env.BACKEND_URL }}/docs; then
+            echo "✅ API docs: OK" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ API docs: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: ⚡ Performance Check
+        run: |
+          echo "## ⚡ Backend Performance" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Response time test
+          RESPONSE_TIME=$(curl -w "%{time_total}" -o /dev/null -s ${{ env.BACKEND_URL }}/api/health)
+          echo "Response time: ${RESPONSE_TIME}s" >> $GITHUB_STEP_SUMMARY
+          
+          if (( $(echo "$RESPONSE_TIME < 2.0" | bc -l) )); then
+            echo "✅ Performance: Good (< 2s)" >> $GITHUB_STEP_SUMMARY
+          elif (( $(echo "$RESPONSE_TIME < 5.0" | bc -l) )); then
+            echo "⚠️ Performance: Slow (2-5s)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Performance: Poor (> 5s)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🔍 API Endpoint Check
+        run: |
+          echo "## 🔍 API Endpoint Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Test key endpoints
+          ENDPOINTS=(
+            "/api/health"
+            "/api/ready"
+            "/api/auth/login"
+            "/api/market/quote/AAPL"
+            "/api/stream/status"
+          )
+          
+          for endpoint in "${ENDPOINTS[@]}"; do
+            if curl -f "${{ env.BACKEND_URL }}$endpoint" > /dev/null 2>&1; then
+              echo "✅ $endpoint: OK" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ $endpoint: FAILED" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  # Frontend Health Monitoring
+  frontend-health:
+    name: ⚛️ Frontend Health Check
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'frontend' || github.event.inputs.check_type == '' }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏥 Health Check
+        run: |
+          echo "## ⚛️ Frontend Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Test main page
+          if curl -f ${{ env.FRONTEND_URL }}/; then
+            echo "✅ Main page: OK" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Main page: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Test monitor page
+          if curl -f ${{ env.FRONTEND_URL }}/monitor; then
+            echo "✅ Monitor page: OK" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Monitor page: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: ⚡ Performance Check
+        run: |
+          echo "## ⚡ Frontend Performance" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Response time test
+          RESPONSE_TIME=$(curl -w "%{time_total}" -o /dev/null -s ${{ env.FRONTEND_URL }}/)
+          echo "Response time: ${RESPONSE_TIME}s" >> $GITHUB_STEP_SUMMARY
+          
+          if (( $(echo "$RESPONSE_TIME < 3.0" | bc -l) )); then
+            echo "✅ Performance: Good (< 3s)" >> $GITHUB_STEP_SUMMARY
+          elif (( $(echo "$RESPONSE_TIME < 8.0" | bc -l) )); then
+            echo "⚠️ Performance: Slow (3-8s)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Performance: Poor (> 8s)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🔍 Content Check
+        run: |
+          echo "## 🔍 Frontend Content Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for key content
+          CONTENT=$(curl -s ${{ env.FRONTEND_URL }}/)
+          
+          if echo "$CONTENT" | grep -q "PaiiD"; then
+            echo "✅ PaiiD title: Found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ PaiiD title: Missing" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if echo "$CONTENT" | grep -q "AI"; then
+            echo "✅ AI content: Found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ AI content: Missing" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Database Health Monitoring
+  database-health:
+    name: 🗄️ Database Health Check
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'database' || github.event.inputs.check_type == '' }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🗄️ Database Check
+        run: |
+          echo "## 🗄️ Database Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Test database connectivity through health endpoint
+          HEALTH_RESPONSE=$(curl -s ${{ env.BACKEND_URL }}/api/health)
+          
+          if echo "$HEALTH_RESPONSE" | grep -q "redis.*connected.*true"; then
+            echo "✅ Redis: Connected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Redis: Disconnected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if echo "$HEALTH_RESPONSE" | grep -q "latency_ms"; then
+            echo "✅ Database latency: Available" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Database latency: Unknown" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # API Health Monitoring
+  api-health:
+    name: 🔗 API Health Check
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'api' || github.event.inputs.check_type == '' }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔗 API Endpoint Tests
+        run: |
+          echo "## 🔗 API Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Test authentication endpoints
+          echo "### 🔐 Authentication Endpoints" >> $GITHUB_STEP_SUMMARY
+          if curl -f ${{ env.BACKEND_URL }}/api/auth/login -X POST -H "Content-Type: application/json" -d '{"email":"test","password":"test"}' > /dev/null 2>&1; then
+            echo "✅ Login endpoint: Responding" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Login endpoint: Not responding" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Test market data endpoints
+          echo "### 📊 Market Data Endpoints" >> $GITHUB_STEP_SUMMARY
+          if curl -f ${{ env.BACKEND_URL }}/api/market/quote/AAPL -H "Authorization: Bearer test" > /dev/null 2>&1; then
+            echo "✅ Quote endpoint: Responding" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Quote endpoint: Not responding" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Test streaming endpoints
+          echo "### 📡 Streaming Endpoints" >> $GITHUB_STEP_SUMMARY
+          if curl -f ${{ env.BACKEND_URL }}/api/stream/status > /dev/null 2>&1; then
+            echo "✅ Stream status: Responding" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Stream status: Not responding" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Alert on Failure
+  alert-on-failure:
+    name: 🚨 Alert on Failure
+    runs-on: ubuntu-latest
+    needs: [backend-health, frontend-health, database-health, api-health]
+    if: failure()
+    
+    steps:
+      - name: 🚨 Send Alert
+        run: |
+          echo "## 🚨 ALERT: PaiiD Health Check Failed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "One or more health checks failed. Manual intervention may be required." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Check the following:" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend: ${{ env.BACKEND_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: ${{ env.FRONTEND_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Render dashboard for deployment status" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment variables and secrets" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Failed Checks:" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend Health: ${{ needs.backend-health.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend Health: ${{ needs.frontend-health.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Database Health: ${{ needs.database-health.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- API Health: ${{ needs.api-health.result }}" >> $GITHUB_STEP_SUMMARY
+
+  # Success Summary
+  success-summary:
+    name: ✅ Success Summary
+    runs-on: ubuntu-latest
+    needs: [backend-health, frontend-health, database-health, api-health]
+    if: success()
+    
+    steps:
+      - name: ✅ All Systems Healthy
+        run: |
+          echo "## ✅ All Systems Healthy!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "PaiiD is running smoothly with all systems operational." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 System Status:" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend: ${{ needs.backend-health.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: ${{ needs.frontend-health.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Database: ${{ needs.database-health.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- API: ${{ needs.api-health.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Access Points:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Main App**: ${{ env.FRONTEND_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Docs**: ${{ env.BACKEND_URL }}/docs" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Check**: ${{ env.BACKEND_URL }}/api/health" >> $GITHUB_STEP_SUMMARY

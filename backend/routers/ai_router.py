@@ -3,15 +3,14 @@ AI Router for Market Analysis and Trading Recommendations
 Handles AI-powered endpoints for sentiment analysis, recommendations, and chat
 """
 
-import json
 import logging
-from typing import List, Optional
 
 from backend.services.ai_service import AIService
 from backend.services.sentiment_analyzer import SentimentAnalyzer
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai", tags=["ai"])
@@ -19,25 +18,25 @@ security = HTTPBearer()
 
 
 class SentimentAnalysisRequest(BaseModel):
-    symbols: List[str]
-    days_back: Optional[int] = 7
+    symbols: list[str]
+    days_back: int | None = 7
 
 
 class TradingRecommendationsRequest(BaseModel):
     user_id: str
-    symbols: List[str]
-    risk_tolerance: Optional[str] = "medium"
+    symbols: list[str]
+    risk_tolerance: str | None = "medium"
 
 
 class ChatRequest(BaseModel):
     user_id: str
     message: str
-    context: Optional[dict] = None
+    context: dict | None = None
 
 
 class NewsSentimentRequest(BaseModel):
-    symbols: List[str]
-    days_back: Optional[int] = 7
+    symbols: list[str]
+    days_back: int | None = 7
 
 
 @router.post("/sentiment/analyze")
@@ -72,7 +71,7 @@ async def analyze_news_sentiment(request: NewsSentimentRequest):
 
 @router.post("/sentiment/social")
 async def analyze_social_sentiment(
-    symbols: List[str] = Query(..., description="List of symbols to analyze"),
+    symbols: list[str] = Query(..., description="List of symbols to analyze"),
     hours_back: int = Query(24, description="Hours to look back for social posts"),
 ):
     """
@@ -150,7 +149,7 @@ async def get_ai_insights(
     """
     try:
         symbol_list = symbols.split(",")
-        
+
         async with AIService() as ai_service:
             result = await ai_service.get_ai_insights(symbol_list)
             return result
@@ -167,7 +166,7 @@ async def get_trending_sentiment():
     try:
         # Mock trending symbols
         trending_symbols = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA"]
-        
+
         async with SentimentAnalyzer() as analyzer:
             result = await analyzer.get_market_sentiment_summary(trending_symbols)
             return result

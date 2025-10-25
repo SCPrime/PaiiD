@@ -3,15 +3,15 @@ AI Service for Market Analysis and Trading Recommendations
 Integrates Claude API for natural language processing and market insights
 """
 
-import asyncio
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import aiohttp
 import redis
 from backend.config import settings
+
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +54,8 @@ class AIService:
         self.rate_limiter["requests"] += 1
 
     async def analyze_market_sentiment(
-        self, symbols: List[str], news_articles: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, symbols: list[str], news_articles: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Analyze market sentiment for given symbols using news articles"""
         try:
             if not await self._check_rate_limit():
@@ -63,7 +63,7 @@ class AIService:
 
             # Prepare context for Claude
             context = f"""
-            Analyze the market sentiment for these symbols: {', '.join(symbols)}
+            Analyze the market sentiment for these symbols: {", ".join(symbols)}
             
             News Articles:
             {json.dumps(news_articles[:10], indent=2)}  # Limit to 10 articles
@@ -92,7 +92,9 @@ class AIService:
 
             # Cache the analysis
             cache_key = f"sentiment_analysis:{':'.join(symbols)}"
-            self.redis_client.setex(cache_key, 300, json.dumps(sentiment_analysis))  # 5 min cache
+            self.redis_client.setex(
+                cache_key, 300, json.dumps(sentiment_analysis)
+            )  # 5 min cache
 
             return sentiment_analysis
 
@@ -101,8 +103,8 @@ class AIService:
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
 
     async def generate_trading_recommendations(
-        self, user_portfolio: Dict[str, Any], market_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, user_portfolio: dict[str, Any], market_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate AI-powered trading recommendations"""
         try:
             if not await self._check_rate_limit():
@@ -143,7 +145,9 @@ class AIService:
 
             # Cache recommendations
             cache_key = f"recommendations:{user_portfolio.get('user_id')}"
-            self.redis_client.setex(cache_key, 600, json.dumps(recommendations))  # 10 min cache
+            self.redis_client.setex(
+                cache_key, 600, json.dumps(recommendations)
+            )  # 10 min cache
 
             return recommendations
 
@@ -151,7 +155,9 @@ class AIService:
             logger.error(f"Error generating trading recommendations: {e}")
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
 
-    async def analyze_news_sentiment(self, news_articles: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def analyze_news_sentiment(
+        self, news_articles: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Analyze sentiment of news articles"""
         try:
             if not await self._check_rate_limit():
@@ -192,7 +198,9 @@ class AIService:
             logger.error(f"Error analyzing news sentiment: {e}")
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
 
-    async def chat_with_ai(self, user_message: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def chat_with_ai(
+        self, user_message: str, context: dict[str, Any]
+    ) -> dict[str, Any]:
         """Chat with AI about market conditions and trading"""
         try:
             if not await self._check_rate_limit():
@@ -215,7 +223,9 @@ class AIService:
             # Structure the chat response
             chat_response = {
                 "user_message": user_message,
-                "ai_response": response.get("response", "I'm sorry, I couldn't process that request."),
+                "ai_response": response.get(
+                    "response", "I'm sorry, I couldn't process that request."
+                ),
                 "confidence": response.get("confidence", 50),
                 "suggested_actions": response.get("suggested_actions", []),
                 "timestamp": datetime.now().isoformat(),
@@ -227,7 +237,7 @@ class AIService:
             logger.error(f"Error in AI chat: {e}")
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
 
-    async def _call_claude_api(self, context: str) -> Dict[str, Any]:
+    async def _call_claude_api(self, context: str) -> dict[str, Any]:
         """Call Claude API with the given context"""
         try:
             if not self.session:
@@ -257,7 +267,7 @@ class AIService:
                     data = await response.json()
                     # Parse Claude's response and extract structured data
                     content = data.get("content", [{}])[0].get("text", "")
-                    
+
                     # Try to parse as JSON, fallback to text
                     try:
                         return json.loads(content)
@@ -271,7 +281,7 @@ class AIService:
             logger.error(f"Error calling Claude API: {e}")
             return {"error": str(e)}
 
-    async def get_ai_insights(self, symbols: List[str]) -> Dict[str, Any]:
+    async def get_ai_insights(self, symbols: list[str]) -> dict[str, Any]:
         """Get AI insights for specific symbols"""
         try:
             # Check cache first
@@ -285,7 +295,7 @@ class AIService:
 
             # Prepare context for Claude
             context = f"""
-            Provide AI insights for these trading symbols: {', '.join(symbols)}
+            Provide AI insights for these trading symbols: {", ".join(symbols)}
             
             Include:
             1. Technical analysis summary

@@ -57,6 +57,7 @@ from .routers import (
 )
 from .routers import settings as settings_router
 
+
 # Optional: Subscription router (requires stripe package)
 try:
     from .routers import subscription
@@ -456,7 +457,9 @@ app.include_router(backtesting.router, prefix="/api")
 app.include_router(ml.router)  # Machine Learning (Phase 2)
 app.include_router(ml_sentiment.router)  # ML Sentiment & Signals (Phase 2 - Active)
 if SUBSCRIPTION_AVAILABLE:
-    app.include_router(subscription.router)  # Subscription & Billing (Phase 2 - Monetization)
+    app.include_router(
+        subscription.router
+    )  # Subscription & Billing (Phase 2 - Monetization)
     print("[OK] Subscription API endpoints registered", flush=True)
 else:
     print(

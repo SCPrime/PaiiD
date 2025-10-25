@@ -8,7 +8,16 @@ Phase 2: Monetization Engine
 
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.orm import relationship
 
 from ..db.session import Base
@@ -21,7 +30,11 @@ class Subscription(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
     )
 
     # Stripe integration
@@ -52,11 +65,20 @@ class Subscription(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
-    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
     # Relationships
-    usage_records = relationship("UsageRecord", back_populates="subscription", cascade="all, delete-orphan")
-    invoices = relationship("Invoice", back_populates="subscription", cascade="all, delete-orphan")
+    usage_records = relationship(
+        "UsageRecord", back_populates="subscription", cascade="all, delete-orphan"
+    )
+    invoices = relationship(
+        "Invoice", back_populates="subscription", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Subscription(id={self.id}, user_id={self.user_id}, tier='{self.tier}', status='{self.status}')>"
@@ -87,7 +109,10 @@ class UsageRecord(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     subscription_id = Column(
-        Integer, ForeignKey("subscriptions.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer,
+        ForeignKey("subscriptions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
@@ -105,7 +130,9 @@ class UsageRecord(Base):
     usage_metadata = Column(JSON, default=dict, nullable=False)
 
     # Timestamps
-    timestamp = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True)
+    timestamp = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
     billing_period_start = Column(DateTime, nullable=False, index=True)
     billing_period_end = Column(DateTime, nullable=False)
 
@@ -123,7 +150,10 @@ class Invoice(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     subscription_id = Column(
-        Integer, ForeignKey("subscriptions.id", ondelete="SET NULL"), nullable=True, index=True
+        Integer,
+        ForeignKey("subscriptions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
@@ -160,8 +190,15 @@ class Invoice(Base):
     pdf_url = Column(String(500), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True)
-    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
     # Relationship
     subscription = relationship("Subscription", back_populates="invoices")
@@ -181,7 +218,9 @@ class PaymentMethod(Base):
     )
 
     # Stripe integration
-    stripe_payment_method_id = Column(String(100), unique=True, nullable=False, index=True)
+    stripe_payment_method_id = Column(
+        String(100), unique=True, nullable=False, index=True
+    )
 
     # Payment method details
     type = Column(String(20), nullable=False)  # card, bank_account, etc.
@@ -196,7 +235,12 @@ class PaymentMethod(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
-    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
     def __repr__(self):
         return f"<PaymentMethod(id={self.id}, user_id={self.user_id}, type='{self.type}', last4='{self.last4}')>"
@@ -209,7 +253,10 @@ class SubscriptionEvent(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     subscription_id = Column(
-        Integer, ForeignKey("subscriptions.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer,
+        ForeignKey("subscriptions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
@@ -231,13 +278,16 @@ class SubscriptionEvent(Base):
     event_data = Column(JSON, default=dict, nullable=False)
 
     # Timestamps
-    timestamp = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True)
+    timestamp = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     def __repr__(self):
         return f"<SubscriptionEvent(id={self.id}, subscription_id={self.subscription_id}, event_type='{self.event_type}', timestamp={self.timestamp})>"
 
 
 # Usage aggregation queries helper functions
+
 
 def get_monthly_usage(subscription_id: int, feature: str, month_start: datetime) -> int:
     """
@@ -248,6 +298,7 @@ def get_monthly_usage(subscription_id: int, feature: str, month_start: datetime)
         usage = get_monthly_usage(subscription_id, "ml_prediction", month_start)
     """
     from sqlalchemy import func
+
     from ..db.session import SessionLocal
 
     db = SessionLocal()

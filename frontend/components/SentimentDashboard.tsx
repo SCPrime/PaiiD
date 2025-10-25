@@ -1,120 +1,119 @@
-"use client";
+import React, { useEffect, useState } from "react";
+import { useWebSocket } from "../hooks/useWebSocket";
+import AnimatedCounter from "./ui/AnimatedCounter";
+import EnhancedCard from "./ui/EnhancedCard";
+import StatusIndicator from "./ui/StatusIndicator";
 
-import { Minus, Newspaper, RefreshCw, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { useIsMobile } from "../hooks/useBreakpoint";
-import { showError, showSuccess } from "../lib/toast";
-import { theme } from "../styles/theme";
-import { Button, Card } from "./ui";
-
-interface NewsSentiment {
-  article_id: string;
-  title: string;
-  source: string;
-  published_at: string;
-  url: string;
-  sentiment: "bullish" | "bearish" | "neutral";
-  sentiment_score: number;
-  confidence: number;
-  key_topics: string[];
-  impact_score: number;
+interface SentimentDashboardProps {
+  userId: string;
+  className?: string;
+  symbols?: string[];
+  autoRefresh?: boolean;
+  refreshInterval?: number;
 }
 
-interface SentimentAnalysis {
-  symbol: string;
-  overall_sentiment: "bullish" | "bearish" | "neutral";
-  sentiment_score: number;
-  confidence: number;
-  bullish_count: number;
-  bearish_count: number;
-  neutral_count: number;
-  total_articles: number;
-  avg_impact: number;
-  top_topics: string[];
-  articles: NewsSentiment[];
+interface SentimentData {
+  symbols: string[];
+  overall_sentiment: string;
+  combined_score: number;
+  news_sentiment: {
+    sentiment_score: number;
+    confidence: number;
+    articles_analyzed: number;
+  };
+  social_sentiment: {
+    sentiment_score: number;
+    confidence: number;
+    posts_analyzed: number;
+  };
   timestamp: string;
 }
 
-export default function SentimentDashboard() {
-  const isMobile = useIsMobile();
-  const [symbol, setSymbol] = useState("SPY");
-  const [lookbackHours, setLookbackHours] = useState(24);
+const SentimentDashboard: React.FC<SentimentDashboardProps> = ({
+  userId,
+  className,
+  symbols = ["AAPL", "MSFT", "GOOGL", "TSLA"],
+  autoRefresh = true,
+  refreshInterval = 300000, // 5 minutes
+}) => {
+  const [sentimentData, setSentimentData] = useState<SentimentData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<SentimentAnalysis | null>(null);
-  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Auto-refresh every 5 minutes if enabled
-  useEffect(() => {
-    if (!autoRefresh || !result) return;
+  const { isConnected } = useWebSocket({
+    url: process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws",
+    userId,
+    autoConnect: true,
+  });
 
-    const interval = setInterval(
-      () => {
-        analyzeSentiment();
-      },
-      5 * 60 * 1000
-    ); // 5 minutes
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, result, analyzeSentiment]);
-
-  const analyzeSentiment = useCallback(async () => {
-    if (!symbol.trim()) {
-      showError("Please enter a symbol");
-      return;
-    }
-
+  const fetchSentimentData = async () => {
     setIsLoading(true);
+    setError(null);
 
     try {
-      const res = await fetch(
-        `/api/proxy/api/sentiment/analyze?symbol=${symbol.toUpperCase()}&lookback_hours=${lookbackHours}`
-      );
+      const response = await fetch("/api/ai/sentiment/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          symbols: symbols,
+          days_back: 7,
+        }),
+      });
 
-      if (!res.ok) {
-        throw new Error(`Sentiment analysis failed: ${res.statusText}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSentimentData(data);
+        setLastUpdated(new Date());
+      } else {
+        throw new Error("Failed to fetch sentiment data");
       }
-
-      const data = await res.json();
-      setResult(data);
-      showSuccess(`Analyzed ${data.total_articles} articles for ${data.symbol}`);
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      showError(`Analysis failed: ${errorMessage}`);
+    } catch (err) {
+      console.error("Error fetching sentiment data:", err);
+      setError("Failed to load sentiment data");
     } finally {
       setIsLoading(false);
     }
-  }, [symbol, lookbackHours]);
+  };
 
-  const getSentimentColor = (sentiment: string): string => {
-    switch (sentiment) {
+  // Fetch sentiment data on mount
+  useEffect(() => {
+    fetchSentimentData();
+  }, [symbols.join(",")]);
+
+  // Auto-refresh
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(fetchSentimentData, refreshInterval);
+    return () => clearInterval(interval);
+  }, [autoRefresh, refreshInterval, symbols.join(",")]);
+
+  const getSentimentColor = (sentiment: string) => {
+    switch (sentiment.toLowerCase()) {
       case "bullish":
-        return theme.colors.success;
+        return "text-green-400";
       case "bearish":
-        return theme.colors.error;
+        return "text-red-400";
       case "neutral":
-        return theme.colors.textMuted;
+        return "text-yellow-400";
       default:
-        return theme.colors.text;
+        return "text-slate-400";
     }
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score > 20) return "positive";
+    if (score < -20) return "negative";
+    return "neutral";
   };
 
   const getSentimentIcon = (sentiment: string) => {
-    switch (sentiment) {
+    switch (sentiment.toLowerCase()) {
       case "bullish":
-        return <TrendingUp size={24} color={theme.colors.success} />;
-      case "bearish":
-        return <TrendingDown size={24} color={theme.colors.error} />;
-      case "neutral":
-        return <Minus size={24} color={theme.colors.textMuted} />;
-      default:
-        return <Minus size={24} />;
-    }
-  };
-
-  const getSentimentEmoji = (sentiment: string): string => {
-    switch (sentiment) {
-      case "bullish":
-        return "🚀";
+        return "📈";
       case "bearish":
         return "📉";
       case "neutral":
@@ -124,574 +123,199 @@ export default function SentimentDashboard() {
     }
   };
 
-  const formatTimestamp = (timestamp: string): string => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMins = Math.floor(diffMs / (1000 * 60));
+  if (error) {
+    return (
+      <EnhancedCard variant="default" className={className}>
+        <div className="text-center text-red-400">
+          <StatusIndicator status="error" size="sm" />
+          <p className="mt-2">Error: {error}</p>
+          <button
+            onClick={fetchSentimentData}
+            className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </EnhancedCard>
+    );
+  }
 
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return date.toLocaleDateString();
-  };
+  if (isLoading && !sentimentData) {
+    return (
+      <EnhancedCard variant="default" className={className}>
+        <div className="text-center">
+          <StatusIndicator status="loading" size="sm" />
+          <p className="mt-2 text-slate-400">Loading sentiment analysis...</p>
+        </div>
+      </EnhancedCard>
+    );
+  }
+
+  if (!sentimentData) {
+    return (
+      <EnhancedCard variant="default" className={className}>
+        <div className="text-center text-slate-400">
+          <StatusIndicator status="offline" size="sm" />
+          <p className="mt-2">No sentiment data available</p>
+        </div>
+      </EnhancedCard>
+    );
+  }
 
   return (
-    <div style={{ padding: isMobile ? theme.spacing.md : theme.spacing.lg }}>
+    <div className={`space-y-6 ${className}`}>
       {/* Header */}
-      <div style={{ marginBottom: theme.spacing.lg }}>
-        <h2
-          style={{
-            margin: 0,
-            fontSize: isMobile ? "24px" : "32px",
-            fontWeight: "700",
-            color: theme.colors.text,
-            textShadow: theme.glow.cyan,
-            marginBottom: theme.spacing.xs,
-            display: "flex",
-            alignItems: "center",
-            gap: theme.spacing.sm,
-          }}
-        >
-          <Newspaper size={32} color={theme.colors.secondary} />
-          News Sentiment Dashboard
-        </h2>
-        <p
-          style={{
-            margin: 0,
-            fontSize: "14px",
-            color: theme.colors.textMuted,
-          }}
-        >
-          Real-time AI-powered news sentiment analysis
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h3 className="text-white font-bold text-xl">Market Sentiment Analysis</h3>
+          <StatusIndicator status={isConnected ? "online" : "offline"} size="sm" />
+        </div>
+
+        <div className="flex items-center gap-4">
+          {lastUpdated && (
+            <span className="text-xs text-slate-400">
+              Updated: {lastUpdated.toLocaleTimeString()}
+            </span>
+          )}
+          <button
+            onClick={fetchSentimentData}
+            disabled={isLoading}
+            className="bg-blue-500 hover:bg-blue-600 disabled:bg-slate-600 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+          >
+            {isLoading ? "..." : "Refresh"}
+          </button>
+        </div>
       </div>
 
-      {/* Configuration Card */}
-      <Card glow="cyan" style={{ marginBottom: theme.spacing.lg }}>
-        <h3
-          style={{
-            fontSize: isMobile ? "18px" : "20px",
-            fontWeight: "600",
-            color: theme.colors.text,
-            marginBottom: theme.spacing.lg,
-          }}
-        >
-          Analysis Configuration
-        </h3>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
-            gap: theme.spacing.md,
-            marginBottom: theme.spacing.lg,
-          }}
-        >
-          {/* Symbol Input */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "12px",
-                color: theme.colors.textMuted,
-                marginBottom: theme.spacing.xs,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              Symbol
-            </label>
-            <input
-              type="text"
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              disabled={isLoading}
-              placeholder="SPY"
-              style={{
-                width: "100%",
-                padding: "12px",
-                background: "rgba(15, 23, 42, 0.5)",
-                border: `1px solid ${theme.colors.border}`,
-                borderRadius: theme.borderRadius.md,
-                color: theme.colors.text,
-                fontSize: "14px",
-              }}
-            />
+      {/* Overall Sentiment */}
+      <EnhancedCard variant="gradient" size="lg" className="text-center">
+        <div className="space-y-4">
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-4xl">{getSentimentIcon(sentimentData.overall_sentiment)}</span>
+            <h4 className="text-white font-bold text-2xl">Overall Sentiment</h4>
           </div>
 
-          {/* Lookback Hours */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "12px",
-                color: theme.colors.textMuted,
-                marginBottom: theme.spacing.xs,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
+          <div className="space-y-2">
+            <p
+              className={`text-3xl font-bold ${getSentimentColor(sentimentData.overall_sentiment)}`}
             >
-              Lookback Period: {lookbackHours} hours
-            </label>
-            <input
-              type="range"
-              min="6"
-              max="168"
-              step="6"
-              value={lookbackHours}
-              onChange={(e) => setLookbackHours(Number(e.target.value))}
-              disabled={isLoading}
-              style={{
-                width: "100%",
-                height: "8px",
-                borderRadius: "4px",
-                outline: "none",
-                opacity: isLoading ? 0.5 : 1,
-              }}
+              {sentimentData.overall_sentiment.toUpperCase()}
+            </p>
+
+            <AnimatedCounter
+              value={sentimentData.combined_score}
+              prefix={sentimentData.combined_score >= 0 ? "+" : ""}
+              decimals={1}
+              color={getScoreColor(sentimentData.combined_score)}
+              className="text-2xl font-semibold"
             />
-            <div
-              style={{
-                fontSize: "11px",
-                color: theme.colors.textMuted,
-                marginTop: theme.spacing.xs,
-              }}
-            >
-              6 hours - 7 days
-            </div>
           </div>
         </div>
+      </EnhancedCard>
 
-        <div
-          style={{
-            display: "flex",
-            gap: theme.spacing.sm,
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <Button
-            onClick={analyzeSentiment}
-            loading={isLoading}
-            disabled={isLoading || !symbol.trim()}
-            variant="primary"
-            style={{ flex: isMobile ? "1" : "0" }}
-          >
-            {isLoading ? "Analyzing..." : "Analyze Sentiment"}
-          </Button>
+      {/* Sentiment Breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* News Sentiment */}
+        <EnhancedCard variant="glass" size="md">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h5 className="text-white font-semibold text-lg">News Sentiment</h5>
+              <StatusIndicator status="online" size="sm" />
+            </div>
 
-          {result && (
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: theme.spacing.xs,
-                fontSize: "14px",
-                color: theme.colors.text,
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
-                style={{ cursor: "pointer" }}
-              />
-              <RefreshCw size={16} />
-              Auto-refresh (5min)
-            </label>
-          )}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Sentiment Score</span>
+                <AnimatedCounter
+                  value={sentimentData.news_sentiment.sentiment_score}
+                  prefix={sentimentData.news_sentiment.sentiment_score >= 0 ? "+" : ""}
+                  decimals={1}
+                  color={getScoreColor(sentimentData.news_sentiment.sentiment_score)}
+                  className="text-lg font-semibold"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Confidence</span>
+                <span className="text-white font-semibold">
+                  {sentimentData.news_sentiment.confidence}%
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Articles Analyzed</span>
+                <span className="text-white font-semibold">
+                  {sentimentData.news_sentiment.articles_analyzed}
+                </span>
+              </div>
+            </div>
+          </div>
+        </EnhancedCard>
+
+        {/* Social Sentiment */}
+        <EnhancedCard variant="glass" size="md">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h5 className="text-white font-semibold text-lg">Social Sentiment</h5>
+              <StatusIndicator status="online" size="sm" />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Sentiment Score</span>
+                <AnimatedCounter
+                  value={sentimentData.social_sentiment.sentiment_score}
+                  prefix={sentimentData.social_sentiment.sentiment_score >= 0 ? "+" : ""}
+                  decimals={1}
+                  color={getScoreColor(sentimentData.social_sentiment.sentiment_score)}
+                  className="text-lg font-semibold"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Confidence</span>
+                <span className="text-white font-semibold">
+                  {sentimentData.social_sentiment.confidence}%
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Posts Analyzed</span>
+                <span className="text-white font-semibold">
+                  {sentimentData.social_sentiment.posts_analyzed}
+                </span>
+              </div>
+            </div>
+          </div>
+        </EnhancedCard>
+      </div>
+
+      {/* Symbols Analyzed */}
+      <EnhancedCard variant="default" size="sm">
+        <div className="flex items-center justify-between">
+          <span className="text-slate-400">Symbols Analyzed</span>
+          <div className="flex items-center gap-2">
+            {sentimentData.symbols.map((symbol, index) => (
+              <span
+                key={symbol}
+                className="bg-slate-700 text-white px-2 py-1 rounded text-sm font-mono"
+              >
+                {symbol}
+              </span>
+            ))}
+          </div>
         </div>
-      </Card>
+      </EnhancedCard>
 
-      {/* Results */}
-      {result && (
-        <>
-          {/* Overall Sentiment Card */}
-          <Card glow="purple" style={{ marginBottom: theme.spacing.lg }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: theme.spacing.lg,
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: isMobile ? "18px" : "20px",
-                  fontWeight: "600",
-                  color: theme.colors.text,
-                  margin: 0,
-                }}
-              >
-                {getSentimentEmoji(result.overall_sentiment)} Market Sentiment - {result.symbol}
-              </h3>
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: theme.colors.textMuted,
-                }}
-              >
-                {formatTimestamp(result.timestamp)}
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
-                gap: theme.spacing.md,
-                marginBottom: theme.spacing.lg,
-              }}
-            >
-              {/* Overall Sentiment */}
-              <div
-                style={{
-                  padding: theme.spacing.md,
-                  background: `rgba(${
-                    result.overall_sentiment === "bullish"
-                      ? "16, 185, 129"
-                      : result.overall_sentiment === "bearish"
-                        ? "239, 68, 68"
-                        : "148, 163, 184"
-                  }, 0.1)`,
-                  border: `2px solid ${getSentimentColor(result.overall_sentiment)}`,
-                  borderRadius: theme.borderRadius.md,
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ marginBottom: theme.spacing.sm }}>
-                  {getSentimentIcon(result.overall_sentiment)}
-                </div>
-                <div
-                  style={{
-                    fontSize: "24px",
-                    fontWeight: "700",
-                    color: getSentimentColor(result.overall_sentiment),
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {result.overall_sentiment}
-                </div>
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: theme.colors.textMuted,
-                    marginTop: theme.spacing.xs,
-                  }}
-                >
-                  {(result.confidence * 100).toFixed(0)}% confidence
-                </div>
-              </div>
-
-              {/* Sentiment Score */}
-              <div
-                style={{
-                  padding: theme.spacing.md,
-                  background: "rgba(139, 92, 246, 0.1)",
-                  border: `1px solid ${theme.colors.accent}`,
-                  borderRadius: theme.borderRadius.md,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: theme.colors.textMuted,
-                    marginBottom: theme.spacing.xs,
-                  }}
-                >
-                  SENTIMENT SCORE
-                </div>
-                <div
-                  style={{
-                    fontSize: "32px",
-                    fontWeight: "700",
-                    color: theme.colors.accent,
-                  }}
-                >
-                  {result.sentiment_score >= 0 ? "+" : ""}
-                  {result.sentiment_score.toFixed(2)}
-                </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: theme.colors.textMuted,
-                  }}
-                >
-                  -1.0 (bearish) to +1.0 (bullish)
-                </div>
-              </div>
-
-              {/* Article Breakdown */}
-              <div
-                style={{
-                  padding: theme.spacing.md,
-                  background: "rgba(6, 182, 212, 0.1)",
-                  border: `1px solid ${theme.colors.secondary}`,
-                  borderRadius: theme.borderRadius.md,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: theme.colors.textMuted,
-                    marginBottom: theme.spacing.xs,
-                  }}
-                >
-                  ARTICLES ANALYZED
-                </div>
-                <div
-                  style={{
-                    fontSize: "32px",
-                    fontWeight: "700",
-                    color: theme.colors.secondary,
-                  }}
-                >
-                  {result.total_articles}
-                </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: theme.colors.textMuted,
-                  }}
-                >
-                  <span style={{ color: theme.colors.success }}>{result.bullish_count} 🚀</span> /{" "}
-                  <span style={{ color: theme.colors.error }}>{result.bearish_count} 📉</span> /{" "}
-                  <span>{result.neutral_count} ➡️</span>
-                </div>
-              </div>
-
-              {/* Impact Score */}
-              <div
-                style={{
-                  padding: theme.spacing.md,
-                  background: "rgba(16, 185, 129, 0.1)",
-                  border: `1px solid ${theme.colors.success}`,
-                  borderRadius: theme.borderRadius.md,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: theme.colors.textMuted,
-                    marginBottom: theme.spacing.xs,
-                  }}
-                >
-                  AVG IMPACT
-                </div>
-                <div
-                  style={{
-                    fontSize: "32px",
-                    fontWeight: "700",
-                    color: theme.colors.success,
-                  }}
-                >
-                  {(result.avg_impact * 100).toFixed(0)}%
-                </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: theme.colors.textMuted,
-                  }}
-                >
-                  Market moving potential
-                </div>
-              </div>
-            </div>
-
-            {/* Top Topics */}
-            {result.top_topics.length > 0 && (
-              <div>
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: theme.colors.textMuted,
-                    marginBottom: theme.spacing.sm,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  <Sparkles size={14} style={{ display: "inline", marginRight: "4px" }} />
-                  Trending Topics:
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: theme.spacing.xs,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  {result.top_topics.map((topic, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: "6px 12px",
-                        background: "rgba(139, 92, 246, 0.2)",
-                        border: `1px solid ${theme.colors.accent}`,
-                        borderRadius: theme.borderRadius.sm,
-                        fontSize: "13px",
-                        color: theme.colors.accent,
-                        fontWeight: "600",
-                      }}
-                    >
-                      {topic}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* News Articles */}
-          <Card glow="green" style={{ marginBottom: theme.spacing.lg }}>
-            <h3
-              style={{
-                fontSize: isMobile ? "18px" : "20px",
-                fontWeight: "600",
-                color: theme.colors.text,
-                marginBottom: theme.spacing.lg,
-              }}
-            >
-              📰 Recent News Articles
-            </h3>
-
-            {result.articles.length === 0 ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: theme.spacing.xl,
-                  color: theme.colors.textMuted,
-                }}
-              >
-                No articles found for this symbol in the selected time period.
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr",
-                  gap: theme.spacing.md,
-                }}
-              >
-                {result.articles.slice(0, 10).map((article, idx) => (
-                  <a
-                    key={idx}
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      padding: theme.spacing.md,
-                      background: "rgba(15, 23, 42, 0.5)",
-                      border: `1px solid ${getSentimentColor(article.sentiment)}`,
-                      borderRadius: theme.borderRadius.md,
-                      textDecoration: "none",
-                      display: "block",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(15, 23, 42, 0.8)";
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "rgba(15, 23, 42, 0.5)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        marginBottom: theme.spacing.sm,
-                      }}
-                    >
-                      <div
-                        style={{
-                          flex: 1,
-                          fontSize: "16px",
-                          fontWeight: "600",
-                          color: theme.colors.text,
-                          lineHeight: "1.4",
-                        }}
-                      >
-                        {article.title}
-                      </div>
-                      <div
-                        style={{
-                          marginLeft: theme.spacing.sm,
-                          padding: "4px 12px",
-                          background: `rgba(${
-                            article.sentiment === "bullish"
-                              ? "16, 185, 129"
-                              : article.sentiment === "bearish"
-                                ? "239, 68, 68"
-                                : "148, 163, 184"
-                          }, 0.2)`,
-                          border: `1px solid ${getSentimentColor(article.sentiment)}`,
-                          borderRadius: theme.borderRadius.sm,
-                          fontSize: "12px",
-                          color: getSentimentColor(article.sentiment),
-                          fontWeight: "700",
-                          textTransform: "uppercase",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {article.sentiment}
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        fontSize: "12px",
-                        color: theme.colors.textMuted,
-                      }}
-                    >
-                      <div>
-                        {article.source} • {formatTimestamp(article.published_at)}
-                      </div>
-                      <div>
-                        Confidence: {(article.confidence * 100).toFixed(0)}% | Impact:{" "}
-                        {(article.impact_score * 100).toFixed(0)}%
-                      </div>
-                    </div>
-
-                    {article.key_topics.length > 0 && (
-                      <div
-                        style={{
-                          marginTop: theme.spacing.sm,
-                          display: "flex",
-                          gap: theme.spacing.xs,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        {article.key_topics.slice(0, 3).map((topic, topicIdx) => (
-                          <span
-                            key={topicIdx}
-                            style={{
-                              padding: "2px 8px",
-                              background: "rgba(139, 92, 246, 0.15)",
-                              border: `1px solid ${theme.colors.accent}`,
-                              borderRadius: theme.borderRadius.xs,
-                              fontSize: "11px",
-                              color: theme.colors.accent,
-                            }}
-                          >
-                            {topic}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </a>
-                ))}
-              </div>
-            )}
-          </Card>
-        </>
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="text-center">
+          <StatusIndicator status="loading" size="sm" />
+          <p className="mt-2 text-slate-400">Updating sentiment analysis...</p>
+        </div>
       )}
     </div>
   );
-}
+};
+
+export default SentimentDashboard;

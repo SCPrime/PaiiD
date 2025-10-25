@@ -7,8 +7,8 @@ Phase 2: Monetization Engine - Usage Metering
 """
 
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -133,8 +133,9 @@ async def check_usage_limit(
         (within_limit, current_usage, limit)
     """
     try:
-        from ..models.subscription import check_feature_limit
         from datetime import datetime
+
+        from ..models.subscription import check_feature_limit
 
         # Get current billing period start
         now = lambda: datetime.now(UTC)()
@@ -220,7 +221,9 @@ def increment_usage(user_id: int, feature: str, quantity: int = 1) -> None:
             billing_period_end = datetime(now.year, now.month + 1, 1)
 
         # TODO: Record in database
-        logger.info(f"📊 Manual usage increment: {feature} +{quantity} for user {user_id}")
+        logger.info(
+            f"📊 Manual usage increment: {feature} +{quantity} for user {user_id}"
+        )
 
     except Exception as e:
         logger.warning(f"Failed to increment usage: {e}")
@@ -238,8 +241,9 @@ def get_usage_summary(user_id: int, tier: str) -> dict:
         Dictionary with usage for each feature
     """
     try:
-        from ..services.stripe_service import get_stripe_service
         from datetime import datetime
+
+        from ..services.stripe_service import get_stripe_service
 
         stripe_service = get_stripe_service()
         limits = stripe_service.get_tier_limits(tier)
@@ -282,7 +286,7 @@ def get_usage_summary(user_id: int, tier: str) -> dict:
 __all__ = [
     "UsageTrackingMiddleware",
     "check_usage_limit",
-    "require_feature_access",
-    "increment_usage",
     "get_usage_summary",
+    "increment_usage",
+    "require_feature_access",
 ]

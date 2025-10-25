@@ -269,10 +269,8 @@ function RadialMenuComponent({
           const marketVolatility = Math.abs(newData.dow.change) + Math.abs(newData.nasdaq.change);
           const stabilityScore = Math.max(0, 100 - marketVolatility * 10); // Lower volatility = higher confidence
           const connectionScore = retryAttempt === 0 ? 100 : Math.max(0, 100 - retryAttempt * 10);
-
-          const confidence = Math.round(
-            dataFreshness * 0.4 + stabilityScore * 0.4 + connectionScore * 0.2
-          );
+          
+          const confidence = Math.round((dataFreshness * 0.4 + stabilityScore * 0.4 + connectionScore * 0.2));
           setForceFieldConfidence(Math.min(100, Math.max(0, confidence)));
 
           // Use throttled update to prevent logo animation interruptions
@@ -401,29 +399,22 @@ function RadialMenuComponent({
 
     // ====== SVG FILTERS ======
 
-    // PREMIUM GLASS: Enhanced shadow filter (3-layer depth system)
+    // Normal shadow filter
     const normalShadow = defs
       .append("filter")
       .attr("id", "normalShadow")
-      .attr("height", "200%")
-      .attr("width", "200%")
-      .attr("x", "-50%")
-      .attr("y", "-50%");
-    normalShadow.append("feGaussianBlur").attr("in", "SourceAlpha").attr("stdDeviation", "4").attr("result", "blur1");
-    normalShadow.append("feOffset").attr("in", "blur1").attr("dx", "0").attr("dy", "3").attr("result", "dropShadow");
-    normalShadow.append("feFlood").attr("flood-color", "#000000").attr("flood-opacity", "0.3").attr("result", "dropColor");
-    normalShadow.append("feComposite").attr("in", "dropColor").attr("in2", "dropShadow").attr("operator", "in").attr("result", "shadow1");
-    normalShadow.append("feGaussianBlur").attr("in", "SourceAlpha").attr("stdDeviation", "8").attr("result", "blur2");
-    normalShadow.append("feFlood").attr("flood-color", "#000000").attr("flood-opacity", "0.15").attr("result", "ambientColor");
-    normalShadow.append("feComposite").attr("in", "ambientColor").attr("in2", "blur2").attr("operator", "in").attr("result", "shadow2");
-    normalShadow.append("feGaussianBlur").attr("in", "SourceAlpha").attr("stdDeviation", "1").attr("result", "edgeBlur");
-    normalShadow.append("feFlood").attr("flood-color", "#ffffff").attr("flood-opacity", "0.08").attr("result", "edgeColor");
-    normalShadow.append("feComposite").attr("in", "edgeColor").attr("in2", "edgeBlur").attr("operator", "in").attr("result", "edgeHighlight");
+      .attr("height", "150%")
+      .attr("width", "150%");
+    normalShadow.append("feGaussianBlur").attr("in", "SourceAlpha").attr("stdDeviation", "3");
+    normalShadow.append("feOffset").attr("dx", "0").attr("dy", "2").attr("result", "offsetblur");
+    normalShadow
+      .append("feComponentTransfer")
+      .append("feFuncA")
+      .attr("type", "linear")
+      .attr("slope", "0.4");
     const normalMerge = normalShadow.append("feMerge");
-    normalMerge.append("feMergeNode").attr("in", "shadow2");
-    normalMerge.append("feMergeNode").attr("in", "shadow1");
+    normalMerge.append("feMergeNode");
     normalMerge.append("feMergeNode").attr("in", "SourceGraphic");
-    normalMerge.append("feMergeNode").attr("in", "edgeHighlight");
 
     // Hover glow filter
     const hoverGlow = defs
@@ -868,14 +859,10 @@ function RadialMenuComponent({
       .style("pointer-events", "none")
       .text("FORCE FIELD");
 
-    const confidenceColor =
-      forceFieldConfidence >= 80
-        ? "#45f0c0"
-        : forceFieldConfidence >= 60
-          ? "#fbbf24"
-          : forceFieldConfidence >= 40
-            ? "#fb923c"
-            : "#ef4444";
+    const confidenceColor = 
+      forceFieldConfidence >= 80 ? "#45f0c0" : 
+      forceFieldConfidence >= 60 ? "#fbbf24" : 
+      forceFieldConfidence >= 40 ? "#fb923c" : "#ef4444";
 
     forceFieldGroup
       .append("text")
