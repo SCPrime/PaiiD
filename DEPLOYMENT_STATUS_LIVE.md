@@ -8,13 +8,13 @@
 
 ## 🚀 **LIVE URLS:**
 
-| Service | URL | Status |
-|---------|-----|--------|
-| **Frontend** | https://paiid-frontend.onrender.com | 🟢 LIVE |
-| **Backend** | https://paiid-backend.onrender.com | 🟢 LIVE |
-| **Progress Dashboard** | https://scprime.github.io/PaiiD/ | 🟢 LIVE |
-| **API Health** | https://paiid-backend.onrender.com/api/health | 🟢 LIVE |
-| **API Docs** | https://paiid-backend.onrender.com/docs | 🟢 LIVE |
+| Service                | URL                                           | Status |
+| ---------------------- | --------------------------------------------- | ------ |
+| **Frontend**           | https://paiid-frontend.onrender.com           | 🟢 LIVE |
+| **Backend**            | https://paiid-backend.onrender.com            | 🟢 LIVE |
+| **Progress Dashboard** | https://scprime.github.io/PaiiD/              | 🟢 LIVE |
+| **API Health**         | https://paiid-backend.onrender.com/api/health | 🟢 LIVE |
+| **API Docs**           | https://paiid-backend.onrender.com/docs       | 🟢 LIVE |
 
 ---
 
@@ -226,27 +226,27 @@ git push origin main
 
 ## 📊 **DEPLOYMENT HISTORY:**
 
-| Date | Service | Change | Status |
-|------|---------|--------|--------|
-| 2025-10-24 | Both | GitHub Monitor added | ✅ Success |
-| 2025-10-24 | Backend | ML Sentiment Engine | ✅ Success |
-| 2025-10-24 | Both | JWT Migration | ✅ Success |
-| 2025-10-24 | Backend | Performance optimization | ✅ Success |
-| 2025-10-24 | Frontend | Code splitting | ✅ Success |
+| Date       | Service  | Change                   | Status    |
+| ---------- | -------- | ------------------------ | --------- |
+| 2025-10-24 | Both     | GitHub Monitor added     | ✅ Success |
+| 2025-10-24 | Backend  | ML Sentiment Engine      | ✅ Success |
+| 2025-10-24 | Both     | JWT Migration            | ✅ Success |
+| 2025-10-24 | Backend  | Performance optimization | ✅ Success |
+| 2025-10-24 | Frontend | Code splitting           | ✅ Success |
 
 ---
 
 ## 🎯 **QUICK LINKS:**
 
-| Resource | Link |
-|----------|------|
-| **Render Dashboard** | https://dashboard.render.com |
-| **GitHub Repo** | https://github.com/SCPrime/PaiiD |
-| **GitHub Actions** | https://github.com/SCPrime/PaiiD/actions |
-| **Live Frontend** | https://paiid-frontend.onrender.com |
-| **Live Backend** | https://paiid-backend.onrender.com |
-| **API Docs** | https://paiid-backend.onrender.com/docs |
-| **Progress Dashboard** | https://scprime.github.io/PaiiD/ |
+| Resource               | Link                                     |
+| ---------------------- | ---------------------------------------- |
+| **Render Dashboard**   | https://dashboard.render.com             |
+| **GitHub Repo**        | https://github.com/SCPrime/PaiiD         |
+| **GitHub Actions**     | https://github.com/SCPrime/PaiiD/actions |
+| **Live Frontend**      | https://paiid-frontend.onrender.com      |
+| **Live Backend**       | https://paiid-backend.onrender.com       |
+| **API Docs**           | https://paiid-backend.onrender.com/docs  |
+| **Progress Dashboard** | https://scprime.github.io/PaiiD/         |
 
 ---
 
