@@ -1,6 +1,9 @@
-from .base_provider import BaseNewsProvider, NewsArticle
 import os
+
 import requests
+
+from .base_provider import BaseNewsProvider, NewsArticle
+
 
 class PolygonProvider(BaseNewsProvider):
     def __init__(self):

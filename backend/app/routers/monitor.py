@@ -1,21 +1,25 @@
-from ..core.auth import get_current_user
-from ..core.config import get_settings
-from ..models.user import User
-from ..services.counter_manager import get_counter_manager
-from ..services.github_monitor import get_github_handler
-from datetime import UTC, datetime
-from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
-import logging
-
 """
 GitHub Repository Monitor API Router
 Provides endpoints for monitoring dashboard and counters
 """
 
+import logging
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
+
+from ..core.jwt import get_current_user
+from ..core.config import settings
+from ..models.user import User
+from ..services.counter_manager import get_counter_manager
+from ..services.github_monitor import get_github_handler
+
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/monitor", tags=["Repository Monitor"])
 settings = get_settings()
+
 
 # Response Models
 class CountersResponse(BaseModel):
@@ -34,6 +38,7 @@ class CountersResponse(BaseModel):
     conflicts: int = 0
     hotfixes: int = 0
 
+
 class DashboardResponse(BaseModel):
     """Complete dashboard data"""
 
@@ -41,11 +46,13 @@ class DashboardResponse(BaseModel):
     timestamp: datetime
     status: str
 
+
 class TrendPoint(BaseModel):
     """Single point in trend data"""
 
     timestamp: float
     value: int
+
 
 class TrendResponse(BaseModel):
     """Trend data for a counter"""
@@ -53,6 +60,7 @@ class TrendResponse(BaseModel):
     counter_name: str
     hours: int
     data: list[TrendPoint]
+
 
 # Endpoints
 @router.get("/counters", response_model=CountersResponse)
@@ -86,6 +94,7 @@ async def get_counters(current_user: User = Depends(get_current_user)):
         raise HTTPException(
             status_code=500, detail=f"Failed to get counters: {e!s}"
         ) from e
+
 
 @router.get("/dashboard", response_model=DashboardResponse)
 async def get_dashboard(current_user: User = Depends(get_current_user)):
@@ -125,6 +134,7 @@ async def get_dashboard(current_user: User = Depends(get_current_user)):
             status_code=500, detail=f"Failed to get dashboard data: {e!s}"
         ) from e
 
+
 @router.get("/trend/{counter_name}", response_model=TrendResponse)
 async def get_counter_trend(
     counter_name: str,
@@ -159,6 +169,7 @@ async def get_counter_trend(
         raise HTTPException(
             status_code=500, detail=f"Failed to get trend data: {e!s}"
         ) from e
+
 
 @router.post("/webhook")
 async def github_webhook(request: Request):
@@ -219,6 +230,7 @@ async def github_webhook(request: Request):
             status_code=500, detail=f"Webhook processing failed: {e!s}"
         ) from e
 
+
 @router.post("/reset-weekly")
 async def reset_weekly_counters(current_user: User = Depends(get_current_user)):
     """
@@ -242,6 +254,7 @@ async def reset_weekly_counters(current_user: User = Depends(get_current_user)):
         raise HTTPException(
             status_code=500, detail=f"Failed to reset counters: {e!s}"
         ) from e
+
 
 @router.get("/health")
 async def monitor_health_check():
@@ -269,3 +282,4 @@ async def monitor_health_check():
             "error": str(e),
             "timestamp": datetime.now(UTC).isoformat(),
         }
+

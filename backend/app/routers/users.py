@@ -1,20 +1,24 @@
-from ..core.jwt import get_current_user
-from ..db.session import get_db
-from ..models.database import User
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, field_validator
-from sqlalchemy.orm import Session
-from typing import Any
-import logging
-
 """
 User Preferences API Routes
 Endpoints for managing user preferences including risk tolerance
 """
 
+import logging
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field, field_validator
+from sqlalchemy.orm import Session
+
+from ..core.jwt import get_current_user
+from ..db.session import get_db
+from ..models.database import User
+
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
 
 class UserPreferencesResponse(BaseModel):
     """Response model for user preferences"""
@@ -24,6 +28,7 @@ class UserPreferencesResponse(BaseModel):
     watchlist: list | None = None
     notifications_enabled: bool | None = None
     preferences: dict[str, Any]  # Full preferences object
+
 
 class UserPreferencesUpdate(BaseModel):
     """Request model for updating user preferences"""
@@ -41,6 +46,7 @@ class UserPreferencesUpdate(BaseModel):
         if v is not None and (v < 0 or v > 100):
             raise ValueError("risk_tolerance must be between 0 and 100")
         return v
+
 
 @router.get("/users/preferences")
 def get_user_preferences(
@@ -74,6 +80,7 @@ def get_user_preferences(
     except Exception as e:
         logger.error(f"❌ Failed to fetch user preferences: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch user preferences: {e!s}")
+
 
 @router.patch("/users/preferences")
 def update_user_preferences(
@@ -143,6 +150,7 @@ def update_user_preferences(
         logger.error(f"❌ Failed to update user preferences: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to update user preferences: {e!s}")
 
+
 def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
     """
     Calculate risk-based trading limits
@@ -177,6 +185,7 @@ def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
             "max_positions": 10,  # Max 10 concurrent positions
             "description": "Higher risk, larger position sizes",
         }
+
 
 @router.get("/users/risk-limits")
 def get_user_risk_limits(

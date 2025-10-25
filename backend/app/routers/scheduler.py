@@ -1,24 +1,29 @@
-from ..core.jwt import get_current_user
-from ..models.database import User
-from ..scheduler import APPROVALS_DIR, EXECUTIONS_DIR, SCHEDULES_DIR, get_scheduler
-from datetime import UTC, datetime
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-import json
-import logging
-import uuid
-
 """
 Scheduler API Router (Simplified - File-based)
 REST endpoints for managing scheduled trading tasks
 """
 
+import json
+import logging
+import uuid
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+
+from ..core.jwt import get_current_user
+from ..models.database import User
+from ..scheduler import APPROVALS_DIR, EXECUTIONS_DIR, SCHEDULES_DIR, get_scheduler
+
+
 router = APIRouter(prefix="/scheduler", tags=["scheduler"])
 logger = logging.getLogger(__name__)
+
 
 # ========================
 # Request/Response Models
 # ========================
+
 
 class ScheduleCreate(BaseModel):
     name: str
@@ -28,12 +33,14 @@ class ScheduleCreate(BaseModel):
     requires_approval: bool = True
     enabled: bool = True
 
+
 class ScheduleUpdate(BaseModel):
     name: str | None = None
     cron_expression: str | None = None
     timezone: str | None = None
     requires_approval: bool | None = None
     enabled: bool | None = None
+
 
 class ScheduleResponse(BaseModel):
     id: str
@@ -51,6 +58,7 @@ class ScheduleResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class ExecutionResponse(BaseModel):
     id: str
     schedule_id: str
@@ -63,6 +71,7 @@ class ExecutionResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class ApprovalResponse(BaseModel):
     id: str
@@ -83,12 +92,15 @@ class ApprovalResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class ApprovalDecision(BaseModel):
     reason: str | None = None
+
 
 # ========================
 # Helper Functions
 # ========================
+
 
 def _load_schedule(schedule_id: str) -> dict | None:
     """Load schedule from file"""
@@ -98,17 +110,20 @@ def _load_schedule(schedule_id: str) -> dict | None:
             return json.load(f)
     return None
 
+
 def _save_schedule(schedule: dict):
     """Save schedule to file"""
     schedule_file = SCHEDULES_DIR / f"{schedule['id']}.json"
     with open(schedule_file, "w") as f:
         json.dump(schedule, f, indent=2)
 
+
 def _delete_schedule_file(schedule_id: str):
     """Delete schedule file"""
     schedule_file = SCHEDULES_DIR / f"{schedule_id}.json"
     if schedule_file.exists():
         schedule_file.unlink()
+
 
 def _load_all_schedules() -> list[dict]:
     """Load all schedules from files"""
@@ -117,6 +132,7 @@ def _load_all_schedules() -> list[dict]:
         with open(schedule_file) as f:
             schedules.append(json.load(f))
     return sorted(schedules, key=lambda x: x.get("created_at", ""), reverse=True)
+
 
 def _load_executions(limit: int = 20, schedule_id: str | None = None) -> list[dict]:
     """Load execution history from files"""
@@ -130,6 +146,7 @@ def _load_executions(limit: int = 20, schedule_id: str | None = None) -> list[di
     # Sort by started_at descending
     executions = sorted(executions, key=lambda x: x.get("started_at", ""), reverse=True)
     return executions[:limit]
+
 
 def _load_pending_approvals() -> list[dict]:
     """Load pending approvals from files"""
@@ -147,6 +164,7 @@ def _load_pending_approvals() -> list[dict]:
 
     return sorted(approvals, key=lambda x: x.get("created_at", ""), reverse=True)
 
+
 def _update_approval(approval_id: str, updates: dict):
     """Update approval file"""
     approval_file = APPROVALS_DIR / f"{approval_id}.json"
@@ -157,9 +175,11 @@ def _update_approval(approval_id: str, updates: dict):
         with open(approval_file, "w") as f:
             json.dump(approval, f, indent=2)
 
+
 # ========================
 # Schedule Management
 # ========================
+
 
 @router.get("/schedules", response_model=list[ScheduleResponse])
 async def list_schedules(current_user: User = Depends(get_current_user)):
@@ -198,6 +218,7 @@ async def list_schedules(current_user: User = Depends(get_current_user)):
     except Exception as e:
         logger.error(f"Failed to list schedules: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list schedules")
+
 
 @router.post(
     "/schedules", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED
@@ -247,6 +268,7 @@ async def create_schedule(
         logger.error(f"Failed to create schedule: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create schedule")
 
+
 @router.patch("/schedules/{schedule_id}", response_model=ScheduleResponse)
 async def update_schedule(
     schedule_id: str,
@@ -292,6 +314,7 @@ async def update_schedule(
         logger.error(f"Failed to update schedule {schedule_id}: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to update schedule")
 
+
 @router.delete("/schedules/{schedule_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_schedule(
     schedule_id: str, current_user: User = Depends(get_current_user)
@@ -311,9 +334,11 @@ async def delete_schedule(
         logger.error(f"Failed to delete schedule {schedule_id}: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to delete schedule")
 
+
 # ========================
 # Emergency Controls
 # ========================
+
 
 @router.post("/pause-all")
 async def pause_all_schedules(current_user: User = Depends(get_current_user)):
@@ -330,6 +355,7 @@ async def pause_all_schedules(current_user: User = Depends(get_current_user)):
         logger.error(f"Failed to pause all schedules: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to pause schedules")
 
+
 @router.post("/resume-all")
 async def resume_all_schedules(current_user: User = Depends(get_current_user)):
     """Resume all paused schedules"""
@@ -345,9 +371,11 @@ async def resume_all_schedules(current_user: User = Depends(get_current_user)):
         logger.error(f"Failed to resume all schedules: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to resume schedules")
 
+
 # ========================
 # Execution History
 # ========================
+
 
 @router.get("/executions", response_model=list[ExecutionResponse])
 async def list_executions(
@@ -363,9 +391,11 @@ async def list_executions(
         logger.error(f"Failed to list executions: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list executions")
 
+
 # ========================
 # Approval Workflow
 # ========================
+
 
 @router.get("/pending-approvals", response_model=list[ApprovalResponse])
 async def list_pending_approvals(current_user: User = Depends(get_current_user)):
@@ -376,6 +406,7 @@ async def list_pending_approvals(current_user: User = Depends(get_current_user))
     except Exception as e:
         logger.error(f"Failed to list pending approvals: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list approvals")
+
 
 @router.post("/approvals/{approval_id}/approve")
 async def approve_trade(
@@ -408,6 +439,7 @@ async def approve_trade(
     except Exception as e:
         logger.error(f"Failed to approve trade {approval_id}: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to approve trade")
+
 
 @router.post("/approvals/{approval_id}/reject")
 async def reject_trade(
@@ -443,9 +475,11 @@ async def reject_trade(
         logger.error(f"Failed to reject trade {approval_id}: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to reject trade")
 
+
 # ========================
 # Health & Status
 # ========================
+
 
 @router.get("/status")
 async def scheduler_status(current_user: User = Depends(get_current_user)):

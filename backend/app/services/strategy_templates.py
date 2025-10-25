@@ -1,10 +1,11 @@
-from dataclasses import dataclass
-from typing import Any
-
 """
 Strategy Templates Service
 Pre-built trading strategy templates with risk classifications
 """
+
+from dataclasses import dataclass
+from typing import Any
+
 
 @dataclass
 class StrategyTemplate:
@@ -20,6 +21,7 @@ class StrategyTemplate:
     avg_return_percent: float  # Average return per trade
     max_drawdown_percent: float  # Maximum historical drawdown
     recommended_for: list[str]  # Market conditions this strategy works best in
+
 
 # Pre-built strategy templates
 STRATEGY_TEMPLATES = [
@@ -231,9 +233,11 @@ STRATEGY_TEMPLATES = [
     ),
 ]
 
+
 def get_all_templates() -> list[StrategyTemplate]:
     """Get all available strategy templates"""
     return STRATEGY_TEMPLATES
+
 
 def get_template_by_id(template_id: str) -> StrategyTemplate:
     """Get a specific template by ID"""
@@ -241,6 +245,7 @@ def get_template_by_id(template_id: str) -> StrategyTemplate:
         if template.id == template_id:
             return template
     raise ValueError(f"Template not found: {template_id}")
+
 
 def filter_templates_by_risk(risk_tolerance: int) -> list[StrategyTemplate]:
     """
@@ -263,6 +268,7 @@ def filter_templates_by_risk(risk_tolerance: int) -> list[StrategyTemplate]:
         allowed_levels = ["Conservative", "Moderate", "Aggressive"]
 
     return [t for t in STRATEGY_TEMPLATES if t.risk_level in allowed_levels]
+
 
 def customize_template_for_risk(template: StrategyTemplate, risk_tolerance: int) -> dict[str, Any]:
     """
@@ -301,6 +307,7 @@ def customize_template_for_risk(template: StrategyTemplate, risk_tolerance: int)
                 rule["value"] = round(rule["value"] * 1.2, 1)
 
     return config
+
 
 def get_template_compatibility_score(
     template: StrategyTemplate,
@@ -368,6 +375,7 @@ def get_template_compatibility_score(
         score += 10  # Can handle any number of positions
 
     return min(100.0, max(0.0, score))
+
 
 def get_all_strategy_templates() -> list[StrategyTemplate]:
     """

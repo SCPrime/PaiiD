@@ -1,14 +1,16 @@
-from ..core.config import settings
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy.pool import StaticPool
-
 """
 Database Session Management
 
 Provides SQLAlchemy engine, session, and base for models.
 Falls back to SQLite in-memory if DATABASE_URL not configured.
 """
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from ..core.config import settings
+
 
 # Create engine based on configuration
 if settings.DATABASE_URL:
@@ -35,6 +37,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Base class for models
 Base = declarative_base()
 
+
 def get_db():
     """
     Dependency for FastAPI routes
@@ -50,6 +53,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 def init_db():
     """

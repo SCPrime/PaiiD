@@ -1,18 +1,21 @@
-from ..core.config import get_settings
-from .counter_manager import get_counter_manager
-from datetime import UTC, datetime
-from typing import Any
-import hashlib
-import hmac
-import logging
-
 """
 GitHub Monitor Service
 Handles GitHub webhook events and tracks repository activity
 """
 
+import hashlib
+import hmac
+import logging
+from datetime import UTC, datetime
+from typing import Any
+
+from ..core.config import get_settings
+from .counter_manager import get_counter_manager
+
+
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
 
 class GitHubWebhookHandler:
     """Handles GitHub webhook events"""
@@ -331,8 +334,10 @@ class GitHubWebhookHandler:
             logger.error(f"Error handling release event: {e}")
             return {"event": "release", "error": str(e)}
 
+
 # Global instance
 _github_handler: GitHubWebhookHandler | None = None
+
 
 def get_github_handler() -> GitHubWebhookHandler:
     """Get or create GitHub webhook handler instance"""

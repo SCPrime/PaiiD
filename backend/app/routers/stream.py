@@ -1,15 +1,3 @@
-from app.core.jwt import get_current_user
-from app.models.database import User
-from app.services.cache import CacheService, get_cache
-from app.services.tradier_stream import get_tradier_stream
-from collections.abc import AsyncGenerator
-from fastapi import APIRouter, Depends, Query
-from sse_starlette.sse import EventSourceResponse
-import asyncio
-import json
-import logging
-import time
-
 """
 Server-Sent Events (SSE) Streaming Endpoints
 
@@ -23,6 +11,21 @@ Phase 2.A - Real-Time Data Implementation (Tradier WebSocket streaming)
 Phase 5.C - Heartbeat mechanism for connection monitoring
 """
 
+import asyncio
+import json
+import logging
+import time
+from collections.abc import AsyncGenerator
+
+from fastapi import APIRouter, Depends, Query
+from sse_starlette.sse import EventSourceResponse
+
+from app.core.jwt import get_current_user
+from app.models.database import User
+from app.services.cache import CacheService, get_cache
+from app.services.tradier_stream import get_tradier_stream
+
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["streaming"])
@@ -30,6 +33,7 @@ router = APIRouter(tags=["streaming"])
 # Configuration
 HEARTBEAT_INTERVAL = 15  # Send heartbeat every 15 seconds
 DATA_CHECK_INTERVAL = 1  # Check for new data every 1 second
+
 
 @router.get("/stream/prices")
 async def stream_prices(
@@ -139,6 +143,7 @@ async def stream_prices(
 
     return EventSourceResponse(price_generator())
 
+
 @router.get("/stream/positions")
 async def stream_positions(
     current_user: User = Depends(get_current_user),
@@ -214,6 +219,7 @@ async def stream_positions(
             yield {"event": "error", "data": json.dumps({"error": str(e)})}
 
     return EventSourceResponse(position_generator())
+
 
 @router.get("/stream/market-indices")
 async def stream_market_indices(
@@ -341,6 +347,7 @@ async def stream_market_indices(
             yield {"event": "error", "data": json.dumps({"error": str(e)})}
 
     return EventSourceResponse(indices_generator())
+
 
 @router.get("/stream/status")
 async def stream_status(current_user: User = Depends(get_current_user)):

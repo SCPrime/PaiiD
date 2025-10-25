@@ -1,16 +1,3 @@
-            from ..services.stripe_service import get_stripe_service
-            from fastapi import HTTPException
-        from ..models.subscription import check_feature_limit
-        from ..services.stripe_service import get_stripe_service
-        from datetime import datetime
-        from datetime import datetime
-        from datetime import datetime
-from collections.abc import Callable
-from datetime import UTC, datetime
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
-import logging
-
 """
 Usage Tracking Middleware
 
@@ -19,7 +6,16 @@ Automatically tracks feature usage for subscription metering.
 Phase 2: Monetization Engine - Usage Metering
 """
 
+import logging
+from datetime import datetime
+from typing import Callable
+
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
+
+
 logger = logging.getLogger(__name__)
+
 
 # Feature tracking configuration
 TRACKED_ENDPOINTS = {
@@ -33,6 +29,7 @@ TRACKED_ENDPOINTS = {
     "/api/sentiment/analyze": "ml_prediction",
     "/api/news": "news_fetch",
 }
+
 
 class UsageTrackingMiddleware(BaseHTTPMiddleware):
     """
@@ -88,7 +85,7 @@ class UsageTrackingMiddleware(BaseHTTPMiddleware):
                 user_id = 1  # Default for development
 
             # Get current billing period
-            now = lambda: datetime.now(UTC)()
+            now = datetime.utcnow()
             billing_period_start = datetime(now.year, now.month, 1)
 
             # Calculate period end (first day of next month)
@@ -118,6 +115,7 @@ class UsageTrackingMiddleware(BaseHTTPMiddleware):
             # Don't fail request if usage tracking fails
             logger.warning(f"Failed to track usage: {e}")
 
+
 async def check_usage_limit(
     user_id: int,
     feature: str,
@@ -135,9 +133,11 @@ async def check_usage_limit(
         (within_limit, current_usage, limit)
     """
     try:
+        from ..models.subscription import check_feature_limit
+        from datetime import datetime
 
         # Get current billing period start
-        now = lambda: datetime.now(UTC)()
+        now = datetime.utcnow()
         month_start = datetime(now.year, now.month, 1)
 
         # TODO: Get subscription_id from user
@@ -158,6 +158,7 @@ async def check_usage_limit(
         # On error, allow request to proceed
         return True, 0, -1
 
+
 def require_feature_access(feature: str):
     """
     Decorator to require feature access based on subscription tier
@@ -171,11 +172,13 @@ def require_feature_access(feature: str):
 
     def decorator(func):
         async def wrapper(*args, **kwargs):
+            from fastapi import HTTPException
 
             # TODO: Get user subscription tier
             tier = "free"  # Placeholder
 
             # Check if feature is available for tier
+            from ..services.stripe_service import get_stripe_service
 
             stripe_service = get_stripe_service()
             limits = stripe_service.get_tier_limits(tier)
@@ -195,6 +198,7 @@ def require_feature_access(feature: str):
 
     return decorator
 
+
 def increment_usage(user_id: int, feature: str, quantity: int = 1) -> None:
     """
     Manually increment usage for a feature
@@ -205,8 +209,9 @@ def increment_usage(user_id: int, feature: str, quantity: int = 1) -> None:
         quantity: Usage quantity (default: 1)
     """
     try:
+        from datetime import datetime
 
-        now = lambda: datetime.now(UTC)()
+        now = datetime.utcnow()
         billing_period_start = datetime(now.year, now.month, 1)
 
         if now.month == 12:
@@ -215,12 +220,11 @@ def increment_usage(user_id: int, feature: str, quantity: int = 1) -> None:
             billing_period_end = datetime(now.year, now.month + 1, 1)
 
         # TODO: Record in database
-        logger.info(
-            f"📊 Manual usage increment: {feature} +{quantity} for user {user_id}"
-        )
+        logger.info(f"📊 Manual usage increment: {feature} +{quantity} for user {user_id}")
 
     except Exception as e:
         logger.warning(f"Failed to increment usage: {e}")
+
 
 def get_usage_summary(user_id: int, tier: str) -> dict:
     """
@@ -234,11 +238,13 @@ def get_usage_summary(user_id: int, tier: str) -> dict:
         Dictionary with usage for each feature
     """
     try:
+        from ..services.stripe_service import get_stripe_service
+        from datetime import datetime
 
         stripe_service = get_stripe_service()
         limits = stripe_service.get_tier_limits(tier)
 
-        now = lambda: datetime.now(UTC)()
+        now = datetime.utcnow()
         month_start = datetime(now.year, now.month, 1)
 
         # TODO: Get actual usage from database
@@ -271,11 +277,12 @@ def get_usage_summary(user_id: int, tier: str) -> dict:
         logger.error(f"Failed to get usage summary: {e}")
         return {}
 
+
 # Export middleware and utilities
 __all__ = [
     "UsageTrackingMiddleware",
     "check_usage_limit",
-    "get_usage_summary",
-    "increment_usage",
     "require_feature_access",
+    "increment_usage",
+    "get_usage_summary",
 ]

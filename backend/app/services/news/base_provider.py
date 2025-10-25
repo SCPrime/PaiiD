@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+
 class NewsArticle:
     """Standardized news article format"""
 
@@ -33,6 +34,7 @@ class NewsArticle:
             "image_url": self.image_url,
             "provider": self.provider,
         }
+
 
 class BaseNewsProvider(ABC):
     """Base class for all news providers"""

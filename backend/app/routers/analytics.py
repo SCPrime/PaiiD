@@ -1,15 +1,3 @@
-        from ..services.equity_tracker import get_equity_tracker
-        from ..services.equity_tracker import get_equity_tracker
-from ..core.jwt import get_current_user
-from ..models.database import User
-from ..services.tradier_client import get_tradier_client
-from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-from typing import Literal
-import logging
-import math
-
 """
 Analytics and Performance Tracking Endpoints
 
@@ -17,9 +5,23 @@ Provides portfolio performance metrics, historical equity tracking,
 and risk analytics for the P&L Dashboard.
 """
 
+import logging
+import math
+from datetime import datetime, timedelta
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+
+from ..core.jwt import get_current_user
+from ..models.database import User
+from ..services.tradier_client import get_tradier_client
+
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["analytics"])
+
 
 class PortfolioSummary(BaseModel):
     """Real-time portfolio summary metrics"""
@@ -37,6 +39,7 @@ class PortfolioSummary(BaseModel):
     largest_winner: dict | None = None
     largest_loser: dict | None = None
 
+
 class EquityPoint(BaseModel):
     """Single equity curve data point"""
 
@@ -44,6 +47,7 @@ class EquityPoint(BaseModel):
     equity: float
     cash: float
     positions_value: float
+
 
 class PerformanceMetrics(BaseModel):
     """Comprehensive performance analytics"""
@@ -63,6 +67,7 @@ class PerformanceMetrics(BaseModel):
     current_streak: int
     best_day: float
     worst_day: float
+
 
 @router.get("/portfolio/summary")
 async def get_portfolio_summary(
@@ -166,6 +171,7 @@ async def get_portfolio_summary(
         logger.error(f"❌ Failed to get portfolio summary: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to get portfolio summary: {e!s}")
 
+
 @router.get("/portfolio/history")
 async def get_portfolio_history(
     period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M"),
@@ -184,6 +190,7 @@ async def get_portfolio_history(
     Falls back to simulated data if insufficient history.
     """
     try:
+        from ..services.equity_tracker import get_equity_tracker
 
         tracker = get_equity_tracker()
         client = get_tradier_client()
@@ -251,6 +258,7 @@ async def get_portfolio_history(
     except Exception as e:
         logger.error(f"❌ Failed to get portfolio history: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to get portfolio history: {e!s}")
+
 
 @router.get("/analytics/performance")
 async def get_performance_metrics(
@@ -327,6 +335,7 @@ async def get_performance_metrics(
         total_return_percent = (total_return / total_cost * 100) if total_cost > 0 else 0
 
         # Sharpe ratio - calculate actual volatility from equity history
+        from ..services.equity_tracker import get_equity_tracker
 
         tracker = get_equity_tracker()
         now = datetime.now()

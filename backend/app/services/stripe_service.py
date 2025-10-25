@@ -1,9 +1,3 @@
-from datetime import datetime
-from typing import Any
-import logging
-import os
-import stripe
-
 """
 Stripe Service for Subscription Management
 
@@ -12,11 +6,20 @@ Handles subscription lifecycle, usage metering, and payment processing.
 Phase 2: Monetization Engine
 """
 
+import logging
+import os
+from datetime import datetime
+from typing import Any
+
+import stripe
+
+
 logger = logging.getLogger(__name__)
 
 # Initialize Stripe
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+
 
 # Subscription Tiers Configuration
 SUBSCRIPTION_TIERS = {
@@ -66,6 +69,7 @@ SUBSCRIPTION_TIERS = {
         },
     },
 }
+
 
 class StripeService:
     """Stripe integration for subscription management"""
@@ -424,8 +428,10 @@ class StripeService:
 
         return current_usage < limit
 
+
 # Singleton instance
 _stripe_service = None
+
 
 def get_stripe_service() -> StripeService:
     """Get or create Stripe service instance"""

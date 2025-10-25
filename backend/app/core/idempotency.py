@@ -1,17 +1,20 @@
-    from redis import Redis
-from .config import settings
-from threading import RLock
-from typing import Optional
 import os
 import time
+from threading import RLock
+from typing import Optional
+
+from .config import settings
+
 
 try:
+    from redis import Redis
 except ImportError:
     Redis = None  # type: ignore
 
 _redis = None
 _seen = {}
 _lock = RLock()
+
 
 def get_redis() -> Optional["Redis"]:
     """Return a Redis client if REDIS_URL is set and redis pkg is installed."""
@@ -26,6 +29,7 @@ def get_redis() -> Optional["Redis"]:
         return _redis
     except Exception:
         return None
+
 
 def check_and_store(key: str) -> bool:
     """

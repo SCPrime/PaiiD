@@ -1,14 +1,17 @@
-from datetime import datetime
-import logging
-import psutil
-import requests
-import time
-
 """
 Production Health Monitoring Service
 """
 
+import logging
+import time
+from datetime import datetime
+
+import psutil
+import requests
+
+
 logger = logging.getLogger(__name__)
+
 
 class HealthMonitor:
     def __init__(self):
@@ -119,6 +122,7 @@ class HealthMonitor:
 
     def record_cache_miss(self):
         self.cache_misses += 1
+
 
 # Global instance
 health_monitor = HealthMonitor()

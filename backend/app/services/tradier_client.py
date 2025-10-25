@@ -1,14 +1,17 @@
-from datetime import UTC, datetime, timedelta
-import logging
-import os
-import requests
-
 """
 Tradier API Client - Production Integration
 Handles: Account, Positions, Orders, Market Data, Options
 """
 
+import logging
+import os
+from datetime import UTC, datetime, timedelta
+
+import requests
+
+
 logger = logging.getLogger(__name__)
+
 
 class TradierClient:
     """Tradier API client for production trading"""
@@ -328,8 +331,10 @@ class TradierClient:
         params = {"symbol": symbol}
         return self._request("GET", "/markets/options/expirations", params=params)
 
+
 # Singleton instance
 _tradier_client = None
+
 
 def get_tradier_client() -> TradierClient:
     """Get singleton Tradier client"""

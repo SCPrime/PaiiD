@@ -1,20 +1,3 @@
-            from ..services.fixture_loader import get_fixture_loader
-            from ..services.fixture_loader import get_fixture_loader
-        from ..core.config import settings
-        from ..core.config import settings
-        from ..services.greeks import GreeksCalculator
-from ..core.unified_auth import get_current_user_unified
-from ..models.database import User
-from ..services.alpaca_options import get_alpaca_options_client
-from ..services.cache import get_cache
-from ..services.tradier_client import get_tradier_client
-from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-import asyncio
-import logging
-import requests
-
 """
 Options Trading Router
 
@@ -27,22 +10,41 @@ Phase 1 Implementation:
 - Multi-leg order support
 """
 
+import asyncio
+import logging
+from datetime import datetime
+
+import requests
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+
+from ..core.unified_auth import get_current_user_unified
+from ..models.database import User
+from ..services.alpaca_options import get_alpaca_options_client
+from ..services.cache import get_cache
+from ..services.tradier_client import get_tradier_client
+
+
 router = APIRouter(prefix="/options", tags=["options"])
 logger = logging.getLogger(__name__)
 
 cache = get_cache()
 
+
 # ============================================================================
 # TRADIER CLIENT HELPER
 # ============================================================================
+
 
 def _get_tradier_client():
     """Get Tradier client instance"""
     return get_tradier_client()
 
+
 # ============================================================================
 # REQUEST/RESPONSE MODELS
 # ============================================================================
+
 
 class OptionContract(BaseModel):
     """Single option contract details"""
@@ -70,6 +72,7 @@ class OptionContract(BaseModel):
     # Implied volatility
     implied_volatility: float | None = Field(None, description="Implied volatility")
 
+
 class OptionsChainResponse(BaseModel):
     """Options chain for a symbol and expiration"""
 
@@ -80,15 +83,18 @@ class OptionsChainResponse(BaseModel):
     puts: list[OptionContract] = []
     total_contracts: int = 0
 
+
 class ExpirationDate(BaseModel):
     """Available expiration date"""
 
     date: str
     days_to_expiry: int
 
+
 # ============================================================================
 # ENDPOINTS
 # ============================================================================
+
 
 @router.get(
     "/chain/{symbol}",
@@ -122,9 +128,11 @@ async def get_options_chain(
 
     try:
         # Check if we should use test fixtures
+        from ..core.config import settings
 
         if settings.USE_TEST_FIXTURES:
             logger.info("Using test fixtures for deterministic testing")
+            from ..services.fixture_loader import get_fixture_loader
 
             fixture_loader = get_fixture_loader()
             chain_data = fixture_loader.load_options_chain(symbol)
@@ -266,6 +274,7 @@ async def get_options_chain(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching options chain: {e!s}")
 
+
 @router.get("/expirations/{symbol}", response_model=list[ExpirationDate])
 def get_expiration_dates(symbol: str, current_user: User = Depends(get_current_user_unified)):
     """
@@ -277,9 +286,11 @@ def get_expiration_dates(symbol: str, current_user: User = Depends(get_current_u
     """
     try:
         # Check if we should use test fixtures
+        from ..core.config import settings
 
         if settings.USE_TEST_FIXTURES:
             logger.info("Using test fixtures for expiration dates")
+            from ..services.fixture_loader import get_fixture_loader
 
             fixture_loader = get_fixture_loader()
             chain_data = fixture_loader.load_options_chain(symbol)
@@ -340,6 +351,7 @@ def get_expiration_dates(symbol: str, current_user: User = Depends(get_current_u
         logger.error(f"Error fetching expirations: {e}")
         raise HTTPException(status_code=500, detail=f"Error fetching expirations: {e!s}")
 
+
 @router.post("/greeks")
 async def calculate_greeks(
     symbol: str = Query(..., description="Option symbol"),
@@ -368,6 +380,7 @@ async def calculate_greeks(
         Greeks dict with delta, gamma, theta, vega
     """
     try:
+        from ..services.greeks import GreeksCalculator
 
         # Calculate days to expiration
         exp_date = datetime.strptime(expiration, "%Y-%m-%d")
@@ -410,6 +423,7 @@ async def calculate_greeks(
     except Exception as e:
         logger.error(f"❌ Failed to calculate Greeks: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to calculate Greeks: {e!s}")
+
 
 @router.get(
     "/contract/{option_symbol}",
@@ -468,6 +482,7 @@ async def get_option_contract(
     except Exception as e:
         logger.error(f"❌ Failed to fetch contract details: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch contract details: {e!s}")
+
 
 # ============================================================================
 # HELPER FUNCTIONS

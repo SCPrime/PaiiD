@@ -1,15 +1,3 @@
-from ..services.backtesting_engine import BacktestingEngine
-from ..services.strategy_templates import get_all_strategy_templates
-from .data_pipeline import get_data_pipeline
-from .market_regime import get_regime_detector
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from typing import Any
-import joblib
-import logging
-import pandas as pd
-
 """
 Strategy Recommendation Engine
 
@@ -20,7 +8,23 @@ The model learns from backtesting results: which strategies performed best
 in which market regimes and feature combinations.
 """
 
+import logging
+from typing import Any
+
+import joblib
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+
+from ..services.backtesting_engine import BacktestingEngine
+from ..services.strategy_templates import get_all_strategy_templates
+from .data_pipeline import get_data_pipeline
+from .market_regime import get_regime_detector
+
+
 logger = logging.getLogger(__name__)
+
 
 class StrategySelector:
     """
@@ -471,8 +475,10 @@ class StrategySelector:
             logger.error(f"❌ Model load failed: {e}")
             return False
 
+
 # Singleton instance
 _strategy_selector = None
+
 
 def get_strategy_selector() -> StrategySelector:
     """Get or create strategy selector singleton"""

@@ -1,21 +1,3 @@
-        from ..ml.ensemble import get_regime_ensemble
-        from ..services.tradier_client import get_tradier_client
-        from datetime import datetime
-        from datetime import datetime
-        from datetime import datetime
-        from datetime import datetime, timedelta
-        from datetime import datetime, timedelta
-        import random
-        import random
-        import random
-        import random
-        import random
-from ..ml import get_pattern_detector, get_regime_detector, get_strategy_selector
-from fastapi import APIRouter, HTTPException, Query
-from typing import Any
-import logging
-import pandas as pd
-
 """
 Machine Learning API Endpoints
 
@@ -25,9 +7,19 @@ Endpoints for ML-powered features:
 - Pattern recognition
 """
 
+import logging
+from typing import Any
+
+import pandas as pd
+from fastapi import APIRouter, HTTPException, Query
+
+from ..ml import get_pattern_detector, get_regime_detector, get_strategy_selector
+
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/ml", tags=["Machine Learning"])
+
 
 @router.get("/market-regime")
 async def get_market_regime(
@@ -80,6 +72,7 @@ async def get_market_regime(
         logger.error(f"Market regime detection failed: {e}")
         raise HTTPException(status_code=500, detail=f"Market regime detection failed: {e!s}") from e
 
+
 @router.post("/train-regime-detector")
 async def train_regime_detector(
     symbol: str = Query("SPY", description="Symbol to train on"),
@@ -129,6 +122,7 @@ async def train_regime_detector(
         logger.error(f"Training failed: {e}")
         raise HTTPException(status_code=500, detail=f"Training failed: {e!s}") from e
 
+
 @router.get("/health")
 async def ml_health_check() -> dict[str, Any]:
     """
@@ -157,6 +151,7 @@ async def ml_health_check() -> dict[str, Any]:
             "status": "unhealthy",
             "error": str(e),
         }
+
 
 @router.get("/recommend-strategy")
 async def recommend_strategy(
@@ -217,6 +212,7 @@ async def recommend_strategy(
         logger.error(f"Strategy recommendation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Strategy recommendation failed: {e!s}") from e
 
+
 @router.post("/train-strategy-selector")
 async def train_strategy_selector(
     symbols: list[str] = Query(["SPY", "QQQ", "IWM", "DIA"], description="Symbols to train on"),
@@ -265,6 +261,7 @@ async def train_strategy_selector(
     except Exception as e:
         logger.error(f"Training failed: {e}")
         raise HTTPException(status_code=500, detail=f"Training failed: {e!s}") from e
+
 
 @router.get("/detect-patterns")
 async def detect_patterns(
@@ -317,6 +314,7 @@ async def detect_patterns(
         logger.error(f"Pattern detection failed: {e}")
         raise HTTPException(status_code=500, detail=f"Pattern detection failed: {e!s}") from e
 
+
 @router.post("/backtest-patterns")
 async def backtest_patterns(
     symbol: str = Query("SPY", description="Stock symbol to backtest"),
@@ -345,6 +343,10 @@ async def backtest_patterns(
     """
     try:
         logger.info(f"Pattern backtesting requested for {symbol} ({lookback_days} days)")
+
+        from datetime import datetime, timedelta
+        from ..services.tradier_client import get_tradier_client
+        import random
 
         # Get historical data
         end_date = datetime.now()
@@ -474,6 +476,7 @@ async def backtest_patterns(
         logger.error(f"Pattern backtesting failed: {e}")
         raise HTTPException(status_code=500, detail=f"Pattern backtesting failed: {e!s}") from e
 
+
 @router.get("/models/status")
 async def get_models_status() -> dict[str, Any]:
     """
@@ -489,6 +492,8 @@ async def get_models_status() -> dict[str, Any]:
         GET /api/ml/models/status
     """
     try:
+        from datetime import datetime, timedelta
+        import random
 
         logger.info("Model status requested")
 
@@ -611,6 +616,7 @@ async def get_models_status() -> dict[str, Any]:
         logger.error(f"Failed to get model status: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get model status: {e!s}") from e
 
+
 @router.post("/models/{model_id}/retrain")
 async def retrain_model(model_id: str) -> dict[str, Any]:
     """
@@ -626,6 +632,8 @@ async def retrain_model(model_id: str) -> dict[str, Any]:
         POST /api/ml/models/regime_detector/retrain
     """
     try:
+        from datetime import datetime
+        import random
 
         logger.info(f"Retraining requested for model: {model_id}")
 
@@ -671,6 +679,7 @@ async def retrain_model(model_id: str) -> dict[str, Any]:
         logger.error(f"Retraining failed for {model_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Retraining failed: {e!s}") from e
 
+
 @router.post("/models/auto-retrain")
 async def toggle_auto_retrain(enabled: bool = Query(..., description="Enable/disable auto-retrain")) -> dict[str, Any]:
     """
@@ -707,6 +716,7 @@ async def toggle_auto_retrain(enabled: bool = Query(..., description="Enable/dis
         logger.error(f"Failed to toggle auto-retrain: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to toggle auto-retrain: {e!s}") from e
 
+
 @router.post("/optimize-portfolio")
 async def optimize_portfolio(
     risk_tolerance: str = Query("moderate", description="Risk tolerance: conservative, moderate, aggressive"),
@@ -729,6 +739,8 @@ async def optimize_portfolio(
         POST /api/ml/optimize-portfolio?risk_tolerance=moderate&target_return=12
     """
     try:
+        import random
+        from datetime import datetime
 
         logger.info(f"Portfolio optimization requested: {risk_tolerance} risk, {target_return}% target")
 
@@ -909,6 +921,7 @@ async def optimize_portfolio(
         logger.error(f"Portfolio optimization failed: {e}")
         raise HTTPException(status_code=500, detail=f"Portfolio optimization failed: {e!s}") from e
 
+
 @router.get("/analytics")
 async def get_ml_analytics() -> dict[str, Any]:
     """
@@ -928,6 +941,8 @@ async def get_ml_analytics() -> dict[str, Any]:
         GET /api/ml/analytics
     """
     try:
+        import random
+        from datetime import datetime
 
         logger.info("ML analytics requested")
 
@@ -1090,6 +1105,7 @@ async def get_ml_analytics() -> dict[str, Any]:
         logger.error(f"Failed to get ML analytics: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get ML analytics: {e!s}") from e
 
+
 @router.get("/ensemble-prediction")
 async def get_ensemble_prediction(
     symbol: str = Query("SPY", description="Stock symbol to analyze"),
@@ -1116,6 +1132,8 @@ async def get_ensemble_prediction(
     """
     try:
         logger.info(f"Ensemble prediction requested for {symbol}")
+
+        from ..ml.ensemble import get_regime_ensemble
 
         ensemble = get_regime_ensemble()
 

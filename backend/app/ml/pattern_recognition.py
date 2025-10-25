@@ -1,11 +1,3 @@
-from .data_pipeline import get_data_pipeline
-from datetime import datetime
-from scipy.signal import find_peaks
-from typing import Literal
-import logging
-import numpy as np
-import pandas as pd
-
 """
 Chart Pattern Recognition
 
@@ -18,6 +10,17 @@ Patterns detected:
 - Triangle patterns (continuation/breakout)
 - Support/resistance breaks
 """
+
+import logging
+from datetime import datetime
+from typing import Literal
+
+import numpy as np
+import pandas as pd
+from scipy.signal import find_peaks
+
+from .data_pipeline import get_data_pipeline
+
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +38,7 @@ PatternType = Literal[
 ]
 
 SignalType = Literal["bullish", "bearish", "neutral"]
+
 
 class Pattern:
     """Detected chart pattern"""
@@ -80,6 +84,7 @@ class Pattern:
             "target_price": self.target_price,
             "stop_loss": self.stop_loss,
         }
+
 
 class PatternDetector:
     """
@@ -560,8 +565,10 @@ class PatternDetector:
 
         return patterns
 
+
 # Singleton instance
 _pattern_detector = None
+
 
 def get_pattern_detector() -> PatternDetector:
     """Get or create pattern detector singleton"""

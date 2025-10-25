@@ -1,12 +1,3 @@
-    from ta.momentum import RSIIndicator, StochasticOscillator
-    from ta.trend import MACD, ADXIndicator, EMAIndicator, SMAIndicator
-    from ta.volatility import AverageTrueRange, BollingerBands
-    from ta.volume import OnBalanceVolumeIndicator
-    import ta
-import logging
-import numpy as np
-import pandas as pd
-
 """
 Feature Engineering for ML Trading
 
@@ -16,12 +7,24 @@ to create feature vectors for machine learning models.
 Uses TA-Lib for technical analysis calculations.
 """
 
+import logging
+
+import numpy as np
+import pandas as pd
+
+
 try:
+    import ta
+    from ta.momentum import RSIIndicator, StochasticOscillator
+    from ta.trend import MACD, ADXIndicator, EMAIndicator, SMAIndicator
+    from ta.volatility import AverageTrueRange, BollingerBands
+    from ta.volume import OnBalanceVolumeIndicator
 except ImportError:
     # Graceful degradation if TA library not installed yet
     ta = None
 
 logger = logging.getLogger(__name__)
+
 
 class FeatureEngineer:
     """
@@ -276,6 +279,7 @@ class FeatureEngineer:
             "gap",
             "trend_direction",
         ]
+
 
 # Convenience function for quick feature extraction
 def extract_features_from_dict(data: list[dict]) -> pd.DataFrame:

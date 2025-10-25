@@ -1,13 +1,15 @@
-from ..core.kill_switch import is_killed
-from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse
-
 """
 Kill Switch Middleware
 
 Blocks mutating HTTP methods when the global kill switch is active.
 """
+
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+
+from ..core.kill_switch import is_killed
+
 
 class KillSwitchMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):

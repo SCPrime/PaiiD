@@ -1,15 +1,17 @@
-from ..services.tradier_client import get_tradier_client
-from datetime import UTC, datetime
-from pathlib import Path
-import json
-import logging
-
 """
 Equity Curve Tracking Service
 
 Tracks daily portfolio equity for historical performance analysis.
 Stores equity snapshots in JSON files for P&L Dashboard.
 """
+
+import json
+import logging
+from datetime import UTC, datetime
+from pathlib import Path
+
+from ..services.tradier_client import get_tradier_client
+
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ EQUITY_DATA_DIR = Path("data/equity")
 EQUITY_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 EQUITY_FILE = EQUITY_DATA_DIR / "equity_history.json"
+
 
 class EquityTracker:
     """Tracks daily equity snapshots for performance analysis"""
@@ -233,8 +236,10 @@ class EquityTracker:
             "num_snapshots": len(recent_snapshots),
         }
 
+
 # Singleton instance
 _equity_tracker = None
+
 
 def get_equity_tracker() -> EquityTracker:
     """Get singleton EquityTracker instance"""

@@ -1,22 +1,23 @@
-                    import json
-            import json
-from datetime import datetime
-from pathlib import Path
-from typing import Any
-import joblib
-import logging
-import pickle
-
 """
 Model Persistence Service
 Handles saving/loading trained ML models to/from disk
 """
+
+import logging
+import pickle
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+import joblib
+
 
 logger = logging.getLogger(__name__)
 
 # Model storage directory
 MODEL_DIR = Path("models")
 MODEL_DIR.mkdir(exist_ok=True)
+
 
 class ModelPersistence:
     """Service for persisting ML models to disk"""
@@ -70,6 +71,7 @@ class ModelPersistence:
 
             # Save metadata separately for quick lookups
             metadata_file = model_path / f"{model_id}_latest_metadata.json"
+            import json
             with open(metadata_file, "w") as f:
                 json.dump(
                     {
@@ -110,6 +112,7 @@ class ModelPersistence:
             if version is None:
                 metadata_file = model_path / f"{model_id}_latest_metadata.json"
                 if metadata_file.exists():
+                    import json
                     with open(metadata_file) as f:
                         metadata = json.load(f)
                         latest_file = metadata["latest_file"]
@@ -206,8 +209,10 @@ class ModelPersistence:
             logger.error(f"Failed to delete old versions: {e}")
             return 0
 
+
 # Singleton instance
 _persistence_service = None
+
 
 def get_model_persistence() -> ModelPersistence:
     """Get or create model persistence service"""

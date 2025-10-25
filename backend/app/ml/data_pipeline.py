@@ -1,11 +1,3 @@
-from ..services.tradier_client import get_tradier_client
-from .feature_engineering import FeatureEngineer
-from datetime import datetime, timedelta
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-import logging
-import pandas as pd
-
 """
 Data Pipeline for ML Models
 
@@ -13,7 +5,19 @@ Fetches historical market data, preprocesses it, and prepares
 feature matrices for machine learning training and prediction.
 """
 
+import logging
+from datetime import datetime, timedelta
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+from ..services.tradier_client import get_tradier_client
+from .feature_engineering import FeatureEngineer
+
+
 logger = logging.getLogger(__name__)
+
 
 class MLDataPipeline:
     """
@@ -292,8 +296,10 @@ class MLDataPipeline:
             logger.error(f"❌ Prediction feature preparation failed for {symbol}: {e}")
             return None
 
+
 # Singleton instance
 _data_pipeline = None
+
 
 def get_data_pipeline() -> MLDataPipeline:
     """Get or create ML data pipeline singleton"""

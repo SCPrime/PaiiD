@@ -1,9 +1,3 @@
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any
-import logging
-import math
-
 """
 Backtesting Engine Service
 
@@ -11,7 +5,15 @@ Simulates strategy execution on historical market data to evaluate performance.
 Calculates key metrics: Sharpe ratio, max drawdown, win rate, profit factor.
 """
 
+import logging
+import math
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+
+
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class Trade:
@@ -27,6 +29,7 @@ class Trade:
     pnl_percent: float | None = None
     status: str = "open"  # 'open', 'closed'
 
+
 @dataclass
 class StrategyRules:
     """Defines strategy entry/exit rules"""
@@ -38,6 +41,7 @@ class StrategyRules:
     position_size_percent: float = 10.0  # % of portfolio per trade
     max_positions: int = 1  # Max concurrent positions
     rsi_period: int = 14  # Configurable RSI period (default 14)
+
 
 @dataclass
 class BacktestResult:
@@ -70,6 +74,7 @@ class BacktestResult:
     start_date: str
     end_date: str
     symbol: str
+
 
 class BacktestingEngine:
     """Core backtesting engine"""

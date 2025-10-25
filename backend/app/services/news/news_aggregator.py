@@ -1,14 +1,10 @@
-from .alpha_vantage_provider import AlphaVantageProvider
-from .base_provider import NewsArticle
-from .finnhub_provider import FinnhubProvider
-from .polygon_provider import PolygonProvider
+import logging
 from collections import defaultdict
 from datetime import datetime
 from difflib import SequenceMatcher
-from tenacity import (
 from typing import Any
-import logging
 
+from tenacity import (
     before_sleep_log,
     retry,
     retry_if_exception_type,
@@ -16,7 +12,14 @@ import logging
     wait_exponential,
 )
 
+from .alpha_vantage_provider import AlphaVantageProvider
+from .base_provider import NewsArticle
+from .finnhub_provider import FinnhubProvider
+from .polygon_provider import PolygonProvider
+
+
 logger = logging.getLogger(__name__)
+
 
 class CircuitBreaker:
     """
@@ -96,6 +99,7 @@ class CircuitBreaker:
             "failure_count": self.failure_count,
             "last_failure": self.last_failure_time.isoformat() if self.last_failure_time else None,
         }
+
 
 class NewsAggregator:
     def __init__(self):

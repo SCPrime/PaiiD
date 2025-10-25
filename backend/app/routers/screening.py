@@ -1,15 +1,19 @@
-from ..core.jwt import get_current_user
-from ..models.database import User
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
-from typing import Literal
-import random
-
 """
 Strategy-based opportunity screening endpoints
 """
 
+import random
+from typing import Literal
+
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
+
+from ..core.jwt import get_current_user
+from ..models.database import User
+
+
 router = APIRouter(tags=["screening"])
+
 
 class Opportunity(BaseModel):
     symbol: str
@@ -20,6 +24,7 @@ class Opportunity(BaseModel):
     targetPrice: float | None = None
     confidence: int  # 0-100
     risk: Literal["low", "medium", "high"]
+
 
 @router.get("/screening/opportunities")
 async def get_opportunities(
@@ -309,6 +314,7 @@ async def get_opportunities(
         "filteredByPrice": max_price is not None,
         "maxPrice": max_price,
     }
+
 
 @router.get("/screening/strategies")
 async def get_available_strategies(

@@ -1,17 +1,21 @@
-from app.core.jwt import get_current_user
-from app.models.database import User
-from app.services.order_execution import OptionsProposal, get_order_execution_service
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-import logging
-
 """
 Options Proposals Router - Create and execute options trade proposals
 """
 
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+
+from app.core.jwt import get_current_user
+from app.models.database import User
+from app.services.order_execution import OptionsProposal, get_order_execution_service
+
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/proposals", tags=["proposals"])
+
 
 class CreateProposalRequest(BaseModel):
     """Request to create an options trade proposal"""
@@ -21,11 +25,13 @@ class CreateProposalRequest(BaseModel):
     quantity: int
     order_type: str = "limit"
 
+
 class ExecuteProposalRequest(BaseModel):
     """Request to execute an approved proposal"""
 
     proposal: OptionsProposal
     limit_price: float | None = None
+
 
 @router.post("/create")
 async def create_proposal(
@@ -99,6 +105,7 @@ async def create_proposal(
         logger.error(f"Failed to create proposal: {e}")
         raise HTTPException(status_code=500, detail="Failed to create proposal")
 
+
 @router.post("/execute")
 async def execute_proposal(
     request: ExecuteProposalRequest,
@@ -158,6 +165,7 @@ async def execute_proposal(
     except Exception as e:
         logger.error(f"Failed to execute proposal: {e}")
         raise HTTPException(status_code=500, detail="Failed to execute order")
+
 
 @router.get("/history")
 async def get_proposal_history(current_user: User = Depends(get_current_user)):

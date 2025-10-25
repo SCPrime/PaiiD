@@ -1,8 +1,3 @@
-from ..db.session import Base
-from datetime import datetime
-from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import relationship
-
 """
 ML Analytics Database Models
 
@@ -11,6 +6,14 @@ and training analytics. Enables long-term ML system monitoring.
 
 Phase 1E: Production Hardening - Database Schema
 """
+
+from datetime import datetime
+
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
+
+from ..db.session import Base
+
 
 class MLPredictionHistory(Base):
     """History of ML predictions for accuracy tracking and analysis"""
@@ -61,6 +64,7 @@ class MLPredictionHistory(Base):
 
     def __repr__(self):
         return f"<MLPredictionHistory(id={self.id}, model='{self.model_id}', symbol='{self.symbol}', confidence={self.confidence_score:.2f})>"
+
 
 class MLModelMetrics(Base):
     """ML model performance metrics over time"""
@@ -121,6 +125,7 @@ class MLModelMetrics(Base):
     def __repr__(self):
         return f"<MLModelMetrics(model='{self.model_id}', version='{self.model_version}', accuracy={self.accuracy:.2f}, predictions={self.total_predictions})>"
 
+
 class MLTrainingJob(Base):
     """Training job history and status tracking"""
 
@@ -172,6 +177,7 @@ class MLTrainingJob(Base):
 
     def __repr__(self):
         return f"<MLTrainingJob(id={self.id}, model='{self.model_id}', status='{self.status}', progress={self.progress_percent:.1f}%)>"
+
 
 class BacktestResult(Base):
     """Backtest results for strategies and ML models"""
@@ -245,6 +251,7 @@ class BacktestResult(Base):
     def __repr__(self):
         return f"<BacktestResult(id={self.id}, symbol='{self.symbol}', return={self.total_return:.2f}%, sharpe={self.sharpe_ratio:.2f}, trades={self.total_trades})>"
 
+
 class FeatureStore(Base):
     """Cached feature engineering results for ML models"""
 
@@ -281,6 +288,7 @@ class FeatureStore(Base):
 
     def __repr__(self):
         return f"<FeatureStore(symbol='{self.symbol}', date={self.date}, timeframe='{self.timeframe}')>"
+
 
 # Indexes for performance optimization
 # SQLAlchemy automatically creates single-column indexes for columns with index=True

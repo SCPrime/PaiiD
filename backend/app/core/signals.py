@@ -1,22 +1,22 @@
-            from ..scheduler import get_scheduler
-            from ..services.tradier_stream import stop_tradier_stream
-from pathlib import Path
-import asyncio
-import logging
-import signal
-import sys
-
 """
 Signal Handling Module for Graceful Shutdown
 Ensures proper cleanup of resources and PID files on process termination
 Version: 1.0.0
 """
 
+import asyncio
+import logging
+import signal
+import sys
+from pathlib import Path
+
+
 logger = logging.getLogger(__name__)
 
 # Track if shutdown is in progress
 _shutdown_in_progress = False
 _shutdown_timeout = 30  # Maximum 30 seconds for graceful shutdown
+
 
 def get_pid_file_path() -> Path | None:
     """Get the path to this process's PID file"""
@@ -28,6 +28,7 @@ def get_pid_file_path() -> Path | None:
         return pid_file
     return None
 
+
 def remove_pid_file() -> None:
     """Remove the PID file for this process"""
     try:
@@ -37,6 +38,7 @@ def remove_pid_file() -> None:
             logger.info(f"Removed PID file: {pid_file}")
     except Exception as e:
         logger.error(f"Failed to remove PID file: {e}")
+
 
 async def graceful_shutdown(sig: signal.Signals) -> None:
     """
@@ -73,6 +75,7 @@ async def graceful_shutdown(sig: signal.Signals) -> None:
         # 3. Shutdown scheduler
         logger.info("[3/6] Shutting down scheduler...")
         try:
+            from ..scheduler import get_scheduler
 
             scheduler_instance = get_scheduler()
             if scheduler_instance:
@@ -84,6 +87,7 @@ async def graceful_shutdown(sig: signal.Signals) -> None:
         # 4. Shutdown Tradier stream
         logger.info("[4/6] Shutting down Tradier stream...")
         try:
+            from ..services.tradier_stream import stop_tradier_stream
 
             await stop_tradier_stream()
             logger.info("  Tradier stream shutdown complete")
@@ -112,6 +116,7 @@ async def graceful_shutdown(sig: signal.Signals) -> None:
         # Force exit after timeout
         sys.exit(0)
 
+
 def handle_signal(sig: signal.Signals, frame) -> None:
     """Signal handler that triggers graceful shutdown"""
     # Create a new event loop if needed (signal handlers run in main thread)
@@ -123,6 +128,7 @@ def handle_signal(sig: signal.Signals, frame) -> None:
 
     # Schedule the graceful shutdown coroutine
     loop.create_task(graceful_shutdown(sig))
+
 
 def register_signal_handlers() -> None:
     """
@@ -144,6 +150,7 @@ def register_signal_handlers() -> None:
 
     # SIGINT is cross-platform
     signal.signal(signal.SIGINT, handle_signal)
+
 
 def setup_shutdown_handlers() -> None:
     """

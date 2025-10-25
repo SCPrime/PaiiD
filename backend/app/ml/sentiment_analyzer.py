@@ -1,16 +1,20 @@
-from ..core.config import get_settings
-from datetime import UTC, datetime
-from pydantic import BaseModel
-import anthropic
-import logging
-
 """
 Sentiment Analysis Service using Anthropic Claude
 Analyzes market news and social media sentiment for trading insights
 """
 
+import logging
+from datetime import UTC, datetime
+
+import anthropic
+from pydantic import BaseModel
+
+from ..core.config import get_settings
+
+
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
 
 class SentimentScore(BaseModel):
     """Sentiment analysis result"""
@@ -22,6 +26,7 @@ class SentimentScore(BaseModel):
     reasoning: str
     timestamp: datetime
     source: str  # 'news', 'social', 'combined'
+
 
 class SentimentAnalyzer:
     """Analyzes market sentiment using Anthropic Claude"""
@@ -237,8 +242,10 @@ Focus on the most recent and impactful information."""
 
         return "\n".join(combined)
 
+
 # Global instance
 _sentiment_analyzer: SentimentAnalyzer | None = None
+
 
 def get_sentiment_analyzer() -> SentimentAnalyzer:
     """Get or create sentiment analyzer instance"""

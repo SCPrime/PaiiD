@@ -1,9 +1,8 @@
-from .under4_multileg import (
-
 """
 Trading Strategies Module
 """
 
+from .under4_multileg import (
     Under4MultilegConfig,
     Under4MultilegStrategy,
     create_under4_multileg_strategy,

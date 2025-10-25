@@ -1,11 +1,3 @@
-from ..models.subscription import Subscription, SubscriptionEvent, UsageRecord
-from ..services.stripe_service import SUBSCRIPTION_TIERS, get_stripe_service
-from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel
-from typing import Any
-import logging
-
 """
 Subscription API Endpoints
 
@@ -14,9 +6,21 @@ Handles subscription management, billing, and usage tracking.
 Phase 2: Monetization Engine
 """
 
+import logging
+from datetime import datetime
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
+
+from ..models.subscription import Subscription, SubscriptionEvent, UsageRecord
+from ..services.stripe_service import SUBSCRIPTION_TIERS, get_stripe_service
+
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/subscription", tags=["Subscription"])
+
 
 # Pydantic models for request/response
 
@@ -38,16 +42,19 @@ class SubscriptionResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class CreateCheckoutSessionRequest(BaseModel):
     """Request to create a checkout session"""
 
     tier: str
     trial_days: int | None = None
 
+
 class UpdateSubscriptionRequest(BaseModel):
     """Request to update subscription tier"""
 
     new_tier: str
+
 
 class UsageResponse(BaseModel):
     """Usage tracking response"""
@@ -57,6 +64,7 @@ class UsageResponse(BaseModel):
     limit: int
     percentage_used: float
     within_limit: bool
+
 
 # Dependency to get current user (placeholder - implement with JWT auth)
 async def get_current_user_id(request: Request) -> int:
@@ -70,6 +78,7 @@ async def get_current_user_id(request: Request) -> int:
     if user_id:
         return int(user_id)
     return 1  # Default user for development
+
 
 @router.get("/current", response_model=SubscriptionResponse)
 async def get_current_subscription(
@@ -106,6 +115,7 @@ async def get_current_subscription(
         logger.error(f"Failed to get subscription: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get subscription: {e!s}") from e
 
+
 @router.get("/tiers")
 async def get_subscription_tiers() -> dict[str, Any]:
     """
@@ -122,6 +132,7 @@ async def get_subscription_tiers() -> dict[str, Any]:
     except Exception as e:
         logger.error(f"Failed to get tiers: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get tiers: {e!s}") from e
+
 
 @router.post("/checkout-session")
 async def create_checkout_session(
@@ -177,6 +188,7 @@ async def create_checkout_session(
             detail=f"Failed to create checkout session: {e!s}",
         ) from e
 
+
 @router.post("/billing-portal")
 async def create_billing_portal_session(
     user_id: int = Depends(get_current_user_id),
@@ -217,6 +229,7 @@ async def create_billing_portal_session(
             status_code=500,
             detail=f"Failed to create billing portal session: {e!s}",
         ) from e
+
 
 @router.post("/upgrade")
 async def upgrade_subscription(
@@ -266,6 +279,7 @@ async def upgrade_subscription(
             status_code=500,
             detail=f"Failed to upgrade subscription: {e!s}",
         ) from e
+
 
 @router.post("/cancel")
 async def cancel_subscription(
@@ -317,6 +331,7 @@ async def cancel_subscription(
             status_code=500,
             detail=f"Failed to cancel subscription: {e!s}",
         ) from e
+
 
 @router.get("/usage/{feature}")
 async def get_usage(
@@ -378,6 +393,7 @@ async def get_usage(
     except Exception as e:
         logger.error(f"Failed to get usage: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get usage: {e!s}") from e
+
 
 @router.post("/webhook")
 async def handle_stripe_webhook(request: Request) -> dict[str, Any]:

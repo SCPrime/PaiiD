@@ -1,17 +1,20 @@
-        import re
-from app.services.alpaca_client import get_alpaca_client
-from app.services.greeks import GreeksCalculator
-from app.services.tradier_client import get_tradier_client
-from datetime import datetime
-from pydantic import BaseModel
-from typing import Any
-import logging
-
 """
 Order Execution Service - Handles options trade proposal and execution
 """
 
+import logging
+from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel
+
+from app.services.alpaca_client import get_alpaca_client
+from app.services.greeks import GreeksCalculator
+from app.services.tradier_client import get_tradier_client
+
+
 logger = logging.getLogger(__name__)
+
 
 class OptionsProposal(BaseModel):
     """Options trade proposal with risk analysis"""
@@ -32,6 +35,7 @@ class OptionsProposal(BaseModel):
     iv_rank: float | None = None
     risk_reward_ratio: float
     margin_requirement: float
+
 
 class OrderExecutionService:
     """Service for creating and executing options orders with risk analysis"""
@@ -200,6 +204,7 @@ class OrderExecutionService:
         """
         # Find where the date starts (6 digits: YYMMDD)
         # OCC format: TICKER + YYMMDD + C/P + 8-digit strike
+        import re
 
         match = re.match(r"([A-Z]+)(\d{6})([CP])(\d{8})", option_symbol)
         if not match:
@@ -280,8 +285,10 @@ class OrderExecutionService:
             "margin_requirement": margin_requirement,
         }
 
+
 # Singleton instance
 _order_execution_service: OrderExecutionService | None = None
+
 
 def get_order_execution_service() -> OrderExecutionService:
     """Get or create the order execution service singleton"""

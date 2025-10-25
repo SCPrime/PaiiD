@@ -1,16 +1,16 @@
-        from scipy.signal import find_peaks
-        from scipy.signal import find_peaks
-from dataclasses import dataclass
-from enum import Enum
-import logging
-import numpy as np
-import pandas as pd
-import talib
-
 """
 Advanced Pattern Recognition Module
 Enhanced ML-powered pattern detection for PaiiD
 """
+
+import logging
+from dataclasses import dataclass
+from enum import Enum
+
+import numpy as np
+import pandas as pd
+import talib
+from scipy.signal import find_peaks
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,13 @@
-from app.services.health_monitor import health_monitor
-from fastapi import Request
-import time
-
 """
 Middleware to track request metrics
 """
+
+import time
+
+from fastapi import Request
+
+from app.services.health_monitor import health_monitor
+
 
 async def metrics_middleware(request: Request, call_next):
     """Track request metrics"""

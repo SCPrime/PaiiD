@@ -1,15 +1,17 @@
-from collections.abc import Callable
-from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
-import sentry_sdk
-import time
-
 """
 Sentry Error Context Middleware
 
 Adds custom context and breadcrumbs to Sentry error reports for better debugging.
 """
+
+import time
+from collections.abc import Callable
+
+import sentry_sdk
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+
 
 class SentryContextMiddleware(BaseHTTPMiddleware):
     """
@@ -92,6 +94,7 @@ class SentryContextMiddleware(BaseHTTPMiddleware):
                 # Re-raise to let FastAPI handle it
                 raise
 
+
 def capture_trading_event(event_type: str, symbol: str | None = None, **kwargs):
     """
     Capture custom trading events in Sentry for analytics
@@ -104,6 +107,7 @@ def capture_trading_event(event_type: str, symbol: str | None = None, **kwargs):
     sentry_sdk.add_breadcrumb(
         category="trading", message=event_type, level="info", data={"symbol": symbol, **kwargs}
     )
+
 
 def capture_market_data_fetch(source: str, endpoint: str, success: bool, duration_ms: float | None = None):
     """
@@ -126,6 +130,7 @@ def capture_market_data_fetch(source: str, endpoint: str, success: bool, duratio
             "duration_ms": duration_ms,
         },
     )
+
 
 def capture_cache_operation(operation: str, key: str, hit: bool | None = None):
     """

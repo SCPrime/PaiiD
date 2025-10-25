@@ -1,19 +1,20 @@
-        import os
-    import hashlib
-from redis import asyncio as aioredis
-from typing import Any
-import json
-import logging
-
 """
 Redis Client for ML Prediction Caching
 High-performance caching layer for expensive ML operations
 """
 
+import json
+import logging
+from typing import Any
+
+from redis import asyncio as aioredis
+
+
 logger = logging.getLogger(__name__)
 
 # Global Redis client
 _redis_client = None
+
 
 class RedisCache:
     """Async Redis cache for ML predictions"""
@@ -121,6 +122,7 @@ class RedisCache:
         """Check if Redis is connected"""
         return self._connected
 
+
 class MLPredictionCache:
     """High-level cache for ML predictions"""
 
@@ -180,19 +182,23 @@ class MLPredictionCache:
             await self.redis.delete(key)
         logger.info(f"Invalidated {len(keys)} cached predictions for {model_id}")
 
+
 # Global instances
 _redis_cache = None
 _ml_prediction_cache = None
+
 
 async def get_redis() -> RedisCache:
     """Get or create Redis cache instance"""
     global _redis_cache
     if _redis_cache is None:
         # Try to get Redis URL from environment
+        import os
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
         _redis_cache = RedisCache(redis_url)
         await _redis_cache.connect()
     return _redis_cache
+
 
 async def get_ml_cache() -> MLPredictionCache:
     """Get or create ML prediction cache"""
@@ -202,8 +208,10 @@ async def get_ml_cache() -> MLPredictionCache:
         _ml_prediction_cache = MLPredictionCache(redis)
     return _ml_prediction_cache
 
+
 def generate_input_hash(**kwargs) -> str:
     """Generate hash from input parameters"""
+    import hashlib
     # Sort kwargs for consistent hashing
     sorted_items = sorted(kwargs.items())
     input_str = json.dumps(sorted_items, sort_keys=True)

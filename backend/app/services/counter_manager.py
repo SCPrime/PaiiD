@@ -1,16 +1,19 @@
-from ..core.config import get_settings
-from ..core.redis_client import get_redis
-from datetime import UTC, datetime, timedelta
-from typing import Any
-import logging
-
 """
 Counter Manager Service
 Manages all monitoring counters with Redis backend for real-time tracking
 """
 
+import logging
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
+from ..core.config import get_settings
+from ..core.redis_client import get_redis
+
+
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
 
 class CounterManager:
     """Manages all monitoring counters with Redis backend"""
@@ -214,8 +217,10 @@ class CounterManager:
             logger.error(f"Error cleaning up timeseries: {e}")
             return 0
 
+
 # Global instance
 _counter_manager: CounterManager | None = None
+
 
 def get_counter_manager() -> CounterManager:
     """Get or create counter manager instance"""

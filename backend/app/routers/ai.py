@@ -1,48 +1,33 @@
-            from datetime import timedelta
-            import os
-        from ..core.config import settings
-        from ..models.database import AIRecommendation
-        from ..models.database import AIRecommendation
-        from ..models.database import User
-        from ..services.alpaca_client import get_alpaca_client
-        from ..services.strategy_templates import (
-        from ..services.tradier_client import get_tradier_client
-        from anthropic import Anthropic
-        from anthropic import Anthropic
-        from datetime import timedelta
-        from datetime import timedelta
-        from datetime import timedelta
-        from datetime import timedelta
-        from datetime import timedelta
-        import json
-        import os
-        import os
-        import requests
-from ..core.auth import require_bearer
-from ..core.jwt import get_current_user
-from ..db.session import get_db
-from ..models.database import User
-from ..services.technical_indicators import TechnicalIndicators
-from ..services.tradier_client import get_tradier_client
-from datetime import UTC, datetime
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-from typing import Literal
-import json
-import logging
-import os
-import random
-import re
-
 """
 AI Recommendations Router
 Provides AI-generated trading recommendations based on market analysis
 """
 
+import json
+import logging
+import os
+import random
+import re
+from datetime import UTC, datetime
+from typing import Literal
+
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from ..core.auth import require_bearer
+from ..core.jwt import get_current_user
+from ..core.auth import get_current_user_id
+from ..db.session import get_db
+from ..models.database import User
+from ..services.technical_indicators import TechnicalIndicators
+from ..services.tradier_client import get_tradier_client
+
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
+
 
 class TradeData(BaseModel):
     """Pre-filled trade execution data for 1-click trading"""
@@ -54,6 +39,7 @@ class TradeData(BaseModel):
     entryPrice: float | None = None
     stopLoss: float | None = None
     takeProfit: float | None = None
+
 
 class Recommendation(BaseModel):
     symbol: str
@@ -80,6 +66,7 @@ class Recommendation(BaseModel):
     sectorPerformance: dict | None = None  # Sector performance data
     explanation: str | None = None  # Detailed "Why this recommendation?" explanation
 
+
 class PortfolioAnalysis(BaseModel):
     """Portfolio-level risk and diversification analysis"""
 
@@ -90,14 +77,16 @@ class PortfolioAnalysis(BaseModel):
     diversificationScore: float  # 1-10 (10 = best diversified)
     recommendations: list[str]  # Portfolio-level suggestions
 
+
 class RecommendationsResponse(BaseModel):
     recommendations: list[Recommendation]
     portfolioAnalysis: PortfolioAnalysis | None = None
     generated_at: str
     model_version: str = "v1.0.0"
 
+
 @router.get("/recommendations", response_model=RecommendationsResponse)
-async def get_recommendations(current_user: User = Depends(get_current_user)):
+async def get_recommendations(current_user: User = Depends(get_current_user_id)):
     """
     Generate AI-powered trading recommendations using real market data
 
@@ -120,6 +109,7 @@ async def get_recommendations(current_user: User = Depends(get_current_user)):
         # PHASE 2.5: Get user's watchlist from database
         # Current: Use configurable default watchlist from environment
         # Future: Fetch from user preferences: db.query(User).filter(User.id == get_current_user_id(token)).first().watchlist
+        import os
 
         default_watchlist = os.getenv(
             "DEFAULT_WATCHLIST", "AAPL,MSFT,GOOGL,META,NVDA,AMZN,TSLA,JPM,V,JNJ"
@@ -295,6 +285,7 @@ async def get_recommendations(current_user: User = Depends(get_current_user)):
             status_code=500, detail=f"Failed to generate recommendations: {e!s}"
         )
 
+
 @router.get("/recommendations/{symbol}", response_model=Recommendation)
 async def get_symbol_recommendation(symbol: str):
     """
@@ -345,6 +336,7 @@ async def get_symbol_recommendation(symbol: str):
             status_code=500, detail=f"Failed to generate recommendation: {e!s}"
         )
 
+
 @router.get(
     "/signals",
     response_model=RecommendationsResponse,
@@ -376,6 +368,7 @@ async def get_ml_signals(
     try:
         # Default watchlist if no symbols provided (from environment or hardcoded)
         if not symbols:
+            import os
 
             symbols = os.getenv(
                 "DEFAULT_WATCHLIST",
@@ -421,6 +414,7 @@ async def get_ml_signals(
         logger.error(f"Error generating signals: {e!s}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 async def _generate_technical_signal(symbol: str) -> Recommendation | None:
     """
     Generate signal using real technical analysis from Tradier historical data
@@ -429,6 +423,7 @@ async def _generate_technical_signal(symbol: str) -> Recommendation | None:
     """
     try:
         # Fetch real historical data from Tradier
+        from datetime import timedelta
 
         client = get_tradier_client()
 
@@ -494,6 +489,7 @@ async def _generate_technical_signal(symbol: str) -> Recommendation | None:
         logger.error(f"Error generating technical signal for {symbol}: {e!s}")
         return None
 
+
 class SymbolAnalysis(BaseModel):
     symbol: str
     current_price: float
@@ -511,11 +507,12 @@ class SymbolAnalysis(BaseModel):
     key_indicators: dict
     summary: str
 
+
 @router.get(
     "/analyze-symbol/{symbol}",
     response_model=SymbolAnalysis,
 )
-async def analyze_symbol(symbol: str, current_user: User = Depends(get_current_user)):
+async def analyze_symbol(symbol: str, current_user: User = Depends(get_current_user_id)):
     """
     Comprehensive AI analysis of a stock symbol using Tradier data
 
@@ -530,6 +527,7 @@ async def analyze_symbol(symbol: str, current_user: User = Depends(get_current_u
         symbol = symbol.upper()
 
         # Fetch real historical data from Tradier
+        from datetime import timedelta
 
         client = get_tradier_client()
 
@@ -691,11 +689,14 @@ async def analyze_symbol(symbol: str, current_user: User = Depends(get_current_u
         logger.error(f"❌ Failed to analyze {symbol}: {e!s}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {e!s}")
 
+
 # ====== PORTFOLIO-AWARE HELPER FUNCTIONS ======
+
 
 async def _fetch_portfolio_data() -> dict:
     """Fetch user's current portfolio from Alpaca"""
     try:
+        from ..services.alpaca_client import get_alpaca_client
 
         alpaca = get_alpaca_client()
 
@@ -742,6 +743,7 @@ async def _fetch_portfolio_data() -> dict:
             "num_positions": 0,
         }
 
+
 def _calculate_recommendation_score(
     confidence: float, risk: str, change_percent: float
 ) -> float:
@@ -768,6 +770,7 @@ def _calculate_recommendation_score(
 
     # Clamp to 1-10
     return round(max(1.0, min(10.0, base_score)), 1)
+
 
 def _analyze_portfolio_fit(symbol: str, action: str, portfolio_data: dict) -> str:
     """Analyze how this recommendation fits the user's portfolio"""
@@ -796,6 +799,7 @@ def _analyze_portfolio_fit(symbol: str, action: str, portfolio_data: dict) -> st
 
     return "✅ Good fit"
 
+
 def _calculate_position_size(
     current_price: float, portfolio_data: dict, risk: str
 ) -> int:
@@ -820,6 +824,7 @@ def _calculate_position_size(
     quantity = max(1, int(position_value / current_price))
 
     return quantity
+
 
 def _generate_portfolio_analysis(
     portfolio_data: dict, recommendations: list[Recommendation]
@@ -905,7 +910,9 @@ def _generate_portfolio_analysis(
         recommendations=portfolio_recommendations[:5],  # Top 5 suggestions
     )
 
+
 # ====== PHASE 3.A: ENHANCED MOMENTUM & VOLUME ANALYSIS ======
+
 
 async def _calculate_momentum_analysis(
     symbol: str, current_price: float, current_volume: int
@@ -928,6 +935,7 @@ async def _calculate_momentum_analysis(
     }
     """
     try:
+        from datetime import timedelta
 
         client = get_tradier_client()
 
@@ -1041,7 +1049,9 @@ async def _calculate_momentum_analysis(
             "trend_alignment": "Unknown",
         }
 
+
 # ====== PHASE 3.A.2: VOLATILITY & SECTOR CORRELATION ======
+
 
 def _map_symbol_to_sector(symbol: str) -> str:
     """
@@ -1152,6 +1162,7 @@ def _map_symbol_to_sector(symbol: str) -> str:
 
     return sector_map.get(symbol, "Unknown")
 
+
 async def _fetch_sector_performance() -> dict:
     """
     Fetch current sector performance from market endpoint
@@ -1159,6 +1170,9 @@ async def _fetch_sector_performance() -> dict:
     Returns sector data with leader/laggard identification
     """
     try:
+        import requests
+
+        from ..core.config import settings
 
         # Make internal API call to market/sectors endpoint
         # In production, we could call the function directly, but using HTTP ensures consistency
@@ -1184,6 +1198,7 @@ async def _fetch_sector_performance() -> dict:
         logger.error(f"❌ Failed to fetch sector performance: {e!s}")
         return {"sectors": [], "leader": "Unknown", "laggard": "Unknown"}
 
+
 async def _calculate_volatility_analysis(symbol: str, current_price: float) -> dict:
     """
     Calculate volatility analysis using ATR and Bollinger Band width
@@ -1198,6 +1213,7 @@ async def _calculate_volatility_analysis(symbol: str, current_price: float) -> d
     }
     """
     try:
+        from datetime import timedelta
 
         client = get_tradier_client()
 
@@ -1274,6 +1290,7 @@ async def _calculate_volatility_analysis(symbol: str, current_price: float) -> d
             "volatility_class": "Medium",
             "volatility_score": 5.0,
         }
+
 
 def _generate_signal_from_momentum(
     symbol: str,
@@ -1371,6 +1388,7 @@ def _generate_signal_from_momentum(
 
     return action, confidence, target_price, risk, reason
 
+
 def _calculate_enhanced_score(
     confidence: float, risk: str, change_percent: float, momentum: dict
 ) -> float:
@@ -1417,6 +1435,7 @@ def _calculate_enhanced_score(
 
     # Clamp to 1-10
     return round(max(1.0, min(10.0, total_score)), 1)
+
 
 def _generate_recommendation_explanation(
     symbol: str,
@@ -1521,7 +1540,9 @@ def _generate_recommendation_explanation(
 
     return "\n".join(explanation_parts)
 
+
 # ====== PHASE 3.A.3: STRATEGY TEMPLATE MATCHING ======
+
 
 @router.get("/recommended-templates", dependencies=[Depends(require_bearer)])
 async def get_recommended_templates(db: Session = Depends(get_db)):
@@ -1535,6 +1556,8 @@ async def get_recommended_templates(db: Session = Depends(get_db)):
         List of templates sorted by compatibility score with rationale
     """
     try:
+        from ..models.database import User
+        from ..services.strategy_templates import (
             filter_templates_by_risk,
             get_template_compatibility_score,
         )
@@ -1555,6 +1578,7 @@ async def get_recommended_templates(db: Session = Depends(get_db)):
         try:
             # Quick volatility check on SPY
             client = get_tradier_client()
+            from datetime import timedelta
 
             end_date = datetime.now()
             start_date = end_date - timedelta(days=30)
@@ -1688,7 +1712,9 @@ async def get_recommended_templates(db: Session = Depends(get_db)):
             detail=f"Failed to generate template recommendations: {e!s}",
         )
 
+
 # ====== RECOMMENDATION HISTORY TRACKING (Phase: Final 6% MVP) ======
+
 
 class SaveRecommendationRequest(BaseModel):
     """Request to save an AI recommendation to history"""
@@ -1703,6 +1729,7 @@ class SaveRecommendationRequest(BaseModel):
     suggested_position_size: float | None = None
     reasoning: str | None = None
     market_context: str | None = None
+
 
 class RecommendationHistoryResponse(BaseModel):
     """Single recommendation history entry"""
@@ -1729,10 +1756,11 @@ class RecommendationHistoryResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 @router.post("/recommendations/save")
 async def save_recommendation(
     request: SaveRecommendationRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """
@@ -1746,6 +1774,9 @@ async def save_recommendation(
     Phase: Final 6% MVP completion
     """
     try:
+        from datetime import timedelta
+
+        from ..models.database import AIRecommendation
 
         # Calculate expiry (recommendations expire after 7 days)
         expires_at = datetime.now(UTC) + timedelta(days=7)
@@ -1787,6 +1818,7 @@ async def save_recommendation(
             status_code=500, detail=f"Failed to save recommendation: {e!s}"
         )
 
+
 @router.get(
     "/recommendations/history",
     response_model=list[RecommendationHistoryResponse],
@@ -1800,7 +1832,7 @@ async def get_recommendation_history(
         50, ge=1, le=200, description="Maximum number of recommendations to return"
     ),
     offset: int = Query(0, ge=0, description="Number of recommendations to skip"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """
@@ -1815,6 +1847,7 @@ async def get_recommendation_history(
     Phase: Final 6% MVP completion
     """
     try:
+        from ..models.database import AIRecommendation
 
         # Build query
         query = db.query(AIRecommendation).filter(
@@ -1878,9 +1911,11 @@ async def get_recommendation_history(
             status_code=500, detail=f"Failed to retrieve recommendation history: {e!s}"
         )
 
+
 # =============================================================================
 # PHASE 1A: AI PORTFOLIO ANALYSIS ENDPOINT
 # =============================================================================
+
 
 class PortfolioAnalysisResponse(BaseModel):
     """AI-powered portfolio analysis response"""
@@ -1898,8 +1933,9 @@ class PortfolioAnalysisResponse(BaseModel):
     ai_summary: str
     generated_at: str
 
+
 @router.get("/analyze-portfolio", response_model=PortfolioAnalysisResponse)
-async def analyze_portfolio(current_user: User = Depends(get_current_user)):
+async def analyze_portfolio(current_user: User = Depends(get_current_user_id)):
     """
     AI-powered portfolio analysis using Claude API
 
@@ -1913,6 +1949,9 @@ async def analyze_portfolio(current_user: User = Depends(get_current_user)):
     Returns comprehensive analysis with actionable insights
     """
     try:
+        import os
+
+        from anthropic import Anthropic
 
         logger.info("🤖 AI Portfolio Analysis - Starting...")
 
@@ -2024,6 +2063,7 @@ Format your response as JSON with these exact keys:
         )
 
         # Parse Claude's response
+        import json
 
         response_text = message.content[0].text
 
@@ -2056,6 +2096,7 @@ Format your response as JSON with these exact keys:
     except Exception as e:
         logger.error(f"❌ Portfolio analysis failed: {e!s}")
         raise HTTPException(status_code=500, detail=f"Portfolio analysis failed: {e!s}")
+
 
 def _generate_rule_based_portfolio_analysis(
     total_value: float,
@@ -2159,6 +2200,7 @@ def _generate_rule_based_portfolio_analysis(
         generated_at=datetime.now().isoformat() + "Z",
     )
 
+
 @router.post("/analyze-news")
 async def analyze_news(
     article: dict = Body(
@@ -2170,7 +2212,7 @@ async def analyze_news(
             "published_at": "2025-10-20T10:30:00Z",
         },
     ),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_id),
 ):
     """
     AI-powered news article analysis
@@ -2190,6 +2232,7 @@ async def analyze_news(
             )
 
         # Get user's positions for context
+        from ..services.tradier_client import get_tradier_client
 
         client = get_tradier_client()
         positions = client.get_positions()
@@ -2228,6 +2271,8 @@ Base your analysis on:
 - Urgency for action"""
 
         logger.info("🤖 Sending request to Claude API...")
+
+        from anthropic import Anthropic
 
         anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
         if not anthropic_api_key:
@@ -2285,6 +2330,7 @@ Base your analysis on:
         logger.error(f"❌ News analysis error: {e!s}")
         raise HTTPException(status_code=500, detail=f"News analysis failed: {e!s}")
 
+
 @router.post("/analyze-news-batch")
 async def analyze_news_batch(
     articles: list = Body(
@@ -2298,7 +2344,7 @@ async def analyze_news_batch(
             },
         ],
     ),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_id),
 ):
     """
     Analyze multiple news articles in batch

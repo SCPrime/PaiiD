@@ -1,14 +1,3 @@
-            from app.models.monitor import MonitorAlert
-            from app.models.monitor import MonitorAlert
-from app.core.config import settings
-from app.core.database import SessionLocal
-from datetime import UTC, datetime
-from enum import Enum
-from typing import Any
-import asyncio
-import httpx
-import logging
-
 """
 Alert Manager Service - Handles alerting for monitoring events
 
@@ -19,7 +8,20 @@ Sends alerts via:
 - Database logging for dashboard display
 """
 
+import asyncio
+import logging
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
+
+import httpx
+
+from app.core.config import settings
+from app.core.database import SessionLocal
+
+
 logger = logging.getLogger(__name__)
+
 
 class AlertSeverity(str, Enum):
     """Alert severity levels"""
@@ -28,6 +30,7 @@ class AlertSeverity(str, Enum):
     HIGH = "high"  # Attention needed soon (build failures, merge conflicts)
     MEDIUM = "medium"  # Notable event (stale PRs, increased error rates)
     LOW = "low"  # Informational (successful deployments, milestones)
+
 
 class AlertManager:
     """Manages alerts across multiple channels"""
@@ -195,6 +198,7 @@ class AlertManager:
         """Store alert in database for dashboard display"""
         try:
             # Import here to avoid circular dependency
+            from app.models.monitor import MonitorAlert
 
             db = SessionLocal()
             try:
@@ -228,6 +232,7 @@ class AlertManager:
             List of recent alerts
         """
         try:
+            from app.models.monitor import MonitorAlert
 
             db = SessionLocal()
             try:
@@ -256,8 +261,10 @@ class AlertManager:
             logger.error(f"Failed to get recent alerts: {e}")
             return []
 
+
 # Singleton instance
 _alert_manager = None
+
 
 def get_alert_manager() -> AlertManager:
     """Get or create AlertManager singleton"""

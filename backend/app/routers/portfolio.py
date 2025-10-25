@@ -1,15 +1,19 @@
+import logging
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+
 from ..core.jwt import get_current_user
 from ..models.database import User
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from typing import Literal
-import logging
+
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
 
 class AlpacaAccount(BaseModel):
     """Alpaca account information"""
@@ -41,6 +45,7 @@ class AlpacaAccount(BaseModel):
     long_market_value_change: str | None = None
     short_market_value_change: str | None = None
 
+
 @router.get("/account")
 def get_account(current_user: User = Depends(get_current_user)):
     """Get Tradier account information"""
@@ -56,6 +61,7 @@ def get_account(current_user: User = Depends(get_current_user)):
     except Exception as e:
         logger.error(f"❌ Tradier account request failed: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier account: {e!s}")
+
 
 @router.get("/positions")
 def get_positions(
@@ -83,6 +89,7 @@ def get_positions(
         logger.error(f"❌ Tradier positions request failed: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier positions: {e!s}")
 
+
 @router.get("/positions/{symbol}")
 def get_position(symbol: str, current_user: User = Depends(get_current_user)):
     """Get a specific position by symbol"""
@@ -102,64 +109,3 @@ def get_position(symbol: str, current_user: User = Depends(get_current_user)):
     except Exception as e:
         logger.error(f"❌ Failed to fetch position for {symbol}: {e!s}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch position for {symbol}: {e!s}")
-
-@router.get("/simple-history")
-def get_simple_history(
-    timeframe: str = "30D",
-    current_user: User = Depends(get_current_user),
-):
-    """Get simple account value history for visual chart
-
-    Returns account value over time in a format easy for non-technical users
-    - 7D: Last 7 days
-    - 30D: Last 30 days
-    - ALL: All available history
-    """
-    from datetime import datetime, timedelta
-    import random
-
-    logger.info(f"🎯 SIMPLE HISTORY ENDPOINT - Timeframe: {timeframe}")
-
-    try:
-        # Get current account info
-        client = get_tradier_client()
-        account_data = client.get_account()
-
-        current_value = float(account_data.get("account", {}).get("account_value", 100000))
-
-        # Determine number of days
-        days = 7 if timeframe == "7D" else 30 if timeframe == "30D" else 90
-
-        # Generate historical data (in production, this would come from database)
-        history = []
-        value = current_value * 0.95  # Start slightly lower
-
-        for i in range(days):
-            date = datetime.now() - timedelta(days=days - i)
-            # Simulate realistic growth with some volatility
-            value += (random.random() - 0.45) * (current_value * 0.02)
-            value = max(value, current_value * 0.90)  # Don't drop below 90% of current
-
-            history.append({
-                "date": date.strftime("%b %d"),
-                "value": round(value, 2),
-            })
-
-        # Make sure last value is current value
-        history[-1]["value"] = current_value
-
-        # Calculate today's change
-        yesterday_value = history[-2]["value"] if len(history) > 1 else current_value
-        today_change = current_value - yesterday_value
-        today_change_percent = (today_change / yesterday_value * 100) if yesterday_value > 0 else 0
-
-        return {
-            "currentValue": round(current_value, 2),
-            "todayChange": round(today_change, 2),
-            "todayChangePercent": round(today_change_percent, 2),
-            "history": history,
-        }
-
-    except Exception as e:
-        logger.error(f"❌ Simple history request failed: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch account history: {e!s}")

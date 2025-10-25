@@ -1,12 +1,3 @@
-from ..db.session import get_db
-from ..models.database import User
-from .config import settings
-from .jwt import decode_token
-from fastapi import Depends, Header, HTTPException, status
-from fastapi.security import HTTPBearer
-from sqlalchemy.orm import Session
-import logging
-
 """
 Unified Authentication System for PaiiD
 =======================================
@@ -19,8 +10,21 @@ This module provides a clean, unified authentication system that supports:
 STABILITY: Gibraltar-level - bulletproof error handling and clear auth flow
 """
 
+import logging
+
+from fastapi import Depends, Header, HTTPException, status
+from fastapi.security import HTTPBearer
+from sqlalchemy.orm import Session
+
+from ..db.session import get_db
+from ..models.database import User
+from .config import settings
+from .jwt import decode_token
+
+
 logger = logging.getLogger(__name__)
 security = HTTPBearer()
+
 
 class AuthMode:
     """Authentication mode selector"""
@@ -28,6 +32,7 @@ class AuthMode:
     API_TOKEN = "api_token"  # Simple token for service-to-service
     JWT = "jwt"  # Full JWT for user sessions
     MVP_FALLBACK = "mvp_fallback"  # Single-user MVP mode
+
 
 def verify_api_token(authorization: str) -> bool:
     """
@@ -44,6 +49,7 @@ def verify_api_token(authorization: str) -> bool:
 
     token = authorization.split(" ", 1)[1]
     return token == settings.API_TOKEN
+
 
 def get_auth_mode(authorization: str | None = Header(None)) -> str:
     """
@@ -69,6 +75,7 @@ def get_auth_mode(authorization: str | None = Header(None)) -> str:
 
     # Otherwise assume it's a JWT
     return AuthMode.JWT
+
 
 def get_current_user_unified(
     authorization: str | None = Header(None), db: Session = Depends(get_db)
@@ -200,6 +207,7 @@ def get_current_user_unified(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         detail="Authentication system error",
     )
+
 
 def require_api_token(authorization: str | None = Header(None)) -> str:
     """

@@ -1,18 +1,19 @@
-            from alpaca.trading.enums import QueryOrderStatus
-            from alpaca.trading.requests import GetOrdersRequest
-from alpaca.trading.client import TradingClient
-from alpaca.trading.enums import OrderSide, TimeInForce
-from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
-import logging
-import os
-
 """
 Alpaca Paper Trading API Client
 Handles: Account, Positions, Orders for Paper Trading ONLY
 Market Data comes from Tradier API
 """
 
+import logging
+import os
+
+from alpaca.trading.client import TradingClient
+from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
+
+
 logger = logging.getLogger(__name__)
+
 
 class AlpacaClient:
     """Alpaca Paper Trading client for account and position management"""
@@ -175,6 +176,8 @@ class AlpacaClient:
     def get_orders(self, status: str | None = None, limit: int = 100) -> list[dict]:
         """Get orders from Alpaca paper trading account"""
         try:
+            from alpaca.trading.enums import QueryOrderStatus
+            from alpaca.trading.requests import GetOrdersRequest
 
             # Map status string to enum
             status_filter = None
@@ -236,8 +239,10 @@ class AlpacaClient:
             logger.error(f"❌ Alpaca cancel_order failed: {e!s}")
             raise Exception(f"Failed to cancel order: {e!s}")
 
+
 # Singleton instance
 _alpaca_client = None
+
 
 def get_alpaca_client() -> AlpacaClient:
     """Get or create Alpaca client singleton"""

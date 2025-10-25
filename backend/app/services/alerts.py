@@ -1,14 +1,16 @@
-    from app.services.health_monitor import health_monitor
-from datetime import datetime
-import logging
-import os
-import requests
-
 """
 Production alert system
 """
 
+import logging
+import os
+from datetime import datetime
+
+import requests
+
+
 logger = logging.getLogger(__name__)
+
 
 class AlertService:
     def __init__(self):
@@ -78,12 +80,15 @@ class AlertService:
         except Exception as e:
             logger.error(f"Failed to send Slack alert: {e}")
 
+
 # Global instance
 alert_service = AlertService()
+
 
 # Usage examples:
 def check_error_rate():
     """Example: Alert on high error rate"""
+    from app.services.health_monitor import health_monitor
 
     health = health_monitor.get_system_health()
     error_rate = health["application"]["error_rate_percent"]
