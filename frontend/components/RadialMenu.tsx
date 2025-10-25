@@ -93,6 +93,13 @@ export const workflows: Workflow[] = [
     description: "GitHub repository monitoring with real-time activity tracking and metrics.",
   },
   {
+    id: "ml-intelligence",
+    name: "ML\nINTELLIGENCE",
+    color: "#8B5CF6",
+    icon: "🧠",
+    description: "AI-powered market analysis, pattern recognition, and personal trading insights.",
+  },
+  {
     id: "settings",
     name: "SETTINGS",
     color: "#64748b",
@@ -562,7 +569,7 @@ function RadialMenuComponent({
     centerGradient.append("stop").attr("offset", "0%").attr("stop-color", "#0f172a");
     centerGradient.append("stop").attr("offset", "100%").attr("stop-color", "#1e293b");
 
-    // Animated radial gradients for each wedge with wave effects
+    // PREMIUM GLASS: 4-stop depth gradients with subtle shimmer
     workflows.forEach((workflow, i) => {
       const wedgeGradient = defs
         .append("radialGradient")
@@ -571,7 +578,8 @@ function RadialMenuComponent({
         .attr("cy", "50%")
         .attr("r", "50%");
 
-      wedgeGradient
+      // 4-stop gradient for depth perception
+      const stop1 = wedgeGradient
         .append("stop")
         .attr("offset", "0%")
         .attr("stop-color", workflow.color)
@@ -579,17 +587,29 @@ function RadialMenuComponent({
 
       wedgeGradient
         .append("stop")
+        .attr("offset", "35%")
+        .attr("stop-color", workflow.color)
+        .attr("stop-opacity", "1");
+
+      wedgeGradient
+        .append("stop")
+        .attr("offset", "70%")
+        .attr("stop-color", workflow.color)
+        .attr("stop-opacity", "0.92");
+
+      wedgeGradient
+        .append("stop")
         .attr("offset", "100%")
         .attr("stop-color", workflow.color)
-        .attr("stop-opacity", "0.7");
+        .attr("stop-opacity", "0.85");
 
-      // Animate the gradient
-      wedgeGradient
-        .select("stop:first-child")
+      // SUBTLE SHIMMER: 4x slower, smaller range, staggered
+      stop1
         .append("animate")
         .attr("attributeName", "stop-opacity")
-        .attr("values", "1;0.8;1")
-        .attr("dur", "3s")
+        .attr("values", "0.92;1.0;0.92")
+        .attr("dur", "12s")
+        .attr("begin", `${i * 0.8}s`)
         .attr("repeatCount", "indefinite");
     });
 
@@ -615,7 +635,7 @@ function RadialMenuComponent({
     const hoverArc = d3
       .arc<d3.PieArcDatum<Workflow>>()
       .innerRadius(innerRadius)
-      .outerRadius(outerRadius + 12)
+      .outerRadius(outerRadius + 15)
       .cornerRadius(3);
 
     const segments = g
@@ -630,13 +650,13 @@ function RadialMenuComponent({
       .append("path")
       .attr("d", arc)
       .attr("fill", (_d, i) => `url(#wedgeGradient${i})`)
-      .attr("stroke", "#000000")
-      .attr("stroke-width", 2)
+      .attr("stroke", "rgba(255, 255, 255, 0.15)")
+      .attr("stroke-width", 1.5)
       .style("filter", "url(#normalShadow)")
       .on("mouseenter", function (_event, d) {
         d3.select(this)
           .transition()
-          .duration(150)
+          .duration(200)
           .attr("d", hoverArc as (d: unknown) => string)
           .style("filter", "url(#hoverGlow)");
         setHoveredWorkflow(d.data);
@@ -645,7 +665,7 @@ function RadialMenuComponent({
       .on("mouseleave", function () {
         d3.select(this)
           .transition()
-          .duration(150)
+          .duration(200)
           .attr("d", arc as (d: unknown) => string)
           .style("filter", "url(#normalShadow)");
         setHoveredWorkflow(null);

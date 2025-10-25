@@ -28,7 +28,7 @@ jobs:
     name: 🐍 Backend Health Check
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'backend' || github.event.inputs.check_type == '' }}
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -37,21 +37,21 @@ jobs:
         run: |
           echo "## 🐍 Backend Health Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Test health endpoint
           if curl -f ${{ env.BACKEND_URL }}/api/health; then
             echo "✅ Health endpoint: OK" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Health endpoint: FAILED" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Test ready endpoint
           if curl -f ${{ env.BACKEND_URL }}/api/ready; then
             echo "✅ Ready endpoint: OK" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Ready endpoint: FAILED" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Test API docs
           if curl -f ${{ env.BACKEND_URL }}/docs; then
             echo "✅ API docs: OK" >> $GITHUB_STEP_SUMMARY
@@ -63,11 +63,11 @@ jobs:
         run: |
           echo "## ⚡ Backend Performance" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Response time test
           RESPONSE_TIME=$(curl -w "%{time_total}" -o /dev/null -s ${{ env.BACKEND_URL }}/api/health)
           echo "Response time: ${RESPONSE_TIME}s" >> $GITHUB_STEP_SUMMARY
-          
+
           if (( $(echo "$RESPONSE_TIME < 2.0" | bc -l) )); then
             echo "✅ Performance: Good (< 2s)" >> $GITHUB_STEP_SUMMARY
           elif (( $(echo "$RESPONSE_TIME < 5.0" | bc -l) )); then
@@ -80,7 +80,7 @@ jobs:
         run: |
           echo "## 🔍 API Endpoint Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Test key endpoints
           ENDPOINTS=(
             "/api/health"
@@ -89,7 +89,7 @@ jobs:
             "/api/market/quote/AAPL"
             "/api/stream/status"
           )
-          
+
           for endpoint in "${ENDPOINTS[@]}"; do
             if curl -f "${{ env.BACKEND_URL }}$endpoint" > /dev/null 2>&1; then
               echo "✅ $endpoint: OK" >> $GITHUB_STEP_SUMMARY
@@ -103,7 +103,7 @@ jobs:
     name: ⚛️ Frontend Health Check
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'frontend' || github.event.inputs.check_type == '' }}
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -112,14 +112,14 @@ jobs:
         run: |
           echo "## ⚛️ Frontend Health Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Test main page
           if curl -f ${{ env.FRONTEND_URL }}/; then
             echo "✅ Main page: OK" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Main page: FAILED" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Test monitor page
           if curl -f ${{ env.FRONTEND_URL }}/monitor; then
             echo "✅ Monitor page: OK" >> $GITHUB_STEP_SUMMARY
@@ -131,11 +131,11 @@ jobs:
         run: |
           echo "## ⚡ Frontend Performance" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Response time test
           RESPONSE_TIME=$(curl -w "%{time_total}" -o /dev/null -s ${{ env.FRONTEND_URL }}/)
           echo "Response time: ${RESPONSE_TIME}s" >> $GITHUB_STEP_SUMMARY
-          
+
           if (( $(echo "$RESPONSE_TIME < 3.0" | bc -l) )); then
             echo "✅ Performance: Good (< 3s)" >> $GITHUB_STEP_SUMMARY
           elif (( $(echo "$RESPONSE_TIME < 8.0" | bc -l) )); then
@@ -148,16 +148,16 @@ jobs:
         run: |
           echo "## 🔍 Frontend Content Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Check for key content
           CONTENT=$(curl -s ${{ env.FRONTEND_URL }}/)
-          
+
           if echo "$CONTENT" | grep -q "PaiiD"; then
             echo "✅ PaiiD title: Found" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ PaiiD title: Missing" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if echo "$CONTENT" | grep -q "AI"; then
             echo "✅ AI content: Found" >> $GITHUB_STEP_SUMMARY
           else
@@ -169,7 +169,7 @@ jobs:
     name: 🗄️ Database Health Check
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'database' || github.event.inputs.check_type == '' }}
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -178,16 +178,16 @@ jobs:
         run: |
           echo "## 🗄️ Database Health Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Test database connectivity through health endpoint
           HEALTH_RESPONSE=$(curl -s ${{ env.BACKEND_URL }}/api/health)
-          
+
           if echo "$HEALTH_RESPONSE" | grep -q "redis.*connected.*true"; then
             echo "✅ Redis: Connected" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Redis: Disconnected" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if echo "$HEALTH_RESPONSE" | grep -q "latency_ms"; then
             echo "✅ Database latency: Available" >> $GITHUB_STEP_SUMMARY
           else
@@ -199,7 +199,7 @@ jobs:
     name: 🔗 API Health Check
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'api' || github.event.inputs.check_type == '' }}
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -208,7 +208,7 @@ jobs:
         run: |
           echo "## 🔗 API Health Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Test authentication endpoints
           echo "### 🔐 Authentication Endpoints" >> $GITHUB_STEP_SUMMARY
           if curl -f ${{ env.BACKEND_URL }}/api/auth/login -X POST -H "Content-Type: application/json" -d '{"email":"test","password":"test"}' > /dev/null 2>&1; then
@@ -216,7 +216,7 @@ jobs:
           else
             echo "❌ Login endpoint: Not responding" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Test market data endpoints
           echo "### 📊 Market Data Endpoints" >> $GITHUB_STEP_SUMMARY
           if curl -f ${{ env.BACKEND_URL }}/api/market/quote/AAPL -H "Authorization: Bearer test" > /dev/null 2>&1; then
@@ -224,7 +224,7 @@ jobs:
           else
             echo "❌ Quote endpoint: Not responding" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Test streaming endpoints
           echo "### 📡 Streaming Endpoints" >> $GITHUB_STEP_SUMMARY
           if curl -f ${{ env.BACKEND_URL }}/api/stream/status > /dev/null 2>&1; then
@@ -239,7 +239,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [backend-health, frontend-health, database-health, api-health]
     if: failure()
-    
+
     steps:
       - name: 🚨 Send Alert
         run: |
@@ -265,7 +265,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [backend-health, frontend-health, database-health, api-health]
     if: success()
-    
+
     steps:
       - name: ✅ All Systems Healthy
         run: |

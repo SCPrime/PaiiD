@@ -231,6 +231,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
             value={selectedSymbol}
             onChange={(e) => setSelectedSymbol(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Select symbol for analysis"
           >
             <option value="SPY">SPY (S&P 500)</option>
             <option value="QQQ">QQQ (NASDAQ)</option>

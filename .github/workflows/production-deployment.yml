@@ -34,7 +34,7 @@ jobs:
     name: 🔍 Pre-deployment Checks
     runs-on: ubuntu-latest
     if: ${{ !inputs.force_deploy }}
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -76,7 +76,7 @@ jobs:
     needs: [pre-deployment-checks]
     if: always() && (needs.pre-deployment-checks.result == 'success' || inputs.force_deploy)
     environment: ${{ inputs.environment || 'production' }}
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -117,7 +117,7 @@ jobs:
         run: |
           echo "Waiting for backend deployment..."
           sleep 30
-          
+
           # Test backend health
           for i in {1..10}; do
             if curl -f https://paiid-backend.onrender.com/api/health; then
@@ -136,7 +136,7 @@ jobs:
     needs: [deploy-backend]
     if: always() && (needs.deploy-backend.result == 'success' || inputs.force_deploy)
     environment: ${{ inputs.environment || 'production' }}
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -174,7 +174,7 @@ jobs:
         run: |
           echo "Waiting for frontend deployment..."
           sleep 30
-          
+
           # Test frontend
           for i in {1..10}; do
             if curl -f https://paiid-frontend.onrender.com/; then
@@ -192,7 +192,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [deploy-backend, deploy-frontend]
     if: always() && (needs.deploy-backend.result == 'success' && needs.deploy-frontend.result == 'success')
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -219,7 +219,7 @@ jobs:
           echo "Testing API endpoints..."
           # Test market data
           curl -H "Authorization: Bearer test-token" https://paiid-backend.onrender.com/api/market/quote/AAPL || echo "Market data test failed but continuing"
-          
+
           # Test authentication
           curl -X POST https://paiid-backend.onrender.com/api/auth/login \
             -H "Content-Type: application/json" \
@@ -231,27 +231,27 @@ jobs:
     runs-on: ubuntu-latest
     needs: [integration-testing]
     if: always()
-    
+
     steps:
       - name: 📊 Health Check
         run: |
           echo "## 🏥 Health Check Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Backend health
           if curl -f https://paiid-backend.onrender.com/api/health; then
             echo "✅ Backend: Healthy" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Backend: Unhealthy" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Frontend health
           if curl -f https://paiid-frontend.onrender.com/; then
             echo "✅ Frontend: Healthy" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Frontend: Unhealthy" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🔗 URLs" >> $GITHUB_STEP_SUMMARY
           echo "- Backend: https://paiid-backend.onrender.com" >> $GITHUB_STEP_SUMMARY
@@ -262,11 +262,11 @@ jobs:
         run: |
           echo "## ⚡ Performance Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Backend response time
           BACKEND_TIME=$(curl -w "%{time_total}" -o /dev/null -s https://paiid-backend.onrender.com/api/health)
           echo "Backend response time: ${BACKEND_TIME}s" >> $GITHUB_STEP_SUMMARY
-          
+
           # Frontend response time
           FRONTEND_TIME=$(curl -w "%{time_total}" -o /dev/null -s https://paiid-frontend.onrender.com/)
           echo "Frontend response time: ${FRONTEND_TIME}s" >> $GITHUB_STEP_SUMMARY
@@ -296,7 +296,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [deploy-backend, deploy-frontend, integration-testing]
     if: failure() && (needs.deploy-backend.result == 'failure' || needs.deploy-frontend.result == 'failure' || needs.integration-testing.result == 'failure')
-    
+
     steps:
       - name: 🚨 Rollback Alert
         run: |

@@ -48,6 +48,13 @@ const Backtesting = dynamic(() => import("../components/Backtesting"), {
     </div>
   ),
 });
+const MLIntelligenceWorkflow = dynamic(() => import("../components/workflows/MLIntelligenceWorkflow"), {
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
+  ),
+});
 const NewsReview = dynamic(() => import("../components/NewsReview"), {
   loading: () => (
     <div className="flex items-center justify-center p-8">
@@ -212,6 +219,9 @@ export default function Dashboard() {
 
         case "monitor":
           return <MonitorDashboard />;
+
+        case "ml-intelligence":
+          return <MLIntelligenceWorkflow onClose={() => setSelectedWorkflow(null)} />;
 
         default:
           return null;

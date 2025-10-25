@@ -306,6 +306,7 @@ export const PatternRecognition: React.FC<PatternRecognitionProps> = ({
               <button
                 onClick={() => setSelectedPattern(null)}
                 className="text-gray-400 hover:text-gray-600"
+                aria-label="Close pattern details"
               >
                 <XCircle className="w-6 h-6" />
               </button>
