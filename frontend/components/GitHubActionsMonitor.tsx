@@ -1,201 +1,161 @@
-/**
- * GitHub Actions Monitor Component
- * 
- * Real-time monitoring of GitHub Actions status directly in Cursor.
- * Shows workflow runs, status, and allows quick access to logs.
- */
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  AlertTriangle, 
-  RefreshCw, 
-  ExternalLink,
-  GitBranch,
-  Calendar,
-  User,
-  Loader2,
-  Activity,
-  Zap
-} from 'lucide-react';
+import { CheckCircle, Clock, ExternalLink, RefreshCw, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface WorkflowRun {
   id: number;
   name: string;
-  status: 'completed' | 'in_progress' | 'queued' | 'cancelled';
-  conclusion: 'success' | 'failure' | 'cancelled' | 'skipped' | null;
+  status: "completed" | "in_progress" | "queued" | "cancelled" | "failed";
+  conclusion: "success" | "failure" | "cancelled" | "skipped" | null;
   created_at: string;
   updated_at: string;
-  head_branch: string;
-  head_sha: string;
   html_url: string;
-  actor: {
-    login: string;
-    avatar_url: string;
-  };
   workflow_id: number;
-  workflow_url: string;
+  workflow_name: string;
+}
+
+interface Workflow {
+  id: number;
+  name: string;
+  state: "active" | "deleted";
+  created_at: string;
+  updated_at: string;
+  html_url: string;
 }
 
 interface GitHubActionsMonitorProps {
   repository: string;
-  onStatusChange?: (status: 'all_green' | 'has_red' | 'unknown') => void;
 }
 
-export const GitHubActionsMonitor: React.FC<GitHubActionsMonitorProps> = ({ 
-  repository = 'SCPrime/PaiiD',
-  onStatusChange 
-}) => {
-  const [workflows, setWorkflows] = useState<WorkflowRun[]>([]);
+export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) {
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [runs, setRuns] = useState<WorkflowRun[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const fetchWorkflows = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch workflows
+      const workflowsResponse = await fetch(
+        `https://api.github.com/repos/${repository}/actions/workflows`
+      );
+      
+      if (!workflowsResponse.ok) {
+        throw new Error(`Failed to fetch workflows: ${workflowsResponse.status}`);
+      }
+      
+      const workflowsData = await workflowsResponse.json();
+      setWorkflows(workflowsData.workflows || []);
+
+      // Fetch recent runs
+      const runsResponse = await fetch(
+        `https://api.github.com/repos/${repository}/actions/runs?per_page=20`
+      );
+      
+      if (!runsResponse.ok) {
+        throw new Error(`Failed to fetch runs: ${runsResponse.status}`);
+      }
+      
+      const runsData = await runsResponse.json();
+      setRuns(runsData.workflow_runs || []);
+      
+      setLastUpdated(new Date());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch GitHub Actions data");
+      console.error("GitHub Actions fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    loadWorkflowRuns();
+    fetchWorkflows();
+    
     // Auto-refresh every 30 seconds
-    const interval = setInterval(loadWorkflowRuns, 30000);
+    const interval = setInterval(fetchWorkflows, 30000);
     return () => clearInterval(interval);
   }, [repository]);
 
-  const loadWorkflowRuns = async () => {
-    setRefreshing(true);
-    try {
-      // Note: This would need a GitHub token in production
-      // For now, we'll simulate the data
-      const mockWorkflows: WorkflowRun[] = [
-        {
-          id: 1,
-          name: 'CI/CD Pipeline',
-          status: 'completed',
-          conclusion: 'success',
-          created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-          updated_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-          head_branch: 'main',
-          head_sha: 'b72d170',
-          html_url: `https://github.com/${repository}/actions/runs/1`,
-          actor: {
-            login: 'SCPrime',
-            avatar_url: 'https://github.com/SCPrime.png'
-          },
-          workflow_id: 1,
-          workflow_url: `https://github.com/${repository}/actions/workflows/ci.yml`
-        },
-        {
-          id: 2,
-          name: 'ML Intelligence Tests',
-          status: 'completed',
-          conclusion: 'failure',
-          created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-          updated_at: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
-          head_branch: 'main',
-          head_sha: 'b72d170',
-          html_url: `https://github.com/${repository}/actions/runs/2`,
-          actor: {
-            login: 'SCPrime',
-            avatar_url: 'https://github.com/SCPrime.png'
-          },
-          workflow_id: 2,
-          workflow_url: `https://github.com/${repository}/actions/workflows/ml-tests.yml`
-        },
-        {
-          id: 3,
-          name: 'Deployment Pipeline',
-          status: 'in_progress',
-          conclusion: null,
-          created_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-          updated_at: new Date(Date.now() - 30 * 1000).toISOString(),
-          head_branch: 'main',
-          head_sha: 'b72d170',
-          html_url: `https://github.com/${repository}/actions/runs/3`,
-          actor: {
-            login: 'SCPrime',
-            avatar_url: 'https://github.com/SCPrime.png'
-          },
-          workflow_id: 3,
-          workflow_url: `https://github.com/${repository}/actions/workflows/deploy.yml`
-        }
-      ];
-
-      setWorkflows(mockWorkflows);
-      setLastUpdate(new Date());
-      setError(null);
-
-      // Determine overall status
-      const hasFailures = mockWorkflows.some(w => w.conclusion === 'failure');
-      const hasInProgress = mockWorkflows.some(w => w.status === 'in_progress');
-      
-      if (hasFailures) {
-        onStatusChange?.('has_red');
-      } else if (hasInProgress) {
-        onStatusChange?.('unknown');
-      } else {
-        onStatusChange?.('all_green');
-      }
-
-    } catch (err) {
-      setError('Failed to load GitHub Actions status');
-      console.error('GitHub Actions monitor error:', err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
   const getStatusIcon = (status: string, conclusion: string | null) => {
-    if (status === 'in_progress') {
-      return <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />;
-    if (conclusion === 'success') {
-      return <CheckCircle className="w-5 h-5 text-green-500" />;
-    if (conclusion === 'failure') {
-      return <XCircle className="w-5 h-5 text-red-500" />;
-    if (conclusion === 'cancelled') {
-      return <XCircle className="w-5 h-5 text-gray-500" />;
-    if (conclusion === 'skipped') {
-      return <Clock className="w-5 h-5 text-gray-400" />;
+    if (status === "in_progress") {
+      return <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />;
     }
-    return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+    if (status === "queued") {
+      return <Clock className="w-4 h-4 text-yellow-500" />;
+    }
+    if (conclusion === "success") {
+      return <CheckCircle className="w-4 h-4 text-green-500" />;
+    }
+    if (conclusion === "failure") {
+      return <XCircle className="w-4 h-4 text-red-500" />;
+    }
+    if (conclusion === "cancelled") {
+      return <XCircle className="w-4 h-4 text-gray-500" />;
+    }
+    return <Clock className="w-4 h-4 text-gray-400" />;
   };
 
   const getStatusColor = (status: string, conclusion: string | null) => {
-    if (status === 'in_progress') return 'border-blue-200 bg-blue-50';
-    if (conclusion === 'success') return 'border-green-200 bg-green-50';
-    if (conclusion === 'failure') return 'border-red-200 bg-red-50';
-    if (conclusion === 'cancelled') return 'border-gray-200 bg-gray-50';
-    return 'border-yellow-200 bg-yellow-50';
+    if (status === "in_progress") return "text-blue-500";
+    if (status === "queued") return "text-yellow-500";
+    if (conclusion === "success") return "text-green-500";
+    if (conclusion === "failure") return "text-red-500";
+    if (conclusion === "cancelled") return "text-gray-500";
+    return "text-gray-400";
   };
 
-  const getStatusText = (status: string, conclusion: string | null) => {
-    if (status === 'in_progress') return 'Running';
-    if (conclusion === 'success') return 'Success';
-    if (conclusion === 'failure') return 'Failed';
-    if (conclusion === 'cancelled') return 'Cancelled';
-    if (conclusion === 'skipped') return 'Skipped';
-    return 'Unknown';
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
   };
 
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
+  const getStatusCounts = () => {
+    const counts = {
+      success: 0,
+      failure: 0,
+      running: 0,
+      queued: 0,
+    };
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
+    runs.forEach((run) => {
+      if (run.status === "in_progress") counts.running++;
+      else if (run.status === "queued") counts.queued++;
+      else if (run.conclusion === "success") counts.success++;
+      else if (run.conclusion === "failure") counts.failure++;
+    });
+
+    return counts;
   };
 
-  if (loading) {
+  const statusCounts = getStatusCounts();
+
+  if (loading && !lastUpdated) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        <span className="ml-3 text-gray-600">Loading GitHub Actions status...</span>
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <span className="ml-3 text-gray-400">Loading GitHub Actions...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+        <div className="flex items-center gap-2 text-red-400 mb-2">
+          <XCircle className="w-5 h-5" />
+          <h3 className="font-semibold">Error Loading GitHub Actions</h3>
+        </div>
+        <p className="text-red-300 text-sm mb-4">{error}</p>
+        <button
+          onClick={fetchWorkflows}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
@@ -204,179 +164,164 @@ export const GitHubActionsMonitor: React.FC<GitHubActionsMonitorProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg">
-            <Activity className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">GitHub Actions Monitor</h2>
-            <p className="text-sm text-gray-600">Real-time workflow status for {repository}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          {lastUpdate && (
-            <div className="text-sm text-gray-500">
-              Last updated: {lastUpdate.toLocaleTimeString()}
-            </div>
+        <div>
+          <h2 className="text-2xl font-bold text-white">GitHub Actions Monitor</h2>
+          <p className="text-gray-400 text-sm">
+            Repository: <span className="text-blue-400">{repository}</span>
+          </p>
+          {lastUpdated && (
+            <p className="text-gray-500 text-xs mt-1">
+              Last updated: {formatDate(lastUpdated.toISOString())}
+            </p>
           )}
-          <button
-            onClick={loadWorkflowRuns}
-            disabled={refreshing}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
         </div>
+        <button
+          onClick={fetchWorkflows}
+          disabled={loading}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
       </div>
 
-      {/* Status Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="w-8 h-8 text-green-500" />
-            <div>
-              <div className="text-2xl font-bold text-gray-900">
-                {workflows.filter(w => w.conclusion === 'success').length}
-              </div>
-              <div className="text-sm text-gray-500">Successful</div>
-            </div>
+      {/* Status Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-green-500" />
+            <span className="text-green-400 font-semibold">Success</span>
           </div>
+          <div className="text-2xl font-bold text-green-300 mt-1">{statusCounts.success}</div>
         </div>
-
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center space-x-3">
-            <XCircle className="w-8 h-8 text-red-500" />
-            <div>
-              <div className="text-2xl font-bold text-gray-900">
-                {workflows.filter(w => w.conclusion === 'failure').length}
-              </div>
-              <div className="text-sm text-gray-500">Failed</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center space-x-3">
-            <Loader2 className="w-8 h-8 text-blue-500" />
-            <div>
-              <div className="text-2xl font-bold text-gray-900">
-                {workflows.filter(w => w.status === 'in_progress').length}
-              </div>
-              <div className="text-sm text-gray-500">Running</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Workflow Runs */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Recent Workflow Runs</h3>
         
-        {workflows.length > 0 ? (
+        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <XCircle className="w-5 h-5 text-red-500" />
+            <span className="text-red-400 font-semibold">Failed</span>
+          </div>
+          <div className="text-2xl font-bold text-red-300 mt-1">{statusCounts.failure}</div>
+        </div>
+        
+        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <RefreshCw className="w-5 h-5 text-blue-500 animate-spin" />
+            <span className="text-blue-400 font-semibold">Running</span>
+          </div>
+          <div className="text-2xl font-bold text-blue-300 mt-1">{statusCounts.running}</div>
+        </div>
+        
+        <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-yellow-500" />
+            <span className="text-yellow-400 font-semibold">Queued</span>
+          </div>
+          <div className="text-2xl font-bold text-yellow-300 mt-1">{statusCounts.queued}</div>
+        </div>
+      </div>
+
+      {/* Recent Runs */}
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="text-xl">🔄</span>
+          Recent Workflow Runs
+        </h3>
+        
+        {runs.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            No workflow runs found
+          </div>
+        ) : (
           <div className="space-y-3">
-            {workflows.map((workflow) => (
+            {runs.slice(0, 10).map((run) => (
               <div
-                key={workflow.id}
-                className={`border rounded-xl p-4 ${getStatusColor(workflow.status, workflow.conclusion)}`}
+                key={run.id}
+                className="bg-slate-900/40 border border-slate-700/30 rounded-lg p-4 hover:bg-slate-900/60 transition-colors"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    {getStatusIcon(workflow.status, workflow.conclusion)}
+                  <div className="flex items-center gap-3">
+                    {getStatusIcon(run.status, run.conclusion)}
                     <div>
-                      <h4 className="font-semibold text-gray-900">{workflow.name}</h4>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <GitBranch className="w-4 h-4" />
-                          <span>{workflow.head_branch}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{formatTimeAgo(workflow.created_at)}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <User className="w-4 h-4" />
-                          <span>{workflow.actor.login}</span>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-white">{run.name}</span>
+                        <span className={`text-sm ${getStatusColor(run.status, run.conclusion)}`}>
+                          {run.status === "in_progress" ? "Running" : 
+                           run.status === "queued" ? "Queued" :
+                           run.conclusion === "success" ? "Success" :
+                           run.conclusion === "failure" ? "Failed" :
+                           run.conclusion === "cancelled" ? "Cancelled" : "Unknown"}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-400">
+                        {run.workflow_name} • {formatDate(run.created_at)}
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-3">
-                    <div className="text-right">
-                      <div className="font-medium text-gray-900">
-                        {getStatusText(workflow.status, workflow.conclusion)}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {workflow.head_sha.substring(0, 7)}
-                      </div>
-                    </div>
-                    
+                  <div className="flex items-center gap-2">
                     <a
-                      href={workflow.html_url}
+                      href={run.html_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                      className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+                      title="View in GitHub"
                     >
-                      <ExternalLink className="w-4 h-4" />
-                      <span className="text-sm">View</span>
+                      <ExternalLink className="w-4 h-4 text-gray-400" />
                     </a>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Workflow Runs</h3>
-            <p className="text-gray-600">
-              No recent workflow runs found for {repository}.
-            </p>
-          </div>
         )}
       </div>
 
-      {/* Error State */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <div className="flex items-center space-x-2">
-            <AlertTriangle className="w-5 h-5 text-red-500" />
-            <span className="font-medium text-red-800">{error}</span>
+      {/* Workflows */}
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="text-xl">⚙️</span>
+          Available Workflows
+        </h3>
+        
+        {workflows.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            No workflows found
           </div>
-          <p className="text-sm text-red-600 mt-1">
-            Check your GitHub token permissions or network connection.
-          </p>
-        </div>
-      )}
-
-      {/* Quick Actions */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <h3 className="font-semibold text-gray-900 mb-3">Quick Actions</h3>
-        <div className="flex flex-wrap gap-2">
-          <a
-            href={`https://github.com/${repository}/actions`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center space-x-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-            <span>View All Actions</span>
-          </a>
-          <a
-            href={`https://github.com/${repository}/actions/workflows`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center space-x-2 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
-          >
-            <Zap className="w-4 h-4" />
-            <span>Workflow Files</span>
-          </a>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {workflows.map((workflow) => (
+              <div
+                key={workflow.id}
+                className="bg-slate-900/40 border border-slate-700/30 rounded-lg p-4 hover:bg-slate-900/60 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-white">{workflow.name}</div>
+                    <div className="text-sm text-gray-400">
+                      State: <span className={workflow.state === "active" ? "text-green-400" : "text-red-400"}>
+                        {workflow.state}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Updated: {formatDate(workflow.updated_at)}
+                    </div>
+                  </div>
+                  
+                  <a
+                    href={workflow.html_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+                    title="View in GitHub"
+                  >
+                    <ExternalLink className="w-4 h-4 text-gray-400" />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default GitHubActionsMonitor;
+}
