@@ -36,6 +36,7 @@ import MLAnalyticsDashboard from "./MLAnalyticsDashboard";
 import MLModelManagement from "./MLModelManagement";
 import MLTrainingDashboard from "./MLTrainingDashboard";
 import { MonitorDashboard } from "./MonitorDashboard";
+import { GitHubActionsMonitor } from "./GitHubActionsMonitor";
 import PatternBacktestDashboard from "./PatternBacktestDashboard";
 import PerformanceDashboard from "./admin/PerformanceDashboard";
 import PortfolioOptimizer from "./PortfolioOptimizer";
@@ -1232,7 +1233,11 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
           {activeTab === "performance" && isAdmin && <PerformanceDashboard />}
 
-          {activeTab === "github-monitor" && isAdmin && <MonitorDashboard />}
+          {activeTab === "github-monitor" && isAdmin && (
+            <div className="min-h-[500px]">
+              <GitHubActionsMonitor repository="SCPrime/PaiiD" />
+            </div>
+          )}
         </div>
 
         {/* Footer */}

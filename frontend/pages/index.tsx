@@ -233,9 +233,6 @@ export default function Dashboard() {
         case "ml-intelligence":
           return <MLIntelligenceWorkflow onClose={() => setSelectedWorkflow(null)} />;
 
-        case "github-monitor":
-          return <GitHubActionsMonitor repository="SCPrime/PaiiD" />;
-
         default:
           return null;
       }
