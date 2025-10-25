@@ -1,24 +1,24 @@
 /**
  * Personal Analytics Component
- * 
+ *
  * Personal trading analytics and insights for friends and family.
  * Tracks performance, identifies patterns, and provides personalized recommendations.
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Target,
-  Shield,
-  Zap,
-  Award,
+import {
   AlertTriangle,
+  Award,
+  BarChart3,
   Info,
+  Loader2,
   RefreshCw,
-  Loader2
-} from 'lucide-react';
-import { HelpTooltip } from '../HelpTooltip';
+  Shield,
+  Target,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { HelpTooltip } from "../HelpTooltip";
 
 interface PersonalAnalytics {
   total_trades: number;
@@ -44,22 +44,22 @@ interface TradingPattern {
 }
 
 interface PersonalRecommendation {
-  type: 'improvement' | 'opportunity' | 'warning';
+  type: "improvement" | "opportunity" | "warning";
   title: string;
   description: string;
-  priority: 'high' | 'medium' | 'low';
+  priority: "high" | "medium" | "low";
   actionable: boolean;
   impact: string;
 }
 
 interface PersonalAnalyticsProps {
   userId?: string;
-  timeRange?: '7d' | '30d' | '90d' | '1y';
+  timeRange?: "7d" | "30d" | "90d" | "1y";
 }
 
-export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({ 
-  userId = 'demo',
-  timeRange = '30d'
+export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
+  userId = "demo",
+  timeRange = "30d",
 }) => {
   const [analytics, setAnalytics] = useState<PersonalAnalytics | null>(null);
   const [patterns, setPatterns] = useState<TradingPattern[]>([]);
@@ -88,66 +88,68 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
         best_trade: 15.7,
         worst_trade: -6.8,
         risk_score: 0.65,
-        consistency_score: 0.78
+        consistency_score: 0.78,
       };
 
       const mockPatterns: TradingPattern[] = [
         {
-          pattern_name: 'Momentum Breakouts',
+          pattern_name: "Momentum Breakouts",
           frequency: 12,
           success_rate: 75.0,
           avg_return: 8.2,
-          description: 'You excel at identifying and trading momentum breakouts'
+          description: "You excel at identifying and trading momentum breakouts",
         },
         {
-          pattern_name: 'Support Bounces',
+          pattern_name: "Support Bounces",
           frequency: 8,
           success_rate: 62.5,
           avg_return: 4.1,
-          description: 'You have moderate success with support level bounces'
+          description: "You have moderate success with support level bounces",
         },
         {
-          pattern_name: 'Resistance Rejections',
+          pattern_name: "Resistance Rejections",
           frequency: 6,
           success_rate: 33.3,
           avg_return: -2.1,
-          description: 'You struggle with resistance level rejections'
-        }
+          description: "You struggle with resistance level rejections",
+        },
       ];
 
       const mockRecommendations: PersonalRecommendation[] = [
         {
-          type: 'improvement',
-          title: 'Improve Risk Management',
-          description: 'Your average loss (-6.8%) is larger than your average win (8.2%). Consider tighter stop losses.',
-          priority: 'high',
+          type: "improvement",
+          title: "Improve Risk Management",
+          description:
+            "Your average loss (-6.8%) is larger than your average win (8.2%). Consider tighter stop losses.",
+          priority: "high",
           actionable: true,
-          impact: 'Could reduce drawdown by 30-40%'
+          impact: "Could reduce drawdown by 30-40%",
         },
         {
-          type: 'opportunity',
-          title: 'Leverage Your Strength',
-          description: 'You have a 75% success rate with momentum breakouts. Consider increasing position size for these setups.',
-          priority: 'medium',
+          type: "opportunity",
+          title: "Leverage Your Strength",
+          description:
+            "You have a 75% success rate with momentum breakouts. Consider increasing position size for these setups.",
+          priority: "medium",
           actionable: true,
-          impact: 'Could increase returns by 15-20%'
+          impact: "Could increase returns by 15-20%",
         },
         {
-          type: 'warning',
-          title: 'Avoid Resistance Trades',
-          description: 'You have a 33% success rate with resistance rejections. Consider avoiding these setups.',
-          priority: 'medium',
+          type: "warning",
+          title: "Avoid Resistance Trades",
+          description:
+            "You have a 33% success rate with resistance rejections. Consider avoiding these setups.",
+          priority: "medium",
           actionable: true,
-          impact: 'Could improve win rate by 5-10%'
-        }
+          impact: "Could improve win rate by 5-10%",
+        },
       ];
 
       setAnalytics(mockAnalytics);
       setPatterns(mockPatterns);
       setRecommendations(mockRecommendations);
-
     } catch (error) {
-      console.error('Failed to load personal analytics:', error);
+      console.error("Failed to load personal analytics:", error);
     } finally {
       setLoading(false);
     }
@@ -159,34 +161,42 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
     setRefreshing(false);
   };
 
-  const getPerformanceColor = (value: number, type: 'return' | 'ratio' | 'rate') => {
-    if (type === 'return') {
-      return value > 0 ? 'text-green-600' : 'text-red-600';
+  const getPerformanceColor = (value: number, type: "return" | "ratio" | "rate") => {
+    if (type === "return") {
+      return value > 0 ? "text-green-600" : "text-red-600";
     }
-    if (type === 'ratio') {
-      return value > 1.5 ? 'text-green-600' : value > 1.0 ? 'text-yellow-600' : 'text-red-600';
+    if (type === "ratio") {
+      return value > 1.5 ? "text-green-600" : value > 1.0 ? "text-yellow-600" : "text-red-600";
     }
-    if (type === 'rate') {
-      return value > 60 ? 'text-green-600' : value > 40 ? 'text-yellow-600' : 'text-red-600';
+    if (type === "rate") {
+      return value > 60 ? "text-green-600" : value > 40 ? "text-yellow-600" : "text-red-600";
     }
-    return 'text-gray-600';
+    return "text-gray-600";
   };
 
   const getRecommendationIcon = (type: string) => {
     switch (type) {
-      case 'improvement': return <TrendingUp className="w-5 h-5 text-blue-500" />;
-      case 'opportunity': return <Zap className="w-5 h-5 text-green-500" />;
-      case 'warning': return <AlertTriangle className="w-5 h-5 text-orange-500" />;
-      default: return <Info className="w-5 h-5 text-gray-500" />;
+      case "improvement":
+        return <TrendingUp className="w-5 h-5 text-blue-500" />;
+      case "opportunity":
+        return <Zap className="w-5 h-5 text-green-500" />;
+      case "warning":
+        return <AlertTriangle className="w-5 h-5 text-orange-500" />;
+      default:
+        return <Info className="w-5 h-5 text-gray-500" />;
     }
   };
 
   const getRecommendationColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'border-red-200 bg-red-50';
-      case 'medium': return 'border-yellow-200 bg-yellow-50';
-      case 'low': return 'border-green-200 bg-green-50';
-      default: return 'border-gray-200 bg-gray-50';
+      case "high":
+        return "border-red-200 bg-red-50";
+      case "medium":
+        return "border-yellow-200 bg-yellow-50";
+      case "low":
+        return "border-green-200 bg-green-50";
+      default:
+        return "border-gray-200 bg-gray-50";
     }
   };
 
@@ -210,11 +220,13 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
             <p className="text-sm text-gray-600">Your trading performance insights</p>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           <select
             value={timeRange}
-            onChange={(_e) => {/* Handle time range change */}}
+            onChange={(_e) => {
+              /* Handle time range change */
+            }}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             aria-label="Select time range for analytics"
           >
@@ -223,13 +235,13 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
             <option value="90d">Last 90 days</option>
             <option value="1y">Last year</option>
           </select>
-          
+
           <button
             onClick={handleRefresh}
             disabled={refreshing}
             className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
             <span>Refresh</span>
           </button>
         </div>
@@ -242,8 +254,11 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Return</p>
-                <p className={`text-2xl font-bold ${getPerformanceColor(analytics.total_return, 'return')}`}>
-                  {analytics.total_return > 0 ? '+' : ''}{analytics.total_return}%
+                <p
+                  className={`text-2xl font-bold ${getPerformanceColor(analytics.total_return, "return")}`}
+                >
+                  {analytics.total_return > 0 ? "+" : ""}
+                  {analytics.total_return}%
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-green-500" />
@@ -254,7 +269,9 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Win Rate</p>
-                <p className={`text-2xl font-bold ${getPerformanceColor(analytics.win_rate, 'rate')}`}>
+                <p
+                  className={`text-2xl font-bold ${getPerformanceColor(analytics.win_rate, "rate")}`}
+                >
                   {analytics.win_rate}%
                 </p>
               </div>
@@ -266,7 +283,9 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Sharpe Ratio</p>
-                <p className={`text-2xl font-bold ${getPerformanceColor(analytics.sharpe_ratio, 'ratio')}`}>
+                <p
+                  className={`text-2xl font-bold ${getPerformanceColor(analytics.sharpe_ratio, "ratio")}`}
+                >
                   {analytics.sharpe_ratio}
                 </p>
               </div>
@@ -278,7 +297,9 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Max Drawdown</p>
-                <p className={`text-2xl font-bold ${getPerformanceColor(analytics.max_drawdown, 'return')}`}>
+                <p
+                  className={`text-2xl font-bold ${getPerformanceColor(analytics.max_drawdown, "return")}`}
+                >
                   {analytics.max_drawdown}%
                 </p>
               </div>
@@ -296,7 +317,7 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
             <h3 className="text-lg font-semibold text-gray-900">Your Trading Patterns</h3>
             <HelpTooltip content="Analysis of your trading patterns and success rates. Use this to identify your strengths and areas for improvement." />
           </div>
-          
+
           <div className="space-y-4">
             {patterns.map((pattern, index) => (
               <div key={index} className="border border-gray-200 rounded-lg p-4">
@@ -306,13 +327,11 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
                     <p className="text-sm text-gray-600">{pattern.description}</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold text-blue-600">
-                      {pattern.success_rate}%
-                    </div>
+                    <div className="text-lg font-bold text-blue-600">{pattern.success_rate}%</div>
                     <div className="text-xs text-gray-500">Success Rate</div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
                     <div className="text-gray-500">Frequency</div>
@@ -320,15 +339,21 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
                   </div>
                   <div>
                     <div className="text-gray-500">Avg Return</div>
-                    <div className={`font-medium ${pattern.avg_return > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {pattern.avg_return > 0 ? '+' : ''}{pattern.avg_return}%
+                    <div
+                      className={`font-medium ${pattern.avg_return > 0 ? "text-green-600" : "text-red-600"}`}
+                    >
+                      {pattern.avg_return > 0 ? "+" : ""}
+                      {pattern.avg_return}%
                     </div>
                   </div>
                   <div>
                     <div className="text-gray-500">Performance</div>
                     <div className="font-medium">
-                      {pattern.success_rate > 70 ? 'Excellent' : 
-                       pattern.success_rate > 50 ? 'Good' : 'Needs Improvement'}
+                      {pattern.success_rate > 70
+                        ? "Excellent"
+                        : pattern.success_rate > 50
+                          ? "Good"
+                          : "Needs Improvement"}
                     </div>
                   </div>
                 </div>
@@ -346,7 +371,7 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
             <h3 className="text-lg font-semibold text-gray-900">Personal Recommendations</h3>
             <HelpTooltip content="AI-generated recommendations based on your trading patterns and performance. Focus on high-priority items first." />
           </div>
-          
+
           <div className="space-y-4">
             {recommendations.map((recommendation, index) => (
               <div
@@ -358,11 +383,15 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <h4 className="font-semibold text-gray-900">{recommendation.title}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        recommendation.priority === 'high' ? 'bg-red-100 text-red-800' :
-                        recommendation.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          recommendation.priority === "high"
+                            ? "bg-red-100 text-red-800"
+                            : recommendation.priority === "medium"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-green-100 text-green-800"
+                        }`}
+                      >
                         {recommendation.priority.toUpperCase()}
                       </span>
                     </div>

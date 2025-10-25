@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
+import AnimatedCounter from "../ui/AnimatedCounter";
 import EnhancedCard from "../ui/EnhancedCard";
 import StatusIndicator from "../ui/StatusIndicator";
-import AnimatedCounter from "../ui/AnimatedCounter";
 
 interface AIChartAnalysisProps {
   symbol: string;
@@ -63,10 +63,11 @@ const AIChartAnalysis: React.FC<AIChartAnalysisProps> = ({
 
       return patternTypes
         .filter(() => Math.random() > 0.5) // Random selection
-        .map(pattern => ({
+        .map((pattern) => ({
           ...pattern,
           description: `AI detected ${pattern.name.toLowerCase()} pattern with ${pattern.confidence}% confidence`,
-          priceTarget: pattern.signal === "bullish" ? 150 + Math.random() * 50 : 100 + Math.random() * 30,
+          priceTarget:
+            pattern.signal === "bullish" ? 150 + Math.random() * 50 : 100 + Math.random() * 30,
         }));
     };
 
@@ -104,7 +105,7 @@ const AIChartAnalysis: React.FC<AIChartAnalysisProps> = ({
 
       return insightTypes
         .filter(() => Math.random() > 0.3) // Random selection
-        .map(insight => ({
+        .map((insight) => ({
           ...insight,
           timestamp: new Date().toISOString(),
         }));
@@ -172,7 +173,7 @@ const AIChartAnalysis: React.FC<AIChartAnalysisProps> = ({
           <h3 className="text-white font-bold text-xl">AI Chart Analysis</h3>
           <StatusIndicator status={isConnected ? "online" : "offline"} size="sm" />
         </div>
-        
+
         <div className="flex items-center gap-2">
           <span className="text-slate-400 text-sm">{symbol}</span>
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -191,7 +192,7 @@ const AIChartAnalysis: React.FC<AIChartAnalysisProps> = ({
               </p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-slate-400 text-sm">Patterns Detected</div>
@@ -200,9 +201,10 @@ const AIChartAnalysis: React.FC<AIChartAnalysisProps> = ({
             <div className="text-center">
               <div className="text-slate-400 text-sm">Avg Confidence</div>
               <div className="text-white font-bold text-2xl">
-                {patterns.length > 0 
+                {patterns.length > 0
                   ? Math.round(patterns.reduce((sum, p) => sum + p.confidence, 0) / patterns.length)
-                  : 0}%
+                  : 0}
+                %
               </div>
             </div>
             <div className="text-center">
@@ -227,15 +229,15 @@ const AIChartAnalysis: React.FC<AIChartAnalysisProps> = ({
                       <span className={`text-sm font-semibold ${getSignalColor(pattern.signal)}`}>
                         {pattern.signal.toUpperCase()}
                       </span>
-                      <StatusIndicator 
-                        status={pattern.confidence >= 80 ? "online" : "warning"} 
-                        size="sm" 
+                      <StatusIndicator
+                        status={pattern.confidence >= 80 ? "online" : "warning"}
+                        size="sm"
                       />
                     </div>
                   </div>
-                  
+
                   <p className="text-slate-300 text-sm">{pattern.description}</p>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400 text-sm">Confidence</span>
@@ -243,7 +245,7 @@ const AIChartAnalysis: React.FC<AIChartAnalysisProps> = ({
                         {pattern.confidence}%
                       </span>
                     </div>
-                    
+
                     {pattern.priceTarget && (
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400 text-sm">Price Target</span>
@@ -275,17 +277,21 @@ const AIChartAnalysis: React.FC<AIChartAnalysisProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-white">{insight.title}</span>
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2 py-1 rounded ${getImpactColor(insight.impact)} bg-slate-700`}>
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${getImpactColor(insight.impact)} bg-slate-700`}
+                      >
                         {insight.impact.toUpperCase()}
                       </span>
-                      <span className={`text-sm font-semibold ${getConfidenceColor(insight.confidence)}`}>
+                      <span
+                        className={`text-sm font-semibold ${getConfidenceColor(insight.confidence)}`}
+                      >
                         {insight.confidence}%
                       </span>
                     </div>
                   </div>
-                  
+
                   <p className="text-slate-300 text-sm">{insight.description}</p>
-                  
+
                   <div className="text-xs text-slate-500">
                     {new Date(insight.timestamp).toLocaleString()}
                   </div>

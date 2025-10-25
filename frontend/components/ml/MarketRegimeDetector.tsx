@@ -1,25 +1,25 @@
 /**
  * Market Regime Detector Component
- * 
+ *
  * Detects current market regime and provides strategy recommendations.
  * Makes complex market analysis accessible for friends and family.
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Minus,
+import {
   BarChart3,
-  Zap,
-  Target,
+  Loader2,
+  Minus,
   RefreshCw,
-  Loader2
-} from 'lucide-react';
-import { HelpTooltip } from '../HelpTooltip';
+  Target,
+  TrendingDown,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { HelpTooltip } from "../HelpTooltip";
 
 interface MarketRegime {
-  regime: 'trending_bullish' | 'trending_bearish' | 'ranging' | 'high_volatility';
+  regime: "trending_bullish" | "trending_bearish" | "ranging" | "high_volatility";
   confidence: number;
   features: {
     trend_direction: number;
@@ -37,7 +37,7 @@ interface StrategyRecommendation {
   probability: number;
   confidence: number;
   description: string;
-  risk_level: 'low' | 'medium' | 'high';
+  risk_level: "low" | "medium" | "high";
   expected_return: number;
   time_horizon: string;
 }
@@ -47,12 +47,14 @@ interface MarketRegimeDetectorProps {
   onRegimeChange?: (regime: MarketRegime) => void;
 }
 
-export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({ 
-  symbol = 'SPY',
-  onRegimeChange 
+export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({
+  symbol = "SPY",
+  onRegimeChange,
 }) => {
   const [regime, setRegime] = useState<MarketRegime | null>(null);
-  const [strategyRecommendations, setStrategyRecommendations] = useState<StrategyRecommendation[]>([]);
+  const [strategyRecommendations, setStrategyRecommendations] = useState<StrategyRecommendation[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
@@ -70,7 +72,7 @@ export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({
         `${process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL}/api/ml/market-regime?symbol=${symbol}&lookback_days=90`
       );
       const regimeData = await regimeResponse.json();
-      
+
       if (regimeData.regime) {
         setRegime(regimeData);
         onRegimeChange?.(regimeData);
@@ -81,13 +83,12 @@ export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({
         `${process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL}/api/ml/recommend-strategy?symbol=${symbol}&lookback_days=90&top_n=5`
       );
       const strategyData = await strategyResponse.json();
-      
+
       if (strategyData.recommendations) {
         setStrategyRecommendations(strategyData.recommendations);
       }
-
     } catch (error) {
-      console.error('Failed to load market regime:', error);
+      console.error("Failed to load market regime:", error);
     } finally {
       setLoading(false);
     }
@@ -101,121 +102,165 @@ export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({
 
   const getRegimeIcon = (regimeType: string) => {
     switch (regimeType) {
-      case 'trending_bullish': return <TrendingUp className="w-6 h-6 text-green-500" />;
-      case 'trending_bearish': return <TrendingDown className="w-6 h-6 text-red-500" />;
-      case 'ranging': return <Minus className="w-6 h-6 text-gray-500" />;
-      case 'high_volatility': return <BarChart3 className="w-6 h-6 text-orange-500" />;
-      default: return <Target className="w-6 h-6 text-blue-500" />;
+      case "trending_bullish":
+        return <TrendingUp className="w-6 h-6 text-green-500" />;
+      case "trending_bearish":
+        return <TrendingDown className="w-6 h-6 text-red-500" />;
+      case "ranging":
+        return <Minus className="w-6 h-6 text-gray-500" />;
+      case "high_volatility":
+        return <BarChart3 className="w-6 h-6 text-orange-500" />;
+      default:
+        return <Target className="w-6 h-6 text-blue-500" />;
     }
   };
 
   const getRegimeColor = (regimeType: string) => {
     switch (regimeType) {
-      case 'trending_bullish': return 'text-green-600 bg-green-50 border-green-200';
-      case 'trending_bearish': return 'text-red-600 bg-red-50 border-red-200';
-      case 'ranging': return 'text-gray-600 bg-gray-50 border-gray-200';
-      case 'high_volatility': return 'text-orange-600 bg-orange-50 border-orange-200';
-      default: return 'text-blue-600 bg-blue-50 border-blue-200';
+      case "trending_bullish":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "trending_bearish":
+        return "text-red-600 bg-red-50 border-red-200";
+      case "ranging":
+        return "text-gray-600 bg-gray-50 border-gray-200";
+      case "high_volatility":
+        return "text-orange-600 bg-orange-50 border-orange-200";
+      default:
+        return "text-blue-600 bg-blue-50 border-blue-200";
     }
   };
 
   const getRegimeDescription = (regimeType: string, _confidence: number) => {
     const descriptions = {
-      'trending_bullish': {
-        title: 'Bullish Trend',
-        description: 'Market is in a strong upward trend with positive momentum. This is typically a good time for growth strategies.',
-        characteristics: ['Rising prices', 'High volume on up days', 'Higher highs and higher lows', 'Positive sentiment'],
-        strategy_focus: 'Focus on momentum and trend-following strategies'
+      trending_bullish: {
+        title: "Bullish Trend",
+        description:
+          "Market is in a strong upward trend with positive momentum. This is typically a good time for growth strategies.",
+        characteristics: [
+          "Rising prices",
+          "High volume on up days",
+          "Higher highs and higher lows",
+          "Positive sentiment",
+        ],
+        strategy_focus: "Focus on momentum and trend-following strategies",
       },
-      'trending_bearish': {
-        title: 'Bearish Trend',
-        description: 'Market is in a downward trend with negative momentum. This requires defensive strategies and risk management.',
-        characteristics: ['Falling prices', 'High volume on down days', 'Lower highs and lower lows', 'Negative sentiment'],
-        strategy_focus: 'Focus on defensive and contrarian strategies'
+      trending_bearish: {
+        title: "Bearish Trend",
+        description:
+          "Market is in a downward trend with negative momentum. This requires defensive strategies and risk management.",
+        characteristics: [
+          "Falling prices",
+          "High volume on down days",
+          "Lower highs and lower lows",
+          "Negative sentiment",
+        ],
+        strategy_focus: "Focus on defensive and contrarian strategies",
       },
-      'ranging': {
-        title: 'Sideways Market',
-        description: 'Market is moving sideways with no clear direction. This is ideal for range-bound trading strategies.',
-        characteristics: ['Price bouncing between support and resistance', 'Low volatility', 'Mixed signals', 'Consolidation'],
-        strategy_focus: 'Focus on mean reversion and range trading'
+      ranging: {
+        title: "Sideways Market",
+        description:
+          "Market is moving sideways with no clear direction. This is ideal for range-bound trading strategies.",
+        characteristics: [
+          "Price bouncing between support and resistance",
+          "Low volatility",
+          "Mixed signals",
+          "Consolidation",
+        ],
+        strategy_focus: "Focus on mean reversion and range trading",
       },
-      'high_volatility': {
-        title: 'High Volatility',
-        description: 'Market is experiencing high volatility with large price swings. This requires careful risk management.',
-        characteristics: ['Large daily price swings', 'Increased uncertainty', 'High volume', 'Rapid changes'],
-        strategy_focus: 'Focus on volatility strategies and risk management'
-      }
+      high_volatility: {
+        title: "High Volatility",
+        description:
+          "Market is experiencing high volatility with large price swings. This requires careful risk management.",
+        characteristics: [
+          "Large daily price swings",
+          "Increased uncertainty",
+          "High volume",
+          "Rapid changes",
+        ],
+        strategy_focus: "Focus on volatility strategies and risk management",
+      },
     };
 
-    return descriptions[regimeType as keyof typeof descriptions] || {
-      title: 'Unknown Regime',
-      description: 'Market regime is unclear.',
-      characteristics: [],
-      strategy_focus: 'Monitor market conditions'
-    };
+    return (
+      descriptions[regimeType as keyof typeof descriptions] || {
+        title: "Unknown Regime",
+        description: "Market regime is unclear.",
+        characteristics: [],
+        strategy_focus: "Monitor market conditions",
+      }
+    );
   };
 
   const getStrategyDescription = (strategyId: string) => {
     const descriptions = {
-      'trend-following-ma-crossover': {
-        name: 'Moving Average Crossover',
-        description: 'Buy when short-term MA crosses above long-term MA, sell when it crosses below.',
-        risk_level: 'medium',
-        time_horizon: 'Medium-term (weeks to months)',
-        best_for: 'Trending markets'
+      "trend-following-ma-crossover": {
+        name: "Moving Average Crossover",
+        description:
+          "Buy when short-term MA crosses above long-term MA, sell when it crosses below.",
+        risk_level: "medium",
+        time_horizon: "Medium-term (weeks to months)",
+        best_for: "Trending markets",
       },
-      'momentum-breakout': {
-        name: 'Momentum Breakout',
-        description: 'Buy when price breaks above resistance with high volume.',
-        risk_level: 'high',
-        time_horizon: 'Short to medium-term (days to weeks)',
-        best_for: 'Strong trending markets'
+      "momentum-breakout": {
+        name: "Momentum Breakout",
+        description: "Buy when price breaks above resistance with high volume.",
+        risk_level: "high",
+        time_horizon: "Short to medium-term (days to weeks)",
+        best_for: "Strong trending markets",
       },
-      'mean-reversion-bb-rsi': {
-        name: 'Mean Reversion (Bollinger Bands + RSI)',
-        description: 'Buy when price is oversold (low RSI, near lower Bollinger Band).',
-        risk_level: 'medium',
-        time_horizon: 'Short-term (days to weeks)',
-        best_for: 'Ranging markets'
+      "mean-reversion-bb-rsi": {
+        name: "Mean Reversion (Bollinger Bands + RSI)",
+        description: "Buy when price is oversold (low RSI, near lower Bollinger Band).",
+        risk_level: "medium",
+        time_horizon: "Short-term (days to weeks)",
+        best_for: "Ranging markets",
       },
-      'support-resistance-bounce': {
-        name: 'Support/Resistance Bounce',
-        description: 'Buy at support levels, sell at resistance levels.',
-        risk_level: 'low',
-        time_horizon: 'Short-term (days)',
-        best_for: 'Ranging markets'
+      "support-resistance-bounce": {
+        name: "Support/Resistance Bounce",
+        description: "Buy at support levels, sell at resistance levels.",
+        risk_level: "low",
+        time_horizon: "Short-term (days)",
+        best_for: "Ranging markets",
       },
-      'volatility-breakout': {
-        name: 'Volatility Breakout',
-        description: 'Trade breakouts during high volatility periods.',
-        risk_level: 'high',
-        time_horizon: 'Short-term (days)',
-        best_for: 'High volatility markets'
+      "volatility-breakout": {
+        name: "Volatility Breakout",
+        description: "Trade breakouts during high volatility periods.",
+        risk_level: "high",
+        time_horizon: "Short-term (days)",
+        best_for: "High volatility markets",
       },
-      'options-straddle': {
-        name: 'Options Straddle',
-        description: 'Buy both call and put options to profit from large moves in either direction.',
-        risk_level: 'high',
-        time_horizon: 'Short-term (days to weeks)',
-        best_for: 'High volatility markets'
-      }
+      "options-straddle": {
+        name: "Options Straddle",
+        description:
+          "Buy both call and put options to profit from large moves in either direction.",
+        risk_level: "high",
+        time_horizon: "Short-term (days to weeks)",
+        best_for: "High volatility markets",
+      },
     };
 
-    return descriptions[strategyId as keyof typeof descriptions] || {
-      name: strategyId.replace('-', ' ').toUpperCase(),
-      description: 'Strategy details not available.',
-      risk_level: 'medium',
-      time_horizon: 'Medium-term',
-      best_for: 'General market conditions'
-    };
+    return (
+      descriptions[strategyId as keyof typeof descriptions] || {
+        name: strategyId.replace("-", " ").toUpperCase(),
+        description: "Strategy details not available.",
+        risk_level: "medium",
+        time_horizon: "Medium-term",
+        best_for: "General market conditions",
+      }
+    );
   };
 
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
-      case 'low': return 'text-green-600 bg-green-50';
-      case 'medium': return 'text-yellow-600 bg-yellow-50';
-      case 'high': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case "low":
+        return "text-green-600 bg-green-50";
+      case "medium":
+        return "text-yellow-600 bg-yellow-50";
+      case "high":
+        return "text-red-600 bg-red-50";
+      default:
+        return "text-gray-600 bg-gray-50";
     }
   };
 
@@ -239,13 +284,13 @@ export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({
             <p className="text-sm text-gray-600">AI-powered market state detection</p>
           </div>
         </div>
-        
+
         <button
           onClick={handleRefresh}
           disabled={refreshing}
           className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
           <span>Refresh</span>
         </button>
       </div>
@@ -279,7 +324,8 @@ export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900">
-                  {regime.features.trend_direction > 0 ? '+' : ''}{Math.round(regime.features.trend_direction * 100)}%
+                  {regime.features.trend_direction > 0 ? "+" : ""}
+                  {Math.round(regime.features.trend_direction * 100)}%
                 </div>
                 <div className="text-xs text-gray-500">Trend Direction</div>
               </div>
@@ -325,7 +371,7 @@ export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({
             <h3 className="text-lg font-semibold text-gray-900">Recommended Strategies</h3>
             <HelpTooltip content="AI-recommended trading strategies based on current market conditions. Higher probability strategies are more likely to succeed in the current regime." />
           </div>
-          
+
           <div className="space-y-3">
             {strategyRecommendations.map((strategy, index) => {
               const strategyInfo = getStrategyDescription(strategy.strategy_id);
@@ -333,17 +379,21 @@ export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({
                 <div
                   key={index}
                   className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
-                    selectedStrategy === strategy.strategy_id ? 'ring-2 ring-blue-500' : ''
+                    selectedStrategy === strategy.strategy_id ? "ring-2 ring-blue-500" : ""
                   }`}
-                  onClick={() => setSelectedStrategy(
-                    selectedStrategy === strategy.strategy_id ? null : strategy.strategy_id
-                  )}
+                  onClick={() =>
+                    setSelectedStrategy(
+                      selectedStrategy === strategy.strategy_id ? null : strategy.strategy_id
+                    )
+                  }
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <h4 className="font-semibold text-gray-900">{strategyInfo.name}</h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(strategyInfo.risk_level)}`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(strategyInfo.risk_level)}`}
+                        >
                           {strategyInfo.risk_level.toUpperCase()}
                         </span>
                       </div>
@@ -353,7 +403,7 @@ export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({
                         <span>🎯 {strategyInfo.best_for}</span>
                       </div>
                     </div>
-                    
+
                     <div className="text-right">
                       <div className="text-lg font-bold text-blue-600">
                         {Math.round(strategy.probability * 100)}%
@@ -369,17 +419,30 @@ export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({
                         <div>
                           <h5 className="font-medium text-gray-900 mb-2">Strategy Details</h5>
                           <div className="space-y-1 text-sm text-gray-600">
-                            <div><strong>Risk Level:</strong> {strategyInfo.risk_level}</div>
-                            <div><strong>Time Horizon:</strong> {strategyInfo.time_horizon}</div>
-                            <div><strong>Best For:</strong> {strategyInfo.best_for}</div>
+                            <div>
+                              <strong>Risk Level:</strong> {strategyInfo.risk_level}
+                            </div>
+                            <div>
+                              <strong>Time Horizon:</strong> {strategyInfo.time_horizon}
+                            </div>
+                            <div>
+                              <strong>Best For:</strong> {strategyInfo.best_for}
+                            </div>
                           </div>
                         </div>
                         <div>
                           <h5 className="font-medium text-gray-900 mb-2">Performance Metrics</h5>
                           <div className="space-y-1 text-sm text-gray-600">
-                            <div><strong>Confidence:</strong> {Math.round(strategy.confidence * 100)}%</div>
-                            <div><strong>Expected Return:</strong> {strategy.expected_return}%</div>
-                            <div><strong>Probability:</strong> {Math.round(strategy.probability * 100)}%</div>
+                            <div>
+                              <strong>Confidence:</strong> {Math.round(strategy.confidence * 100)}%
+                            </div>
+                            <div>
+                              <strong>Expected Return:</strong> {strategy.expected_return}%
+                            </div>
+                            <div>
+                              <strong>Probability:</strong> {Math.round(strategy.probability * 100)}
+                              %
+                            </div>
                           </div>
                         </div>
                       </div>

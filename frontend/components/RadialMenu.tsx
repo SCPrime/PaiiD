@@ -423,16 +423,60 @@ function RadialMenuComponent({
       .attr("width", "200%")
       .attr("x", "-50%")
       .attr("y", "-50%");
-    normalShadow.append("feGaussianBlur").attr("in", "SourceAlpha").attr("stdDeviation", "4").attr("result", "blur1");
-    normalShadow.append("feOffset").attr("in", "blur1").attr("dx", "0").attr("dy", "3").attr("result", "dropShadow");
-    normalShadow.append("feFlood").attr("flood-color", "#000000").attr("flood-opacity", "0.3").attr("result", "dropColor");
-    normalShadow.append("feComposite").attr("in", "dropColor").attr("in2", "dropShadow").attr("operator", "in").attr("result", "shadow1");
-    normalShadow.append("feGaussianBlur").attr("in", "SourceAlpha").attr("stdDeviation", "8").attr("result", "blur2");
-    normalShadow.append("feFlood").attr("flood-color", "#000000").attr("flood-opacity", "0.15").attr("result", "ambientColor");
-    normalShadow.append("feComposite").attr("in", "ambientColor").attr("in2", "blur2").attr("operator", "in").attr("result", "shadow2");
-    normalShadow.append("feGaussianBlur").attr("in", "SourceAlpha").attr("stdDeviation", "1").attr("result", "edgeBlur");
-    normalShadow.append("feFlood").attr("flood-color", "#ffffff").attr("flood-opacity", "0.08").attr("result", "edgeColor");
-    normalShadow.append("feComposite").attr("in", "edgeColor").attr("in2", "edgeBlur").attr("operator", "in").attr("result", "edgeHighlight");
+    normalShadow
+      .append("feGaussianBlur")
+      .attr("in", "SourceAlpha")
+      .attr("stdDeviation", "4")
+      .attr("result", "blur1");
+    normalShadow
+      .append("feOffset")
+      .attr("in", "blur1")
+      .attr("dx", "0")
+      .attr("dy", "3")
+      .attr("result", "dropShadow");
+    normalShadow
+      .append("feFlood")
+      .attr("flood-color", "#000000")
+      .attr("flood-opacity", "0.3")
+      .attr("result", "dropColor");
+    normalShadow
+      .append("feComposite")
+      .attr("in", "dropColor")
+      .attr("in2", "dropShadow")
+      .attr("operator", "in")
+      .attr("result", "shadow1");
+    normalShadow
+      .append("feGaussianBlur")
+      .attr("in", "SourceAlpha")
+      .attr("stdDeviation", "8")
+      .attr("result", "blur2");
+    normalShadow
+      .append("feFlood")
+      .attr("flood-color", "#000000")
+      .attr("flood-opacity", "0.15")
+      .attr("result", "ambientColor");
+    normalShadow
+      .append("feComposite")
+      .attr("in", "ambientColor")
+      .attr("in2", "blur2")
+      .attr("operator", "in")
+      .attr("result", "shadow2");
+    normalShadow
+      .append("feGaussianBlur")
+      .attr("in", "SourceAlpha")
+      .attr("stdDeviation", "1")
+      .attr("result", "edgeBlur");
+    normalShadow
+      .append("feFlood")
+      .attr("flood-color", "#ffffff")
+      .attr("flood-opacity", "0.08")
+      .attr("result", "edgeColor");
+    normalShadow
+      .append("feComposite")
+      .attr("in", "edgeColor")
+      .attr("in2", "edgeBlur")
+      .attr("operator", "in")
+      .attr("result", "edgeHighlight");
     const normalMerge = normalShadow.append("feMerge");
     normalMerge.append("feMergeNode").attr("in", "shadow2");
     normalMerge.append("feMergeNode").attr("in", "shadow1");

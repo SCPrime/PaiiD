@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { useWebSocket, MarketData } from "../../hooks/useWebSocket";
+import React, { useEffect, useRef, useState } from "react";
+import { useWebSocket } from "../../hooks/useWebSocket";
 import EnhancedCard from "../ui/EnhancedCard";
 import StatusIndicator from "../ui/StatusIndicator";
 
@@ -56,18 +56,18 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
     const generateMockData = () => {
       const data: ChartData[] = [];
       const now = new Date();
-      
+
       for (let i = 100; i >= 0; i--) {
         const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
         const basePrice = 150 + Math.sin(i * 0.1) * 20;
         const volatility = 2 + Math.random() * 3;
-        
+
         const open = basePrice + (Math.random() - 0.5) * volatility;
         const close = open + (Math.random() - 0.5) * volatility * 2;
         const high = Math.max(open, close) + Math.random() * volatility;
         const low = Math.min(open, close) - Math.random() * volatility;
         const volume = Math.floor(Math.random() * 1000000) + 100000;
-        
+
         data.push({
           timestamp: date.toISOString(),
           open: Number(open.toFixed(2)),
@@ -77,7 +77,7 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
           volume,
         });
       }
-      
+
       return data;
     };
 
@@ -90,40 +90,42 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
 
     const calculateRSI = (prices: number[], period: number = 14): number => {
       if (prices.length < period + 1) return 50;
-      
+
       const gains: number[] = [];
       const losses: number[] = [];
-      
+
       for (let i = 1; i < prices.length; i++) {
         const change = prices[i] - prices[i - 1];
         gains.push(change > 0 ? change : 0);
         losses.push(change < 0 ? Math.abs(change) : 0);
       }
-      
+
       const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
       const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
-      
+
       if (avgLoss === 0) return 100;
       const rs = avgGain / avgLoss;
-      return 100 - (100 / (1 + rs));
+      return 100 - 100 / (1 + rs);
     };
 
-    const calculateMACD = (prices: number[]): { macd: number; signal: number; histogram: number } => {
+    const calculateMACD = (
+      prices: number[]
+    ): { macd: number; signal: number; histogram: number } => {
       if (prices.length < 26) return { macd: 0, signal: 0, histogram: 0 };
-      
+
       const ema12 = prices.slice(-12).reduce((a, b) => a + b, 0) / 12;
       const ema26 = prices.slice(-26).reduce((a, b) => a + b, 0) / 26;
       const macd = ema12 - ema26;
       const signal = macd * 0.9; // Simplified signal line
       const histogram = macd - signal;
-      
+
       return { macd, signal, histogram };
     };
 
-    const prices = chartData.map(d => d.close);
+    const prices = chartData.map((d) => d.close);
     const rsi = calculateRSI(prices);
     const macd = calculateMACD(prices);
-    
+
     const newIndicators: TechnicalIndicator[] = [
       {
         name: "RSI",
@@ -138,7 +140,7 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
         color: macd.macd > macd.signal ? "#22c55e" : "#ef4444",
       },
     ];
-    
+
     setIndicators(newIndicators);
   }, [chartData]);
 
@@ -162,12 +164,12 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
     // Scales
     const xScale = d3
       .scaleTime()
-      .domain(d3.extent(chartData, d => new Date(d.timestamp)) as [Date, Date])
+      .domain(d3.extent(chartData, (d) => new Date(d.timestamp)) as [Date, Date])
       .range([0, width]);
 
     const yScale = d3
       .scaleLinear()
-      .domain(d3.extent(chartData, d => [d.low, d.high]).flat() as [number, number])
+      .domain(d3.extent(chartData, (d) => [d.low, d.high]).flat() as [number, number])
       .range([height, 0]);
 
     // Candlestick rectangles
@@ -176,12 +178,12 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
       .enter()
       .append("rect")
       .attr("class", "candlestick")
-      .attr("x", d => xScale(new Date(d.timestamp)) - 2)
-      .attr("y", d => yScale(Math.max(d.open, d.close)))
+      .attr("x", (d) => xScale(new Date(d.timestamp)) - 2)
+      .attr("y", (d) => yScale(Math.max(d.open, d.close)))
       .attr("width", 4)
-      .attr("height", d => Math.abs(yScale(d.close) - yScale(d.open)))
-      .attr("fill", d => d.close >= d.open ? "#22c55e" : "#ef4444")
-      .attr("stroke", d => d.close >= d.open ? "#16a34a" : "#dc2626");
+      .attr("height", (d) => Math.abs(yScale(d.close) - yScale(d.open)))
+      .attr("fill", (d) => (d.close >= d.open ? "#22c55e" : "#ef4444"))
+      .attr("stroke", (d) => (d.close >= d.open ? "#16a34a" : "#dc2626"));
 
     // High-low lines
     g.selectAll(".wick")
@@ -189,25 +191,27 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
       .enter()
       .append("line")
       .attr("class", "wick")
-      .attr("x1", d => xScale(new Date(d.timestamp)))
-      .attr("x2", d => xScale(new Date(d.timestamp)))
-      .attr("y1", d => yScale(d.high))
-      .attr("y2", d => yScale(d.low))
-      .attr("stroke", d => d.close >= d.open ? "#16a34a" : "#dc2626")
+      .attr("x1", (d) => xScale(new Date(d.timestamp)))
+      .attr("x2", (d) => xScale(new Date(d.timestamp)))
+      .attr("y1", (d) => yScale(d.high))
+      .attr("y2", (d) => yScale(d.low))
+      .attr("stroke", (d) => (d.close >= d.open ? "#16a34a" : "#dc2626"))
       .attr("stroke-width", 1);
 
     // Moving average line
-    const ma20 = chartData.map((d, i) => {
-      if (i < 19) return null;
-      const slice = chartData.slice(i - 19, i + 1);
-      const avg = slice.reduce((sum, item) => sum + item.close, 0) / slice.length;
-      return { timestamp: d.timestamp, value: avg };
-    }).filter(d => d !== null);
+    const ma20 = chartData
+      .map((d, i) => {
+        if (i < 19) return null;
+        const slice = chartData.slice(i - 19, i + 1);
+        const avg = slice.reduce((sum, item) => sum + item.close, 0) / slice.length;
+        return { timestamp: d.timestamp, value: avg };
+      })
+      .filter((d) => d !== null);
 
     const line = d3
       .line<{ timestamp: string; value: number }>()
-      .x(d => xScale(new Date(d.timestamp)))
-      .y(d => yScale(d.value));
+      .x((d) => xScale(new Date(d.timestamp)))
+      .y((d) => yScale(d.value));
 
     g.append("path")
       .datum(ma20)
@@ -221,23 +225,31 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
       .attr("transform", `translate(0,${height})`)
       .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%m/%d")));
 
-    g.append("g")
-      .call(d3.axisLeft(yScale).tickFormat(d3.format("$.2f")));
+    g.append("g").call(d3.axisLeft(yScale).tickFormat(d3.format("$.2f")));
 
     // Grid lines
     g.append("g")
       .attr("class", "grid")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(() => ""))
+      .call(
+        d3
+          .axisBottom(xScale)
+          .tickSize(-height)
+          .tickFormat(() => "")
+      )
       .style("stroke-dasharray", "3,3")
       .style("opacity", 0.3);
 
     g.append("g")
       .attr("class", "grid")
-      .call(d3.axisLeft(yScale).tickSize(-width).tickFormat(() => ""))
+      .call(
+        d3
+          .axisLeft(yScale)
+          .tickSize(-width)
+          .tickFormat(() => "")
+      )
       .style("stroke-dasharray", "3,3")
       .style("opacity", 0.3);
-
   }, [chartData, chartType]);
 
   if (error) {
@@ -270,7 +282,7 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
           <h3 className="text-white font-bold text-xl">{symbol} Chart</h3>
           <StatusIndicator status={isConnected ? "online" : "offline"} size="sm" />
         </div>
-        
+
         <div className="flex items-center gap-2">
           <span className="text-slate-400 text-sm capitalize">{chartType}</span>
           <span className="text-slate-400 text-sm">{timeFrame}</span>
@@ -290,12 +302,8 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
                     style={{ backgroundColor: indicator.color }}
                   />
                 </div>
-                <div className="text-white font-semibold">
-                  {indicator.value.toFixed(2)}
-                </div>
-                <div className="text-xs text-slate-400 capitalize">
-                  {indicator.signal}
-                </div>
+                <div className="text-white font-semibold">{indicator.value.toFixed(2)}</div>
+                <div className="text-xs text-slate-400 capitalize">{indicator.signal}</div>
               </div>
             </EnhancedCard>
           ))}
@@ -305,11 +313,7 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
       {/* Chart Container */}
       <EnhancedCard variant="glass" size="lg">
         <div className="w-full h-full">
-          <svg
-            ref={svgRef}
-            className="w-full h-full"
-            style={{ minHeight: "400px" }}
-          />
+          <svg ref={svgRef} className="w-full h-full" style={{ minHeight: "400px" }} />
         </div>
       </EnhancedCard>
 
@@ -322,9 +326,14 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
               <h4 className="text-white font-semibold">AI Chart Analysis</h4>
             </div>
             <div className="text-slate-300 text-sm">
-              <p>• Trend: {chartData[chartData.length - 1]?.close > chartData[chartData.length - 2]?.close ? "Bullish" : "Bearish"}</p>
-              <p>• Support: ${Math.min(...chartData.map(d => d.low)).toFixed(2)}</p>
-              <p>• Resistance: ${Math.max(...chartData.map(d => d.high)).toFixed(2)}</p>
+              <p>
+                • Trend:{" "}
+                {chartData[chartData.length - 1]?.close > chartData[chartData.length - 2]?.close
+                  ? "Bullish"
+                  : "Bearish"}
+              </p>
+              <p>• Support: ${Math.min(...chartData.map((d) => d.low)).toFixed(2)}</p>
+              <p>• Resistance: ${Math.max(...chartData.map((d) => d.high)).toFixed(2)}</p>
               <p>• Volume: {chartData[chartData.length - 1]?.volume.toLocaleString()}</p>
             </div>
           </div>

@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { useWebSocket, MarketData } from "../../hooks/useWebSocket";
+import React, { useEffect, useRef, useState } from "react";
+import { useWebSocket } from "../../hooks/useWebSocket";
+import AnimatedCounter from "../ui/AnimatedCounter";
 import EnhancedCard from "../ui/EnhancedCard";
 import StatusIndicator from "../ui/StatusIndicator";
-import AnimatedCounter from "../ui/AnimatedCounter";
 
 interface PortfolioHeatmapProps {
   userId: string;
@@ -46,18 +46,18 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
   useEffect(() => {
     const generateMockData = (): HeatmapData[] => {
       const sectors = ["Technology", "Healthcare", "Finance", "Energy", "Consumer", "Industrial"];
-      
-      return symbols.map(symbol => {
+
+      return symbols.map((symbol) => {
         const change = (Math.random() - 0.5) * 20; // -10% to +10%
         const baseValue = 100 + Math.random() * 200; // $100 to $300
         const volume = Math.floor(Math.random() * 10000000) + 1000000;
         const marketCap = Math.floor(Math.random() * 1000000000000) + 100000000000;
-        
+
         return {
           symbol,
           value: Number(baseValue.toFixed(2)),
           change: Number(change.toFixed(2)),
-          changePercent: Number((change / baseValue * 100).toFixed(2)),
+          changePercent: Number(((change / baseValue) * 100).toFixed(2)),
           volume,
           marketCap,
           sector: sectors[Math.floor(Math.random() * sectors.length)],
@@ -93,29 +93,24 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
 
     // Color scale based on selected metric
     let colorScale: d3.ScaleLinear<string, string>;
-    
+
     if (selectedMetric === "change") {
-      const extent = d3.extent(heatmapData, d => d.changePercent) as [number, number];
+      const extent = d3.extent(heatmapData, (d) => d.changePercent) as [number, number];
       colorScale = d3
         .scaleLinear<string, string>()
         .domain([extent[0], 0, extent[1]])
         .range(["#dc2626", "#6b7280", "#16a34a"]);
     } else if (selectedMetric === "volume") {
-      const extent = d3.extent(heatmapData, d => d.volume) as [number, number];
-      colorScale = d3
-        .scaleLinear<string, string>()
-        .domain(extent)
-        .range(["#1e293b", "#3b82f6"]);
+      const extent = d3.extent(heatmapData, (d) => d.volume) as [number, number];
+      colorScale = d3.scaleLinear<string, string>().domain(extent).range(["#1e293b", "#3b82f6"]);
     } else {
-      const extent = d3.extent(heatmapData, d => d.marketCap) as [number, number];
-      colorScale = d3
-        .scaleLinear<string, string>()
-        .domain(extent)
-        .range(["#1e293b", "#8b5cf6"]);
+      const extent = d3.extent(heatmapData, (d) => d.marketCap) as [number, number];
+      colorScale = d3.scaleLinear<string, string>().domain(extent).range(["#1e293b", "#8b5cf6"]);
     }
 
     // Create heatmap cells
-    const cells = g.selectAll(".heatmap-cell")
+    const cells = g
+      .selectAll(".heatmap-cell")
       .data(heatmapData)
       .enter()
       .append("g")
@@ -127,11 +122,12 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
       });
 
     // Cell rectangles
-    cells.append("rect")
+    cells
+      .append("rect")
       .attr("width", cellWidth - 2)
       .attr("height", cellHeight - 2)
       .attr("rx", 4)
-      .attr("fill", d => {
+      .attr("fill", (d) => {
         if (selectedMetric === "change") return colorScale(d.changePercent);
         if (selectedMetric === "volume") return colorScale(d.volume);
         return colorScale(d.marketCap);
@@ -139,55 +135,57 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
       .attr("stroke", "#374151")
       .attr("stroke-width", 1)
       .style("cursor", "pointer")
-      .on("mouseover", function(event, d) {
+      .on("mouseover", function (event, d) {
         // Highlight on hover
-        d3.select(this)
-          .attr("stroke", "#60a5fa")
-          .attr("stroke-width", 2);
+        d3.select(this).attr("stroke", "#60a5fa").attr("stroke-width", 2);
       })
-      .on("mouseout", function(event, d) {
+      .on("mouseout", function (event, d) {
         // Remove highlight
-        d3.select(this)
-          .attr("stroke", "#374151")
-          .attr("stroke-width", 1);
+        d3.select(this).attr("stroke", "#374151").attr("stroke-width", 1);
       });
 
     // Symbol labels
-    cells.append("text")
+    cells
+      .append("text")
       .attr("x", cellWidth / 2)
       .attr("y", cellHeight / 2 - 8)
       .attr("text-anchor", "middle")
       .attr("font-size", "12px")
       .attr("font-weight", "bold")
       .attr("fill", "white")
-      .text(d => d.symbol);
+      .text((d) => d.symbol);
 
     // Value labels
-    cells.append("text")
+    cells
+      .append("text")
       .attr("x", cellWidth / 2)
       .attr("y", cellHeight / 2 + 8)
       .attr("text-anchor", "middle")
       .attr("font-size", "10px")
       .attr("fill", "white")
-      .text(d => {
-        if (selectedMetric === "change") return `${d.changePercent >= 0 ? "+" : ""}${d.changePercent.toFixed(1)}%`;
+      .text((d) => {
+        if (selectedMetric === "change")
+          return `${d.changePercent >= 0 ? "+" : ""}${d.changePercent.toFixed(1)}%`;
         if (selectedMetric === "volume") return `${(d.volume / 1000000).toFixed(1)}M`;
         return `$${(d.marketCap / 1000000000).toFixed(1)}B`;
       });
 
     // Legend
-    const legend = g.append("g")
+    const legend = g
+      .append("g")
       .attr("class", "legend")
       .attr("transform", `translate(${width - 150}, 20)`);
 
-    legend.append("text")
+    legend
+      .append("text")
       .attr("x", 0)
       .attr("y", 0)
       .attr("font-size", "12px")
       .attr("font-weight", "bold")
       .attr("fill", "white")
-      .text(`Showing: ${selectedMetric === "change" ? "Performance" : selectedMetric === "volume" ? "Volume" : "Market Cap"}`);
-
+      .text(
+        `Showing: ${selectedMetric === "change" ? "Performance" : selectedMetric === "volume" ? "Volume" : "Market Cap"}`
+      );
   }, [heatmapData, selectedMetric]);
 
   const getPerformanceColor = (change: number) => {
@@ -227,7 +225,7 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
           <h3 className="text-white font-bold text-xl">Portfolio Heatmap</h3>
           <StatusIndicator status={isConnected ? "online" : "offline"} size="sm" />
         </div>
-        
+
         <div className="flex items-center gap-2">
           <select
             value={selectedMetric}
@@ -255,29 +253,33 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
             />
           </div>
         </EnhancedCard>
-        
+
         <EnhancedCard variant="glass" size="sm">
           <div className="text-center">
             <div className="text-slate-400 text-sm">Best Performer</div>
             <div className="text-green-400 font-semibold">
-              {heatmapData.reduce((best, current) => 
-                current.changePercent > best.changePercent ? current : best
-              ).symbol}
+              {
+                heatmapData.reduce((best, current) =>
+                  current.changePercent > best.changePercent ? current : best
+                ).symbol
+              }
             </div>
           </div>
         </EnhancedCard>
-        
+
         <EnhancedCard variant="glass" size="sm">
           <div className="text-center">
             <div className="text-slate-400 text-sm">Worst Performer</div>
             <div className="text-red-400 font-semibold">
-              {heatmapData.reduce((worst, current) => 
-                current.changePercent < worst.changePercent ? current : worst
-              ).symbol}
+              {
+                heatmapData.reduce((worst, current) =>
+                  current.changePercent < worst.changePercent ? current : worst
+                ).symbol
+              }
             </div>
           </div>
         </EnhancedCard>
-        
+
         <EnhancedCard variant="glass" size="sm">
           <div className="text-center">
             <div className="text-slate-400 text-sm">Avg Change</div>
@@ -286,7 +288,11 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
               prefix=""
               suffix="%"
               decimals={2}
-              color={heatmapData.reduce((sum, d) => sum + d.changePercent, 0) / heatmapData.length >= 0 ? "positive" : "negative"}
+              color={
+                heatmapData.reduce((sum, d) => sum + d.changePercent, 0) / heatmapData.length >= 0
+                  ? "positive"
+                  : "negative"
+              }
               className="text-lg font-semibold"
             />
           </div>
@@ -296,30 +302,31 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
       {/* Heatmap Chart */}
       <EnhancedCard variant="glass" size="lg">
         <div className="w-full h-full">
-          <svg
-            ref={svgRef}
-            className="w-full h-full"
-            style={{ minHeight: "400px" }}
-          />
+          <svg ref={svgRef} className="w-full h-full" style={{ minHeight: "400px" }} />
         </div>
       </EnhancedCard>
 
       {/* Detailed List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {heatmapData.map((item, index) => (
-          <EnhancedCard key={index} variant="glass" size="sm" className="hover:scale-105 transition-transform">
+          <EnhancedCard
+            key={index}
+            variant="glass"
+            size="sm"
+            className="hover:scale-105 transition-transform"
+          >
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-mono font-bold text-white">{item.symbol}</span>
                 <span className="text-slate-400 text-sm">{item.sector}</span>
               </div>
-              
+
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 text-sm">Price</span>
                   <span className="text-white font-semibold">${item.value.toFixed(2)}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 text-sm">Change</span>
                   <div className="flex items-center gap-2">
@@ -330,12 +337,15 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
                       color={item.change >= 0 ? "positive" : "negative"}
                       className="text-sm font-semibold"
                     />
-                    <span className={`text-sm font-semibold ${getPerformanceColor(item.changePercent)}`}>
-                      {item.changePercent >= 0 ? "+" : ""}{item.changePercent.toFixed(2)}%
+                    <span
+                      className={`text-sm font-semibold ${getPerformanceColor(item.changePercent)}`}
+                    >
+                      {item.changePercent >= 0 ? "+" : ""}
+                      {item.changePercent.toFixed(2)}%
                     </span>
                   </div>
                 </div>
-                
+
                 {showVolume && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400 text-sm">Volume</span>
