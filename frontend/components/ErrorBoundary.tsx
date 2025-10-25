@@ -142,6 +142,56 @@ export class ErrorBoundary extends Component<Props, State> {
               We encountered an unexpected error. This has been logged and we&apos;ll look into it.
             </p>
 
+            {/* Recovery Actions */}
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "24px" }}>
+              <button
+                onClick={this.handleReset}
+                style={{
+                  background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "12px 24px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(59, 130, 246, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                🔄 Try Again
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                style={{
+                  background: "rgba(107, 114, 128, 0.2)",
+                  color: "#cbd5e1",
+                  border: "1px solid rgba(107, 114, 128, 0.3)",
+                  borderRadius: "8px",
+                  padding: "12px 24px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(107, 114, 128, 0.3)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(107, 114, 128, 0.2)";
+                }}
+              >
+                🔄 Reload Page
+              </button>
+            </div>
+
             {process.env.NODE_ENV === "development" && this.state.error && (
               <details
                 style={{

@@ -11,41 +11,45 @@ import UserSetupAI from "../components/UserSetupAI";
 
 // Dynamic imports for code splitting (loads only when needed)
 const MorningRoutineAI = dynamic(() => import("../components/MorningRoutineAI"), {
-  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
 });
 const AIRecommendations = dynamic(() => import("../components/AIRecommendations"), {
-  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
 });
 const MonitorDashboard = dynamic(
   () => import("../components/MonitorDashboard").then((mod) => ({ default: mod.MonitorDashboard })),
   {
-    loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+    loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
   }
 );
 const Analytics = dynamic(() => import("../components/Analytics"), {
-  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
 });
 const Backtesting = dynamic(() => import("../components/Backtesting"), {
-  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
 });
 const NewsReview = dynamic(() => import("../components/NewsReview"), {
-  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
 });
 const StrategyBuilderAI = dynamic(() => import("../components/StrategyBuilderAI"), {
-  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
 });
 const PositionManager = dynamic(() => import("../components/trading/PositionManager"), {
-  loading: () => <div className="flex items-center justify-center p-8">Loading...</div>,
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
 });
 
 import AIChat from "../components/AIChat";
 import CommandPalette from "../components/CommandPalette";
 import CompletePaiiDLogo from "../components/CompletePaiiDLogo";
+import HelpPanel from "../components/HelpPanel";
 import KeyboardShortcuts from "../components/KeyboardShortcuts";
 import MarketScanner from "../components/MarketScanner";
+import TradingModeIndicator from "../components/TradingModeIndicator";
 import RiskCalculator from "../components/trading/RiskCalculator";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { useHelp, HelpProvider } from "../hooks/useHelp";
 import { initializeSession } from "../lib/userManagement";
+import { ToastContainer, useToast } from "../components/ui/Toast";
 
 export default function Dashboard() {
   // Development bypass: Skip onboarding in development mode
@@ -57,6 +61,13 @@ export default function Dashboard() {
   const [isUserSetup, setIsUserSetup] = useState(false); // Start with onboarding
   const [isLoading, setIsLoading] = useState(true);
   const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [tradingMode, setTradingMode] = useState<"paper" | "live">("paper");
+
+  // Help system
+  const { isHelpPanelOpen, openHelpPanel, closeHelpPanel } = useHelp();
+  
+  // Toast notifications
+  const toast = useToast();
 
   // Detect mobile viewport
   const isMobile = useIsMobile();
@@ -249,7 +260,7 @@ export default function Dashboard() {
   };
 
   return (
-    <>
+    <HelpProvider>
       {/* Command Palette (Cmd+K) */}
       <CommandPalette onNavigate={setSelectedWorkflow} />
 
@@ -532,15 +543,53 @@ export default function Dashboard() {
               overflow: "hidden",
             }}
           >
-            {/* Header Logo */}
+            {/* Header with Logo, Help, and Trading Mode */}
             <div
               style={{
-                textAlign: "center",
-                paddingTop: "20px",
-                paddingBottom: "10px",
+                padding: "20px 16px 10px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "12px",
               }}
             >
+              {/* Logo */}
               <CompletePaiiDLogo size={64} />
+              
+              {/* Help Button */}
+              <button
+                onClick={openHelpPanel}
+                style={{
+                  background: "rgba(59, 130, 246, 0.1)",
+                  border: "1px solid rgba(59, 130, 246, 0.3)",
+                  borderRadius: "8px",
+                  padding: "8px 12px",
+                  color: "#3b82f6",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(59, 130, 246, 0.2)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                ❓ Help
+              </button>
+              
+              {/* Trading Mode Indicator */}
+              <TradingModeIndicator 
+                mode={tradingMode}
+                onModeChange={setTradingMode}
+              />
             </div>
 
             {/* Radial Menu */}
@@ -725,6 +774,12 @@ export default function Dashboard() {
         onQuickSell={() => setSelectedWorkflow("execute")}
         onCloseModal={() => setSelectedWorkflow("")}
       />
-    </>
+
+      {/* Help Panel */}
+      <HelpPanel isOpen={isHelpPanelOpen} onClose={closeHelpPanel} />
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
+    </HelpProvider>
   );
 }

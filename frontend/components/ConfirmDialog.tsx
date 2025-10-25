@@ -10,6 +10,19 @@ interface ConfirmDialogProps {
   confirmVariant?: "primary" | "danger" | "warning";
   onConfirm: () => void;
   onCancel: () => void;
+  // Enhanced props for trade preview
+  orderDetails?: {
+    symbol: string;
+    side: "buy" | "sell";
+    qty: number;
+    type: "market" | "limit";
+    limitPrice?: number;
+    asset_class?: "stock" | "option";
+    option_type?: "call" | "put";
+    strike_price?: number;
+    expiration_date?: string;
+  };
+  riskWarning?: boolean;
 }
 
 export default function ConfirmDialog({
@@ -21,6 +34,8 @@ export default function ConfirmDialog({
   confirmVariant = "primary",
   onConfirm,
   onCancel,
+  orderDetails,
+  riskWarning = false,
 }: ConfirmDialogProps) {
   if (!isOpen) return null;
 
@@ -96,6 +111,104 @@ export default function ConfirmDialog({
         >
           {message}
         </p>
+
+        {/* Trade Preview */}
+        {orderDetails && (
+          <div
+            style={{
+              background: theme.background.glass,
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: theme.borderRadius.md,
+              padding: theme.spacing.lg,
+              marginBottom: theme.spacing.lg,
+            }}
+          >
+            <h3
+              style={{
+                color: theme.colors.text,
+                fontSize: "18px",
+                fontWeight: "600",
+                marginBottom: theme.spacing.md,
+                textAlign: "center",
+              }}
+            >
+              📊 Trade Preview
+            </h3>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing.sm }}>
+              <div>
+                <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Symbol:</span>
+                <div style={{ color: theme.colors.text, fontWeight: "600" }}>{orderDetails.symbol}</div>
+              </div>
+              <div>
+                <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Side:</span>
+                <div style={{ 
+                  color: orderDetails.side === "buy" ? theme.colors.success : theme.colors.danger, 
+                  fontWeight: "600" 
+                }}>
+                  {orderDetails.side.toUpperCase()}
+                </div>
+              </div>
+              <div>
+                <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Quantity:</span>
+                <div style={{ color: theme.colors.text, fontWeight: "600" }}>{orderDetails.qty}</div>
+              </div>
+              <div>
+                <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Type:</span>
+                <div style={{ color: theme.colors.text, fontWeight: "600" }}>{orderDetails.type.toUpperCase()}</div>
+              </div>
+              {orderDetails.limitPrice && (
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Limit Price:</span>
+                  <div style={{ color: theme.colors.text, fontWeight: "600" }}>${orderDetails.limitPrice}</div>
+                </div>
+              )}
+              {orderDetails.asset_class === "option" && (
+                <>
+                  <div>
+                    <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Option Type:</span>
+                    <div style={{ color: theme.colors.text, fontWeight: "600" }}>
+                      {orderDetails.option_type?.toUpperCase()}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Strike:</span>
+                    <div style={{ color: theme.colors.text, fontWeight: "600" }}>
+                      ${orderDetails.strike_price}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Risk Warning */}
+            {riskWarning && (
+              <div
+                style={{
+                  background: "rgba(239, 68, 68, 0.1)",
+                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  borderRadius: theme.borderRadius.md,
+                  padding: theme.spacing.md,
+                  marginTop: theme.spacing.md,
+                }}
+              >
+                <div style={{ 
+                  color: theme.colors.danger, 
+                  fontWeight: "600", 
+                  marginBottom: theme.spacing.xs,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: theme.spacing.xs,
+                }}>
+                  ⚠️ Risk Warning
+                </div>
+                <div style={{ color: theme.colors.textMuted, fontSize: "14px", lineHeight: "1.5" }}>
+                  This trade involves real money. Make sure you understand the risks and have done your research.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div
           style={{

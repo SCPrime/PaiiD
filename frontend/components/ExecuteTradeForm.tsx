@@ -1873,6 +1873,20 @@ export default function ExecuteTradeForm() {
           )}
         </Card>
       </div>
+
+      {/* Enhanced Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="Confirm Trade"
+        message="Please review your trade details before executing:"
+        confirmText="Execute Trade"
+        cancelText="Cancel"
+        confirmVariant="primary"
+        onConfirm={executeOrder}
+        onCancel={() => setShowConfirmDialog(false)}
+        orderDetails={pendingOrder}
+        riskWarning={true}
+      />
     </>
   );
 }

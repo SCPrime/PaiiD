@@ -159,7 +159,7 @@ async def startup_event():
         return
 
     import logging
-    from datetime import datetime
+    from datetime import UTC, datetime
 
     from .core.prelaunch import PrelaunchValidator
     from .core.startup_monitor import get_startup_monitor
@@ -173,7 +173,7 @@ async def startup_event():
 
     # Enhanced startup logging with comprehensive telemetry
     logger.info("=" * 70)
-    logger.info(f"🚀 Backend startup initiated at {datetime.utcnow().isoformat()}")
+    logger.info(f"🚀 Backend startup initiated at {datetime.now(UTC).isoformat()}")
     logger.info(f"   Environment: {settings.SENTRY_ENVIRONMENT}")
     logger.info(f"   Port: {os.getenv('PORT', '8001')}")
     logger.info(f"   Hostname: {os.getenv('HOSTNAME', 'unknown')}")
