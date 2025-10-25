@@ -142,7 +142,7 @@ class WebSocketManager:
                 "type": "market_data",
                 "symbol": symbol,
                 "data": data,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             for user_id in self.symbol_subscribers[symbol].copy():
@@ -218,7 +218,7 @@ class WebSocketService:
         message = {
             "type": "portfolio_update",
             "data": portfolio_data,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         await websocket_manager.send_personal_message(message, user_id)
 
@@ -228,7 +228,7 @@ class WebSocketService:
         message = {
             "type": "position_update",
             "data": position_data,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         await websocket_manager.send_personal_message(message, user_id)
 
@@ -238,6 +238,6 @@ class WebSocketService:
         message = {
             "type": "trading_alert",
             "data": alert_data,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         await websocket_manager.send_personal_message(message, user_id)

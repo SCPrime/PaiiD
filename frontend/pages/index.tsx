@@ -11,31 +11,63 @@ import UserSetupAI from "../components/UserSetupAI";
 
 // Dynamic imports for code splitting (loads only when needed)
 const MorningRoutineAI = dynamic(() => import("../components/MorningRoutineAI"), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
+  ),
 });
 const AIRecommendations = dynamic(() => import("../components/AIRecommendations"), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
+  ),
 });
 const MonitorDashboard = dynamic(
   () => import("../components/MonitorDashboard").then((mod) => ({ default: mod.MonitorDashboard })),
   {
-    loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
+    loading: () => (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    ),
   }
 );
 const Analytics = dynamic(() => import("../components/Analytics"), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
+  ),
 });
 const Backtesting = dynamic(() => import("../components/Backtesting"), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
+  ),
 });
 const NewsReview = dynamic(() => import("../components/NewsReview"), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
+  ),
 });
 const StrategyBuilderAI = dynamic(() => import("../components/StrategyBuilderAI"), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
+  ),
 });
 const PositionManager = dynamic(() => import("../components/trading/PositionManager"), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
+  ),
 });
 
 import AIChat from "../components/AIChat";
@@ -46,10 +78,10 @@ import KeyboardShortcuts from "../components/KeyboardShortcuts";
 import MarketScanner from "../components/MarketScanner";
 import TradingModeIndicator from "../components/TradingModeIndicator";
 import RiskCalculator from "../components/trading/RiskCalculator";
-import { useIsMobile } from "../hooks/useBreakpoint";
-import { useHelp, HelpProvider } from "../hooks/useHelp";
-import { initializeSession } from "../lib/userManagement";
 import { ToastContainer, useToast } from "../components/ui/Toast";
+import { useIsMobile } from "../hooks/useBreakpoint";
+import { HelpProvider, useHelp } from "../hooks/useHelp";
+import { initializeSession } from "../lib/userManagement";
 
 export default function Dashboard() {
   // Development bypass: Skip onboarding in development mode
@@ -65,7 +97,7 @@ export default function Dashboard() {
 
   // Help system
   const { isHelpPanelOpen, openHelpPanel, closeHelpPanel } = useHelp();
-  
+
   // Toast notifications
   const toast = useToast();
 
@@ -555,7 +587,7 @@ export default function Dashboard() {
             >
               {/* Logo */}
               <CompletePaiiDLogo size={64} />
-              
+
               {/* Help Button */}
               <button
                 onClick={openHelpPanel}
@@ -584,12 +616,9 @@ export default function Dashboard() {
               >
                 ❓ Help
               </button>
-              
+
               {/* Trading Mode Indicator */}
-              <TradingModeIndicator 
-                mode={tradingMode}
-                onModeChange={setTradingMode}
-              />
+              <TradingModeIndicator mode={tradingMode} onModeChange={setTradingMode} />
             </div>
 
             {/* Radial Menu */}

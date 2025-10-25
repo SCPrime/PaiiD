@@ -3,9 +3,8 @@
  * Slide-out help drawer with searchable guides
  */
 
-import { Search, X, BookOpen, Lightbulb, AlertCircle, TrendingUp } from "lucide-react";
-import { useState, useEffect } from "react";
-import { theme as _theme } from "../styles/theme";
+import { AlertCircle, BookOpen, Lightbulb, Search, TrendingUp, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface HelpItem {
   id: string;
@@ -19,42 +18,48 @@ const helpItems: HelpItem[] = [
   {
     id: "what-is-paiid",
     title: "What is PaiiD?",
-    content: "PaiiD is an AI-powered trading platform that provides real-time market analysis, sentiment tracking, options trading with Greeks, and risk management tools. It's designed for both beginners and experienced traders.",
+    content:
+      "PaiiD is an AI-powered trading platform that provides real-time market analysis, sentiment tracking, options trading with Greeks, and risk management tools. It's designed for both beginners and experienced traders.",
     category: "getting-started",
     icon: <BookOpen size={16} />,
   },
   {
     id: "paper-trading",
     title: "Paper Trading Mode",
-    content: "Paper trading lets you practice with virtual money. Your trades won't affect real money, but you'll see real market data and learn how the platform works. Perfect for beginners!",
+    content:
+      "Paper trading lets you practice with virtual money. Your trades won't affect real money, but you'll see real market data and learn how the platform works. Perfect for beginners!",
     category: "getting-started",
     icon: <Lightbulb size={16} />,
   },
   {
     id: "ml-signals",
     title: "Understanding ML Signals",
-    content: "Our AI analyzes market sentiment, news, and technical patterns to provide trading signals. Green signals suggest bullish sentiment, red suggests bearish. Always do your own research too!",
+    content:
+      "Our AI analyzes market sentiment, news, and technical patterns to provide trading signals. Green signals suggest bullish sentiment, red suggests bearish. Always do your own research too!",
     category: "ml-signals",
     icon: <TrendingUp size={16} />,
   },
   {
     id: "risk-management",
     title: "Risk Management",
-    content: "Never risk more than you can afford to lose. Start with paper trading, use stop-losses, and never invest more than 5% of your portfolio in a single trade. The platform shows risk metrics for each trade.",
+    content:
+      "Never risk more than you can afford to lose. Start with paper trading, use stop-losses, and never invest more than 5% of your portfolio in a single trade. The platform shows risk metrics for each trade.",
     category: "trading",
     icon: <AlertCircle size={16} />,
   },
   {
     id: "options-greeks",
     title: "Options Greeks",
-    content: "Greeks show how option prices change with market conditions. Delta = price sensitivity, Gamma = delta changes, Theta = time decay, Vega = volatility sensitivity. Higher numbers = more risk.",
+    content:
+      "Greeks show how option prices change with market conditions. Delta = price sensitivity, Gamma = delta changes, Theta = time decay, Vega = volatility sensitivity. Higher numbers = more risk.",
     category: "trading",
     icon: <TrendingUp size={16} />,
   },
   {
     id: "troubleshooting",
     title: "Common Issues",
-    content: "If the platform seems slow, try refreshing. If data isn't loading, check your internet connection. If you see errors, the backend might be updating - try again in a few minutes.",
+    content:
+      "If the platform seems slow, try refreshing. If data isn't loading, check your internet connection. If you see errors, the backend might be updating - try again in a few minutes.",
     category: "troubleshooting",
     icon: <AlertCircle size={16} />,
   },
@@ -76,16 +81,15 @@ export default function HelpPanel({ isOpen, onClose }: HelpPanelProps) {
 
     // Filter by category
     if (selectedCategory !== "all") {
-      filtered = filtered.filter(item => item.category === selectedCategory);
+      filtered = filtered.filter((item) => item.category === selectedCategory);
     }
 
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        item =>
-          item.title.toLowerCase().includes(query) ||
-          item.content.toLowerCase().includes(query)
+        (item) =>
+          item.title.toLowerCase().includes(query) || item.content.toLowerCase().includes(query)
       );
     }
 
@@ -94,10 +98,26 @@ export default function HelpPanel({ isOpen, onClose }: HelpPanelProps) {
 
   const categories = [
     { id: "all", label: "All Topics", count: helpItems.length },
-    { id: "getting-started", label: "Getting Started", count: helpItems.filter(i => i.category === "getting-started").length },
-    { id: "trading", label: "Trading", count: helpItems.filter(i => i.category === "trading").length },
-    { id: "ml-signals", label: "ML Signals", count: helpItems.filter(i => i.category === "ml-signals").length },
-    { id: "troubleshooting", label: "Troubleshooting", count: helpItems.filter(i => i.category === "troubleshooting").length },
+    {
+      id: "getting-started",
+      label: "Getting Started",
+      count: helpItems.filter((i) => i.category === "getting-started").length,
+    },
+    {
+      id: "trading",
+      label: "Trading",
+      count: helpItems.filter((i) => i.category === "trading").length,
+    },
+    {
+      id: "ml-signals",
+      label: "ML Signals",
+      count: helpItems.filter((i) => i.category === "ml-signals").length,
+    },
+    {
+      id: "troubleshooting",
+      label: "Troubleshooting",
+      count: helpItems.filter((i) => i.category === "troubleshooting").length,
+    },
   ];
 
   return (
@@ -122,10 +142,7 @@ export default function HelpPanel({ isOpen, onClose }: HelpPanelProps) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <h2 className="text-xl font-semibold text-white">Help Center</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -133,7 +150,10 @@ export default function HelpPanel({ isOpen, onClose }: HelpPanelProps) {
         {/* Search */}
         <div className="p-4 border-b border-gray-700">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
             <input
               type="text"
               placeholder="Search help topics..."

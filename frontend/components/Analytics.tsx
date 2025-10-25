@@ -937,7 +937,7 @@ export default function Analytics() {
             )}
 
             {/* Opportunities */}
-            {aiAnalysis.opportunities.length > 0 && (
+            {(aiAnalysis as any).opportunities?.length > 0 && (
               <div
                 style={{
                   padding: "16px",
@@ -957,7 +957,7 @@ export default function Analytics() {
                   🎯 Opportunities
                 </div>
                 <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                  {aiAnalysis.opportunities.map((opp: string, idx: number) => (
+                  {(aiAnalysis as any).opportunities?.map((opp: string, idx: number) => (
                     <li
                       key={idx}
                       style={{

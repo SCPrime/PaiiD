@@ -3,7 +3,7 @@
  * Enterprise-grade toast notifications with animations
  */
 
-import { CheckCircle, XCircle, AlertTriangle, Info, X } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export type ToastType = "success" | "error" | "warning" | "info";
@@ -108,16 +108,10 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
     >
       <div className="flex items-start gap-3">
         <Icon className={`w-5 h-5 mt-0.5 ${colors.icon} flex-shrink-0`} />
-        
+
         <div className="flex-1 min-w-0">
-          <div className={`font-semibold text-sm ${colors.title}`}>
-            {toast.title}
-          </div>
-          {toast.message && (
-            <div className={`text-sm mt-1 ${colors.message}`}>
-              {toast.message}
-            </div>
-          )}
+          <div className={`font-semibold text-sm ${colors.title}`}>{toast.title}</div>
+          {toast.message && <div className={`text-sm mt-1 ${colors.message}`}>{toast.message}</div>}
           {toast.action && (
             <button
               onClick={toast.action.onClick}
@@ -155,11 +149,7 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2">
       {toasts.map((toast) => (
-        <ToastComponent
-          key={toast.id}
-          toast={toast}
-          onRemove={onRemove}
-        />
+        <ToastComponent key={toast.id} toast={toast} onRemove={onRemove} />
       ))}
     </div>
   );
@@ -174,14 +164,14 @@ export function useToast() {
   const addToast = (toast: Omit<Toast, "id">) => {
     const id = `toast-${++toastId}`;
     const newToast = { ...toast, id };
-    
-    setToasts(prev => [...prev, newToast]);
-    
+
+    setToasts((prev) => [...prev, newToast]);
+
     return id;
   };
 
   const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
   const clearAll = () => {

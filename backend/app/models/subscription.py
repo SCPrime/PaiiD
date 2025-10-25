@@ -6,7 +6,7 @@ SQLAlchemy models for subscription management, usage tracking, and payment histo
 Phase 2: Monetization Engine
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
@@ -51,8 +51,8 @@ class Subscription(Base):
     currency = Column(String(3), default="usd", nullable=False)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
     # Relationships
     usage_records = relationship("UsageRecord", back_populates="subscription", cascade="all, delete-orphan")
@@ -76,7 +76,7 @@ class Subscription(Base):
         """Calculate days until next renewal"""
         if not self.current_period_end:
             return None
-        delta = self.current_period_end - datetime.utcnow()
+        delta = self.current_period_end - datetime.now(UTC)
         return max(0, delta.days)
 
 
@@ -105,7 +105,7 @@ class UsageRecord(Base):
     usage_metadata = Column(JSON, default=dict, nullable=False)
 
     # Timestamps
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True)
     billing_period_start = Column(DateTime, nullable=False, index=True)
     billing_period_end = Column(DateTime, nullable=False)
 
@@ -160,8 +160,8 @@ class Invoice(Base):
     pdf_url = Column(String(500), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True)
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
     # Relationship
     subscription = relationship("Subscription", back_populates="invoices")
@@ -195,8 +195,8 @@ class PaymentMethod(Base):
     is_active = Column(Boolean, default=True, nullable=False)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
     def __repr__(self):
         return f"<PaymentMethod(id={self.id}, user_id={self.user_id}, type='{self.type}', last4='{self.last4}')>"
@@ -231,7 +231,7 @@ class SubscriptionEvent(Base):
     event_data = Column(JSON, default=dict, nullable=False)
 
     # Timestamps
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True)
 
     def __repr__(self):
         return f"<SubscriptionEvent(id={self.id}, subscription_id={self.subscription_id}, event_type='{self.event_type}', timestamp={self.timestamp})>"

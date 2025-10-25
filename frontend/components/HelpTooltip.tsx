@@ -85,9 +85,7 @@ export default function HelpTooltip({
           )}
 
           {/* Content */}
-          {title && (
-            <div className="font-semibold mb-1 text-white">{title}</div>
-          )}
+          {title && <div className="font-semibold mb-1 text-white">{title}</div>}
           <div className="text-gray-200 leading-relaxed">{content}</div>
 
           {/* Arrow */}

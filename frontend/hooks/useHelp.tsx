@@ -3,7 +3,7 @@
  * Provides help system state and actions throughout the app
  */
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 interface HelpContextType {
   isHelpPanelOpen: boolean;

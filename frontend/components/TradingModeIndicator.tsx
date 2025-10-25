@@ -3,9 +3,8 @@
  * Prominent indicator showing paper/live trading mode with safety warnings
  */
 
-import { AlertTriangle, Shield, Zap, Settings } from "lucide-react";
-import { useState, useEffect } from "react";
-import { theme } from "../styles/theme";
+import { AlertTriangle, Shield, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface TradingModeIndicatorProps {
   mode?: "paper" | "live";
@@ -13,10 +12,10 @@ interface TradingModeIndicatorProps {
   className?: string;
 }
 
-export default function TradingModeIndicator({ 
-  mode = "paper", 
+export default function TradingModeIndicator({
+  mode = "paper",
   onModeChange,
-  className = "" 
+  className = "",
 }: TradingModeIndicatorProps) {
   const [isChanging, setIsChanging] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
@@ -36,10 +35,10 @@ export default function TradingModeIndicator({
     }
 
     setIsChanging(true);
-    
+
     // Save to localStorage
     localStorage.setItem("trading-mode", newMode);
-    
+
     // Call parent handler
     if (onModeChange) {
       onModeChange(newMode);
@@ -71,17 +70,18 @@ export default function TradingModeIndicator({
           className={`
             flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm
             transition-all duration-300 cursor-pointer
-            ${isLive 
-              ? "bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200" 
-              : "bg-green-100 text-green-800 border-2 border-green-300 hover:bg-green-200"
+            ${
+              isLive
+                ? "bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200"
+                : "bg-green-100 text-green-800 border-2 border-green-300 hover:bg-green-200"
             }
             ${isChanging ? "opacity-50 pointer-events-none" : ""}
           `}
           onClick={() => handleModeChange(isLive ? "paper" : "live")}
           style={{
             backdropFilter: "blur(10px)",
-            boxShadow: isLive 
-              ? "0 4px 12px rgba(239, 68, 68, 0.2)" 
+            boxShadow: isLive
+              ? "0 4px 12px rgba(239, 68, 68, 0.2)"
               : "0 4px 12px rgba(34, 197, 94, 0.2)",
           }}
         >
@@ -97,7 +97,7 @@ export default function TradingModeIndicator({
               <span>PAPER TRADING</span>
             </>
           )}
-          
+
           {isChanging && (
             <div className="ml-2">
               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -112,9 +112,7 @@ export default function TradingModeIndicator({
               ⚠️ Real money at risk - trades will execute
             </span>
           ) : (
-            <span className="text-green-600">
-              ✅ Safe practice mode - no real money
-            </span>
+            <span className="text-green-600">✅ Safe practice mode - no real money</span>
           )}
         </div>
       </div>
@@ -170,10 +168,10 @@ export default function TradingModeIndicator({
 }
 
 // Compact version for headers/toolbars
-export function CompactTradingModeIndicator({ 
-  mode = "paper", 
+export function CompactTradingModeIndicator({
+  mode = "paper",
   onModeChange,
-  className = "" 
+  className = "",
 }: TradingModeIndicatorProps) {
   const isLive = mode === "live";
 
@@ -185,9 +183,7 @@ export function CompactTradingModeIndicator({
           ${isLive ? "bg-red-500" : "bg-green-500"}
         `}
       />
-      <span className="text-xs font-medium text-gray-600">
-        {isLive ? "LIVE" : "PAPER"}
-      </span>
+      <span className="text-xs font-medium text-gray-600">{isLive ? "LIVE" : "PAPER"}</span>
     </div>
   );
 }

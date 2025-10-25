@@ -4,7 +4,6 @@
  */
 
 import { Loader2 } from "lucide-react";
-import { theme as _theme } from "../../styles/theme";
 
 interface LoadingStateProps {
   size?: "sm" | "md" | "lg";
@@ -15,16 +14,14 @@ interface LoadingStateProps {
 export function LoadingSpinner({ size = "md", text, className = "" }: LoadingStateProps) {
   const sizeClasses = {
     sm: "w-4 h-4",
-    md: "w-6 h-6", 
+    md: "w-6 h-6",
     lg: "w-8 h-8",
   };
 
   return (
     <div className={`flex items-center justify-center gap-2 ${className}`}>
       <Loader2 className={`${sizeClasses[size]} animate-spin text-blue-500`} />
-      {text && (
-        <span className="text-gray-600 text-sm">{text}</span>
-      )}
+      {text && <span className="text-gray-600 text-sm">{text}</span>}
     </div>
   );
 }
@@ -36,7 +33,12 @@ interface SkeletonProps {
   lines?: number;
 }
 
-export function Skeleton({ width = "100%", height = "20px", className = "", lines = 1 }: SkeletonProps) {
+export function Skeleton({
+  width = "100%",
+  height = "20px",
+  className = "",
+  lines = 1,
+}: SkeletonProps) {
   if (lines > 1) {
     return (
       <div className={`space-y-2 ${className}`}>
@@ -52,10 +54,7 @@ export function Skeleton({ width = "100%", height = "20px", className = "", line
   }
 
   return (
-    <div
-      className={`animate-pulse bg-gray-200 rounded ${className}`}
-      style={{ width, height }}
-    />
+    <div className={`animate-pulse bg-gray-200 rounded ${className}`} style={{ width, height }} />
   );
 }
 
@@ -70,7 +69,7 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
         <Skeleton width="15%" height="16px" />
         <Skeleton width="15%" height="16px" />
       </div>
-      
+
       {/* Rows */}
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex gap-4">
@@ -96,7 +95,7 @@ export function ChartSkeleton() {
           <Skeleton width="60px" height="32px" />
         </div>
       </div>
-      
+
       {/* Chart area */}
       <div className="relative h-64 bg-gray-50 rounded-lg overflow-hidden">
         {/* Simulate chart lines */}
@@ -116,7 +115,7 @@ export function ChartSkeleton() {
             className="animate-pulse"
           />
         </svg>
-        
+
         {/* Loading overlay */}
         <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50">
           <LoadingSpinner text="Loading chart data..." />
@@ -150,14 +149,14 @@ export function DashboardSkeleton() {
           <Skeleton width="100px" height="40px" />
         </div>
       </div>
-      
+
       {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <CardSkeleton key={i} />
         ))}
       </div>
-      
+
       {/* Chart and table */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartSkeleton />

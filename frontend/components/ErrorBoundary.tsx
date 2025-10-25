@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -143,7 +143,14 @@ export class ErrorBoundary extends Component<Props, State> {
             </p>
 
             {/* Recovery Actions */}
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "24px" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "center",
+                marginBottom: "24px",
+              }}
+            >
               <button
                 onClick={this.handleReset}
                 style={{

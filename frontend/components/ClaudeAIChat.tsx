@@ -90,7 +90,7 @@ export default function ClaudeAIChat() {
             const patternList = data.patterns
               .map(
                 (p: unknown) =>
-                  `• **${p.pattern_type.replace(/_/g, " ").toUpperCase()}** (${p.signal}) - ${(p.confidence * 100).toFixed(0)}% confidence\n  Target: $${p.target_price.toFixed(2)} | Stop: $${p.stop_loss.toFixed(2)}`
+                  `• **${(p as any).pattern_type.replace(/_/g, " ").toUpperCase()}** (${(p as any).signal}) - ${((p as any).confidence * 100).toFixed(0)}% confidence\n  Target: $${(p as any).target_price.toFixed(2)} | Stop: $${(p as any).stop_loss.toFixed(2)}`
               )
               .join("\n\n");
             const assistantMessage: Message = {
