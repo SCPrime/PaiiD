@@ -215,8 +215,13 @@ export default function Dashboard() {
         case "settings":
           return <Settings isOpen={true} onClose={() => setSelectedWorkflow("")} />;
 
-        case "pnl-dashboard":
-          return <Analytics />;
+        case "my-account":
+          // Simple financial chart view
+          return (
+            <div style={{ padding: '20px' }}>
+              <iframe src="/my-account" style={{ width: '100%', height: '90vh', border: 'none', borderRadius: '20px' }} />
+            </div>
+          );
 
         case "news-review":
           return <NewsReview />;
@@ -227,8 +232,13 @@ export default function Dashboard() {
         case "backtesting":
           return <Backtesting />;
 
-        case "monitor":
-          return <MonitorDashboard />;
+        case "dev-progress":
+          // Dev progress dashboard
+          return (
+            <div style={{ padding: '20px' }}>
+              <iframe src="/progress" style={{ width: '100%', height: '90vh', border: 'none', borderRadius: '20px' }} />
+            </div>
+          );
 
         case "ml-intelligence":
           return <MLIntelligenceWorkflow onClose={() => setSelectedWorkflow(null)} />;

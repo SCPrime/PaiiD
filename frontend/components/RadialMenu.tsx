@@ -51,11 +51,11 @@ export const workflows: Workflow[] = [
     description: "Monitor and manage your current open positions and orders.",
   },
   {
-    id: "pnl-dashboard",
+    id: "my-account",
     name: "P&L\nDASHBOARD",
     color: "#FF8800",
     icon: "💰",
-    description: "Analytics, performance metrics, equity curves, and trading statistics.",
+    description: "Simple view of your account value with clean line graph.",
   },
   {
     id: "strategy-builder",
@@ -86,11 +86,11 @@ export const workflows: Workflow[] = [
     description: "Options chain viewer with Greeks, multi-leg strategies, and execution.",
   },
   {
-    id: "monitor",
+    id: "dev-progress",
     name: "REPO\nMONITOR",
     color: "#10B981",
     icon: "🔍",
-    description: "GitHub repository monitoring with real-time activity tracking and metrics.",
+    description: "See how the PaiiD app construction is progressing with simple visuals.",
   },
   {
     id: "ml-intelligence",
