@@ -58,13 +58,13 @@ const MLIntelligenceWorkflow = dynamic(
     ),
   }
 );
-const GitHubActionsMonitor = dynamic(() => import("../components/GitHubActionsMonitor"), {
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
-  ),
-});
+// const GitHubActionsMonitor = dynamic(() => import("../components/GitHubActionsMonitor"), {
+//   loading: () => (
+//     <div className="flex items-center justify-center p-8">
+//       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+//     </div>
+//   ),
+// });
 const NewsReview = dynamic(() => import("../components/NewsReview"), {
   loading: () => (
     <div className="flex items-center justify-center p-8">

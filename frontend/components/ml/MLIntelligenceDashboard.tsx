@@ -21,7 +21,7 @@ import {
   AlertTriangle,
   Loader2
 } from 'lucide-react';
-import { useToast } from '../hooks/useToast';
+import { useToast } from '../ui/Toast';
 import { HelpTooltip } from '../HelpTooltip';
 
 interface MLInsight {

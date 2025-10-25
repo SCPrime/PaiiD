@@ -44,11 +44,11 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
       const workflowsResponse = await fetch(
         `https://api.github.com/repos/${repository}/actions/workflows`
       );
-      
+
       if (!workflowsResponse.ok) {
         throw new Error(`Failed to fetch workflows: ${workflowsResponse.status}`);
       }
-      
+
       const workflowsData = await workflowsResponse.json();
       setWorkflows(workflowsData.workflows || []);
 
@@ -56,14 +56,14 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
       const runsResponse = await fetch(
         `https://api.github.com/repos/${repository}/actions/runs?per_page=20`
       );
-      
+
       if (!runsResponse.ok) {
         throw new Error(`Failed to fetch runs: ${runsResponse.status}`);
       }
-      
+
       const runsData = await runsResponse.json();
       setRuns(runsData.workflow_runs || []);
-      
+
       setLastUpdated(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch GitHub Actions data");
@@ -75,7 +75,7 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
 
   useEffect(() => {
     fetchWorkflows();
-    
+
     // Auto-refresh every 30 seconds
     const interval = setInterval(fetchWorkflows, 30000);
     return () => clearInterval(interval);
@@ -194,7 +194,7 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
           </div>
           <div className="text-2xl font-bold text-green-300 mt-1">{statusCounts.success}</div>
         </div>
-        
+
         <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
           <div className="flex items-center gap-2">
             <XCircle className="w-5 h-5 text-red-500" />
@@ -202,7 +202,7 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
           </div>
           <div className="text-2xl font-bold text-red-300 mt-1">{statusCounts.failure}</div>
         </div>
-        
+
         <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
           <div className="flex items-center gap-2">
             <RefreshCw className="w-5 h-5 text-blue-500 animate-spin" />
@@ -210,7 +210,7 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
           </div>
           <div className="text-2xl font-bold text-blue-300 mt-1">{statusCounts.running}</div>
         </div>
-        
+
         <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
           <div className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-yellow-500" />
@@ -226,11 +226,9 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
           <span className="text-xl">🔄</span>
           Recent Workflow Runs
         </h3>
-        
+
         {runs.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
-            No workflow runs found
-          </div>
+          <div className="text-center py-8 text-gray-400">No workflow runs found</div>
         ) : (
           <div className="space-y-3">
             {runs.slice(0, 10).map((run) => (
@@ -245,11 +243,17 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-white">{run.name}</span>
                         <span className={`text-sm ${getStatusColor(run.status, run.conclusion)}`}>
-                          {run.status === "in_progress" ? "Running" : 
-                           run.status === "queued" ? "Queued" :
-                           run.conclusion === "success" ? "Success" :
-                           run.conclusion === "failure" ? "Failed" :
-                           run.conclusion === "cancelled" ? "Cancelled" : "Unknown"}
+                          {run.status === "in_progress"
+                            ? "Running"
+                            : run.status === "queued"
+                              ? "Queued"
+                              : run.conclusion === "success"
+                                ? "Success"
+                                : run.conclusion === "failure"
+                                  ? "Failed"
+                                  : run.conclusion === "cancelled"
+                                    ? "Cancelled"
+                                    : "Unknown"}
                         </span>
                       </div>
                       <div className="text-sm text-gray-400">
@@ -257,7 +261,7 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <a
                       href={run.html_url}
@@ -282,11 +286,9 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
           <span className="text-xl">⚙️</span>
           Available Workflows
         </h3>
-        
+
         {workflows.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
-            No workflows found
-          </div>
+          <div className="text-center py-8 text-gray-400">No workflows found</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {workflows.map((workflow) => (
@@ -298,7 +300,10 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
                   <div>
                     <div className="font-medium text-white">{workflow.name}</div>
                     <div className="text-sm text-gray-400">
-                      State: <span className={workflow.state === "active" ? "text-green-400" : "text-red-400"}>
+                      State:{" "}
+                      <span
+                        className={workflow.state === "active" ? "text-green-400" : "text-red-400"}
+                      >
                         {workflow.state}
                       </span>
                     </div>
@@ -306,7 +311,7 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
                       Updated: {formatDate(workflow.updated_at)}
                     </div>
                   </div>
-                  
+
                   <a
                     href={workflow.html_url}
                     target="_blank"
