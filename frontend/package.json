@@ -30,6 +30,7 @@
     "@types/node": "^20.19.18",
     "@types/react": "^18.3.25",
     "@types/react-dom": "^18.3.7",
+    "chart.js": "^4.4.0",
     "clsx": "^2.0.0",
     "d3": "^7.9.0",
     "date-fns": "^3.0.0",
