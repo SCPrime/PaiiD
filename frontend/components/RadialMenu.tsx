@@ -129,7 +129,9 @@ function RadialMenuComponent({
   const [marketData, setMarketData] = useState({
     dow: { value: 0, change: 0, symbol: "DJI" },
     nasdaq: { value: 0, change: 0, symbol: "COMP" },
+    lastUpdate: 0,
   });
+  const [forceFieldConfidence, setForceFieldConfidence] = useState(0);
   const [isMarketDataLoading, setIsMarketDataLoading] = useState(true);
   const [_sseConnected, setSseConnected] = useState(false);
   const [_sseRetryCount, setSseRetryCount] = useState(0);
@@ -246,6 +248,7 @@ function RadialMenuComponent({
           const data = JSON.parse(e.data);
           console.debug("[RadialMenu] 📊 Received live market data:", data);
 
+          const now = Date.now();
           const newData = {
             dow: {
               value: data.dow?.last || 0,
@@ -257,7 +260,18 @@ function RadialMenuComponent({
               change: data.nasdaq?.changePercent || 0,
               symbol: "COMP",
             },
+            lastUpdate: now,
           };
+
+          // Calculate Force Field Confidence (0-100%)
+          // Based on: data freshness, market stability, and connection quality
+          const dataFreshness = 100; // Fresh data just received
+          const marketVolatility = Math.abs(newData.dow.change) + Math.abs(newData.nasdaq.change);
+          const stabilityScore = Math.max(0, 100 - marketVolatility * 10); // Lower volatility = higher confidence
+          const connectionScore = retryAttempt === 0 ? 100 : Math.max(0, 100 - retryAttempt * 10);
+          
+          const confidence = Math.round((dataFreshness * 0.4 + stabilityScore * 0.4 + connectionScore * 0.2));
+          setForceFieldConfidence(Math.min(100, Math.max(0, confidence)));
 
           // Use throttled update to prevent logo animation interruptions
           throttledSetMarketData(newData);
@@ -829,6 +843,37 @@ function RadialMenuComponent({
           .style("opacity", 1)
           .on("end", repeat);
       });
+
+    // ====== FORCE FIELD CONFIDENCE ======
+    const forceFieldGroup = centerGroup
+      .append("g")
+      .attr("transform", `translate(0, ${-centerContentSpacing.dowOffset - 35})`);
+
+    forceFieldGroup
+      .append("text")
+      .attr("text-anchor", "middle")
+      .attr("font-size", fontSizes.marketLabel)
+      .attr("font-weight", "800")
+      .attr("fill", "#cbd5e1")
+      .attr("letter-spacing", "1.5px")
+      .style("pointer-events", "none")
+      .text("FORCE FIELD");
+
+    const confidenceColor = 
+      forceFieldConfidence >= 80 ? "#45f0c0" : 
+      forceFieldConfidence >= 60 ? "#fbbf24" : 
+      forceFieldConfidence >= 40 ? "#fb923c" : "#ef4444";
+
+    forceFieldGroup
+      .append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "14")
+      .attr("font-size", `${parseInt(fontSizes.marketValue) * 1.3}px`)
+      .attr("font-weight", "900")
+      .attr("fill", confidenceColor)
+      .style("text-shadow", `0 0 15px ${confidenceColor}80, 0 2px 8px rgba(0, 0, 0, 0.8)`)
+      .style("pointer-events", "none")
+      .text(`${forceFieldConfidence}%`);
   }, [
     menuSize,
     fontSizes,
@@ -839,6 +884,8 @@ function RadialMenuComponent({
     marketData.dow.change,
     marketData.nasdaq.value,
     marketData.nasdaq.change,
+    forceFieldConfidence,
+    centerContentSpacing,
   ]); // Re-render when menu size or loading state changes
 
   // Separate effect for market data updates - only update text when data changes
