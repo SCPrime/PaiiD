@@ -378,3 +378,5 @@ export const GitHubActionsMonitor: React.FC<GitHubActionsMonitorProps> = ({
     </div>
   );
 };
+
+export default GitHubActionsMonitor;
