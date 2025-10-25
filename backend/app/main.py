@@ -52,11 +52,20 @@ from .routers import (
     stock,
     strategies,
     stream,
-    subscription,
     telemetry,
     users,
 )
 from .routers import settings as settings_router
+
+# Optional: Subscription router (requires stripe package)
+try:
+    from .routers import subscription
+
+    SUBSCRIPTION_AVAILABLE = True
+except ImportError as e:
+    print(f"[WARNING] Subscription router not available: {e}", flush=True)
+    SUBSCRIPTION_AVAILABLE = False
+    subscription = None
 from .scheduler import init_scheduler
 
 
@@ -446,6 +455,13 @@ app.include_router(analytics.router, prefix="/api")
 app.include_router(backtesting.router, prefix="/api")
 app.include_router(ml.router)  # Machine Learning (Phase 2)
 app.include_router(ml_sentiment.router)  # ML Sentiment & Signals (Phase 2 - Active)
-app.include_router(subscription.router)  # Subscription & Billing (Phase 2 - Monetization)
+if SUBSCRIPTION_AVAILABLE:
+    app.include_router(subscription.router)  # Subscription & Billing (Phase 2 - Monetization)
+    print("[OK] Subscription API endpoints registered", flush=True)
+else:
+    print(
+        "[WARNING] Subscription API disabled - install 'stripe' package to enable",
+        flush=True,
+    )
 app.include_router(monitor.router)  # GitHub Repository Monitor
 app.include_router(telemetry.router)
