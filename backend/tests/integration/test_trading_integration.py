@@ -5,8 +5,9 @@ Priority: CRITICAL
 """
 
 import pytest
-from backend.main import app
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 
 @pytest.fixture

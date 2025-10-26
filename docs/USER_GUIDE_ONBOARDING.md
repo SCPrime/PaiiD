@@ -316,13 +316,13 @@ PaiiD is a comprehensive financial trading platform that combines real-time mark
 ### Subscription Management
 
 #### Plan Comparison
-| Feature | Free | Pro | Enterprise |
-|---------|------|-----|------------|
-| API Calls/Month | 1,000 | 50,000 | Unlimited |
-| Real-time Data | Limited | Full | Full |
-| AI Sentiment | Basic | Advanced | Advanced |
-| Support | Community | Email | Phone + Video |
-| Custom Integrations | No | Limited | Full |
+| Feature             | Free      | Pro      | Enterprise    |
+| ------------------- | --------- | -------- | ------------- |
+| API Calls/Month     | 1,000     | 50,000   | Unlimited     |
+| Real-time Data      | Limited   | Full     | Full          |
+| AI Sentiment        | Basic     | Advanced | Advanced      |
+| Support             | Community | Email    | Phone + Video |
+| Custom Integrations | No        | Limited  | Full          |
 
 #### Upgrading/Downgrading
 1. **Go to Billing**: Navigate to Settings > Billing

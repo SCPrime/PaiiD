@@ -4,22 +4,22 @@ Test ID: AUTH-002
 Priority: CRITICAL
 """
 
-import os
 import pytest
-import tempfile
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from fastapi.testclient import TestClient
 
-from app.main import app
-from app.db.session import get_db
-from app.models.database import Base, User
 from app.core.jwt import hash_password
+from app.db.session import get_db
+from app.main import app
+from app.models.database import Base, User
 
 
 # Test Database Configuration
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -37,9 +37,9 @@ def db_session(test_db):
     connection = test_db.connect()
     transaction = connection.begin()
     session = TestingSessionLocal(bind=connection)
-    
+
     yield session
-    
+
     session.close()
     transaction.rollback()
     connection.close()
@@ -48,17 +48,18 @@ def db_session(test_db):
 @pytest.fixture
 def client(db_session):
     """Test client with database dependency override"""
+
     def override_get_db():
         try:
             yield db_session
         finally:
             pass
-    
+
     app.dependency_overrides[get_db] = override_get_db
-    
+
     with TestClient(app) as test_client:
         yield test_client
-    
+
     app.dependency_overrides.clear()
 
 
@@ -70,7 +71,7 @@ def test_user(db_session):
         password_hash=hash_password("TestP@ss123"),
         name="Test User",
         risk_tolerance="moderate",
-        is_active=True
+        is_active=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -82,6 +83,7 @@ def test_user(db_session):
 def test_timestamp():
     """Generate unique timestamp for test emails"""
     import time
+
     return int(time.time())
 
 
@@ -89,10 +91,9 @@ def test_timestamp():
 def auth_headers(client, test_user):
     """Get authentication headers for test user"""
     response = client.post(
-        "/api/auth/login",
-        json={"email": test_user.email, "password": "TestP@ss123"}
+        "/api/auth/login", json={"email": test_user.email, "password": "TestP@ss123"}
     )
-    
+
     if response.status_code == 200:
         token = response.json()["access_token"]
         return {"Authorization": f"Bearer {token}"}
@@ -106,7 +107,7 @@ class TestAuthenticationIntegrationEnhanced:
     def test_user_registration_complete_flow(self, client, test_timestamp):
         """Test complete user registration flow with validation"""
         email = f"newuser-{test_timestamp}@example.com"
-        
+
         # Register new user
         response = client.post(
             "/api/auth/register",
@@ -120,7 +121,7 @@ class TestAuthenticationIntegrationEnhanced:
 
         assert response.status_code == 201
         data = response.json()
-        
+
         # Validate response structure
         assert "user_id" in data
         assert "access_token" in data
@@ -128,11 +129,10 @@ class TestAuthenticationIntegrationEnhanced:
         assert data["email"] == email
         assert data["name"] == "New Test User"
         assert data["risk_tolerance"] == "moderate"
-        
+
         # Verify user can login with new credentials
         login_response = client.post(
-            "/api/auth/login",
-            json={"email": email, "password": "SecureP@ss123"}
+            "/api/auth/login", json={"email": email, "password": "SecureP@ss123"}
         )
         assert login_response.status_code == 200
 
@@ -145,7 +145,7 @@ class TestAuthenticationIntegrationEnhanced:
 
         assert response.status_code == 200
         data = response.json()
-        
+
         # Validate response structure
         assert "access_token" in data
         assert "refresh_token" in data
@@ -181,7 +181,7 @@ class TestAuthenticationIntegrationEnhanced:
         """Test session validation with valid token"""
         if not auth_headers:
             pytest.skip("Authentication setup failed")
-            
+
         response = client.get("/api/auth/session", headers=auth_headers)
 
         assert response.status_code == 200
@@ -201,8 +201,7 @@ class TestAuthenticationIntegrationEnhanced:
     def test_session_validation_with_invalid_token(self, client):
         """Test session validation with invalid token"""
         response = client.get(
-            "/api/auth/session", 
-            headers={"Authorization": "Bearer invalid_token"}
+            "/api/auth/session", headers={"Authorization": "Bearer invalid_token"}
         )
 
         assert response.status_code == 401
@@ -213,7 +212,7 @@ class TestAuthenticationIntegrationEnhanced:
         """Test user logout and token invalidation"""
         if not auth_headers:
             pytest.skip("Authentication setup failed")
-            
+
         # Logout
         response = client.post("/api/auth/logout", headers=auth_headers)
         assert response.status_code == 200
@@ -235,8 +234,7 @@ class TestAuthenticationIntegrationEnhanced:
 
         # Refresh access token
         response = client.post(
-            "/api/auth/refresh", 
-            json={"refresh_token": refresh_token}
+            "/api/auth/refresh", json={"refresh_token": refresh_token}
         )
 
         assert response.status_code == 200
@@ -265,7 +263,7 @@ class TestAuthenticationIntegrationEnhanced:
         weak_passwords = [
             "short",
             "nouppercase123",
-            "NOLOWERCASE123", 
+            "NOLOWERCASE123",
             "NoNumbers",
             "NoSpecial123",
         ]
@@ -332,28 +330,27 @@ class TestAuthenticationIntegrationEnhanced:
     def test_concurrent_login_attempts(self, client, test_user):
         """Test handling of concurrent login attempts"""
         import threading
-        import time
-        
+
         results = []
-        
+
         def login_attempt():
             response = client.post(
                 "/api/auth/login",
                 json={"email": test_user.email, "password": "TestP@ss123"},
             )
             results.append(response.status_code)
-        
+
         # Start multiple concurrent login attempts
         threads = []
         for _ in range(5):
             thread = threading.Thread(target=login_attempt)
             threads.append(thread)
             thread.start()
-        
+
         # Wait for all threads to complete
         for thread in threads:
             thread.join()
-        
+
         # All should succeed (or be rate limited gracefully)
         for status_code in results:
             assert status_code in [200, 429]  # Success or rate limited
@@ -365,7 +362,7 @@ class TestAuthenticationSecurity:
     def test_sql_injection_protection(self, client):
         """Test protection against SQL injection"""
         malicious_email = "'; DROP TABLE users; --"
-        
+
         response = client.post(
             "/api/auth/login",
             json={"email": malicious_email, "password": "TestP@ss123"},
@@ -379,17 +376,17 @@ class TestAuthenticationSecurity:
     def test_password_not_logged(self, client, test_user, caplog):
         """Test that passwords are not logged"""
         import logging
-        
+
         # Set logging level to capture all logs
         caplog.set_level(logging.DEBUG)
-        
+
         response = client.post(
             "/api/auth/login",
             json={"email": test_user.email, "password": "TestP@ss123"},
         )
-        
+
         assert response.status_code == 200
-        
+
         # Check that password is not in logs
         log_text = caplog.text
         assert "TestP@ss123" not in log_text
@@ -399,10 +396,9 @@ class TestAuthenticationSecurity:
         # This would require mocking time or using expired tokens
         # For now, just test that expired tokens are rejected
         response = client.get(
-            "/api/auth/session",
-            headers={"Authorization": "Bearer expired_token"}
+            "/api/auth/session", headers={"Authorization": "Bearer expired_token"}
         )
-        
+
         assert response.status_code == 401
 
 

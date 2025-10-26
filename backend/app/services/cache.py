@@ -23,24 +23,30 @@ class CacheService:
         self._initialize()
 
     def _initialize(self):
-        """Initialize Redis connection"""
+        """Initialize Redis connection with improved error handling"""
         if not settings.REDIS_URL:
-            print("[WARNING] REDIS_URL not configured - caching disabled", flush=True)
+            print(
+                "[WARNING] REDIS_URL not configured - using in-memory fallback",
+                flush=True,
+            )
             return
 
         try:
             self.client = redis.from_url(
                 settings.REDIS_URL,
                 decode_responses=True,
-                socket_connect_timeout=5,
-                socket_timeout=5,
+                socket_connect_timeout=2,  # Reduced timeout for faster failure
+                socket_timeout=2,
             )
             # Test connection
             self.client.ping()
             self.available = True
             print("[OK] Redis cache connected", flush=True)
         except Exception as e:
-            print(f"[WARNING] Redis connection failed: {e} - caching disabled", flush=True)
+            print(
+                f"[WARNING] Redis connection failed: {e} - using in-memory fallback",
+                flush=True,
+            )
             self.client = None
             self.available = False
 
