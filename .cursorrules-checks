@@ -464,6 +464,159 @@ Check all database migrations have proper rollback procedures
 
 ---
 
+## 14. 🧟 Zombie Process Patterns
+
+### Pattern: Improper Process Spawning
+**Search for:**
+```powershell
+# PowerShell processes without PID tracking
+Start-Process.*(?!.*Start-ManagedProcess)
+Start-Job.*(?!.*ProcessManager)
+```
+
+```bash
+# Bash processes without proper signal handling
+command.*&(?!.*wait)
+uvicorn.*&(?!.*trap)
+```
+
+```python
+# Python subprocess without timeout
+subprocess\.run\((?!.*timeout)
+subprocess\.Popen\((?!.*timeout)
+```
+
+```typescript
+# TypeScript execSync without timeout
+execSync\(.*(?!.*timeout)
+```
+
+**Example Bad Code:**
+```powershell
+# ❌ No PID tracking
+Start-Process powershell -ArgumentList "-Command", "uvicorn app.main:app"
+```
+
+```bash
+# ❌ No signal handling
+uvicorn app.main:app &
+```
+
+```python
+# ❌ No timeout
+result = subprocess.run(["git", "diff"], capture_output=True)
+```
+
+**Example Good Code:**
+```powershell
+# ✅ Managed process
+$pid = Start-ManagedProcess -Name "backend" -Command "uvicorn app.main:app"
+```
+
+```bash
+# ✅ Signal handling
+uvicorn app.main:app &
+UVICORN_PID=$!
+trap 'kill -TERM $UVICORN_PID' EXIT
+wait $UVICORN_PID
+```
+
+```python
+# ✅ With timeout
+result = subprocess.run(
+    ["git", "diff"], 
+    capture_output=True, 
+    timeout=30,
+    check=True
+)
+```
+
+**Cursor Command:**
+```
+Find all process spawning patterns that don't use proper PID tracking
+```
+
+---
+
+## 15. 🔄 Missing Process Cleanup
+
+### Pattern: No Cleanup Handlers
+**Search for:**
+```powershell
+# PowerShell without cleanup
+Start-Process.*(?!.*Register-EngineEvent)
+```
+
+```bash
+# Bash without trap handlers
+uvicorn.*(?!.*trap)
+```
+
+```typescript
+# TypeScript without cleanup
+execSync.*(?!.*finally)
+```
+
+**Example Bad Code:**
+```powershell
+# ❌ No cleanup
+Start-Process powershell -ArgumentList "-Command", "uvicorn app.main:app"
+# Process continues running after script exits
+```
+
+**Example Good Code:**
+```powershell
+# ✅ With cleanup
+Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
+    Stop-ManagedProcess -Name "backend"
+}
+```
+
+**Cursor Command:**
+```
+Find all process spawning without cleanup handlers
+```
+
+---
+
+## 16. 🎯 Port Conflicts
+
+### Pattern: Port Binding Without Cleanup
+**Search for:**
+```powershell
+# Port usage without cleanup
+Get-NetTCPConnection.*(?!.*Stop-Process)
+```
+
+```bash
+# Port usage without cleanup
+lsof.*(?!.*kill)
+netstat.*(?!.*kill)
+```
+
+**Example Bad Code:**
+```powershell
+# ❌ No port cleanup
+$connections = Get-NetTCPConnection -LocalPort 8001
+# Port remains occupied
+```
+
+**Example Good Code:**
+```powershell
+# ✅ Port cleanup
+$connections = Get-NetTCPConnection -LocalPort 8001
+foreach ($conn in $connections) {
+    Stop-Process -Id $conn.OwningProcess -Force
+}
+```
+
+**Cursor Command:**
+```
+Find all port usage without proper cleanup procedures
+```
+
+---
+
 ## 🚀 How to Use These Checks
 
 ### Daily (Before Committing)
@@ -477,7 +630,7 @@ Check all database migrations have proper rollback procedures
 3. Prioritize critical issues
 
 ### Before Major Release
-1. Run ALL 13 checks
+1. Run ALL 16 checks
 2. Verify no critical issues
 3. Document any accepted risks
 
@@ -493,6 +646,9 @@ Week of [DATE]:
 - [ ] Pattern 3: SQL injection - 0 found
 - [ ] Pattern 4: Exposed secrets - 1 found, 1 fixed
 - [ ] Pattern 5: Missing timeouts - 5 found, 5 fixed
+- [ ] Pattern 14: Zombie processes - 2 found, 2 fixed
+- [ ] Pattern 15: Missing cleanup - 1 found, 1 fixed
+- [ ] Pattern 16: Port conflicts - 0 found
 ...
 ```
 

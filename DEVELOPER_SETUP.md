@@ -12,6 +12,7 @@ Complete guide to development tools, code quality standards, and workflows for t
 - [Testing](#testing)
 - [Code Quality Standards](#code-quality-standards)
 - [Environment Variables](#environment-variables)
+- [Zombie Process Prevention](#zombie-process-prevention)
 - [Project Structure](#project-structure)
 - [Common Issues](#common-issues)
 - [Contributing](#contributing)
@@ -555,6 +556,142 @@ SENTRY_DSN=<your-sentry-dsn>
 ```
 
 **⚠️ NEVER commit .env files to git!** They're in `.gitignore`.
+
+---
+
+## Zombie Process Prevention
+
+### Overview
+
+Zombie processes are a common issue in development environments where processes appear to be running (showing in `netstat`) but are actually dead or unresponsive. This can cause port conflicts and prevent clean development restarts.
+
+### Quick Reference
+
+#### Start Development Environment
+```powershell
+# ✅ Recommended - includes automatic zombie cleanup
+.\start-dev.ps1
+
+# ✅ With force cleanup
+.\start-dev.ps1 -KillExisting
+```
+
+#### Stop Development Environment
+```powershell
+# ✅ Graceful shutdown
+.\scripts\stop-all.ps1
+
+# ✅ Force cleanup
+.\scripts\stop-dev.ps1 -Force
+```
+
+#### Emergency Zombie Cleanup
+```powershell
+# ✅ Kill zombie processes
+.\scripts\zombie-killer.ps1 -Force
+
+# ✅ Nuclear option (kill all Python)
+.\scripts\emergency-cleanup.ps1 -Force -KillAllPython
+```
+
+### Common Zombie Process Issues
+
+#### 1. Port 8001 Zombie Processes
+**Symptoms:**
+- Port 8001 shows as "LISTENING" but no process found
+- `taskkill /PID <pid>` returns "process not found"
+- Development fails to start on port 8001
+
+**Solution:**
+```powershell
+# Use port 8002 instead (default in start-dev.ps1)
+.\start-dev.ps1
+
+# Or clean up port 8001
+.\scripts\emergency-cleanup.ps1 -Port 8001 -Force
+```
+
+#### 2. uvicorn Not Found
+**Symptoms:**
+- "uvicorn is not recognized as the name of a cmdlet"
+- Backend fails to start
+
+**Solution:**
+```powershell
+# Use full Python path
+python -m uvicorn app.main:app --reload --port 8002
+
+# Or use the managed startup script
+.\start-dev.ps1
+```
+
+### Prevention Best Practices
+
+#### 1. Always Use Managed Scripts
+```powershell
+# ✅ Correct
+.\start-dev.ps1
+.\scripts\stop-all.ps1
+
+# ❌ Incorrect
+Start-Process powershell -ArgumentList "uvicorn app.main:app"
+taskkill /F /IM python.exe
+```
+
+#### 2. Proper Shutdown
+```powershell
+# ✅ Always stop processes gracefully
+.\scripts\stop-all.ps1
+
+# ❌ Don't force kill without cleanup
+taskkill /F /IM python.exe
+```
+
+#### 3. Port Management
+```powershell
+# ✅ Check port availability first
+netstat -ano | findstr :8001
+
+# ✅ Use alternate ports if needed
+$env:PORT=8002; .\start-dev.ps1
+```
+
+### Automated Detection
+
+#### Scheduled Task (Optional)
+```powershell
+# Register weekly zombie detection (requires admin)
+.\scripts\register-zombie-detection-task.ps1
+
+# Manual detection
+.\scripts\scheduled-zombie-detector.ps1
+```
+
+#### Log Files
+- **Zombie Detection:** `backend/.logs/zombie-detection.log`
+- **Process Manager:** `backend/.logs/process-manager.log`
+
+### Emergency Recovery
+
+#### Complete Reset
+```powershell
+# 1. Stop all processes
+.\scripts\stop-all.ps1
+
+# 2. Kill zombie processes
+.\scripts\emergency-cleanup.ps1 -Force -KillAllPython
+
+# 3. Clean up PID files
+Remove-Item backend\.run\*.pid -Force -ErrorAction SilentlyContinue
+Remove-Item frontend\.run\*.pid -Force -ErrorAction SilentlyContinue
+
+# 4. Restart
+.\start-dev.ps1 -KillExisting
+```
+
+### Troubleshooting
+
+For detailed troubleshooting information, see [PROCESS_MANAGEMENT.md](docs/PROCESS_MANAGEMENT.md#troubleshooting-zombie-processes).
 
 ---
 
