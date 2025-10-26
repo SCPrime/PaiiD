@@ -20,8 +20,17 @@ from ..models.database import User, UserSession
 from .config import settings
 
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing context with bcrypt configuration
+# Using pbkdf2_sha256 as primary scheme to avoid bcrypt bug detection issues
+pwd_context = CryptContext(
+    schemes=["pbkdf2_sha256", "bcrypt"], 
+    deprecated="auto",
+    pbkdf2_sha256__default_rounds=290000,
+    pbkdf2_sha256__min_rounds=100000,
+    bcrypt__default_rounds=12,
+    bcrypt__min_rounds=10,
+    bcrypt__max_rounds=15
+)
 
 # HTTP Bearer token scheme
 security = HTTPBearer()
@@ -37,6 +46,10 @@ def hash_password(password: str) -> str:
     Returns:
         Bcrypt password hash
     """
+    # Ensure password is not longer than 72 bytes (bcrypt limit)
+    if len(password.encode('utf-8')) > 72:
+        password = password[:72]
+    
     return pwd_context.hash(password)
 
 
