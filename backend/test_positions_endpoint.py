@@ -1,4 +1,7 @@
+import os
 import requests
+import sys
+
 
 """
 Test script for the new /api/ai/analyze-positions endpoint
@@ -7,8 +10,12 @@ Test script for the new /api/ai/analyze-positions endpoint
 # Backend URL
 BASE_URL = "http://127.0.0.1:8001"
 
-# API token (from .env or default)
-API_TOKEN = "rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl"
+# API token from environment variable
+API_TOKEN = os.getenv("API_TOKEN")
+if not API_TOKEN:
+    print("ERROR: API_TOKEN environment variable not set")
+    print("Please set API_TOKEN in your .env file or export it")
+    sys.exit(1)
 
 headers = {"Authorization": f"Bearer {API_TOKEN}", "Content-Type": "application/json"}
 

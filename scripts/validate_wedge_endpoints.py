@@ -17,7 +17,11 @@ console = Console()
 
 # Configuration
 BACKEND_URL = os.getenv("BACKEND_URL", "https://paiid-backend.onrender.com")
-API_TOKEN = os.getenv("API_TOKEN", "rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl")
+API_TOKEN = os.getenv("API_TOKEN")
+if not API_TOKEN:
+    console.print("[red]ERROR: API_TOKEN environment variable not set[/red]")
+    console.print("Please set API_TOKEN in your .env file or export it")
+    exit(1)
 TIMEOUT = 30.0
 
 HEADERS = {
