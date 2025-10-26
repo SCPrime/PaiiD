@@ -1,10 +1,13 @@
+import sys
+from logging.config import fileConfig
+from pathlib import Path
+
+from sqlalchemy import engine_from_config, pool
+
 from alembic import context
 from app.core.config import settings
 from app.db.session import Base
-from logging.config import fileConfig
-from pathlib import Path
-from sqlalchemy import engine_from_config, pool
-import sys
+
 
 # Import settings and models
 

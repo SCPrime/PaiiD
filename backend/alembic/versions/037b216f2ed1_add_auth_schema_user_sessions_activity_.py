@@ -1,6 +1,9 @@
-from alembic import op
 from collections.abc import Sequence
+
 import sqlalchemy as sa
+
+from alembic import op
+
 
 """add_auth_schema_user_sessions_activity_log
 

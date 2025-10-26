@@ -1,6 +1,9 @@
-from alembic import op
 from collections.abc import Sequence
+
 import sqlalchemy as sa
+
+from alembic import op
+
 
 """Initial schema: users, strategies, trades, performance, equity_snapshots
 
