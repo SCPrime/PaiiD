@@ -47,7 +47,13 @@ def check_and_store(key: str) -> bool:
             if created:
                 r.expire(f"idemp:{key}", ttl_sec)
             return bool(created)
-        except Exception:
+        except Exception as e:
+            # Log error but fall through to in-memory fallback
+            import logging
+
+            logging.getLogger(__name__).debug(
+                f"Redis idempotency check failed, using in-memory: {e}"
+            )
             pass  # fall through to in-memory
 
     # In-memory fallback

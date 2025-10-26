@@ -6,7 +6,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.core.jwt import get_current_user
 from app.core.unified_auth import get_current_user_unified
 from app.db.session import Base, get_db
 from app.main import app
@@ -50,6 +49,7 @@ TEST_PASSWORD_HASH = "$2b$12$LQ3JzqjX7Y8ZHnVc9r5MHOfWw8L4vQy8QWxK0X1y0HdTYJKRQ6q
 
 # ==================== DATABASE FIXTURES ====================
 
+
 @pytest.fixture(scope="function")
 def test_db():
     """
@@ -73,6 +73,7 @@ def test_db():
     finally:
         db.close()
         Base.metadata.drop_all(bind=engine)
+
 
 @pytest.fixture(scope="function")
 def client(test_db):
@@ -113,7 +114,6 @@ def client(test_db):
         return user
 
     app.dependency_overrides[get_db] = override_get_db
-    app.dependency_overrides[get_current_user] = override_get_current_user
     app.dependency_overrides[get_current_user_unified] = override_get_current_user
 
     # Use raise_server_exceptions=False to allow TestClient to start
@@ -123,6 +123,7 @@ def client(test_db):
         yield test_client
 
     app.dependency_overrides.clear()
+
 
 @pytest.fixture(scope="function")
 def auth_headers():
@@ -136,7 +137,9 @@ def auth_headers():
     """
     return {"Authorization": "Bearer test-token-12345"}
 
+
 # ==================== MOCK CACHE FIXTURES ====================
+
 
 class MockCacheService:
     """Mock cache service for testing without Redis"""
@@ -162,6 +165,7 @@ class MockCacheService:
             del self.cache[key]
         return len(keys_to_delete)
 
+
 @pytest.fixture(scope="function")
 def mock_cache():
     """
@@ -174,7 +178,9 @@ def mock_cache():
     """
     return MockCacheService()
 
+
 # ==================== DATABASE MODEL FIXTURES ====================
+
 
 @pytest.fixture
 def sample_user(test_db):
@@ -190,6 +196,7 @@ def sample_user(test_db):
     test_db.commit()
     test_db.refresh(user)
     return user
+
 
 @pytest.fixture
 def sample_strategy(test_db, sample_user):
@@ -213,6 +220,7 @@ def sample_strategy(test_db, sample_user):
     test_db.refresh(strategy)
     return strategy
 
+
 @pytest.fixture
 def sample_trade(test_db, sample_user, sample_strategy):
     """Create a sample trade for testing"""
@@ -234,7 +242,9 @@ def sample_trade(test_db, sample_user, sample_strategy):
     test_db.refresh(trade)
     return trade
 
+
 # ==================== MOCK API RESPONSES ====================
+
 
 @pytest.fixture
 def mock_tradier_quotes():
@@ -266,6 +276,7 @@ def mock_tradier_quotes():
         }
     }
 
+
 @pytest.fixture
 def mock_market_indices():
     """Mock market indices data"""
@@ -275,7 +286,9 @@ def mock_market_indices():
         "source": "tradier",
     }
 
+
 # ==================== HELPER FUNCTIONS ====================
+
 
 def create_test_user(db, email="test@example.com"):
     """Helper to create test user"""
@@ -285,6 +298,7 @@ def create_test_user(db, email="test@example.com"):
     db.commit()
     db.refresh(user)
     return user
+
 
 def create_test_strategy(db, user_id, name="Test Strategy"):
     """Helper to create test strategy"""

@@ -17,6 +17,7 @@ Optimizes API response times, caching, and rate limiting for maximum performance
 
 logger = logging.getLogger(__name__)
 
+
 class APIOptimizer:
     """Optimizes API performance with caching, compression, and response optimization"""
 
@@ -371,6 +372,7 @@ class APIOptimizer:
             logger.error(f"Failed to generate optimization report: {e}")
             return {"error": str(e)}
 
+
 class PerformanceMiddleware(BaseHTTPMiddleware):
     """Middleware for monitoring and optimizing API performance"""
 
@@ -452,6 +454,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
             config_data = self.optimizer.redis_client.get(f"cache_config:GET {path}")
             if config_data:
                 return json.loads(config_data)
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Cache config retrieval failed: {e}")
             pass
         return None
