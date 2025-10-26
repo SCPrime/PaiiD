@@ -1,6 +1,8 @@
-from app.routers.ai import analyze_portfolio
 import asyncio
 import sys
+
+from app.routers.ai import analyze_portfolio
+
 
 """
 Test script for the /api/ai/analyze-portfolio endpoint

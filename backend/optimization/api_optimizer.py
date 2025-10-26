@@ -1,12 +1,14 @@
+import json
+import logging
+import time
 from datetime import datetime
+from typing import Any
+
+import redis
 from fastapi import Request
 from fastapi.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
-from typing import Any
-import json
-import logging
-import redis
-import time
+
 
 """
 API Performance Optimizer

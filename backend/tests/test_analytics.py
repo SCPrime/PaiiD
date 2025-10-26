@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+
 """
 Test analytics and portfolio calculations
 Tests P&L calculation, risk metrics, portfolio summary

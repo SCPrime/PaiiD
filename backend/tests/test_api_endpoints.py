@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+
 """
 API Endpoint Tests
 

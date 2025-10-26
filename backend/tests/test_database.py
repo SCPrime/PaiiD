@@ -1,6 +1,9 @@
-from app.models.database import EquitySnapshot, Performance, Strategy, Trade, User
 from datetime import UTC, datetime
+
 import pytest
+
+from app.models.database import EquitySnapshot, Performance, Strategy, Trade, User
+
 
 """
 Database Model Tests

@@ -3,17 +3,17 @@ PaiiD Backend Integration Tests
 Comprehensive testing of API endpoints, ML features, and system integration
 """
 
+from unittest.mock import patch
+
 import pytest
-import asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from unittest.mock import patch, MagicMock
 
-from app.main import app
-from app.core.config import settings
 from app.db.database import get_db
+from app.main import app
 from app.models.database import Base
+
 
 # Test database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -213,7 +213,6 @@ class TestPerformance:
 
     def test_concurrent_requests(self, client):
         import concurrent.futures
-        import threading
 
         def make_request():
             return client.get("/api/health")

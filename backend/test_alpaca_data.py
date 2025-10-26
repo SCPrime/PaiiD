@@ -1,8 +1,10 @@
-from datetime import UTC, datetime
-from dotenv import load_dotenv
-from pathlib import Path
 import os
+from datetime import UTC, datetime
+from pathlib import Path
+
 import requests
+from dotenv import load_dotenv
+
 
 # Load environment variables
 load_dotenv(Path(".env"))

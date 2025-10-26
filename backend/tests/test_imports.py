@@ -1,20 +1,16 @@
-            from app.core.config import settings
-            from app.main import app
-            from app.middleware.cache_control import CacheControlMiddleware
-            from app.middleware.cache_control import CacheControlMiddleware
-            from app.middleware.rate_limit import custom_rate_limit_exceeded_handler, limiter
-            from app.middleware.rate_limit import limiter
-            from app.middleware.sentry import SentryContextMiddleware
-            from app.middleware.sentry import SentryContextMiddleware
-            from app.routers import (
-            from app.services.cache import init_cache
-            from app.services.cache import init_cache
-            from app.services.tradier_stream import start_tradier_stream
-            from app.services.tradier_stream import start_tradier_stream, stop_tradier_stream
-        from app import middleware
-        from app import services
 from pathlib import Path
+
 import pytest
+
+from app import middleware, services
+from app.core.config import settings
+from app.main import app
+from app.middleware.cache_control import CacheControlMiddleware
+from app.middleware.rate_limit import custom_rate_limit_exceeded_handler, limiter
+from app.middleware.sentry import SentryContextMiddleware
+from app.services.cache import init_cache
+from app.services.tradier_stream import start_tradier_stream, stop_tradier_stream
+
 
 """
 Import Verification Tests
@@ -106,6 +102,7 @@ class TestCriticalImports:
     def test_routers_imports(self):
         """Verify all routers can be imported"""
         try:
+            from app.routers import (
                 ai,
                 claude,
                 health,
