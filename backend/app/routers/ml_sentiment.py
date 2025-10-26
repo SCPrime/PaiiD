@@ -15,10 +15,10 @@ from pydantic import BaseModel
 from ..core.config import settings
 from ..core.redis_client import get_redis
 from ..core.unified_auth import get_current_user_unified
-from ..ml.data_pipeline import DataPipeline
+from ..ml.data_pipeline import MLDataPipeline
 from ..ml.sentiment_analyzer import get_sentiment_analyzer
 from ..ml.signal_generator import SignalType, get_signal_generator
-from ..models.user import User
+from ..models.database import User
 
 
 logger = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ async def get_sentiment(
 
         logger.info(f"Cache MISS for sentiment: {symbol}")
         sentiment_analyzer = get_sentiment_analyzer()
-        data_pipeline = DataPipeline()
+        data_pipeline = MLDataPipeline()
 
         if include_news:
             # Fetch recent news
@@ -200,7 +200,7 @@ async def get_trade_signal(
 
         logger.info(f"Cache MISS for signal: {symbol}")
         signal_generator = get_signal_generator()
-        data_pipeline = DataPipeline()
+        data_pipeline = MLDataPipeline()
 
         # Fetch price data
         end_date = datetime.now(UTC)
