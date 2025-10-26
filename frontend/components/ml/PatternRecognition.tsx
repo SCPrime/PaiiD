@@ -14,6 +14,7 @@ import {
     XCircle
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { logger } from '../../lib/logger';
 
 interface Pattern {
   pattern_type: string;
@@ -55,7 +56,7 @@ export const PatternRecognition: React.FC<PatternRecognitionProps> = ({
       const data = await response.json();
       setPatterns(data.patterns || []);
     } catch (error) {
-      console.error('Failed to load patterns:', error);
+      logger.error('Failed to load patterns', error);
     } finally {
       setLoading(false);
     }

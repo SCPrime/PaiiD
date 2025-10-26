@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useMarketStream } from "../hooks/useMarketStream";
+import { logger } from "../lib/logger";
 
 export default function StatusBar() {
   const [status, setStatus] = useState<"checking" | "healthy" | "error">("checking");
@@ -29,7 +30,7 @@ export default function StatusBar() {
 
       const data = await res.json();
       // eslint-disable-next-line no-console
-      console.info("Health check response:", data);
+      logger.info("Health check response", { data });
 
       setStatus("healthy");
       const redisStatus = data.redis?.status || "not configured";
@@ -39,7 +40,7 @@ export default function StatusBar() {
       );
       setLastCheck(new Date());
     } catch (error: unknown) {
-      console.error("Health check failed:", error);
+      logger.error("Health check failed", error);
       setStatus("error");
       setMessage(`Backend error: ${error instanceof Error ? error.message : "Cannot connect"}`);
     }
@@ -47,12 +48,12 @@ export default function StatusBar() {
 
   useEffect(() => {
     // eslint-disable-next-line no-console
-    console.info("StatusBar mounted, starting health checks");
+    logger.info("StatusBar mounted, starting health checks");
     fetchHealth();
     const interval = setInterval(fetchHealth, 30000);
     return () => {
       // eslint-disable-next-line no-console
-      console.info("StatusBar unmounting, clearing interval");
+      logger.info("StatusBar unmounting, clearing interval");
       clearInterval(interval);
     };
   }, [fetchHealth]);

@@ -18,6 +18,7 @@ import {
     Zap
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { logger } from '../../lib/logger';
 import { HelpTooltip } from '../HelpTooltip';
 import { useToast } from '../ui/Toast';
 
@@ -98,7 +99,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
       generateInsights(regimeData, patternsData.patterns || []);
 
     } catch (error) {
-      console.error('Failed to load ML insights:', error);
+      logger.error('Failed to load ML insights', error);
       toast({
         title: 'ML Analysis Failed',
         description: 'Unable to load market intelligence. Please try again.',

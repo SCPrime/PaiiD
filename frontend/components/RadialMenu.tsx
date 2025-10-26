@@ -1,9 +1,9 @@
-/* eslint-disable no-console */
 import * as d3 from "d3";
 import { throttle } from "lodash";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIsMobile, useWindowDimensions } from "../hooks/useBreakpoint";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
+import { logger } from "../lib/logger";
 import CompletePaiiDLogo from "./CompletePaiiDLogo";
 
 export interface Workflow {
@@ -201,7 +201,7 @@ function RadialMenuComponent({
   const throttledSetMarketData = useCallback(
     throttle((newData: typeof marketData) => {
       setMarketData(newData);
-      console.info("[RadialMenu] 🎯 Market data updated (throttled)");
+      logger.info("[RadialMenu] 🎯 Market data updated (throttled)");
     }, 10000), // Update max once per 10 seconds
     []
   );
@@ -220,13 +220,13 @@ function RadialMenuComponent({
           const parsed = JSON.parse(cached);
           // Only use cache if it's less than 24 hours old
           if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-            console.info("[RadialMenu] 💾 Loading cached market data from localStorage");
+            logger.info("[RadialMenu] 💾 Loading cached market data from localStorage");
             setMarketData(parsed.data);
             setIsMarketDataLoading(false);
           }
         }
       } catch (error) {
-        console.error("[RadialMenu] ❌ Failed to load cached market data:", error);
+        logger.error("[RadialMenu] ❌ Failed to load cached market data", error);
       }
     };
 
@@ -238,12 +238,12 @@ function RadialMenuComponent({
       const baseDelay = 2000; // 2 seconds
 
       if (retryAttempt >= maxRetries) {
-        console.error("[RadialMenu] 🚨 Max SSE retry attempts reached. Giving up.");
+        logger.error("[RadialMenu] 🚨 Max SSE retry attempts reached. Giving up.");
         setIsMarketDataLoading(false);
         return;
       }
 
-      console.info(
+      logger.info(
         `[RadialMenu] 📡 Connecting to SSE stream (attempt ${retryAttempt + 1}/${maxRetries})...`
       );
       setSseRetryCount(retryAttempt);
@@ -253,7 +253,7 @@ function RadialMenuComponent({
 
         eventSource.addEventListener("indices_update", (e) => {
           const data = JSON.parse(e.data);
-          console.debug("[RadialMenu] 📊 Received live market data:", data);
+          logger.debug("[RadialMenu] 📊 Received live market data", { data });
 
           const now = Date.now();
           const newData = {
@@ -300,17 +300,17 @@ function RadialMenuComponent({
               })
             );
           } catch (error) {
-            console.error("[RadialMenu] ❌ Failed to cache market data:", error);
+            logger.error("[RadialMenu] ❌ Failed to cache market data", error);
           }
         });
 
         eventSource.addEventListener("heartbeat", (e) => {
           const data = JSON.parse(e.data);
-          console.debug("[RadialMenu] 💓 SSE heartbeat received:", data.timestamp);
+          logger.debug("[RadialMenu] 💓 SSE heartbeat received", { timestamp: data.timestamp });
         });
 
         eventSource.addEventListener("error", (e) => {
-          console.error("[RadialMenu] ❌ SSE connection error:", e);
+          logger.error("[RadialMenu] ❌ SSE connection error", e);
           setSseConnected(false);
 
           if (eventSource) {
@@ -320,7 +320,7 @@ function RadialMenuComponent({
 
           // Exponential backoff: 2s, 4s, 8s, 16s, 32s, 64s, 128s (max ~2min)
           const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 128000);
-          console.warn(
+          logger.warn(
             `[RadialMenu] ⚠️ SSE disconnected. Retrying in ${delay / 1000}s... (attempt ${retryAttempt + 1}/${maxRetries})`
           );
 
@@ -330,11 +330,11 @@ function RadialMenuComponent({
         });
 
         eventSource.addEventListener("open", () => {
-          console.info("[RadialMenu] ✅ SSE connection established");
+          logger.info("[RadialMenu] ✅ SSE connection established");
           setSseConnected(true);
         });
       } catch (error) {
-        console.error("[RadialMenu] ❌ Failed to create EventSource:", error);
+        logger.error("[RadialMenu] ❌ Failed to create EventSource", error);
         setSseConnected(false);
 
         // Retry with exponential backoff
@@ -352,7 +352,7 @@ function RadialMenuComponent({
     // Cleanup: close SSE connection on unmount
     return () => {
       isUnmounted = true;
-      console.info("[RadialMenu] 🔌 Closing SSE connection");
+      logger.info("[RadialMenu] 🔌 Closing SSE connection");
 
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
@@ -366,14 +366,14 @@ function RadialMenuComponent({
 
   // Debug logging for Fast Refresh loop detection
   useEffect(() => {
-    console.info("RadialMenu rendered with selectedWorkflow:", selectedWorkflow);
+    logger.info("RadialMenu rendered with selectedWorkflow", { selectedWorkflow });
   }, [selectedWorkflow]);
 
   useEffect(() => {
     if (!svgRef.current) return;
 
     // ✅ EXTENSION VERIFICATION: D3.js
-    console.info("[Extension Verification] ✅ D3.js loaded successfully:", {
+    logger.info("[Extension Verification] ✅ D3.js loaded successfully", {
       version: d3.version,
       modules: ["select", "pie", "arc", "selectAll"],
       status: "FUNCTIONAL",
@@ -395,7 +395,7 @@ function RadialMenuComponent({
     };
 
     // Debug log positioning
-    console.info("[RadialMenu] Center positioning:", {
+    logger.info("[RadialMenu] Center positioning", {
       innerRadius,
       menuSize,
       centerContentSpacing,
@@ -722,7 +722,7 @@ function RadialMenuComponent({
         d3.select(this).style("filter", "url(#hoverGlow)");
       })
       .on("click", (_event, d) => {
-        console.info("RadialMenu: Workflow clicked:", d.data.id);
+        logger.info("RadialMenu: Workflow clicked", { workflowId: d.data.id });
         onWorkflowSelect(d.data.id);
       });
 

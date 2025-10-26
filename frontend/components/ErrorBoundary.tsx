@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from "react";
+import { logger } from "../lib/logger";
 
 interface Props {
   children: ReactNode;
@@ -43,8 +44,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log error to console
-    console.error("[ErrorBoundary] Caught error:", error);
-    console.error("[ErrorBoundary] Error info:", errorInfo);
+    logger.error("[ErrorBoundary] Caught error", error);
+    logger.error("[ErrorBoundary] Error info", errorInfo);
 
     // Update state with error details
     this.setState({
@@ -64,14 +65,14 @@ export class ErrorBoundary extends Component<Props, State> {
               },
             });
             // eslint-disable-next-line no-console
-            console.info("[ErrorBoundary] Error sent to Sentry");
+            logger.info("[ErrorBoundary] Error sent to Sentry");
           }
         })
         .catch(() => {
           // Sentry not available, skip
         });
     } catch (sentryError) {
-      console.warn("[ErrorBoundary] Failed to send to Sentry:", sentryError);
+      logger.warn("[ErrorBoundary] Failed to send to Sentry", sentryError);
     }
 
     // Call optional error handler prop

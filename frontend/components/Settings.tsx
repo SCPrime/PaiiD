@@ -28,6 +28,7 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTheme } from "../contexts/ThemeContext";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { logger } from "../lib/logger";
 import { clearUserData, getCurrentUser, getUserAnalytics } from "../lib/userManagement";
 import PerformanceDashboard from "./admin/PerformanceDashboard";
 import ApprovalQueue from "./ApprovalQueue";
@@ -176,7 +177,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
       try {
         setSettings(JSON.parse(savedSettings));
       } catch (error) {
-        console.error("Failed to load settings:", error);
+        logger.error("Failed to load settings", error);
       }
     }
 
@@ -272,7 +273,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         }
       }
     } catch (error) {
-      console.error("Failed to fetch risk tolerance:", error);
+      logger.error("Failed to fetch risk tolerance", error);
     }
   };
 
@@ -299,7 +300,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         setPaperAccountBalance(parseFloat(data.equity || data.portfolio_value || "100000"));
       }
     } catch (error) {
-      console.error("Failed to fetch account balance:", error);
+      logger.error("Failed to fetch account balance", error);
     }
   };
 
@@ -346,7 +347,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         toast.error("Failed to update risk tolerance");
       }
     } catch (error) {
-      console.error("Failed to update risk tolerance:", error);
+      logger.error("Failed to update risk tolerance", error);
       toast.error("Failed to update risk tolerance");
     } finally {
       setIsLoadingRisk(false);
@@ -378,7 +379,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         toast.error("Failed to update paper account balance");
       }
     } catch (error) {
-      console.error("Failed to update paper account balance:", error);
+      logger.error("Failed to update paper account balance", error);
       toast.error("Failed to update paper account balance");
     } finally {
       setIsLoadingBalance(false);

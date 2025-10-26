@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
+import { logger } from "../lib/logger";
 import AnimatedCounter from "./ui/AnimatedCounter";
 import EnhancedCard from "./ui/EnhancedCard";
 import StatusIndicator from "./ui/StatusIndicator";
@@ -75,7 +76,7 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
         throw new Error("Failed to fetch recommendations");
       }
     } catch (err) {
-      console.error("Error fetching AI recommendations:", err);
+      logger.error("Error fetching AI recommendations", err);
       setError("Failed to load AI recommendations");
     } finally {
       setIsLoading(false);
