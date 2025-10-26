@@ -15,10 +15,10 @@ from sqlalchemy.orm import Session
 from ..core.jwt import (
     create_token_pair,
     decode_token,
-    get_current_user,
     hash_password,
     verify_password,
 )
+from ..core.unified_auth import get_current_user_unified
 from ..db.session import get_db
 from ..models.database import ActivityLog, User, UserSession
 
@@ -231,7 +231,8 @@ async def login(
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
-    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user_unified),
+    db: Session = Depends(get_db),
 ):
     """
     Logout user and invalidate all sessions
@@ -344,7 +345,9 @@ async def refresh_token(
 
 
 @router.get("/auth/me", response_model=UserProfile)
-async def get_current_user_profile(current_user: User = Depends(get_current_user)):
+async def get_current_user_profile(
+    current_user: User = Depends(get_current_user_unified),
+):
     """
     Get current authenticated user's profile
 
