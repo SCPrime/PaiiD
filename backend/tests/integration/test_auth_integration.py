@@ -5,8 +5,9 @@ Priority: CRITICAL
 """
 
 import pytest
-from backend.database import get_db
-from backend.main import app
+import time
+from app.db.session import get_db
+from app.main import app
 from fastapi.testclient import TestClient
 
 
@@ -26,16 +27,22 @@ def test_db():
     db.close()
 
 
+@pytest.fixture
+def test_timestamp():
+    """Generate a unique timestamp for test emails"""
+    return int(time.time())
+
+
 class TestAuthenticationIntegration:
     """Integration tests for authentication flow"""
 
-    def test_user_registration_flow(self, client):
+    def test_user_registration_flow(self, client, test_timestamp):
         """Test complete user registration flow"""
         # Register new user
         response = client.post(
             "/api/auth/register",
             json={
-                "email": f"test-{pytest.timestamp}@example.com",
+                "email": f"test-{test_timestamp}@example.com",
                 "password": "SecureP@ss123",
                 "name": "Test User",
                 "risk_tolerance": "moderate",
@@ -46,7 +53,7 @@ class TestAuthenticationIntegration:
         data = response.json()
         assert "user_id" in data
         assert "access_token" in data
-        assert data["email"] == f"test-{pytest.timestamp}@example.com"
+        assert data["email"] == f"test-{test_timestamp}@example.com"
 
     def test_user_login_flow(self, client):
         """Test user login with valid credentials"""
