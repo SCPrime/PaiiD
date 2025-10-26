@@ -4,11 +4,13 @@ Test ID: AUTH-001
 Priority: CRITICAL
 """
 
-import pytest
 import time
+
+import pytest
+from fastapi.testclient import TestClient
+
 from app.db.session import get_db
 from app.main import app
-from fastapi.testclient import TestClient
 
 
 @pytest.fixture
