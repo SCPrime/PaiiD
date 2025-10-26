@@ -5,6 +5,8 @@
  * through the backend proxy. All requests go through /api/proxy to secure API keys.
  */
 
+import { logger } from '@/lib/logger';
+
 const API_BASE = "/api/proxy";
 
 // Types
@@ -467,7 +469,7 @@ export async function isMarketOpen(): Promise<boolean> {
     const clock = await alpaca.getClock();
     return clock.is_open;
   } catch (error) {
-    console.error("Failed to check market status:", error);
+    logger.error("Failed to check market status", error);
     return false;
   }
 }

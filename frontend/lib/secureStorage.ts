@@ -4,6 +4,8 @@
  * Addresses HIGH priority security issue: localStorage without encryption
  */
 
+import { logger } from '@/lib/logger';
+
 interface EncryptedData {
   iv: string;
   data: string;
@@ -54,7 +56,7 @@ class SecureStorage {
         sessionStorage.setItem('__key_material__', JSON.stringify(exported));
       }
     } catch (error) {
-      console.error('Failed to initialize encryption key:', error);
+      logger.error('Failed to initialize encryption key', error);
       throw new Error('Secure storage initialization failed');
     }
   }
@@ -155,7 +157,7 @@ class SecureStorage {
       const storageKey = this.STORAGE_KEY_PREFIX + key;
       localStorage.setItem(storageKey, JSON.stringify(encrypted));
     } catch (error) {
-      console.error('Failed to store encrypted data:', error);
+      logger.error('Failed to store encrypted data', error);
       throw error;
     }
   }
@@ -175,7 +177,7 @@ class SecureStorage {
       const encryptedData: EncryptedData = JSON.parse(storedData);
       return await this.decrypt(encryptedData);
     } catch (error) {
-      console.error('Failed to retrieve encrypted data:', error);
+      logger.error('Failed to retrieve encrypted data', error);
       return null;
     }
   }

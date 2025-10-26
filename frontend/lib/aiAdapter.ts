@@ -1,6 +1,8 @@
 // frontend/lib/aiAdapter.ts
 // Fixed version - calls backend proxy instead of Anthropic directly
 
+import { logger } from '@/lib/logger';
+
 export interface AIMessage {
   role: "user" | "assistant";
   content: string;
@@ -23,7 +25,7 @@ export class ClaudeAI {
     // Use Next.js API proxy to route to backend (works in both dev and production)
 
     // ✅ EXTENSION VERIFICATION: Anthropic SDK (via backend proxy)
-    console.info("[Extension Verification] ✅ Anthropic SDK adapter initialized successfully:", {
+    logger.info("[Extension Verification] ✅ Anthropic SDK adapter initialized successfully", {
       adapter: "ClaudeAI",
       proxyEndpoint: "/api/proxy/claude/chat",
       methods: [
@@ -43,7 +45,7 @@ export class ClaudeAI {
    */
   resetConversation(): void {
     this.conversationHistory = [];
-    console.info("[aiAdapter] 🔄 Conversation reset");
+    logger.info("[aiAdapter] 🔄 Conversation reset");
   }
 
   /**
@@ -81,7 +83,7 @@ export class ClaudeAI {
       }
     }
     try {
-      console.info("[aiAdapter] Sending chat request to backend via proxy");
+      logger.info("[aiAdapter] Sending chat request to backend via proxy");
 
       // Use proxy to avoid CORS and add auth automatically
       const response = await fetch("/api/proxy/claude/chat", {
@@ -104,7 +106,7 @@ export class ClaudeAI {
 
       // Extract text from response content
       if (data.content && typeof data.content === "string") {
-        console.info("[aiAdapter] ✅ Received response from Claude");
+        logger.info("[aiAdapter] ✅ Received response from Claude");
 
         // Add assistant response to conversation history if we used it
         if (typeof messagesOrString === "string") {
@@ -119,7 +121,7 @@ export class ClaudeAI {
 
       throw new Error("Invalid response format from backend");
     } catch (error) {
-      console.error("[aiAdapter] Error:", error);
+      logger.error("[aiAdapter] Error", error);
       throw error;
     }
   }
@@ -148,10 +150,10 @@ Please provide a structured morning routine with specific times and activities. 
 
       const response = await this.chat([{ role: "user", content: prompt }], 2000);
 
-      console.info("[aiAdapter] ✅ Morning routine generated successfully");
+      logger.info("[aiAdapter] ✅ Morning routine generated successfully");
       return response;
     } catch (error) {
-      console.error("[aiAdapter] Failed to generate morning routine:", error);
+      logger.error("[aiAdapter] Failed to generate morning routine", error);
       throw error;
     }
   }
@@ -187,10 +189,10 @@ Do not include any text outside the JSON object.`;
       }
 
       const preferences = JSON.parse(jsonMatch[0]);
-      console.info("[aiAdapter] ✅ Extracted preferences:", preferences);
+      logger.info("[aiAdapter] ✅ Extracted preferences", { preferences });
       return preferences;
     } catch (error) {
-      console.error("[aiAdapter] Failed to extract preferences:", error);
+      logger.error("[aiAdapter] Failed to extract preferences", error);
       throw error;
     }
   }
@@ -228,10 +230,10 @@ Do not include any text outside the JSON object.`;
       }
 
       const strategy = JSON.parse(jsonMatch[0]);
-      console.info("[aiAdapter] ✅ Generated strategy:", strategy.name);
+      logger.info("[aiAdapter] ✅ Generated strategy", { name: strategy.name });
       return strategy;
     } catch (error) {
-      console.error("[aiAdapter] Failed to generate strategy:", error);
+      logger.error("[aiAdapter] Failed to generate strategy", error);
       throw error;
     }
   }
@@ -259,10 +261,10 @@ Provide a concise analysis with:
 
       const response = await this.chat([{ role: "user", content: prompt }], 1500);
 
-      console.info("[aiAdapter] ✅ Market analysis completed");
+      logger.info("[aiAdapter] ✅ Market analysis completed");
       return response;
     } catch (error) {
-      console.error("[aiAdapter] Failed to analyze market:", error);
+      logger.error("[aiAdapter] Failed to analyze market", error);
       throw error;
     }
   }
@@ -283,14 +285,14 @@ Provide a concise analysis with:
       });
 
       if (response.ok) {
-        console.info("[aiAdapter] ✅ Health check passed");
+        logger.info("[aiAdapter] ✅ Health check passed");
         return true;
       }
 
-      console.warn("[aiAdapter] ⚠️ Health check failed:", response.status);
+      logger.warn("[aiAdapter] ⚠️ Health check failed", { status: response.status });
       return false;
     } catch (error) {
-      console.error("[aiAdapter] ❌ Health check error:", error);
+      logger.error("[aiAdapter] ❌ Health check error", error);
       return false;
     }
   }

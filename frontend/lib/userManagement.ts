@@ -5,6 +5,8 @@
  * Each tester gets a unique userId for tracking their trades and performance.
  */
 
+import { logger } from './logger';
+
 export interface User {
   userId: string;
   displayName: string;
@@ -126,7 +128,7 @@ export function createUser(
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 
   // Track user creation event (in production, send to analytics)
-  console.info("User created:", {
+  logger.info("User created", {
     userId: user.userId,
     testGroup: user.testGroup,
     onboarding: user.onboarding,
@@ -146,7 +148,7 @@ export function getCurrentUser(): User | null {
       return JSON.parse(userData);
     }
   } catch (error) {
-    console.error("Failed to load user:", error);
+    logger.error("Failed to load user", error);
   }
   return null;
 }
@@ -215,7 +217,7 @@ export function startSession(): Session {
   });
 
   // Track session start (in production, send to analytics)
-  console.info("Session started:", {
+  logger.info("Session started", {
     sessionId: session.sessionId,
     userId: user.userId,
     timestamp: now,
@@ -234,7 +236,7 @@ export function getCurrentSession(): Session | null {
       return JSON.parse(sessionData);
     }
   } catch (error) {
-    console.error("Failed to load session:", error);
+    logger.error("Failed to load session", error);
   }
   return null;
 }
@@ -256,7 +258,7 @@ export function updateSessionActivity(action?: string): Session | null {
 
   // Track action (in production, send to analytics)
   if (action) {
-    console.info("User action:", {
+    logger.info("User action", {
       sessionId: session.sessionId,
       userId: session.userId,
       action,
@@ -282,7 +284,7 @@ export function trackPageView(pageName: string): void {
 
   sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(updatedSession));
 
-  console.info("Page view:", {
+  logger.info("Page view", {
     sessionId: session.sessionId,
     userId: session.userId,
     page: pageName,
@@ -299,7 +301,7 @@ export function endSession(): void {
 
   const duration = new Date().getTime() - new Date(session.startedAt).getTime();
 
-  console.info("Session ended:", {
+  logger.info("Session ended", {
     sessionId: session.sessionId,
     userId: session.userId,
     duration: `${Math.floor(duration / 1000)}s`,
@@ -349,7 +351,7 @@ export function initializeSession(): Session | null {
 export function clearUserData(): void {
   localStorage.removeItem(USER_STORAGE_KEY);
   sessionStorage.removeItem(SESSION_STORAGE_KEY);
-  console.info("User data cleared");
+  logger.info("User data cleared");
 }
 
 /**

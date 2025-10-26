@@ -12,6 +12,7 @@
  */
 
 import * as Sentry from "@sentry/nextjs";
+import { logger } from '@/lib/logger';
 
 let sentryInitialized = false;
 
@@ -25,8 +26,8 @@ export function initSentry(): void {
 
   // Skip initialization if no DSN configured
   if (!SENTRY_DSN) {
-    console.info("[Sentry] DSN not configured - error tracking disabled");
-    console.info("[Sentry] To enable: Add NEXT_PUBLIC_SENTRY_DSN to environment variables");
+    logger.info("[Sentry] DSN not configured - error tracking disabled");
+    logger.info("[Sentry] To enable: Add NEXT_PUBLIC_SENTRY_DSN to environment variables");
     return;
   }
 
@@ -101,9 +102,9 @@ export function initSentry(): void {
     });
 
     sentryInitialized = true;
-    console.info("[Sentry] ✅ Error tracking initialized");
+    logger.info("[Sentry] ✅ Error tracking initialized");
   } catch (error) {
-    console.error("[Sentry] ❌ Failed to initialize:", error);
+    logger.error("[Sentry] ❌ Failed to initialize", error);
   }
 }
 
@@ -112,7 +113,7 @@ export function initSentry(): void {
  */
 export function captureException(error: Error, context?: Record<string, unknown>): void {
   if (!sentryInitialized) {
-    console.error("[Sentry] Not initialized, logging error:", error);
+    logger.error("[Sentry] Not initialized, logging error", error);
     return;
   }
 
@@ -129,7 +130,7 @@ export function captureMessage(
   level: "info" | "warning" | "error" = "info"
 ): void {
   if (!sentryInitialized) {
-    console.info(`[Sentry] Not initialized, logging message [${level}]:`, message);
+    logger.info(`[Sentry] Not initialized, logging message [${level}]`, { message });
     return;
   }
 

@@ -10,26 +10,49 @@ import { existsSync, readdirSync, unlinkSync } from "fs";
 import { join } from "path";
 
 /**
- * Kill processes on specific ports (cross-platform)
+ * Kill processes on specific ports (cross-platform) with PID tracking
  */
-function killPort(port: number): void {
+async function killPort(port: number): Promise<void> {
   console.log(`[Global Setup] Cleaning up port ${port}...`);
 
   try {
+    let pids: number[] = [];
+    
     if (process.platform === "win32") {
-      // Windows
-      const cmd = `powershell -Command "Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"`;
-      execSync(cmd, { stdio: "ignore" });
+      // Windows - get PIDs first
+      const getPidsCmd = `powershell -Command "Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue | ForEach-Object { $_.OwningProcess }"`;
+      const result = execSync(getPidsCmd, { encoding: "utf8", timeout: 10000 });
+      pids = result.trim().split("\n").filter(pid => pid.trim()).map(pid => parseInt(pid.trim()));
+      
+      if (pids.length > 0) {
+        // Kill processes
+        const killCmd = `powershell -Command "Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"`;
+        execSync(killCmd, { stdio: "ignore", timeout: 10000 });
+      }
     } else {
-      // Unix/Linux/Mac
-      execSync(`lsof -ti:${port} | xargs kill -9 2>/dev/null || true`, {
-        stdio: "ignore",
-      });
+      // Unix/Linux/Mac - get PIDs first
+      try {
+        const result = execSync(`lsof -ti:${port}`, { encoding: "utf8", timeout: 10000 });
+        pids = result.trim().split("\n").filter(pid => pid.trim()).map(pid => parseInt(pid.trim()));
+        
+        if (pids.length > 0) {
+          execSync(`lsof -ti:${port} | xargs kill -9 2>/dev/null || true`, {
+            stdio: "ignore",
+            timeout: 10000,
+          });
+        }
+      } catch (error) {
+        // Port not in use
+      }
     }
-    console.log(`  Port ${port} cleared`);
+    
+    if (pids.length > 0) {
+      console.log(`  Port ${port} cleared (killed PIDs: ${pids.join(", ")})`);
+    } else {
+      console.log(`  Port ${port} was not in use`);
+    }
   } catch (error) {
-    // Ignore errors if port wasn't in use
-    console.log(`  Port ${port} was not in use`);
+    console.log(`  Port ${port} cleanup failed: ${error}`);
   }
 }
 
@@ -101,7 +124,7 @@ async function globalSetup(): Promise<void> {
   // 1. Clean up test ports (3000, 3001, 3002, 3003, 8000, 8001, 8002)
   const testPorts = [3000, 3001, 3002, 3003, 8000, 8001, 8002];
   for (const port of testPorts) {
-    killPort(port);
+    await killPort(port);
   }
 
   // Wait for ports to fully release

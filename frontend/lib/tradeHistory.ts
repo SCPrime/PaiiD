@@ -6,6 +6,8 @@
  * User has full control over autopilot settings.
  */
 
+import { logger } from './logger';
+
 export interface TradeRecord {
   id: string;
   userId: string; // Track which user made this trade
@@ -250,7 +252,7 @@ export function seedMockTradeData(strategyId: string, userId: string) {
     });
   }
 
-  console.info(`Seeded ${strategyId} with 20 mock trades for user ${userId}`);
+  logger.info(`Seeded ${strategyId} with 20 mock trades for user ${userId}`);
 }
 
 /**
