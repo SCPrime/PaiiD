@@ -227,7 +227,7 @@ export const useWebSocket = ({
         break;
 
       case "subscription_confirmed":
-        logger.info("Subscription confirmed for symbols", { symbols: (message.data as { symbols?: string[] })?.symbols });
+        logger.info("Subscription confirmed for symbols", { symbols: message.data?.symbols });
         break;
 
       case "pong":
@@ -243,7 +243,7 @@ export const useWebSocket = ({
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       const newSymbols = symbols.filter((s) => !subscribedSymbolsRef.current.has(s));
       if (newSymbols.length > 0) {
-        subscribedSymbolsRef.current = new Set([...Array.from(subscribedSymbolsRef.current), ...newSymbols]);
+        subscribedSymbolsRef.current = new Set([...subscribedSymbolsRef.current, ...newSymbols]);
         wsRef.current.send(
           JSON.stringify({
             type: "subscribe",

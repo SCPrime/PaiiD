@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -56,11 +57,14 @@ def get_account(current_user: User = Depends(get_current_user_unified)):
         account_data = client.get_account()
 
         logger.info("✅ Tradier account data retrieved successfully")
-        return account_data
+        return {
+            "data": account_data,
+            "timestamp": datetime.now().isoformat(),
+        }
 
     except Exception as e:
         logger.error(f"❌ Tradier account request failed: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier account: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier account: {e!s}") from e
 
 
 @router.get("/positions")
@@ -74,7 +78,11 @@ def get_positions(
     cached_positions = cache.get(cache_key)
     if cached_positions:
         logger.info("✅ Cache HIT for positions")
-        return cached_positions
+        return {
+            "data": cached_positions,
+            "count": len(cached_positions) if isinstance(cached_positions, list) else 0,
+            "timestamp": datetime.now().isoformat(),
+        }
 
     try:
         client = get_tradier_client()
@@ -83,11 +91,15 @@ def get_positions(
 
         # Cache for 30 seconds
         cache.set(cache_key, positions, ttl=30)
-        return positions
+        return {
+            "data": positions,
+            "count": len(positions),
+            "timestamp": datetime.now().isoformat(),
+        }
 
     except Exception as e:
         logger.error(f"❌ Tradier positions request failed: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier positions: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier positions: {e!s}") from e
 
 
 @router.get("/positions/{symbol}")
@@ -100,7 +112,10 @@ def get_position(symbol: str, current_user: User = Depends(get_current_user_unif
         # Find position by symbol
         for position in positions:
             if position.get("symbol") == symbol.upper():
-                return position
+                return {
+                    "data": position,
+                    "timestamp": datetime.now().isoformat(),
+                }
 
         raise HTTPException(status_code=404, detail=f"No position found for {symbol}")
 
@@ -108,4 +123,4 @@ def get_position(symbol: str, current_user: User = Depends(get_current_user_unif
         raise
     except Exception as e:
         logger.error(f"❌ Failed to fetch position for {symbol}: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch position for {symbol}: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch position for {symbol}: {e!s}") from e

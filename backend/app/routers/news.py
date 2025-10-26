@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..core.unified_auth import get_current_user_unified
@@ -84,14 +86,17 @@ async def get_company_news(
             )
 
         return {
-            "symbol": symbol,
-            "articles": filtered,
+            "data": {
+                "symbol": symbol,
+                "articles": filtered,
+                "sources": [p.get_provider_name() for p in news_aggregator.providers],
+                "cached": False,
+            },
             "count": len(filtered),
-            "sources": [p.get_provider_name() for p in news_aggregator.providers],
-            "cached": False,
+            "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/news/market")
@@ -129,13 +134,16 @@ async def get_market_news(
             if cached_filtered is not None:
                 # Cached results are already filtered - no need to re-filter
                 return {
-                    "category": category,
-                    "articles": cached_filtered[:limit],
+                    "data": {
+                        "category": category,
+                        "articles": cached_filtered[:limit],
+                        "sources": [
+                            p.get_provider_name() for p in news_aggregator.providers
+                        ],
+                        "cached": True,
+                    },
                     "count": len(cached_filtered[:limit]),
-                    "sources": [
-                        p.get_provider_name() for p in news_aggregator.providers
-                    ],
-                    "cached": True,
+                    "timestamp": datetime.now().isoformat(),
                 }
 
         # Fetch fresh data (fetch more to allow for filtering)
@@ -156,14 +164,17 @@ async def get_market_news(
             )
 
         return {
-            "category": category,
-            "articles": filtered[:limit],
+            "data": {
+                "category": category,
+                "articles": filtered[:limit],
+                "sources": [p.get_provider_name() for p in news_aggregator.providers],
+                "cached": False,
+            },
             "count": len(filtered[:limit]),
-            "sources": [p.get_provider_name() for p in news_aggregator.providers],
-            "cached": False,
+            "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/news/providers")
@@ -172,12 +183,14 @@ async def get_news_providers(current_user: User = Depends(get_current_user_unifi
     if not news_aggregator:
         return {"providers": [], "status": "unavailable"}
 
+    providers = [
+        {"name": p.get_provider_name(), "status": "active"}
+        for p in news_aggregator.providers
+    ]
     return {
-        "providers": [
-            {"name": p.get_provider_name(), "status": "active"}
-            for p in news_aggregator.providers
-        ],
-        "total": len(news_aggregator.providers),
+        "data": providers,
+        "count": len(providers),
+        "timestamp": datetime.now().isoformat(),
     }
 
 
@@ -199,7 +212,10 @@ async def get_news_health(current_user: User = Depends(get_current_user_unified)
 
     try:
         health = news_aggregator.get_provider_health()
-        return health
+        return {
+            "data": health,
+            "timestamp": datetime.now().isoformat(),
+        }
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to get health status: {e!s}"
@@ -236,40 +252,43 @@ async def get_market_sentiment(
         avg_score = total_score / total_articles if total_articles > 0 else 0.0
 
         return {
-            "category": category,
-            "total_articles": total_articles,
-            "avg_sentiment_score": round(avg_score, 3),
-            "sentiment_distribution": {
-                "bullish": sentiments["bullish"],
-                "bearish": sentiments["bearish"],
-                "neutral": sentiments["neutral"],
-                "bullish_percent": (
-                    round(sentiments["bullish"] / total_articles * 100, 1)
-                    if total_articles > 0
-                    else 0
-                ),
-                "bearish_percent": (
-                    round(sentiments["bearish"] / total_articles * 100, 1)
-                    if total_articles > 0
-                    else 0
-                ),
-                "neutral_percent": (
-                    round(sentiments["neutral"] / total_articles * 100, 1)
-                    if total_articles > 0
-                    else 0
+            "data": {
+                "category": category,
+                "total_articles": total_articles,
+                "avg_sentiment_score": round(avg_score, 3),
+                "sentiment_distribution": {
+                    "bullish": sentiments["bullish"],
+                    "bearish": sentiments["bearish"],
+                    "neutral": sentiments["neutral"],
+                    "bullish_percent": (
+                        round(sentiments["bullish"] / total_articles * 100, 1)
+                        if total_articles > 0
+                        else 0
+                    ),
+                    "bearish_percent": (
+                        round(sentiments["bearish"] / total_articles * 100, 1)
+                        if total_articles > 0
+                        else 0
+                    ),
+                    "neutral_percent": (
+                        round(sentiments["neutral"] / total_articles * 100, 1)
+                        if total_articles > 0
+                        else 0
+                    ),
+                },
+                "overall_sentiment": (
+                    "bullish"
+                    if avg_score > 0.15
+                    else "bearish"
+                    if avg_score < -0.15
+                    else "neutral"
                 ),
             },
-            "overall_sentiment": (
-                "bullish"
-                if avg_score > 0.15
-                else "bearish"
-                if avg_score < -0.15
-                else "neutral"
-            ),
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/news/cache/stats")
@@ -288,7 +307,11 @@ async def clear_news_cache(current_user: User = Depends(get_current_user_unified
         raise HTTPException(status_code=503, detail="Cache unavailable")
 
     news_cache.clear_all()
-    return {"status": "cleared"}
+    return {
+        "success": True,
+        "message": "Cache cleared successfully",
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
 # Helper functions

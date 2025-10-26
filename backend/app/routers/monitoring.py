@@ -374,18 +374,22 @@ class HealthChecker:
 health_checker = HealthChecker()
 
 
-@router.get("/health", response_model=HealthStatus)
+@router.get("/health")
 async def get_health_status():
     """Get basic health status"""
-    return HealthStatus(
+    health_data = HealthStatus(
         status="healthy",
         timestamp=datetime.now(),
         uptime=health_checker.get_uptime(),
         version="1.0.0",
     )
+    return {
+        "data": health_data.model_dump(),
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
-@router.get("/health/detailed", response_model=list[ServiceHealth])
+@router.get("/health/detailed")
 async def get_detailed_health(db: Session = Depends(get_db)):
     """Get detailed health status for all services"""
     services = []
@@ -402,34 +406,57 @@ async def get_detailed_health(db: Session = Depends(get_db)):
     external_services = await health_checker.check_external_apis()
     services.extend(external_services)
 
-    return services
+    return {
+        "data": [s.model_dump() for s in services],
+        "count": len(services),
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
-@router.get("/metrics/system", response_model=SystemMetrics)
+@router.get("/metrics/system")
 async def get_system_metrics():
     """Get system performance metrics"""
-    return health_checker.get_system_metrics()
+    metrics = health_checker.get_system_metrics()
+    return {
+        "data": metrics.model_dump(),
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
-@router.get("/metrics/ml-models", response_model=list[MLModelHealth])
+@router.get("/metrics/ml-models")
 async def get_ml_model_health():
     """Get ML model health and performance metrics"""
-    return health_checker.get_ml_model_health()
+    models = health_checker.get_ml_model_health()
+    return {
+        "data": [m.model_dump() for m in models],
+        "count": len(models),
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
-@router.get("/metrics/cache", response_model=list[CacheMetrics])
+@router.get("/metrics/cache")
 async def get_cache_metrics():
     """Get cache performance metrics"""
-    return health_checker.get_cache_metrics()
+    metrics = health_checker.get_cache_metrics()
+    return {
+        "data": [m.model_dump() for m in metrics],
+        "count": len(metrics),
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
-@router.get("/alerts", response_model=list[Alert])
+@router.get("/alerts")
 async def get_alerts():
     """Get current system alerts"""
-    return health_checker.get_alerts()
+    alerts = health_checker.get_alerts()
+    return {
+        "data": [a.model_dump() for a in alerts],
+        "count": len(alerts),
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
-@router.get("/dashboard", response_model=MonitoringDashboard)
+@router.get("/dashboard")
 async def get_monitoring_dashboard(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_unified),
@@ -467,7 +494,7 @@ async def get_monitoring_dashboard(
         "cache_hit_rate": [0.78, 0.82, 0.75, 0.80, 0.85, 0.78, 0.82],
     }
 
-    return MonitoringDashboard(
+    dashboard_data = MonitoringDashboard(
         system_health=system_health,
         services=services,
         system_metrics=system_metrics,
@@ -477,6 +504,11 @@ async def get_monitoring_dashboard(
         performance_trends=performance_trends,
     )
 
+    return {
+        "data": dashboard_data.model_dump(),
+        "timestamp": datetime.now().isoformat(),
+    }
+
 
 @router.post("/alerts/{alert_id}/resolve")
 async def resolve_alert(
@@ -484,7 +516,12 @@ async def resolve_alert(
 ):
     """Resolve an alert (requires authentication)"""
     # In a real system, this would update the alert status in the database
-    return {"message": f"Alert {alert_id} resolved", "resolved_by": current_user.email}
+    return {
+        "success": True,
+        "message": f"Alert {alert_id} resolved",
+        "data": {"alert_id": alert_id, "resolved_by": current_user.email},
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
 @router.get("/logs")
@@ -495,17 +532,19 @@ async def get_system_logs(
 ):
     """Get system logs (requires authentication)"""
     # In a real system, this would fetch logs from a log aggregation service
+    logs = [
+        {
+            "timestamp": datetime.now().isoformat(),
+            "level": level,
+            "message": "Sample log entry",
+            "service": "monitoring",
+        }
+    ]
     return {
-        "logs": [
-            {
-                "timestamp": datetime.now().isoformat(),
-                "level": level,
-                "message": "Sample log entry",
-                "service": "monitoring",
-            }
-        ],
-        "total": 1,
+        "data": logs,
+        "count": len(logs),
         "limit": limit,
+        "timestamp": datetime.now().isoformat(),
     }
 
 
@@ -517,28 +556,31 @@ async def get_performance_summary():
     cache_metrics = health_checker.get_cache_metrics()
 
     return {
-        "system_performance": {
-            "cpu_usage": metrics.cpu_usage_percent,
-            "memory_usage": metrics.memory_usage_percent,
-            "disk_usage": metrics.disk_usage_percent,
-            "active_connections": metrics.active_connections,
+        "data": {
+            "system_performance": {
+                "cpu_usage": metrics.cpu_usage_percent,
+                "memory_usage": metrics.memory_usage_percent,
+                "disk_usage": metrics.disk_usage_percent,
+                "active_connections": metrics.active_connections,
+            },
+            "ml_performance": {
+                "total_models": len(ml_models),
+                "healthy_models": len([m for m in ml_models if m.status == "healthy"]),
+                "average_inference_time": sum(m.inference_time_ms or 0 for m in ml_models)
+                / len(ml_models)
+                if ml_models
+                else 0,
+            },
+            "cache_performance": {
+                "total_caches": len(cache_metrics),
+                "average_hit_rate": sum(c.hit_rate for c in cache_metrics)
+                / len(cache_metrics)
+                if cache_metrics
+                else 0,
+                "total_memory_usage": sum(c.memory_usage_mb for c in cache_metrics),
+            },
         },
-        "ml_performance": {
-            "total_models": len(ml_models),
-            "healthy_models": len([m for m in ml_models if m.status == "healthy"]),
-            "average_inference_time": sum(m.inference_time_ms or 0 for m in ml_models)
-            / len(ml_models)
-            if ml_models
-            else 0,
-        },
-        "cache_performance": {
-            "total_caches": len(cache_metrics),
-            "average_hit_rate": sum(c.hit_rate for c in cache_metrics)
-            / len(cache_metrics)
-            if cache_metrics
-            else 0,
-            "total_memory_usage": sum(c.memory_usage_mb for c in cache_metrics),
-        },
+        "timestamp": datetime.now().isoformat(),
     }
 
 
@@ -546,15 +588,21 @@ async def get_performance_summary():
 @router.get("/ping")
 async def ping():
     """Simple ping endpoint for basic connectivity check"""
-    return {"message": "pong", "timestamp": datetime.now().isoformat()}
+    return {
+        "data": {"message": "pong"},
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
 @router.get("/version")
 async def get_version():
     """Get system version information"""
     return {
-        "version": "1.0.0",
-        "build_date": "2024-01-15",
-        "git_commit": "latest",
-        "environment": "production",
+        "data": {
+            "version": "1.0.0",
+            "build_date": "2024-01-15",
+            "git_commit": "latest",
+            "environment": "production",
+        },
+        "timestamp": datetime.now().isoformat(),
     }

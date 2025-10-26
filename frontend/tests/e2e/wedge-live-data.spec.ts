@@ -6,7 +6,9 @@ import { test, expect, Page } from '@playwright/test';
  */
 
 const BASE_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-const API_TOKEN = process.env.API_TOKEN || 'rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl';
+// Read API_TOKEN from environment variable (REQUIRED for E2E tests)
+// Set in CI/CD pipeline or local .env.test file
+const API_TOKEN = process.env.API_TOKEN || '';
 
 // Helper: Skip onboarding
 async function skipOnboarding(page: Page) {

@@ -22,45 +22,74 @@ router = APIRouter(prefix="/health", tags=["health"])
 @router.get("")
 async def health_check():
     """Basic health check - public"""
-    return {"status": "ok", "time": datetime.now().isoformat()}
+    try:
+        return {"status": "ok", "time": datetime.now().isoformat()}
+    except Exception as e:
+        from ..core.config import logger
+        logger.error(f"Health check failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Health check failed") from e
 
 
 @router.get("/detailed")
 async def detailed_health(current_user: User = Depends(get_current_user_unified)):
     """Detailed health metrics - requires auth"""
-    return health_monitor.get_system_health()
+    try:
+        return health_monitor.get_system_health()
+    except Exception as e:
+        from ..core.config import logger
+        logger.error(f"Detailed health check failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Detailed health check failed") from e
 
 
 @router.get("/readiness")
 async def readiness_check():
     """Kubernetes-style readiness probe"""
-    health = health_monitor.get_system_health()
+    try:
+        health = health_monitor.get_system_health()
 
-    if health["status"] == "healthy":
-        return {"ready": True}
-    else:
-        raise HTTPException(
-            status_code=503, detail={"ready": False, "reason": "System degraded"}
-        )
+        if health["status"] == "healthy":
+            return {"ready": True}
+        else:
+            raise HTTPException(
+                status_code=503, detail={"ready": False, "reason": "System degraded"}
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        from ..core.config import logger
+        logger.error(f"Readiness check failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Readiness check failed") from e
 
 
 @router.get("/liveness")
 async def liveness_check():
     """Kubernetes-style liveness probe"""
-    return {"alive": True}
+    try:
+        return {"alive": True}
+    except Exception as e:
+        from ..core.config import logger
+        logger.error(f"Liveness check failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Liveness check failed") from e
 
 
 @router.get("/ready")
 async def ready_check():
     """Kubernetes-style readiness probe - alias for readiness"""
-    health = health_monitor.get_system_health()
+    try:
+        health = health_monitor.get_system_health()
 
-    if health["status"] == "healthy":
-        return {"ready": True}
-    else:
-        raise HTTPException(
-            status_code=503, detail={"ready": False, "reason": "System degraded"}
-        )
+        if health["status"] == "healthy":
+            return {"ready": True}
+        else:
+            raise HTTPException(
+                status_code=503, detail={"ready": False, "reason": "System degraded"}
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        from ..core.config import logger
+        logger.error(f"Ready check failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Ready check failed") from e
 
 
 @router.get("/ready/full")

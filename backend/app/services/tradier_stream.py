@@ -45,7 +45,13 @@ class TradierStreamService:
     """
 
     def __init__(self):
-        """Initialize the Tradier streaming service"""
+        """
+        Initialize the Tradier streaming service
+
+        DEPENDENCIES:
+        - Redis cache (via get_cache) - Required for storing real-time quotes
+        - Falls back gracefully if Redis unavailable (see cache.py)
+        """
         self.active_symbols: set[str] = set()
         self.running = False
         self.websocket: Any | None = None
@@ -53,7 +59,7 @@ class TradierStreamService:
         self.session_created_at: float | None = None
         self.reconnect_attempts = 0
         self.max_reconnect_attempts = 10
-        self.cache = get_cache()
+        self.cache = get_cache()  # CacheService with in-memory fallback
 
         # Circuit breaker for "too many sessions" errors
         self.session_error_count = 0

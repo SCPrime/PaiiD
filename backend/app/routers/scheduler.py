@@ -212,7 +212,11 @@ async def list_schedules(current_user: User = Depends(get_current_user_unified))
 
             enriched.append(sched_dict)
 
-        return enriched
+        return {
+            "data": enriched,
+            "count": len(enriched),
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -262,7 +266,10 @@ async def create_schedule(
                     detail=f"Failed to create schedule: {e!s}",
                 ) from e
 
-        return schedule
+        return {
+            "data": schedule,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -308,7 +315,10 @@ async def update_schedule(
 
         schedule.update(update_data)
         _save_schedule(schedule)
-        return schedule
+        return {
+            "data": schedule,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -351,7 +361,11 @@ async def pause_all_schedules(current_user: User = Depends(get_current_user_unif
             schedule["status"] = "paused"
             schedule["enabled"] = False
             _save_schedule(schedule)
-        return {"message": "All schedules paused"}
+        return {
+            "success": True,
+            "message": "All schedules paused",
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
     except Exception as e:
         logger.error(f"Failed to pause all schedules: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to pause schedules") from e
@@ -367,7 +381,11 @@ async def resume_all_schedules(current_user: User = Depends(get_current_user_uni
             schedule["status"] = "active"
             schedule["enabled"] = True
             _save_schedule(schedule)
-        return {"message": "All schedules resumed"}
+        return {
+            "success": True,
+            "message": "All schedules resumed",
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
     except Exception as e:
         logger.error(f"Failed to resume all schedules: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to resume schedules") from e
@@ -387,7 +405,12 @@ async def list_executions(
     """Get execution history"""
     try:
         executions = _load_executions(limit, schedule_id)
-        return executions
+        return {
+            "data": executions,
+            "count": len(executions),
+            "limit": limit,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
     except Exception as e:
         logger.error(f"Failed to list executions: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list executions") from e
@@ -405,7 +428,11 @@ async def list_pending_approvals(
     """Get all pending trade approvals"""
     try:
         approvals = _load_pending_approvals()
-        return approvals
+        return {
+            "data": approvals,
+            "count": len(approvals),
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
     except Exception as e:
         logger.error(f"Failed to list pending approvals: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list approvals") from e
@@ -436,7 +463,11 @@ async def approve_trade(
             {"status": "approved", "approved_at": datetime.now(UTC).isoformat()},
         )
 
-        return {"message": "Trade approved and executed"}
+        return {
+            "success": True,
+            "message": "Trade approved and executed",
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -471,7 +502,11 @@ async def reject_trade(
             },
         )
 
-        return {"message": "Trade rejected"}
+        return {
+            "success": True,
+            "message": "Trade rejected",
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -490,9 +525,12 @@ async def scheduler_status(current_user: User = Depends(get_current_user_unified
     try:
         scheduler = get_scheduler()
         return {
-            "running": scheduler.running,
-            "jobs_count": len(scheduler.scheduler.get_jobs()),
-            "status": "healthy" if scheduler.running else "stopped",
+            "data": {
+                "running": scheduler.running,
+                "jobs_count": len(scheduler.scheduler.get_jobs()),
+                "status": "healthy" if scheduler.running else "stopped",
+            },
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception as e:
         logger.error(f"Failed to get scheduler status: {e!s}", exc_info=True)

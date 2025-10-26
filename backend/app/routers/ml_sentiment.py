@@ -95,7 +95,10 @@ async def get_sentiment(
         if cached:
             logger.info(f"Cache HIT for sentiment: {symbol}")
             cached_data = json.loads(cached)
-            return SentimentResponse(**cached_data)
+            return {
+                "data": cached_data,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
 
         logger.info(f"Cache MISS for sentiment: {symbol}")
         sentiment_analyzer = get_sentiment_analyzer()
@@ -160,7 +163,10 @@ async def get_sentiment(
         )
         logger.info(f"Cached sentiment for {symbol} (TTL: {SENTIMENT_CACHE_TTL}s)")
 
-        return response
+        return {
+            "data": response.model_dump(),
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
 
     except Exception as e:
         logger.error(f"Error getting sentiment for {symbol}: {e}")
@@ -196,7 +202,10 @@ async def get_trade_signal(
         if cached:
             logger.info(f"Cache HIT for signal: {symbol}")
             cached_data = json.loads(cached)
-            return SignalResponse(**cached_data)
+            return {
+                "data": cached_data,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
 
         logger.info(f"Cache MISS for signal: {symbol}")
         signal_generator = get_signal_generator()
@@ -254,7 +263,10 @@ async def get_trade_signal(
         )
         logger.info(f"Cached signal for {symbol} (TTL: {SIGNAL_CACHE_TTL}s)")
 
-        return response
+        return {
+            "data": response.model_dump(),
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
 
     except HTTPException:
         raise
@@ -285,7 +297,7 @@ async def get_batch_signals(
         )
 
     signal_generator = get_signal_generator()
-    data_pipeline = DataPipeline()
+    data_pipeline = MLDataPipeline()
     end_date = datetime.now(UTC)
     start_date = end_date - timedelta(days=lookback_days)
 
@@ -347,7 +359,11 @@ async def get_batch_signals(
             detail="No signals could be generated for the provided symbols",
         )
 
-    return results
+    return {
+        "data": [r.model_dump() if hasattr(r, "model_dump") else r for r in results],
+        "count": len(results),
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
 
 
 @router.get("/health")
@@ -359,21 +375,22 @@ async def ml_sentiment_health_check():
         get_signal_generator()
 
         return {
-            "status": "healthy",
-            "services": {
-                "sentiment_analyzer": "ready",
-                "signal_generator": "ready",
-                "anthropic_configured": bool(settings.ANTHROPIC_API_KEY),
+            "data": {
+                "status": "healthy",
+                "services": {
+                    "sentiment_analyzer": "ready",
+                    "signal_generator": "ready",
+                    "anthropic_configured": bool(settings.ANTHROPIC_API_KEY),
+                },
             },
             "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception as e:
         logger.error(f"ML health check failed: {e}")
-        return {
-            "status": "unhealthy",
-            "error": str(e),
-            "timestamp": datetime.now(UTC).isoformat(),
-        }
+        raise HTTPException(
+            status_code=500,
+            detail=f"ML health check failed: {str(e)}",
+        ) from e
 
 
 @router.get("/analyze")
@@ -422,17 +439,19 @@ async def analyze_sentiment(
             # Return neutral sentiment for no articles
             logger.info(f"No articles found for {symbol}")
             return {
-                "symbol": symbol,
-                "overall_sentiment": "neutral",
-                "sentiment_score": 0.0,
-                "confidence": 0.0,
-                "bullish_count": 0,
-                "bearish_count": 0,
-                "neutral_count": 0,
-                "total_articles": 0,
-                "avg_impact": 0.0,
-                "top_topics": [],
-                "articles": [],
+                "data": {
+                    "symbol": symbol,
+                    "overall_sentiment": "neutral",
+                    "sentiment_score": 0.0,
+                    "confidence": 0.0,
+                    "bullish_count": 0,
+                    "bearish_count": 0,
+                    "neutral_count": 0,
+                    "total_articles": 0,
+                    "avg_impact": 0.0,
+                    "top_topics": [],
+                    "articles": [],
+                },
                 "timestamp": datetime.now().isoformat(),
             }
 
@@ -537,17 +556,19 @@ async def analyze_sentiment(
         )
 
         return {
-            "symbol": symbol,
-            "overall_sentiment": overall_sentiment,
-            "sentiment_score": overall_score,
-            "confidence": overall_confidence,
-            "bullish_count": bullish_count,
-            "bearish_count": bearish_count,
-            "neutral_count": neutral_count,
-            "total_articles": total_articles,
-            "avg_impact": avg_impact,
-            "top_topics": top_topics,
-            "articles": sentiment_articles,
+            "data": {
+                "symbol": symbol,
+                "overall_sentiment": overall_sentiment,
+                "sentiment_score": overall_score,
+                "confidence": overall_confidence,
+                "bullish_count": bullish_count,
+                "bearish_count": bearish_count,
+                "neutral_count": neutral_count,
+                "total_articles": total_articles,
+                "avg_impact": avg_impact,
+                "top_topics": top_topics,
+                "articles": sentiment_articles,
+            },
             "timestamp": datetime.now().isoformat(),
         }
 

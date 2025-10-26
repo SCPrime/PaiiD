@@ -116,10 +116,22 @@ from starlette.middleware.gzip import GZipMiddleware
 
 from .middleware.kill_switch import KillSwitchMiddleware
 from .middleware.request_id import RequestIDMiddleware
+from .middleware.security import CSRFProtectionMiddleware, set_csrf_middleware
 
 
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(KillSwitchMiddleware)
+
+# Add CSRF protection middleware (Batch 2C: Security Hardening)
+# Disable CSRF validation in test mode (TestClient doesn't maintain state)
+csrf_middleware_instance = CSRFProtectionMiddleware(app, testing_mode=settings.TESTING)
+set_csrf_middleware(csrf_middleware_instance)
+app.add_middleware(CSRFProtectionMiddleware, testing_mode=settings.TESTING)
+if settings.TESTING:
+    print("[TEST MODE] CSRF protection middleware enabled (validation disabled for tests)", flush=True)
+else:
+    print("[OK] CSRF protection middleware enabled", flush=True)
+
 # Add GZIP compression for responses >1KB (reduces bandwidth by ~70%)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 print("[OK] GZIP compression enabled for responses >1KB", flush=True)
@@ -216,6 +228,47 @@ async def startup_event():
         logger.info(f"     {key}: {value}")
 
     logger.info("=" * 70)
+
+    # CRITICAL: Validate required secrets BEFORE any service initialization
+    # This prevents runtime failures due to missing or invalid configuration
+    from .core.config import validate_required_secrets
+
+    logger.info("🔐 Validating required secrets...")
+    strict_secret_mode = os.getenv("STRICT_SECRET_VALIDATION", "false").lower() == "true"
+    secrets_valid, missing_secrets = validate_required_secrets(strict=strict_secret_mode)
+
+    if not secrets_valid:
+        logger.error("=" * 70)
+        logger.error("🚨 SECRET VALIDATION FAILED!")
+        logger.error("=" * 70)
+        logger.error("Missing or invalid secrets detected:")
+        for secret in missing_secrets:
+            logger.error(f"   ❌ {secret}")
+        logger.error("")
+        logger.error("Required actions:")
+        logger.error("   1. Copy backend/.env.example to backend/.env")
+        logger.error("   2. Fill in all required secret values")
+        logger.error("   3. See docs/SECRETS.md for detailed instructions")
+        logger.error("")
+        logger.error("Secret generation commands:")
+        logger.error("   API_TOKEN:      python -c 'import secrets; print(secrets.token_urlsafe(32))'")
+        logger.error("   JWT_SECRET_KEY: python -c 'import secrets; print(secrets.token_urlsafe(32))'")
+        logger.error("=" * 70)
+
+        # Only block startup in strict mode or production
+        is_production = "render.com" in os.getenv("RENDER_EXTERNAL_URL", "")
+        if strict_secret_mode or is_production:
+            raise RuntimeError(
+                f"Application startup blocked due to missing secrets. "
+                f"Missing: {', '.join(missing_secrets)}"
+            )
+        else:
+            logger.warning(
+                "⚠️  Continuing startup despite missing secrets (development mode). "
+                "Set STRICT_SECRET_VALIDATION=true to enforce validation."
+            )
+    else:
+        logger.info("✅ All required secrets validated successfully")
 
     monitor = get_startup_monitor()
     monitor.start()

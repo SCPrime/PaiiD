@@ -3,6 +3,8 @@ Authentication API Routes
 
 Handles user registration, login, logout, token refresh, and profile management.
 Supports owner and beta tester registration with invite codes.
+
+SECURITY: User emails logged but passwords always redacted
 """
 
 import logging
@@ -20,6 +22,7 @@ from ..core.jwt import (
 )
 from ..core.unified_auth import get_current_user_unified
 from ..db.session import get_db
+from ..middleware.security import generate_csrf_token_endpoint
 from ..models.database import ActivityLog, User, UserSession
 
 
@@ -358,3 +361,40 @@ async def get_current_user_profile(
     - User profile with email, role, preferences, etc.
     """
     return current_user
+
+
+@router.get("/auth/csrf-token")
+async def get_csrf_token(current_user: User = Depends(get_current_user_unified)):
+    """
+    Generate a CSRF token for the authenticated user
+
+    **Requires:**
+    - Valid JWT access token in Authorization header
+
+    **Returns:**
+    - CSRF token that must be included in X-CSRF-Token header for state-changing requests
+
+    **Usage:**
+    1. Call this endpoint after login to get a CSRF token
+    2. Include the token in X-CSRF-Token header for POST/PUT/DELETE/PATCH requests
+    3. Token expires after 1 hour - call this endpoint again to refresh
+
+    **Example:**
+    ```
+    GET /api/auth/csrf-token
+    Authorization: Bearer <access_token>
+
+    Response: {"csrf_token": "abc123..."}
+
+    POST /api/orders/...
+    Authorization: Bearer <access_token>
+    X-CSRF-Token: abc123...
+    ```
+    """
+    csrf_token = generate_csrf_token_endpoint(user_id=str(current_user.id))
+    logger.info(f"✅ CSRF token generated for user: {current_user.email}")
+    return {
+        "csrf_token": csrf_token,
+        "expires_in": 3600,  # 1 hour
+        "message": "Include this token in X-CSRF-Token header for state-changing requests",
+    }

@@ -355,7 +355,9 @@
     <script>
         const BACKEND_URL = 'https://paiid-backend.onrender.com';
         const FRONTEND_URL = 'https://paiid-frontend.onrender.com';
-        const API_TOKEN = 'rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl';
+        // API_TOKEN should be provided via prompt or environment variable
+        // This is a development dashboard file - replace with actual token when testing
+        const API_TOKEN = prompt('Enter API_TOKEN:') || '';
 
         let checkResults = [];
 

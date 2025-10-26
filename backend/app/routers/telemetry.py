@@ -1,18 +1,21 @@
 """
 Telemetry Router - Tracks user interactions and system events
+
+SECURITY: User IDs logged but no sensitive PII
 """
 
 import json
-import logging
 from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from ..core.logging_utils import get_secure_logger
+
 
 router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
-logger = logging.getLogger(__name__)
+logger = get_secure_logger(__name__)
 
 # In-memory storage (replace with database in production)
 telemetry_events: list[dict[str, Any]] = []
@@ -84,7 +87,12 @@ async def get_telemetry_events(
         filtered_events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
         return {"total": len(filtered_events), "events": filtered_events[:limit]}
     except Exception as e:
-        logger.error(f"Failed to get telemetry events: {e!s}", exc_info=True)
+        logger.error(
+            "Failed to get telemetry events",
+            error_type=type(e).__name__,
+            error_msg=str(e),
+            exc_info=True
+        )
         raise HTTPException(status_code=500, detail="Failed to get telemetry events")
 
 
@@ -134,7 +142,12 @@ async def get_telemetry_stats():
             "users_by_role": role_counts,
         }
     except Exception as e:
-        logger.error(f"Failed to get telemetry stats: {e!s}", exc_info=True)
+        logger.error(
+            "Failed to get telemetry stats",
+            error_type=type(e).__name__,
+            error_msg=str(e),
+            exc_info=True
+        )
         raise HTTPException(status_code=500, detail="Failed to get telemetry stats")
 
 
@@ -147,9 +160,15 @@ async def clear_telemetry_events():
         global telemetry_events
         count = len(telemetry_events)
         telemetry_events = []
+        logger.info("Cleared telemetry events", count=count)
         return {"success": True, "message": f"Cleared {count} telemetry events"}
     except Exception as e:
-        logger.error(f"Failed to clear telemetry events: {e!s}", exc_info=True)
+        logger.error(
+            "Failed to clear telemetry events",
+            error_type=type(e).__name__,
+            error_msg=str(e),
+            exc_info=True
+        )
         raise HTTPException(status_code=500, detail="Failed to clear telemetry events")
 
 
@@ -165,5 +184,10 @@ async def export_telemetry():
             "total": len(telemetry_events),
         }
     except Exception as e:
-        logger.error(f"Failed to export telemetry: {e!s}", exc_info=True)
+        logger.error(
+            "Failed to export telemetry",
+            error_type=type(e).__name__,
+            error_msg=str(e),
+            exc_info=True
+        )
         raise HTTPException(status_code=500, detail="Failed to export telemetry")

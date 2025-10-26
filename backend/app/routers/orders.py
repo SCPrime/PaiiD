@@ -315,7 +315,7 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
         # For non-retryable errors (4xx, 5xx), fail immediately
         raise HTTPException(
             status_code=500, detail=f"Failed to execute order for {order.symbol}: {e!s}"
-        )
+        ) from e
 
 
 class ExecRequest(BaseModel):
@@ -412,7 +412,7 @@ async def execute(
             f"[Trading Execute] UNEXPECTED ERROR: {type(e).__name__}: {e!s}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}") from e
 
 
 @router.post("/admin/kill")

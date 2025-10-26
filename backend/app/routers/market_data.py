@@ -9,9 +9,10 @@ Alpaca is ONLY used for paper trading execution (see orders.py).
 import logging
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
 from ..core.unified_auth import get_current_user_unified
+from ..core.validators import InputSanitizer
 from ..models.database import User
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
@@ -27,7 +28,7 @@ router = APIRouter()
 
 @router.get("/market/quote/{symbol}")
 async def get_quote(
-    symbol: str,
+    symbol: str = Path(..., min_length=1, max_length=10, description="Stock symbol"),
     current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
@@ -103,7 +104,8 @@ async def get_quote(
 
 @router.get("/market/quotes")
 async def get_quotes(
-    symbols: str, current_user: User = Depends(get_current_user_unified)
+    symbols: str = Query(..., min_length=1, max_length=200, description="Comma-separated symbols"),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Get quotes for multiple symbols (comma-separated) using Tradier
 
@@ -162,9 +164,9 @@ async def get_quotes(
 
 @router.get("/market/bars/{symbol}")
 async def get_bars(
-    symbol: str,
-    timeframe: str = "daily",
-    limit: int = 100,
+    symbol: str = Path(..., min_length=1, max_length=10, description="Stock symbol"),
+    timeframe: str = Query("daily", pattern="^(1Min|5Min|15Min|1Hour|1Day|daily|weekly|monthly)$"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of bars to return"),
     current_user: User = Depends(get_current_user_unified),
 ):
     """Get historical price bars using Tradier"""

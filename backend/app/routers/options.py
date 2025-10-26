@@ -162,7 +162,7 @@ async def get_options_chain(
             calls = [OptionContract(**call) for call in exp_data.get("calls", [])]
             puts = [OptionContract(**put) for put in exp_data.get("puts", [])]
 
-            return OptionsChainResponse(
+            chain_response = OptionsChainResponse(
                 symbol=symbol,
                 expiration_date=exp_data["date"],
                 underlying_price=chain_data.get("underlying_price"),
@@ -170,6 +170,10 @@ async def get_options_chain(
                 puts=puts,
                 total_contracts=len(calls) + len(puts),
             )
+            return {
+                "data": chain_response.model_dump(),
+                "timestamp": datetime.now().isoformat(),
+            }
 
         # Initialize Tradier client for real API calls
         client = _get_tradier_client()
@@ -219,13 +223,17 @@ async def get_options_chain(
         option_list = options_data.get("option", [])
 
         if not option_list:
-            return OptionsChainResponse(
+            chain_response = OptionsChainResponse(
                 symbol=symbol,
                 expiration_date=expiration,
                 calls=[],
                 puts=[],
                 total_contracts=0,
             )
+            return {
+                "data": chain_response.model_dump(),
+                "timestamp": datetime.now().isoformat(),
+            }
 
         # Separate calls and puts, parse Greeks
         calls = []
@@ -270,7 +278,7 @@ async def get_options_chain(
         except Exception as e:
             logger.warning(f"⚠️ Failed to fetch underlying price for {symbol}: {e}")
 
-        return OptionsChainResponse(
+        chain_response = OptionsChainResponse(
             symbol=symbol,
             expiration_date=expiration,
             underlying_price=underlying_price,
@@ -278,6 +286,10 @@ async def get_options_chain(
             puts=puts,
             total_contracts=len(calls) + len(puts),
         )
+        return {
+            "data": chain_response.model_dump(),
+            "timestamp": datetime.now().isoformat(),
+        }
 
     except requests.exceptions.HTTPError as e:
         raise HTTPException(
@@ -289,7 +301,7 @@ async def get_options_chain(
         )
 
 
-@router.get("/expirations/{symbol}", response_model=list[ExpirationDate])
+@router.get("/expirations/{symbol}")
 def get_expiration_dates(
     symbol: str, current_user: User = Depends(get_current_user_unified)
 ):
@@ -332,7 +344,11 @@ def get_expiration_dates(
                     ExpirationDate(date=exp_date, days_to_expiry=max(0, days_to_expiry))
                 )
 
-            return expiration_dates
+            return {
+                "data": [exp.model_dump() for exp in expiration_dates],
+                "count": len(expiration_dates),
+                "timestamp": datetime.now().isoformat(),
+            }
 
         # Get Tradier client instance
         client = _get_tradier_client()
@@ -360,7 +376,11 @@ def get_expiration_dates(
                 ExpirationDate(date=exp_date_str, days_to_expiry=days_to_expiry)
             )
 
-        return result
+        return {
+            "data": [exp.model_dump() for exp in result],
+            "count": len(result),
+            "timestamp": datetime.now().isoformat(),
+        }
 
     except requests.exceptions.HTTPError as e:
         logger.error(f"Tradier HTTP error: {e}")
@@ -435,14 +455,17 @@ async def calculate_greeks(
         )
 
         return {
-            "symbol": symbol,
-            "underlying_price": underlying_price,
-            "strike": strike,
-            "expiration": expiration,
-            "option_type": option_type,
-            "days_to_expiry": days_to_expiry,
-            "implied_volatility": implied_volatility,
-            **greeks,
+            "data": {
+                "symbol": symbol,
+                "underlying_price": underlying_price,
+                "strike": strike,
+                "expiration": expiration,
+                "option_type": option_type,
+                "days_to_expiry": days_to_expiry,
+                "implied_volatility": implied_volatility,
+                **greeks,
+            },
+            "timestamp": datetime.now().isoformat(),
         }
 
     except ValueError as e:
@@ -455,10 +478,7 @@ async def calculate_greeks(
         )
 
 
-@router.get(
-    "/contract/{option_symbol}",
-    response_model=OptionContract,
-)
+@router.get("/contract/{option_symbol}")
 async def get_option_contract(
     option_symbol: str, current_user: User = Depends(get_current_user_unified)
 ):
@@ -504,7 +524,10 @@ async def get_option_contract(
         )
 
         logger.info(f"✅ Contract details retrieved for {option_symbol}")
-        return contract
+        return {
+            "data": contract.model_dump(),
+            "timestamp": datetime.now().isoformat(),
+        }
 
     except ValueError as e:
         logger.error(f"❌ Invalid option symbol: {e}")

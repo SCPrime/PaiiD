@@ -1,9 +1,10 @@
 """
 User Preferences API Routes
 Endpoints for managing user preferences including risk tolerance
+
+SECURITY: Never logs full user objects or sensitive data
 """
 
-import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,11 +12,12 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from ..core.unified_auth import get_current_user_unified
+from ..core.logging_utils import get_secure_logger, format_user_for_logging
 from ..db.session import get_db
 from ..models.database import User
 
 
-logger = logging.getLogger(__name__)
+logger = get_secure_logger(__name__)
 
 router = APIRouter()
 
@@ -67,10 +69,18 @@ def get_user_preferences(
         user = db.query(User).filter(User.id == current_user.id).first()
 
         if not user:
-            logger.error(f"❌ User {current_user.id} not found in database")
+            logger.error(
+                "User not found in database",
+                user_id=current_user.id
+            )
             raise HTTPException(status_code=404, detail="User not found")
 
         preferences = user.preferences or {}
+
+        logger.debug(
+            "Retrieved user preferences",
+            user=format_user_for_logging(user)
+        )
 
         return UserPreferencesResponse(
             risk_tolerance=preferences.get("risk_tolerance", 50),
@@ -83,7 +93,11 @@ def get_user_preferences(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to fetch user preferences: {e!s}")
+        logger.error(
+            "Failed to fetch user preferences",
+            error_type=type(e).__name__,
+            error_msg=str(e)
+        )
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch user preferences: {e!s}"
         ) from e
@@ -106,7 +120,10 @@ def update_user_preferences(
         user = db.query(User).filter(User.id == current_user.id).first()
 
         if not user:
-            logger.error(f"❌ User {current_user.id} not found in database")
+            logger.error(
+                "User not found in database",
+                user_id=current_user.id
+            )
             raise HTTPException(status_code=404, detail="User not found")
 
         # Get current preferences
@@ -121,7 +138,11 @@ def update_user_preferences(
 
             # Safeguard: Warn if ultra-aggressive (>90)
             if risk_value > 90:
-                logger.warning(f"⚠️ User setting very high risk tolerance: {risk_value}")
+                logger.warning(
+                    "User setting very high risk tolerance",
+                    user=format_user_for_logging(user),
+                    risk_tolerance=risk_value
+                )
 
             # Safeguard: Ensure value is in valid range
             if risk_value < 0 or risk_value > 100:
@@ -141,7 +162,11 @@ def update_user_preferences(
         db.commit()
         db.refresh(user)
 
-        logger.info(f"✅ Updated user preferences: {update_data}")
+        logger.info(
+            "Updated user preferences",
+            user=format_user_for_logging(user),
+            updated_fields=list(update_data.keys())
+        )
 
         return UserPreferencesResponse(
             risk_tolerance=preferences.get("risk_tolerance", 50),
@@ -154,7 +179,11 @@ def update_user_preferences(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to update user preferences: {e!s}")
+        logger.error(
+            "Failed to update user preferences",
+            error_type=type(e).__name__,
+            error_msg=str(e)
+        )
         raise HTTPException(
             status_code=500, detail=f"Failed to update user preferences: {e!s}"
         ) from e
@@ -210,7 +239,10 @@ def get_user_risk_limits(
         user = db.query(User).filter(User.id == current_user.id).first()
 
         if not user:
-            logger.error(f"❌ User {current_user.id} not found in database")
+            logger.error(
+                "User not found in database",
+                user_id=current_user.id
+            )
             raise HTTPException(status_code=404, detail="User not found")
 
         preferences = user.preferences or {}
@@ -218,10 +250,21 @@ def get_user_risk_limits(
 
         limits = get_risk_limits(risk_tolerance)
 
+        logger.debug(
+            "Calculated risk limits",
+            user=format_user_for_logging(user),
+            risk_tolerance=risk_tolerance,
+            risk_category=limits.get("risk_category")
+        )
+
         return {"risk_tolerance": risk_tolerance, **limits}
 
     except Exception as e:
-        logger.error(f"❌ Failed to calculate risk limits: {e!s}")
+        logger.error(
+            "Failed to calculate risk limits",
+            error_type=type(e).__name__,
+            error_msg=str(e)
+        )
         raise HTTPException(
             status_code=500, detail=f"Failed to calculate risk limits: {e!s}"
         ) from e

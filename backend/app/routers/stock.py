@@ -1,19 +1,21 @@
 """
 Stock Information and News Router
 Provides stock lookup, company info, and news endpoints for the StockLookup feature
-"""
 
-import logging
+SECURITY: No sensitive data logged
+"""
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from ..core.unified_auth import get_current_user_unified
+from ..core.logging_utils import get_secure_logger
 from ..models.database import User
+from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
 
 
-logger = logging.getLogger(__name__)
+logger = get_secure_logger(__name__)
 
 router = APIRouter(prefix="/stock", tags=["stock"])
 
@@ -60,6 +62,7 @@ class StockInfoResponse(BaseModel):
 async def get_stock_info(
     symbol: str,
     current_user: User = Depends(get_current_user_unified),
+    cache: CacheService = Depends(get_cache),
 ) -> CompanyInfo:
     """
     Get comprehensive company information for a symbol
@@ -74,8 +77,25 @@ async def get_stock_info(
         symbol = symbol.upper()
         client = get_tradier_client()
 
-        # Get real-time quote
-        quote = client.get_quote(symbol)
+        # Try to get real-time quote from Tradier
+        try:
+            quote = client.get_quote(symbol)
+        except Exception as e:
+            logger.error(
+                "Tradier API failed for symbol",
+                symbol=symbol,
+                error_type=type(e).__name__,
+                error_msg=str(e)
+            )
+            # Try cache fallback
+            cached_quote = cache.get(f"stock_info:{symbol}")
+            if cached_quote:
+                logger.info("Returning cached stock info", symbol=symbol)
+                return CompanyInfo(**cached_quote)
+            raise HTTPException(
+                status_code=503,
+                detail=f"Market data temporarily unavailable for {symbol}"
+            ) from e
 
         if not quote or "symbol" not in quote:
             raise HTTPException(status_code=404, detail=f"Stock {symbol} not found")
@@ -104,14 +124,26 @@ async def get_stock_info(
             change_percent=change_percent,
         )
 
-        logger.info(f"✅ Retrieved stock info for {symbol}: ${current_price:.2f}")
+        # Cache for 30 seconds
+        cache.set(f"stock_info:{symbol}", company_info.model_dump(), ttl=30)
+
+        logger.info(
+            "Retrieved stock info",
+            symbol=symbol,
+            price=current_price
+        )
         return company_info
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to get stock info for {symbol}: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to get stock info: {e!s}")
+        logger.error(
+            "Failed to get stock info",
+            symbol=symbol,
+            error_type=type(e).__name__,
+            error_msg=str(e)
+        )
+        raise HTTPException(status_code=500, detail=f"Failed to get stock info: {e!s}") from e
 
 
 @router.get("/{symbol}/news")
@@ -144,7 +176,7 @@ async def get_stock_news(
         # Current: Returns empty array with warning log (news feature disabled until Phase 2)
 
         # Mock news structure - in production, replace with API call
-        logger.warning(f"⚠️ News API not yet integrated. Returning empty news feed for {symbol}")
+        logger.warning("News API not yet integrated", symbol=symbol)
 
         news_articles = []
 
@@ -160,18 +192,28 @@ async def get_stock_news(
         #     )
         # ]
 
-        logger.info(f"✅ Retrieved {len(news_articles)} news articles for {symbol}")
+        logger.info(
+            "Retrieved news articles",
+            symbol=symbol,
+            count=len(news_articles)
+        )
         return news_articles
 
     except Exception as e:
-        logger.error(f"❌ Failed to get news for {symbol}: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to get stock news: {e!s}")
+        logger.error(
+            "Failed to get news",
+            symbol=symbol,
+            error_type=type(e).__name__,
+            error_msg=str(e)
+        )
+        raise HTTPException(status_code=500, detail=f"Failed to get stock news: {e!s}") from e
 
 
 @router.get("/{symbol}/complete")
 async def get_complete_stock_info(
     symbol: str,
     current_user: User = Depends(get_current_user_unified),
+    cache: CacheService = Depends(get_cache),
 ) -> StockInfoResponse:
     """
     Get complete stock information including company info, technicals, and news
@@ -186,11 +228,31 @@ async def get_complete_stock_info(
         symbol = symbol.upper()
         client = get_tradier_client()
 
-        # Get company info
-        company = await get_stock_info(symbol)
+        # Get company info (with built-in fallback)
+        company = await get_stock_info(symbol, current_user, cache)
 
-        # Get quote for technical data
-        quote = client.get_quote(symbol)
+        # Get quote for technical data with fallback
+        try:
+            quote = client.get_quote(symbol)
+        except Exception as e:
+            logger.error(
+                "Tradier API failed for technicals",
+                symbol=symbol,
+                error_type=type(e).__name__,
+                error_msg=str(e)
+            )
+            # Try cache fallback
+            cached_technicals = cache.get(f"technicals:{symbol}")
+            if cached_technicals:
+                logger.info("Returning cached technicals", symbol=symbol)
+                news = await get_stock_news(symbol, limit=5, current_user=current_user)
+                return StockInfoResponse(
+                    company=company,
+                    technicals=cached_technicals,
+                    news=news
+                )
+            # If no cache, provide minimal technicals
+            quote = {}
 
         # Build technical indicators data
         technicals = {
@@ -204,15 +266,25 @@ async def get_complete_stock_info(
             "vwap": None,  # Volume-weighted average price - would calculate from historical data
         }
 
-        # Get news
-        news = await get_stock_news(symbol, limit=5)
+        # Cache technicals for 30 seconds
+        cache.set(f"technicals:{symbol}", technicals, ttl=30)
 
-        logger.info(f"✅ Retrieved complete stock info for {symbol}")
+        # Get news
+        news = await get_stock_news(symbol, limit=5, current_user=current_user)
+
+        logger.info("Retrieved complete stock info", symbol=symbol)
 
         return StockInfoResponse(company=company, technicals=technicals, news=news)
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to get complete stock info for {symbol}: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to get complete stock info: {e!s}")
+        logger.error(
+            "Failed to get complete stock info",
+            symbol=symbol,
+            error_type=type(e).__name__,
+            error_msg=str(e)
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get complete stock info: {e!s}"
+        ) from e

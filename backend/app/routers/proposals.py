@@ -3,6 +3,7 @@ Options Proposals Router - Create and execute options trade proposals
 """
 
 import logging
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -33,7 +34,7 @@ class ExecuteProposalRequest(BaseModel):
     limit_price: float | None = None
 
 
-@router.post("/create")
+@router.post("/create", status_code=201)
 async def create_proposal(
     request: CreateProposalRequest,
     current_user: User = Depends(get_current_user_unified),
@@ -94,11 +95,12 @@ async def create_proposal(
 
         return {
             "success": True,
-            "proposal": proposal.dict(),
+            "data": proposal.dict(),
             "message": (
                 f"Proposal created for {request.quantity} contract(s) "
                 f"of {request.option_symbol}"
             ),
+            "timestamp": datetime.now().isoformat(),
         }
 
     except ValueError as e:
@@ -161,7 +163,11 @@ async def execute_proposal(
                 detail=result.get("error", "Order execution failed"),
             )
 
-        return result
+        return {
+            "success": True,
+            "data": result,
+            "timestamp": datetime.now().isoformat(),
+        }
 
     except HTTPException:
         raise
@@ -183,7 +189,8 @@ async def get_proposal_history(current_user: User = Depends(get_current_user_uni
     **Current Status:** Not yet implemented
     """
     return {
-        "success": True,
-        "proposals": [],
+        "data": [],
+        "count": 0,
         "message": "Proposal history coming soon - currently in-memory only",
+        "timestamp": datetime.now().isoformat(),
     }

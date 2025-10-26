@@ -8,9 +8,8 @@ This module provides a clean, unified authentication system that supports:
 3. Automatic fallback for single-user MVP mode
 
 STABILITY: Gibraltar-level - bulletproof error handling and clear auth flow
+SECURITY: All tokens are redacted in logs
 """
-
-import logging
 
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPBearer
@@ -20,9 +19,10 @@ from ..db.session import get_db
 from ..models.database import User
 from .config import settings
 from .jwt import decode_token
+from .logging_utils import get_secure_logger, redact_auth_header, format_user_for_logging
 
 
-logger = logging.getLogger(__name__)
+logger = get_secure_logger(__name__)
 security = HTTPBearer()
 
 
@@ -62,24 +62,22 @@ def get_auth_mode(authorization: str | None) -> str:
         AuthMode constant indicating auth type
     """
     if not authorization:
-        logger.debug("No authorization header - using MVP fallback")
+        logger.debug("Auth mode: MVP fallback (no header)")
         return AuthMode.MVP_FALLBACK
 
     if not authorization.startswith("Bearer "):
-        logger.debug(
-            "Authorization header missing 'Bearer ' prefix - using MVP fallback"
-        )
+        logger.debug("Auth mode: MVP fallback (invalid format)")
         return AuthMode.MVP_FALLBACK
 
     token = authorization.split(" ", 1)[1]
 
     # Check if it's the simple API token
     if token == settings.API_TOKEN:
-        logger.debug("API token matched - using API_TOKEN auth mode")
+        logger.debug("Auth mode: API_TOKEN")
         return AuthMode.API_TOKEN
 
     # Otherwise assume it's a JWT
-    logger.debug("Token did not match API_TOKEN - assuming JWT auth mode")
+    logger.debug("Auth mode: JWT")
     return AuthMode.JWT
 
 
@@ -103,14 +101,14 @@ def get_current_user_unified(
         HTTPException: 401 if authentication fails
     """
     auth_mode = get_auth_mode(authorization)
-    logger.info(
-        f"🔐 AUTH DEBUG: Auth mode detected: {auth_mode}, token: {authorization[:20] if authorization else 'None'}..."
+    logger.debug(
+        "Authentication attempt",
+        mode=auth_mode,
+        auth_header=redact_auth_header(authorization)
     )
 
     # CASE 1: Simple API Token (service-to-service or frontend proxy)
     if auth_mode == AuthMode.API_TOKEN:
-        logger.debug("Using API token authentication")
-
         # Get or create MVP user (user_id=1)
         user = db.query(User).filter(User.id == 1).first()
 
@@ -127,22 +125,24 @@ def get_current_user_unified(
             db.add(user)
             db.commit()
             db.refresh(user)
-            logger.info("Created MVP user (id=1)")
+            logger.info("Created MVP user", user_id=1)
 
-        logger.debug(f"API token auth successful - returning user: {user.email}")
+        logger.debug(
+            "API token auth successful",
+            user=format_user_for_logging(user)
+        )
         return user
 
     # CASE 2: JWT Authentication (multi-user mode)
     if auth_mode == AuthMode.JWT:
-        logger.debug("Using JWT authentication")
-
         if not authorization:
+            logger.error("JWT auth failed: Missing authorization header")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Missing authorization header",
             )
 
-        # Extract token and create credentials object
+        # Extract token (already validated to start with "Bearer " in get_auth_mode)
         token = authorization.split(" ", 1)[1]
 
         try:
@@ -151,6 +151,10 @@ def get_current_user_unified(
 
             # Verify token type
             if payload.get("type") != "access":
+                logger.error(
+                    "JWT auth failed: Invalid token type",
+                    token_type=payload.get("type")
+                )
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid token type (expected access token)",
@@ -159,6 +163,7 @@ def get_current_user_unified(
             # Get user_id from payload
             user_id: int = payload.get("sub")
             if user_id is None:
+                logger.error("JWT auth failed: Token missing user identifier")
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Token missing user identifier",
@@ -167,23 +172,36 @@ def get_current_user_unified(
             # Fetch user from database
             user = db.query(User).filter(User.id == user_id).first()
             if not user:
+                logger.error("JWT auth failed: User not found", user_id=user_id)
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
                 )
 
             # Check if user is active
             if not user.is_active:
+                logger.warning(
+                    "JWT auth failed: Inactive user",
+                    user=format_user_for_logging(user)
+                )
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="User account is disabled",
                 )
 
+            logger.debug(
+                "JWT auth successful",
+                user=format_user_for_logging(user)
+            )
             return user
 
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"JWT validation error: {e}")
+            logger.error(
+                "JWT validation error",
+                error_type=type(e).__name__,
+                error_msg=str(e)
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication token",
@@ -191,8 +209,6 @@ def get_current_user_unified(
 
     # CASE 3: MVP Fallback (no auth header or unrecognized)
     if auth_mode == AuthMode.MVP_FALLBACK:
-        logger.debug("Using MVP fallback authentication")
-
         # Get or create MVP user (user_id=1)
         user = db.query(User).filter(User.id == 1).first()
 
@@ -209,8 +225,12 @@ def get_current_user_unified(
             db.add(user)
             db.commit()
             db.refresh(user)
-            logger.info("Created MVP user (id=1) for fallback auth")
+            logger.info("Created MVP user for fallback auth", user_id=1)
 
+        logger.debug(
+            "MVP fallback auth successful",
+            user=format_user_for_logging(user)
+        )
         return user
 
     # Should never reach here

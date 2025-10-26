@@ -11,12 +11,12 @@ import re
 from datetime import UTC, datetime
 from typing import Literal
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from ..core.auth import require_bearer
 from ..core.unified_auth import get_current_user_unified
+from ..core.validators import InputSanitizer
 from ..db.session import get_db
 from ..models.database import User
 from ..services.technical_indicators import TechnicalIndicators
@@ -286,12 +286,14 @@ async def get_recommendations(current_user: User = Depends(get_current_user_unif
 
 
 @router.get("/recommendations/{symbol}", response_model=Recommendation)
-async def get_symbol_recommendation(symbol: str):
+async def get_symbol_recommendation(
+    symbol: str = Path(..., min_length=1, max_length=10, pattern="^[A-Z0-9$.:^-]+$")
+):
     """
     Get AI recommendation for a specific symbol using real market data
     """
     try:
-        symbol = symbol.upper()
+        symbol = InputSanitizer.normalize_symbol(symbol)
 
         # Get real price from Tradier
         client = get_tradier_client()
@@ -339,9 +341,9 @@ async def get_symbol_recommendation(symbol: str):
 @router.get(
     "/signals",
     response_model=RecommendationsResponse,
-    dependencies=[Depends(require_bearer)],
 )
 async def get_ml_signals(
+    current_user: User = Depends(get_current_user_unified),
     symbols: str | None = Query(
         default=None, description="Comma-separated list of symbols"
     ),
@@ -512,7 +514,8 @@ class SymbolAnalysis(BaseModel):
     response_model=SymbolAnalysis,
 )
 async def analyze_symbol(
-    symbol: str, current_user: User = Depends(get_current_user_unified)
+    symbol: str = Path(..., min_length=1, max_length=10, pattern="^[A-Z0-9$.:^-]+$"),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Comprehensive AI analysis of a stock symbol using Tradier data
@@ -525,7 +528,7 @@ async def analyze_symbol(
     - Momentum analysis
     """
     try:
-        symbol = symbol.upper()
+        symbol = InputSanitizer.normalize_symbol(symbol)
 
         # Fetch real historical data from Tradier
         from datetime import timedelta
@@ -1545,8 +1548,11 @@ def _generate_recommendation_explanation(
 # ====== PHASE 3.A.3: STRATEGY TEMPLATE MATCHING ======
 
 
-@router.get("/recommended-templates", dependencies=[Depends(require_bearer)])
-async def get_recommended_templates(db: Session = Depends(get_db)):
+@router.get("/recommended-templates")
+async def get_recommended_templates(
+    current_user: User = Depends(get_current_user_unified),
+    db: Session = Depends(get_db),
+):
     """
     Get AI-recommended strategy templates based on user's risk profile, portfolio, and market conditions
 
@@ -1720,16 +1726,30 @@ async def get_recommended_templates(db: Session = Depends(get_db)):
 class SaveRecommendationRequest(BaseModel):
     """Request to save an AI recommendation to history"""
 
-    symbol: str
+    symbol: str = Field(..., min_length=1, max_length=10)
     recommendation_type: Literal["buy", "sell", "hold"]
-    confidence_score: float
+    confidence_score: float = Field(..., ge=0.0, le=100.0)
     analysis_data: dict = {}
-    suggested_entry_price: float | None = None
-    suggested_stop_loss: float | None = None
-    suggested_take_profit: float | None = None
-    suggested_position_size: float | None = None
-    reasoning: str | None = None
-    market_context: str | None = None
+    suggested_entry_price: float | None = Field(None, gt=0)
+    suggested_stop_loss: float | None = Field(None, gt=0)
+    suggested_take_profit: float | None = Field(None, gt=0)
+    suggested_position_size: float | None = Field(None, gt=0, le=10000)
+    reasoning: str | None = Field(None, max_length=5000)
+    market_context: str | None = Field(None, max_length=2000)
+
+    @field_validator("symbol")
+    @classmethod
+    def normalize_symbol(cls, v: str) -> str:
+        """Normalize symbol to uppercase and remove invalid characters"""
+        return InputSanitizer.normalize_symbol(v)
+
+    @field_validator("reasoning", "market_context")
+    @classmethod
+    def sanitize_text(cls, v: str | None) -> str | None:
+        """Sanitize text fields to prevent XSS"""
+        if v:
+            return InputSanitizer.sanitize_text(v)
+        return v
 
 
 class RecommendationHistoryResponse(BaseModel):

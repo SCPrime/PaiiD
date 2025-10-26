@@ -8,7 +8,7 @@ import sys
 
 from anthropic import Anthropic
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
@@ -32,15 +32,31 @@ else:
 
 
 class Message(BaseModel):
-    role: str
-    content: str
+    role: str = Field(..., pattern="^(user|assistant)$")
+    content: str = Field(..., min_length=1, max_length=10000)
+
+    @field_validator("content")
+    @classmethod
+    def sanitize_content(cls, v: str) -> str:
+        """Sanitize message content to prevent XSS"""
+        import html
+        return html.escape(v.strip())
 
 
 class ChatRequest(BaseModel):
-    messages: list[Message]
-    system: str | None = None  # Frontend sends string, we'll convert to list if needed
-    max_tokens: int = 2000
-    model: str = "claude-sonnet-4-5-20250929"
+    messages: list[Message] = Field(..., min_length=1, max_length=50)
+    system: str | None = Field(None, max_length=5000)
+    max_tokens: int = Field(2000, ge=100, le=8000)
+    model: str = Field("claude-sonnet-4-5-20250929", pattern="^claude-.*")
+
+    @field_validator("system")
+    @classmethod
+    def sanitize_system(cls, v: str | None) -> str | None:
+        """Sanitize system prompt"""
+        if v:
+            import html
+            return html.escape(v.strip())
+        return v
 
 
 class ChatResponse(BaseModel):

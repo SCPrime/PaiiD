@@ -3,6 +3,7 @@ Position Management API
 """
 
 import logging
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -53,16 +54,25 @@ async def get_positions(current_user: User = Depends(get_current_user_unified)):
             )
             positions.append(position)
 
-        return positions
+        return {
+            "data": [p.model_dump() for p in positions],
+            "count": len(positions),
+            "timestamp": datetime.now().isoformat(),
+        }
 
     try:
         service = PositionTrackerService()
-        return await service.get_open_positions()
+        positions = await service.get_open_positions()
+        return {
+            "data": [p.model_dump() if hasattr(p, "model_dump") else p for p in positions],
+            "count": len(positions),
+            "timestamp": datetime.now().isoformat(),
+        }
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to get positions: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to fetch positions")
+        raise HTTPException(status_code=500, detail="Failed to fetch positions") from e
 
 
 @router.get("/greeks", response_model=PortfolioGreeks)
@@ -70,12 +80,16 @@ async def get_portfolio_greeks(current_user: User = Depends(get_current_user_uni
     """Get aggregate portfolio Greeks"""
     try:
         service = PositionTrackerService()
-        return await service.get_portfolio_greeks()
+        greeks = await service.get_portfolio_greeks()
+        return {
+            "data": greeks.model_dump() if hasattr(greeks, "model_dump") else greeks,
+            "timestamp": datetime.now().isoformat(),
+        }
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to get portfolio greeks: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to fetch portfolio greeks")
+        raise HTTPException(status_code=500, detail="Failed to fetch portfolio greeks") from e
 
 
 @router.post("/{position_id}/close")
@@ -87,9 +101,14 @@ async def close_position(
     """Close an open position"""
     try:
         service = PositionTrackerService()
-        return await service.close_position(position_id, limit_price)
+        result = await service.close_position(position_id, limit_price)
+        return {
+            "success": True,
+            "data": result,
+            "timestamp": datetime.now().isoformat(),
+        }
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to close position {position_id}: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to close position")
+        raise HTTPException(status_code=500, detail="Failed to close position") from e
