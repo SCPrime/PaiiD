@@ -55,16 +55,6 @@ from .routers import (
 )
 from .routers import settings as settings_router
 
-
-# Optional: Subscription router (requires stripe package)
-try:
-    from .routers import subscription
-
-    SUBSCRIPTION_AVAILABLE = True
-except ImportError as e:
-    print(f"[WARNING] Subscription router not available: {e}", flush=True)
-    SUBSCRIPTION_AVAILABLE = False
-    subscription = None
 from .scheduler import init_scheduler
 
 
@@ -125,16 +115,13 @@ from starlette.middleware.gzip import GZipMiddleware
 
 from .middleware.kill_switch import KillSwitchMiddleware
 from .middleware.request_id import RequestIDMiddleware
-from .middleware.usage_tracking import UsageTrackingMiddleware
 
 
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(KillSwitchMiddleware)
-app.add_middleware(UsageTrackingMiddleware)  # Phase 2: Monetization - Usage metering
 # Add GZIP compression for responses >1KB (reduces bandwidth by ~70%)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 print("[OK] GZIP compression enabled for responses >1KB", flush=True)
-print("[OK] Usage tracking middleware enabled", flush=True)
 
 # Configure rate limiting (Phase 3: Bulletproof Reliability)
 # Skip rate limiting in test environment to avoid middleware conflicts with TestClient
@@ -466,16 +453,6 @@ app.include_router(analytics.router, prefix="/api")
 app.include_router(backtesting.router, prefix="/api")
 app.include_router(ml.router)  # Machine Learning (Phase 2)
 # app.include_router(ml_sentiment.router)  # ML Sentiment & Signals (Phase 2 - Active) - Disabled due to compatibility
-if SUBSCRIPTION_AVAILABLE:
-    app.include_router(
-        subscription.router
-    )  # Subscription & Billing (Phase 2 - Monetization)
-    print("[OK] Subscription API endpoints registered", flush=True)
-else:
-    print(
-        "[WARNING] Subscription API disabled - install 'stripe' package to enable",
-        flush=True,
-    )
 # app.include_router(monitor.router)  # GitHub Repository Monitor - Disabled
 app.include_router(telemetry.router)
 # app.include_router(websocket.router)  # WebSocket real-time streaming - Disabled (router not found)
