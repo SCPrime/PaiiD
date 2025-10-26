@@ -66,7 +66,9 @@ def get_auth_mode(authorization: str | None) -> str:
         return AuthMode.MVP_FALLBACK
 
     if not authorization.startswith("Bearer "):
-        logger.debug("Authorization header missing 'Bearer ' prefix - using MVP fallback")
+        logger.debug(
+            "Authorization header missing 'Bearer ' prefix - using MVP fallback"
+        )
         return AuthMode.MVP_FALLBACK
 
     token = authorization.split(" ", 1)[1]
@@ -82,7 +84,8 @@ def get_auth_mode(authorization: str | None) -> str:
 
 
 def get_current_user_unified(
-    authorization: str | None = Header(None), db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None, alias="Authorization", convert_underscores=False),
 ) -> User:
     """
     Unified authentication that handles both API token and JWT
@@ -100,7 +103,9 @@ def get_current_user_unified(
         HTTPException: 401 if authentication fails
     """
     auth_mode = get_auth_mode(authorization)
-    logger.debug(f"Auth mode detected: {auth_mode}")
+    logger.info(
+        f"🔐 AUTH DEBUG: Auth mode detected: {auth_mode}, token: {authorization[:20] if authorization else 'None'}..."
+    )
 
     # CASE 1: Simple API Token (service-to-service or frontend proxy)
     if auth_mode == AuthMode.API_TOKEN:
@@ -215,7 +220,7 @@ def get_current_user_unified(
     )
 
 
-def require_api_token(authorization: str | None = Header(None)) -> str:
+def require_api_token(authorization: str | None = Header(None, alias="Authorization", convert_underscores=False)) -> str:
     """
     Require simple API token authentication (for service endpoints)
 

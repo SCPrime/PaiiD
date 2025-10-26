@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
 
 from ..core.unified_auth import get_current_user_unified
 from ..db.session import engine
@@ -70,7 +71,7 @@ async def ready_full_check():
     # DB check
     try:
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            conn.execute(text("SELECT 1"))
         checks["database"] = {"status": "up"}
     except Exception as e:
         checks["database"] = {"status": "down", "error": str(e)}
