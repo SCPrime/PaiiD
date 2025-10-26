@@ -12,9 +12,9 @@ from datetime import UTC, datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from ..core.unified_auth import get_current_user_unified
 from ..core.config import settings
 from ..core.redis_client import get_redis
+from ..core.unified_auth import get_current_user_unified
 from ..ml.data_pipeline import DataPipeline
 from ..ml.sentiment_analyzer import get_sentiment_analyzer
 from ..ml.signal_generator import SignalType, get_signal_generator
@@ -23,7 +23,6 @@ from ..models.user import User
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/sentiment", tags=["ML Sentiment & Signals"])
-settings = get_settings()
 
 # Cache configuration
 SENTIMENT_CACHE_TTL = 900  # 15 minutes
