@@ -331,6 +331,32 @@ class TradierStreamService:
         except Exception as e:
             logger.error(f"❌ Error subscribing to symbols: {e}")
 
+    async def _cleanup_zombie_sessions(self):
+        """Active cleanup of zombie sessions by sending close frames"""
+        try:
+            logger.info("🧹 Starting active zombie session cleanup...")
+
+            # Close current WebSocket if it exists
+            if self.websocket:
+                try:
+                    await self.websocket.close()
+                    logger.info("  Closed current WebSocket connection")
+                except Exception as e:
+                    logger.warning(f"  Error closing WebSocket: {e}")
+
+            # Reset session state
+            self.session_id = None
+            self.websocket = None
+            self.connection_state = "disconnected"
+
+            # Wait for any pending operations to complete
+            await asyncio.sleep(1)
+
+            logger.info("  Zombie session cleanup completed")
+
+        except Exception as e:
+            logger.error(f"Error during zombie session cleanup: {e}")
+
     async def _handle_message(self, message: str):
         """
         Parse and cache incoming WebSocket messages
@@ -352,18 +378,22 @@ class TradierStreamService:
                     )
 
                     # IMMEDIATE CIRCUIT BREAKER: Activate on FIRST error
-                    # Wait 6 minutes (360s) for all zombie sessions to expire (Tradier TTL is 5 min)
+                    # Active session cleanup + reduced timeout (60s instead of 360s)
                     if not self.circuit_breaker_active:
                         self.circuit_breaker_active = True
                         self.circuit_breaker_reset_time = (
-                            time.time() + 360
-                        )  # 6 minute timeout
+                            time.time() + 60
+                        )  # 1 minute timeout (reduced from 6 minutes)
                         logger.error(
-                            "🔴 CIRCUIT BREAKER ACTIVATED - Too many sessions error. Waiting 6 minutes for session cleanup."
+                            "🔴 CIRCUIT BREAKER ACTIVATED - Too many sessions error. Active cleanup + 1 minute timeout."
                         )
                         logger.error(
                             "🔴 Root cause: Zombie sessions from previous reconnections must expire (Tradier TTL: 5 min)"
                         )
+
+                        # Active session cleanup - send close frames to zombie sessions
+                        await self._cleanup_zombie_sessions()
+
                         # Close WebSocket to force reconnection with circuit breaker logic
                         if self.websocket:
                             await self.websocket.close()

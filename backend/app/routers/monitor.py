@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
-from ..core.config import settings
 from ..core.unified_auth import get_current_user_unified
 from ..models.user import User
 from ..services.counter_manager import get_counter_manager
@@ -18,7 +17,6 @@ from ..services.github_monitor import get_github_handler
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/monitor", tags=["Repository Monitor"])
-settings = get_settings()
 
 
 # Response Models

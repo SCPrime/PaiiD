@@ -1,13 +1,14 @@
-        from scipy.stats import kurtosis
-        from scipy.stats import skew
+import logging
 from dataclasses import dataclass
 from enum import Enum
-from sklearn.ensemble import IsolationForest, RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
-import logging
+
 import numpy as np
 import pandas as pd
 import talib
+from scipy.stats import kurtosis, skew
+from sklearn.ensemble import IsolationForest, RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+
 
 """
 Advanced Market Regime Detection Module

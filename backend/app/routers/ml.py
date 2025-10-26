@@ -8,6 +8,7 @@ Endpoints for ML-powered features:
 """
 
 import logging
+from datetime import datetime
 from typing import Any
 
 import pandas as pd
@@ -344,9 +345,10 @@ async def backtest_patterns(
     try:
         logger.info(f"Pattern backtesting requested for {symbol} ({lookback_days} days)")
 
-        from datetime import datetime, timedelta
-        from ..services.tradier_client import get_tradier_client
         import random
+        from datetime import datetime, timedelta
+
+        from ..services.tradier_client import get_tradier_client
 
         # Get historical data
         end_date = datetime.now()
@@ -492,8 +494,8 @@ async def get_models_status() -> dict[str, Any]:
         GET /api/ml/models/status
     """
     try:
-        from datetime import datetime, timedelta
         import random
+        from datetime import datetime, timedelta
 
         logger.info("Model status requested")
 
@@ -632,8 +634,8 @@ async def retrain_model(model_id: str) -> dict[str, Any]:
         POST /api/ml/models/regime_detector/retrain
     """
     try:
-        from datetime import datetime
         import random
+        from datetime import datetime
 
         logger.info(f"Retraining requested for model: {model_id}")
 
@@ -740,7 +742,6 @@ async def optimize_portfolio(
     """
     try:
         import random
-        from datetime import datetime
 
         logger.info(f"Portfolio optimization requested: {risk_tolerance} risk, {target_return}% target")
 

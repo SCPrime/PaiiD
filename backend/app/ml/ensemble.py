@@ -11,7 +11,6 @@ import logging
 from typing import Any
 
 import numpy as np
-from sklearn.ensemble import VotingClassifier, VotingRegressor
 
 
 logger = logging.getLogger(__name__)
@@ -243,7 +242,7 @@ class EnsemblePredictor:
 
         except Exception as e:
             logger.error(f"Failed to calculate performance weights: {e}")
-            return {name: 1.0 for name in performance_metrics}
+            return dict.fromkeys(performance_metrics, 1.0)
 
 
 class MarketRegimeEnsemble:

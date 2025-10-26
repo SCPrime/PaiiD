@@ -5,8 +5,8 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends
 
 from ..core.config import settings
-from ..core.unified_auth import get_current_user_unified
 from ..core.startup_monitor import get_startup_monitor
+from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 
 

@@ -4,7 +4,6 @@ Handles saving/loading trained ML models to/from disk
 """
 
 import logging
-import pickle
 from datetime import datetime
 from pathlib import Path
 from typing import Any

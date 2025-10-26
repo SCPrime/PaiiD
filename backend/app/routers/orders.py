@@ -15,8 +15,8 @@ from tenacity import (
 
 from ..core.config import settings
 from ..core.idempotency import check_and_store
-from ..core.unified_auth import get_current_user_unified
 from ..core.kill_switch import is_killed, set_kill
+from ..core.unified_auth import get_current_user_unified
 from ..db.session import get_db
 from ..middleware.validation import (
     validate_limit_price,

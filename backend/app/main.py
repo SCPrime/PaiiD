@@ -55,7 +55,6 @@ from .routers import (
     users,
 )
 from .routers import settings as settings_router
-
 from .scheduler import init_scheduler
 
 
@@ -453,7 +452,9 @@ app.include_router(scheduler.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(backtesting.router, prefix="/api")
 app.include_router(ml.router)  # Machine Learning (Phase 2)
-app.include_router(ml_sentiment.router)  # ML Sentiment & Signals (Phase 2 - Active) - Re-enabled with unified auth
+app.include_router(
+    ml_sentiment.router
+)  # ML Sentiment & Signals (Phase 2 - Active) - Re-enabled with unified auth
 # app.include_router(monitor.router)  # GitHub Repository Monitor - Disabled
 app.include_router(telemetry.router)
 # app.include_router(websocket.router)  # WebSocket real-time streaming - Disabled (router not found)

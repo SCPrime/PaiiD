@@ -96,7 +96,9 @@ async def get_quote(
         raise
     except Exception as e:
         logger.error(f"❌ Tradier quote request failed for {symbol}: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch quote: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch quote: {e!s}"
+        ) from e
 
 
 @router.get("/market/quotes")
@@ -153,7 +155,9 @@ async def get_quotes(
         return result
     except Exception as e:
         logger.error(f"❌ Tradier quotes request failed: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch quotes: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch quotes: {e!s}"
+        ) from e
 
 
 @router.get("/market/bars/{symbol}")
@@ -216,7 +220,9 @@ async def get_bars(
         return {"symbol": symbol.upper(), "bars": result}
     except Exception as e:
         logger.error(f"❌ Tradier bars request failed for {symbol}: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch bars: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch bars: {e!s}"
+        ) from e
 
 
 @router.get("/market/scanner/under4")
@@ -271,4 +277,6 @@ async def scan_under_4(current_user: User = Depends(get_current_user_unified)):
         return {"candidates": results, "count": len(results)}
     except Exception as e:
         logger.error(f"❌ Tradier scanner request failed: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to scan stocks: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to scan stocks: {e!s}"
+        ) from e
