@@ -9,7 +9,7 @@ import SimpleFinancialChart from "../components/SimpleFinancialChart";
 
 export default function MyAccountPage() {
   return (
-    <div
+    <main
       style={{
         minHeight: "100vh",
         background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
@@ -23,7 +23,8 @@ export default function MyAccountPage() {
         }}
       >
         {/* Header */}
-        <div
+        <header
+          role="banner"
           style={{
             textAlign: "center",
             marginBottom: "40px",
@@ -38,7 +39,10 @@ export default function MyAccountPage() {
               marginBottom: "10px",
             }}
           >
-            💰 My Account
+            <span role="img" aria-label="Money bag">
+              💰
+            </span>{" "}
+            My Account
           </h1>
           <p
             style={{
@@ -48,11 +52,13 @@ export default function MyAccountPage() {
           >
             How you&apos;re doing
           </p>
-        </div>
+        </header>
 
         {/* Simple Financial Chart */}
-        <SimpleFinancialChart />
+        <section aria-label="Account performance chart">
+          <SimpleFinancialChart />
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

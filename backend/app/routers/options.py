@@ -18,17 +18,16 @@ import requests
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from ..core.config import get_settings
 from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.alpaca_options import get_alpaca_options_client
-from ..services.cache import get_cache
+from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
 
 
 router = APIRouter(prefix="/options", tags=["options"])
 logger = logging.getLogger(__name__)
-
-cache = get_cache()
 
 
 # ============================================================================
@@ -107,13 +106,17 @@ async def get_options_chain(
         description="Expiration date (YYYY-MM-DD). If not provided, uses nearest expiration.",
     ),
     current_user: User = Depends(get_current_user_unified),
+    cache: CacheService = Depends(get_cache),
 ):
     """
-    Get options chain for a symbol with Greeks
+    Get options chain for a symbol with Greeks (with intelligent caching)
 
     Returns calls and puts for the specified expiration date with Greeks calculated.
     Uses Tradier API for real-time options data including delta, gamma, theta, vega.
     Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
+
+    Options chains are cached for 60 seconds (configurable) since Greeks update
+    less frequently than stock quotes.
 
     Args:
         symbol: Stock symbol (e.g., SPY, AAPL)
@@ -126,10 +129,11 @@ async def get_options_chain(
         f"========== OPTIONS CHAIN ENDPOINT: symbol={symbol}, expiration={expiration} =========="
     )
 
+    # Get settings for cache TTL
+    settings = get_settings()
+
     try:
         # Check if we should use test fixtures
-        from ..core.config import settings
-
         if settings.USE_TEST_FIXTURES:
             logger.info("Using test fixtures for deterministic testing")
             from ..services.fixture_loader import get_fixture_loader
@@ -190,18 +194,22 @@ async def get_options_chain(
                 expirations[0] if isinstance(expirations, list) else expirations
             )
 
-        # Check cache first (5-minute TTL)
+        # Check cache first (configurable TTL for options chains)
         cache_key = f"options:{symbol}:{expiration}"
         chain_data = cache.get(cache_key)
         if chain_data:
-            logger.info(f"✅ CACHE HIT: {cache_key}")
+            logger.info(
+                f"✅ CACHE HIT: {cache_key} (TTL: {settings.CACHE_TTL_OPTIONS_CHAIN}s)"
+            )
         else:
             logger.info(f"❌ CACHE MISS: {cache_key} - Fetching from Tradier API")
             chain_data = await asyncio.to_thread(
                 client.get_option_chains, symbol, expiration
             )
-            cache.set(cache_key, chain_data, ttl=300)
-            logger.info(f"💾 CACHED: {cache_key} (TTL: 5 minutes)")
+            cache.set(cache_key, chain_data, ttl=settings.CACHE_TTL_OPTIONS_CHAIN)
+            logger.info(
+                f"💾 CACHED: {cache_key} (TTL: {settings.CACHE_TTL_OPTIONS_CHAIN}s)"
+            )
 
         # Parse Tradier response
         # Log response for debugging
@@ -294,28 +302,43 @@ async def get_options_chain(
     except requests.exceptions.HTTPError as e:
         raise HTTPException(
             status_code=e.response.status_code, detail=f"Tradier API error: {e!s}"
-        )
+        ) from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error fetching options chain: {e!s}"
-        )
+        ) from e
 
 
 @router.get("/expirations/{symbol}")
 def get_expiration_dates(
-    symbol: str, current_user: User = Depends(get_current_user_unified)
+    symbol: str,
+    current_user: User = Depends(get_current_user_unified),
+    cache: CacheService = Depends(get_cache),
 ):
     """
-    Get available expiration dates for a symbol
+    Get available expiration dates for a symbol (with caching)
 
     Returns list of available option expiration dates with days until expiry.
     Uses Tradier API for real-time expiration data.
     Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
+
+    Expiration dates are cached for 5 minutes since they change infrequently.
     """
+    # Get settings for cache TTL
+    settings = get_settings()
+
+    # Check cache first
+    cache_key = f"options_expiry:{symbol.upper()}"
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        logger.info(
+            f"✅ Cache HIT for expiration dates {symbol} "
+            f"(TTL: {settings.CACHE_TTL_OPTIONS_EXPIRY}s)"
+        )
+        return {**cached_data, "cached": True}
+
     try:
         # Check if we should use test fixtures
-        from ..core.config import settings
-
         if settings.USE_TEST_FIXTURES:
             logger.info("Using test fixtures for expiration dates")
             from ..services.fixture_loader import get_fixture_loader
@@ -344,11 +367,16 @@ def get_expiration_dates(
                     ExpirationDate(date=exp_date, days_to_expiry=max(0, days_to_expiry))
                 )
 
-            return {
+            result = {
                 "data": [exp.model_dump() for exp in expiration_dates],
                 "count": len(expiration_dates),
                 "timestamp": datetime.now().isoformat(),
+                "cached": False,
             }
+
+            # Cache fixture results
+            cache.set(cache_key, result, ttl=settings.CACHE_TTL_OPTIONS_EXPIRY)
+            return result
 
         # Get Tradier client instance
         client = _get_tradier_client()
@@ -365,33 +393,41 @@ def get_expiration_dates(
             expirations = [expirations]
 
         # Calculate days to expiry for each
-        result = []
+        expiration_dates = []
         today = datetime.now().date()
 
         for exp_date_str in expirations:
             exp_date = datetime.strptime(exp_date_str, "%Y-%m-%d").date()
             days_to_expiry = (exp_date - today).days
 
-            result.append(
+            expiration_dates.append(
                 ExpirationDate(date=exp_date_str, days_to_expiry=days_to_expiry)
             )
 
-        return {
-            "data": [exp.model_dump() for exp in result],
-            "count": len(result),
+        response = {
+            "data": [exp.model_dump() for exp in expiration_dates],
+            "count": len(expiration_dates),
             "timestamp": datetime.now().isoformat(),
+            "cached": False,
         }
+
+        # Cache expiration dates
+        cache.set(cache_key, response, ttl=settings.CACHE_TTL_OPTIONS_EXPIRY)
+        logger.info(
+            f"💾 Cached expiration dates for {symbol} (TTL: {settings.CACHE_TTL_OPTIONS_EXPIRY}s)"
+        )
+        return response
 
     except requests.exceptions.HTTPError as e:
         logger.error(f"Tradier HTTP error: {e}")
         raise HTTPException(
             status_code=e.response.status_code, detail=f"Tradier API error: {e!s}"
-        )
+        ) from e
     except Exception as e:
         logger.error(f"Error fetching expirations: {e}")
         raise HTTPException(
             status_code=500, detail=f"Error fetching expirations: {e!s}"
-        )
+        ) from e
 
 
 @router.post("/greeks")
@@ -470,12 +506,12 @@ async def calculate_greeks(
 
     except ValueError as e:
         logger.error(f"❌ Invalid parameters: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"❌ Failed to calculate Greeks: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to calculate Greeks: {e!s}"
-        )
+        ) from e
 
 
 @router.get("/contract/{option_symbol}")
@@ -531,12 +567,44 @@ async def get_option_contract(
 
     except ValueError as e:
         logger.error(f"❌ Invalid option symbol: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"❌ Failed to fetch contract details: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch contract details: {e!s}"
-        )
+        ) from e
+
+
+@router.post("/cache/clear")
+async def clear_options_cache(
+    current_user: User = Depends(get_current_user_unified),
+    cache: CacheService = Depends(get_cache),
+):
+    """
+    Clear all options data caches
+
+    Invalidates all cached options chains and expiration dates.
+    Use this to force fresh data from Tradier API.
+    """
+    # Clear all options-related cache patterns
+    patterns_cleared = 0
+
+    patterns = [
+        "options:*",        # Options chains
+        "options_expiry:*", # Expiration dates
+    ]
+
+    for pattern in patterns:
+        count = cache.clear_pattern(pattern)
+        patterns_cleared += count
+
+    logger.info(f"🧹 Cleared {patterns_cleared} options cache entries")
+
+    return {
+        "success": True,
+        "entries_cleared": patterns_cleared,
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
 # ============================================================================

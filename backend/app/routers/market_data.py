@@ -11,8 +11,8 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
+from ..core.config import get_settings
 from ..core.unified_auth import get_current_user_unified
-from ..core.validators import InputSanitizer
 from ..models.database import User
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
@@ -32,13 +32,14 @@ async def get_quote(
     current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
-    """Get real-time quote for a symbol using Tradier (cached for 15s)
+    """Get real-time quote for a symbol using Tradier (cached with configurable TTL)
 
     Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
     """
-    # Check if we should use test fixtures
-    from ..core.config import settings
+    # Get settings for cache TTL
+    settings = get_settings()
 
+    # Check if we should use test fixtures
     if settings.USE_TEST_FIXTURES:
         logger.info("Using test fixtures for quote data")
         from ..services.fixture_loader import get_fixture_loader
@@ -65,11 +66,12 @@ async def get_quote(
 
         return result
 
-    # Check cache first
+    # Check cache first (using configurable TTL)
     cache_key = f"quote:{symbol.upper()}"
     cached_quote = cache.get(cache_key)
     if cached_quote:
-        logger.info(f"✅ Cache HIT for quote {symbol}")
+        logger.info(f"✅ Cache HIT for quote {symbol} (TTL: {settings.CACHE_TTL_QUOTE}s)")
+        cached_quote["cached"] = True
         return cached_quote
 
     try:
@@ -88,10 +90,12 @@ async def get_quote(
             "last": float(quote.get("last", 0)),
             "volume": int(quote.get("volume", 0)),
             "timestamp": quote.get("trade_date", datetime.now().isoformat()),
+            "cached": False,
         }
 
-        # Cache for 15 seconds
-        cache.set(cache_key, result, ttl=15)
+        # Cache with configurable TTL from settings
+        cache.set(cache_key, result, ttl=settings.CACHE_TTL_QUOTE)
+        logger.info(f"💾 Cached quote {symbol} (TTL: {settings.CACHE_TTL_QUOTE}s)")
         return result
     except HTTPException:
         raise
@@ -106,14 +110,16 @@ async def get_quote(
 async def get_quotes(
     symbols: str = Query(..., min_length=1, max_length=200, description="Comma-separated symbols"),
     current_user: User = Depends(get_current_user_unified),
+    cache: CacheService = Depends(get_cache),
 ):
-    """Get quotes for multiple symbols (comma-separated) using Tradier
+    """Get quotes for multiple symbols (comma-separated) using Tradier with intelligent caching
 
     Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
     """
-    # Check if we should use test fixtures
-    from ..core.config import settings
+    # Get settings for cache TTL
+    settings = get_settings()
 
+    # Check if we should use test fixtures
     if settings.USE_TEST_FIXTURES:
         logger.info("Using test fixtures for quotes data")
         from ..services.fixture_loader import get_fixture_loader
@@ -138,22 +144,51 @@ async def get_quotes(
         return result
 
     try:
-        client = get_tradier_client()
         symbol_list = [s.strip().upper() for s in symbols.split(",")]
-        quotes_data = client.get_quotes(symbol_list)
-
         result = {}
-        for symbol in symbol_list:
-            if symbol in quotes_data:
-                q = quotes_data[symbol]
-                result[symbol] = {
-                    "bid": float(q.get("bid", 0)),
-                    "ask": float(q.get("ask", 0)),
-                    "last": float(q.get("last", 0)),
-                    "timestamp": q.get("trade_date", datetime.now(UTC).isoformat()),
-                }
+        cache_misses = []
+        cache_hits = 0
 
-        logger.info(f"✅ Retrieved {len(result)} quotes from Tradier")
+        # Check cache for each symbol individually
+        for symbol in symbol_list:
+            cache_key = f"quote:{symbol}"
+            cached = cache.get(cache_key)
+            if cached:
+                # Extract the quote data (removing meta fields like 'cached')
+                result[symbol] = {
+                    "bid": cached.get("bid"),
+                    "ask": cached.get("ask"),
+                    "last": cached.get("last"),
+                    "timestamp": cached.get("timestamp"),
+                }
+                cache_hits += 1
+            else:
+                cache_misses.append(symbol)
+
+        # Fetch cache misses from API in batch
+        if cache_misses:
+            client = get_tradier_client()
+            quotes_data = client.get_quotes(cache_misses)
+
+            for symbol in cache_misses:
+                if symbol in quotes_data:
+                    q = quotes_data[symbol]
+                    quote = {
+                        "bid": float(q.get("bid", 0)),
+                        "ask": float(q.get("ask", 0)),
+                        "last": float(q.get("last", 0)),
+                        "timestamp": q.get("trade_date", datetime.now(UTC).isoformat()),
+                    }
+                    result[symbol] = quote
+
+                    # Cache individual quote with metadata
+                    cache_entry = {**quote, "symbol": symbol, "cached": False}
+                    cache.set(f"quote:{symbol}", cache_entry, ttl=settings.CACHE_TTL_QUOTE)
+
+        logger.info(
+            f"✅ Retrieved {len(result)} quotes "
+            f"(Cache: {cache_hits} hits, {len(cache_misses)} misses)"
+        )
         return result
     except Exception as e:
         logger.error(f"❌ Tradier quotes request failed: {e!s}")
@@ -168,8 +203,27 @@ async def get_bars(
     timeframe: str = Query("daily", pattern="^(1Min|5Min|15Min|1Hour|1Day|daily|weekly|monthly)$"),
     limit: int = Query(100, ge=1, le=1000, description="Number of bars to return"),
     current_user: User = Depends(get_current_user_unified),
+    cache: CacheService = Depends(get_cache),
 ):
-    """Get historical price bars using Tradier"""
+    """Get historical price bars using Tradier with intelligent caching
+
+    Historical data is cached for 1 hour (configurable) since past bars don't change.
+    """
+    # Get settings for cache TTL
+    settings = get_settings()
+
+    # Create cache key based on symbol, timeframe, and limit
+    cache_key = f"bars:{symbol.upper()}:{timeframe}:{limit}"
+
+    # Check cache first
+    cached_bars = cache.get(cache_key)
+    if cached_bars:
+        logger.info(
+            f"✅ Cache HIT for bars {symbol} {timeframe} "
+            f"(TTL: {settings.CACHE_TTL_HISTORICAL_BARS}s)"
+        )
+        return {**cached_bars, "cached": True}
+
     try:
         client = get_tradier_client()
 
@@ -218,8 +272,15 @@ async def get_bars(
                 }
             )
 
-        logger.info(f"✅ Retrieved {len(result)} bars for {symbol} from Tradier")
-        return {"symbol": symbol.upper(), "bars": result}
+        response = {"symbol": symbol.upper(), "bars": result, "cached": False}
+
+        # Cache with long TTL since historical data doesn't change
+        cache.set(cache_key, response, ttl=settings.CACHE_TTL_HISTORICAL_BARS)
+        logger.info(
+            f"✅ Retrieved {len(result)} bars for {symbol} from Tradier "
+            f"(cached for {settings.CACHE_TTL_HISTORICAL_BARS}s)"
+        )
+        return response
     except Exception as e:
         logger.error(f"❌ Tradier bars request failed for {symbol}: {e!s}")
         raise HTTPException(
@@ -228,8 +289,25 @@ async def get_bars(
 
 
 @router.get("/market/scanner/under4")
-async def scan_under_4(current_user: User = Depends(get_current_user_unified)):
-    """Scan for stocks under $4 with volume using Tradier"""
+async def scan_under_4(
+    current_user: User = Depends(get_current_user_unified),
+    cache: CacheService = Depends(get_cache),
+):
+    """Scan for stocks under $4 with volume using Tradier with caching
+
+    Scanner results are cached for 3 minutes (configurable) to reduce API load
+    while still providing reasonably fresh results.
+    """
+    # Get settings for cache TTL
+    settings = get_settings()
+
+    # Check cache first
+    cache_key = "scanner:under4"
+    cached_results = cache.get(cache_key)
+    if cached_results:
+        logger.info(f"✅ Cache HIT for scanner under $4 (TTL: {settings.CACHE_TTL_SCANNER}s)")
+        return {**cached_results, "cached": True}
+
     try:
         # Pre-defined list of liquid stocks that trade near/under $4
         candidates = [
@@ -275,10 +353,85 @@ async def scan_under_4(current_user: User = Depends(get_current_user_unified)):
         # Sort by price ascending
         results.sort(key=lambda x: x["price"])
 
-        logger.info(f"✅ Scanner found {len(results)} stocks under $4 from Tradier")
-        return {"candidates": results, "count": len(results)}
+        response = {"candidates": results, "count": len(results), "cached": False}
+
+        # Cache scanner results
+        cache.set(cache_key, response, ttl=settings.CACHE_TTL_SCANNER)
+        logger.info(
+            f"✅ Scanner found {len(results)} stocks under $4 from Tradier "
+            f"(cached for {settings.CACHE_TTL_SCANNER}s)"
+        )
+        return response
     except Exception as e:
         logger.error(f"❌ Tradier scanner request failed: {e!s}")
         raise HTTPException(
             status_code=500, detail=f"Failed to scan stocks: {e!s}"
         ) from e
+
+
+@router.get("/market/cache/stats")
+async def get_cache_stats(
+    current_user: User = Depends(get_current_user_unified),
+):
+    """
+    Get cache performance statistics
+
+    Returns cache hit/miss rates and performance metrics from the health monitor.
+    Useful for monitoring cache effectiveness and tuning TTL values.
+    """
+    from ..services.health_monitor import health_monitor
+
+    total_cache_ops = health_monitor.cache_hits + health_monitor.cache_misses
+    hit_rate = (
+        (health_monitor.cache_hits / total_cache_ops * 100)
+        if total_cache_ops > 0
+        else 0.0
+    )
+
+    stats = {
+        "cache_hits": health_monitor.cache_hits,
+        "cache_misses": health_monitor.cache_misses,
+        "total_requests": total_cache_ops,
+        "hit_rate_percent": hit_rate,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
+    logger.info(
+        f"📊 Cache Stats: {stats['cache_hits']} hits, {stats['cache_misses']} misses "
+        f"({stats['hit_rate_percent']:.1f}% hit rate)"
+    )
+
+    return stats
+
+
+@router.post("/market/cache/clear")
+async def clear_market_cache(
+    current_user: User = Depends(get_current_user_unified),
+    cache: CacheService = Depends(get_cache),
+):
+    """
+    Clear all market data caches
+
+    Invalidates all cached quotes, bars, scanner results, etc.
+    Use this to force fresh data from Tradier API.
+    """
+    # Clear all market-related cache patterns
+    patterns_cleared = 0
+
+    patterns = [
+        "quote:*",
+        "bars:*",
+        "scanner:*",
+    ]
+
+    for pattern in patterns:
+        count = cache.clear_pattern(pattern)
+        patterns_cleared += count
+
+    logger.info(f"🧹 Cleared {patterns_cleared} market cache entries")
+
+    return {
+        "success": True,
+        "entries_cleared": patterns_cleared,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }

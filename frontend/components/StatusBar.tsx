@@ -71,16 +71,32 @@ export default function StatusBar() {
   };
 
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-lg border ${statusStyles[status]}`}>
-      <div className={`w-3 h-3 rounded-full ${pulseColors[status]} animate-pulse`} />
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      className={`flex items-center gap-3 p-3 rounded-lg border ${statusStyles[status]}`}
+    >
+      <div
+        className={`w-3 h-3 rounded-full ${pulseColors[status]} animate-pulse`}
+        aria-label={`Connection status: ${status === "healthy" ? "online" : status === "error" ? "offline" : "checking"}`}
+        role="img"
+      />
       <span className="text-sm font-medium flex-1">{message}</span>
       {status === "error" && (
-        <button onClick={fetchHealth} className="text-xs font-medium underline hover:no-underline">
+        <button
+          onClick={fetchHealth}
+          className="text-xs font-medium underline hover:no-underline"
+          aria-label="Retry connection to backend"
+          type="button"
+        >
           Retry
         </button>
       )}
       {lastCheck && status === "healthy" && (
-        <span className="text-xs opacity-60">Last: {lastCheck.toLocaleTimeString()}</span>
+        <span className="text-xs opacity-60" aria-label={`Last checked at ${lastCheck.toLocaleTimeString()}`}>
+          Last: {lastCheck.toLocaleTimeString()}
+        </span>
       )}
     </div>
   );

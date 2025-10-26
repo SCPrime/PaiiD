@@ -7,7 +7,18 @@ Defines schema for users, strategies, trades, performance tracking, and equity s
 
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 from ..db.session import Base
@@ -53,6 +64,12 @@ class User(Base):
     sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
     activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
 
+    # Composite indexes for common query patterns
+    __table_args__ = (
+        Index('idx_users_role_active', 'role', 'is_active'),
+        Index('idx_users_email_active', 'email', 'is_active'),
+    )
+
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, role={self.role})>"
 
@@ -84,6 +101,11 @@ class UserSession(Base):
 
     # Relationship
     user = relationship("User", back_populates="sessions")
+
+    # Composite indexes for session lookup
+    __table_args__ = (
+        Index('idx_sessions_user_expires', 'user_id', 'expires_at'),
+    )
 
     def __repr__(self):
         return f"<UserSession(id={self.id}, user_id={self.user_id}, expires={self.expires_at})>"
@@ -122,8 +144,18 @@ class ActivityLog(Base):
     # Relationship
     user = relationship("User", back_populates="activity_logs")
 
+    # Composite indexes for activity queries
+    __table_args__ = (
+        Index('idx_activity_user_timestamp', 'user_id', 'timestamp'),
+        Index('idx_activity_user_action', 'user_id', 'action_type'),
+        Index('idx_activity_action_timestamp', 'action_type', 'timestamp'),
+    )
+
     def __repr__(self):
-        return f"<ActivityLog(id={self.id}, user_id={self.user_id}, action={self.action_type}, timestamp={self.timestamp})>"
+        return (
+            f"<ActivityLog(id={self.id}, user_id={self.user_id}, "
+            f"action={self.action_type}, timestamp={self.timestamp})>"
+        )
 
 
 class Strategy(Base):
@@ -163,6 +195,13 @@ class Strategy(Base):
     # Relationships
     user = relationship("User", back_populates="strategies")
     trades = relationship("Trade", back_populates="strategy")
+
+    # Composite indexes for strategy queries
+    __table_args__ = (
+        Index('idx_strategies_user_active', 'user_id', 'is_active'),
+        Index('idx_strategies_user_type', 'user_id', 'strategy_type'),
+        Index('idx_strategies_type_active', 'strategy_type', 'is_active'),
+    )
 
     def __repr__(self):
         return f"<Strategy(id={self.id}, name='{self.name}', type='{self.strategy_type}')>"
@@ -213,8 +252,20 @@ class Trade(Base):
     user = relationship("User", back_populates="trades")
     strategy = relationship("Strategy")
 
+    # Composite indexes for trade queries
+    __table_args__ = (
+        Index('idx_trades_user_symbol', 'user_id', 'symbol'),
+        Index('idx_trades_user_created', 'user_id', 'created_at'),
+        Index('idx_trades_symbol_created', 'symbol', 'created_at'),
+        Index('idx_trades_user_status', 'user_id', 'status'),
+        Index('idx_trades_strategy_created', 'strategy_id', 'created_at'),
+    )
+
     def __repr__(self):
-        return f"<Trade(id={self.id}, symbol='{self.symbol}', side='{self.side}', qty={self.quantity}, status='{self.status}')>"
+        return (
+            f"<Trade(id={self.id}, symbol='{self.symbol}', side='{self.side}', "
+            f"qty={self.quantity}, status='{self.status}')>"
+        )
 
 
 class Performance(Base):
@@ -253,8 +304,16 @@ class Performance(Base):
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
+    # Composite indexes for performance queries
+    __table_args__ = (
+        Index('idx_performance_user_date', 'user_id', 'date'),
+    )
+
     def __repr__(self):
-        return f"<Performance(id={self.id}, date={self.date}, value=${self.portfolio_value:.2f}, pnl=${self.day_pnl:.2f})>"
+        return (
+            f"<Performance(id={self.id}, date={self.date}, "
+            f"value=${self.portfolio_value:.2f}, pnl=${self.day_pnl:.2f})>"
+        )
 
 
 class EquitySnapshot(Base):
@@ -275,6 +334,11 @@ class EquitySnapshot(Base):
     # Additional context (stored as JSON for flexibility)
     # Example: {"largest_position": "AAPL", "sector_breakdown": {...}}
     extra_data = Column(JSON, default=dict, nullable=False)
+
+    # Composite indexes for equity snapshot queries
+    __table_args__ = (
+        Index('idx_equity_user_timestamp', 'user_id', 'timestamp'),
+    )
 
     def __repr__(self):
         return (
@@ -306,8 +370,16 @@ class OrderTemplate(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     last_used_at = Column(DateTime, nullable=True)
 
+    # Composite indexes for template queries
+    __table_args__ = (
+        Index('idx_templates_user_symbol', 'user_id', 'symbol'),
+    )
+
     def __repr__(self):
-        return f"<OrderTemplate(id={self.id}, name='{self.name}', symbol='{self.symbol}', side='{self.side}')>"
+        return (
+            f"<OrderTemplate(id={self.id}, name='{self.name}', "
+            f"symbol='{self.symbol}', side='{self.side}')>"
+        )
 
 
 class AIRecommendation(Base):
@@ -358,5 +430,17 @@ class AIRecommendation(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     expires_at = Column(DateTime, nullable=True)  # Recommendation expiry
 
+    # Composite indexes for recommendation queries
+    __table_args__ = (
+        Index('idx_ai_rec_user_symbol', 'user_id', 'symbol'),
+        Index('idx_ai_rec_user_created', 'user_id', 'created_at'),
+        Index('idx_ai_rec_symbol_status', 'symbol', 'status'),
+        Index('idx_ai_rec_user_status', 'user_id', 'status'),
+    )
+
     def __repr__(self):
-        return f"<AIRecommendation(id={self.id}, symbol='{self.symbol}', type='{self.recommendation_type}', confidence={self.confidence_score:.1f}%, status='{self.status}')>"
+        return (
+            f"<AIRecommendation(id={self.id}, symbol='{self.symbol}', "
+            f"type='{self.recommendation_type}', "
+            f"confidence={self.confidence_score:.1f}%, status='{self.status}')>"
+        )

@@ -10,6 +10,24 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
+  // Skip ESLint during builds (run separately with npm run lint)
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  // Enable SWC minification (faster than Terser)
+  swcMinify: true,
+
+  // Optimize bundle size
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn']
+    } : false,
+  },
+
+  // Production optimizations
+  productionBrowserSourceMaps: false,
+
   // Image optimization configuration (Phase 2: Performance)
   images: {
     domains: ["cdn.jsdelivr.net", "s3.tradingview.com", "cdnjs.cloudflare.com", "localhost"],
@@ -17,6 +35,78 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60, // Cache images for at least 60 seconds
+  },
+
+  // Webpack optimizations
+  webpack: (config, { isServer, webpack }) => {
+    // Tree shaking for moment.js locale files (if used)
+    config.plugins.push(
+      new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /en/)
+    );
+
+    // Analyze bundle in production builds
+    if (!isServer && process.env.ANALYZE === 'true') {
+      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+      config.plugins.push(
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'static',
+          reportFilename: './analyze.html',
+          openAnalyzer: true,
+        })
+      );
+    }
+
+    // Optimize chunks
+    if (!isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          // Vendor chunk
+          vendor: {
+            name: 'vendor',
+            chunks: 'all',
+            test: /node_modules/,
+            priority: 20
+          },
+          // D3.js separate chunk (large library)
+          d3: {
+            name: 'd3',
+            test: /[\\/]node_modules[\\/]d3/,
+            priority: 30
+          },
+          // Chart libraries separate chunk
+          charts: {
+            name: 'charts',
+            test: /[\\/]node_modules[\\/](chart\.js|react-chartjs-2|recharts|lightweight-charts)/,
+            priority: 30
+          },
+          // Anthropic SDK separate chunk
+          anthropic: {
+            name: 'anthropic',
+            test: /[\\/]node_modules[\\/]@anthropic-ai/,
+            priority: 30
+          },
+          // Common components
+          common: {
+            name: 'common',
+            minChunks: 2,
+            priority: 10,
+            reuseExistingChunk: true,
+            enforce: true
+          }
+        }
+      };
+    }
+
+    return config;
+  },
+
+  // Experimental features
+  experimental: {
+    // optimizeCss: true, // Requires critters package - disabled for now
+    optimizePackageImports: ['d3', '@anthropic-ai/sdk', 'lodash', 'date-fns']
   },
 
   async headers() {

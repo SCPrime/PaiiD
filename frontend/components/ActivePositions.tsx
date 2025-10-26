@@ -14,6 +14,7 @@ import { alpaca, formatPosition } from "../lib/alpaca";
 import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
 import { Button, Card } from "./ui";
+import { SkeletonCard, ErrorState, EmptyState, Spinner } from "./ui/LoadingStates";
 // import { usePositionUpdates } from "../hooks/usePositionUpdates"; // DISABLED: Using REST API instead
 
 interface Position {
@@ -59,6 +60,7 @@ export default function ActivePositions() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [metrics, setMetrics] = useState<PortfolioMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"symbol" | "pl" | "plPercent" | "value">("symbol");
 
   // AI Analysis state
@@ -127,6 +129,7 @@ export default function ActivePositions() {
 
   const loadPositions = async () => {
     setLoading(true);
+    setError(null);
 
     try {
       // Fetch positions from Alpaca
@@ -139,6 +142,7 @@ export default function ActivePositions() {
       await calculateMetrics(formattedPositions);
     } catch (error) {
       logger.error("Failed to load positions", error);
+      setError(error instanceof Error ? error.message : "Failed to load positions");
       // Keep existing data if refresh fails
     } finally {
       setLoading(false);
@@ -393,16 +397,22 @@ export default function ActivePositions() {
         </div>
       </div>
 
-      {loading ? (
+      {/* Error State */}
+      {error && !loading && (
+        <ErrorState
+          message={error}
+          onRetry={loadPositions}
+          isRetrying={loading}
+        />
+      )}
+
+      {/* Loading State with Skeleton Screens */}
+      {loading && positions.length === 0 ? (
         <Card>
-          <div
-            style={{
-              textAlign: "center",
-              padding: theme.spacing.xl,
-              color: theme.colors.textMuted,
-            }}
-          >
-            Loading positions...
+          <div style={{ padding: theme.spacing.md }}>
+            <SkeletonCard height="100px" />
+            <SkeletonCard height="100px" />
+            <SkeletonCard height="100px" />
           </div>
         </Card>
       ) : (
@@ -496,18 +506,18 @@ export default function ActivePositions() {
           </Card>
 
           {/* Positions List */}
-          {positions.length === 0 ? (
-            <Card>
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: theme.spacing.xl,
-                  color: theme.colors.textMuted,
-                }}
-              >
-                No active positions
-              </div>
-            </Card>
+          {positions.length === 0 && !error ? (
+            <EmptyState
+              icon="📊"
+              title="No Active Positions"
+              description="You don't have any open positions yet. Execute a trade to get started!"
+              actionLabel="Execute Trade"
+              onAction={() => {
+                // Navigate to execute trade workflow
+                const event = new CustomEvent('workflow-select', { detail: { workflow: 'execute' } });
+                window.dispatchEvent(event);
+              }}
+            />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: theme.spacing.md }}>
               {sortPositions(positions).map((position) => (
@@ -702,16 +712,7 @@ export default function ActivePositions() {
                             fontSize: "13px",
                           }}
                         >
-                          <div
-                            style={{
-                              width: "16px",
-                              height: "16px",
-                              border: `2px solid ${theme.colors.border}`,
-                              borderTop: `2px solid ${theme.colors.primary}`,
-                              borderRadius: "50%",
-                              animation: "spin 1s linear infinite",
-                            }}
-                          />
+                          <Spinner size="small" color={theme.colors.primary} />
                           <span>Analyzing {position.symbol}...</span>
                         </div>
                       )}

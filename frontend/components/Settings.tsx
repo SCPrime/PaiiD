@@ -168,6 +168,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     buying_power: number;
   } | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -354,9 +355,32 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     }
   }, []);
 
+  // Validate Paper Account Balance
+  const validateBalance = (value: number): string | null => {
+    if (isNaN(value)) {
+      return 'Please enter a valid number';
+    }
+    if (value < 1000) {
+      return 'Minimum balance is $1,000';
+    }
+    if (value > 10000000) {
+      return 'Maximum balance is $10,000,000';
+    }
+    return null;
+  };
+
   // Update Paper Account Balance
   const updatePaperAccountBalance = async () => {
+    // Validate before sending
+    const error = validateBalance(paperAccountBalance);
+    if (error) {
+      setBalanceError(error);
+      toast.error(error);
+      return;
+    }
+
     setIsLoadingBalance(true);
+    setBalanceError(null);
 
     try {
       const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
@@ -376,11 +400,16 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         // Refresh account info after update
         await fetchAccountBalance();
       } else {
-        toast.error("Failed to update paper account balance");
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        const errorMessage = errorData.detail || 'Failed to update paper account balance';
+        setBalanceError(errorMessage);
+        toast.error(errorMessage);
       }
     } catch (error) {
       logger.error("Failed to update paper account balance", error);
-      toast.error("Failed to update paper account balance");
+      const errorMessage = 'Unable to connect to server. Please check your connection and try again.';
+      setBalanceError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoadingBalance(false);
     }
@@ -938,8 +967,19 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                         max="10000000"
                         step="1000"
                         value={paperAccountBalance}
-                        onChange={(e) => setPaperAccountBalance(Number(e.target.value))}
-                        className="flex-1 px-4 py-3 bg-slate-900/60 border border-slate-700/50 rounded-lg text-white font-semibold text-lg outline-none focus:ring-2 focus:ring-cyan-500/50"
+                        onChange={(e) => {
+                          const value = Number(e.target.value);
+                          setPaperAccountBalance(value);
+                          // Clear error when user starts typing
+                          if (balanceError) {
+                            setBalanceError(null);
+                          }
+                        }}
+                        className={`flex-1 px-4 py-3 bg-slate-900/60 border rounded-lg text-white font-semibold text-lg outline-none focus:ring-2 ${
+                          balanceError
+                            ? 'border-red-500/50 focus:ring-red-500/50'
+                            : 'border-slate-700/50 focus:ring-cyan-500/50'
+                        }`}
                         placeholder="100000"
                       />
                       <button
@@ -950,6 +990,12 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                         {isLoadingBalance ? "Updating..." : "Update"}
                       </button>
                     </div>
+                    {balanceError && (
+                      <div className="flex items-start gap-2 mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded text-xs text-red-400">
+                        <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
+                        <span>{balanceError}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-xs text-slate-400 mt-2">
                       <span>Min: $1,000</span>
                       <span>Default: $100,000</span>

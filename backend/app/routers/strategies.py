@@ -2,8 +2,8 @@
 Strategy API Routes
 Endpoints for managing trading strategies
 """
+# ruff: noqa: I001, E402 - sys.path modification must occur before import
 
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -23,22 +23,13 @@ from ..services.strategy_templates import (
     get_template_compatibility_score,
 )
 
-
-# Add backend root to path for strategies import
+# Add backend root to path for strategies import (must be before import)
 backend_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_root))
 
-from strategies.under4_multileg import (
-    Under4MultilegConfig,
-    create_under4_multileg_strategy,
-)
-
+from strategies.under4_multileg import Under4MultilegConfig
 
 router = APIRouter()
-
-# Strategy storage path
-STRATEGIES_DIR = Path("data/strategies")
-STRATEGIES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class StrategyConfigRequest(BaseModel):
@@ -117,9 +108,6 @@ async def save_strategy(
         "config": { ... }
     }
     """
-    user_id = str(current_user.id)  # Use authenticated user ID from JWT
-    strategy_file = STRATEGIES_DIR / f"{user_id}_{request.strategy_type}.json"
-
     try:
         # Validate config based on strategy type
         if request.strategy_type == "under4-multileg":
@@ -132,21 +120,21 @@ async def save_strategy(
                 detail=f"Unknown strategy type: {request.strategy_type}",
             )
 
-        # Save to file
-        with open(strategy_file, "w") as f:
-            json.dump(
-                {"strategy_type": request.strategy_type, "config": validated_config},
-                f,
-                indent=2,
-            )
+        # Use service to save strategy
+        from ..services.strategy_execution_service import get_strategy_execution_service
+        strategy_service = get_strategy_execution_service()
+        result = strategy_service.save_strategy(
+            user_id=current_user.id,
+            strategy_type=request.strategy_type,
+            config=validated_config,
+        )
 
-        return {
-            "success": True,
-            "message": f"Strategy '{request.strategy_type}' saved successfully",
-        }
+        return result
 
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/strategies/load/{strategy_type}")
@@ -158,31 +146,27 @@ async def load_strategy(
 
     GET /api/strategies/load/under4-multileg
     """
-    user_id = str(current_user.id)  # Use authenticated user ID from JWT
-    strategy_file = STRATEGIES_DIR / f"{user_id}_{strategy_type}.json"
-
-    if not strategy_file.exists():
-        # Return default configuration
-        if strategy_type == "under4-multileg":
-            default_config = Under4MultilegConfig()
-            return {
-                "strategy_type": strategy_type,
-                "config": default_config.model_dump(),
-                "is_default": True,
-            }
-        else:
-            raise HTTPException(
-                status_code=404, detail=f"Strategy '{strategy_type}' not found"
-            )
-
     try:
-        with open(strategy_file) as f:
-            data = json.load(f)
+        from ..services.strategy_execution_service import get_strategy_execution_service
+        strategy_service = get_strategy_execution_service()
 
-        return {**data, "is_default": False}
+        # Provide default config if strategy type is under4-multileg
+        default_config = None
+        if strategy_type == "under4-multileg":
+            default_config = Under4MultilegConfig().model_dump()
 
+        result = strategy_service.load_strategy(
+            user_id=current_user.id,
+            strategy_type=strategy_type,
+            default_config=default_config,
+        )
+
+        return result
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/strategies/list")
@@ -192,28 +176,15 @@ async def list_strategies(current_user: User = Depends(get_current_user_unified)
 
     GET /api/strategies/list
     """
-    user_id = str(current_user.id)  # Use authenticated user ID from JWT
+    try:
+        from ..services.strategy_execution_service import get_strategy_execution_service
+        strategy_service = get_strategy_execution_service()
 
-    strategies = []
+        strategies = strategy_service.list_strategies(user_id=current_user.id)
+        return {"strategies": strategies}
 
-    # Check for saved strategies
-    for strategy_file in STRATEGIES_DIR.glob(f"{user_id}_*.json"):
-        try:
-            with open(strategy_file) as f:
-                data = json.load(f)
-            strategies.append(
-                {"strategy_type": data["strategy_type"], "has_config": True}
-            )
-        except (json.JSONDecodeError, KeyError, OSError):
-            continue
-
-    # Add available strategies that haven't been configured
-    available_strategies = ["under4-multileg", "custom"]
-    for strategy_type in available_strategies:
-        if not any(s["strategy_type"] == strategy_type for s in strategies):
-            strategies.append({"strategy_type": strategy_type, "has_config": False})
-
-    return {"strategies": strategies}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/strategies/run")
@@ -229,67 +200,36 @@ async def run_strategy(
         "dry_run": true
     }
     """
-    user_id = str(current_user.id)  # Use authenticated user ID from JWT
-
     try:
-        # Load strategy configuration
-        strategy_file = STRATEGIES_DIR / f"{user_id}_{request.strategy_type}.json"
+        from ..services.strategy_execution_service import get_strategy_execution_service
+        strategy_service = get_strategy_execution_service()
 
-        if strategy_file.exists():
-            with open(strategy_file) as f:
-                data = json.load(f)
-                config_dict = data["config"]
-        else:
-            config_dict = None
-
-        # Create strategy instance
+        # Create strategy instance for validation (if needed)
         if request.strategy_type == "under4-multileg":
-            create_under4_multileg_strategy(config_dict)
+            # This is just for validation, the service handles execution
+            pass
         else:
             raise HTTPException(
                 status_code=400,
                 detail=f"Unknown strategy type: {request.strategy_type}",
             )
 
-        # PHASE 1: Get Alpaca client from user credentials (stored in settings)
-        # For now, return mock results
-
         if request.dry_run:
-            return {
-                "success": True,
-                "dry_run": True,
-                "message": "Strategy dry run completed",
-                "results": {
-                    "candidates": ["SNDL", "NOK", "SOFI", "PLUG"],
-                    "proposals": [
-                        {
-                            "type": "BUY_CALL",
-                            "symbol": "SNDL",
-                            "strike": 3.50,
-                            "expiry": "2025-11-15",
-                            "delta": 0.60,
-                            "qty": 3,
-                        },
-                        {
-                            "type": "SELL_PUT",
-                            "symbol": "NOK",
-                            "strike": 3.00,
-                            "expiry": "2025-11-15",
-                            "delta": 0.20,
-                            "qty": 2,
-                        },
-                    ],
-                    "approved_trades": 2,
-                },
-            }
+            result = strategy_service.execute_strategy_dry_run(
+                user_id=current_user.id,
+                strategy_type=request.strategy_type,
+            )
+            return result
         else:
             # PHASE 1: Implement actual execution via order_execution.py
             raise HTTPException(
                 status_code=501, detail="Live execution not yet implemented"
             )
 
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.delete("/strategies/{strategy_type}")
@@ -301,22 +241,21 @@ async def delete_strategy(
 
     DELETE /api/strategies/under4-multileg
     """
-    user_id = str(current_user.id)  # Use authenticated user ID from JWT
-    strategy_file = STRATEGIES_DIR / f"{user_id}_{strategy_type}.json"
+    try:
+        from ..services.strategy_execution_service import get_strategy_execution_service
+        strategy_service = get_strategy_execution_service()
 
-    if not strategy_file.exists():
-        raise HTTPException(
-            status_code=404, detail=f"Strategy '{strategy_type}' not found"
+        result = strategy_service.delete_strategy(
+            user_id=current_user.id,
+            strategy_type=strategy_type,
         )
 
-    try:
-        strategy_file.unlink()
-        return {
-            "success": True,
-            "message": f"Strategy '{strategy_type}' deleted successfully",
-        }
+        return result
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ========================================
@@ -390,7 +329,7 @@ async def get_strategy_templates(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch strategy templates: {e!s}"
-        )
+        ) from e
 
 
 @router.get("/strategies/templates/{template_id}")
@@ -435,9 +374,9 @@ async def get_strategy_template(
         }
 
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch template: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch template: {e!s}") from e
 
 
 class CloneTemplateRequest(BaseModel):
@@ -543,6 +482,6 @@ async def clone_strategy_template(
         }
 
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to clone template: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Failed to clone template: {e!s}") from e

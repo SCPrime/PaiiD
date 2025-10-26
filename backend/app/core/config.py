@@ -140,6 +140,50 @@ class Settings(BaseModel):
         description="Use test fixtures for deterministic testing"
     )
 
+    # =====================================
+    # CACHE TTL CONFIGURATION (in seconds)
+    # =====================================
+
+    # Real-time market data (very short TTL for live updates)
+    CACHE_TTL_QUOTE: int = Field(
+        default_factory=lambda: int(os.getenv("CACHE_TTL_QUOTE", "5")),
+        description="Quote cache TTL in seconds (default: 5s for real-time data)"
+    )
+
+    # Options data (moderate TTL, updated less frequently)
+    CACHE_TTL_OPTIONS_CHAIN: int = Field(
+        default_factory=lambda: int(os.getenv("CACHE_TTL_OPTIONS_CHAIN", "60")),
+        description="Options chain cache TTL in seconds (default: 60s)"
+    )
+    CACHE_TTL_OPTIONS_EXPIRY: int = Field(
+        default_factory=lambda: int(os.getenv("CACHE_TTL_OPTIONS_EXPIRY", "300")),
+        description="Options expiration dates cache TTL in seconds (default: 5 minutes)"
+    )
+
+    # Historical data (long TTL, static past data)
+    CACHE_TTL_HISTORICAL_BARS: int = Field(
+        default_factory=lambda: int(os.getenv("CACHE_TTL_HISTORICAL_BARS", "3600")),
+        description="Historical bars cache TTL in seconds (default: 1 hour)"
+    )
+
+    # News articles (moderate TTL)
+    CACHE_TTL_NEWS: int = Field(
+        default_factory=lambda: int(os.getenv("CACHE_TTL_NEWS", "300")),
+        description="News articles cache TTL in seconds (default: 5 minutes)"
+    )
+
+    # Company/static data (long TTL, rarely changes)
+    CACHE_TTL_COMPANY_INFO: int = Field(
+        default_factory=lambda: int(os.getenv("CACHE_TTL_COMPANY_INFO", "86400")),
+        description="Company info cache TTL in seconds (default: 24 hours)"
+    )
+
+    # Scanner results (moderate TTL)
+    CACHE_TTL_SCANNER: int = Field(
+        default_factory=lambda: int(os.getenv("CACHE_TTL_SCANNER", "180")),
+        description="Market scanner cache TTL in seconds (default: 3 minutes)"
+    )
+
     @field_validator("API_TOKEN")
     @classmethod
     def validate_api_token(cls, v: str) -> str:

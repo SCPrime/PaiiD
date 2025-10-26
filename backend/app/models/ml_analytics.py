@@ -9,7 +9,7 @@ Phase 1E: Production Hardening - Database Schema
 
 from datetime import datetime
 
-from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from ..db.session import Base
@@ -24,7 +24,8 @@ class MLPredictionHistory(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
 
     # Model identification
-    model_id = Column(String(100), nullable=False, index=True)  # regime_detector, strategy_selector, etc.
+    # Examples: regime_detector, strategy_selector, etc.
+    model_id = Column(String(100), nullable=False, index=True)
     model_version = Column(String(50), nullable=False)  # 1.0.0, 1.1.0, etc.
 
     # Input parameters (stored as JSON for flexibility)
@@ -62,8 +63,19 @@ class MLPredictionHistory(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     validated_at = Column(DateTime, nullable=True)  # When accuracy was confirmed
 
+    # Composite indexes for ML prediction queries
+    __table_args__ = (
+        Index('idx_ml_pred_model_symbol_date', 'model_id', 'symbol', 'created_at'),
+        Index('idx_ml_pred_user_model', 'user_id', 'model_id'),
+        Index('idx_ml_pred_symbol_created', 'symbol', 'created_at'),
+        Index('idx_ml_pred_model_hash', 'model_id', 'input_hash'),  # For cache lookups
+    )
+
     def __repr__(self):
-        return f"<MLPredictionHistory(id={self.id}, model='{self.model_id}', symbol='{self.symbol}', confidence={self.confidence_score:.2f})>"
+        return (
+            f"<MLPredictionHistory(id={self.id}, model='{self.model_id}', "
+            f"symbol='{self.symbol}', confidence={self.confidence_score:.2f})>"
+        )
 
 
 class MLModelMetrics(Base):
@@ -84,7 +96,8 @@ class MLModelMetrics(Base):
 
     # Confidence calibration
     avg_confidence = Column(Float, nullable=True)
-    confidence_accuracy_correlation = Column(Float, nullable=True)  # How well confidence predicts accuracy
+    # How well confidence predicts accuracy
+    confidence_accuracy_correlation = Column(Float, nullable=True)
 
     # Performance by regime/category (stored as JSON)
     # Example: {
@@ -118,12 +131,23 @@ class MLModelMetrics(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, index=True)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, index=True
+    )
     last_trained_at = Column(DateTime, nullable=True)
     last_evaluated_at = Column(DateTime, nullable=True)
 
+    # Composite indexes for model metrics queries
+    __table_args__ = (
+        Index('idx_ml_metrics_model_version', 'model_id', 'model_version'),
+        Index('idx_ml_metrics_model_updated', 'model_id', 'updated_at'),
+    )
+
     def __repr__(self):
-        return f"<MLModelMetrics(model='{self.model_id}', version='{self.model_version}', accuracy={self.accuracy:.2f}, predictions={self.total_predictions})>"
+        return (
+            f"<MLModelMetrics(model='{self.model_id}', version='{self.model_version}', "
+            f"accuracy={self.accuracy:.2f}, predictions={self.total_predictions})>"
+        )
 
 
 class MLTrainingJob(Base):
@@ -175,8 +199,18 @@ class MLTrainingJob(Base):
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
 
+    # Composite indexes for training job queries
+    __table_args__ = (
+        Index('idx_ml_jobs_user_model', 'user_id', 'model_id'),
+        Index('idx_ml_jobs_model_status', 'model_id', 'status'),
+        Index('idx_ml_jobs_user_created', 'user_id', 'created_at'),
+    )
+
     def __repr__(self):
-        return f"<MLTrainingJob(id={self.id}, model='{self.model_id}', status='{self.status}', progress={self.progress_percent:.1f}%)>"
+        return (
+            f"<MLTrainingJob(id={self.id}, model='{self.model_id}', "
+            f"status='{self.status}', progress={self.progress_percent:.1f}%)>"
+        )
 
 
 class BacktestResult(Base):
@@ -248,8 +282,20 @@ class BacktestResult(Base):
     # Relationships
     strategy = relationship("Strategy")
 
+    # Composite indexes for backtest queries
+    __table_args__ = (
+        Index('idx_backtest_user_symbol', 'user_id', 'symbol', 'created_at'),
+        Index('idx_backtest_strategy_created', 'strategy_id', 'created_at'),
+        Index('idx_backtest_symbol_dates', 'symbol', 'start_date', 'end_date'),
+        Index('idx_backtest_user_status', 'user_id', 'status'),
+    )
+
     def __repr__(self):
-        return f"<BacktestResult(id={self.id}, symbol='{self.symbol}', return={self.total_return:.2f}%, sharpe={self.sharpe_ratio:.2f}, trades={self.total_trades})>"
+        return (
+            f"<BacktestResult(id={self.id}, symbol='{self.symbol}', "
+            f"return={self.total_return:.2f}%, sharpe={self.sharpe_ratio:.2f}, "
+            f"trades={self.total_trades})>"
+        )
 
 
 class FeatureStore(Base):
@@ -279,23 +325,23 @@ class FeatureStore(Base):
     feature_hash = Column(String(32), nullable=False, index=True)
 
     # Metadata
-    feature_version = Column(String(20), default="1.0", nullable=False)  # Feature engineering version
+    # Feature engineering version
+    feature_version = Column(String(20), default="1.0", nullable=False)
     computation_time_ms = Column(Float, nullable=True)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime, nullable=True, index=True)  # TTL for cache invalidation
 
+    # Composite indexes for feature store queries
+    __table_args__ = (
+        Index('idx_feature_store_symbol_date_tf', 'symbol', 'date', 'timeframe'),
+        Index('idx_feature_store_symbol_hash', 'symbol', 'feature_hash'),  # For cache lookups
+        Index('idx_feature_store_expires', 'expires_at'),  # For cleanup queries
+    )
+
     def __repr__(self):
-        return f"<FeatureStore(symbol='{self.symbol}', date={self.date}, timeframe='{self.timeframe}')>"
-
-
-# Indexes for performance optimization
-# SQLAlchemy automatically creates single-column indexes for columns with index=True
-# Add composite indexes for common query patterns
-
-# Example composite indexes (run these via Alembic migration):
-# CREATE INDEX idx_ml_pred_model_symbol_date ON ml_prediction_history(model_id, symbol, created_at);
-# CREATE INDEX idx_ml_pred_user_model ON ml_prediction_history(user_id, model_id);
-# CREATE INDEX idx_backtest_user_symbol ON backtest_results(user_id, symbol, created_at);
-# CREATE INDEX idx_feature_store_symbol_date ON feature_store(symbol, date, timeframe);
+        return (
+            f"<FeatureStore(symbol='{self.symbol}', date={self.date}, "
+            f"timeframe='{self.timeframe}')>"
+        )

@@ -139,14 +139,32 @@ export function createUser(
 }
 
 /**
- * Get current user from localStorage
+ * Get current user from localStorage with type validation
+ * @returns {User | null} User object if valid, null otherwise
  */
 export function getCurrentUser(): User | null {
   try {
     const userData = localStorage.getItem(USER_STORAGE_KEY);
-    if (userData) {
-      return JSON.parse(userData);
+    if (!userData) return null;
+
+    const parsed: unknown = JSON.parse(userData);
+
+    // Runtime type validation
+    if (!parsed || typeof parsed !== 'object') return null;
+    const obj = parsed as Record<string, unknown>;
+
+    if (
+      typeof obj.userId !== 'string' ||
+      typeof obj.displayName !== 'string' ||
+      typeof obj.createdAt !== 'string' ||
+      typeof obj.lastActive !== 'string' ||
+      typeof obj.sessionCount !== 'number'
+    ) {
+      logger.warn('Invalid user data in localStorage');
+      return null;
     }
+
+    return parsed as User;
   } catch (error) {
     logger.error("Failed to load user", error);
   }
@@ -227,14 +245,33 @@ export function startSession(): Session {
 }
 
 /**
- * Get current session
+ * Get current session with type validation
+ * @returns {Session | null} Session object if valid, null otherwise
  */
 export function getCurrentSession(): Session | null {
   try {
     const sessionData = sessionStorage.getItem(SESSION_STORAGE_KEY);
-    if (sessionData) {
-      return JSON.parse(sessionData);
+    if (!sessionData) return null;
+
+    const parsed: unknown = JSON.parse(sessionData);
+
+    // Runtime type validation
+    if (!parsed || typeof parsed !== 'object') return null;
+    const obj = parsed as Record<string, unknown>;
+
+    if (
+      typeof obj.sessionId !== 'string' ||
+      typeof obj.userId !== 'string' ||
+      typeof obj.startedAt !== 'string' ||
+      typeof obj.lastActivity !== 'string' ||
+      typeof obj.pageViews !== 'number' ||
+      typeof obj.actionsCount !== 'number'
+    ) {
+      logger.warn('Invalid session data in sessionStorage');
+      return null;
     }
+
+    return parsed as Session;
   } catch (error) {
     logger.error("Failed to load session", error);
   }

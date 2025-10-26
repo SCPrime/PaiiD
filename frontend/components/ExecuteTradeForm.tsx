@@ -21,6 +21,7 @@ import { addOrderToHistory } from "./OrderHistory";
 import StockLookup from "./StockLookup";
 import RiskCalculator from "./trading/RiskCalculator";
 import { Button, Card } from "./ui";
+import { Spinner } from "./ui/LoadingStates";
 
 interface Order {
   symbol: string;
@@ -1000,14 +1001,7 @@ export default function ExecuteTradeForm() {
                         fontSize: "14px",
                       }}
                     >
-                      <div
-                        style={{
-                          animation: "spin 1s linear infinite",
-                          display: "inline-block",
-                        }}
-                      >
-                        ⏳
-                      </div>
+                      <Spinner size="small" color={theme.colors.primary} />
                       <span>Analyzing {symbol.toUpperCase()} with PaπD AI...</span>
                     </div>
                   )}

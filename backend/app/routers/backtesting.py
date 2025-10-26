@@ -5,7 +5,7 @@ Endpoints for running strategy backtests and retrieving results.
 """
 
 import logging
-from typing import Any
+from typing import Any, ClassVar
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -14,6 +14,7 @@ from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.backtesting_engine import BacktestingEngine, StrategyRules
 from ..services.historical_data import HistoricalDataService
+from ..utils.query_profiler import profile_endpoint
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ class BacktestRequest(BaseModel):
     max_positions: int = Field(1, ge=1, le=10, description="Max concurrent positions")
 
     class Config:
-        json_schema_extra = {
+        json_schema_extra: ClassVar[dict[str, Any]] = {
             "example": {
                 "symbol": "AAPL",
                 "start_date": "2024-01-01",
@@ -64,6 +65,7 @@ class BacktestResponse(BaseModel):
 
 
 @router.post("/run", response_model=BacktestResponse)
+@profile_endpoint(threshold_ms=2000)  # Backtests can take longer
 async def run_backtest(
     request: BacktestRequest,
     current_user: User = Depends(get_current_user_unified),
@@ -162,7 +164,7 @@ async def run_backtest(
                 "start_date": result.start_date,
                 "end_date": result.end_date,
             },
-            "equity_curve": result.equity_curve,
+            "equity_curve": result.equity_curve[:1000],  # Limit to 1000 most recent points
             "trade_history": result.trade_history[:100],  # Limit to 100 most recent trades
         }
 
@@ -174,13 +176,14 @@ async def run_backtest(
 
     except ValueError as e:
         logger.error(f"Validation error: {e!s}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Backtest execution error: {e!s}", exc_info=True)
         return BacktestResponse(success=False, error=f"Backtest failed: {e!s}")
 
 
 @router.get("/quick-test")
+@profile_endpoint(threshold_ms=2000)
 async def quick_backtest(
     symbol: str = Query("SPY", description="Symbol to test"),
     months_back: int = Query(6, ge=1, le=60, description="Months of history"),
@@ -216,7 +219,7 @@ async def quick_backtest(
 
     except Exception as e:
         logger.error(f"Quick backtest error: {e!s}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/strategy-templates")

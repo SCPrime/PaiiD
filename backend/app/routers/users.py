@@ -11,10 +11,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
+from ..core.logging_utils import get_secure_logger
 from ..core.unified_auth import get_current_user_unified
-from ..core.logging_utils import get_secure_logger, format_user_for_logging
 from ..db.session import get_db
 from ..models.database import User
+from ..services.user_management_service import get_user_management_service
 
 
 logger = get_secure_logger(__name__)
@@ -65,33 +66,20 @@ def get_user_preferences(
     Returns current user preferences or default values if not set.
     """
     try:
-        # JWT authentication now provides actual user object with user.id
-        user = db.query(User).filter(User.id == current_user.id).first()
-
-        if not user:
-            logger.error(
-                "User not found in database",
-                user_id=current_user.id
-            )
-            raise HTTPException(status_code=404, detail="User not found")
-
-        preferences = user.preferences or {}
-
-        logger.debug(
-            "Retrieved user preferences",
-            user=format_user_for_logging(user)
-        )
+        user_service = get_user_management_service(db)
+        prefs = user_service.get_user_preferences(current_user.id)
 
         return UserPreferencesResponse(
-            risk_tolerance=preferences.get("risk_tolerance", 50),
-            default_position_size=preferences.get("default_position_size"),
-            watchlist=preferences.get("watchlist", []),
-            notifications_enabled=preferences.get("notifications_enabled", True),
-            preferences=preferences,
+            risk_tolerance=prefs.risk_tolerance,
+            default_position_size=prefs.default_position_size,
+            watchlist=prefs.watchlist,
+            notifications_enabled=prefs.notifications_enabled,
+            preferences=prefs.preferences,
         )
 
-    except HTTPException:
-        raise
+    except ValueError as e:
+        logger.error("User not found", user_id=current_user.id, error_msg=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         logger.error(
             "Failed to fetch user preferences",
@@ -116,68 +104,22 @@ def update_user_preferences(
     Validates risk_tolerance is between 0-100.
     """
     try:
-        # Get authenticated user from JWT
-        user = db.query(User).filter(User.id == current_user.id).first()
+        user_service = get_user_management_service(db)
+        update_data = updates.model_dump(exclude_unset=True)
 
-        if not user:
-            logger.error(
-                "User not found in database",
-                user_id=current_user.id
-            )
-            raise HTTPException(status_code=404, detail="User not found")
-
-        # Get current preferences
-        preferences = user.preferences or {}
-
-        # Update only provided fields
-        update_data = updates.dict(exclude_unset=True)
-
-        # Apply backend safeguards for risk_tolerance
-        if "risk_tolerance" in update_data:
-            risk_value = update_data["risk_tolerance"]
-
-            # Safeguard: Warn if ultra-aggressive (>90)
-            if risk_value > 90:
-                logger.warning(
-                    "User setting very high risk tolerance",
-                    user=format_user_for_logging(user),
-                    risk_tolerance=risk_value
-                )
-
-            # Safeguard: Ensure value is in valid range
-            if risk_value < 0 or risk_value > 100:
-                raise HTTPException(
-                    status_code=400, detail="risk_tolerance must be between 0 and 100"
-                )
-
-            preferences["risk_tolerance"] = risk_value
-
-        # Update other preferences
-        for key, value in update_data.items():
-            if key != "risk_tolerance":
-                preferences[key] = value
-
-        # Save to database
-        user.preferences = preferences
-        db.commit()
-        db.refresh(user)
-
-        logger.info(
-            "Updated user preferences",
-            user=format_user_for_logging(user),
-            updated_fields=list(update_data.keys())
-        )
+        prefs = user_service.update_user_preferences(current_user.id, update_data)
 
         return UserPreferencesResponse(
-            risk_tolerance=preferences.get("risk_tolerance", 50),
-            default_position_size=preferences.get("default_position_size"),
-            watchlist=preferences.get("watchlist", []),
-            notifications_enabled=preferences.get("notifications_enabled", True),
-            preferences=preferences,
+            risk_tolerance=prefs.risk_tolerance,
+            default_position_size=prefs.default_position_size,
+            watchlist=prefs.watchlist,
+            notifications_enabled=prefs.notifications_enabled,
+            preferences=prefs.preferences,
         )
 
-    except HTTPException:
-        raise
+    except ValueError as e:
+        logger.error("Invalid update request", user_id=current_user.id, error_msg=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(
             "Failed to update user preferences",
@@ -187,42 +129,6 @@ def update_user_preferences(
         raise HTTPException(
             status_code=500, detail=f"Failed to update user preferences: {e!s}"
         ) from e
-
-
-def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
-    """
-    Calculate risk-based trading limits
-
-    Args:
-        risk_tolerance: User's risk tolerance (0-100)
-
-    Returns:
-        Dictionary with max_position_size_percent, max_positions, and risk_category
-    """
-    if risk_tolerance <= 33:
-        # Conservative
-        return {
-            "risk_category": "Conservative",
-            "max_position_size_percent": 5.0,  # Max 5% per trade
-            "max_positions": 3,  # Max 3 concurrent positions
-            "description": "Lower risk, smaller position sizes",
-        }
-    elif risk_tolerance <= 66:
-        # Moderate
-        return {
-            "risk_category": "Moderate",
-            "max_position_size_percent": 10.0,  # Max 10% per trade
-            "max_positions": 5,  # Max 5 concurrent positions
-            "description": "Balanced risk and reward",
-        }
-    else:
-        # Aggressive
-        return {
-            "risk_category": "Aggressive",
-            "max_position_size_percent": 20.0,  # Max 20% per trade
-            "max_positions": 10,  # Max 10 concurrent positions
-            "description": "Higher risk, larger position sizes",
-        }
 
 
 @router.get("/users/risk-limits")
@@ -236,29 +142,13 @@ def get_user_risk_limits(
     Returns position sizing limits and maximum concurrent positions.
     """
     try:
-        user = db.query(User).filter(User.id == current_user.id).first()
+        user_service = get_user_management_service(db)
+        limits = user_service.get_user_risk_limits(current_user.id)
+        return limits
 
-        if not user:
-            logger.error(
-                "User not found in database",
-                user_id=current_user.id
-            )
-            raise HTTPException(status_code=404, detail="User not found")
-
-        preferences = user.preferences or {}
-        risk_tolerance = preferences.get("risk_tolerance", 50)
-
-        limits = get_risk_limits(risk_tolerance)
-
-        logger.debug(
-            "Calculated risk limits",
-            user=format_user_for_logging(user),
-            risk_tolerance=risk_tolerance,
-            risk_category=limits.get("risk_category")
-        )
-
-        return {"risk_tolerance": risk_tolerance, **limits}
-
+    except ValueError as e:
+        logger.error("User not found", user_id=current_user.id, error_msg=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         logger.error(
             "Failed to calculate risk limits",

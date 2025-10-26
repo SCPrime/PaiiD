@@ -3,11 +3,106 @@
 
 import { logger } from '@/lib/logger';
 
+// Error handling types
+export interface AIError {
+  type: 'network' | 'auth' | 'validation' | 'server' | 'rate_limit' | 'unknown';
+  message: string;
+  userMessage: string;
+  statusCode?: number;
+  retryable: boolean;
+}
+
+/**
+ * Convert AI API errors to user-friendly messages
+ */
+export function handleAIError(error: unknown): AIError {
+  // Network errors (fetch failed, timeout, offline)
+  if (error instanceof TypeError && error.message.includes('fetch')) {
+    return {
+      type: 'network',
+      message: error.message,
+      userMessage: 'Unable to connect to the AI service. Please check your internet connection and try again.',
+      retryable: true
+    };
+  }
+
+  // HTTP errors from Response object
+  if (error && typeof error === 'object' && 'status' in error) {
+    const response = error as Response;
+    const statusCode = response.status;
+
+    if (statusCode === 401 || statusCode === 403) {
+      return {
+        type: 'auth',
+        message: `AI authentication failed: ${statusCode}`,
+        userMessage: 'AI service authentication failed. Please check your API key configuration.',
+        statusCode,
+        retryable: false
+      };
+    }
+
+    if (statusCode === 400 || statusCode === 422) {
+      return {
+        type: 'validation',
+        message: `AI validation error: ${statusCode}`,
+        userMessage: 'The AI request format is invalid. Please try a different prompt.',
+        statusCode,
+        retryable: false
+      };
+    }
+
+    if (statusCode === 429) {
+      return {
+        type: 'rate_limit',
+        message: `AI rate limit exceeded: ${statusCode}`,
+        userMessage: 'Too many AI requests. Please wait a moment before trying again.',
+        statusCode,
+        retryable: true
+      };
+    }
+
+    if (statusCode >= 500) {
+      return {
+        type: 'server',
+        message: `AI server error: ${statusCode}`,
+        userMessage: 'The AI service is temporarily unavailable. Please try again in a few moments.',
+        statusCode,
+        retryable: true
+      };
+    }
+  }
+
+  // Unknown errors
+  return {
+    type: 'unknown',
+    message: error instanceof Error ? error.message : String(error),
+    userMessage: 'An unexpected error occurred with the AI service. Please try again.',
+    retryable: true
+  };
+}
+
+/**
+ * AI conversation message structure
+ * @interface AIMessage
+ * @property {("user" | "assistant")} role - The role of the message sender
+ * @property {string} content - The message content
+ */
 export interface AIMessage {
   role: "user" | "assistant";
   content: string;
 }
 
+/**
+ * User trading preferences extracted from onboarding or manual setup
+ * @interface UserPreferences
+ * @property {("conservative" | "moderate" | "aggressive")} [riskTolerance] - User's risk tolerance level
+ * @property {("day" | "swing" | "long-term")} [tradingStyle] - Preferred trading timeframe
+ * @property {string[]} [preferredAssets] - List of preferred asset types (stocks, options, crypto)
+ * @property {string[]} [goals] - Investment goals (income, growth, preservation)
+ * @property {Object} [investmentAmount] - Investment capital configuration
+ * @property {string[]} [instruments] - Trading instruments user wants to trade
+ * @property {string[]} [watchlist] - List of symbols to watch
+ */
 export interface UserPreferences {
   riskTolerance?: "conservative" | "moderate" | "aggressive";
   tradingStyle?: "day" | "swing" | "long-term";
@@ -99,7 +194,15 @@ export class ClaudeAI {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ detail: "Unknown error" }));
-        throw new Error(`Backend error: ${response.status} - ${errorData.detail}`);
+        const aiError = handleAIError(response);
+
+        // Enhance error with server message if available
+        if (errorData.detail) {
+          aiError.message = errorData.detail;
+        }
+
+        logger.error(`[aiAdapter] AI API error: ${aiError.message}`, { statusCode: response.status });
+        throw aiError;
       }
 
       const data = await response.json();
@@ -121,8 +224,15 @@ export class ClaudeAI {
 
       throw new Error("Invalid response format from backend");
     } catch (error) {
-      logger.error("[aiAdapter] Error", error);
-      throw error;
+      // If it's already an AIError, re-throw it
+      if (error && typeof error === 'object' && 'type' in error) {
+        throw error;
+      }
+
+      // Otherwise, convert to AIError
+      const aiError = handleAIError(error);
+      logger.error("[aiAdapter] Request failed", { error: aiError.message });
+      throw aiError;
     }
   }
 
@@ -159,7 +269,16 @@ Please provide a structured morning routine with specific times and activities. 
   }
 
   /**
-   * Extract user trading preferences from natural language
+   * Extract user trading preferences from natural language input
+   * Uses AI to parse conversational input and extract structured trading preferences
+   * @param {string} userInput - Natural language description of trading preferences
+   * @returns {Promise<ExtractedPreferences>} Structured preferences object
+   * @throws {Error} If AI response is invalid or cannot be parsed
+   * @example
+   * const prefs = await claudeAI.extractSetupPreferences(
+   *   "I'm a conservative investor interested in long-term growth stocks"
+   * );
+   * // Returns: { riskTolerance: "conservative", tradingStyle: "long-term", ... }
    */
   async extractSetupPreferences(userInput: string): Promise<{
     riskTolerance: "conservative" | "moderate" | "aggressive";
@@ -198,7 +317,16 @@ Do not include any text outside the JSON object.`;
   }
 
   /**
-   * Generate trading strategy from natural language description
+   * Generate a complete trading strategy from natural language description
+   * Uses AI to create structured strategy with entry/exit rules and risk management
+   * @param {string} description - Natural language strategy description
+   * @returns {Promise<GeneratedStrategy>} Structured trading strategy
+   * @throws {Error} If AI response is invalid or cannot be parsed
+   * @example
+   * const strategy = await claudeAI.generateStrategy(
+   *   "Buy when RSI is oversold and price crosses above 50-day MA"
+   * );
+   * // Returns: { name: "RSI MA Crossover", entry: [...], exit: [...], ... }
    */
   async generateStrategy(description: string): Promise<{
     name: string;

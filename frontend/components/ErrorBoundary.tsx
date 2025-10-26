@@ -11,6 +11,7 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  errorCount: number;
 }
 
 /**
@@ -31,6 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      errorCount: 0,
     };
   }
 
@@ -47,11 +49,12 @@ export class ErrorBoundary extends Component<Props, State> {
     logger.error("[ErrorBoundary] Caught error", error);
     logger.error("[ErrorBoundary] Error info", errorInfo);
 
-    // Update state with error details
-    this.setState({
+    // Update state with error details and increment error count
+    this.setState((prev) => ({
       error,
       errorInfo,
-    });
+      errorCount: prev.errorCount + 1,
+    }));
 
     // Send to Sentry if available
     try {
@@ -72,7 +75,7 @@ export class ErrorBoundary extends Component<Props, State> {
           // Sentry not available, skip
         });
     } catch (sentryError) {
-      logger.warn("[ErrorBoundary] Failed to send to Sentry", sentryError);
+      logger.warn("[ErrorBoundary] Failed to send to Sentry", sentryError instanceof Error ? sentryError : undefined);
     }
 
     // Call optional error handler prop
@@ -86,7 +89,16 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      // Keep errorCount to track recurring errors
     });
+  };
+
+  handleReload = (): void => {
+    window.location.reload();
+  };
+
+  handleGoBack = (): void => {
+    window.history.back();
   };
 
   render(): ReactNode {
@@ -100,180 +112,149 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div
           style={{
-            padding: "40px",
-            textAlign: "center",
-            background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
-            minHeight: "100vh",
+            position: "fixed",
+            inset: 0,
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            color: "#fff",
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(10px)",
+            padding: "24px",
+            zIndex: 9999,
           }}
         >
           <div
             style={{
-              background: "rgba(239, 68, 68, 0.1)",
-              border: "2px solid rgba(239, 68, 68, 0.3)",
+              maxWidth: "600px",
+              background: "rgba(30, 41, 59, 0.95)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(71, 85, 105, 0.5)",
               borderRadius: "16px",
               padding: "32px",
-              maxWidth: "600px",
-              backdropFilter: "blur(10px)",
+              textAlign: "center",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
             }}
           >
-            <div style={{ fontSize: "48px", marginBottom: "16px" }}>⚠️</div>
+            <div style={{ fontSize: "64px", marginBottom: "16px" }}>⚠️</div>
+
             <h1
               style={{
-                fontSize: "28px",
-                fontWeight: "700",
-                marginBottom: "16px",
                 color: "#ef4444",
+                fontSize: "24px",
+                marginBottom: "16px",
+                fontWeight: "bold",
               }}
             >
               Something Went Wrong
             </h1>
+
             <p
               style={{
-                fontSize: "16px",
                 color: "#cbd5e1",
                 marginBottom: "24px",
                 lineHeight: "1.6",
+                fontSize: "15px",
               }}
             >
-              We encountered an unexpected error. This has been logged and we&apos;ll look into it.
+              We encountered an unexpected error while rendering this component.
+              Don&apos;t worry - your data is safe. Try refreshing the page or going back.
             </p>
 
-            {/* Recovery Actions */}
-            <div
-              style={{
-                display: "flex",
-                gap: "12px",
-                justifyContent: "center",
-                marginBottom: "24px",
-              }}
-            >
-              <button
-                onClick={this.handleReset}
-                style={{
-                  background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  padding: "12px 24px",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(59, 130, 246, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-              >
-                🔄 Try Again
-              </button>
-              <button
-                onClick={() => window.location.reload()}
-                style={{
-                  background: "rgba(107, 114, 128, 0.2)",
-                  color: "#cbd5e1",
-                  border: "1px solid rgba(107, 114, 128, 0.3)",
-                  borderRadius: "8px",
-                  padding: "12px 24px",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(107, 114, 128, 0.3)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(107, 114, 128, 0.2)";
-                }}
-              >
-                🔄 Reload Page
-              </button>
-            </div>
-
-            {process.env.NODE_ENV === "development" && this.state.error && (
+            {this.state.error && (
               <details
                 style={{
-                  marginBottom: "24px",
                   textAlign: "left",
-                  background: "rgba(15, 23, 42, 0.6)",
+                  marginBottom: "24px",
                   padding: "16px",
+                  background: "rgba(15, 23, 42, 0.5)",
                   borderRadius: "8px",
                   fontSize: "14px",
-                  color: "#f87171",
-                  maxWidth: "100%",
-                  overflow: "auto",
+                  color: "#94a3b8",
                 }}
               >
                 <summary style={{ cursor: "pointer", marginBottom: "8px", fontWeight: "600" }}>
-                  Error Details (Development Only)
+                  Technical Details (for developers)
                 </summary>
-                <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                <pre
+                  style={{
+                    overflowX: "auto",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    margin: 0,
+                  }}
+                >
                   {this.state.error.toString()}
                   {this.state.errorInfo?.componentStack}
                 </pre>
               </details>
             )}
 
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
               <button
                 onClick={this.handleReset}
                 style={{
+                  background: "#3b82f6",
+                  color: "white",
                   padding: "12px 24px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  color: "#fff",
-                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                  border: "none",
                   borderRadius: "8px",
+                  border: "none",
                   cursor: "pointer",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 8px 20px rgba(16, 185, 129, 0.3)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "none";
+                  fontWeight: "500",
+                  fontSize: "14px",
                 }}
               >
                 Try Again
               </button>
+
               <button
-                onClick={() => (window.location.href = "/")}
+                onClick={this.handleReload}
                 style={{
+                  background: "rgba(71, 85, 105, 0.5)",
+                  color: "white",
                   padding: "12px 24px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  color: "#cbd5e1",
-                  background: "rgba(51, 65, 85, 0.6)",
-                  border: "1px solid rgba(148, 163, 184, 0.3)",
                   borderRadius: "8px",
+                  border: "1px solid rgba(148, 163, 184, 0.3)",
                   cursor: "pointer",
-                  transition: "transform 0.2s ease, border-color 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.6)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.3)";
+                  fontWeight: "500",
+                  fontSize: "14px",
                 }}
               >
-                Go Home
+                Reload Page
+              </button>
+
+              <button
+                onClick={this.handleGoBack}
+                style={{
+                  background: "transparent",
+                  color: "#94a3b8",
+                  padding: "12px 24px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(148, 163, 184, 0.3)",
+                  cursor: "pointer",
+                  fontWeight: "500",
+                  fontSize: "14px",
+                }}
+              >
+                Go Back
               </button>
             </div>
+
+            {this.state.errorCount > 2 && (
+              <div
+                style={{
+                  marginTop: "24px",
+                  padding: "12px",
+                  background: "rgba(234, 179, 8, 0.1)",
+                  border: "1px solid rgba(234, 179, 8, 0.3)",
+                  borderRadius: "8px",
+                  color: "#eab308",
+                  fontSize: "14px",
+                }}
+              >
+                ⚠️ This error has occurred {this.state.errorCount} times.
+                Consider contacting support if the issue persists.
+              </div>
+            )}
           </div>
         </div>
       );

@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.tradier_client import get_tradier_client
+from ..utils.query_profiler import profile_endpoint
 
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ class PerformanceMetrics(BaseModel):
 
 
 @router.get("/portfolio/summary")
+@profile_endpoint(threshold_ms=500)
 async def get_portfolio_summary(
     current_user: User = Depends(get_current_user_unified),
 ) -> PortfolioSummary:
@@ -169,10 +171,13 @@ async def get_portfolio_summary(
 
     except Exception as e:
         logger.error(f"❌ Failed to get portfolio summary: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to get portfolio summary: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get portfolio summary: {e!s}"
+        ) from e
 
 
 @router.get("/portfolio/history")
+@profile_endpoint(threshold_ms=500)
 async def get_portfolio_history(
     period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M"),
     current_user: User = Depends(get_current_user_unified),
@@ -244,7 +249,10 @@ async def get_portfolio_history(
             ]
 
             logger.warning(
-                f"⚠️ Insufficient historical data for period {period}. Showing current snapshot only. Data will accumulate over time."
+
+                    f"⚠️ Insufficient historical data for period {period}. "
+                    "Showing current snapshot only. Data will accumulate over time."
+
             )
 
         return {
@@ -257,10 +265,13 @@ async def get_portfolio_history(
 
     except Exception as e:
         logger.error(f"❌ Failed to get portfolio history: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to get portfolio history: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get portfolio history: {e!s}"
+        ) from e
 
 
 @router.get("/analytics/performance")
+@profile_endpoint(threshold_ms=500)
 async def get_performance_metrics(
     period: Literal["1D", "1W", "1M", "3M", "1Y", "ALL"] = Query(default="1M"),
     current_user: User = Depends(get_current_user_unified),
@@ -419,7 +430,10 @@ async def get_performance_metrics(
             worst_day = min(daily_changes) if daily_changes else 0.0
 
             logger.info(
-                f"Calculated best day: ${best_day:.2f}, worst day: ${worst_day:.2f} from {len(daily_changes)} days of history"
+
+                    f"Calculated best day: ${best_day:.2f}, worst day: ${worst_day:.2f} "
+                    f"from {len(daily_changes)} days of history"
+
             )
         else:
             # Insufficient historical data - set to 0
@@ -453,4 +467,6 @@ async def get_performance_metrics(
 
     except Exception as e:
         logger.error(f"❌ Failed to get performance metrics: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to get performance metrics: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get performance metrics: {e!s}"
+        ) from e

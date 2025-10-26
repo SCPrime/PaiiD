@@ -9,6 +9,127 @@ import { logger } from '@/lib/logger';
 
 const API_BASE = "/api/proxy";
 
+// Error handling types and utilities
+
+/**
+ * Structured API error with user-friendly messages
+ */
+export interface ApiError {
+  type: 'network' | 'auth' | 'validation' | 'server' | 'unknown';
+  message: string;
+  userMessage: string;
+  statusCode?: number;
+  retryable: boolean;
+}
+
+/**
+ * Convert API errors to user-friendly messages
+ */
+export function handleApiError(error: unknown): ApiError {
+  // Network errors (fetch failed, timeout, offline)
+  if (error instanceof TypeError && error.message.includes('fetch')) {
+    return {
+      type: 'network',
+      message: error.message,
+      userMessage: 'Unable to connect to the server. Please check your internet connection and try again.',
+      retryable: true
+    };
+  }
+
+  // HTTP errors from Response object
+  if (error && typeof error === 'object' && 'status' in error) {
+    const response = error as Response;
+    const statusCode = response.status;
+
+    if (statusCode === 401 || statusCode === 403) {
+      return {
+        type: 'auth',
+        message: `Authentication failed: ${statusCode}`,
+        userMessage: 'Your session has expired. Please log in again.',
+        statusCode,
+        retryable: false
+      };
+    }
+
+    if (statusCode === 400 || statusCode === 422) {
+      return {
+        type: 'validation',
+        message: `Validation error: ${statusCode}`,
+        userMessage: 'The information you provided is invalid. Please check your input and try again.',
+        statusCode,
+        retryable: false
+      };
+    }
+
+    if (statusCode === 404) {
+      return {
+        type: 'server',
+        message: `Not found: ${statusCode}`,
+        userMessage: 'The requested resource was not found. It may have been moved or deleted.',
+        statusCode,
+        retryable: false
+      };
+    }
+
+    if (statusCode === 429) {
+      return {
+        type: 'server',
+        message: `Rate limited: ${statusCode}`,
+        userMessage: 'Too many requests. Please wait a moment and try again.',
+        statusCode,
+        retryable: true
+      };
+    }
+
+    if (statusCode >= 500) {
+      return {
+        type: 'server',
+        message: `Server error: ${statusCode}`,
+        userMessage: 'Our servers are experiencing issues. Please try again in a few moments.',
+        statusCode,
+        retryable: true
+      };
+    }
+  }
+
+  // Unknown errors
+  return {
+    type: 'unknown',
+    message: error instanceof Error ? error.message : String(error),
+    userMessage: 'An unexpected error occurred. Please try again.',
+    retryable: true
+  };
+}
+
+/**
+ * Retry logic for retryable errors with exponential backoff
+ */
+export async function fetchWithRetry<T>(
+  fetchFn: () => Promise<T>,
+  maxRetries = 3,
+  delayMs = 1000
+): Promise<T> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fetchFn();
+    } catch (error) {
+      const apiError = handleApiError(error);
+
+      if (!apiError.retryable || attempt === maxRetries) {
+        logger.error(`Request failed after ${attempt} attempts`, error);
+        throw apiError;
+      }
+
+      // Exponential backoff: wait longer between each retry
+      const delay = delayMs * Math.pow(2, attempt - 1);
+      logger.warn(`Request failed, retrying in ${delay}ms (attempt ${attempt}/${maxRetries})`, { error: apiError.message });
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw new Error('Max retries exceeded');
+}
+
 // Types
 export interface AlpacaAccount {
   id: string;
@@ -168,6 +289,21 @@ export interface AlpacaCalendar {
   close: string;
 }
 
+export interface AlpacaWatchlist {
+  id: string;
+  account_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  assets?: Array<{
+    id: string;
+    class: string;
+    exchange: string;
+    symbol: string;
+    name: string;
+  }>;
+}
+
 /**
  * Alpaca API Client
  */
@@ -180,24 +316,46 @@ class AlpacaClient {
 
   /**
    * Make authenticated request to Alpaca API through backend proxy
+   * Includes error handling and user-friendly error messages
    */
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: response.statusText }));
-      throw new Error(error.message || `Alpaca API error: ${response.statusText}`);
+      if (!response.ok) {
+        // Try to parse error message from response
+        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+        const apiError = handleApiError(response);
+
+        // Enhance error with server message if available
+        if (errorData.message) {
+          apiError.message = errorData.message;
+        }
+
+        logger.error(`Alpaca API error: ${apiError.message}`, { endpoint, statusCode: response.status });
+        throw apiError;
+      }
+
+      return response.json();
+    } catch (error) {
+      // If it's already an ApiError, re-throw it
+      if (error && typeof error === 'object' && 'type' in error) {
+        throw error;
+      }
+
+      // Otherwise, convert to ApiError
+      const apiError = handleApiError(error);
+      logger.error(`Request failed: ${apiError.message}`, { endpoint });
+      throw apiError;
     }
-
-    return response.json();
   }
 
   // ==================== Account ====================
@@ -405,15 +563,15 @@ class AlpacaClient {
   /**
    * Get all watchlists
    */
-  async getWatchlists(): Promise<unknown[]> {
-    return this.request<unknown[]>("/api/watchlists");
+  async getWatchlists(): Promise<AlpacaWatchlist[]> {
+    return this.request<AlpacaWatchlist[]>("/api/watchlists");
   }
 
   /**
    * Create a watchlist
    */
-  async createWatchlist(name: string, symbols: string[]): Promise<unknown> {
-    return this.request("/api/watchlists", {
+  async createWatchlist(name: string, symbols: string[]): Promise<AlpacaWatchlist> {
+    return this.request<AlpacaWatchlist>("/api/watchlists", {
       method: "POST",
       body: JSON.stringify({ name, symbols }),
     });

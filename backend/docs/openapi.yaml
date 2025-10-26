@@ -1,0 +1,982 @@
+openapi: 3.0.3
+info:
+  title: PaiiD Trading API
+  description: |
+    Personal Artificial Intelligence Investment Dashboard
+
+    AI-powered trading platform with real-time market data and intelligent trade execution.
+
+    ## Data Sources
+    - **Market Data:** Tradier API (Real-time, NO delay)
+    - **Trade Execution:** Alpaca Paper Trading API
+    - **AI Analysis:** Anthropic Claude API
+
+    ## Authentication
+    All endpoints (except health checks and public endpoints) require JWT Bearer token authentication.
+    State-changing operations (POST/PUT/DELETE/PATCH) also require CSRF token in X-CSRF-Token header.
+  version: 1.0.0
+  contact:
+    name: PaiiD Support
+    url: https://github.com/your-repo/paiid
+    email: support@paiid.com
+  license:
+    name: Proprietary
+    url: https://paiid.com/terms
+
+servers:
+  - url: https://paiid-backend.onrender.com
+    description: Production server (Render)
+  - url: http://localhost:8001
+    description: Local development server
+
+security:
+  - bearerAuth: []
+  - csrfToken: []
+
+tags:
+  - name: auth
+    description: Authentication and user management
+  - name: health
+    description: Health checks and system status
+  - name: portfolio
+    description: Portfolio and position management
+  - name: orders
+    description: Order execution and templates
+  - name: market-data
+    description: Market data quotes and historical bars
+  - name: ai
+    description: AI-powered recommendations and analysis
+  - name: strategies
+    description: Trading strategy management
+  - name: analytics
+    description: Performance analytics
+  - name: backtesting
+    description: Strategy backtesting
+  - name: news
+    description: Market news and analysis
+  - name: options
+    description: Options data and Greeks
+  - name: ml
+    description: Machine learning models
+  - name: screening
+    description: Stock screening
+  - name: streaming
+    description: Real-time data streaming
+  - name: users
+    description: User profile management
+  - name: telemetry
+    description: Event tracking and telemetry
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from login/register endpoint
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: CSRF token for state-changing operations (POST/PUT/DELETE/PATCH)
+
+  schemas:
+    # Authentication Models
+    UserRegister:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: SecurePassword123
+          description: Must contain at least one digit and one uppercase letter
+        full_name:
+          type: string
+          example: John Doe
+        invite_code:
+          type: string
+          example: PAIID_BETA_2025
+          description: Required for beta tester registration
+
+    UserLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: SecurePassword123
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refresh_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        token_type:
+          type: string
+          example: bearer
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        full_name:
+          type: string
+          example: John Doe
+        role:
+          type: string
+          enum: [owner, beta_tester, personal_only]
+          example: beta_tester
+        is_active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: 2025-01-15T10:30:00Z
+        last_login_at:
+          type: string
+          format: date-time
+          example: 2025-01-20T14:25:00Z
+        preferences:
+          type: object
+          example:
+            risk_tolerance: 50
+
+    # Market Data Models
+    Quote:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: AAPL
+        bid:
+          type: number
+          format: float
+          example: 154.25
+        ask:
+          type: number
+          format: float
+          example: 154.50
+        last:
+          type: number
+          format: float
+          example: 154.35
+        volume:
+          type: integer
+          example: 45678910
+        timestamp:
+          type: string
+          format: date-time
+          example: 2025-10-26T14:30:00.000Z
+        cached:
+          type: boolean
+          example: false
+
+    Bar:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: 2025-10-26T00:00:00Z
+        open:
+          type: number
+          format: float
+          example: 154.00
+        high:
+          type: number
+          format: float
+          example: 156.50
+        low:
+          type: number
+          format: float
+          example: 153.25
+        close:
+          type: number
+          format: float
+          example: 155.75
+        volume:
+          type: integer
+          example: 78954210
+
+    # Position Models
+    Position:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: AAPL
+        quantity:
+          type: number
+          example: 100
+        cost_basis:
+          type: number
+          format: float
+          example: 15000.00
+        close_price:
+          type: number
+          format: float
+          example: 155.50
+        date_acquired:
+          type: string
+          format: date-time
+          example: 2025-10-15T00:00:00Z
+
+    # Order Models
+    Order:
+      type: object
+      required:
+        - symbol
+        - side
+        - qty
+      properties:
+        symbol:
+          type: string
+          minLength: 1
+          maxLength: 5
+          pattern: ^[A-Z]{1,5}$
+          example: AAPL
+          description: Stock symbol (1-5 uppercase letters)
+        side:
+          type: string
+          enum: [buy, sell]
+          example: buy
+        qty:
+          type: number
+          minimum: 0.01
+          maximum: 10000
+          example: 10
+          description: Order quantity (0.01 to 10,000 shares/contracts)
+        type:
+          type: string
+          enum: [market, limit, stop, stop_limit]
+          default: market
+          example: limit
+        limit_price:
+          type: number
+          minimum: 0
+          maximum: 1000000
+          example: 150.00
+          description: Required for limit/stop_limit orders
+        asset_class:
+          type: string
+          enum: [stock, option]
+          default: stock
+          example: stock
+        option_type:
+          type: string
+          enum: [call, put]
+          example: call
+          description: Required for options orders
+        strike_price:
+          type: number
+          minimum: 0
+          maximum: 100000
+          example: 155.00
+          description: Required for options orders
+        expiration_date:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          example: 2025-12-19
+          description: Required for options orders (YYYY-MM-DD)
+
+    ExecuteRequest:
+      type: object
+      required:
+        - requestId
+        - orders
+      properties:
+        dryRun:
+          type: boolean
+          default: true
+          description: Dry run mode (no actual execution)
+        requestId:
+          type: string
+          minLength: 8
+          maxLength: 64
+          pattern: ^[a-zA-Z0-9\-_]{8,64}$
+          example: req-20251026-143000-abc123
+          description: Unique request ID for idempotency
+        orders:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/Order'
+
+    # AI Recommendation Models
+    Recommendation:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: AAPL
+        action:
+          type: string
+          enum: [BUY, SELL, HOLD]
+          example: BUY
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 85.5
+        score:
+          type: number
+          format: float
+          minimum: 1
+          maximum: 10
+          example: 8.5
+        reason:
+          type: string
+          example: Strong bullish momentum with high volume confirmation
+        targetPrice:
+          type: number
+          format: float
+          example: 165.00
+        currentPrice:
+          type: number
+          format: float
+          example: 154.35
+        timeframe:
+          type: string
+          example: 1-2 weeks
+        risk:
+          type: string
+          enum: [Low, Medium, High]
+          example: Low
+        entryPrice:
+          type: number
+          format: float
+          example: 153.50
+        stopLoss:
+          type: number
+          format: float
+          example: 146.50
+        takeProfit:
+          type: number
+          format: float
+          example: 165.00
+        riskRewardRatio:
+          type: number
+          format: float
+          example: 2.3
+        indicators:
+          type: object
+          properties:
+            rsi:
+              type: number
+              example: 62.5
+            macd_histogram:
+              type: number
+              example: 0.75
+            sma_20:
+              type: number
+              example: 152.00
+            sma_50:
+              type: number
+              example: 148.50
+        portfolioFit:
+          type: string
+          example: New position - Adds diversification
+        sector:
+          type: string
+          example: Technology
+
+    # Error Models
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: Authentication failed
+
+    ValidationError:
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  type: string
+                example: [body, password]
+              msg:
+                type: string
+                example: Password must be at least 8 characters long
+              type:
+                type: string
+                example: value_error
+
+  responses:
+    Unauthorized:
+      description: Unauthorized - Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: Not authenticated
+
+    Forbidden:
+      description: Forbidden - Valid token but insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: Account is disabled
+
+    NotFound:
+      description: Not Found - Resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: Resource not found
+
+    ValidationError:
+      description: Bad Request - Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: Internal server error
+
+paths:
+  # Authentication Endpoints
+  /api/auth/register:
+    post:
+      tags: [auth]
+      summary: Register a new user
+      description: |
+        Register a new user account.
+
+        **Beta Testing:** Requires valid invite code for beta tester registration.
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Authenticate user
+      description: Authenticate user and receive JWT tokens
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh access token
+      description: Exchange refresh token for new access + refresh token pair
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/logout:
+    post:
+      tags: [auth]
+      summary: Logout user
+      description: Logout user and invalidate all sessions
+      operationId: logout
+      responses:
+        '204':
+          description: Logout successful
+
+  /api/auth/me:
+    get:
+      tags: [auth]
+      summary: Get current user profile
+      description: Get current authenticated user's profile
+      operationId: getCurrentUserProfile
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/csrf-token:
+    get:
+      tags: [auth]
+      summary: Get CSRF token
+      description: Generate a CSRF token for the authenticated user
+      operationId: getCsrfToken
+      responses:
+        '200':
+          description: CSRF token generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  csrf_token:
+                    type: string
+                    example: abc123...
+                  expires_in:
+                    type: integer
+                    example: 3600
+                  message:
+                    type: string
+                    example: Include this token in X-CSRF-Token header for state-changing requests
+
+  # Health Check Endpoints
+  /api/health:
+    get:
+      tags: [health]
+      summary: Basic health check
+      description: Check if the API is running (no auth required)
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  time:
+                    type: string
+                    format: date-time
+                    example: 2025-10-26T14:30:00.000Z
+
+  /api/health/detailed:
+    get:
+      tags: [health]
+      summary: Detailed health check
+      description: Detailed health check with system metrics (requires auth)
+      operationId: detailedHealthCheck
+      responses:
+        '200':
+          description: Detailed health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: 1.0.0
+                  dependencies:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        example: healthy
+                      tradier_api:
+                        type: string
+                        example: healthy
+                      alpaca_api:
+                        type: string
+                        example: healthy
+
+  # Market Data Endpoints
+  /api/market/quote/{symbol}:
+    get:
+      tags: [market-data]
+      summary: Get real-time quote
+      description: Get real-time quote for a symbol using Tradier (cached with configurable TTL)
+      operationId: getQuote
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 10
+          description: Stock symbol
+          example: AAPL
+      responses:
+        '200':
+          description: Quote data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/market/quotes:
+    get:
+      tags: [market-data]
+      summary: Get multiple quotes
+      description: Get quotes for multiple symbols (batch request)
+      operationId: getQuotes
+      parameters:
+        - name: symbols
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+          description: Comma-separated symbols (e.g., "AAPL,MSFT,GOOGL")
+          example: AAPL,MSFT,GOOGL
+      responses:
+        '200':
+          description: Quotes data
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/Quote'
+
+  /api/market/bars/{symbol}:
+    get:
+      tags: [market-data]
+      summary: Get historical bars
+      description: Get historical price bars (OHLCV data)
+      operationId: getBars
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+          example: AAPL
+        - name: timeframe
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [1Min, 5Min, 15Min, 1Hour, 1Day, daily, weekly, monthly]
+            default: daily
+          example: daily
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+          example: 100
+      responses:
+        '200':
+          description: Historical bars
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                    example: AAPL
+                  bars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bar'
+                  cached:
+                    type: boolean
+                    example: false
+
+  # Portfolio Endpoints
+  /api/account:
+    get:
+      tags: [portfolio]
+      summary: Get account information
+      description: Get Tradier account information
+      operationId: getAccount
+      responses:
+        '200':
+          description: Account data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      account_number:
+                        type: string
+                        example: ABC123456
+                      total_equity:
+                        type: number
+                        example: 125000.50
+                      total_cash:
+                        type: number
+                        example: 45000.25
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/positions:
+    get:
+      tags: [portfolio]
+      summary: Get all positions
+      description: Get all open positions from Tradier (cached for 30s)
+      operationId: getPositions
+      responses:
+        '200':
+          description: Positions data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Position'
+                  count:
+                    type: integer
+                    example: 1
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  # Trading Endpoints
+  /api/trading/execute:
+    post:
+      tags: [orders]
+      summary: Execute trading orders
+      description: |
+        Execute trading orders with idempotency and dry-run support.
+
+        **Circuit Breaker:** Opens after 3 consecutive failures, 60s cooldown.
+        **Retry Logic:** 3 attempts with exponential backoff (1s, 2s, 4s).
+      operationId: executeOrders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteRequest'
+      responses:
+        '200':
+          description: Order executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accepted:
+                    type: boolean
+                    example: true
+                  dryRun:
+                    type: boolean
+                    example: true
+                  orders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '423':
+          description: Trading halted (kill switch active)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Service unavailable (circuit breaker open)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # AI Recommendations Endpoints
+  /api/ai/recommendations:
+    get:
+      tags: [ai]
+      summary: Get AI recommendations
+      description: |
+        Generate AI-powered trading recommendations using real market data.
+
+        **Data Sources:**
+        - Real-time quotes: Tradier API
+        - Historical data: Tradier API (200 days)
+        - Portfolio positions: Alpaca Paper Trading API
+        - Technical indicators: RSI, MACD, Bollinger Bands, SMA
+      operationId: getRecommendations
+      responses:
+        '200':
+          description: AI recommendations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommendations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Recommendation'
+                  generated_at:
+                    type: string
+                    format: date-time
+                  model_version:
+                    type: string
+                    example: v2.0.0-portfolio-aware
+
+  /api/ai/recommendations/{symbol}:
+    get:
+      tags: [ai]
+      summary: Get recommendation for symbol
+      description: Get AI recommendation for a specific symbol
+      operationId: getSymbolRecommendation
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Z0-9$.:^-]+$
+          example: AAPL
+      responses:
+        '200':
+          description: Symbol recommendation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recommendation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/ai/analyze-portfolio:
+    get:
+      tags: [ai]
+      summary: Analyze portfolio
+      description: |
+        AI-powered portfolio analysis using Claude API.
+
+        Analyzes account health, diversification, risk factors, and opportunities.
+      operationId: analyzePortfolio
+      responses:
+        '200':
+          description: Portfolio analysis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  health_score:
+                    type: number
+                    example: 82.5
+                  risk_level:
+                    type: string
+                    enum: [Low, Medium, High, Very High]
+                    example: Medium
+                  total_value:
+                    type: number
+                    example: 125000.50
+                  diversification_score:
+                    type: number
+                    example: 80.0
+                  recommendations:
+                    type: array
+                    items:
+                      type: string
+                  ai_summary:
+                    type: string
+
+externalDocs:
+  description: Full API Reference Documentation
+  url: https://github.com/your-repo/paiid/blob/main/backend/docs/API_REFERENCE.md

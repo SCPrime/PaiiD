@@ -2,10 +2,32 @@
  * Secure Storage Utility
  * Provides encrypted storage for sensitive data using Web Crypto API
  * Addresses HIGH priority security issue: localStorage without encryption
+ *
+ * Uses AES-GCM encryption with 256-bit keys for maximum security.
+ * Keys are stored in sessionStorage and regenerated per session for added security.
+ *
+ * @module secureStorage
+ * @example
+ * import { secureStorage, secureStorageHelpers } from '@/lib/secureStorage';
+ *
+ * // Store encrypted data
+ * await secureStorage.setItem('api_key', 'secret-key');
+ *
+ * // Retrieve encrypted data
+ * const key = await secureStorage.getItem('api_key');
+ *
+ * // Use helpers for common operations
+ * await secureStorageHelpers.storeAuthToken('token123');
  */
 
 import { logger } from '@/lib/logger';
 
+/**
+ * Encrypted data structure stored in localStorage
+ * @interface EncryptedData
+ * @property {string} iv - Base64-encoded initialization vector
+ * @property {string} data - Base64-encoded encrypted data
+ */
 interface EncryptedData {
   iv: string;
   data: string;
@@ -109,7 +131,7 @@ class SecureStorage {
 
     // Convert to base64 for storage
     const encryptedBase64 = this.arrayBufferToBase64(encryptedBytes);
-    const ivBase64 = this.arrayBufferToBase64(iv);
+    const ivBase64 = this.arrayBufferToBase64(iv.buffer);
 
     return {
       iv: ivBase64,
@@ -289,17 +311,45 @@ export const secureStorageHelpers = {
 
   /**
    * Store user preferences securely
+   * @template T - Type of preferences object
+   * @param {T} preferences - User preferences object
+   * @returns {Promise<void>}
    */
-  async storeUserPreferences(preferences: Record<string, unknown>): Promise<void> {
+  async storeUserPreferences<T extends Record<string, unknown>>(preferences: T): Promise<void> {
     await secureStorage.setItem('user_preferences', JSON.stringify(preferences));
   },
 
   /**
-   * Retrieve user preferences
+   * Retrieve user preferences with type safety
+   * @template T - Expected type of preferences object
+   * @param {(obj: unknown) => obj is T} [validator] - Optional type guard for runtime validation
+   * @returns {Promise<T | null>} Preferences object if exists and valid, null otherwise
+   * @example
+   * interface MyPrefs { theme: string; }
+   * const prefs = await getUserPreferences<MyPrefs>((obj): obj is MyPrefs =>
+   *   typeof obj === 'object' && obj !== null && 'theme' in obj
+   * );
    */
-  async getUserPreferences(): Promise<Record<string, unknown> | null> {
+  async getUserPreferences<T extends Record<string, unknown>>(
+    validator?: (obj: unknown) => obj is T
+  ): Promise<T | null> {
     const data = await secureStorage.getItem('user_preferences');
-    return data ? JSON.parse(data) : null;
+    if (!data) return null;
+
+    try {
+      const parsed: unknown = JSON.parse(data);
+
+      // If validator provided, use it for type checking
+      if (validator && !validator(parsed)) {
+        logger.warn('User preferences failed validation');
+        return null;
+      }
+
+      return parsed as T;
+    } catch (error) {
+      logger.error('Failed to parse user preferences', error);
+      return null;
+    }
   },
 
   /**

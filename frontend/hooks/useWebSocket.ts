@@ -1,6 +1,41 @@
+/**
+ * WebSocket Hook for Real-Time Market Data and Portfolio Updates
+ *
+ * Provides a React hook for managing WebSocket connections with automatic
+ * reconnection, subscription management, and typed message handling.
+ *
+ * @module useWebSocket
+ * @example
+ * const {
+ *   isConnected,
+ *   marketData,
+ *   subscribe,
+ *   disconnect
+ * } = useWebSocket({
+ *   url: 'ws://localhost:8001/ws',
+ *   userId: 'user123',
+ *   autoConnect: true
+ * });
+ *
+ * // Subscribe to market data
+ * useEffect(() => {
+ *   if (isConnected) {
+ *     subscribe(['AAPL', 'MSFT', 'GOOGL']);
+ *   }
+ * }, [isConnected]);
+ */
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { logger } from "../lib/logger";
 
+/**
+ * WebSocket message structure
+ * @interface WebSocketMessage
+ * @property {string} type - Message type (market_data, portfolio_update, etc.)
+ * @property {unknown} [data] - Message payload
+ * @property {string} [symbol] - Stock symbol for market data messages
+ * @property {string} timestamp - ISO timestamp of message
+ */
 export interface WebSocketMessage {
   type: string;
   data?: unknown;
@@ -8,6 +43,21 @@ export interface WebSocketMessage {
   timestamp: string;
 }
 
+/**
+ * Real-time market data for a symbol
+ * @interface MarketData
+ * @property {string} symbol - Stock ticker symbol
+ * @property {number} price - Current price
+ * @property {number} change - Price change from previous close
+ * @property {number} change_percent - Percentage change from previous close
+ * @property {number} volume - Trading volume
+ * @property {number} high - Day's high price
+ * @property {number} low - Day's low price
+ * @property {number} open - Opening price
+ * @property {number} previous_close - Previous day's closing price
+ * @property {string} timestamp - ISO timestamp of quote
+ * @property {string} source - Data source (tradier, alpaca, etc.)
+ */
 export interface MarketData {
   symbol: string;
   price: number;
@@ -54,6 +104,20 @@ export interface TradingAlert {
   timestamp: string;
 }
 
+/**
+ * Connection status types for WebSocket
+ */
+export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error' | 'reconnecting';
+
+/**
+ * Configuration options for WebSocket hook
+ * @interface UseWebSocketOptions
+ * @property {string} url - WebSocket server URL
+ * @property {string} userId - User ID for authentication
+ * @property {boolean} [autoConnect=true] - Auto-connect on mount
+ * @property {number} [reconnectInterval=5000] - Milliseconds between reconnect attempts
+ * @property {number} [maxReconnectAttempts=5] - Maximum reconnection attempts
+ */
 interface UseWebSocketOptions {
   url: string;
   userId: string;
@@ -62,9 +126,29 @@ interface UseWebSocketOptions {
   maxReconnectAttempts?: number;
 }
 
+/**
+ * Return value from useWebSocket hook
+ * @interface UseWebSocketReturn
+ * @property {ConnectionStatus} status - Current connection status
+ * @property {boolean} isConnected - WebSocket connection status
+ * @property {boolean} isConnecting - Currently attempting to connect
+ * @property {boolean} isReconnecting - Currently attempting to reconnect
+ * @property {string | null} error - Error message if connection failed
+ * @property {Map<string, MarketData>} marketData - Real-time market data by symbol
+ * @property {PortfolioUpdate | null} portfolioUpdate - Latest portfolio update
+ * @property {Map<string, PositionUpdate>} positionUpdates - Position updates by symbol
+ * @property {TradingAlert[]} tradingAlerts - List of trading alerts (max 50)
+ * @property {(symbols: string[]) => void} subscribe - Subscribe to symbol updates
+ * @property {(symbols: string[]) => void} unsubscribe - Unsubscribe from symbol updates
+ * @property {(message: WebSocketMessage) => void} sendMessage - Send custom message
+ * @property {() => void} connect - Manually connect to WebSocket
+ * @property {() => void} disconnect - Manually disconnect from WebSocket
+ */
 interface UseWebSocketReturn {
+  status: ConnectionStatus;
   isConnected: boolean;
   isConnecting: boolean;
+  isReconnecting: boolean;
   error: string | null;
   marketData: Map<string, MarketData>;
   portfolioUpdate: PortfolioUpdate | null;
@@ -77,6 +161,30 @@ interface UseWebSocketReturn {
   disconnect: () => void;
 }
 
+/**
+ * Custom React hook for managing WebSocket connections
+ *
+ * Handles connection lifecycle, automatic reconnection, message routing,
+ * and subscription management for real-time market data and portfolio updates.
+ *
+ * @param {UseWebSocketOptions} options - WebSocket configuration
+ * @returns {UseWebSocketReturn} WebSocket state and control functions
+ *
+ * @example
+ * const {
+ *   isConnected,
+ *   marketData,
+ *   portfolioUpdate,
+ *   subscribe,
+ *   unsubscribe
+ * } = useWebSocket({
+ *   url: 'ws://localhost:8001/ws',
+ *   userId: 'user_123',
+ *   autoConnect: true,
+ *   reconnectInterval: 3000,
+ *   maxReconnectAttempts: 10
+ * });
+ */
 export const useWebSocket = ({
   url,
   userId,
@@ -84,8 +192,7 @@ export const useWebSocket = ({
   reconnectInterval = 5000,
   maxReconnectAttempts = 5,
 }: UseWebSocketOptions): UseWebSocketReturn => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [error, setError] = useState<string | null>(null);
   const [marketData, setMarketData] = useState<Map<string, MarketData>>(new Map());
   const [portfolioUpdate, setPortfolioUpdate] = useState<PortfolioUpdate | null>(null);
@@ -97,12 +204,17 @@ export const useWebSocket = ({
   const reconnectAttemptsRef = useRef(0);
   const subscribedSymbolsRef = useRef<Set<string>>(new Set());
 
+  // Derived states for backwards compatibility
+  const isConnected = status === 'connected';
+  const isConnecting = status === 'connecting';
+  const isReconnecting = status === 'reconnecting';
+
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
     }
 
-    setIsConnecting(true);
+    setStatus('connecting');
     setError(null);
 
     try {
@@ -111,8 +223,7 @@ export const useWebSocket = ({
 
       ws.onopen = () => {
         logger.info("WebSocket connected");
-        setIsConnected(true);
-        setIsConnecting(false);
+        setStatus('connected');
         setError(null);
         reconnectAttemptsRef.current = 0;
 
@@ -138,12 +249,13 @@ export const useWebSocket = ({
 
       ws.onclose = (event) => {
         logger.info("WebSocket disconnected", { code: event.code, reason: event.reason });
-        setIsConnected(false);
-        setIsConnecting(false);
+        setStatus('disconnected');
 
         // Attempt to reconnect if not a manual disconnect
         if (event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
           reconnectAttemptsRef.current++;
+          setStatus('reconnecting');
+          setError('Connection lost. Attempting to reconnect...');
           logger.info(
             `Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`
           );
@@ -152,19 +264,26 @@ export const useWebSocket = ({
             connect();
           }, reconnectInterval);
         } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
-          setError("Failed to reconnect after maximum attempts");
+          setStatus('error');
+          setError('Unable to establish connection after multiple attempts. Please refresh the page.');
         }
       };
 
-      ws.onerror = (err) => {
-        logger.error("WebSocket error", err);
-        setError("WebSocket connection error");
-        setIsConnecting(false);
+      ws.onerror = () => {
+        logger.error("WebSocket error");
+        setStatus('error');
+
+        // User-friendly error messages based on online status
+        const errorMessage = navigator.onLine
+          ? 'Real-time connection failed. Retrying automatically...'
+          : 'You appear to be offline. Connection will resume when online.';
+
+        setError(errorMessage);
       };
     } catch (err) {
       logger.error("Error creating WebSocket", err);
-      setError("Failed to create WebSocket connection");
-      setIsConnecting(false);
+      setStatus('error');
+      setError('Failed to create real-time connection. Please try refreshing the page.');
     }
   }, [url, userId, reconnectInterval, maxReconnectAttempts]);
 
@@ -179,8 +298,8 @@ export const useWebSocket = ({
       wsRef.current = null;
     }
 
-    setIsConnected(false);
-    setIsConnecting(false);
+    setStatus('disconnected');
+    setError(null);
     reconnectAttemptsRef.current = 0;
   }, []);
 
@@ -227,7 +346,9 @@ export const useWebSocket = ({
         break;
 
       case "subscription_confirmed":
-        logger.info("Subscription confirmed for symbols", { symbols: message.data?.symbols });
+        if (message.data && typeof message.data === 'object' && 'symbols' in message.data) {
+          logger.info("Subscription confirmed for symbols", { symbols: (message.data as { symbols: string[] }).symbols });
+        }
         break;
 
       case "pong":
@@ -243,7 +364,7 @@ export const useWebSocket = ({
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       const newSymbols = symbols.filter((s) => !subscribedSymbolsRef.current.has(s));
       if (newSymbols.length > 0) {
-        subscribedSymbolsRef.current = new Set([...subscribedSymbolsRef.current, ...newSymbols]);
+        subscribedSymbolsRef.current = new Set([...Array.from(subscribedSymbolsRef.current), ...newSymbols]);
         wsRef.current.send(
           JSON.stringify({
             type: "subscribe",
@@ -266,7 +387,7 @@ export const useWebSocket = ({
     }
   }, []);
 
-  const sendMessage = useCallback((message: any) => {
+  const sendMessage = useCallback((message: WebSocketMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     }
@@ -293,8 +414,10 @@ export const useWebSocket = ({
   }, []);
 
   return {
+    status,
     isConnected,
     isConnecting,
+    isReconnecting,
     error,
     marketData,
     portfolioUpdate,

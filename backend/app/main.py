@@ -107,9 +107,145 @@ setup_shutdown_handlers()
 
 app = FastAPI(
     title="PaiiD Trading API",
-    description="Personal Artificial Intelligence Investment Dashboard",
+    description="Personal Artificial Intelligence Investment Dashboard - AI-powered trading platform with real-time market data and intelligent trade execution",
     version="1.0.0",
+    docs_url="/api/docs",  # Swagger UI
+    redoc_url="/api/redoc",  # ReDoc alternative documentation
+    openapi_url="/api/openapi.json",  # OpenAPI schema
+    contact={
+        "name": "PaiiD Support",
+        "url": "https://github.com/your-repo/paiid",
+        "email": "support@paiid.com",
+    },
+    license_info={
+        "name": "Proprietary",
+        "url": "https://paiid.com/terms",
+    },
 )
+
+
+# Custom OpenAPI schema configuration
+def custom_openapi():
+    """
+    Custom OpenAPI schema with enhanced security schemes and metadata
+
+    Adds:
+    - JWT Bearer authentication scheme
+    - CSRF token authentication scheme
+    - Comprehensive endpoint tags
+    - Data source documentation
+    """
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    from fastapi.openapi.utils import get_openapi
+
+    openapi_schema = get_openapi(
+        title="PaiiD Trading API",
+        version="1.0.0",
+        description="""
+# Personal Artificial Intelligence Investment Dashboard
+
+AI-powered trading platform with real-time market data and intelligent trade execution.
+
+## Data Sources
+
+- **Market Data:** Tradier API (Real-time, NO delay)
+- **Trade Execution:** Alpaca Paper Trading API (Paper trading only)
+- **AI Analysis:** Anthropic Claude API
+
+## Authentication
+
+All endpoints (except health checks and public endpoints) require JWT Bearer token authentication.
+State-changing operations (POST/PUT/DELETE/PATCH) also require CSRF token in X-CSRF-Token header.
+
+## Rate Limiting
+
+Rate limiting is enabled in production to prevent abuse.
+
+## Caching
+
+Intelligent caching is implemented for market data to optimize performance:
+- Quotes: 5 seconds TTL
+- Historical bars: 1 hour TTL
+- Positions: 30 seconds TTL
+- Scanner results: 3 minutes TTL
+
+## Interactive Documentation
+
+- **Swagger UI:** http://localhost:8001/api/docs
+- **ReDoc:** http://localhost:8001/api/redoc
+- **OpenAPI JSON:** http://localhost:8001/api/openapi.json
+        """,
+        routes=app.routes,
+        contact={
+            "name": "PaiiD Support",
+            "url": "https://github.com/your-repo/paiid",
+            "email": "support@paiid.com",
+        },
+        license_info={
+            "name": "Proprietary",
+            "url": "https://paiid.com/terms",
+        },
+    )
+
+    # Add security schemes
+    openapi_schema["components"]["securitySchemes"] = {
+        "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "JWT access token obtained from login/register endpoint. Format: 'Bearer <token>'",
+        },
+        "csrfToken": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "description": "CSRF token for state-changing operations (POST/PUT/DELETE/PATCH). Obtain from /api/auth/csrf-token",
+        },
+    }
+
+    # Add tags metadata
+    openapi_schema["tags"] = [
+        {"name": "auth", "description": "Authentication and user management"},
+        {"name": "health", "description": "Health checks and system status"},
+        {"name": "portfolio", "description": "Portfolio and position management (Tradier API)"},
+        {"name": "orders", "description": "Order execution and templates (Alpaca Paper Trading)"},
+        {"name": "market-data", "description": "Market data quotes and historical bars (Tradier API)"},
+        {"name": "ai", "description": "AI-powered recommendations and analysis (Claude API)"},
+        {"name": "strategies", "description": "Trading strategy management and templates"},
+        {"name": "analytics", "description": "Performance analytics and metrics"},
+        {"name": "backtesting", "description": "Strategy backtesting and historical analysis"},
+        {"name": "news", "description": "Market news and sentiment analysis"},
+        {"name": "options", "description": "Options data, Greeks, and multi-leg strategies"},
+        {"name": "ml", "description": "Machine learning models and predictions"},
+        {"name": "screening", "description": "Stock screening and filtering"},
+        {"name": "streaming", "description": "Real-time data streaming (WebSocket)"},
+        {"name": "users", "description": "User profile and preference management"},
+        {"name": "telemetry", "description": "Event tracking and application telemetry"},
+    ]
+
+    # Add servers
+    openapi_schema["servers"] = [
+        {
+            "url": "https://paiid-backend.onrender.com",
+            "description": "Production server (Render)",
+        },
+        {"url": "http://localhost:8001", "description": "Local development server"},
+    ]
+
+    # Add external documentation
+    openapi_schema["externalDocs"] = {
+        "description": "Full API Reference Documentation",
+        "url": "https://github.com/your-repo/paiid/blob/main/backend/docs/API_REFERENCE.md",
+    }
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+# Set custom OpenAPI schema
+app.openapi = custom_openapi
 
 # Add Request ID middleware early for correlation
 from starlette.middleware.gzip import GZipMiddleware

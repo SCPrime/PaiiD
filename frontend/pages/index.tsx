@@ -330,6 +330,42 @@ export default function Dashboard() {
 
   return (
     <HelpProvider>
+      {/* Skip to main content link for keyboard navigation */}
+      <a
+        href="#main-content"
+        style={{
+          position: "absolute",
+          left: "-10000px",
+          top: "auto",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden",
+          zIndex: 10000,
+          background: "#3b82f6",
+          color: "#fff",
+          padding: "8px 16px",
+          borderRadius: "4px",
+          textDecoration: "none",
+          fontWeight: "600",
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.position = "fixed";
+          e.currentTarget.style.top = "10px";
+          e.currentTarget.style.left = "10px";
+          e.currentTarget.style.width = "auto";
+          e.currentTarget.style.height = "auto";
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.position = "absolute";
+          e.currentTarget.style.left = "-10000px";
+          e.currentTarget.style.top = "auto";
+          e.currentTarget.style.width = "1px";
+          e.currentTarget.style.height = "1px";
+        }}
+      >
+        Skip to main content
+      </a>
+
       {/* Command Palette (Cmd+K) */}
       <CommandPalette onNavigate={setSelectedWorkflow} />
 
@@ -357,7 +393,8 @@ export default function Dashboard() {
 
       {!selectedWorkflow ? (
         // Full screen view when no workflow selected
-        <div
+        <main
+          id="main-content"
           style={{
             width: "100vw",
             height: "100vh",
@@ -373,6 +410,17 @@ export default function Dashboard() {
             paddingTop: ENABLE_DEV_BYPASS ? "40px" : "0",
           }}
         >
+          <h1
+            style={{
+              position: "absolute",
+              left: "-10000px",
+              width: "1px",
+              height: "1px",
+              overflow: "hidden",
+            }}
+          >
+            PaiiD Trading Dashboard - Workflow Navigation
+          </h1>
           {/* Radial Menu Container - centered and scaled to fit */}
           <div
             style={{
@@ -515,10 +563,11 @@ export default function Dashboard() {
                   : "Hover over segments for details"}
             </div>
           </div>
-        </div>
+        </main>
       ) : isMobile ? (
         // Mobile: Stacked layout (no split view)
-        <div
+        <main
+          id="main-content"
           style={{
             width: "100%",
             height: "100vh",
@@ -528,6 +577,17 @@ export default function Dashboard() {
             overflow: "hidden",
           }}
         >
+          <h1
+            style={{
+              position: "absolute",
+              left: "-10000px",
+              width: "1px",
+              height: "1px",
+              overflow: "hidden",
+            }}
+          >
+            PaiiD Trading Dashboard
+          </h1>
           {/* Mobile Header with Back Button */}
           <div
             style={{
@@ -543,6 +603,8 @@ export default function Dashboard() {
             {/* Back Button */}
             <button
               onClick={() => setSelectedWorkflow("")}
+              aria-label="Return to workflow navigation menu"
+              type="button"
               style={{
                 background: "rgba(16, 185, 129, 0.1)",
                 border: "1px solid rgba(16, 185, 129, 0.3)",
@@ -587,7 +649,7 @@ export default function Dashboard() {
           >
             {renderWorkflowContent()}
           </div>
-        </div>
+        </main>
       ) : (
         // Desktop/Tablet: Split view when workflow selected
         <Split
@@ -603,7 +665,9 @@ export default function Dashboard() {
           className="split"
         >
           {/* Left panel - radial menu with header */}
-          <div
+          <aside
+            role="complementary"
+            aria-label="Workflow navigation menu"
             style={{
               display: "flex",
               flexDirection: "column",
@@ -628,6 +692,8 @@ export default function Dashboard() {
               {/* Help Button */}
               <button
                 onClick={openHelpPanel}
+                aria-label="Open help panel"
+                type="button"
                 style={{
                   background: "rgba(59, 130, 246, 0.1)",
                   border: "1px solid rgba(59, 130, 246, 0.3)",
@@ -681,10 +747,11 @@ export default function Dashboard() {
                 />
               </div>
             </div>
-          </div>
+          </aside>
 
           {/* Right panel - workflow content */}
-          <div
+          <main
+            id="main-content"
             style={{
               overflowY: "auto",
               overflowX: "hidden",
@@ -694,8 +761,21 @@ export default function Dashboard() {
               color: "#e2e8f0",
             }}
           >
+            <h1
+              style={{
+                position: "absolute",
+                left: "-10000px",
+                width: "1px",
+                height: "1px",
+                overflow: "hidden",
+              }}
+            >
+              {displayWorkflow
+                ? `${displayWorkflow.name.replace("\n", " ")} Workflow`
+                : "PaiiD Trading Dashboard"}
+            </h1>
             {renderWorkflowContent()}
-          </div>
+          </main>
         </Split>
       )}
 

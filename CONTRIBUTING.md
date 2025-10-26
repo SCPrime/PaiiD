@@ -2,6 +2,16 @@
 
 Thank you for contributing to **PaiiD (Personal Artificial Intelligence Investment Dashboard)**! This guide will help you get started with contributing code, documentation, and improvements to the platform.
 
+## Quick Links to Documentation
+
+Before you start contributing, check out these comprehensive guides:
+
+- **[Developer Guide](./docs/DEVELOPER_GUIDE.md)** - Complete setup instructions and development workflow
+- **[Architecture](./docs/ARCHITECTURE.md)** - System architecture and technology stack
+- **[Deployment Guide](./docs/DEPLOYMENT.md)** - How to deploy to production
+- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Solutions to common issues
+- **[CLAUDE.md](./CLAUDE.md)** - Project-specific conventions and guidelines
+
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
@@ -51,13 +61,13 @@ Before contributing, make sure you have:
 1. **Fork the repository** on GitHub
 2. **Clone your fork:**
    ```bash
-   git clone https://github.com/YOUR-USERNAME/ai-Trader.git
-   cd ai-Trader
+   git clone https://github.com/YOUR-USERNAME/PaiiD.git
+   cd PaiiD
    ```
 
 3. **Add upstream remote:**
    ```bash
-   git remote add upstream https://github.com/ORIGINAL-OWNER/ai-Trader.git
+   git remote add upstream https://github.com/ORIGINAL-OWNER/PaiiD.git
    ```
 
 4. **Install dependencies:**
@@ -68,10 +78,12 @@ Before contributing, make sure you have:
 
    # Backend
    cd ../backend
+   python -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
    pip install -r requirements.txt
    ```
 
-5. **Set up environment variables** (see `DEVELOPER_SETUP.md`)
+5. **Set up environment variables** (see [Developer Guide](./docs/DEVELOPER_GUIDE.md))
 
 6. **Verify setup:**
    ```bash
@@ -86,6 +98,8 @@ Before contributing, make sure you have:
    python -m uvicorn app.main:app --reload --port 8001  # Should start on :8001
    pytest -v           # Tests should pass
    ```
+
+**Need help?** See the [Troubleshooting Guide](./docs/TROUBLESHOOTING.md) for common setup issues.
 
 ---
 
@@ -558,7 +572,10 @@ def test_get_positions_success():
 **Update these files when relevant:**
 - `README.md` - Project overview, deployment URLs
 - `CLAUDE.md` - Architecture, conventions, troubleshooting
-- `DEVELOPER_SETUP.md` - Development tools, setup guide
+- `docs/DEVELOPER_GUIDE.md` - Development tools, setup guide
+- `docs/ARCHITECTURE.md` - System architecture
+- `docs/DEPLOYMENT.md` - Deployment procedures
+- `docs/TROUBLESHOOTING.md` - Common issues and solutions
 - `CONTRIBUTING.md` - This file
 - `DATA_SOURCES.md` - Data flow explanations
 - Inline code comments - Complex logic

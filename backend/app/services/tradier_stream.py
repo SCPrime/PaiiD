@@ -491,6 +491,67 @@ class TradierStreamService:
         except Exception as e:
             logger.error(f"❌ Error handling message: {e}")
 
+    async def _warm_popular_quotes(self):
+        """
+        Warm cache with popular symbols for faster initial loads
+
+        Pre-populates cache with quotes for commonly requested symbols
+        to reduce API load and improve response times for popular stocks.
+        """
+        # Popular symbols to warm cache
+        popular_symbols = [
+            # Major indices ETFs
+            "SPY",   # S&P 500
+            "QQQ",   # Nasdaq 100
+            "IWM",   # Russell 2000
+            "DIA",   # Dow Jones
+            # Popular tech stocks
+            "AAPL",  # Apple
+            "MSFT",  # Microsoft
+            "NVDA",  # Nvidia
+            "TSLA",  # Tesla
+            "AMZN",  # Amazon
+            "GOOGL", # Google
+            "META",  # Meta
+            # Popular trading stocks
+            "AMD",   # AMD
+            "NFLX",  # Netflix
+            "BA",    # Boeing
+        ]
+
+        logger.info(f"🔥 Warming cache for {len(popular_symbols)} popular symbols...")
+
+        try:
+            from .tradier_client import get_tradier_client
+
+            client = get_tradier_client()
+            quotes_data = client.get_quotes(popular_symbols)
+
+            warmed_count = 0
+            for symbol, quote in quotes_data.items():
+                try:
+                    quote_entry = {
+                        "symbol": symbol,
+                        "bid": float(quote.get("bid", 0)) if quote.get("bid") else None,
+                        "ask": float(quote.get("ask", 0)) if quote.get("ask") else None,
+                        "last": float(quote.get("last", 0)) if quote.get("last") else None,
+                        "volume": int(quote.get("volume", 0)),
+                        "timestamp": quote.get("trade_date", datetime.now().isoformat()),
+                        "cached": False,
+                    }
+
+                    # Use same TTL as quote endpoint (5s default)
+                    self.cache.set(f"quote:{symbol}", quote_entry, ttl=5)
+                    warmed_count += 1
+
+                except Exception as e:
+                    logger.warning(f"Failed to warm cache for {symbol}: {e}")
+
+            logger.info(f"✅ Cache warmed with {warmed_count}/{len(popular_symbols)} symbols")
+
+        except Exception as e:
+            logger.error(f"❌ Cache warming failed: {e}")
+
     async def start(self):
         """Start the streaming service"""
         if self.running:
@@ -499,6 +560,9 @@ class TradierStreamService:
 
         logger.info("🚀 Starting Tradier streaming service...")
         self.running = True
+
+        # Warm cache with popular symbols on startup
+        await self._warm_popular_quotes()
 
         # Start WebSocket connection task
         self._connection_task = asyncio.create_task(self._connect_websocket())
