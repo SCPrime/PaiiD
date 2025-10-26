@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear PaiiD Authentication</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .container {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+        }
+        h1 {
+            background: linear-gradient(135deg, #1a7560 0%, #10b981 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #cbd5e1;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1a7560 0%, #10b981 100%);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 PaiiD Authentication Reset</h1>
+        <p>Click the button below to clear your authentication tokens and return to the login screen.</p>
+
+        <button onclick="clearAuth()">Clear Tokens & Reload</button>
+
+        <div class="success" id="success">
+            ✅ Tokens cleared! Redirecting to PaiiD...
+        </div>
+    </div>
+
+    <script>
+        function clearAuth() {
+            console.log('Clearing all localStorage keys...');
+
+            // Clear ALL localStorage (complete reset)
+            localStorage.clear();
+
+            console.log('localStorage cleared. Current keys:', Object.keys(localStorage));
+
+            // Show success message
+            document.getElementById('success').style.display = 'block';
+
+            // Redirect to PaiiD after 2 seconds
+            setTimeout(() => {
+                console.log('Redirecting to PaiiD...');
+                window.location.href = 'https://paiid-frontend.onrender.com';
+            }, 2000);
+        }
+
+        // Log current localStorage state on page load
+        console.log('Current localStorage keys:', Object.keys(localStorage));
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            console.log(`  ${key}:`, localStorage.getItem(key)?.substring(0, 50));
+        }
+    </script>
+</body>
+</html>

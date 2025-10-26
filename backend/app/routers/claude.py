@@ -67,7 +67,9 @@ async def claude_chat(
 
     try:
         # Convert Pydantic models to dicts for Anthropic SDK
-        messages = [{"role": msg.role, "content": msg.content} for msg in request.messages]
+        messages = [
+            {"role": msg.role, "content": msg.content} for msg in request.messages
+        ]
 
         # Call Anthropic API
         # Build kwargs to avoid passing None for system
@@ -94,14 +96,15 @@ async def claude_chat(
         return ChatResponse(content=content, model=response.model, role="assistant")
 
     except Exception as e:
-        # Safe error logging for Windows console
+        # Safe error logging for Windows console and return gateway error to avoid generic 500s
         try:
             print(f"[Claude API Error]: {e!s}")
         except UnicodeEncodeError:
             error_msg = str(e).encode("ascii", "ignore").decode("ascii")
             print(f"[Claude API Error]: {error_msg}")
 
-        raise HTTPException(status_code=500, detail=str(e))
+        # Map upstream/model errors to 502 so frontend can classify/retry
+        raise HTTPException(status_code=502, detail="Upstream AI service error")
 
 
 @router.get("/health")

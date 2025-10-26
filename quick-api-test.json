@@ -1,0 +1,65 @@
+[
+  {
+    "endpoint": "/api/health",
+    "description": "Backend Health",
+    "status": 200,
+    "success": true,
+    "latency_ms": 246.14
+  },
+  {
+    "endpoint": "/api/account",
+    "description": "Account Data",
+    "status": 500,
+    "success": false,
+    "latency_ms": 448.89
+  },
+  {
+    "endpoint": "/api/positions",
+    "description": "Positions",
+    "status": 500,
+    "success": false,
+    "latency_ms": 623.98
+  },
+  {
+    "endpoint": "/api/market/indices",
+    "description": "Market Indices",
+    "status": 500,
+    "success": false,
+    "latency_ms": 609.87
+  },
+  {
+    "endpoint": "/api/market/quote/AAPL",
+    "description": "Stock Quote",
+    "status": 500,
+    "success": false,
+    "latency_ms": 405.12
+  },
+  {
+    "endpoint": "/api/news/market",
+    "description": "Market News",
+    "status": 401,
+    "success": false,
+    "latency_ms": 131.48
+  },
+  {
+    "endpoint": "/api/ai/recommendations",
+    "description": "AI Recommendations",
+    "status": 500,
+    "success": false,
+    "latency_ms": 1035.83
+  },
+  {
+    "endpoint": "/api/strategies",
+    "description": "Strategies",
+    "status": 404,
+    "success": false,
+    "latency_ms": 115.44
+  },
+  {
+    "endpoint": "/api/orders",
+    "description": "Orders",
+    "status": 404,
+    "success": false,
+    "latency_ms": 120.5
+  }
+]

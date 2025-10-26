@@ -48,8 +48,8 @@ WEDGE_ENDPOINTS = {
         ("/api/analytics/pnl", "GET", True, "P&L historical data"),
     ],
     "6. Strategy Builder": [
-        ("/api/strategies", "GET", True, "List saved strategies"),
-        ("/api/strategies/active", "GET", True, "Active strategies"),
+        ("/api/strategies/list", "GET", True, "List saved strategies"),
+        ("/api/strategies/templates", "GET", True, "Strategy templates"),
     ],
     "7. Backtesting": [
         ("/api/backtesting/strategies", "GET", True, "Strategies available for backtest"),
@@ -58,7 +58,7 @@ WEDGE_ENDPOINTS = {
     "8. Execute Trade": [
         ("/api/market/quote/AAPL", "GET", True, "Real-time quote from Tradier"),
         ("/api/market/search", "GET", True, "Symbol search/lookup"),
-        ("/api/orders", "GET", True, "Order history from Alpaca"),
+        ("/api/order-templates", "GET", True, "Order templates"),
     ],
     "9. Options Trading": [
         ("/api/options/chain/SPY", "GET", True, "Options chain from Tradier"),

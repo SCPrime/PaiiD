@@ -433,20 +433,29 @@ export const alpaca = new AlpacaClient();
 // Helper functions
 
 /**
+ * Safely parse numeric string/value, returning fallback if invalid
+ */
+function safeParseFloat(value: unknown, fallback = 0): number {
+  if (value === null || value === undefined || value === "") return fallback;
+  const num = parseFloat(String(value));
+  return Number.isFinite(num) ? num : fallback;
+}
+
+/**
  * Format Alpaca position data for UI display
  */
 export function formatPosition(position: AlpacaPosition) {
   return {
     symbol: position.symbol,
-    qty: parseFloat(position.qty),
-    avgEntryPrice: parseFloat(position.avg_entry_price),
-    currentPrice: parseFloat(position.current_price),
-    marketValue: parseFloat(position.market_value),
-    unrealizedPL: parseFloat(position.unrealized_pl),
-    unrealizedPLPercent: parseFloat(position.unrealized_plpc) * 100,
+    qty: safeParseFloat(position.qty),
+    avgEntryPrice: safeParseFloat(position.avg_entry_price),
+    currentPrice: safeParseFloat(position.current_price),
+    marketValue: safeParseFloat(position.market_value),
+    unrealizedPL: safeParseFloat(position.unrealized_pl),
+    unrealizedPLPercent: safeParseFloat(position.unrealized_plpc) * 100,
     side: position.side,
-    dayChange: parseFloat(position.change_today),
-    dayChangePercent: parseFloat(position.unrealized_intraday_plpc) * 100,
+    dayChange: safeParseFloat(position.change_today),
+    dayChangePercent: safeParseFloat(position.unrealized_intraday_plpc) * 100,
   };
 }
 

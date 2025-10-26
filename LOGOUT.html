@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PaiiD Logout</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: Arial;
+            padding: 50px;
+            text-align: center;
+        }
+        button {
+            background: #10b981;
+            color: white;
+            padding: 20px 40px;
+            font-size: 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <h1>PaiiD Logout</h1>
+    <p>Click below to clear all data and go to login screen</p>
+    <button onclick="logout()">LOGOUT & GO TO LOGIN</button>
+
+    <script>
+        function logout() {
+            // Clear everything
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Go to PaiiD
+            window.location.href = 'https://paiid-frontend.onrender.com';
+        }
+    </script>
+</body>
+</html>

@@ -101,6 +101,12 @@ class TradierStreamService:
                 if response.status_code == 200:
                     logger.info(f"✅ Deleted Tradier session: {session_id[:8]}...")
                     return True
+                elif response.status_code == 404:
+                    # Treat missing session as already cleaned up to avoid blocking
+                    logger.info(
+                        f"Session {session_id[:8]} not found on delete (already expired). Continuing."
+                    )
+                    return True
                 else:
                     logger.warning(
                         f"⚠️ Failed to delete session {session_id[:8]}: {response.status_code} - {response.text}"
@@ -148,7 +154,9 @@ class TradierStreamService:
                         self.session_id = session_id
                         self.session_created_at = time.time()
                         # Note: Do NOT reset circuit breaker here - only reset after successful WebSocket message receipt
-                        logger.info(f"✅ Created Tradier streaming session: {session_id[:8]}...")
+                        logger.info(
+                            f"✅ Created Tradier streaming session: {session_id[:8]}..."
+                        )
                         return session_id
                     else:
                         logger.error(f"❌ No sessionid in response: {data}")
@@ -174,6 +182,20 @@ class TradierStreamService:
 
                 if not self.running:
                     break
+
+                # Skip renewals while circuit breaker is active to avoid creating extra sessions
+                if self.circuit_breaker_active:
+                    logger.warning(
+                        "⏭️ Skipping session renewal while circuit breaker is active"
+                    )
+                    continue
+
+                # Only renew if we currently have an active websocket/session
+                if not self.websocket or not self.session_id:
+                    logger.info(
+                        "⏭️ Skipping session renewal (no active websocket/session)"
+                    )
+                    continue
 
                 logger.info("🔄 Renewing Tradier streaming session...")
                 new_session_id = await self._create_session()
@@ -212,7 +234,9 @@ class TradierStreamService:
                             continue
                         else:
                             # Timer expired, reset immediately
-                            logger.info("✅ Circuit breaker timer expired - resetting now")
+                            logger.info(
+                                "✅ Circuit breaker timer expired - resetting now"
+                            )
                             self.circuit_breaker_active = False
                             self.session_error_count = 0
                     else:
@@ -229,8 +253,8 @@ class TradierStreamService:
                     # Attempt to delete old session (best effort)
                     try:
                         await self._delete_session(old_session)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"Delete old session best-effort failed: {e}")
 
                 # Create fresh session
                 session_id = await self._create_session()
@@ -331,7 +355,9 @@ class TradierStreamService:
                     # Wait 6 minutes (360s) for all zombie sessions to expire (Tradier TTL is 5 min)
                     if not self.circuit_breaker_active:
                         self.circuit_breaker_active = True
-                        self.circuit_breaker_reset_time = time.time() + 360  # 6 minute timeout
+                        self.circuit_breaker_reset_time = (
+                            time.time() + 360
+                        )  # 6 minute timeout
                         logger.error(
                             "🔴 CIRCUIT BREAKER ACTIVATED - Too many sessions error. Waiting 6 minutes for session cleanup."
                         )
@@ -385,7 +411,9 @@ class TradierStreamService:
                     "ask": ask,
                     "bidsize": data.get("bidsize"),
                     "asksize": data.get("asksize"),
-                    "mid": ((bid + ask) / 2 if bid is not None and ask is not None else None),
+                    "mid": (
+                        (bid + ask) / 2 if bid is not None and ask is not None else None
+                    ),
                     "timestamp": datetime.now().isoformat(),
                     "type": "quote",
                 }
@@ -440,7 +468,9 @@ class TradierStreamService:
         self._connection_task = asyncio.create_task(self._connect_websocket())
 
         # Start session renewal task
-        self._session_renewal_task = asyncio.create_task(self._renew_session_periodically())
+        self._session_renewal_task = asyncio.create_task(
+            self._renew_session_periodically()
+        )
 
         logger.info("✅ Tradier streaming service started")
 
@@ -492,7 +522,9 @@ class TradierStreamService:
         if self.websocket and self.session_id:
             await self._subscribe_symbols(list(self.active_symbols))
 
-        logger.info(f"✅ Subscribed to quotes: {symbols} (total: {len(self.active_symbols)})")
+        logger.info(
+            f"✅ Subscribed to quotes: {symbols} (total: {len(self.active_symbols)})"
+        )
 
     async def unsubscribe_quotes(self, symbols: list[str]):
         """
@@ -509,7 +541,9 @@ class TradierStreamService:
         if self.websocket and self.session_id and self.active_symbols:
             await self._subscribe_symbols(list(self.active_symbols))
 
-        logger.info(f"✅ Unsubscribed from: {symbols} (remaining: {len(self.active_symbols)})")
+        logger.info(
+            f"✅ Unsubscribed from: {symbols} (remaining: {len(self.active_symbols)})"
+        )
 
     def is_running(self) -> bool:
         """Check if streaming is active"""
