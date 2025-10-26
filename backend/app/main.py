@@ -436,14 +436,14 @@ app.include_router(auth.router, prefix="/api")  # Authentication endpoints
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(portfolio.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
-app.include_router(positions.router)  # Position management
+app.include_router(positions.router, prefix="/api")  # Position management
 app.include_router(stream.router, prefix="/api")
 app.include_router(screening.router, prefix="/api")
 app.include_router(market.router, prefix="/api")
 app.include_router(market_data.router, prefix="/api", tags=["market-data"])
 app.include_router(news.router, prefix="/api", tags=["news"])
 app.include_router(options.router, prefix="/api")  # Options Greeks calculator
-app.include_router(proposals.router)  # Options trade proposals
+app.include_router(proposals.router, prefix="/api")  # Options trade proposals
 app.include_router(ai.router, prefix="/api")
 app.include_router(claude.router, prefix="/api")
 app.include_router(stock.router, prefix="/api")
@@ -452,11 +452,11 @@ app.include_router(strategies.router, prefix="/api")
 app.include_router(scheduler.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(backtesting.router, prefix="/api")
-app.include_router(ml.router)  # Machine Learning (Phase 2)
+app.include_router(ml.router, prefix="/api")  # Machine Learning (Phase 2)
 app.include_router(
-    ml_sentiment.router
+    ml_sentiment.router, prefix="/api"
 )  # ML Sentiment & Signals (Phase 2 - Active) - Re-enabled with unified auth
-app.include_router(monitoring.router)  # Monitoring & Health Checks (Phase 4)
-# app.include_router(monitor.router)  # GitHub Repository Monitor - Disabled
-app.include_router(telemetry.router)
-# app.include_router(websocket.router)  # WebSocket real-time streaming - Disabled (router not found)
+app.include_router(
+    monitoring.router, prefix="/api"
+)  # Monitoring & Health Checks (Phase 4)
+app.include_router(telemetry.router, prefix="/api")
