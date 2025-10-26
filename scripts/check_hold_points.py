@@ -17,13 +17,22 @@ def check_locked_files(config):
     locked_files = config.get("locked_files", [])
 
     # Get modified files in current branch
-    result = subprocess.run(
-        ["git", "diff", "--name-only", "origin/main...HEAD"],
-        capture_output=True,
-        text=True,
-    )
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "origin/main...HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=30,  # Prevent indefinite hangs
+            check=True,
+        )
+    except subprocess.TimeoutExpired:
+        print("❌ Git command timed out after 30 seconds")
+        return False
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Git command failed: {e}")
+        return False
 
-    modified_files = result.stdout.strip().split("\n")
+    modified_files = result.stdout.strip().split("\n") if result.stdout.strip() else []
 
     # Check for locked file modifications
     violations = [f for f in modified_files if f in locked_files]

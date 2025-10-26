@@ -132,37 +132,73 @@ function Kill-ProcessesOnPort {
     }
 }
 
-# Phase 2: Kill orphaned uvicorn processes
+# Phase 2: Kill orphaned uvicorn processes and PowerShell zombies
 function Kill-OrphanedUvicornProcesses {
-    Write-EmergencyLog "Phase 2: Killing orphaned uvicorn processes" "WARN"
+    Write-EmergencyLog "Phase 2: Killing orphaned uvicorn processes and PowerShell zombies" "WARN"
 
+    # Kill orphaned uvicorn processes
     $uvicornProcesses = Get-CimInstance Win32_Process | Where-Object {
         $_.CommandLine -like "*uvicorn*" -and $_.Name -eq "python.exe"
     }
 
-    if (-not $uvicornProcesses) {
-        Write-EmergencyLog "No orphaned uvicorn processes found" "SUCCESS"
-        return
-    }
+    if ($uvicornProcesses) {
+        Write-EmergencyLog "Found $($uvicornProcesses.Count) uvicorn process(es)" "WARN"
 
-    Write-EmergencyLog "Found $($uvicornProcesses.Count) uvicorn process(es)" "WARN"
+        foreach ($proc in $uvicornProcesses) {
+            $processId = $proc.ProcessId
+            $commandLine = $proc.CommandLine
 
-    foreach ($proc in $uvicornProcesses) {
-        $processId = $proc.ProcessId
-        $commandLine = $proc.CommandLine
+            Write-EmergencyLog "Orphaned uvicorn PID $processId" "WARN"
+            Write-EmergencyLog "  Command: $commandLine" "INFO"
 
-        Write-EmergencyLog "Orphaned uvicorn PID $processId" "WARN"
-        Write-EmergencyLog "  Command: $commandLine" "INFO"
-
-        if (-not $WhatIf) {
-            try {
-                Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
-                Write-EmergencyLog "  Killed PID $processId" "SUCCESS"
-            }
-            catch {
-                Write-EmergencyLog "  Failed to kill PID $processId : $_" "ERROR"
+            if (-not $WhatIf) {
+                try {
+                    Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+                    Write-EmergencyLog "  Killed PID $processId" "SUCCESS"
+                }
+                catch {
+                    Write-EmergencyLog "  Failed to kill PID $processId : $_" "ERROR"
+                }
             }
         }
+    } else {
+        Write-EmergencyLog "No orphaned uvicorn processes found" "SUCCESS"
+    }
+
+    # Kill orphaned PowerShell processes running our commands
+    Write-EmergencyLog "Checking for orphaned PowerShell processes..." "INFO"
+    
+    $powershellProcesses = Get-CimInstance Win32_Process | Where-Object {
+        $_.Name -eq "powershell.exe" -and (
+            $_.CommandLine -like "*uvicorn*" -or
+            $_.CommandLine -like "*npm*dev*" -or
+            $_.CommandLine -like "*next*dev*" -or
+            $_.CommandLine -like "*paiid*"
+        )
+    }
+
+    if ($powershellProcesses) {
+        Write-EmergencyLog "Found $($powershellProcesses.Count) orphaned PowerShell process(es)" "WARN"
+
+        foreach ($proc in $powershellProcesses) {
+            $processId = $proc.ProcessId
+            $commandLine = $proc.CommandLine
+
+            Write-EmergencyLog "Orphaned PowerShell PID $processId" "WARN"
+            Write-EmergencyLog "  Command: $commandLine" "INFO"
+
+            if (-not $WhatIf) {
+                try {
+                    Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+                    Write-EmergencyLog "  Killed PID $processId" "SUCCESS"
+                }
+                catch {
+                    Write-EmergencyLog "  Failed to kill PID $processId : $_" "ERROR"
+                }
+            }
+        }
+    } else {
+        Write-EmergencyLog "No orphaned PowerShell processes found" "SUCCESS"
     }
 }
 
@@ -243,45 +279,120 @@ function Clear-TimeWaitSockets {
     }
 }
 
-# Phase 5: Clean up PID files
-function Clear-OrphanedPidFiles {
-    Write-EmergencyLog "Phase 5: Cleaning up orphaned PID files" "INFO"
+# Phase 5: Clean up Job Objects and PowerShell Jobs
+function Clear-JobObjects {
+    Write-EmergencyLog "Phase 5: Cleaning up Job Objects and PowerShell Jobs" "INFO"
 
-    $projectRoot = Split-Path $PSScriptRoot -Parent
-    $pidDir = Join-Path $projectRoot "backend\.run"
-
-    if (-not (Test-Path $pidDir)) {
-        Write-EmergencyLog "PID directory not found: $pidDir" "INFO"
-        return
-    }
-
-    $pidFiles = Get-ChildItem -Path $pidDir -Filter "*.pid" -ErrorAction SilentlyContinue
-
-    if (-not $pidFiles) {
-        Write-EmergencyLog "No PID files found" "SUCCESS"
-        return
-    }
-
-    Write-EmergencyLog "Found $($pidFiles.Count) PID file(s)" "INFO"
-
-    foreach ($pidFile in $pidFiles) {
-        $processId = Get-Content $pidFile.FullName -Raw -ErrorAction SilentlyContinue
-
-        if ($processId) {
-            $processId = $processId.Trim()
-            $processExists = Get-Process -Id $processId -ErrorAction SilentlyContinue
-
-            if (-not $processExists) {
-                Write-EmergencyLog "Orphaned PID file: $($pidFile.Name) (PID $processId no longer running)" "WARN"
-
-                if (-not $WhatIf) {
-                    Remove-Item $pidFile.FullName -Force
-                    Write-EmergencyLog "  Removed $($pidFile.Name)" "SUCCESS"
+    # Get all PowerShell jobs
+    $jobs = Get-Job -ErrorAction SilentlyContinue
+    
+    if ($jobs) {
+        Write-EmergencyLog "Found $($jobs.Count) PowerShell job(s)" "WARN"
+        
+        foreach ($job in $jobs) {
+            $jobId = $job.Id
+            $jobName = $job.Name
+            $jobState = $job.State
+            
+            Write-EmergencyLog "Job $jobId ($jobName): $jobState" "INFO"
+            
+            if (-not $WhatIf) {
+                try {
+                    Remove-Job -Id $jobId -Force -ErrorAction SilentlyContinue
+                    Write-EmergencyLog "  Removed job $jobId" "SUCCESS"
                 }
-            } else {
-                Write-EmergencyLog "Active PID file: $($pidFile.Name) (PID $processId is running)" "INFO"
+                catch {
+                    Write-EmergencyLog "  Failed to remove job $jobId : $_" "ERROR"
+                }
             }
         }
+    } else {
+        Write-EmergencyLog "No PowerShell jobs found" "SUCCESS"
+    }
+
+    # Check for orphaned Job Objects using WMI
+    try {
+        $jobObjects = Get-CimInstance Win32_Job -ErrorAction SilentlyContinue
+        
+        if ($jobObjects) {
+            Write-EmergencyLog "Found $($jobObjects.Count) Job Object(s)" "WARN"
+            
+            foreach ($job in $jobObjects) {
+                $jobName = $job.Name
+                $jobProcesses = $job.Processes
+                
+                Write-EmergencyLog "Job Object: $jobName (Processes: $jobProcesses)" "INFO"
+                
+                if (-not $WhatIf) {
+                    try {
+                        $job.Terminate()
+                        Write-EmergencyLog "  Terminated Job Object: $jobName" "SUCCESS"
+                    }
+                    catch {
+                        Write-EmergencyLog "  Failed to terminate Job Object $jobName : $_" "ERROR"
+                    }
+                }
+            }
+        } else {
+            Write-EmergencyLog "No Job Objects found" "SUCCESS"
+        }
+    }
+    catch {
+        Write-EmergencyLog "Could not query Job Objects: $_" "WARN"
+    }
+}
+
+# Phase 6: Clean up PID files
+function Clear-OrphanedPidFiles {
+    Write-EmergencyLog "Phase 6: Cleaning up orphaned PID files" "INFO"
+
+    $projectRoot = Split-Path $PSScriptRoot -Parent
+    $pidDirs = @(
+        (Join-Path $projectRoot "backend\.run"),
+        (Join-Path $projectRoot "frontend\.run")
+    )
+
+    $totalCleaned = 0
+
+    foreach ($pidDir in $pidDirs) {
+        if (-not (Test-Path $pidDir)) {
+            Write-EmergencyLog "PID directory not found: $pidDir" "INFO"
+            continue
+        }
+
+        $pidFiles = Get-ChildItem -Path $pidDir -Filter "*.pid" -ErrorAction SilentlyContinue
+
+        if (-not $pidFiles) {
+            Write-EmergencyLog "No PID files found in $pidDir" "SUCCESS"
+            continue
+        }
+
+        Write-EmergencyLog "Found $($pidFiles.Count) PID file(s) in $pidDir" "INFO"
+
+        foreach ($pidFile in $pidFiles) {
+            $processId = Get-Content $pidFile.FullName -Raw -ErrorAction SilentlyContinue
+
+            if ($processId) {
+                $processId = $processId.Trim()
+                $processExists = Get-Process -Id $processId -ErrorAction SilentlyContinue
+
+                if (-not $processExists) {
+                    Write-EmergencyLog "Orphaned PID file: $($pidFile.Name) (PID $processId no longer running)" "WARN"
+
+                    if (-not $WhatIf) {
+                        Remove-Item $pidFile.FullName -Force
+                        Write-EmergencyLog "  Removed $($pidFile.Name)" "SUCCESS"
+                        $totalCleaned++
+                    }
+                } else {
+                    Write-EmergencyLog "Active PID file: $($pidFile.Name) (PID $processId is running)" "INFO"
+                }
+            }
+        }
+    }
+
+    if ($totalCleaned -gt 0) {
+        Write-EmergencyLog "Cleaned up $totalCleaned orphaned PID file(s)" "SUCCESS"
     }
 }
 
@@ -302,7 +413,10 @@ function Main {
     # Phase 4: TIME_WAIT cleanup
     Clear-TimeWaitSockets -TargetPort $Port
 
-    # Phase 5: PID file cleanup
+    # Phase 5: Job Object cleanup
+    Clear-JobObjects
+
+    # Phase 6: PID file cleanup
     Clear-OrphanedPidFiles
 
     Write-Host ""
