@@ -40,6 +40,7 @@ from .routers import (
     market_data,
     ml,
     ml_sentiment,
+    monitoring,
     news,
     options,
     orders,
@@ -455,6 +456,7 @@ app.include_router(ml.router)  # Machine Learning (Phase 2)
 app.include_router(
     ml_sentiment.router
 )  # ML Sentiment & Signals (Phase 2 - Active) - Re-enabled with unified auth
+app.include_router(monitoring.router)  # Monitoring & Health Checks (Phase 4)
 # app.include_router(monitor.router)  # GitHub Repository Monitor - Disabled
 app.include_router(telemetry.router)
 # app.include_router(websocket.router)  # WebSocket real-time streaming - Disabled (router not found)
