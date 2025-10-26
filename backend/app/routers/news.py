@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.core.jwt import get_current_user
+from app.core.unified_auth import get_current_user_unified
 from app.models.database import User
 
 
@@ -29,7 +29,7 @@ async def get_company_news(
     sentiment: str | None = Query(default=None, regex="^(bullish|bearish|neutral)$"),
     provider: str | None = None,
     use_cache: bool = Query(default=True),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Get aggregated news for specific company
@@ -99,7 +99,7 @@ async def get_market_news(
     sentiment: str | None = Query(default=None, regex="^(bullish|bearish|neutral)$"),
     provider: str | None = None,
     use_cache: bool = Query(default=True),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Get aggregated market news
@@ -163,7 +163,7 @@ async def get_market_news(
 
 
 @router.get("/news/providers")
-async def get_news_providers(current_user: User = Depends(get_current_user)):
+async def get_news_providers(current_user: User = Depends(get_current_user_unified)):
     """List active news providers"""
     if not news_aggregator:
         return {"providers": [], "status": "unavailable"}
@@ -177,7 +177,7 @@ async def get_news_providers(current_user: User = Depends(get_current_user)):
 
 
 @router.get("/news/health")
-async def get_news_health(current_user: User = Depends(get_current_user)):
+async def get_news_health(current_user: User = Depends(get_current_user_unified)):
     """
     Get health status of all news providers including circuit breaker states.
 
@@ -203,7 +203,7 @@ async def get_news_health(current_user: User = Depends(get_current_user)):
 async def get_market_sentiment(
     category: str = Query(default="general"),
     days_back: int = Query(default=7, ge=1, le=30),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Get aggregated market sentiment analytics
@@ -262,7 +262,7 @@ async def get_market_sentiment(
 
 
 @router.get("/news/cache/stats")
-async def get_cache_stats(current_user: User = Depends(get_current_user)):
+async def get_cache_stats(current_user: User = Depends(get_current_user_unified)):
     """Get news cache statistics"""
     if not news_cache:
         return {"status": "unavailable"}
@@ -271,7 +271,7 @@ async def get_cache_stats(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/news/cache/clear")
-async def clear_news_cache(current_user: User = Depends(get_current_user)):
+async def clear_news_cache(current_user: User = Depends(get_current_user_unified)):
     """Clear all cached news"""
     if not news_cache:
         raise HTTPException(status_code=503, detail="Cache unavailable")

@@ -7,7 +7,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.jwt import get_current_user
+from app.core.unified_auth import get_current_user_unified
 from app.db.session import engine
 from app.models.database import User
 from app.services.cache import get_cache
@@ -25,7 +25,7 @@ async def health_check():
 
 
 @router.get("/detailed")
-async def detailed_health(current_user: User = Depends(get_current_user)):
+async def detailed_health(current_user: User = Depends(get_current_user_unified)):
     """Detailed health metrics - requires auth"""
     return health_monitor.get_system_health()
 

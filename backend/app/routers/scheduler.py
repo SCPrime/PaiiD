@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..scheduler import APPROVALS_DIR, EXECUTIONS_DIR, SCHEDULES_DIR, get_scheduler
 
@@ -182,7 +182,7 @@ def _update_approval(approval_id: str, updates: dict):
 
 
 @router.get("/schedules", response_model=list[ScheduleResponse])
-async def list_schedules(current_user: User = Depends(get_current_user)):
+async def list_schedules(current_user: User = Depends(get_current_user_unified)):
     """Get all schedules for the current user"""
     try:
         schedules = _load_all_schedules()
@@ -224,7 +224,7 @@ async def list_schedules(current_user: User = Depends(get_current_user)):
     "/schedules", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_schedule(
-    schedule_data: ScheduleCreate, current_user: User = Depends(get_current_user)
+    schedule_data: ScheduleCreate, current_user: User = Depends(get_current_user_unified)
 ):
     """Create a new schedule"""
     try:
@@ -273,7 +273,7 @@ async def create_schedule(
 async def update_schedule(
     schedule_id: str,
     schedule_data: ScheduleUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Update an existing schedule"""
     try:
@@ -317,7 +317,7 @@ async def update_schedule(
 
 @router.delete("/schedules/{schedule_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_schedule(
-    schedule_id: str, current_user: User = Depends(get_current_user)
+    schedule_id: str, current_user: User = Depends(get_current_user_unified)
 ):
     """Delete a schedule"""
     try:
@@ -341,7 +341,7 @@ async def delete_schedule(
 
 
 @router.post("/pause-all")
-async def pause_all_schedules(current_user: User = Depends(get_current_user)):
+async def pause_all_schedules(current_user: User = Depends(get_current_user_unified)):
     """Emergency pause all schedules"""
     try:
         scheduler = get_scheduler()
@@ -357,7 +357,7 @@ async def pause_all_schedules(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/resume-all")
-async def resume_all_schedules(current_user: User = Depends(get_current_user)):
+async def resume_all_schedules(current_user: User = Depends(get_current_user_unified)):
     """Resume all paused schedules"""
     try:
         scheduler = get_scheduler()
@@ -381,7 +381,7 @@ async def resume_all_schedules(current_user: User = Depends(get_current_user)):
 async def list_executions(
     limit: int = 20,
     schedule_id: str | None = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Get execution history"""
     try:
@@ -398,7 +398,7 @@ async def list_executions(
 
 
 @router.get("/pending-approvals", response_model=list[ApprovalResponse])
-async def list_pending_approvals(current_user: User = Depends(get_current_user)):
+async def list_pending_approvals(current_user: User = Depends(get_current_user_unified)):
     """Get all pending trade approvals"""
     try:
         approvals = _load_pending_approvals()
@@ -410,7 +410,7 @@ async def list_pending_approvals(current_user: User = Depends(get_current_user))
 
 @router.post("/approvals/{approval_id}/approve")
 async def approve_trade(
-    approval_id: str, current_user: User = Depends(get_current_user)
+    approval_id: str, current_user: User = Depends(get_current_user_unified)
 ):
     """Approve a pending trade"""
     try:
@@ -445,7 +445,7 @@ async def approve_trade(
 async def reject_trade(
     approval_id: str,
     decision: ApprovalDecision,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Reject a pending trade"""
     try:
@@ -482,7 +482,7 @@ async def reject_trade(
 
 
 @router.get("/status")
-async def scheduler_status(current_user: User = Depends(get_current_user)):
+async def scheduler_status(current_user: User = Depends(get_current_user_unified)):
     """Get scheduler health status"""
     try:
         scheduler = get_scheduler()

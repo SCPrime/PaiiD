@@ -10,7 +10,7 @@ from anthropic import Anthropic
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 
 
@@ -52,7 +52,7 @@ class ChatResponse(BaseModel):
 @router.post("/chat", response_model=ChatResponse)
 async def claude_chat(
     request: ChatRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Proxy Claude API chat requests from frontend

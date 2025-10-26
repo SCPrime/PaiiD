@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..db.session import get_db
 from ..models.database import User
 
@@ -50,7 +50,7 @@ class UserPreferencesUpdate(BaseModel):
 
 @router.get("/users/preferences")
 def get_user_preferences(
-    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user_unified), db: Session = Depends(get_db)
 ) -> UserPreferencesResponse:
     """
     Get user preferences including risk tolerance
@@ -85,7 +85,7 @@ def get_user_preferences(
 @router.patch("/users/preferences")
 def update_user_preferences(
     updates: UserPreferencesUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
     db: Session = Depends(get_db),
 ) -> UserPreferencesResponse:
     """
@@ -189,7 +189,7 @@ def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
 
 @router.get("/users/risk-limits")
 def get_user_risk_limits(
-    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user_unified), db: Session = Depends(get_db)
 ):
     """
     Get calculated risk limits based on user's risk tolerance

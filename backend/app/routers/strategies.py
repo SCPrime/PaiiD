@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..db.session import get_db
 from ..models.database import Strategy, User
 from ..services.strategy_templates import (
@@ -106,7 +106,7 @@ class StrategyRunRequest(BaseModel):
 
 @router.post("/strategies/save")
 async def save_strategy(
-    request: StrategyConfigRequest, current_user: User = Depends(get_current_user)
+    request: StrategyConfigRequest, current_user: User = Depends(get_current_user_unified)
 ):
     """
     Save strategy configuration
@@ -151,7 +151,7 @@ async def save_strategy(
 
 @router.get("/strategies/load/{strategy_type}")
 async def load_strategy(
-    strategy_type: str, current_user: User = Depends(get_current_user)
+    strategy_type: str, current_user: User = Depends(get_current_user_unified)
 ):
     """
     Load strategy configuration
@@ -186,7 +186,7 @@ async def load_strategy(
 
 
 @router.get("/strategies/list")
-async def list_strategies(current_user: User = Depends(get_current_user)):
+async def list_strategies(current_user: User = Depends(get_current_user_unified)):
     """
     List all available strategies
 
@@ -218,7 +218,7 @@ async def list_strategies(current_user: User = Depends(get_current_user)):
 
 @router.post("/strategies/run")
 async def run_strategy(
-    request: StrategyRunRequest, current_user: User = Depends(get_current_user)
+    request: StrategyRunRequest, current_user: User = Depends(get_current_user_unified)
 ):
     """
     Run a strategy (execute morning routine)
@@ -294,7 +294,7 @@ async def run_strategy(
 
 @router.delete("/strategies/{strategy_type}")
 async def delete_strategy(
-    strategy_type: str, current_user: User = Depends(get_current_user)
+    strategy_type: str, current_user: User = Depends(get_current_user_unified)
 ):
     """
     Delete a saved strategy configuration
@@ -327,7 +327,7 @@ async def delete_strategy(
 @router.get("/strategies/templates")
 async def get_strategy_templates(
     filter_by_risk: bool | None = True,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
     db: Session = Depends(get_db),
 ):
     """
@@ -397,7 +397,7 @@ async def get_strategy_templates(
 async def get_strategy_template(
     template_id: str,
     customize: bool | None = True,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
     db: Session = Depends(get_db),
 ):
     """
@@ -473,7 +473,7 @@ class CloneTemplateRequest(BaseModel):
 async def clone_strategy_template(
     template_id: str,
     request: CloneTemplateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
     db: Session = Depends(get_db),
 ):
     """

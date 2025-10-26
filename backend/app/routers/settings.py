@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends
 
 from ..core.config import settings
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..core.startup_monitor import get_startup_monitor
 from ..models.database import User
 
@@ -26,13 +26,13 @@ def get_settings():
 
 
 @router.post("/settings")
-def set_settings(payload: dict, current_user: User = Depends(get_current_user)):
+def set_settings(payload: dict, current_user: User = Depends(get_current_user_unified)):
     _settings.update({k: float(payload.get(k, v)) for k, v in _settings.items()})
     return _settings
 
 
 @router.get("/config")
-def get_config(current_user: User = Depends(get_current_user)):
+def get_config(current_user: User = Depends(get_current_user_unified)):
     """
     Get safe configuration state for debugging production issues.
     Returns no secrets, only configuration status.

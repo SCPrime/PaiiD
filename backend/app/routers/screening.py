@@ -8,7 +8,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 
 
@@ -29,7 +29,7 @@ class Opportunity(BaseModel):
 @router.get("/screening/opportunities")
 async def get_opportunities(
     max_price: float | None = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ) -> dict:
     """
     Get strategy-based trading opportunities
@@ -318,7 +318,7 @@ async def get_opportunities(
 
 @router.get("/screening/strategies")
 async def get_available_strategies(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ) -> dict:
     """
     Get list of available screening strategies

@@ -6,7 +6,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.jwt import get_current_user
+from app.core.unified_auth import get_current_user_unified
 from app.models.database import User
 from app.services.position_tracker import (
     PortfolioGreeks,
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("", response_model=list[Position])
-async def get_positions(current_user: User = Depends(get_current_user)):
+async def get_positions(current_user: User = Depends(get_current_user_unified)):
     """Get all open positions with real-time P&L and Greeks
 
     Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
@@ -66,7 +66,7 @@ async def get_positions(current_user: User = Depends(get_current_user)):
 
 
 @router.get("/greeks", response_model=PortfolioGreeks)
-async def get_portfolio_greeks(current_user: User = Depends(get_current_user)):
+async def get_portfolio_greeks(current_user: User = Depends(get_current_user_unified)):
     """Get aggregate portfolio Greeks"""
     try:
         service = PositionTrackerService()
@@ -82,7 +82,7 @@ async def get_portfolio_greeks(current_user: User = Depends(get_current_user)):
 async def close_position(
     position_id: str,
     limit_price: float | None = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Close an open position"""
     try:

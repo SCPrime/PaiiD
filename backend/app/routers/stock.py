@@ -8,7 +8,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.tradier_client import get_tradier_client
 
@@ -59,7 +59,7 @@ class StockInfoResponse(BaseModel):
 @router.get("/{symbol}/info")
 async def get_stock_info(
     symbol: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ) -> CompanyInfo:
     """
     Get comprehensive company information for a symbol
@@ -118,7 +118,7 @@ async def get_stock_info(
 async def get_stock_news(
     symbol: str,
     limit: int = Query(default=10, ge=1, le=50, description="Number of news articles to return"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ) -> list[NewsArticle]:
     """
     Get recent news articles for a specific stock
@@ -171,7 +171,7 @@ async def get_stock_news(
 @router.get("/{symbol}/complete")
 async def get_complete_stock_info(
     symbol: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ) -> StockInfoResponse:
     """
     Get complete stock information including company info, technicals, and news

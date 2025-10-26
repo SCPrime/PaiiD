@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from ..core.config import settings
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..models.user import User
 from ..services.counter_manager import get_counter_manager
 from ..services.github_monitor import get_github_handler
@@ -64,7 +64,7 @@ class TrendResponse(BaseModel):
 
 # Endpoints
 @router.get("/counters", response_model=CountersResponse)
-async def get_counters(current_user: User = Depends(get_current_user)):
+async def get_counters(current_user: User = Depends(get_current_user_unified)):
     """
     Get all current counter values
 
@@ -97,7 +97,7 @@ async def get_counters(current_user: User = Depends(get_current_user)):
 
 
 @router.get("/dashboard", response_model=DashboardResponse)
-async def get_dashboard(current_user: User = Depends(get_current_user)):
+async def get_dashboard(current_user: User = Depends(get_current_user_unified)):
     """
     Get complete dashboard data
 
@@ -139,7 +139,7 @@ async def get_dashboard(current_user: User = Depends(get_current_user)):
 async def get_counter_trend(
     counter_name: str,
     hours: int = 24,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Get trend data for a specific counter
@@ -232,7 +232,7 @@ async def github_webhook(request: Request):
 
 
 @router.post("/reset-weekly")
-async def reset_weekly_counters(current_user: User = Depends(get_current_user)):
+async def reset_weekly_counters(current_user: User = Depends(get_current_user_unified)):
     """
     Reset weekly counters
 

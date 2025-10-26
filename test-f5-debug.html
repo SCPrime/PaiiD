@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F5 Debug Test - PaiiD</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            background: linear-gradient(135deg, #1a7560 0%, #10b981 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 3em;
+            margin: 0 0 20px 0;
+        }
+        button {
+            background: linear-gradient(135deg, #1a7560 0%, #10b981 100%);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        .debug-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .waiting {
+            color: #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 F5 Debug Test</h1>
+
+        <p>This page tests if F5 debugging is working in VS Code</p>
+
+        <button onclick="testDebugger()">🔍 Test Breakpoint</button>
+        <button onclick="testConsole()">📝 Test Console</button>
+        <button onclick="testFetch()">🌐 Test API Call</button>
+
+        <div class="debug-info" id="output">
+            <div class="waiting">⏳ Waiting for debug test...</div>
+            <div style="margin-top: 10px; font-size: 12px; opacity: 0.7;">
+                <strong>Instructions:</strong><br>
+                1. Open this file in VS Code<br>
+                2. Press Ctrl+Shift+D (open Debug panel)<br>
+                3. Select "🌐 Launch Chrome - Local Dev"<br>
+                4. Set Chrome to open this file (file://.../test-f5-debug.html)<br>
+                5. Click a button above and watch VS Code!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // This function will pause execution if breakpoint is set
+        function testDebugger() {
+            console.log('🔍 Starting debugger test...');
+
+            // SET A BREAKPOINT ON THE NEXT LINE IN VS CODE!
+            debugger; // ← Click in the gutter next to this line number
+
+            const message = '✅ Debugger paused! Check VS Code debug toolbar.';
+            document.getElementById('output').innerHTML = `
+                <div class="success">${message}</div>
+                <div style="margin-top: 10px;">
+                    If you see this message, the debugger is working!<br>
+                    Press F5 or Continue button in VS Code to resume.
+                </div>
+            `;
+            console.log(message);
+        }
+
+        function testConsole() {
+            console.log('📝 Testing console output...');
+            console.log('✅ Console Test 1: Basic message');
+            console.warn('⚠️ Console Test 2: Warning message');
+            console.error('❌ Console Test 3: Error message');
+            console.table({
+                name: 'PaiiD',
+                status: 'Debugging Active',
+                timestamp: new Date().toISOString()
+            });
+
+            document.getElementById('output').innerHTML = `
+                <div class="success">✅ Console messages sent!</div>
+                <div style="margin-top: 10px;">
+                    Check the Debug Console in VS Code (Ctrl+Shift+Y)<br>
+                    You should see 4 console messages including a table.
+                </div>
+            `;
+        }
+
+        async function testFetch() {
+            console.log('🌐 Testing network request...');
+            document.getElementById('output').innerHTML = '<div class="waiting">⏳ Making API call...</div>';
+
+            try {
+                // Test call to backend health endpoint
+                const response = await fetch('http://localhost:8001/api/health', {
+                    headers: {
+                        'Authorization': 'Bearer rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl'
+                    }
+                });
+
+                const data = await response.json();
+
+                document.getElementById('output').innerHTML = `
+                    <div class="success">✅ API call succeeded!</div>
+                    <div style="margin-top: 10px;">
+                        Status: ${response.status}<br>
+                        Response: <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 12px; opacity: 0.7;">
+                        Check Console Ninja or Debug Console for network details!
+                    </div>
+                `;
+
+                console.log('✅ Fetch succeeded:', data);
+
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <div style="color: #ef4444;">❌ API call failed</div>
+                    <div style="margin-top: 10px;">
+                        Error: ${error.message}<br><br>
+                        <strong>Likely causes:</strong><br>
+                        • Backend not running (start with: cd backend && uvicorn app.main:app --reload)<br>
+                        • CORS issue (normal for file:// protocol)<br>
+                        • Network error
+                    </div>
+                `;
+                console.error('❌ Fetch failed:', error);
+            }
+        }
+
+        // Auto-test on load
+        console.log('🎮 F5 Debug Test Page Loaded');
+        console.log('Debug panel should show this message if connected!');
+
+        // Show environment info
+        console.log('Environment:', {
+            userAgent: navigator.userAgent,
+            url: window.location.href,
+            timestamp: new Date().toISOString()
+        });
+    </script>
+</body>
+</html>

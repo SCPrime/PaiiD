@@ -7,7 +7,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.core.jwt import get_current_user
+from app.core.unified_auth import get_current_user_unified
 from app.models.database import User
 from app.services.order_execution import OptionsProposal, get_order_execution_service
 
@@ -36,7 +36,7 @@ class ExecuteProposalRequest(BaseModel):
 @router.post("/create")
 async def create_proposal(
     request: CreateProposalRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Create a detailed options trade proposal with risk analysis
@@ -109,7 +109,7 @@ async def create_proposal(
 @router.post("/execute")
 async def execute_proposal(
     request: ExecuteProposalRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Execute an approved options trade proposal
@@ -168,7 +168,7 @@ async def execute_proposal(
 
 
 @router.get("/history")
-async def get_proposal_history(current_user: User = Depends(get_current_user)):
+async def get_proposal_history(current_user: User = Depends(get_current_user_unified)):
     """
     Get history of created proposals
 

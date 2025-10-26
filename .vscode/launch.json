@@ -1,0 +1,89 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🌐 Launch Chrome - Local Dev",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile",
+      "runtimeArgs": [
+        "--remote-debugging-port=9222",
+        "--disable-web-security"
+      ]
+    },
+    {
+      "name": "🔷 Launch Edge - Local Dev",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "runtimeArgs": [
+        "--remote-debugging-port=9223"
+      ]
+    },
+    {
+      "name": "🔗 Attach to Chrome (Port 9222)",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true
+    },
+    {
+      "name": "🚀 Debug Production (Render)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "https://paiid-frontend.onrender.com",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": false
+    },
+    {
+      "name": "🐍 Python: Backend (Uvicorn)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "app.main:app",
+        "--reload",
+        "--port",
+        "8001"
+      ],
+      "cwd": "${workspaceFolder}/backend",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "🧪 Python: Run Tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests/",
+        "-v"
+      ],
+      "cwd": "${workspaceFolder}/backend",
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🎯 Full Stack Debug (Chrome + Backend)",
+      "configurations": [
+        "🐍 Python: Backend (Uvicorn)",
+        "🌐 Launch Chrome - Local Dev"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "🎯 Full Stack Debug (Edge + Backend)",
+      "configurations": [
+        "🐍 Python: Backend (Uvicorn)",
+        "🔷 Launch Edge - Local Dev"
+      ],
+      "stopAll": true
+    }
+  ]
+}

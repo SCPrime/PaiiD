@@ -15,7 +15,8 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..core.auth import get_current_user_id, require_bearer
+from ..core.auth import require_bearer
+from ..core.unified_auth import get_current_user_unified
 from ..db.session import get_db
 from ..models.database import User
 from ..services.technical_indicators import TechnicalIndicators
@@ -84,7 +85,7 @@ class RecommendationsResponse(BaseModel):
 
 
 @router.get("/recommendations", response_model=RecommendationsResponse)
-async def get_recommendations(current_user: User = Depends(get_current_user_id)):
+async def get_recommendations(current_user: User = Depends(get_current_user_unified)):
     """
     Generate AI-powered trading recommendations using real market data
 
@@ -106,7 +107,7 @@ async def get_recommendations(current_user: User = Depends(get_current_user_id))
 
         # PHASE 2.5: Get user's watchlist from database
         # Current: Use configurable default watchlist from environment
-        # Future: Fetch from user preferences: db.query(User).filter(User.id == get_current_user_id(token)).first().watchlist
+        # Future: Fetch from user preferences: db.query(User).filter(User.id == get_current_user_unified(token)).first().watchlist
         import os
 
         default_watchlist = os.getenv(
@@ -511,7 +512,7 @@ class SymbolAnalysis(BaseModel):
     response_model=SymbolAnalysis,
 )
 async def analyze_symbol(
-    symbol: str, current_user: User = Depends(get_current_user_id)
+    symbol: str, current_user: User = Depends(get_current_user_unified)
 ):
     """
     Comprehensive AI analysis of a stock symbol using Tradier data
@@ -1760,7 +1761,7 @@ class RecommendationHistoryResponse(BaseModel):
 @router.post("/recommendations/save")
 async def save_recommendation(
     request: SaveRecommendationRequest,
-    current_user: User = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_user_unified),
     db: Session = Depends(get_db),
 ):
     """
@@ -1832,7 +1833,7 @@ async def get_recommendation_history(
         50, ge=1, le=200, description="Maximum number of recommendations to return"
     ),
     offset: int = Query(0, ge=0, description="Number of recommendations to skip"),
-    current_user: User = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_user_unified),
     db: Session = Depends(get_db),
 ):
     """
@@ -1935,7 +1936,7 @@ class PortfolioAnalysisResponse(BaseModel):
 
 
 @router.get("/analyze-portfolio", response_model=PortfolioAnalysisResponse)
-async def analyze_portfolio(current_user: User = Depends(get_current_user_id)):
+async def analyze_portfolio(current_user: User = Depends(get_current_user_unified)):
     """
     AI-powered portfolio analysis using Claude API
 
@@ -2212,7 +2213,7 @@ async def analyze_news(
             "published_at": "2025-10-20T10:30:00Z",
         },
     ),
-    current_user: User = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     AI-powered news article analysis
@@ -2344,7 +2345,7 @@ async def analyze_news_batch(
             },
         ],
     ),
-    current_user: User = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Analyze multiple news articles in batch

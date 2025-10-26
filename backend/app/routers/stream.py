@@ -20,7 +20,7 @@ from collections.abc import AsyncGenerator
 from fastapi import APIRouter, Depends, Query
 from sse_starlette.sse import EventSourceResponse
 
-from app.core.jwt import get_current_user
+from app.core.unified_auth import get_current_user_unified
 from app.models.database import User
 from app.services.cache import CacheService, get_cache
 from app.services.tradier_stream import get_tradier_stream
@@ -38,7 +38,7 @@ DATA_CHECK_INTERVAL = 1  # Check for new data every 1 second
 @router.get("/stream/prices")
 async def stream_prices(
     symbols: str = Query(..., description="Comma-separated list of symbols (e.g., AAPL,MSFT,TSLA)"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
     """
@@ -146,7 +146,7 @@ async def stream_prices(
 
 @router.get("/stream/positions")
 async def stream_positions(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
     """
@@ -223,7 +223,7 @@ async def stream_positions(
 
 @router.get("/stream/market-indices")
 async def stream_market_indices(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
     """
@@ -350,7 +350,7 @@ async def stream_market_indices(
 
 
 @router.get("/stream/status")
-async def stream_status(current_user: User = Depends(get_current_user)):
+async def stream_status(current_user: User = Depends(get_current_user_unified)):
     """
     Get streaming service status
 

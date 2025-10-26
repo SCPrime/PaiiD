@@ -4,7 +4,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..core.jwt import get_current_user
+from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
@@ -47,7 +47,7 @@ class AlpacaAccount(BaseModel):
 
 
 @router.get("/account")
-def get_account(current_user: User = Depends(get_current_user)):
+def get_account(current_user: User = Depends(get_current_user_unified)):
     """Get Tradier account information"""
     logger.info("🎯 ACCOUNT ENDPOINT - Tradier Production")
 
@@ -65,7 +65,7 @@ def get_account(current_user: User = Depends(get_current_user)):
 
 @router.get("/positions")
 def get_positions(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
     """Get Tradier positions (cached for 30s)"""
@@ -91,7 +91,7 @@ def get_positions(
 
 
 @router.get("/positions/{symbol}")
-def get_position(symbol: str, current_user: User = Depends(get_current_user)):
+def get_position(symbol: str, current_user: User = Depends(get_current_user_unified)):
     """Get a specific position by symbol"""
     try:
         client = get_tradier_client()

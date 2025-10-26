@@ -12,7 +12,7 @@ from datetime import UTC, datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from ..core.auth import get_current_user_id_id
+from ..core.unified_auth import get_current_user_unified
 from ..core.config import settings
 from ..core.redis_client import get_redis
 from ..ml.data_pipeline import DataPipeline
@@ -74,7 +74,7 @@ async def get_sentiment(
     symbol: str,
     include_news: bool = Query(True, description="Include news analysis"),
     lookback_days: int = Query(7, ge=1, le=30, description="Days of news to analyze"),
-    current_user: User = Depends(get_current_user_id_id),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Get sentiment analysis for a symbol
@@ -175,7 +175,7 @@ async def get_trade_signal(
     symbol: str,
     include_sentiment: bool = Query(True, description="Include sentiment analysis"),
     lookback_days: int = Query(30, ge=7, le=90, description="Days of price history"),
-    current_user: User = Depends(get_current_user_id_id),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Get AI-generated trade signal for a symbol
@@ -271,7 +271,7 @@ async def get_batch_signals(
     symbols: list[str],
     include_sentiment: bool = Query(True, description="Include sentiment analysis"),
     lookback_days: int = Query(30, ge=7, le=90, description="Days of price history"),
-    current_user: User = Depends(get_current_user_id_id),
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Get trade signals for multiple symbols
