@@ -20,10 +20,10 @@ from collections.abc import AsyncGenerator
 from fastapi import APIRouter, Depends, Query
 from sse_starlette.sse import EventSourceResponse
 
-from app.core.unified_auth import get_current_user_unified
-from app.models.database import User
-from app.services.cache import CacheService, get_cache
-from app.services.tradier_stream import get_tradier_stream
+from ..core.unified_auth import get_current_user_unified
+from ..models.database import User
+from ..services.cache import CacheService, get_cache
+from ..services.tradier_stream import get_tradier_stream
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,9 @@ DATA_CHECK_INTERVAL = 1  # Check for new data every 1 second
 
 @router.get("/stream/prices")
 async def stream_prices(
-    symbols: str = Query(..., description="Comma-separated list of symbols (e.g., AAPL,MSFT,TSLA)"),
+    symbols: str = Query(
+        ..., description="Comma-separated list of symbols (e.g., AAPL,MSFT,TSLA)"
+    ),
     current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
@@ -201,7 +203,9 @@ async def stream_positions(
                             {
                                 "timestamp": current_time,
                                 "stream_type": "positions",
-                                "position_count": len(positions_data) if positions_data else 0,
+                                "position_count": len(positions_data)
+                                if positions_data
+                                else 0,
                             }
                         ),
                     }

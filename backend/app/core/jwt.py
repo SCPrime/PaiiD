@@ -139,15 +139,34 @@ def decode_token(token: str) -> dict[str, Any]:
     Raises:
         HTTPException: If token is invalid, expired, or malformed
     """
+    # Quick validation: JWT tokens must have 3 segments separated by dots
+    if not token or token.count(".") != 2:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token format (JWT tokens must have header.payload.signature structure)",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     try:
         payload = jwt.decode(
             token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
         )
         return payload
     except JWTError as e:
+        # Improve error message for common cases
+        error_str = str(e).lower()
+        if "expired" in error_str:
+            detail = "Token has expired"
+        elif "signature" in error_str or "verification" in error_str:
+            detail = "Invalid token signature"
+        elif "not enough" in error_str or "segments" in error_str:
+            detail = "Invalid token format (malformed JWT structure)"
+        else:
+            detail = f"Invalid token: {e!s}"
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid token: {e!s}",
+            detail=detail,
             headers={"WWW-Authenticate": "Bearer"},
         )
 

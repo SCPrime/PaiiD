@@ -22,6 +22,7 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)  # bcrypt hash
     full_name = Column(String(255), nullable=True)
+    username = Column(String(255), nullable=True)  # Legacy field - kept for database compatibility
 
     # Role-based access control
     role = Column(

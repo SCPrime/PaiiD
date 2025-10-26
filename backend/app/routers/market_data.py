@@ -11,9 +11,8 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.core.unified_auth import get_current_user_unified
-from app.models.database import User
-
+from ..core.unified_auth import get_current_user_unified
+from ..models.database import User
 from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import get_tradier_client
 
@@ -101,7 +100,9 @@ async def get_quote(
 
 
 @router.get("/market/quotes")
-async def get_quotes(symbols: str, current_user: User = Depends(get_current_user_unified)):
+async def get_quotes(
+    symbols: str, current_user: User = Depends(get_current_user_unified)
+):
     """Get quotes for multiple symbols (comma-separated) using Tradier
 
     Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.

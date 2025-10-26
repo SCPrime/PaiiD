@@ -51,29 +51,33 @@ def verify_api_token(authorization: str) -> bool:
     return token == settings.API_TOKEN
 
 
-def get_auth_mode(authorization: str | None = Header(None)) -> str:
+def get_auth_mode(authorization: str | None) -> str:
     """
     Determine which authentication mode to use
 
     Args:
-        authorization: Authorization header
+        authorization: Authorization header value
 
     Returns:
         AuthMode constant indicating auth type
     """
     if not authorization:
+        logger.debug("No authorization header - using MVP fallback")
         return AuthMode.MVP_FALLBACK
 
     if not authorization.startswith("Bearer "):
+        logger.debug("Authorization header missing 'Bearer ' prefix - using MVP fallback")
         return AuthMode.MVP_FALLBACK
 
     token = authorization.split(" ", 1)[1]
 
     # Check if it's the simple API token
     if token == settings.API_TOKEN:
+        logger.debug("API token matched - using API_TOKEN auth mode")
         return AuthMode.API_TOKEN
 
     # Otherwise assume it's a JWT
+    logger.debug("Token did not match API_TOKEN - assuming JWT auth mode")
     return AuthMode.JWT
 
 
@@ -96,7 +100,6 @@ def get_current_user_unified(
         HTTPException: 401 if authentication fails
     """
     auth_mode = get_auth_mode(authorization)
-
     logger.debug(f"Auth mode detected: {auth_mode}")
 
     # CASE 1: Simple API Token (service-to-service or frontend proxy)
@@ -111,7 +114,8 @@ def get_current_user_unified(
             user = User(
                 id=1,
                 email="mvp@paiid.local",
-                username="mvp_user",
+                password_hash="",  # No password for MVP user (uses API token only)
+                full_name="MVP User",
                 role="owner",
                 is_active=True,
             )
@@ -120,6 +124,7 @@ def get_current_user_unified(
             db.refresh(user)
             logger.info("Created MVP user (id=1)")
 
+        logger.debug(f"API token auth successful - returning user: {user.email}")
         return user
 
     # CASE 2: JWT Authentication (multi-user mode)
@@ -191,7 +196,8 @@ def get_current_user_unified(
             user = User(
                 id=1,
                 email="mvp@paiid.local",
-                username="mvp_user",
+                password_hash="",  # No password for MVP user (uses API token only)
+                full_name="MVP User",
                 role="owner",
                 is_active=True,
             )
@@ -247,6 +253,8 @@ def require_api_token(authorization: str | None = Header(None)) -> str:
         )
 
     if token != settings.API_TOKEN:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API token"
+        )
 
     return token
