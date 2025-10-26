@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { logger } from "../lib/logger";
 
 type GlowStyle = "radial" | "halo";
 
@@ -20,10 +21,10 @@ export function GlowStyleProvider({ children }: { children: ReactNode }) {
       const glow = params.get("glow");
       if (glow === "halo") {
         setGlowStyle("halo");
-        console.info("[GlowStyle] 🎨 Using HALO glow");
+        logger.info("[GlowStyle] 🎨 Using HALO glow");
       } else {
         setGlowStyle("radial");
-        console.info("[GlowStyle] 🎨 Using RADIAL glow (default)");
+        logger.info("[GlowStyle] 🎨 Using RADIAL glow (default)");
       }
     }
   }, []);

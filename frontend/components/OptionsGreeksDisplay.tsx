@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { logger } from "../lib/logger";
 
 interface GreeksData {
   symbol: string;
@@ -60,7 +61,7 @@ export default function OptionsGreeksDisplay({
       // Only log if it's not the default/placeholder date
       const todayStr = today.toISOString().split("T")[0];
       if (expiry !== todayStr) {
-        console.warn("[OptionsGreeks] Skipping fetch - expiry is in the past:", expiry);
+        logger.warn("[OptionsGreeks] Skipping fetch - expiry is in the past", { expiry });
       }
       setError("Please select a future expiration date");
       return;
@@ -89,7 +90,7 @@ export default function OptionsGreeksDisplay({
         setGreeksData(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
-        console.error("[OptionsGreeks] Error fetching Greeks:", err);
+        logger.error("[OptionsGreeks] Error fetching Greeks", err);
       } finally {
         setLoading(false);
       }

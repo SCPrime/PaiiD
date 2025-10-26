@@ -18,7 +18,8 @@ import {
   Zap,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { HelpTooltip } from "../HelpTooltip";
+import { logger } from "../../lib/logger";
+import HelpTooltip from "../HelpTooltip";
 
 interface PersonalAnalytics {
   total_trades: number;
@@ -149,7 +150,7 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
       setPatterns(mockPatterns);
       setRecommendations(mockRecommendations);
     } catch (error) {
-      console.error("Failed to load personal analytics:", error);
+      logger.error("Failed to load personal analytics", error);
     } finally {
       setLoading(false);
     }

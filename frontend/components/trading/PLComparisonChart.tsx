@@ -3,6 +3,7 @@
 import type { PLComparison, PLViewMode, PositionTracking, TheoreticalPayoff } from "@/types/pnl";
 import { createChart, IChartApi, LineData } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
+import { logger } from "../../lib/logger";
 
 /**
  * P&L Comparison Chart
@@ -37,7 +38,7 @@ export default function PLComparisonChart({
     if (mode === "live-position" && autoRefresh) {
       const interval = setInterval(() => {
         // Trigger refresh - in production, refetch position data
-        console.info("Refreshing live position data...");
+        logger.info("Refreshing live position data...");
       }, 5000);
 
       return () => clearInterval(interval);

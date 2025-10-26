@@ -1,6 +1,7 @@
 import { Plus, Star, Trash2, TrendingUp, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { logger } from "../lib/logger";
 import {
   UserProfile,
   Watchlist,
@@ -113,14 +114,14 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
               };
             }
           } catch (err) {
-            console.error(`Failed to fetch price for ${symbol}:`, err);
+            logger.error(`Failed to fetch price for ${symbol}`, err);
           }
         })
       );
 
       setSymbolPrices(prices);
     } catch (error) {
-      console.error("Failed to fetch prices:", error);
+      logger.error("Failed to fetch prices", error);
     } finally {
       setLoading(false);
     }

@@ -115,7 +115,7 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
       .enter()
       .append("g")
       .attr("class", "heatmap-cell")
-      .attr("transform", (d, i) => {
+      .attr("transform", (_d, i) => {
         const row = Math.floor(i / cols);
         const col = i % cols;
         return `translate(${col * cellWidth},${row * cellHeight})`;
@@ -195,18 +195,18 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
     return "text-red-400";
   };
 
-  if (error) {
+  if (_error) {
     return (
       <EnhancedCard variant="default" className={className}>
         <div className="text-center text-red-400">
           <StatusIndicator status="error" size="sm" />
-          <p className="mt-2">Heatmap Error: {error}</p>
+          <p className="mt-2">Heatmap Error: {_error}</p>
         </div>
       </EnhancedCard>
     );
   }
 
-  if (isLoading) {
+  if (_isLoading) {
     return (
       <EnhancedCard variant="default" className={className}>
         <div className="text-center">

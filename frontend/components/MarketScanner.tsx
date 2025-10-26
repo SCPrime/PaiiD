@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { ApiError, apiGet } from "../lib/api";
+import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
 import { Button, Card, Input, Select } from "./ui";
 import { Skeleton } from "./ui/Skeleton";
@@ -98,7 +99,7 @@ export default function MarketScanner() {
       setResults(apiResults);
     } catch (e: unknown) {
       const err = e as ApiError;
-      console.error("[MarketScanner] scan error", err.status, err.message);
+      logger.error("[MarketScanner] scan error", { status: err.status, message: err.message });
       setResults([]);
     } finally {
       setLoading(false);

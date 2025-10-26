@@ -7,6 +7,7 @@ import MobileDashboard from "../components/MobileDashboard";
 import Settings from "../components/Settings";
 import UserSetupAI from "../components/UserSetupAI";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { logger } from "../lib/logger";
 import { initializeSession } from "../lib/userManagement";
 
 // Development bypass flag
@@ -33,7 +34,7 @@ export default function EnhancedDashboardPage() {
         }
         setIsLoading(false);
       } catch (error) {
-        console.error("Session initialization failed:", error);
+        logger.error("Session initialization failed", error);
         setIsLoading(false);
       }
     };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { logger } from "../../lib/logger";
 
 interface HealthMetrics {
   status: string;
@@ -45,7 +46,7 @@ export default function PerformanceDashboard() {
       const data = await res.json();
       setMetrics(data);
     } catch (error) {
-      console.error("Failed to fetch metrics:", error);
+      logger.error("Failed to fetch metrics", error);
     } finally {
       setLoading(false);
     }

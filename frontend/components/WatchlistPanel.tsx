@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronUp, RefreshCw, Star, TrendingDown, TrendingUp } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { logger } from "../lib/logger";
 import { UserProfile, Watchlist, getOrCreateProfile } from "../types/profile";
 
 interface WatchlistPanelProps {
@@ -125,7 +126,7 @@ const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
               };
             }
           } catch (err) {
-            console.error(`Failed to fetch quote for ${symbol}:`, err);
+            logger.error(`Failed to fetch quote for ${symbol}`, err);
             // Keep previous quote if fetch fails
             if (quotes[symbol]) {
               newQuotes[symbol] = quotes[symbol];
@@ -137,7 +138,7 @@ const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
       setQuotes(newQuotes);
       setLastRefresh(new Date());
     } catch (error) {
-      console.error("Failed to fetch quotes:", error);
+      logger.error("Failed to fetch quotes", error);
     } finally {
       setLoading(false);
     }

@@ -98,11 +98,14 @@ const MarketVisualization: React.FC<MarketVisualizationProps> = ({
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
     // Create treemap layout
-    const treemap = d3.treemap<MarketData>().size([width, height]).padding(2).round(true);
+    const treemap = d3.treemap<{ children?: MarketData[] } & Partial<MarketData>>()
+      .size([width, height])
+      .padding(2)
+      .round(true);
 
     const root = d3
-      .hierarchy({ children: marketData })
-      .sum((d) => d.marketCap)
+      .hierarchy<{ children?: MarketData[] } & Partial<MarketData>>({ children: marketData })
+      .sum((d) => d.marketCap || 0)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
     treemap(root);
@@ -114,14 +117,14 @@ const MarketVisualization: React.FC<MarketVisualizationProps> = ({
       .enter()
       .append("g")
       .attr("class", "treemap-cell")
-      .attr("transform", (d) => `translate(${d.x0},${d.y0})`);
+      .attr("transform", (d: any) => `translate(${d.x0},${d.y0})`);
 
     // Add rectangles
     cells
       .append("rect")
-      .attr("width", (d) => d.x1 - d.x0)
-      .attr("height", (d) => d.y1 - d.y0)
-      .attr("fill", (d) => d.data.color)
+      .attr("width", (d: any) => d.x1 - d.x0)
+      .attr("height", (d: any) => d.y1 - d.y0)
+      .attr("fill", (d: any) => d.data.color)
       .attr("stroke", "#374151")
       .attr("stroke-width", 1)
       .style("cursor", "pointer")
@@ -135,22 +138,22 @@ const MarketVisualization: React.FC<MarketVisualizationProps> = ({
     // Add text labels
     cells
       .append("text")
-      .attr("x", (d) => (d.x1 - d.x0) / 2)
-      .attr("y", (d) => (d.y1 - d.y0) / 2 - 5)
+      .attr("x", (d: any) => (d.x1 - d.x0) / 2)
+      .attr("y", (d: any) => (d.y1 - d.y0) / 2 - 5)
       .attr("text-anchor", "middle")
-      .attr("font-size", (d) => Math.min(12, (d.x1 - d.x0) / 6))
+      .attr("font-size", (d: any) => Math.min(12, (d.x1 - d.x0) / 6))
       .attr("font-weight", "bold")
       .attr("fill", "white")
-      .text((d) => d.data.symbol);
+      .text((d: any) => d.data.symbol);
 
     cells
       .append("text")
-      .attr("x", (d) => (d.x1 - d.x0) / 2)
-      .attr("y", (d) => (d.y1 - d.y0) / 2 + 10)
+      .attr("x", (d: any) => (d.x1 - d.x0) / 2)
+      .attr("y", (d: any) => (d.y1 - d.y0) / 2 + 10)
       .attr("text-anchor", "middle")
-      .attr("font-size", (d) => Math.min(10, (d.x1 - d.x0) / 8))
+      .attr("font-size", (d: any) => Math.min(10, (d.x1 - d.x0) / 8))
       .attr("fill", "white")
-      .text((d) => `${d.data.changePercent >= 0 ? "+" : ""}${d.data.changePercent.toFixed(1)}%`);
+      .text((d: any) => `${d.data.changePercent >= 0 ? "+" : ""}${d.data.changePercent.toFixed(1)}%`);
   };
 
   // Render bubble chart
@@ -252,7 +255,7 @@ const MarketVisualization: React.FC<MarketVisualizationProps> = ({
     } else if (selectedType === "bubble") {
       renderBubbleChart();
     }
-  }, [marketData, selectedType]);
+  }, [marketData, selectedType, renderBubbleChart, renderTreemap]);
 
   const getPerformanceColor = (change: number) => {
     if (change > 5) return "text-green-400";
@@ -261,18 +264,18 @@ const MarketVisualization: React.FC<MarketVisualizationProps> = ({
     return "text-red-400";
   };
 
-  if (error) {
+  if (_error) {
     return (
       <EnhancedCard variant="default" className={className}>
         <div className="text-center text-red-400">
           <StatusIndicator status="error" size="sm" />
-          <p className="mt-2">Visualization Error: {error}</p>
+          <p className="mt-2">Visualization Error: {_error}</p>
         </div>
       </EnhancedCard>
     );
   }
 
-  if (isLoading) {
+  if (_isLoading) {
     return (
       <EnhancedCard variant="default" className={className}>
         <div className="text-center">

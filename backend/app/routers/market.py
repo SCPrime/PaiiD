@@ -6,6 +6,7 @@ This module uses Tradier API for ALL market data.
 Alpaca is ONLY used for paper trading execution.
 """
 
+from datetime import UTC, datetime
 from typing import Literal
 
 import requests
@@ -18,14 +19,8 @@ from ..models.database import User
 from ..services.cache import CacheService, get_cache
 
 
-# LOUD LOGGING TO VERIFY NEW CODE IS DEPLOYED
-print("=" * 80)
-print("[TRADIER] TRADIER INTEGRATION CODE LOADED - market.py")
-print("=" * 80)
-print(f"TRADIER_API_KEY present: {bool(settings.TRADIER_API_KEY)}")
-print(f"TRADIER_API_BASE_URL: {settings.TRADIER_API_BASE_URL}")
-print(f"ANTHROPIC_API_KEY present: {bool(settings.ANTHROPIC_API_KEY)}")
-print("=" * 80, flush=True)
+# Minimal load log
+print("[market] router loaded (Tradier integration)", flush=True)
 
 router = APIRouter(tags=["market"])
 
@@ -51,7 +46,6 @@ async def get_market_conditions(
     - Market breadth indicators (placeholder - requires additional data)
     - Overall sentiment and recommended actions
     """
-    from datetime import datetime
 
     # Check cache first (60s TTL)
     cache_key = "market:conditions"
@@ -93,18 +87,29 @@ async def get_market_conditions(
                 vix_value = float(vix_quote["last"])
                 if vix_value < 15:
                     vix_status = "favorable"
-                    vix_details = f"Very low volatility ({vix_value:.2f}) - calm market, good for directional trades"
+                    vix_details = (
+                        f"Very low volatility ({vix_value:.2f}) - calm market, "
+                        "good for directional trades"
+                    )
                     positive_signals += 1
                 elif vix_value < 20:
                     vix_status = "favorable"
-                    vix_details = f"Low volatility ({vix_value:.2f}) - stable market conditions"
+                    vix_details = (
+                        f"Low volatility ({vix_value:.2f}) - stable market conditions"
+                    )
                     positive_signals += 1
                 elif vix_value < 30:
                     vix_status = "neutral"
-                    vix_details = f"Moderate volatility ({vix_value:.2f}) - some uncertainty, trade with caution"
+                    vix_details = (
+                        f"Moderate volatility ({vix_value:.2f}) - some uncertainty, "
+                        "trade with caution"
+                    )
                 else:
                     vix_status = "unfavorable"
-                    vix_details = f"High volatility ({vix_value:.2f}) - turbulent market, high risk"
+                    vix_details = (
+                        f"High volatility ({vix_value:.2f}) - turbulent market, "
+                        "high risk"
+                    )
 
                 conditions.append(
                     MarketCondition(
@@ -225,7 +230,7 @@ async def get_market_conditions(
 
         result = {
             "conditions": [cond.model_dump() for cond in conditions],
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat(),
             "overallSentiment": overall_sentiment,
             "recommendedActions": recommended_actions,
             "source": "tradier",
@@ -234,7 +239,9 @@ async def get_market_conditions(
         # Cache for 60 seconds
         cache.set(cache_key, result, ttl=60)
 
-        print(f"[Market Conditions] ✅ Fetched {len(conditions)} real conditions from Tradier")
+        print(
+            f"[Market Conditions] ✅ Fetched {len(conditions)} real conditions from Tradier"
+        )
         return result
 
     except Exception as e:
@@ -250,7 +257,7 @@ async def get_market_conditions(
         ]
         return {
             "conditions": [cond.model_dump() for cond in fallback_conditions],
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat(),
             "overallSentiment": "neutral",
             "recommendedActions": ["Wait for market data to become available"],
             "source": "fallback",
@@ -335,7 +342,8 @@ async def get_major_indices(
                 print("[Market] ✅ Fetched live data from Tradier for Dow/NASDAQ")
                 result = {
                     "dow": dow_data or {"last": 0, "change": 0, "changePercent": 0},
-                    "nasdaq": nasdaq_data or {"last": 0, "change": 0, "changePercent": 0},
+                    "nasdaq": nasdaq_data
+                    or {"last": 0, "change": 0, "changePercent": 0},
                     "source": "tradier",
                 }
                 # Cache for 60 seconds
@@ -362,7 +370,9 @@ async def get_major_indices(
                 messages=[
                     {
                         "role": "user",
-                        "content": """Provide current market index values for Dow Jones Industrial Average ($DJI) and NASDAQ Composite ($COMPX).
+                        "content": """Provide current market index values for:
+                    - Dow Jones Industrial Average ($DJI)
+                    - NASDAQ Composite ($COMPX)
                     Return ONLY valid JSON in this exact format with realistic current values:
                     {
                       "dow": {"last": 42500.00, "change": 125.50, "changePercent": 0.30},
@@ -394,8 +404,11 @@ async def get_major_indices(
             print(f"[Market] ❌ Claude AI fallback also failed: {ai_error}")
             raise HTTPException(
                 status_code=503,
-                detail="Market data temporarily unavailable (Tradier and Claude AI both failed)",
-            )
+                detail=(
+                    "Market data temporarily unavailable "
+                    "(Tradier and Claude AI both failed)"
+                ),
+            ) from ai_error
 
 
 @router.get("/market/sectors")
@@ -408,7 +421,7 @@ async def get_sector_performance(
 
     Fetches real-time quotes for sector ETFs and ranks by performance
     """
-    from datetime import datetime
+    # using top-level datetime (UTC-aware timestamps below)
 
     # Check cache first (60s TTL)
     cache_key = "market:sectors"
@@ -484,7 +497,7 @@ async def get_sector_performance(
 
             result = {
                 "sectors": sectors,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": datetime.now(UTC).isoformat(),
                 "leader": leader,
                 "laggard": laggard,
                 "source": "tradier",
@@ -493,7 +506,9 @@ async def get_sector_performance(
             # Cache for 60 seconds
             cache.set(cache_key, result, ttl=60)
 
-            print(f"[Sector Performance] ✅ Fetched {len(sectors)} real sector ETFs from Tradier")
+            print(
+                f"[Sector Performance] ✅ Fetched {len(sectors)} real sector ETFs from Tradier"
+            )
             return result
 
         else:
@@ -507,7 +522,7 @@ async def get_sector_performance(
         ]
         return {
             "sectors": fallback_sectors,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat(),
             "leader": "Unavailable",
             "laggard": "Unavailable",
             "source": "fallback",
@@ -532,7 +547,7 @@ async def get_market_status(
         - next_change: timestamp of next state change
         - description: human-readable status
     """
-    from datetime import datetime
+    # using top-level datetime (UTC-aware timestamps below)
 
     # Check cache first (60s TTL)
     cache_key = "market:status"
@@ -567,7 +582,7 @@ async def get_market_status(
                 "is_open": is_open,
                 "next_change": next_change,
                 "description": description,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": datetime.now(UTC).isoformat(),
                 "source": "tradier",
             }
 
@@ -587,7 +602,7 @@ async def get_market_status(
             "is_open": False,
             "next_change": "",
             "description": "Market status unavailable",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat(),
             "source": "fallback",
             "error": str(e),
         }

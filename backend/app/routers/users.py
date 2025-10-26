@@ -23,7 +23,9 @@ router = APIRouter()
 class UserPreferencesResponse(BaseModel):
     """Response model for user preferences"""
 
-    risk_tolerance: int | None = Field(None, ge=0, le=100, description="Risk tolerance (0-100)")
+    risk_tolerance: int | None = Field(
+        None, ge=0, le=100, description="Risk tolerance (0-100)"
+    )
     default_position_size: float | None = None
     watchlist: list | None = None
     notifications_enabled: bool | None = None
@@ -33,7 +35,9 @@ class UserPreferencesResponse(BaseModel):
 class UserPreferencesUpdate(BaseModel):
     """Request model for updating user preferences"""
 
-    risk_tolerance: int | None = Field(None, ge=0, le=100, description="Risk tolerance (0-100)")
+    risk_tolerance: int | None = Field(
+        None, ge=0, le=100, description="Risk tolerance (0-100)"
+    )
     default_position_size: float | None = Field(
         None, gt=0, description="Default position size in dollars"
     )
@@ -50,7 +54,8 @@ class UserPreferencesUpdate(BaseModel):
 
 @router.get("/users/preferences")
 def get_user_preferences(
-    current_user: User = Depends(get_current_user_unified), db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user_unified),
+    db: Session = Depends(get_db),
 ) -> UserPreferencesResponse:
     """
     Get user preferences including risk tolerance
@@ -79,7 +84,9 @@ def get_user_preferences(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to fetch user preferences: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch user preferences: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch user preferences: {e!s}"
+        ) from e
 
 
 @router.patch("/users/preferences")
@@ -148,7 +155,9 @@ def update_user_preferences(
         raise
     except Exception as e:
         logger.error(f"❌ Failed to update user preferences: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to update user preferences: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update user preferences: {e!s}"
+        ) from e
 
 
 def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
@@ -189,7 +198,8 @@ def get_risk_limits(risk_tolerance: int) -> dict[str, Any]:
 
 @router.get("/users/risk-limits")
 def get_user_risk_limits(
-    current_user: User = Depends(get_current_user_unified), db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user_unified),
+    db: Session = Depends(get_db),
 ):
     """
     Get calculated risk limits based on user's risk tolerance
@@ -212,4 +222,6 @@ def get_user_risk_limits(
 
     except Exception as e:
         logger.error(f"❌ Failed to calculate risk limits: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to calculate risk limits: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to calculate risk limits: {e!s}"
+        ) from e

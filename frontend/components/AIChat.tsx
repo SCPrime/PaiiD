@@ -3,9 +3,10 @@
  * Reusable AI chat interface that can be triggered from anywhere in the app
  */
 
-import React, { useState, useEffect, useRef } from "react";
-import { X, Send, Brain, Sparkles, Loader2 } from "lucide-react";
-import { claudeAI, AIMessage } from "../lib/aiAdapter";
+import { Brain, Loader2, Send, Sparkles, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { AIMessage, claudeAI } from "../lib/aiAdapter";
+import { logger } from "../lib/logger";
 import { GlassCard } from "./GlassmorphicComponents";
 
 interface AIChatProps {
@@ -60,7 +61,7 @@ export function AIChat({
         onResponse(response);
       }
     } catch (error) {
-      console.error("[AIChat] Error:", error);
+      logger.error("[AIChat] Error", error);
       setMessages((prev) => [
         ...prev,
         {

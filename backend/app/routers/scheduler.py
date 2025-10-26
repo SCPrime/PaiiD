@@ -217,14 +217,15 @@ async def list_schedules(current_user: User = Depends(get_current_user_unified))
         raise
     except Exception as e:
         logger.error(f"Failed to list schedules: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to list schedules")
+        raise HTTPException(status_code=500, detail="Failed to list schedules") from e
 
 
 @router.post(
     "/schedules", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_schedule(
-    schedule_data: ScheduleCreate, current_user: User = Depends(get_current_user_unified)
+    schedule_data: ScheduleCreate,
+    current_user: User = Depends(get_current_user_unified),
 ):
     """Create a new schedule"""
     try:
@@ -259,14 +260,14 @@ async def create_schedule(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Failed to create schedule: {e!s}",
-                )
+                ) from e
 
         return schedule
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to create schedule: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to create schedule")
+        raise HTTPException(status_code=500, detail="Failed to create schedule") from e
 
 
 @router.patch("/schedules/{schedule_id}", response_model=ScheduleResponse)
@@ -312,7 +313,7 @@ async def update_schedule(
         raise
     except Exception as e:
         logger.error(f"Failed to update schedule {schedule_id}: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to update schedule")
+        raise HTTPException(status_code=500, detail="Failed to update schedule") from e
 
 
 @router.delete("/schedules/{schedule_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -332,7 +333,7 @@ async def delete_schedule(
         raise
     except Exception as e:
         logger.error(f"Failed to delete schedule {schedule_id}: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to delete schedule")
+        raise HTTPException(status_code=500, detail="Failed to delete schedule") from e
 
 
 # ========================
@@ -353,7 +354,7 @@ async def pause_all_schedules(current_user: User = Depends(get_current_user_unif
         return {"message": "All schedules paused"}
     except Exception as e:
         logger.error(f"Failed to pause all schedules: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to pause schedules")
+        raise HTTPException(status_code=500, detail="Failed to pause schedules") from e
 
 
 @router.post("/resume-all")
@@ -369,7 +370,7 @@ async def resume_all_schedules(current_user: User = Depends(get_current_user_uni
         return {"message": "All schedules resumed"}
     except Exception as e:
         logger.error(f"Failed to resume all schedules: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to resume schedules")
+        raise HTTPException(status_code=500, detail="Failed to resume schedules") from e
 
 
 # ========================
@@ -389,7 +390,7 @@ async def list_executions(
         return executions
     except Exception as e:
         logger.error(f"Failed to list executions: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to list executions")
+        raise HTTPException(status_code=500, detail="Failed to list executions") from e
 
 
 # ========================
@@ -398,14 +399,16 @@ async def list_executions(
 
 
 @router.get("/pending-approvals", response_model=list[ApprovalResponse])
-async def list_pending_approvals(current_user: User = Depends(get_current_user_unified)):
+async def list_pending_approvals(
+    current_user: User = Depends(get_current_user_unified),
+):
     """Get all pending trade approvals"""
     try:
         approvals = _load_pending_approvals()
         return approvals
     except Exception as e:
         logger.error(f"Failed to list pending approvals: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to list approvals")
+        raise HTTPException(status_code=500, detail="Failed to list approvals") from e
 
 
 @router.post("/approvals/{approval_id}/approve")
@@ -438,7 +441,7 @@ async def approve_trade(
         raise
     except Exception as e:
         logger.error(f"Failed to approve trade {approval_id}: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to approve trade")
+        raise HTTPException(status_code=500, detail="Failed to approve trade") from e
 
 
 @router.post("/approvals/{approval_id}/reject")
@@ -473,7 +476,7 @@ async def reject_trade(
         raise
     except Exception as e:
         logger.error(f"Failed to reject trade {approval_id}: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to reject trade")
+        raise HTTPException(status_code=500, detail="Failed to reject trade") from e
 
 
 # ========================
@@ -493,4 +496,6 @@ async def scheduler_status(current_user: User = Depends(get_current_user_unified
         }
     except Exception as e:
         logger.error(f"Failed to get scheduler status: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to get scheduler status")
+        raise HTTPException(
+            status_code=500, detail="Failed to get scheduler status"
+        ) from e

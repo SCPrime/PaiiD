@@ -6,77 +6,77 @@
  */
 
 import {
-    BarChart3,
-    Brain,
-    RefreshCw,
-    Settings,
-    Shield,
-    Target,
-    TrendingUp,
-    User,
-    Zap
-} from 'lucide-react';
-import React, { useState } from 'react';
-import { HelpTooltip } from '../HelpTooltip';
-import { MarketRegimeDetector } from '../ml/MarketRegimeDetector';
-import { MLIntelligenceDashboard } from '../ml/MLIntelligenceDashboard';
-import { PatternRecognition } from '../ml/PatternRecognition';
-import { PersonalAnalytics } from '../ml/PersonalAnalytics';
+  BarChart3,
+  Brain,
+  RefreshCw,
+  Settings,
+  Shield,
+  Target,
+  TrendingUp,
+  User,
+  Zap,
+} from "lucide-react";
+import React, { useState } from "react";
+import HelpTooltip from "../HelpTooltip";
+import { MarketRegimeDetector } from "../ml/MarketRegimeDetector";
+import { MLIntelligenceDashboard } from "../ml/MLIntelligenceDashboard";
+import { PatternRecognition } from "../ml/PatternRecognition";
+import { PersonalAnalytics } from "../ml/PersonalAnalytics";
 
 interface MLIntelligenceWorkflowProps {
   onClose?: () => void;
 }
 
-type TabType = 'overview' | 'patterns' | 'regime' | 'analytics';
+type TabType = "overview" | "patterns" | "regime" | "analytics";
 
 export const MLIntelligenceWorkflow: React.FC<MLIntelligenceWorkflowProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [selectedSymbol, setSelectedSymbol] = useState('SPY');
+  const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const [selectedSymbol, setSelectedSymbol] = useState("SPY");
   const [refreshing, setRefreshing] = useState(false);
 
   const tabs = [
     {
-      id: 'overview' as TabType,
-      label: 'Overview',
+      id: "overview" as TabType,
+      label: "Overview",
       icon: Brain,
-      description: 'Complete ML intelligence dashboard'
+      description: "Complete ML intelligence dashboard",
     },
     {
-      id: 'patterns' as TabType,
-      label: 'Patterns',
+      id: "patterns" as TabType,
+      label: "Patterns",
       icon: Target,
-      description: 'Chart pattern recognition'
+      description: "Chart pattern recognition",
     },
     {
-      id: 'regime' as TabType,
-      label: 'Market Regime',
+      id: "regime" as TabType,
+      label: "Market Regime",
       icon: BarChart3,
-      description: 'Market state analysis'
+      description: "Market state analysis",
     },
     {
-      id: 'analytics' as TabType,
-      label: 'Personal Analytics',
+      id: "analytics" as TabType,
+      label: "Personal Analytics",
       icon: User,
-      description: 'Your trading performance'
-    }
+      description: "Your trading performance",
+    },
   ];
 
   const handleRefresh = async () => {
     setRefreshing(true);
     // Simulate refresh delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     setRefreshing(false);
   };
 
   const renderActiveTab = () => {
     switch (activeTab) {
-      case 'overview':
+      case "overview":
         return <MLIntelligenceDashboard />;
-      case 'patterns':
+      case "patterns":
         return <PatternRecognition symbol={selectedSymbol} />;
-      case 'regime':
+      case "regime":
         return <MarketRegimeDetector symbol={selectedSymbol} />;
-      case 'analytics':
+      case "analytics":
         return <PersonalAnalytics />;
       default:
         return <MLIntelligenceDashboard />;
@@ -119,7 +119,7 @@ export const MLIntelligenceWorkflow: React.FC<MLIntelligenceWorkflowProps> = ({ 
               disabled={refreshing}
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
               <span>Refresh</span>
             </button>
 
@@ -146,8 +146,8 @@ export const MLIntelligenceWorkflow: React.FC<MLIntelligenceWorkflowProps> = ({ 
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium rounded-t-lg transition-colors ${
                   activeTab === tab.id
-                    ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -161,9 +161,7 @@ export const MLIntelligenceWorkflow: React.FC<MLIntelligenceWorkflowProps> = ({ 
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6">
-          {renderActiveTab()}
-        </div>
+        <div className="p-6">{renderActiveTab()}</div>
       </div>
 
       {/* Quick Actions Footer */}

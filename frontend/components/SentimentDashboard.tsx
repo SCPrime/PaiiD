@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
+import { logger } from "../lib/logger";
 import AnimatedCounter from "./ui/AnimatedCounter";
 import EnhancedCard from "./ui/EnhancedCard";
 import StatusIndicator from "./ui/StatusIndicator";
@@ -71,7 +72,7 @@ const SentimentDashboard: React.FC<SentimentDashboardProps> = ({
         throw new Error("Failed to fetch sentiment data");
       }
     } catch (err) {
-      console.error("Error fetching sentiment data:", err);
+      logger.error("Error fetching sentiment data", err);
       setError("Failed to load sentiment data");
     } finally {
       setIsLoading(false);

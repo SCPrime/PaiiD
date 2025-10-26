@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { claudeAI } from "../lib/aiAdapter";
+import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
 import { GlassBadge, GlassButton, GlassCard } from "./GlassmorphicComponents";
 import StockLookup from "./StockLookup";
@@ -127,7 +128,7 @@ export default function StrategyBuilderAI() {
       try {
         setSavedStrategies(JSON.parse(saved));
       } catch (e) {
-        console.error("Failed to load strategies:", e);
+        logger.error("Failed to load strategies", e);
       }
     }
   }, []);
@@ -171,7 +172,7 @@ export default function StrategyBuilderAI() {
       setTemplates(data.templates || []);
       setUserRiskTolerance(data.user_risk_tolerance || 50);
     } catch (err: unknown) {
-      console.error("Template fetch error:", err);
+      logger.error("Template fetch error", err);
       setTemplatesError(err.message || "Failed to load strategy templates");
     } finally {
       setIsLoadingTemplates(false);
@@ -206,7 +207,7 @@ export default function StrategyBuilderAI() {
       // Refresh saved strategies or add to local state
       // For now, just show success message
     } catch (err: unknown) {
-      console.error("Clone template error:", err);
+      logger.error("Clone template error", err);
       toast.error(err.message || "Failed to clone template");
     }
   };
@@ -223,7 +224,7 @@ export default function StrategyBuilderAI() {
       setView("create");
     } catch (err: unknown) {
       setError(err.message || "Failed to generate strategy");
-      console.error("Strategy generation error:", err);
+      logger.error("Strategy generation error", err);
     } finally {
       setIsGenerating(false);
     }

@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { alpaca, formatPosition } from "../lib/alpaca";
+import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
 import { Button, Card } from "./ui";
 // import { usePositionUpdates } from "../hooks/usePositionUpdates"; // DISABLED: Using REST API instead
@@ -120,7 +121,7 @@ export default function ActivePositions() {
 
       setMetrics(calculatedMetrics);
     } catch (error) {
-      console.error("Failed to calculate metrics:", error);
+      logger.error("Failed to calculate metrics", error);
     }
   };
 
@@ -137,7 +138,7 @@ export default function ActivePositions() {
       setPositions(formattedPositions);
       await calculateMetrics(formattedPositions);
     } catch (error) {
-      console.error("Failed to load positions:", error);
+      logger.error("Failed to load positions", error);
       // Keep existing data if refresh fails
     } finally {
       setLoading(false);
@@ -203,7 +204,7 @@ export default function ActivePositions() {
 
       setAiAnalysisMap((prev) => ({ ...prev, [symbol]: analysis }));
     } catch (error: unknown) {
-      console.error(`AI analysis error for ${symbol}:`, error);
+      logger.error(`AI analysis error for ${symbol}`, error);
       setAiErrorMap((prev) => ({
         ...prev,
         [symbol]: error instanceof Error ? error.message : "Unknown error",
@@ -995,7 +996,7 @@ export default function ActivePositions() {
                           // Refresh positions after close
                           await loadPositions();
                         } catch (error) {
-                          console.error(`Failed to close position ${position.symbol}:`, error);
+                          logger.error(`Failed to close position ${position.symbol}`, error);
                           alert(`Failed to close position: ${error}`);
                         }
                       }

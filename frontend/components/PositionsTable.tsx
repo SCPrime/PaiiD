@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useMarketStream } from "../hooks/useMarketStream";
+import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
 import { Button, Card } from "./ui";
 
@@ -35,7 +36,7 @@ export default function PositionsTable() {
       }
       const data = await res.json();
       // eslint-disable-next-line no-console
-      console.info("API response data:", data);
+      logger.info("API response data", { data });
 
       // Accept either {positions:[...]} or plain array
       const rawPositions = Array.isArray(data)
@@ -85,7 +86,7 @@ export default function PositionsTable() {
       );
 
       // eslint-disable-next-line no-console
-      console.info("Enhanced positions:", enhanced);
+      logger.info("Enhanced positions", { enhanced });
       setPositions(enhanced);
       setLastRefreshed(new Date().toLocaleTimeString());
     } catch (e: unknown) {

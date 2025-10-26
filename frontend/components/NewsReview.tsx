@@ -67,7 +67,7 @@ const NewsReview: React.FC = () => {
       const data = await response.json();
       setProviders(data.providers.map((p: { name: string }) => p.name));
     } catch (err) {
-      console.error("[NEWS] Provider fetch error:", err);
+      logger.error("[NEWS] Provider fetch error", err);
     }
   };
 
@@ -79,7 +79,7 @@ const NewsReview: React.FC = () => {
         setMarketSentiment(data);
       }
     } catch (err) {
-      console.error("[NEWS] Sentiment fetch error:", err);
+      logger.error("[NEWS] Sentiment fetch error", err);
     }
   };
 
@@ -129,7 +129,7 @@ const NewsReview: React.FC = () => {
         setLastUpdate(new Date());
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to load news");
-        console.error("[NEWS] Fetch error:", err);
+        logger.error("[NEWS] Fetch error", err);
       } finally {
         setLoading(false);
       }
@@ -237,7 +237,7 @@ const NewsReview: React.FC = () => {
       if (diffDays < 7) return `${diffDays}d ago`;
       return date.toLocaleDateString();
     } catch (error) {
-      console.error("[NEWS] Date format error:", error, "for", isoString);
+      logger.error("[NEWS] Date format error", { error, isoString });
       return "Recently";
     }
   };
@@ -270,7 +270,7 @@ const NewsReview: React.FC = () => {
       setAiAnalysis(data);
       setShowAiPanel(true);
     } catch (error: unknown) {
-      console.error("AI News Analysis error:", error);
+      logger.error("AI News Analysis error", error);
       setAiError(error.message || "Failed to analyze news");
     } finally {
       setAiLoading(false);

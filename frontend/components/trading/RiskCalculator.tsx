@@ -70,7 +70,7 @@ export default function RiskCalculator({
       setLimitPrice(newProposal.premium.toFixed(2));
       onCreateProposal(newProposal);
     } catch (err: unknown) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ export default function RiskCalculator({
       setOptionSymbol("");
       setLimitPrice("");
     } catch (err: unknown) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }

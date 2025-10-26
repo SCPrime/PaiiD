@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import type { PLSummaryStats } from "@/types/pnl";
+import { useEffect, useState } from "react";
+import { logger } from "../../lib/logger";
 
 /**
  * P&L Summary Dashboard
@@ -67,7 +68,7 @@ export default function PLSummaryDashboard() {
 
       setStats(mockStats);
     } catch (error) {
-      console.error("Failed to fetch summary stats:", error);
+      logger.error("Failed to fetch summary stats", error);
     } finally {
       setLoading(false);
     }

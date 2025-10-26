@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, TrendingDown, TrendingUp, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { logger } from "../lib/logger";
 
 interface PendingTrade {
   id: string;
@@ -49,7 +50,7 @@ export default function ApprovalQueue() {
       setPendingTrades(data);
       setLoading(false);
     } catch (error) {
-      console.error("Failed to fetch pending trades:", error);
+      logger.error("Failed to fetch pending trades", error);
       setLoading(false);
     }
   };
@@ -62,7 +63,7 @@ export default function ApprovalQueue() {
       });
       fetchPendingTrades();
     } catch (error) {
-      console.error("Failed to approve trade:", error);
+      logger.error("Failed to approve trade", error);
     }
   };
 
@@ -75,7 +76,7 @@ export default function ApprovalQueue() {
       });
       fetchPendingTrades();
     } catch (error) {
-      console.error("Failed to reject trade:", error);
+      logger.error("Failed to reject trade", error);
     }
   };
 
@@ -85,7 +86,7 @@ export default function ApprovalQueue() {
       await Promise.all(filteredTrades.map((trade) => approveTrade(trade.id)));
       fetchPendingTrades();
     } catch (error) {
-      console.error("Failed to approve all trades:", error);
+      logger.error("Failed to approve all trades", error);
     }
   };
 
@@ -95,7 +96,7 @@ export default function ApprovalQueue() {
       await Promise.all(filteredTrades.map((trade) => rejectTrade(trade.id, "Bulk rejection")));
       fetchPendingTrades();
     } catch (error) {
-      console.error("Failed to reject all trades:", error);
+      logger.error("Failed to reject all trades", error);
     }
   };
 

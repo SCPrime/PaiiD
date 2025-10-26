@@ -64,13 +64,13 @@ function Get-RegisteredPid {
 
 function Register-ProcessPid {
     param(
-        [int]$ProcessId,
+        [int]$Pid,
         [string]$Name
     )
 
     $pidFile = Get-PidFilePath -Name $Name
-    Set-Content -Path $pidFile -Value $ProcessId
-    Write-ProcessLog "Registered PID $ProcessId for process '$Name' in $pidFile"
+    Set-Content -Path $pidFile -Value $Pid
+    Write-ProcessLog "Registered PID $Pid for process '$Name' in $pidFile"
 }
 
 function Unregister-ProcessPid {
@@ -161,7 +161,7 @@ function Stop-ProcessSafely {
         }
     }
     catch {
-        Write-ProcessLog "Error stopping process $Pid" -Level ERROR
+        Write-ProcessLog "Error stopping process $Pid: $_" -Level ERROR
     }
 
     return -not (Test-ProcessRunning -Pid $Pid)
@@ -221,7 +221,7 @@ function Clear-Port {
                 Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
             }
             catch {
-                Write-ProcessLog "Failed to kill PID $pid" -Level WARN
+                Write-ProcessLog "Failed to kill PID $pid: $_" -Level WARN
             }
         }
 
@@ -312,15 +312,15 @@ function Start-ManagedProcess {
         $process.StartInfo = $processInfo
         
         if ($process.Start()) {
-            $processId = $process.Id
-            Register-ProcessPid -ProcessId $processId -Name $Name
+            $pid = $process.Id
+            Register-ProcessPid -Pid $pid -Name $Name
             
             # Store process object for cleanup
             $script:ProcessObjects = $script:ProcessObjects ?? @{}
             $script:ProcessObjects[$Name] = $process
             
-            Write-ProcessLog "Process '$Name' started successfully (PID: $processId)"
-            return $processId
+            Write-ProcessLog "Process '$Name' started successfully (PID: $pid)"
+            return $pid
         }
         else {
             Write-ProcessLog "Process '$Name' failed to start" -Level ERROR
@@ -350,15 +350,15 @@ function Stop-ManagedProcess {
         [int]$Timeout = 10
     )
 
-    $processId = Get-RegisteredPid -Name $Name
+    $pid = Get-RegisteredPid -Name $Name
 
-    if ($null -eq $processId) {
+    if ($null -eq $pid) {
         Write-ProcessLog "No PID found for process '$Name'" -Level WARN
         Unregister-ProcessPid -Name $Name
         return $true
     }
 
-    Write-ProcessLog "Stopping process: $Name (PID: $processId)"
+    Write-ProcessLog "Stopping process: $Name (PID: $pid)"
 
     # Try to get the process object for graceful shutdown
     $script:ProcessObjects = $script:ProcessObjects ?? @{}
@@ -389,7 +389,7 @@ function Stop-ManagedProcess {
     }
 
     # Force kill if graceful shutdown failed
-    if (Stop-ProcessTree -Pid $processId -Timeout $Timeout) {
+    if (Stop-ProcessTree -Pid $pid -Timeout $Timeout) {
         $script:ProcessObjects.Remove($Name)
         Unregister-ProcessPid -Name $Name
         Write-ProcessLog "Process '$Name' stopped forcefully"
@@ -405,9 +405,9 @@ function Stop-ManagedProcess {
 function Get-ManagedProcessStatus {
     param([string]$Name)
 
-    $processId = Get-RegisteredPid -Name $Name
+    $pid = Get-RegisteredPid -Name $Name
 
-    if ($null -eq $processId) {
+    if ($null -eq $pid) {
         return @{
             Name = $Name
             Status = "Not registered"
@@ -415,12 +415,12 @@ function Get-ManagedProcessStatus {
         }
     }
 
-    if (Test-ProcessRunning -Pid $processId) {
-        $process = Get-Process -Id $processId
+    if (Test-ProcessRunning -Pid $pid) {
+        $process = Get-Process -Id $pid
         return @{
             Name = $Name
             Status = "Running"
-            Pid = $processId
+            Pid = $pid
             StartTime = $process.StartTime
             Memory = $process.WorkingSet64
         }
@@ -429,7 +429,7 @@ function Get-ManagedProcessStatus {
         return @{
             Name = $Name
             Status = "Dead (stale PID)"
-            Pid = $processId
+            Pid = $pid
         }
     }
 }

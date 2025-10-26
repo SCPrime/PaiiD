@@ -11,6 +11,7 @@ import {
 import { useCallback, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { ApiError, apiPost } from "../lib/api";
+import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
 import { Button, Card, Input, Select } from "./ui";
 import { Skeleton } from "./ui/Skeleton";
@@ -73,7 +74,7 @@ export default function Backtesting() {
       setResults(data);
     } catch (e: unknown) {
       const err = e as ApiError;
-      console.error("[Backtesting] run error", err.status, err.message);
+      logger.error("[Backtesting] run error", { status: err.status, message: err.message });
       setResults(null);
     } finally {
       setIsRunning(false);

@@ -7,6 +7,7 @@ import { BarChart3, Copy, Shield, Target, TrendingUp, X } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
 import { GlassButton } from "./GlassmorphicComponents";
 
@@ -150,7 +151,7 @@ export default function TemplateCustomizationModal({
       onClose();
       if (onCloneSuccess) onCloneSuccess();
     } catch (err: unknown) {
-      console.error("Clone template error:", err);
+      logger.error("Clone template error", err);
       toast.error(err.message || "Failed to clone template");
     } finally {
       setIsCloning(false);

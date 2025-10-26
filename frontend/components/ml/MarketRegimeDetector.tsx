@@ -16,7 +16,8 @@ import {
   Zap,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { HelpTooltip } from "../HelpTooltip";
+import { logger } from "../../lib/logger";
+import HelpTooltip from "../HelpTooltip";
 
 interface MarketRegime {
   regime: "trending_bullish" | "trending_bearish" | "ranging" | "high_volatility";
@@ -88,7 +89,7 @@ export const MarketRegimeDetector: React.FC<MarketRegimeDetectorProps> = ({
         setStrategyRecommendations(strategyData.recommendations);
       }
     } catch (error) {
-      console.error("Failed to load market regime:", error);
+      logger.error("Failed to load market regime", error);
     } finally {
       setLoading(false);
     }

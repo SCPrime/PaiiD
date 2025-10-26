@@ -13,6 +13,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
 import TradingViewChart from "./TradingViewChart";
 import { Button, Card } from "./ui";
@@ -79,7 +80,7 @@ function PortfolioSummaryCard() {
       setSummary(data);
       setLoading(false);
     } catch (error) {
-      console.error("Failed to load portfolio summary:", error);
+      logger.error("Failed to load portfolio summary", error);
       setLoading(false);
     }
   };
@@ -369,7 +370,7 @@ export default function Analytics() {
         0.95 // Quality setting
       );
     } catch (error) {
-      console.error("Failed to export chart:", error);
+      logger.error("Failed to export chart", error);
 
       // User-friendly error messages
       const errorMessage =
@@ -406,7 +407,7 @@ export default function Analytics() {
       setAiAnalysis(data);
       setShowAiPanel(true);
     } catch (error: unknown) {
-      console.error("AI Portfolio Analysis error:", error);
+      logger.error("AI Portfolio Analysis error", error);
       setAiError(error instanceof Error ? error.message : "Failed to fetch AI analysis");
     } finally {
       setAiLoading(false);
@@ -466,7 +467,7 @@ export default function Analytics() {
       setDailyPerformance(dailyPerf);
       setMonthlyStats(monthlyData);
     } catch (error) {
-      console.error("Failed to load analytics:", error);
+      logger.error("Failed to load analytics", error);
 
       // Fallback to generating DEMO data if API fails
       setIsDemoMode(true);

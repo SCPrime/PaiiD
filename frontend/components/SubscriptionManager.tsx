@@ -8,6 +8,7 @@
 
 import { Check, CreditCard, Crown, Gift, X, Zap } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { logger } from "../lib/logger";
 
 interface SubscriptionTier {
   name: string;
@@ -98,7 +99,7 @@ const SubscriptionManager: React.FC = () => {
 
       setLoading(false);
     } catch (error) {
-      console.error("Failed to fetch subscription data:", error);
+      logger.error("Failed to fetch subscription data", error);
       setLoading(false);
     }
   };
@@ -128,7 +129,7 @@ const SubscriptionManager: React.FC = () => {
         window.location.href = data.url;
       }
     } catch (error) {
-      console.error("Upgrade failed:", error);
+      logger.error("Upgrade failed", error);
       setUpgrading(false);
       setSelectedTier(null);
     }
@@ -150,7 +151,7 @@ const SubscriptionManager: React.FC = () => {
         window.location.href = data.url;
       }
     } catch (error) {
-      console.error("Failed to open billing portal:", error);
+      logger.error("Failed to open billing portal", error);
     }
   };
 

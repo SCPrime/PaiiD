@@ -8,28 +8,28 @@
  */
 
 import {
-    Brain,
-    CheckCircle,
-    Loader2,
-    RefreshCw,
-    Shield,
-    Target,
-    TrendingUp,
-    Zap
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import { logger } from '../../lib/logger';
-import { HelpTooltip } from '../HelpTooltip';
-import { useToast } from '../ui/Toast';
+  Brain,
+  CheckCircle,
+  Loader2,
+  RefreshCw,
+  Shield,
+  Target,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { logger } from "../../lib/logger";
+import HelpTooltip from "../HelpTooltip";
+import { useToast } from "../ui/Toast";
 
 interface MLInsight {
   id: string;
-  type: 'pattern' | 'regime' | 'strategy' | 'risk';
+  type: "pattern" | "regime" | "strategy" | "risk";
   title: string;
   description: string;
   confidence: number;
   actionable: boolean;
-  impact: 'high' | 'medium' | 'low';
+  impact: "high" | "medium" | "low";
   timestamp: string;
   details?: Record<string, unknown>;
 }
@@ -63,7 +63,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedSymbol, setSelectedSymbol] = useState('SPY');
+  const [selectedSymbol, setSelectedSymbol] = useState("SPY");
   const { toast } = useToast();
 
   // Load ML insights on component mount
@@ -97,13 +97,12 @@ export const MLIntelligenceDashboard: React.FC = () => {
 
       // Generate insights from the data
       generateInsights(regimeData, patternsData.patterns || []);
-
     } catch (error) {
-      logger.error('Failed to load ML insights', error);
+      logger.error("Failed to load ML insights", error);
       toast({
-        title: 'ML Analysis Failed',
-        description: 'Unable to load market intelligence. Please try again.',
-        variant: 'destructive',
+        title: "ML Analysis Failed",
+        description: "Unable to load market intelligence. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -116,13 +115,13 @@ export const MLIntelligenceDashboard: React.FC = () => {
     // Market regime insight
     if (regimeData.regime) {
       newInsights.push({
-        id: 'market-regime',
-        type: 'regime',
-        title: `Market is ${regimeData.regime.replace('_', ' ')}`,
+        id: "market-regime",
+        type: "regime",
+        title: `Market is ${regimeData.regime.replace("_", " ")}`,
         description: getRegimeDescription(regimeData.regime, regimeData.confidence),
         confidence: regimeData.confidence,
         actionable: true,
-        impact: regimeData.confidence > 0.8 ? 'high' : 'medium',
+        impact: regimeData.confidence > 0.8 ? "high" : "medium",
         timestamp: new Date().toISOString(),
         details: regimeData,
       });
@@ -132,12 +131,12 @@ export const MLIntelligenceDashboard: React.FC = () => {
     patterns.forEach((pattern, index) => {
       newInsights.push({
         id: `pattern-${index}`,
-        type: 'pattern',
-        title: `${pattern.pattern_type.replace('_', ' ')} detected`,
+        type: "pattern",
+        title: `${pattern.pattern_type.replace("_", " ")} detected`,
         description: pattern.description,
         confidence: pattern.confidence,
         actionable: true,
-        impact: pattern.confidence > 0.8 ? 'high' : 'medium',
+        impact: pattern.confidence > 0.8 ? "high" : "medium",
         timestamp: new Date().toISOString(),
         details: pattern,
       });
@@ -146,13 +145,13 @@ export const MLIntelligenceDashboard: React.FC = () => {
     // Strategy recommendations
     if (regimeData.recommended_strategies?.length > 0) {
       newInsights.push({
-        id: 'strategy-recommendation',
-        type: 'strategy',
-        title: 'Strategy Recommendations',
-        description: `Consider these strategies: ${regimeData.recommended_strategies.join(', ')}`,
+        id: "strategy-recommendation",
+        type: "strategy",
+        title: "Strategy Recommendations",
+        description: `Consider these strategies: ${regimeData.recommended_strategies.join(", ")}`,
         confidence: regimeData.confidence,
         actionable: true,
-        impact: 'high',
+        impact: "high",
         timestamp: new Date().toISOString(),
         details: regimeData.recommended_strategies,
       });
@@ -163,14 +162,20 @@ export const MLIntelligenceDashboard: React.FC = () => {
 
   const getRegimeDescription = (regime: string, confidence: number) => {
     const descriptions = {
-      'trending_bullish': 'Market is in a strong upward trend with positive momentum.',
-      'trending_bearish': 'Market is in a downward trend with negative momentum.',
-      'ranging': 'Market is moving sideways with no clear direction.',
-      'high_volatility': 'Market is experiencing high volatility with large price swings.',
+      trending_bullish: "Market is in a strong upward trend with positive momentum.",
+      trending_bearish: "Market is in a downward trend with negative momentum.",
+      ranging: "Market is moving sideways with no clear direction.",
+      high_volatility: "Market is experiencing high volatility with large price swings.",
     };
 
-    const baseDescription = descriptions[regime as keyof typeof descriptions] || 'Market state is unclear.';
-    const confidenceText = confidence > 0.8 ? 'High confidence' : confidence > 0.6 ? 'Moderate confidence' : 'Low confidence';
+    const baseDescription =
+      descriptions[regime as keyof typeof descriptions] || "Market state is unclear.";
+    const confidenceText =
+      confidence > 0.8
+        ? "High confidence"
+        : confidence > 0.6
+          ? "Moderate confidence"
+          : "Low confidence";
 
     return `${baseDescription} (${confidenceText}: ${Math.round(confidence * 100)}%)`;
   };
@@ -180,27 +185,36 @@ export const MLIntelligenceDashboard: React.FC = () => {
     await loadMLInsights();
     setRefreshing(false);
     toast({
-      title: 'ML Analysis Updated',
-      description: 'Market intelligence has been refreshed with latest data.',
+      title: "ML Analysis Updated",
+      description: "Market intelligence has been refreshed with latest data.",
     });
   };
 
   const getInsightIcon = (type: string) => {
     switch (type) {
-      case 'pattern': return <Target className="w-5 h-5" />;
-      case 'regime': return <TrendingUp className="w-5 h-5" />;
-      case 'strategy': return <Zap className="w-5 h-5" />;
-      case 'risk': return <Shield className="w-5 h-5" />;
-      default: return <Brain className="w-5 h-5" />;
+      case "pattern":
+        return <Target className="w-5 h-5" />;
+      case "regime":
+        return <TrendingUp className="w-5 h-5" />;
+      case "strategy":
+        return <Zap className="w-5 h-5" />;
+      case "risk":
+        return <Shield className="w-5 h-5" />;
+      default:
+        return <Brain className="w-5 h-5" />;
     }
   };
 
   const getInsightColor = (impact: string) => {
     switch (impact) {
-      case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'low': return 'text-green-600 bg-green-50 border-green-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case "high":
+        return "text-red-600 bg-red-50 border-red-200";
+      case "medium":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      case "low":
+        return "text-green-600 bg-green-50 border-green-200";
+      default:
+        return "text-gray-600 bg-gray-50 border-gray-200";
     }
   };
 
@@ -244,7 +258,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
             disabled={refreshing}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
             <span>Refresh</span>
           </button>
         </div>
@@ -258,7 +272,9 @@ export const MLIntelligenceDashboard: React.FC = () => {
               <TrendingUp className="w-6 h-6 text-blue-600" />
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Market Regime</h3>
-                <p className="text-gray-600">{marketRegime.regime.replace('_', ' ').toUpperCase()}</p>
+                <p className="text-gray-600">
+                  {marketRegime.regime.replace("_", " ").toUpperCase()}
+                </p>
               </div>
             </div>
             <div className="text-right">
@@ -269,7 +285,9 @@ export const MLIntelligenceDashboard: React.FC = () => {
             </div>
           </div>
 
-          <p className="mt-3 text-gray-700">{getRegimeDescription(marketRegime.regime, marketRegime.confidence)}</p>
+          <p className="mt-3 text-gray-700">
+            {getRegimeDescription(marketRegime.regime, marketRegime.confidence)}
+          </p>
 
           {marketRegime.recommended_strategies?.length > 0 && (
             <div className="mt-4">
@@ -280,7 +298,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
                     key={index}
                     className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
                   >
-                    {strategy.replace('_', ' ')}
+                    {strategy.replace("_", " ")}
                   </span>
                 ))}
               </div>
@@ -336,15 +354,23 @@ export const MLIntelligenceDashboard: React.FC = () => {
 
           <div className="space-y-3">
             {patterns.map((pattern, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-3 h-3 rounded-full ${
-                    pattern.signal === 'bullish' ? 'bg-green-500' :
-                    pattern.signal === 'bearish' ? 'bg-red-500' : 'bg-gray-500'
-                  }`} />
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      pattern.signal === "bullish"
+                        ? "bg-green-500"
+                        : pattern.signal === "bearish"
+                          ? "bg-red-500"
+                          : "bg-gray-500"
+                    }`}
+                  />
                   <div>
                     <div className="font-medium text-gray-900">
-                      {pattern.pattern_type.replace('_', ' ').toUpperCase()}
+                      {pattern.pattern_type.replace("_", " ").toUpperCase()}
                     </div>
                     <div className="text-sm text-gray-600">{pattern.description}</div>
                   </div>

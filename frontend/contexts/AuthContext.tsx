@@ -5,9 +5,10 @@
  * Provides login, register, logout functions and auto token refresh.
  */
 
-import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
+import React, { createContext, useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import * as authApi from "../lib/authApi";
+import { logger } from "../lib/logger";
 
 interface AuthContextValue {
   user: authApi.UserProfile | null;
@@ -90,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await refreshSessionInternal();
           startRefreshTimer(); // Schedule next refresh
         } catch (error) {
-          console.error("Token refresh failed:", error);
+          logger.error("Token refresh failed", error);
           // Let user continue, they'll be logged out on next API call
         }
       },
@@ -203,7 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await authApi.logout(tokens.accessToken);
       } catch (error) {
         // Ignore errors, we already cleared local state
-        console.warn("Server logout failed:", error);
+        logger.warn("Server logout failed", error);
       }
     }
 

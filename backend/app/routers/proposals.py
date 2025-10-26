@@ -95,15 +95,18 @@ async def create_proposal(
         return {
             "success": True,
             "proposal": proposal.dict(),
-            "message": f"Proposal created for {request.quantity} contract(s) of {request.option_symbol}",
+            "message": (
+                f"Proposal created for {request.quantity} contract(s) "
+                f"of {request.option_symbol}"
+            ),
         }
 
     except ValueError as e:
         logger.warning(f"Invalid proposal request: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Failed to create proposal: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create proposal")
+        raise HTTPException(status_code=500, detail="Failed to create proposal") from e
 
 
 @router.post("/execute")
@@ -164,7 +167,7 @@ async def execute_proposal(
         raise
     except Exception as e:
         logger.error(f"Failed to execute proposal: {e}")
-        raise HTTPException(status_code=500, detail="Failed to execute order")
+        raise HTTPException(status_code=500, detail="Failed to execute order") from e
 
 
 @router.get("/history")

@@ -13,6 +13,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { logger } from "../lib/logger";
 
 export interface Position {
   symbol: string;
@@ -87,7 +88,7 @@ export function usePositionUpdates(
   const log = useCallback(
     (...args: unknown[]) => {
       if (debug) {
-        console.info("[usePositionUpdates]", ...args);
+        logger.info("[usePositionUpdates]", ...args);
       }
     },
     [debug]
@@ -186,7 +187,7 @@ export function usePositionUpdates(
             lastUpdate: new Date(),
           }));
         } catch (error) {
-          console.error("[usePositionUpdates] Error parsing position update:", error);
+          logger.error("[usePositionUpdates] Error parsing position update", error);
         }
       });
 
@@ -204,7 +205,7 @@ export function usePositionUpdates(
       eventSource.addEventListener("error", (event) => {
         try {
           const errorData = JSON.parse((event as MessageEvent).data);
-          console.error("[usePositionUpdates] Server error:", errorData.error);
+          logger.error("[usePositionUpdates] Server error", errorData.error);
           setState((prev) => ({
             ...prev,
             error: errorData.error,
@@ -251,7 +252,7 @@ export function usePositionUpdates(
         }
       };
     } catch (error: unknown) {
-      console.error("[usePositionUpdates] Connection error:", error);
+      logger.error("[usePositionUpdates] Connection error", error);
       setState((prev) => ({
         ...prev,
         connected: false,

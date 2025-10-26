@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { logger } from "../../lib/logger";
 
 /**
  * Proposal Review Component
@@ -301,7 +302,7 @@ export default function ProposalReview() {
       const data = await response.json();
       setProposals(data.proposals || []);
     } catch (err) {
-      console.error("Error fetching proposals:", err);
+      logger.error("Error fetching proposals", err);
       setError("Failed to load proposals");
 
       // Mock data for testing
@@ -393,7 +394,7 @@ export default function ProposalReview() {
         throw new Error("Approval failed");
       }
     } catch (err) {
-      console.error("Error approving proposal:", err);
+      logger.error("Error approving proposal", err);
       alert("❌ Failed to approve proposal");
     }
   };
@@ -411,7 +412,7 @@ export default function ProposalReview() {
         throw new Error("Rejection failed");
       }
     } catch (err) {
-      console.error("Error rejecting proposal:", err);
+      logger.error("Error rejecting proposal", err);
       alert("❌ Failed to reject proposal");
     }
   };
@@ -432,7 +433,7 @@ export default function ProposalReview() {
         throw new Error("Reprice failed");
       }
     } catch (err) {
-      console.error("Error repricing proposal:", err);
+      logger.error("Error repricing proposal", err);
       alert("❌ Failed to reprice proposal");
     }
   };

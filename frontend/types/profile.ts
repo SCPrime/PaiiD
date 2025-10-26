@@ -4,6 +4,8 @@
  * Tracks investment capital, preferences, and portfolio state across all workflows
  */
 
+import { logger } from "../lib/logger";
+
 export interface InvestmentSettings {
   initialCapital: number; // Total starting capital
   currentCapital: number; // Current available capital
@@ -189,7 +191,7 @@ export function loadProfile(): UserProfile | null {
     const profile = JSON.parse(stored) as UserProfile;
     return calculateDerivedValues(profile);
   } catch (error) {
-    console.error("[Profile] Failed to load profile:", error);
+    logger.error("[Profile] Failed to load profile", error);
     return null;
   }
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { logger } from "../lib/logger";
 
 export interface WebSocketMessage {
   type: string;
@@ -109,7 +110,7 @@ export const useWebSocket = ({
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("WebSocket connected");
+        logger.info("WebSocket connected");
         setIsConnected(true);
         setIsConnecting(false);
         setError(null);
@@ -131,19 +132,19 @@ export const useWebSocket = ({
           const message: WebSocketMessage = JSON.parse(event.data);
           handleMessage(message);
         } catch (err) {
-          console.error("Error parsing WebSocket message:", err);
+          logger.error("Error parsing WebSocket message", err);
         }
       };
 
       ws.onclose = (event) => {
-        console.log("WebSocket disconnected:", event.code, event.reason);
+        logger.info("WebSocket disconnected", { code: event.code, reason: event.reason });
         setIsConnected(false);
         setIsConnecting(false);
 
         // Attempt to reconnect if not a manual disconnect
         if (event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
           reconnectAttemptsRef.current++;
-          console.log(
+          logger.info(
             `Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`
           );
 
@@ -156,12 +157,12 @@ export const useWebSocket = ({
       };
 
       ws.onerror = (err) => {
-        console.error("WebSocket error:", err);
+        logger.error("WebSocket error", err);
         setError("WebSocket connection error");
         setIsConnecting(false);
       };
     } catch (err) {
-      console.error("Error creating WebSocket:", err);
+      logger.error("Error creating WebSocket", err);
       setError("Failed to create WebSocket connection");
       setIsConnecting(false);
     }
@@ -186,7 +187,7 @@ export const useWebSocket = ({
   const handleMessage = useCallback((message: WebSocketMessage) => {
     switch (message.type) {
       case "connection":
-        console.log("WebSocket connection established:", message);
+        logger.info("WebSocket connection established", { message });
         break;
 
       case "market_data":
@@ -226,7 +227,7 @@ export const useWebSocket = ({
         break;
 
       case "subscription_confirmed":
-        console.log("Subscription confirmed for symbols:", message.data?.symbols);
+        logger.info("Subscription confirmed for symbols", { symbols: (message.data as { symbols?: string[] })?.symbols });
         break;
 
       case "pong":
@@ -234,7 +235,7 @@ export const useWebSocket = ({
         break;
 
       default:
-        console.log("Unknown message type:", message.type);
+        logger.info("Unknown message type", { type: message.type });
     }
   }, []);
 
@@ -242,7 +243,7 @@ export const useWebSocket = ({
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       const newSymbols = symbols.filter((s) => !subscribedSymbolsRef.current.has(s));
       if (newSymbols.length > 0) {
-        subscribedSymbolsRef.current = new Set([...subscribedSymbolsRef.current, ...newSymbols]);
+        subscribedSymbolsRef.current = new Set([...Array.from(subscribedSymbolsRef.current), ...newSymbols]);
         wsRef.current.send(
           JSON.stringify({
             type: "subscribe",

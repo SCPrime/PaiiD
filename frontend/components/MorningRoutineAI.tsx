@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Morning Routine with AI Scheduler + Run Now Feature
  * Schedule custom morning trading routines with AI assistance
@@ -20,6 +19,7 @@ import {
 import { useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { claudeAI } from "../lib/aiAdapter";
+import { logger } from "../lib/logger";
 import { fetchUnder4Scanner } from "../lib/marketData";
 import { getCurrentUser, updateUser } from "../lib/userManagement";
 import { theme } from "../styles/theme";
@@ -47,10 +47,10 @@ interface NewsItem {
 // Helper function to fetch real market data
 async function fetchLiveMarketData() {
   try {
-    console.info("[MorningRoutine] 🔴 Fetching LIVE market data...");
+    logger.info("[MorningRoutine] 🔴 Fetching LIVE market data...");
     const scanner = await fetchUnder4Scanner();
 
-    console.info("[MorningRoutine] ✅ Received live data:", scanner);
+    logger.info("[MorningRoutine] ✅ Received live data", { scanner });
 
     return {
       candidates: scanner.candidates || [],
@@ -58,7 +58,7 @@ async function fetchLiveMarketData() {
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    console.error("[MorningRoutine] ❌ Failed to fetch live market data:", error);
+    logger.error("[MorningRoutine] ❌ Failed to fetch live market data", error);
     return null;
   }
 }
@@ -201,7 +201,7 @@ export default function MorningRoutineAI() {
 
   useEffect(() => {
     // ✅ EXTENSION VERIFICATION: lucide-react
-    console.info("[Extension Verification] ✅ lucide-react icons loaded successfully:", {
+    logger.info("[Extension Verification] ✅ lucide-react icons loaded successfully", {
       icons: [
         "Sun",
         "Calendar",
@@ -255,7 +255,7 @@ export default function MorningRoutineAI() {
                 : 0,
             buyingPower: parseFloat(accountData.buying_power || accountData.cash || "0"),
           });
-          console.info("[MorningRoutine] ✅ Loaded real portfolio data from API");
+          logger.info("[MorningRoutine] ✅ Loaded real portfolio data from API");
         } else {
           // Fallback to user profile if API fails
           const user = getCurrentUser();
@@ -271,11 +271,11 @@ export default function MorningRoutineAI() {
               dayChangePercent: 0,
               buyingPower: amount,
             });
-            console.info("[MorningRoutine] ✅ Loaded portfolio data from user profile");
+            logger.info("[MorningRoutine] ✅ Loaded portfolio data from user profile");
           }
         }
       } catch (error) {
-        console.error("[MorningRoutine] Failed to load portfolio data:", error);
+        logger.error("[MorningRoutine] Failed to load portfolio data", error);
       }
     };
 
@@ -290,10 +290,10 @@ export default function MorningRoutineAI() {
         const data = await fetchLiveMarketData();
         if (data) {
           setLiveDataPreview(data);
-          console.info("[MorningRoutine] ✅ Loaded live data preview");
+          logger.info("[MorningRoutine] ✅ Loaded live data preview");
         }
       } catch (error) {
-        console.error("[MorningRoutine] Failed to load live data preview:", error);
+        logger.error("[MorningRoutine] Failed to load live data preview", error);
       } finally {
         setIsLoadingLiveData(false);
       }
@@ -311,7 +311,7 @@ export default function MorningRoutineAI() {
         setLiveDataPreview(data);
       }
     } catch (error) {
-      console.error("[MorningRoutine] Failed to refresh live data:", error);
+      logger.error("[MorningRoutine] Failed to refresh live data", error);
     } finally {
       setIsLoadingLiveData(false);
     }
@@ -365,7 +365,7 @@ export default function MorningRoutineAI() {
     setError(null);
 
     try {
-      console.info("[MorningRoutine] Generating routine from input:", aiInput);
+      logger.info("[MorningRoutine] Generating routine from input", { aiInput });
       const response = await claudeAI.generateMorningRoutine({
         wakeTime: "7:00 AM",
         marketOpen: true,
@@ -373,7 +373,7 @@ export default function MorningRoutineAI() {
         reviewPositions: true,
         aiRecommendations: true,
       });
-      console.info("[MorningRoutine] Raw AI response:", response);
+      logger.info("[MorningRoutine] Raw AI response", { response });
 
       // Try to parse JSON from the response
       let routine: {
@@ -399,15 +399,15 @@ export default function MorningRoutineAI() {
       if (jsonMatch) {
         try {
           routine = JSON.parse(jsonMatch[0]);
-          console.info("[MorningRoutine] Successfully parsed JSON:", routine);
+          logger.info("[MorningRoutine] Successfully parsed JSON", { routine });
         } catch (parseError) {
-          console.error("[MorningRoutine] JSON parse error:", parseError);
+          logger.error("[MorningRoutine] JSON parse error", parseError);
         }
       }
 
       // If we couldn't parse JSON, create a simple routine from the response
       if (!routine) {
-        console.info("[MorningRoutine] Could not parse JSON, using fallback with defaults");
+        logger.info("[MorningRoutine] Could not parse JSON, using fallback with defaults");
         // Just use default values and keep the selected steps
         alert("AI generated a routine suggestion. Using default schedule settings.");
         setShowAIBuilder(false);
@@ -417,12 +417,14 @@ export default function MorningRoutineAI() {
 
       // Map AI-generated routine to schedule settings with fallbacks
       if (routine.schedule?.startTime) {
-        console.info("[MorningRoutine] Setting schedule time:", routine.schedule.startTime);
+        logger.info("[MorningRoutine] Setting schedule time", { time: routine.schedule.startTime });
         setScheduleTime(routine.schedule.startTime);
       }
 
       if (routine.schedule?.frequency) {
-        console.info("[MorningRoutine] Setting frequency:", routine.schedule.frequency);
+        logger.info("[MorningRoutine] Setting frequency", {
+          frequency: routine.schedule.frequency,
+        });
         setScheduleFrequency(routine.schedule.frequency);
       }
 
@@ -431,7 +433,7 @@ export default function MorningRoutineAI() {
         const stepTypes = routine.steps
           .map((step: { type: string }) => step.type)
           .filter((type: string) => availableSteps.some((s) => s.id === type));
-        console.info("[MorningRoutine] Setting step types:", stepTypes);
+        logger.info("[MorningRoutine] Setting step types", { stepTypes });
         if (stepTypes.length > 0) {
           setSelectedSteps(stepTypes);
         }
@@ -440,9 +442,9 @@ export default function MorningRoutineAI() {
       setShowAIBuilder(false);
       setAiInput("");
       alert(`AI generated routine: "${routine.name || "Custom Routine"}"`);
-      console.info("[MorningRoutine] ✅ Routine generated successfully");
+      logger.info("[MorningRoutine] ✅ Routine generated successfully");
     } catch (err: unknown) {
-      console.error("[MorningRoutine] Error generating routine:", err);
+      logger.error("[MorningRoutine] Error generating routine", err);
       setError(
         err instanceof Error ? err.message : "Failed to generate routine. Please try again."
       );

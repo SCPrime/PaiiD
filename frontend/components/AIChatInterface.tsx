@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
+import { logger } from "../lib/logger";
 import EnhancedCard from "./ui/EnhancedCard";
 import StatusIndicator from "./ui/StatusIndicator";
 
@@ -95,7 +96,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         throw new Error("Failed to get AI response");
       }
     } catch (error) {
-      console.error("Error sending chat message:", error);
+      logger.error("Error sending chat message", error);
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: "ai",

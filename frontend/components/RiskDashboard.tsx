@@ -1,9 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Shield, AlertTriangle, TrendingDown, DollarSign, Percent } from "lucide-react";
-import { Card } from "./ui";
-import { theme } from "../styles/theme";
+import { AlertTriangle, DollarSign, Percent, Shield, TrendingDown } from "lucide-react";
+import { useEffect, useState } from "react";
 import { alpaca } from "../lib/alpaca";
+import { logger } from "../lib/logger";
+import { theme } from "../styles/theme";
+import { Card } from "./ui";
 
 interface RiskMetrics {
   portfolioValue: number;
@@ -128,7 +129,7 @@ export default function RiskDashboard() {
       setPositionRisks(posRisks);
       setAlerts(newAlerts);
     } catch (error) {
-      console.error("Failed to load risk metrics:", error);
+      logger.error("Failed to load risk metrics", error);
     } finally {
       setLoading(false);
     }

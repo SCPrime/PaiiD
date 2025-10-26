@@ -25,6 +25,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import { logger } from "../lib/logger";
 import { createUser } from "../lib/userManagement";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 import { theme } from "../styles/theme";
@@ -511,13 +512,13 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
         }
       );
 
-      console.info("User created successfully:", user.userId);
+      logger.info("User created successfully", { userId: user.userId });
 
       setTimeout(() => {
         onComplete();
       }, 500);
     } catch (error) {
-      console.error("Failed to create user:", error);
+      logger.error("Failed to create user", error);
       setErrors({ submit: "Failed to create user. Please try again." });
       setIsSubmitting(false);
     }

@@ -58,33 +58,12 @@ if (Test-Path "backend/requirements.txt") {
 }
 
 Write-Host ""
-Write-Host "🧟 Setting up zombie process detection..." -ForegroundColor Yellow
-
-# Register scheduled task for zombie detection
-$zombieTaskScript = Join-Path $PSScriptRoot "scripts\register-zombie-detection-task.ps1"
-if (Test-Path $zombieTaskScript) {
-    try {
-        Write-Host "   Registering weekly zombie detection task..." -ForegroundColor Gray
-        & $zombieTaskScript
-        Write-Host "✅ Zombie detection task registered" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "⚠️  Could not register zombie detection task (requires admin): $_" -ForegroundColor Yellow
-        Write-Host "   You can run it manually later: .\scripts\register-zombie-detection-task.ps1" -ForegroundColor Gray
-    }
-} else {
-    Write-Host "⚠️  Zombie detection script not found" -ForegroundColor Yellow
-}
-
-Write-Host ""
 Write-Host "🎯 Development Setup Complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "🚀 Quick Start Commands:" -ForegroundColor Cyan
-Write-Host "   Start All: .\start-dev.ps1" -ForegroundColor White
 Write-Host "   Frontend: npm run dev" -ForegroundColor White
 Write-Host "   Backend: cd backend && python -m uvicorn app.main:app --reload" -ForegroundColor White
-Write-Host "   Stop All: .\scripts\stop-all.ps1" -ForegroundColor White
-Write-Host "   Zombie Cleanup: .\scripts\zombie-killer.ps1 -Force" -ForegroundColor White
+Write-Host "   GitHub Monitor: Available in radial menu!" -ForegroundColor White
 Write-Host ""
 Write-Host "🔧 Cursor Shortcuts:" -ForegroundColor Cyan
 Write-Host "   Ctrl+Shift+P - Command Palette" -ForegroundColor White

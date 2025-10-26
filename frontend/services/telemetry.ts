@@ -1,6 +1,8 @@
 // Telemetry Service
 // Tracks user interactions, errors, and performance metrics
 
+import { logger } from "../lib/logger";
+
 interface TelemetryEvent {
   userId: string;
   sessionId: string;
@@ -83,7 +85,12 @@ class TelemetryService {
   /**
    * Track button click
    */
-  trackClick(userId: string, userRole: TelemetryEvent["userRole"] | string, component: string, buttonName: string) {
+  trackClick(
+    userId: string,
+    userRole: TelemetryEvent["userRole"] | string,
+    component: string,
+    buttonName: string
+  ) {
     this.track({
       userId,
       userRole: (userRole as TelemetryEvent["userRole"]) || "user",
@@ -177,9 +184,9 @@ class TelemetryService {
         throw new Error(`Telemetry flush failed: ${response.status}`);
       }
 
-      console.info(`[Telemetry] Flushed ${events.length} events`);
+      logger.info(`[Telemetry] Flushed ${events.length} events`);
     } catch (error) {
-      console.error("[Telemetry] Flush error:", error);
+      logger.error("[Telemetry] Flush error", error);
       // Re-add failed events to buffer
       this.buffer.unshift(...events);
     }

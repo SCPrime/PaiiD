@@ -2,6 +2,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import Split from "react-split";
 import RadialMenu, { Workflow, workflows } from "../components/RadialMenu";
+import { logger } from "../lib/logger";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 
 import ExecuteTradeForm from "../components/ExecuteTradeForm";
@@ -138,7 +139,7 @@ export default function Dashboard() {
       // Check for Ctrl+Shift+A (Windows/Linux) or Cmd+Shift+A (Mac)
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "A") {
         e.preventDefault();
-        console.info("[PaiiD] 🔓 Admin bypass activated");
+        logger.info("[PaiiD] 🔓 Admin bypass activated");
 
         // Set localStorage flags
         if (typeof window !== "undefined") {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { logger } from "../../lib/logger";
 // TODO: Re-enable when strategies module is implemented
 // import { validateStrategy } from "@/strategies/validator";
 // import type { Strategy, ValidationResult } from "@/strategies/schema";
@@ -169,7 +170,7 @@ export default function StrategyBuilder({
         setVersions(data.versions || []);
       }
     } catch (error) {
-      console.error("Failed to load versions:", error);
+      logger.error("Failed to load versions", error);
     }
   };
 
@@ -188,7 +189,7 @@ export default function StrategyBuilder({
         }
       }
     } catch (error) {
-      console.error("Failed to load version:", error);
+      logger.error("Failed to load version", error);
     }
   };
 

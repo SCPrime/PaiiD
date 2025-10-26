@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
 import { Button, Card, Input, Select } from "./ui";
 
@@ -35,7 +36,7 @@ export default function ResearchDashboardSimple() {
       setPriceChange(result.priceChange || 1.25);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to fetch data");
-      console.error("Historical data fetch error:", err);
+      logger.error("Historical data fetch error", err);
       setHasData(false);
     } finally {
       setLoading(false);

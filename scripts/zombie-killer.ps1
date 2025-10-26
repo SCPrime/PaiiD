@@ -74,25 +74,25 @@ function Stop-ProcessSafely {
         [bool]$Force = $false
     )
     
-    $processId = $Process.ProcessId
+    $pid = $Process.ProcessId
     $name = $Process.Name
     $commandLine = $Process.CommandLine
     
     try {
-        Write-ZombieLog "Attempting to kill process: PID $processId ($name)"
+        Write-ZombieLog "Attempting to kill process: PID $pid ($name)"
         Write-ZombieLog "  Command: $commandLine"
         
         # Try graceful termination first
-        $proc = Get-Process -Id $processId -ErrorAction SilentlyContinue
+        $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
         if ($proc) {
             $proc.CloseMainWindow()
             Start-Sleep -Seconds 2
             
             # Check if still running
-            if (Get-Process -Id $processId -ErrorAction SilentlyContinue) {
+            if (Get-Process -Id $pid -ErrorAction SilentlyContinue) {
                 if ($Force) {
                     Write-ZombieLog "Process still running, forcing termination..." "WARN"
-                    Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+                    Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
                 } else {
                     Write-ZombieLog "Process did not terminate gracefully, use -Force to force kill" "WARN"
                     return $false
@@ -102,16 +102,16 @@ function Stop-ProcessSafely {
         
         # Verify process is gone
         Start-Sleep -Seconds 1
-        if (-not (Get-Process -Id $processId -ErrorAction SilentlyContinue)) {
-            Write-ZombieLog "Successfully killed PID $processId" "SUCCESS"
+        if (-not (Get-Process -Id $pid -ErrorAction SilentlyContinue)) {
+            Write-ZombieLog "Successfully killed PID $pid" "SUCCESS"
             return $true
         } else {
-            Write-ZombieLog "Failed to kill PID $processId" "ERROR"
+            Write-ZombieLog "Failed to kill PID $pid" "ERROR"
             return $false
         }
     }
     catch {
-        Write-ZombieLog "Error killing PID $processId" "ERROR"
+        Write-ZombieLog "Error killing PID $pid: $_" "ERROR"
         return $false
     }
 }
@@ -139,11 +139,11 @@ function Start-ZombieCleanup {
     $failed = 0
     
     foreach ($process in $processes) {
-        $processId = $process.ProcessId
+        $pid = $process.ProcessId
         $name = $process.Name
         $commandLine = $process.CommandLine
         
-        Write-ZombieLog "Process: PID $processId ($name)"
+        Write-ZombieLog "Process: PID $pid ($name)"
         Write-ZombieLog "  Command: $commandLine"
         
         # Additional safety checks in safe mode

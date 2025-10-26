@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { logger } from "../lib/logger";
 
 interface RadialMenuNavProps {
   onWorkflowSelect: (workflowId: string) => void;
@@ -15,7 +16,7 @@ export default function RadialMenuNav({ onWorkflowSelect }: RadialMenuNavProps) 
       if (event.source === iframeRef.current?.contentWindow) {
         if (event.data?.type === "workflow-selected" && event.data?.workflowId) {
           // eslint-disable-next-line no-console
-          console.info("Radial menu selected:", event.data.workflowId);
+          logger.info("Radial menu selected", { workflowId: event.data.workflowId });
           onWorkflowSelect(event.data.workflowId);
         }
       }

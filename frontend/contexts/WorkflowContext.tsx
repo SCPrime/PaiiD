@@ -1,4 +1,5 @@
 import React, { createContext, ReactNode, useContext, useState } from "react";
+import { logger } from "../lib/logger";
 
 /**
  * WorkflowContext
@@ -80,7 +81,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({ children }) 
     // Dispatch custom event for components that listen
     window.dispatchEvent(new CustomEvent("workflow-navigate", { detail: navigationData }));
 
-    console.info("[WorkflowContext] Navigating to:", workflow, data);
+    logger.info("[WorkflowContext] Navigating to", { workflow, data });
   };
 
   const navigateToTrade = (tradeData: TradeData) => {
@@ -96,7 +97,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({ children }) 
     // Dispatch custom event
     window.dispatchEvent(new CustomEvent("workflow-navigate", { detail: navigationData }));
 
-    console.info("[WorkflowContext] Navigating to Execute Trade:", tradeData);
+    logger.info("[WorkflowContext] Navigating to Execute Trade", { tradeData });
   };
 
   const clearPendingNavigation = () => {

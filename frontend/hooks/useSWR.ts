@@ -14,6 +14,7 @@
 
 import type { SWRConfiguration } from "swr";
 import useSWR from "swr";
+import { logger } from "../lib/logger";
 
 // Global SWR configuration
 const defaultConfig: SWRConfiguration = {
@@ -25,7 +26,7 @@ const defaultConfig: SWRConfiguration = {
 };
 
 // ✅ EXTENSION VERIFICATION: SWR
-console.info("[Extension Verification] ✅ SWR data fetching library loaded successfully:", {
+logger.info("[Extension Verification] ✅ SWR data fetching library loaded successfully", {
   hooks: [
     "usePositions",
     "useAccount",

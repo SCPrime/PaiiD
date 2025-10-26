@@ -203,7 +203,8 @@ class PrelaunchValidator:
             if missing:
                 if "SENTRY_DSN" in missing:
                     messages.append(
-                        f"Missing required secrets: {', '.join(missing)}. SENTRY_DSN is required for production"
+                        f"Missing required secrets: {', '.join(missing)}. "
+                        "SENTRY_DSN is required for production"
                     )
                 else:
                     messages.append(f"Missing required secrets: {', '.join(missing)}")
@@ -245,20 +246,23 @@ class PrelaunchValidator:
         valid_sentry_envs = ["development", "staging", "production"]
         if sentry_env not in valid_sentry_envs:
             errors.append(
-                f"Invalid SENTRY_ENVIRONMENT '{sentry_env}'. Must be one of: {', '.join(valid_sentry_envs)}"
+                f"Invalid SENTRY_ENVIRONMENT '{sentry_env}'. "
+                f"Must be one of: {', '.join(valid_sentry_envs)}"
             )
 
         # Check for conflicts
         use_test_fixtures = os.getenv("USE_TEST_FIXTURES", "false").lower() == "true"
         if use_test_fixtures and sentry_env == "production":
             warnings.append(
-                "USE_TEST_FIXTURES=true in production environment - this should only be used for testing"
+                "USE_TEST_FIXTURES=true in production environment - "
+                "this should only be used for testing"
             )
 
         # Check REDIS_URL (non-blocking warning)
         if not os.getenv("REDIS_URL"):
             warnings.append(
-                "REDIS_URL not configured - using in-memory fallback (not recommended for production)"
+                "REDIS_URL not configured - using in-memory fallback "
+                "(not recommended for production)"
             )
 
         if errors:

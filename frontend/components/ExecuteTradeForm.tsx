@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { useWorkflow } from "../contexts/WorkflowContext";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { logger } from "../lib/logger";
 import { showError, showSuccess, showWarning } from "../lib/toast";
 import { theme } from "../styles/theme";
 import ConfirmDialog from "./ConfirmDialog";
@@ -128,7 +129,7 @@ export default function ExecuteTradeForm() {
       const { tradeData } = pendingNavigation;
 
       // eslint-disable-next-line no-console
-      console.info("[ExecuteTradeForm] Pre-filling form with trade data:", tradeData);
+      logger.info("[ExecuteTradeForm] Pre-filling form with trade data", { tradeData });
 
       // Pre-fill form fields
       if (tradeData.symbol) setSymbol(tradeData.symbol);
@@ -168,7 +169,7 @@ export default function ExecuteTradeForm() {
         setTemplates(data);
       }
     } catch (err) {
-      console.error("Failed to load templates:", err);
+      logger.error("Failed to load templates", err);
     }
   };
 
@@ -188,7 +189,7 @@ export default function ExecuteTradeForm() {
           }
         }
       } catch (err) {
-        console.error("Failed to fetch expirations:", err);
+        logger.error("Failed to fetch expirations", err);
       } finally {
         setLoadingOptionsChain(false);
       }
@@ -216,7 +217,7 @@ export default function ExecuteTradeForm() {
           }
         }
       } catch (err) {
-        console.error("Failed to fetch strikes:", err);
+        logger.error("Failed to fetch strikes", err);
       } finally {
         setLoadingOptionsChain(false);
       }
@@ -281,7 +282,7 @@ export default function ExecuteTradeForm() {
       const data = await response.json();
       setAiAnalysis(data);
     } catch (err: unknown) {
-      console.error("AI analysis error:", err);
+      logger.error("AI analysis error", err);
       setAiError(err instanceof Error ? err.message : "Failed to load AI analysis");
       setAiAnalysis(null);
     } finally {
@@ -305,7 +306,7 @@ export default function ExecuteTradeForm() {
       // Mark template as used
       fetch(`/api/proxy/api/order-templates/${template.id}/use`, {
         method: "POST",
-      }).catch((err) => console.error("Failed to mark template as used:", err));
+      }).catch((err) => logger.error("Failed to mark template as used", err));
     }
   };
 

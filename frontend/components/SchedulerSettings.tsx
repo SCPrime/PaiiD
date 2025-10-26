@@ -11,6 +11,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { logger } from "../lib/logger";
 
 interface Schedule {
   id: string;
@@ -71,7 +72,7 @@ export default function SchedulerSettings() {
       setSchedules(data);
       setLoading(false);
     } catch (error) {
-      console.error("Failed to fetch schedules:", error);
+      logger.error("Failed to fetch schedules", error);
       setLoading(false);
     }
   };
@@ -82,7 +83,7 @@ export default function SchedulerSettings() {
       const data = await response.json();
       setExecutions(data);
     } catch (error) {
-      console.error("Failed to fetch executions:", error);
+      logger.error("Failed to fetch executions", error);
     }
   };
 
@@ -95,7 +96,7 @@ export default function SchedulerSettings() {
       });
       fetchSchedules();
     } catch (error) {
-      console.error("Failed to toggle schedule:", error);
+      logger.error("Failed to toggle schedule", error);
     }
   };
 
@@ -105,7 +106,7 @@ export default function SchedulerSettings() {
       await fetch(`/api/proxy/scheduler/schedules/${id}`, { method: "DELETE" });
       fetchSchedules();
     } catch (error) {
-      console.error("Failed to delete schedule:", error);
+      logger.error("Failed to delete schedule", error);
     }
   };
 
@@ -145,7 +146,7 @@ export default function SchedulerSettings() {
       fetchSchedules();
       alert("✅ Schedule created successfully!");
     } catch (error) {
-      console.error("Failed to create schedule:", error);
+      logger.error("Failed to create schedule", error);
       alert(
         `❌ Failed to create schedule: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -160,7 +161,7 @@ export default function SchedulerSettings() {
       setGlobalPaused(true);
       fetchSchedules();
     } catch (error) {
-      console.error("Failed to pause all schedules:", error);
+      logger.error("Failed to pause all schedules", error);
     }
   };
 
@@ -170,7 +171,7 @@ export default function SchedulerSettings() {
       setGlobalPaused(false);
       fetchSchedules();
     } catch (error) {
-      console.error("Failed to resume schedules:", error);
+      logger.error("Failed to resume schedules", error);
     }
   };
 
@@ -457,7 +458,10 @@ export default function SchedulerSettings() {
                 </div>
 
                 <div>
-                  <label htmlFor="schedule-type" className="block text-sm font-medium text-slate-300 mb-1">
+                  <label
+                    htmlFor="schedule-type"
+                    className="block text-sm font-medium text-slate-300 mb-1"
+                  >
                     Schedule Type
                   </label>
                   <select
@@ -477,7 +481,10 @@ export default function SchedulerSettings() {
                 </div>
 
                 <div>
-                  <label htmlFor="schedule-cron" className="block text-sm font-medium text-slate-300 mb-1">
+                  <label
+                    htmlFor="schedule-cron"
+                    className="block text-sm font-medium text-slate-300 mb-1"
+                  >
                     Schedule (Cron)
                   </label>
                   <select
@@ -499,7 +506,12 @@ export default function SchedulerSettings() {
                 </div>
 
                 <div>
-                  <label htmlFor="schedule-timezone" className="block text-sm font-medium text-slate-300 mb-1">Timezone</label>
+                  <label
+                    htmlFor="schedule-timezone"
+                    className="block text-sm font-medium text-slate-300 mb-1"
+                  >
+                    Timezone
+                  </label>
                   <select
                     id="schedule-timezone"
                     aria-label="Timezone"

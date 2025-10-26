@@ -143,18 +143,18 @@ const AIChartAnalysis: React.FC<AIChartAnalysisProps> = ({
     return "text-red-400";
   };
 
-  if (error) {
+  if (_error) {
     return (
       <EnhancedCard variant="default" className={className}>
         <div className="text-center text-red-400">
           <StatusIndicator status="error" size="sm" />
-          <p className="mt-2">AI Analysis Error: {error}</p>
+          <p className="mt-2">AI Analysis Error: {_error}</p>
         </div>
       </EnhancedCard>
     );
   }
 
-  if (isLoading) {
+  if (_isLoading) {
     return (
       <EnhancedCard variant="default" className={className}>
         <div className="text-center">

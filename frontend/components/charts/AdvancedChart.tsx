@@ -169,7 +169,10 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
 
     const yScale = d3
       .scaleLinear()
-      .domain(d3.extent(chartData, (d) => [d.low, d.high]).flat() as [number, number])
+      .domain([
+        d3.min(chartData, (d) => d.low) || 0,
+        d3.max(chartData, (d) => d.high) || 0,
+      ])
       .range([height, 0]);
 
     // Candlestick rectangles
@@ -223,7 +226,7 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
     // Axes
     g.append("g")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%m/%d")));
+      .call(d3.axisBottom(xScale).tickFormat((d) => d3.timeFormat("%m/%d")(d as Date)));
 
     g.append("g").call(d3.axisLeft(yScale).tickFormat(d3.format("$.2f")));
 
@@ -252,18 +255,18 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
       .style("opacity", 0.3);
   }, [chartData, chartType]);
 
-  if (error) {
+  if (_error) {
     return (
       <EnhancedCard variant="default" className={className}>
         <div className="text-center text-red-400">
           <StatusIndicator status="error" size="sm" />
-          <p className="mt-2">Chart Error: {error}</p>
+          <p className="mt-2">Chart Error: {_error}</p>
         </div>
       </EnhancedCard>
     );
   }
 
-  if (isLoading) {
+  if (_isLoading) {
     return (
       <EnhancedCard variant="default" className={className}>
         <div className="text-center">

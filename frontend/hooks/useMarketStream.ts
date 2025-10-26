@@ -13,6 +13,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { logger } from "../lib/logger";
 
 export interface PriceData {
   price: number;
@@ -85,7 +86,7 @@ export function useMarketStream(
   const log = useCallback(
     (...args: unknown[]) => {
       if (debug) {
-        console.info("[useMarketStream]", ...args);
+        logger.info("[useMarketStream]", ...args);
       }
     },
     [debug]
@@ -191,7 +192,7 @@ export function useMarketStream(
             lastUpdate: new Date(),
           }));
         } catch (error) {
-          console.error("[useMarketStream] Error parsing price update:", error);
+          logger.error("[useMarketStream] Error parsing price update", error);
         }
       });
 
@@ -209,7 +210,7 @@ export function useMarketStream(
       eventSource.addEventListener("error", (event) => {
         try {
           const errorData = JSON.parse((event as MessageEvent).data);
-          console.error("[useMarketStream] Server error:", errorData.error);
+          logger.error("[useMarketStream] Server error", errorData.error);
           setState((prev) => ({
             ...prev,
             error: errorData.error,
@@ -256,7 +257,7 @@ export function useMarketStream(
         }
       };
     } catch (error: unknown) {
-      console.error("[useMarketStream] Connection error:", error);
+      logger.error("[useMarketStream] Connection error", error);
       setState((prev) => ({
         ...prev,
         connected: false,

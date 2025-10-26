@@ -2,6 +2,7 @@
 
 import { CheckCircle, Clock, ExternalLink, RefreshCw, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { logger } from "../lib/logger";
 
 interface WorkflowRun {
   id: number;
@@ -67,7 +68,7 @@ export function GitHubActionsMonitor({ repository }: GitHubActionsMonitorProps) 
       setLastUpdated(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch GitHub Actions data");
-      console.error("GitHub Actions fetch error:", err);
+      logger.error("GitHub Actions fetch error", err);
     } finally {
       setLoading(false);
     }

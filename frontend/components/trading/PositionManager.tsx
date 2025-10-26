@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { logger } from "../../lib/logger";
 
 interface PositionGreeks {
   delta: number;
@@ -58,7 +59,7 @@ export default function PositionManager() {
       const data = await res.json();
       setPositions(data);
     } catch (error) {
-      console.error("Failed to fetch positions:", error);
+      logger.error("Failed to fetch positions", error);
     } finally {
       setLoading(false);
     }
@@ -70,7 +71,7 @@ export default function PositionManager() {
       const data = await res.json();
       setPortfolioGreeks(data);
     } catch (error) {
-      console.error("Failed to fetch portfolio Greeks:", error);
+      logger.error("Failed to fetch portfolio Greeks", error);
     }
   };
 
@@ -83,7 +84,7 @@ export default function PositionManager() {
       });
       fetchPositions();
     } catch (error) {
-      console.error("Failed to close position:", error);
+      logger.error("Failed to close position", error);
       alert("Failed to close position");
     }
   };

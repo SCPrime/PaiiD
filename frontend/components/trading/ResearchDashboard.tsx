@@ -24,6 +24,7 @@ import {
   LineData,
 } from "lightweight-charts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { logger } from "../../lib/logger";
 import OptionsChain from "./OptionsChain";
 import PLComparisonChart from "./PLComparisonChart";
 import PLSummaryDashboard from "./PLSummaryDashboard";
@@ -152,7 +153,7 @@ export default function ResearchDashboard() {
       // Fetch historical data
       await fetchHistoricalData(symbol, timeframe);
     } catch (e) {
-      console.error("Failed to fetch stock data", e);
+      logger.error("Failed to fetch stock data", e);
     } finally {
       setLoading(false);
     }
@@ -167,7 +168,7 @@ export default function ResearchDashboard() {
       const data: HistoricalResponse = await response.json();
       setHistoricalData(data.bars);
     } catch (error) {
-      console.error("Historical data fetch error:", error);
+      logger.error("Historical data fetch error", error);
       setHistoricalData([]);
     }
   };
@@ -240,7 +241,7 @@ export default function ResearchDashboard() {
       setStrategySuggestions(data);
       setShowStrategyModal(true);
     } catch (error) {
-      console.error("Strategy suggestion error:", error);
+      logger.error("Strategy suggestion error", error);
       alert("Failed to generate strategy suggestions. Please try again.");
     } finally {
       setAiLoading(false);
@@ -319,7 +320,7 @@ Proposal system coming in INCREMENT 9`);
       setPlViewMode("pre-trade");
       setShowPLAnalysis(true);
     } catch (error) {
-      console.error("Theoretical P&L calculation error:", error);
+      logger.error("Theoretical P&L calculation error", error);
       alert("Failed to calculate theoretical P&L. Please try again.");
     }
   };
@@ -346,7 +347,7 @@ Proposal system coming in INCREMENT 9`);
       setPlViewMode("live-position");
       setShowPLAnalysis(true);
     } catch (error) {
-      console.error("Position tracking error:", error);
+      logger.error("Position tracking error", error);
       alert("Failed to load position tracking. Please try again.");
     }
   };
@@ -364,7 +365,7 @@ Proposal system coming in INCREMENT 9`);
       setPlViewMode("historical");
       setShowPLAnalysis(true);
     } catch (error) {
-      console.error("P&L comparison error:", error);
+      logger.error("P&L comparison error", error);
       alert("Failed to load P&L comparison. Please try again.");
     }
   };

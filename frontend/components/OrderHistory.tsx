@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Card } from "./ui";
+import { useEffect, useState } from "react";
+import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
+import { Card } from "./ui";
 
 interface OrderRecord {
   id: string;
@@ -26,7 +27,7 @@ export default function OrderHistory() {
       try {
         setOrders(JSON.parse(stored));
       } catch (e) {
-        console.error("Failed to load order history:", e);
+        logger.error("Failed to load order history", e);
       }
     }
   }, []);

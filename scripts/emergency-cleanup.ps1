@@ -348,8 +348,8 @@ function Clear-OrphanedPidFiles {
 
     $projectRoot = Split-Path $PSScriptRoot -Parent
     $pidDirs = @(
-        (Join-Path $projectRoot "backend\.run"),
-        (Join-Path $projectRoot "frontend\.run")
+        Join-Path $projectRoot "backend\.run",
+        Join-Path $projectRoot "frontend\.run"
     )
 
     $totalCleaned = 0

@@ -19,6 +19,7 @@ import {
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { claudeAI, UserPreferences } from "../lib/aiAdapter";
+import { logger } from "../lib/logger";
 import { createUser } from "../lib/userManagement";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 import { theme } from "../styles/theme";
@@ -44,9 +45,9 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
   const [showReview, setShowReview] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
-  const [conversationStep, setConversationStep] = useState<"intro" | "name" | "email" | "trading" | "done">(
-    "intro"
-  );
+  const [conversationStep, setConversationStep] = useState<
+    "intro" | "name" | "email" | "trading" | "done"
+  >("intro");
   const [_setupProgress, setSetupProgress] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -74,7 +75,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
       // Check for Ctrl+Shift+A (Windows/Linux) or Cmd+Shift+A (Mac)
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "A") {
         e.preventDefault();
-        console.info("[UserSetupAI] 🔓 Admin bypass activated during onboarding");
+        logger.info("[UserSetupAI] 🔓 Admin bypass activated during onboarding");
 
         // Set localStorage flags
         if (typeof window !== "undefined") {
@@ -259,7 +260,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
       }
     );
 
-    console.info("[UserSetupAI] User created:", {
+    logger.info("[UserSetupAI] User created", {
       name: userName || "PaiiD User",
       email: userEmail || "not provided",
       preferences: extractedPrefs,

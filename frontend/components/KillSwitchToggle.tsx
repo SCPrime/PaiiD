@@ -2,6 +2,7 @@
 
 import { AlertTriangle, CheckCircle2, Power, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
+import { logger } from "../lib/logger";
 import { showError, showSuccess } from "../lib/toast";
 
 interface KillSwitchToggleProps {
@@ -27,7 +28,7 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
         setLastChecked(new Date());
       }
     } catch (err: unknown) {
-      console.error("Error fetching kill-switch status:", err);
+      logger.error("Error fetching kill-switch status", err);
       setError("Unable to determine status");
     }
   };
@@ -67,7 +68,7 @@ export default function KillSwitchToggle({ standalone = false }: KillSwitchToggl
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Failed to update kill-switch";
       setError(errorMessage);
-      console.error("Kill-switch error:", err);
+      logger.error("Kill-switch error", err);
 
       // Show error toast
       showError(`Failed to update kill-switch: ${errorMessage}`);

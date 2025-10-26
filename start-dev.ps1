@@ -25,21 +25,6 @@ Write-Host ""
 # Initialize process manager
 Initialize-ProcessManager
 
-# Run zombie cleanup before starting services
-Write-Host "Running zombie process cleanup..." -ForegroundColor Yellow
-$zombieKillerPath = Join-Path $PSScriptRoot "scripts/zombie-killer.ps1"
-if (Test-Path $zombieKillerPath) {
-    try {
-        & $zombieKillerPath -SafeMode -Force
-        Write-Host "  Zombie cleanup completed" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "  Zombie cleanup failed: $_" -ForegroundColor Red
-    }
-} else {
-    Write-Host "  Zombie killer not found at $zombieKillerPath" -ForegroundColor Yellow
-}
-
 # Kill existing processes if requested
 if ($KillExisting) {
     Write-Host "Killing existing processes on ports $FrontendPort and $BackendPort..." -ForegroundColor Yellow
@@ -92,7 +77,7 @@ if (-not (Test-Path "frontend\.env.local")) {
 
 # Check API_TOKEN matches
 $backendToken = Select-String -Path "backend\.env" -Pattern "^API_TOKEN=(.+)$" | ForEach-Object { $_.Matches.Groups[1].Value }
-$frontendToken = Select-String -Path "frontend\.env.local" -Pattern "^NEXT_PUBLIC_API_TOKEN=(.+)$" | ForEach-Object { $_.Matches.Groups[1].Value }
+$frontendToken = Select-String -Path "frontend\.env.local" -Pattern "^API_TOKEN=(.+)$" | ForEach-Object { $_.Matches.Groups[1].Value }
 
 if ($backendToken -ne $frontendToken) {
     Write-Host "  ⚠️  API_TOKEN mismatch between backend and frontend!" -ForegroundColor Red

@@ -7,7 +7,9 @@ import time
 from datetime import datetime
 
 import psutil
-import requests
+
+from .alpaca_client import get_alpaca_client
+from .tradier_client import get_tradier_client
 
 
 logger = logging.getLogger(__name__)
@@ -37,10 +39,16 @@ class HealthMonitor:
             if self.response_times
             else 0
         )
-        error_rate = (self.error_count / self.request_count * 100) if self.request_count > 0 else 0
+        error_rate = (
+            (self.error_count / self.request_count * 100)
+            if self.request_count > 0
+            else 0
+        )
 
         return {
-            "status": "healthy" if cpu_percent < 80 and memory.percent < 85 else "degraded",
+            "status": "healthy"
+            if cpu_percent < 80 and memory.percent < 85
+            else "degraded",
             "timestamp": datetime.now().isoformat(),
             "uptime_seconds": uptime,
             "system": {
@@ -56,7 +64,9 @@ class HealthMonitor:
                 "total_errors": self.error_count,
                 "error_rate_percent": error_rate,
                 "avg_response_time_ms": avg_response_time * 1000,
-                "requests_per_minute": self.request_count / (uptime / 60) if uptime > 0 else 0,
+                "requests_per_minute": self.request_count / (uptime / 60)
+                if uptime > 0
+                else 0,
                 "cache_hits": self.cache_hits,
                 "cache_misses": self.cache_misses,
                 "cache_hit_rate_percent": (
@@ -66,18 +76,21 @@ class HealthMonitor:
                 ),
             },
             "dependencies": self._check_dependencies(),
+            "configuration": self._check_api_configuration(),
         }
 
     def _check_dependencies(self) -> dict:
-        """Check health of external dependencies"""
+        """Check health of external dependencies using existing client factories"""
         dependencies = {}
 
-        # Check Tradier API
+        # Check Tradier API using existing client factory
         try:
             start = time.time()
-            resp = requests.get("https://api.tradier.com/v1/markets/quotes", timeout=5)
+            tradier_client = get_tradier_client()
+            # Use a lightweight endpoint for health check
+            tradier_client.get_market_clock()
             dependencies["tradier"] = {
-                "status": "up" if resp.status_code < 500 else "down",
+                "status": "up",
                 "response_time_ms": (time.time() - start) * 1000,
                 "last_checked": datetime.now().isoformat(),
             }
@@ -88,12 +101,14 @@ class HealthMonitor:
                 "last_checked": datetime.now().isoformat(),
             }
 
-        # Check Alpaca API
+        # Check Alpaca API using existing client factory
         try:
             start = time.time()
-            resp = requests.get("https://paper-api.alpaca.markets/v2/account", timeout=5)
+            alpaca_client = get_alpaca_client()
+            # Use account endpoint for health check (lightweight)
+            alpaca_client.get_account()
             dependencies["alpaca"] = {
-                "status": "up" if resp.status_code < 500 else "down",
+                "status": "up",
                 "response_time_ms": (time.time() - start) * 1000,
                 "last_checked": datetime.now().isoformat(),
             }
@@ -105,6 +120,42 @@ class HealthMonitor:
             }
 
         return dependencies
+
+    def _check_api_configuration(self) -> dict:
+        """Check API key configuration status"""
+        config_status = {}
+
+        # Check Tradier configuration
+        try:
+            tradier_client = get_tradier_client()
+            config_status["tradier"] = {
+                "api_key_configured": bool(tradier_client.api_key),
+                "account_id_configured": bool(tradier_client.account_id),
+                "base_url": tradier_client.base_url,
+            }
+        except ValueError as e:
+            config_status["tradier"] = {
+                "api_key_configured": False,
+                "account_id_configured": False,
+                "error": str(e),
+            }
+
+        # Check Alpaca configuration
+        try:
+            alpaca_client = get_alpaca_client()
+            config_status["alpaca"] = {
+                "api_key_configured": bool(alpaca_client.api_key),
+                "secret_key_configured": bool(alpaca_client.secret_key),
+                "paper_trading": True,  # Always paper trading in our implementation
+            }
+        except ValueError as e:
+            config_status["alpaca"] = {
+                "api_key_configured": False,
+                "secret_key_configured": False,
+                "error": str(e),
+            }
+
+        return config_status
 
     def record_request(self, response_time: float, is_error: bool = False):
         """Record request metrics"""

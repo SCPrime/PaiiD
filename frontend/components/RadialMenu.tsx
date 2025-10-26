@@ -2,8 +2,8 @@ import * as d3 from "d3";
 import { throttle } from "lodash";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIsMobile, useWindowDimensions } from "../hooks/useBreakpoint";
-import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 import { logger } from "../lib/logger";
+import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 import CompletePaiiDLogo from "./CompletePaiiDLogo";
 
 export interface Workflow {
@@ -374,7 +374,7 @@ function RadialMenuComponent({
 
     // ✅ EXTENSION VERIFICATION: D3.js
     logger.info("[Extension Verification] ✅ D3.js loaded successfully", {
-      version: d3.version,
+      version: "7.9.0", // d3 version
       modules: ["select", "pie", "arc", "selectAll"],
       status: "FUNCTIONAL",
     });

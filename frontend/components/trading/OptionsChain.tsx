@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { logger } from "../../lib/logger";
 
 /**
  * Options Chain Component
@@ -104,7 +105,7 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
         setSelectedExpiration(data[0].date);
       }
     } catch (err) {
-      console.error("Error fetching expirations:", err);
+      logger.error("Error fetching expirations", err);
       setError(err instanceof Error ? err.message : "Failed to fetch expirations");
     }
   };
@@ -132,7 +133,7 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
       const data: OptionsChainData = await response.json();
       setChainData(data);
     } catch (err) {
-      console.error("Error fetching options chain:", err);
+      logger.error("Error fetching options chain", err);
       setError(err instanceof Error ? err.message : "Failed to fetch options chain");
     } finally {
       setLoading(false);
@@ -141,7 +142,7 @@ export default function OptionsChain({ symbol, onClose }: OptionsChainProps) {
 
   // TODO: Implement trade execution
   // const handleExecuteTrade = (contract: OptionContract, side: "buy" | "sell") => {
-  //   console.log("Execute", side, "for", contract.symbol);
+  //   logger.info("Execute", { side, symbol: contract.symbol });
   // };
 
   // Format Greeks with color coding
