@@ -1,7 +1,7 @@
-# COMPREHENSIVE BATCHED PLAN FOR RADIAL HUB UX REFINEMENT AND IPI LOGO INTEGRATION
+# GENIUS UI/UX BATCHED PLAN
 
 ## Overview
-This plan addresses the radial hub UX refinement with a focus on the locked iPi logo wrapper, AI chat box design, and elimination of clunky layout issues. All work follows the layered React implementation pattern established in the existing locked iPi logo components and maintains full consistency with the app's glassmorphic aesthetic.
+This genius batched plan addresses the radial hub UX refinement with a focus on the locked iPi logo wrapper, AI chat box design, and elimination of clunky layout issues. All work follows the layered React implementation pattern established in the existing locked iPi logo components and maintains full consistency with the app's glassmorphic aesthetic.
 
 ---
 
