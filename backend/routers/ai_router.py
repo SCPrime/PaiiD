@@ -1,9 +1,11 @@
+import logging
+
 from backend.services.ai_service import AIService
 from backend.services.sentiment_analyzer import SentimentAnalyzer
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel
-import logging
+
 
 """
 AI Router for Market Analysis and Trading Recommendations

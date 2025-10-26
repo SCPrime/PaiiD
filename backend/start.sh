@@ -26,6 +26,9 @@ else
     exit 1
 fi
 
+# Global variable to track uvicorn PID
+UVICORN_PID=""
+
 # Cleanup function called on EXIT, INT, TERM
 cleanup_on_exit() {
     local exit_code=$?
@@ -33,6 +36,32 @@ cleanup_on_exit() {
     echo "======================================"
     echo "Backend Shutdown Initiated"
     echo "======================================"
+
+    # Kill uvicorn process if it's running
+    if [ -n "$UVICORN_PID" ] && is_process_running "$UVICORN_PID"; then
+        echo "Stopping uvicorn process (PID: $UVICORN_PID)..."
+        
+        # Try graceful shutdown first (SIGTERM)
+        kill -TERM "$UVICORN_PID" 2>/dev/null || true
+        
+        # Wait up to 10 seconds for graceful shutdown
+        local waited=0
+        while [ $waited -lt 10 ]; do
+            if ! is_process_running "$UVICORN_PID"; then
+                echo "Uvicorn stopped gracefully"
+                break
+            fi
+            sleep 1
+            waited=$((waited + 1))
+        done
+        
+        # Force kill if still running
+        if is_process_running "$UVICORN_PID"; then
+            echo "Forcing uvicorn shutdown (SIGKILL)..."
+            kill -KILL "$UVICORN_PID" 2>/dev/null || true
+            sleep 1
+        fi
+    fi
 
     # Get PID file path
     local pid_file=$(get_pid_file "$PROCESS_NAME")
@@ -48,8 +77,24 @@ cleanup_on_exit() {
     exit $exit_code
 }
 
+# Signal handler to forward signals to uvicorn
+signal_handler() {
+    local signal=$1
+    echo "Received signal: $signal"
+    
+    if [ -n "$UVICORN_PID" ] && is_process_running "$UVICORN_PID"; then
+        echo "Forwarding $signal to uvicorn (PID: $UVICORN_PID)"
+        kill -$signal "$UVICORN_PID" 2>/dev/null || true
+    fi
+    
+    # Exit after signal handling
+    exit 0
+}
+
 # Register cleanup handlers
-trap cleanup_on_exit EXIT INT TERM
+trap cleanup_on_exit EXIT
+trap 'signal_handler TERM' TERM
+trap 'signal_handler INT' INT
 
 echo "======================================"
 echo "PaiiD Backend Startup (Managed)"
@@ -143,7 +188,8 @@ echo "Command: uvicorn app.main:app --host 0.0.0.0 --port $PORT"
 
 # Start uvicorn in background and capture PID
 uvicorn app.main:app --host 0.0.0.0 --port $PORT &
-BACKEND_PID=$!
+UVICORN_PID=$!
+BACKEND_PID=$UVICORN_PID
 
 # Register PID immediately
 write_pid "$BACKEND_PID" "$(get_pid_file "$PROCESS_NAME")"
@@ -165,11 +211,19 @@ if is_process_running "$BACKEND_PID"; then
     echo "  PID File: $(get_pid_file "$PROCESS_NAME")"
     echo "======================================"
     echo ""
+    echo "Press Ctrl+C to stop the server"
+    echo ""
 
     # Wait for the backend process (foreground)
-    # This ensures the script doesn't exit and trigger cleanup
+    # This ensures signals are properly caught and forwarded
     wait $BACKEND_PID
+    
+    # Capture exit code from uvicorn
+    UVICORN_EXIT_CODE=$?
+    echo "Uvicorn exited with code: $UVICORN_EXIT_CODE"
+    exit $UVICORN_EXIT_CODE
 else
     echo "ERROR: Backend failed to start"
+    UVICORN_PID=""  # Clear PID so cleanup doesn't try to kill non-existent process
     exit 1
 fi

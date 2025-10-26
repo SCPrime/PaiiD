@@ -1,10 +1,12 @@
-from app.db.session import SessionLocal
-from app.models.database import Strategy
-from datetime import UTC, datetime
-from pathlib import Path
 import json
 import os
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
+
+from app.db.session import SessionLocal
+from app.models.database import Strategy
+
 
 """
 Migrate Strategies from LocalStorage to PostgreSQL

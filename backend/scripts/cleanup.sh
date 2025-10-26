@@ -63,6 +63,47 @@ count_processes() {
     fi
 }
 
+# Detect zombie processes (state 'Z')
+detect_zombie_processes() {
+    log_cleanup INFO "Scanning for zombie processes..."
+    
+    local zombie_count=0
+    
+    if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
+        # Windows - check for zombie processes using WMIC
+        if command -v wmic &> /dev/null; then
+            wmic process where "name='python.exe'" get processid,executablepath 2>/dev/null | while read line; do
+                if [[ "$line" =~ ^[0-9]+ ]]; then
+                    local pid=$(echo "$line" | awk '{print $1}')
+                    # Check if process is in zombie state (Windows doesn't have true zombies, but we can check for hung processes)
+                    if ! ps -p "$pid" > /dev/null 2>&1; then
+                        log_cleanup WARN "Found potential zombie process: PID $pid"
+                        zombie_count=$((zombie_count + 1))
+                    fi
+                fi
+            done
+        fi
+    else
+        # Unix/Linux/Mac - check for actual zombie processes
+        if command -v ps &> /dev/null; then
+            local zombies=$(ps aux | awk '$8 ~ /^Z/ { print $2 }' | wc -l)
+            if [ "$zombies" -gt 0 ]; then
+                log_cleanup WARN "Found $zombies zombie process(es)"
+                ps aux | awk '$8 ~ /^Z/ { print "  Zombie PID: " $2 " (" $11 ")" }'
+                zombie_count=$zombies
+            fi
+        fi
+    fi
+    
+    if [ $zombie_count -eq 0 ]; then
+        log_cleanup INFO "No zombie processes detected"
+    else
+        log_cleanup WARN "Detected $zombie_count zombie process(es)"
+    fi
+    
+    return $zombie_count
+}
+
 # Cleanup orphaned PID files BEFORE port cleanup
 cleanup_pid_files() {
     log_cleanup INFO "Cleaning up orphaned PID files in $PID_DIR..."
@@ -101,9 +142,31 @@ cleanup_windows_orphans() {
 
         # Find orphaned python.exe processes with uvicorn
         if command -v wmic &> /dev/null; then
+            local orphaned_pids=()
             wmic process where "name='python.exe' and commandline like '%uvicorn%'" get processid 2>/dev/null | while read pid; do
                 if [ -n "$pid" ] && [ "$pid" != "ProcessId" ]; then
+                    orphaned_pids+=("$pid")
                     log_cleanup WARN "Found orphaned uvicorn process: PID $pid"
+                fi
+            done
+            
+            # Kill orphaned processes
+            for pid in "${orphaned_pids[@]}"; do
+                log_cleanup INFO "Killing orphaned uvicorn process: PID $pid"
+                taskkill //F //PID $pid 2>/dev/null || log_cleanup WARN "Failed to kill PID $pid"
+            done
+            
+            if [ ${#orphaned_pids[@]} -gt 0 ]; then
+                log_cleanup INFO "Cleaned up ${#orphaned_pids[@]} orphaned uvicorn process(es)"
+            fi
+        fi
+        
+        # Also check for orphaned PowerShell processes running our commands
+        log_cleanup INFO "Checking for orphaned PowerShell processes..."
+        if command -v wmic &> /dev/null; then
+            wmic process where "name='powershell.exe' and commandline like '%uvicorn%'" get processid 2>/dev/null | while read pid; do
+                if [ -n "$pid" ] && [ "$pid" != "ProcessId" ]; then
+                    log_cleanup WARN "Found orphaned PowerShell process running uvicorn: PID $pid"
                     taskkill //F //PID $pid 2>/dev/null || true
                 fi
             done
@@ -278,13 +341,16 @@ generate_failure_report() {
 main() {
     log_cleanup INFO "Starting enhanced cleanup for port $PORT"
 
-    # Phase 1: Cleanup orphaned PID files
+    # Phase 1: Detect zombie processes
+    detect_zombie_processes
+
+    # Phase 2: Cleanup orphaned PID files
     cleanup_pid_files
 
-    # Phase 2: Windows-specific orphan detection
+    # Phase 3: Windows-specific orphan detection
     cleanup_windows_orphans
 
-    # Phase 3: Kill processes on target port with retry
+    # Phase 4: Kill processes on target port with retry
     if kill_by_port_with_retry; then
         # Success - final verification
         FINAL_COUNT=$(count_processes)

@@ -1,7 +1,9 @@
+import logging
+
 from backend.optimization.optimization_orchestrator import OptimizationOrchestrator
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from fastapi.responses import JSONResponse
-import logging
+
 
 """
 Optimization Router

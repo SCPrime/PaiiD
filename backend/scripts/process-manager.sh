@@ -162,6 +162,41 @@ kill_process_tree() {
     fi
 }
 
+# Zombie process reaper
+reap_zombies() {
+    log_info "Scanning for zombie processes..."
+
+    local zombies_found=0
+    
+    # Check for actual zombie processes (state 'Z')
+    if command -v ps &> /dev/null; then
+        local zombies=$(ps aux | awk '$8 ~ /^Z/ { print $2 }' | wc -l)
+        if [ "$zombies" -gt 0 ]; then
+            log_warn "Found $zombies zombie process(es)"
+            ps aux | awk '$8 ~ /^Z/ { print "  Zombie PID: " $2 " (" $11 ")" }'
+            zombies_found=$zombies
+        fi
+    fi
+
+    # Check for orphaned processes (no parent or parent is init)
+    if command -v ps &> /dev/null; then
+        local orphans=$(ps -eo pid,ppid,comm | awk '$2 == 1 && $3 ~ /(python|node|uvicorn|npm)/ { print $1 }' | wc -l)
+        if [ "$orphans" -gt 0 ]; then
+            log_warn "Found $orphans orphaned process(es)"
+            ps -eo pid,ppid,comm | awk '$2 == 1 && $3 ~ /(python|node|uvicorn|npm)/ { print "  Orphan PID: " $1 " (" $3 ")" }'
+            zombies_found=$((zombies_found + orphans))
+        fi
+    fi
+
+    if [ $zombies_found -eq 0 ]; then
+        log_info "No zombie processes detected"
+    else
+        log_warn "Detected $zombies_found zombie/orphan process(es)"
+    fi
+
+    return $zombies_found
+}
+
 # Orphan detection and cleanup
 cleanup_orphans() {
     log_info "Scanning for orphaned processes..."
@@ -353,6 +388,9 @@ main() {
         cleanup-port)
             cleanup_port "$@"
             ;;
+        reap-zombies)
+            reap_zombies
+            ;;
         is-running)
             local pid=$1
             if is_process_running "$pid"; then
@@ -362,7 +400,7 @@ main() {
             fi
             ;;
         *)
-            echo "Usage: $0 {start|stop|restart|status|cleanup-orphans|cleanup-port|is-running}"
+            echo "Usage: $0 {start|stop|restart|status|cleanup-orphans|cleanup-port|reap-zombies|is-running}"
             echo ""
             echo "Commands:"
             echo "  start <name> <command>        Start a process and register it"
@@ -371,7 +409,8 @@ main() {
             echo "  status <name>                 Check process status"
             echo "  cleanup-orphans               Clean up orphaned PID files"
             echo "  cleanup-port <port> [retries] Free a port by killing processes"
-            echo "  is-running <pid>              Check if PID is running"
+            echo "  reap-zombies                  Scan for and report zombie processes"
+            echo "  is-running <pid>                 Check if PID is running"
             exit 1
             ;;
     esac

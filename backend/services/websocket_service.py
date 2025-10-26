@@ -1,11 +1,12 @@
-from backend.services.market_data_service import MarketDataService
-from backend.app.services.cache import CacheService
-from datetime import UTC, datetime
-from fastapi import WebSocket
 import asyncio
 import json
 import logging
-import redis
+from datetime import UTC, datetime
+
+from backend.app.services.cache import CacheService
+from backend.services.market_data_service import MarketDataService
+from fastapi import WebSocket
+
 
 """
 WebSocket Service for Real-Time Market Data Streaming
