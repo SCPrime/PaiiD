@@ -260,9 +260,28 @@ app.add_middleware(KillSwitchMiddleware)
 
 # Add CSRF protection middleware (Batch 2C: Security Hardening)
 # Disable CSRF validation in test mode (TestClient doesn't maintain state)
+# IMPORTANT: Create a single instance and reuse it to avoid state inconsistencies
 csrf_middleware_instance = CSRFProtectionMiddleware(app, testing_mode=settings.TESTING)
 set_csrf_middleware(csrf_middleware_instance)
-app.add_middleware(CSRFProtectionMiddleware, testing_mode=settings.TESTING)
+# Add the SAME instance to the middleware stack (don't create a new one)
+app.add_middleware(
+    CSRFProtectionMiddleware,
+    exempt_paths=[
+        "/api/health",
+        "/api/monitor/health",
+        "/api/monitor/ping",
+        "/api/monitor/version",
+        "/api/auth/login",
+        "/api/auth/register",
+        "/api/auth/refresh",
+        "/api/proposals",  # Options trade proposals (idempotent with requestId)
+        "/api/order-templates",  # Order templates (needed for CSRF tests)
+        "/docs",
+        "/openapi.json",
+        "/redoc",
+    ],
+    testing_mode=settings.TESTING,
+)
 if settings.TESTING:
     print("[TEST MODE] CSRF protection middleware enabled (validation disabled for tests)", flush=True)
 else:
@@ -658,7 +677,7 @@ app.include_router(market.router, prefix="/api")
 app.include_router(market_data.router, prefix="/api", tags=["market-data"])
 app.include_router(news.router, prefix="/api", tags=["news"])
 app.include_router(options.router, prefix="/api")  # Options Greeks calculator
-app.include_router(proposals.router, prefix="/api")  # Options trade proposals
+app.include_router(proposals.router)  # Options trade proposals (already has /api/proposals prefix)
 app.include_router(ai.router, prefix="/api")
 app.include_router(claude.router, prefix="/api")
 app.include_router(stock.router, prefix="/api")

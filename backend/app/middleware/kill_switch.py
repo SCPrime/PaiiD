@@ -8,7 +8,8 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from ..core.kill_switch import is_killed
+# Import the module, not the function, to support monkeypatching in tests
+from ..core import kill_switch
 
 
 class KillSwitchMiddleware(BaseHTTPMiddleware):
@@ -17,7 +18,8 @@ class KillSwitchMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
-            if is_killed():
+            # Call is_killed() via module to support monkeypatching
+            if kill_switch.is_killed():
                 return JSONResponse(
                     status_code=423,
                     content={

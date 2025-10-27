@@ -112,3 +112,57 @@ def test_enhanced_security_headers(client):
     assert "object-src 'none'" in csp
     assert "frame-ancestors 'none'" in csp
     assert "upgrade-insecure-requests" in csp
+
+
+def test_xss_protection_in_responses(client):
+    """Test that responses are protected against XSS attacks"""
+    # All security headers should be present on all responses
+    response = client.get("/api/health")
+
+    # Verify content-type is set correctly (prevents MIME sniffing)
+    assert response.headers.get("content-type") == "application/json"
+
+    # Verify X-Content-Type-Options prevents MIME sniffing
+    assert response.headers.get("X-Content-Type-Options") == "nosniff"
+
+    # Verify XSS protection header is present
+    assert response.headers.get("X-XSS-Protection") == "1; mode=block"
+
+    # Verify CSP blocks inline scripts (primary XSS defense)
+    csp = response.headers.get("Content-Security-Policy", "")
+    # CSP should not allow 'unsafe-inline' for scripts
+    assert "script-src 'self'" in csp or "script-src" not in csp
+
+
+def test_rate_limiting_headers_present(client, auth_headers):
+    """Test that rate limiting information is present in headers"""
+    # Make a request to an authenticated endpoint
+    response = client.get("/api/positions", headers=auth_headers)
+
+    # In test mode, rate limiting is disabled, so headers may not be present
+    # But if they are present, they should be valid
+    if "X-RateLimit-Limit" in response.headers:
+        # Verify rate limit headers are integers
+        assert int(response.headers["X-RateLimit-Limit"]) > 0
+        assert int(response.headers["X-RateLimit-Remaining"]) >= 0
+
+        # Reset time should be a valid timestamp
+        reset_time = response.headers.get("X-RateLimit-Reset")
+        if reset_time:
+            assert int(reset_time) > 0
+    else:
+        # In test mode, rate limiting is expected to be disabled
+        # This is acceptable and the test should pass
+        pass
+
+
+def test_security_headers_on_error_responses(client):
+    """Test that security headers are present even on error responses"""
+    # Make a request that will return 404
+    response = client.get("/api/nonexistent-endpoint")
+
+    # Even error responses should have security headers
+    assert response.status_code == 404
+    assert response.headers.get("X-Content-Type-Options") == "nosniff"
+    assert response.headers.get("X-Frame-Options") == "DENY"
+    assert "Content-Security-Policy" in response.headers

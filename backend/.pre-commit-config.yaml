@@ -109,6 +109,24 @@ repos:
         name: Check for deprecated .warn() on loggers
         files: ^backend/.*\.py$
 
+  # Secrets detection (security critical)
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: Detect hardcoded secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: |
+          (?x)^(
+            .*\.lock$|
+            package-lock\.json$|
+            .*\.min\.js$|
+            backend/tests/.*|
+            backend/alembic/versions/.*|
+            frontend/node_modules/.*|
+            .*\.md$
+          )
+
 # ====================================
 # OPTIONAL: Contract Tests Hook
 # ====================================
