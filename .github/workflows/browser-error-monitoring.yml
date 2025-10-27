@@ -1,0 +1,387 @@
+name: 🔍 Browser Console Error Monitoring
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/browser-error-monitoring.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - local
+      headless:
+        description: 'Run browser in headless mode'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  PRODUCTION_URL: 'https://paiid-frontend.onrender.com'
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  browser-console-monitoring:
+    name: 🖥️ Browser Console Log Capture
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📚 Install Frontend Dependencies
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install chromium
+          npx playwright install-deps
+
+      - name: 🏗️ Build Frontend (Local Test)
+        if: github.event.inputs.environment == 'local' || github.event_name == 'pull_request'
+        working-directory: frontend
+        run: |
+          npm run build
+          npm run start &
+          echo "LOCAL_SERVER_PID=$!" >> $GITHUB_ENV
+          # Wait for server to start
+          timeout 60 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
+          echo "✅ Local server started"
+
+      - name: 🔍 Run Browser Console Monitor
+        id: console-monitor
+        env:
+          TARGET_URL: ${{ github.event.inputs.environment == 'production' && env.PRODUCTION_URL || 'http://localhost:3000' }}
+          HEADLESS: ${{ github.event.inputs.headless || 'true' }}
+        run: |
+          # Create monitoring script
+          cat > monitor_browser.py << 'EOF'
+          import asyncio
+          import json
+          import os
+          import sys
+          from datetime import datetime
+          from playwright.async_api import async_playwright, ConsoleMessage, Error as PlaywrightError
+
+          # Console log capture
+          console_logs = []
+          errors = []
+          warnings = []
+          network_failures = []
+
+          def categorize_log(msg: ConsoleMessage):
+              """Categorize console messages"""
+              log_type = msg.type
+              text = msg.text
+              location = f"{msg.location.get('url', 'unknown')}:{msg.location.get('lineNumber', '?')}"
+
+              log_entry = {
+                  "type": log_type,
+                  "text": text,
+                  "location": location,
+                  "timestamp": datetime.now().isoformat()
+              }
+
+              console_logs.append(log_entry)
+
+              if log_type == "error":
+                  errors.append(log_entry)
+                  print(f"❌ ERROR: {text[:200]}", file=sys.stderr)
+              elif log_type == "warning":
+                  warnings.append(log_entry)
+                  print(f"⚠️  WARNING: {text[:200]}")
+              else:
+                  print(f"📝 {log_type.upper()}: {text[:100]}")
+
+          async def monitor_page(url: str, headless: bool = True):
+              """Monitor page for console errors and warnings"""
+              async with async_playwright() as p:
+                  browser = await p.chromium.launch(headless=headless)
+                  context = await browser.new_context(
+                      viewport={'width': 1920, 'height': 1080},
+                      user_agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+                  )
+                  page = await context.new_page()
+
+                  # Attach console listener
+                  page.on("console", categorize_log)
+
+                  # Attach error listener
+                  page.on("pageerror", lambda err: errors.append({
+                      "type": "pageerror",
+                      "text": str(err),
+                      "timestamp": datetime.now().isoformat()
+                  }))
+
+                  # Attach network failure listener
+                  page.on("requestfailed", lambda request: network_failures.append({
+                      "url": request.url,
+                      "method": request.method,
+                      "failure": request.failure,
+                      "timestamp": datetime.now().isoformat()
+                  }))
+
+                  print(f"🌐 Navigating to {url}...")
+                  try:
+                      # Navigate and wait for network idle
+                      await page.goto(url, wait_until="networkidle", timeout=60000)
+                      print("✅ Page loaded successfully")
+
+                      # Wait for radial menu to render (key component)
+                      await page.wait_for_selector('svg', timeout=10000)
+                      print("✅ Radial menu SVG detected")
+
+                      # Wait for additional interactions
+                      await asyncio.sleep(5)
+
+                      # Try clicking the settings button to trigger workflows
+                      try:
+                          settings_btn = page.locator('text=Settings').first
+                          if await settings_btn.is_visible():
+                              await settings_btn.click()
+                              print("✅ Clicked Settings workflow")
+                              await asyncio.sleep(2)
+                      except Exception as e:
+                          print(f"ℹ️  Settings click skipped: {e}")
+
+                  except PlaywrightError as e:
+                      print(f"❌ Page load failed: {e}", file=sys.stderr)
+                      errors.append({
+                          "type": "page_load_error",
+                          "text": str(e),
+                          "timestamp": datetime.now().isoformat()
+                      })
+
+                  finally:
+                      await browser.close()
+
+          async def main():
+              url = os.getenv('TARGET_URL', 'http://localhost:3000')
+              headless = os.getenv('HEADLESS', 'true').lower() == 'true'
+
+              print(f"🔍 Starting browser console monitoring...")
+              print(f"   URL: {url}")
+              print(f"   Headless: {headless}")
+              print("")
+
+              await monitor_page(url, headless)
+
+              # Generate report
+              print("\n" + "="*80)
+              print("📊 MONITORING REPORT")
+              print("="*80 + "\n")
+
+              print(f"📝 Total console logs: {len(console_logs)}")
+              print(f"❌ Errors: {len(errors)}")
+              print(f"⚠️  Warnings: {len(warnings)}")
+              print(f"🌐 Network failures: {len(network_failures)}\n")
+
+              # Critical error detection
+              critical_errors = []
+              for error in errors:
+                  if any(keyword in error['text'].lower() for keyword in [
+                      'referenceerror', 'typeerror', 'syntaxerror',
+                      'undefined', 'is not defined', 'cannot read'
+                  ]):
+                      critical_errors.append(error)
+
+              if critical_errors:
+                  print("🚨 CRITICAL ERRORS DETECTED:\n")
+                  for err in critical_errors:
+                      print(f"   ❌ {err['text'][:300]}")
+                      print(f"      Location: {err.get('location', 'unknown')}")
+                      print(f"      Time: {err['timestamp']}\n")
+
+              # Save detailed report
+              report = {
+                  "summary": {
+                      "total_logs": len(console_logs),
+                      "errors": len(errors),
+                      "warnings": len(warnings),
+                      "network_failures": len(network_failures),
+                      "critical_errors": len(critical_errors)
+                  },
+                  "errors": errors,
+                  "warnings": warnings,
+                  "network_failures": network_failures,
+                  "all_logs": console_logs
+              }
+
+              with open('browser-console-report.json', 'w') as f:
+                  json.dump(report, f, indent=2)
+
+              print("✅ Report saved to browser-console-report.json\n")
+
+              # Exit with error if critical issues found
+              if critical_errors or len(errors) > 10:
+                  print("🚨 FAILURE: Critical browser errors detected!")
+                  sys.exit(1)
+              elif errors:
+                  print("⚠️  WARNING: Some errors detected but not critical")
+                  sys.exit(0)
+              else:
+                  print("✅ SUCCESS: No critical browser errors detected")
+                  sys.exit(0)
+
+          if __name__ == "__main__":
+              asyncio.run(main())
+          EOF
+
+          # Install Playwright
+          pip install playwright
+
+          # Run monitoring script
+          python monitor_browser.py || echo "MONITOR_FAILED=true" >> $GITHUB_ENV
+
+      - name: 📤 Upload Console Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-console-report
+          path: browser-console-report.json
+          retention-days: 30
+
+      - name: 🔍 Analyze Report for Known Errors
+        if: always()
+        run: |
+          echo "## 🔍 Browser Console Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f browser-console-report.json ]; then
+            TOTAL_ERRORS=$(jq '.summary.errors' browser-console-report.json)
+            CRITICAL_ERRORS=$(jq '.summary.critical_errors' browser-console-report.json)
+            WARNINGS=$(jq '.summary.warnings' browser-console-report.json)
+
+            echo "### 📊 Summary" >> $GITHUB_STEP_SUMMARY
+            echo "- **Total Errors**: $TOTAL_ERRORS" >> $GITHUB_STEP_SUMMARY
+            echo "- **Critical Errors**: $CRITICAL_ERRORS" >> $GITHUB_STEP_SUMMARY
+            echo "- **Warnings**: $WARNINGS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Show first 5 errors
+            if [ "$TOTAL_ERRORS" -gt 0 ]; then
+              echo "### ❌ First 5 Errors:" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              jq -r '.errors[:5] | .[] | "[\(.timestamp)] \(.text[:200])"' browser-console-report.json >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            # Check for specific known errors
+            echo "### 🔎 Known Error Detection:" >> $GITHUB_STEP_SUMMARY
+
+            # Check for forceFieldConfidence error (from MOD SQUAD report)
+            if jq -e '.errors[] | select(.text | contains("forceFieldConfidence"))' browser-console-report.json > /dev/null; then
+              echo "- ❌ **forceFieldConfidence undefined error DETECTED**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ✅ forceFieldConfidence error NOT detected" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            # Check for 403 CSRF errors
+            if jq -e '.network_failures[] | select(.url | contains("telemetry") or contains("claude"))' browser-console-report.json > /dev/null; then
+              echo "- ⚠️  **CSRF 403 errors detected (telemetry/claude)**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ✅ CSRF errors NOT detected" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            # Check for SSE connection failures
+            if jq -e '.errors[] | select(.text | contains("EventSource") or contains("stream"))' browser-console-report.json > /dev/null; then
+              echo "- ⚠️  **SSE connection errors detected**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ✅ SSE connection errors NOT detected" >> $GITHUB_STEP_SUMMARY
+            fi
+
+          else
+            echo "⚠️ Report file not found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 💾 Archive Console Logs
+        if: always()
+        run: |
+          mkdir -p console-logs-archive
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          cp browser-console-report.json "console-logs-archive/report_${TIMESTAMP}.json" || true
+
+          # Keep only last 10 reports
+          ls -t console-logs-archive/*.json | tail -n +11 | xargs -r rm
+
+      - name: 📝 Create Issue on Critical Errors
+        if: failure() && github.event_name == 'push'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('browser-console-report.json', 'utf8'));
+
+            const errors = report.errors.slice(0, 10).map(e =>
+              `- \`${e.text.substring(0, 200)}\` (${e.location})`
+            ).join('\n');
+
+            const issueBody = `## 🚨 Critical Browser Errors Detected
+
+            **Commit**: ${context.sha}
+            **Branch**: ${context.ref}
+            **Workflow**: ${context.workflow}
+            **Run**: ${context.runNumber}
+
+            ### 📊 Summary
+            - Total Errors: ${report.summary.errors}
+            - Critical Errors: ${report.summary.critical_errors}
+            - Warnings: ${report.summary.warnings}
+            - Network Failures: ${report.summary.network_failures}
+
+            ### ❌ First 10 Errors:
+            ${errors}
+
+            ### 🔗 Links
+            - [Full Report Artifact](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            - [Commit](${context.payload.repository.html_url}/commit/${context.sha})
+
+            **Action Required**: Please review and fix these errors before next deployment.
+
+            cc: @${context.actor}
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Browser Console Errors Detected - ${new Date().toISOString().split('T')[0]}`,
+              body: issueBody,
+              labels: ['bug', 'critical', 'automated', 'browser-errors']
+            });
+
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          if [ -n "$LOCAL_SERVER_PID" ]; then
+            kill $LOCAL_SERVER_PID || true
+            echo "✅ Stopped local server"
+          fi
