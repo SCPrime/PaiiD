@@ -82,7 +82,7 @@ export default function PortfolioOptimizer() {
       case "moderate":
         return theme.colors.warning;
       case "high":
-        return theme.colors.error;
+        return theme.colors.danger;
       default:
         return theme.colors.text;
     }
@@ -93,7 +93,7 @@ export default function PortfolioOptimizer() {
       case "buy":
         return theme.colors.success;
       case "sell":
-        return theme.colors.error;
+        return theme.colors.danger;
       case "hold":
         return theme.colors.textMuted;
       default:
@@ -106,7 +106,7 @@ export default function PortfolioOptimizer() {
       case "buy":
         return <TrendingUp size={18} color={theme.colors.success} />;
       case "sell":
-        return <AlertTriangle size={18} color={theme.colors.error} />;
+        return <AlertTriangle size={18} color={theme.colors.danger} />;
       case "hold":
         return <Shield size={18} color={theme.colors.textMuted} />;
       default:
@@ -603,7 +603,7 @@ export default function PortfolioOptimizer() {
                           color:
                             suggestion.shares_delta >= 0
                               ? theme.colors.success
-                              : theme.colors.error,
+                              : theme.colors.danger,
                         }}
                       >
                         {suggestion.shares_delta >= 0 ? "+" : ""}

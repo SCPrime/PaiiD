@@ -68,6 +68,14 @@ const NewsReview: React.FC = () => {
     };
     ai_analysis?: {
       sentiment: string;
+      confidence?: number;
+      portfolio_impact?: string;
+      urgency?: string;
+      tickers_mentioned?: string[];
+      affected_positions?: string[];
+      summary?: string;
+      key_points?: string[];
+      trading_implications?: string;
     };
   } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -292,7 +300,7 @@ const NewsReview: React.FC = () => {
   };
 
   // AI Sentiment Helper Functions
-  const getAiSentimentColor = (sentiment: string) => {
+  const getAiSentimentColor = (sentiment: string | undefined) => {
     switch (sentiment) {
       case "bullish":
         return "#10B981";
@@ -305,7 +313,7 @@ const NewsReview: React.FC = () => {
     }
   };
 
-  const getAiSentimentEmoji = (sentiment: string) => {
+  const getAiSentimentEmoji = (sentiment: string | undefined) => {
     switch (sentiment) {
       case "bullish":
         return "📈";
@@ -1031,7 +1039,7 @@ const NewsReview: React.FC = () => {
           </div>
 
           {/* Tickers Mentioned */}
-          {aiAnalysis.ai_analysis?.tickers_mentioned?.length > 0 && (
+          {aiAnalysis.ai_analysis?.tickers_mentioned && aiAnalysis.ai_analysis.tickers_mentioned.length > 0 && (
             <div
               style={{
                 padding: "16px",
@@ -1052,7 +1060,7 @@ const NewsReview: React.FC = () => {
                 🏷️ Tickers Mentioned
               </div>
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                {aiAnalysis.ai_analysis.tickers_mentioned.map((ticker: string) => (
+                {aiAnalysis.ai_analysis?.tickers_mentioned?.map((ticker: string) => (
                   <span
                     key={ticker}
                     style={{
@@ -1073,7 +1081,7 @@ const NewsReview: React.FC = () => {
           )}
 
           {/* Affected Positions */}
-          {aiAnalysis.ai_analysis?.affected_positions?.length > 0 && (
+          {aiAnalysis.ai_analysis?.affected_positions && aiAnalysis.ai_analysis.affected_positions.length > 0 && (
             <div
               style={{
                 padding: "16px",
@@ -1094,7 +1102,7 @@ const NewsReview: React.FC = () => {
                 ⚠️ Your Affected Positions
               </div>
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                {aiAnalysis.ai_analysis.affected_positions.map((ticker: string) => (
+                {aiAnalysis.ai_analysis?.affected_positions?.map((ticker: string) => (
                   <span
                     key={ticker}
                     style={{

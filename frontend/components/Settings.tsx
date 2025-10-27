@@ -45,8 +45,6 @@ import SchedulerSettings from "./SchedulerSettings";
 import SentimentDashboard from "./SentimentDashboard";
 import SubscriptionManager from "./SubscriptionManager";
 import TradingJournal from "./TradingJournal";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _MLTrainingDashboard = MLTrainingDashboard; // Reserved for future ML training feature
 
 interface User {
   id: string;
@@ -99,6 +97,43 @@ interface SettingsProps {
   onClose: () => void;
 }
 
+interface UserManagementTabProps {
+  users: User[];
+  isOwner: boolean;
+  currentUserId: string;
+  onToggleStatus: (userId: string) => void;
+}
+
+interface ThemeCustomizationTabProps {
+  themeCustom: ThemeCustomization;
+  onUpdate: (key: keyof ThemeCustomization, value: string) => void;
+}
+
+interface PermissionsTabProps {
+  users: User[];
+  isOwner: boolean;
+  onUpdatePermission: (
+    userId: string,
+    permission: keyof User["permissions"],
+    value: boolean
+  ) => void;
+}
+
+interface TelemetryTabProps {
+  enabled: boolean;
+  data: TelemetryData[];
+  users: User[];
+  onToggle: () => void;
+  onExport: () => void;
+}
+
+interface TradingControlTabProps {
+  users: User[];
+  isOwner: boolean;
+  currentUserId: string;
+  onToggleTradingMode: (userId: string) => void;
+}
+
 export default function Settings({ isOpen, onClose }: SettingsProps) {
   const isMobile = useIsMobile();
   const currentUserData = getCurrentUser();
@@ -121,6 +156,16 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     | "risk"
     | "automation"
     | "approvals"
+    | "subscription"
+    | "ml-training"
+    | "pattern-backtest"
+    | "ml-models"
+    | "ml-analytics"
+    | "portfolio-optimizer"
+    | "sentiment"
+    | "ai-chat"
+    | "performance"
+    | "github-monitor"
   >("personal");
 
   const [settings, setSettings] = useState<SettingsData>({
@@ -625,7 +670,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as string)}
+                onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={`
                   px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap
                   ${
@@ -811,7 +856,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                             : "0 4px 12px rgba(0, 0, 0, 0.1)",
                       }}
                     >
-                      {theme === "dark" ? (
+                      {currentTheme === "dark" ? (
                         <>
                           <span className="text-slate-300">🌙</span>
                           <span className="text-sm font-medium text-slate-300">Dark</span>
@@ -829,9 +874,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   <div
                     className="p-4 rounded-lg border"
                     style={{
-                      background: theme === "dark" ? "#0f172a" : "#ffffff",
+                      background: currentTheme === "dark" ? "#0f172a" : "#ffffff",
                       borderColor:
-                        theme === "dark" ? "rgba(71, 85, 105, 0.3)" : "rgba(203, 213, 225, 0.5)",
+                        currentTheme === "dark" ? "rgba(71, 85, 105, 0.3)" : "rgba(203, 213, 225, 0.5)",
                     }}
                   >
                     <div className="flex items-center gap-3 mb-2">
@@ -844,13 +889,13 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       <div>
                         <div
                           className="text-sm font-medium"
-                          style={{ color: theme === "dark" ? "#ffffff" : "#0f172a" }}
+                          style={{ color: currentTheme === "dark" ? "#ffffff" : "#0f172a" }}
                         >
                           Theme Preview
                         </div>
                         <div
                           className="text-xs"
-                          style={{ color: theme === "dark" ? "#94a3b8" : "#64748b" }}
+                          style={{ color: currentTheme === "dark" ? "#94a3b8" : "#64748b" }}
                         >
                           Your interface will look like this
                         </div>
@@ -860,8 +905,8 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       className="text-xs p-2 rounded"
                       style={{
                         background:
-                          theme === "dark" ? "rgba(30, 41, 59, 0.6)" : "rgba(248, 250, 252, 0.8)",
-                        color: theme === "dark" ? "#cbd5e1" : "#475569",
+                          currentTheme === "dark" ? "rgba(30, 41, 59, 0.6)" : "rgba(248, 250, 252, 0.8)",
+                        color: currentTheme === "dark" ? "#cbd5e1" : "#475569",
                       }}
                     >
                       ✓ Saved to localStorage
@@ -1212,7 +1257,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
           )}
           {activeTab === "sentiment" && (
             <div className="min-h-[500px]">
-              <SentimentDashboard />
+              <SentimentDashboard userId={currentUser.id} />
             </div>
           )}
           {activeTab === "ai-chat" && (
@@ -1355,7 +1400,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   );
 }
 
-function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: unknown) {
+function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: UserManagementTabProps) {
   const isMobile = useIsMobile();
 
   return (
@@ -1438,7 +1483,7 @@ function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: un
   );
 }
 
-function ThemeCustomizationTab({ themeCustom, onUpdate }: unknown) {
+function ThemeCustomizationTab({ themeCustom, onUpdate }: ThemeCustomizationTabProps) {
   const isMobile = useIsMobile();
 
   return (
@@ -1461,13 +1506,13 @@ function ThemeCustomizationTab({ themeCustom, onUpdate }: unknown) {
               <input
                 type="color"
                 value={value as string}
-                onChange={(e) => onUpdate(key, e.target.value)}
+                onChange={(e) => onUpdate(key as keyof ThemeCustomization, e.target.value)}
                 className="w-16 h-10 rounded border border-slate-700/50 cursor-pointer"
               />
               <input
                 type="text"
                 value={value as string}
-                onChange={(e) => onUpdate(key, e.target.value)}
+                onChange={(e) => onUpdate(key as keyof ThemeCustomization, e.target.value)}
                 className="flex-1 px-3 py-2 bg-slate-900/60 border border-slate-700/50 rounded text-white"
               />
             </div>
@@ -1485,7 +1530,7 @@ function ThemeCustomizationTab({ themeCustom, onUpdate }: unknown) {
   );
 }
 
-function PermissionsTab({ users, isOwner, onUpdatePermission }: unknown) {
+function PermissionsTab({ users, isOwner, onUpdatePermission }: PermissionsTabProps) {
   const isMobile = useIsMobile();
 
   return (
@@ -1515,7 +1560,7 @@ function PermissionsTab({ users, isOwner, onUpdatePermission }: unknown) {
                   type="checkbox"
                   checked={enabled as boolean}
                   onChange={(e) =>
-                    isOwner && onUpdatePermission(user.id, permission, e.target.checked)
+                    isOwner && onUpdatePermission(user.id, permission as keyof User["permissions"], e.target.checked)
                   }
                   disabled={!isOwner}
                   className="w-4 h-4"
@@ -1532,7 +1577,7 @@ function PermissionsTab({ users, isOwner, onUpdatePermission }: unknown) {
   );
 }
 
-function TelemetryTab({ enabled, data, users, onToggle, onExport }: unknown) {
+function TelemetryTab({ enabled, data, users, onToggle, onExport }: TelemetryTabProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -1604,7 +1649,7 @@ function TelemetryTab({ enabled, data, users, onToggle, onExport }: unknown) {
   );
 }
 
-function TradingControlTab({ users, isOwner, currentUserId, onToggleTradingMode }: unknown) {
+function TradingControlTab({ users, isOwner, currentUserId, onToggleTradingMode }: TradingControlTabProps) {
   return (
     <div className="space-y-6">
       {/* Kill Switch Section */}

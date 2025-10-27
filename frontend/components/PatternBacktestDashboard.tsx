@@ -71,13 +71,13 @@ export default function PatternBacktestDashboard() {
   const getWinRateColor = (winRate: number): string => {
     if (winRate >= 70) return theme.colors.success;
     if (winRate >= 50) return theme.colors.warning;
-    return theme.colors.error;
+    return theme.colors.danger;
   };
 
   const getROIColor = (roi: number): string => {
     if (roi >= 5) return theme.colors.success;
     if (roi >= 0) return theme.colors.warning;
-    return theme.colors.error;
+    return theme.colors.danger;
   };
 
   const formatPatternName = (pattern: string): string => {
@@ -578,7 +578,7 @@ export default function PatternBacktestDashboard() {
                               {pattern.successful_trades}
                             </span>
                             {" / "}
-                            <span style={{ color: theme.colors.error }}>
+                            <span style={{ color: theme.colors.danger }}>
                               {pattern.failed_trades}
                             </span>
                           </td>
@@ -629,7 +629,7 @@ export default function PatternBacktestDashboard() {
                             <div style={{ color: theme.colors.success }}>
                               +{pattern.best_roi.toFixed(1)}%
                             </div>
-                            <div style={{ color: theme.colors.error }}>
+                            <div style={{ color: theme.colors.danger }}>
                               {pattern.worst_roi.toFixed(1)}%
                             </div>
                           </td>

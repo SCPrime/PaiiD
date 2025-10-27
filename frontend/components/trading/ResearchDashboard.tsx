@@ -22,6 +22,7 @@ import {
   IChartApi,
   ISeriesApi,
   LineData,
+  Time,
 } from "lightweight-charts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { logger } from "../../lib/logger";
@@ -74,6 +75,36 @@ interface HistoricalResponse {
   timeframe: string;
   bars: BarData[];
   count: number;
+}
+
+interface MACDData {
+  macd: LineData<Time>[];
+  signal: LineData<Time>[];
+  histogram: LineData<Time>[];
+}
+
+interface BollingerBandsData {
+  upper: LineData<Time>[];
+  middle: LineData<Time>[];
+  lower: LineData<Time>[];
+}
+
+interface IchimokuData {
+  tenkan: LineData<Time>[];
+  kijun: LineData<Time>[];
+  senkouA: LineData<Time>[];
+  senkouB: LineData<Time>[];
+  chikou: LineData<Time>[];
+}
+
+interface CalculatedIndicators {
+  sma20?: LineData<Time>[];
+  sma50?: LineData<Time>[];
+  sma200?: LineData<Time>[];
+  rsi?: LineData<Time>[];
+  macd?: MACDData;
+  bb?: BollingerBandsData;
+  ichimoku?: IchimokuData;
 }
 
 export default function ResearchDashboard() {
@@ -370,37 +401,62 @@ Proposal system coming in INCREMENT 9`);
     }
   };
 
+  // Helper to convert LinePoint[] to LineData<Time>[]
+  const convertToLineData = useCallback((points: { time: string; value: number }[]): LineData<Time>[] => {
+    return points.map(point => ({
+      time: (new Date(point.time).getTime() / 1000) as Time,
+      value: point.value
+    }));
+  }, []);
+
   // Memoized indicator calculations
-  const calculatedIndicators = useMemo(() => {
+  const calculatedIndicators = useMemo<CalculatedIndicators>(() => {
     if (historicalData.length === 0) return {};
 
     const enabled = indicators.filter((ind) => ind.enabled).map((ind) => ind.id);
-    const results: Record<string, LineData[] | HistogramData[]> = {};
+    const results: CalculatedIndicators = {};
 
     if (enabled.includes("sma20")) {
-      results.sma20 = calculateSMA(historicalData, 20);
+      results.sma20 = convertToLineData(calculateSMA(historicalData, 20));
     }
     if (enabled.includes("sma50")) {
-      results.sma50 = calculateSMA(historicalData, 50);
+      results.sma50 = convertToLineData(calculateSMA(historicalData, 50));
     }
     if (enabled.includes("sma200")) {
-      results.sma200 = calculateSMA(historicalData, 200);
+      results.sma200 = convertToLineData(calculateSMA(historicalData, 200));
     }
     if (enabled.includes("rsi")) {
-      results.rsi = calculateRSI(historicalData, 14);
+      results.rsi = convertToLineData(calculateRSI(historicalData, 14));
     }
     if (enabled.includes("macd")) {
-      results.macd = calculateMACD(historicalData);
+      const macdData = calculateMACD(historicalData);
+      results.macd = {
+        macd: convertToLineData(macdData.macd),
+        signal: convertToLineData(macdData.signal),
+        histogram: convertToLineData(macdData.histogram)
+      };
     }
     if (enabled.includes("bb")) {
-      results.bb = calculateBollingerBands(historicalData);
+      const bbData = calculateBollingerBands(historicalData);
+      results.bb = {
+        upper: convertToLineData(bbData.upper),
+        middle: convertToLineData(bbData.middle),
+        lower: convertToLineData(bbData.lower)
+      };
     }
     if (enabled.includes("ichimoku")) {
-      results.ichimoku = calculateIchimoku(historicalData);
+      const ichimokuData = calculateIchimoku(historicalData);
+      results.ichimoku = {
+        tenkan: convertToLineData(ichimokuData.tenkan),
+        kijun: convertToLineData(ichimokuData.kijun),
+        senkouA: convertToLineData(ichimokuData.senkouA),
+        senkouB: convertToLineData(ichimokuData.senkouB),
+        chikou: convertToLineData(ichimokuData.chikou)
+      };
     }
 
     return results;
-  }, [historicalData, indicators]);
+  }, [historicalData, indicators, convertToLineData]);
 
   // Initialize charts
   useEffect(() => {
@@ -551,7 +607,7 @@ Proposal system coming in INCREMENT 9`);
     indicatorSeriesRef.current.clear();
 
     // Create new series based on chart type
-    let series: ISeriesApi<"Candlestick" | "Line" | "Area">;
+    let series: ISeriesApi<"Candlestick" | "Line" | "Area"> | null = null;
 
     if (chartType === "Candlestick") {
       series = priceChartRef.current.addCandlestickSeries({
@@ -563,8 +619,8 @@ Proposal system coming in INCREMENT 9`);
         wickDownColor: "#ef4444",
       });
 
-      const candlestickData: CandlestickData[] = historicalData.map((bar) => ({
-        time: (new Date(bar.time).getTime() / 1000) as number,
+      const candlestickData: CandlestickData<Time>[] = historicalData.map((bar) => ({
+        time: (new Date(bar.time).getTime() / 1000) as Time,
         open: bar.open,
         high: bar.high,
         low: bar.low,
@@ -578,8 +634,8 @@ Proposal system coming in INCREMENT 9`);
         lineWidth: 2,
       });
 
-      const lineData: LineData[] = historicalData.map((bar) => ({
-        time: (new Date(bar.time).getTime() / 1000) as number,
+      const lineData: LineData<Time>[] = historicalData.map((bar) => ({
+        time: (new Date(bar.time).getTime() / 1000) as Time,
         value: bar.close,
       }));
 
@@ -593,8 +649,8 @@ Proposal system coming in INCREMENT 9`);
         lineWidth: 2,
       });
 
-      const areaData: LineData[] = historicalData.map((bar) => ({
-        time: (new Date(bar.time).getTime() / 1000) as number,
+      const areaData: LineData<Time>[] = historicalData.map((bar) => ({
+        time: (new Date(bar.time).getTime() / 1000) as Time,
         value: bar.close,
       }));
 
@@ -625,13 +681,8 @@ Proposal system coming in INCREMENT 9`);
         color: "#00acc1",
         lineWidth: 2,
         title: "SMA 20",
-      });
-      series.setData(
-        calculatedIndicators.sma20.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      }) as ISeriesApi<"Line" | "Area" | "Histogram">;
+      series.setData(calculatedIndicators.sma20);
       indicatorSeriesRef.current.set("sma20", series);
     }
 
@@ -640,13 +691,8 @@ Proposal system coming in INCREMENT 9`);
         color: "#7e57c2",
         lineWidth: 2,
         title: "SMA 50",
-      });
-      series.setData(
-        calculatedIndicators.sma50.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      }) as ISeriesApi<"Line" | "Area" | "Histogram">;
+      series.setData(calculatedIndicators.sma50);
       indicatorSeriesRef.current.set("sma50", series);
     }
 
@@ -655,13 +701,8 @@ Proposal system coming in INCREMENT 9`);
         color: "#ff8800",
         lineWidth: 2,
         title: "SMA 200",
-      });
-      series.setData(
-        calculatedIndicators.sma200.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      }) as ISeriesApi<"Line" | "Area" | "Histogram">;
+      series.setData(calculatedIndicators.sma200);
       indicatorSeriesRef.current.set("sma200", series);
     }
 
@@ -673,37 +714,22 @@ Proposal system coming in INCREMENT 9`);
         color: "#ef4444",
         lineWidth: 1,
         title: "BB Upper",
-      });
-      upperSeries.setData(
-        upper.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      }) as ISeriesApi<"Line" | "Area" | "Histogram">;
+      upperSeries.setData(upper);
 
       const middleSeries = priceChartRef.current.addLineSeries({
         color: "#a855f7",
         lineWidth: 2,
         title: "BB Middle",
-      });
-      middleSeries.setData(
-        middle.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      }) as ISeriesApi<"Line" | "Area" | "Histogram">;
+      middleSeries.setData(middle);
 
       const lowerSeries = priceChartRef.current.addLineSeries({
         color: "#ef4444",
         lineWidth: 1,
         title: "BB Lower",
-      });
-      lowerSeries.setData(
-        lower.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      }) as ISeriesApi<"Line" | "Area" | "Histogram">;
+      lowerSeries.setData(lower);
 
       indicatorSeriesRef.current.set("bb_upper", upperSeries);
       indicatorSeriesRef.current.set("bb_middle", middleSeries);
@@ -718,61 +744,36 @@ Proposal system coming in INCREMENT 9`);
         color: "#ef4444",
         lineWidth: 1,
         title: "Tenkan",
-      });
-      tenkanSeries.setData(
-        tenkan.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      }) as ISeriesApi<"Line" | "Area" | "Histogram">;
+      tenkanSeries.setData(tenkan);
 
       const kijunSeries = priceChartRef.current.addLineSeries({
         color: "#3b82f6",
         lineWidth: 1,
         title: "Kijun",
-      });
-      kijunSeries.setData(
-        kijun.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      }) as ISeriesApi<"Line" | "Area" | "Histogram">;
+      kijunSeries.setData(kijun);
 
       const senkouASeries = priceChartRef.current.addLineSeries({
         color: "#10b981",
         lineWidth: 1,
         title: "Senkou A",
-      });
-      senkouASeries.setData(
-        senkouA.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      }) as ISeriesApi<"Line" | "Area" | "Histogram">;
+      senkouASeries.setData(senkouA);
 
       const senkouBSeries = priceChartRef.current.addLineSeries({
         color: "#f59e0b",
         lineWidth: 1,
         title: "Senkou B",
-      });
-      senkouBSeries.setData(
-        senkouB.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      }) as ISeriesApi<"Line" | "Area" | "Histogram">;
+      senkouBSeries.setData(senkouB);
 
       const chikouSeries = priceChartRef.current.addLineSeries({
         color: "#8b5cf6",
         lineWidth: 1,
         title: "Chikou",
-      });
-      chikouSeries.setData(
-        chikou.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      }) as ISeriesApi<"Line" | "Area" | "Histogram">;
+      chikouSeries.setData(chikou);
 
       indicatorSeriesRef.current.set("ichimoku_tenkan", tenkanSeries);
       indicatorSeriesRef.current.set("ichimoku_kijun", kijunSeries);
@@ -822,12 +823,7 @@ Proposal system coming in INCREMENT 9`);
         lineWidth: 2,
         title: "MACD",
       });
-      macdSeries.setData(
-        macd.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      macdSeries.setData(macd);
 
       // Signal line
       const signalSeries = newChart.addLineSeries({
@@ -835,12 +831,7 @@ Proposal system coming in INCREMENT 9`);
         lineWidth: 2,
         title: "Signal",
       });
-      signalSeries.setData(
-        signal.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
-          value: point.value,
-        }))
-      );
+      signalSeries.setData(signal);
 
       // Histogram
       const histogramSeries = newChart.addHistogramSeries({
@@ -852,8 +843,8 @@ Proposal system coming in INCREMENT 9`);
         },
       });
       histogramSeries.setData(
-        histogram.map((point: unknown) => ({
-          time: (new Date(point.time).getTime() / 1000) as number,
+        histogram.map((point) => ({
+          time: point.time,
           value: point.value,
           color: point.value >= 0 ? "#10b981" : "#ef4444",
         }))

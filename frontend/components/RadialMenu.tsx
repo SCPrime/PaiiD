@@ -14,7 +14,7 @@
  * - utils/radialMenuHelpers.ts - Helper functions
  */
 
-export { default } from "./RadialMenu";
+export { default } from "./RadialMenu/index";
 export { workflows } from "./RadialMenu/workflows";
 export type { Workflow } from "./RadialMenu/workflows";
 export type { RadialMenuProps } from "./RadialMenu/RadialMenuComponent";
