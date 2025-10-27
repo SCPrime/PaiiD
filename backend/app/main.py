@@ -490,13 +490,17 @@ async def startup_event():
         async with monitor.phase("database_check", timeout=5.0):
             from sqlalchemy import text
 
-            from .db.session import engine
+            from .db.session import engine, init_db
 
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
             logger.info("[OK] Database connection verified")
+
+            # Initialize database tables (creates tables if they don't exist)
+            init_db()
+            logger.info("[OK] Database tables initialized")
     except Exception as e:
-        logger.error(f"[DB] Connection failed: {e}")
+        logger.error(f"[DB] Connection or initialization failed: {e}")
         raise
 
     # Initialize cache service

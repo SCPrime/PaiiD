@@ -14,13 +14,17 @@ from ..core.config import settings
 
 # Create engine based on configuration
 if settings.DATABASE_URL:
-    # Production: Use PostgreSQL
+    # Production: Use PostgreSQL with hardened connection pooling
     engine = create_engine(
         settings.DATABASE_URL,
+        pool_size=20,  # Increase from default 5 (base pool)
+        max_overflow=30,  # Increase from default 10 (overflow connections)
+        pool_recycle=3600,  # Recycle connections after 1 hour
+        pool_timeout=60,  # Increase timeout from 30s to 60s
         pool_pre_ping=True,  # Verify connections before using
         echo=False,  # Set to True for SQL debugging
     )
-    print("[OK] Database engine created: PostgreSQL", flush=True)
+    print("[OK] Database engine created: PostgreSQL (pool=20, overflow=30, total=50)", flush=True)
 else:
     # Development fallback: SQLite in memory
     engine = create_engine(

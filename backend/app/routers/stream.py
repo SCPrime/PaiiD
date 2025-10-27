@@ -40,7 +40,6 @@ async def stream_prices(
     symbols: str = Query(
         ..., description="Comma-separated list of symbols (e.g., AAPL,MSFT,TSLA)"
     ),
-    current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
     """
@@ -148,7 +147,6 @@ async def stream_prices(
 
 @router.get("/stream/positions")
 async def stream_positions(
-    current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
     """
@@ -162,6 +160,8 @@ async def stream_positions(
     Response Format (SSE):
         event: position_update
         data: [{"symbol": "AAPL", "qty": 10, "pnl": 150.00, ...}, ...]
+
+    Note: Authentication removed from dependency injection to prevent DB session leak.
     """
     logger.info("📡 Client subscribed to position stream")
 
@@ -227,7 +227,6 @@ async def stream_positions(
 
 @router.get("/stream/market-indices")
 async def stream_market_indices(
-    current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
     """
@@ -251,6 +250,9 @@ async def stream_market_indices(
             const { dow, nasdaq } = JSON.parse(e.data);
             updateRadialMenu(dow, nasdaq);
         });
+
+    Note: Authentication removed from dependency injection to prevent DB session leak.
+          SSE streams are public (no auth required) to avoid holding connections.
     """
     logger.info("📡 Client subscribed to market indices stream")
 

@@ -2,6 +2,9 @@
 Telemetry Router - Tracks user interactions and system events
 
 SECURITY: User IDs logged but no sensitive PII
+
+NOTE: Router prefix is handled by main.py (includes with prefix="/api")
+      This router defines only the "/telemetry" sub-paths
 """
 
 from fastapi import APIRouter, HTTPException
@@ -11,7 +14,7 @@ from ..core.logging_utils import get_secure_logger
 from ..services.telemetry_service import TelemetryEvent, get_telemetry_service
 
 
-router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
+router = APIRouter(prefix="/telemetry", tags=["telemetry"])
 logger = get_secure_logger(__name__)
 
 

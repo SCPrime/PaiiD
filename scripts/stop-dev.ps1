@@ -1,112 +1,64 @@
-# Stop Development Environment
-# Companion script to start-dev.ps1 - stops all managed processes
-# Version: 1.0.0
+# PaiiD Development Server Shutdown Script
+# Purpose: Gracefully stop backend + frontend dev servers
+# Usage: .\scripts\stop-dev.ps1
 
-param(
-    [switch]$Force = $false,
-    [switch]$Cleanup = $true
-)
+Write-Host "`n🛑 PaiiD Development Environment - Shutdown`n" -ForegroundColor Cyan
 
-# Import ProcessManager module
-$ProcessManagerPath = Join-Path $PSScriptRoot "ProcessManager.ps1"
-if (-not (Test-Path $ProcessManagerPath)) {
-    Write-Host "ERROR: ProcessManager.ps1 not found at $ProcessManagerPath" -ForegroundColor Red
-    exit 1
-}
+$backendPort = 8001
+$frontendPort = 3001
+$stoppedCount = 0
 
-Import-Module $ProcessManagerPath -Force
+# Function to kill process by port
+function Stop-ProcessByPort {
+    param(
+        [int]$Port,
+        [string]$ServiceName
+    )
 
-Write-Host "`n=== Stopping PaiiD Development Environment ===" -ForegroundColor Cyan
-Write-Host "Force Mode: $Force" -ForegroundColor Gray
-Write-Host "Cleanup Mode: $Cleanup" -ForegroundColor Gray
-Write-Host ""
+    Write-Host "🔍 Stopping $ServiceName on port $Port..." -ForegroundColor Yellow
 
-# Initialize process manager
-Initialize-ProcessManager
+    try {
+        # Find process using the port
+        $connection = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+        if ($connection) {
+            $processId = $connection.OwningProcess
+            $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
 
-# Stop all managed processes
-Write-Host "Stopping managed processes..." -ForegroundColor Yellow
-
-$stopped = 0
-$failed = 0
-
-# Common process names to stop
-$processNames = @("backend-dev", "frontend-dev", "backend-server", "frontend-server")
-
-foreach ($processName in $processNames) {
-    $pid = Get-RegisteredPid -Name $processName
-    
-    if ($null -ne $pid) {
-        Write-Host "Stopping $processName (PID: $pid)..." -ForegroundColor Gray
-        
-        $timeout = if ($Force) { 5 } else { 10 }
-        $result = Stop-ManagedProcess -Name $processName -Timeout $timeout
-        
-        if ($result) {
-            Write-Host "  $processName stopped successfully" -ForegroundColor Green
-            $stopped++
-        } else {
-            Write-Host "  Failed to stop $processName" -ForegroundColor Red
-            $failed++
-        }
-    } else {
-        Write-Host "  $processName not found (not running)" -ForegroundColor Yellow
-    }
-}
-
-# Clean up orphaned processes if requested
-if ($Cleanup) {
-    Write-Host "`nCleaning up orphaned processes..." -ForegroundColor Yellow
-    
-    # Clean up orphaned PID files
-    $cleaned = Clear-OrphanedPids
-    if ($cleaned -gt 0) {
-        Write-Host "  Cleaned up $cleaned orphaned PID file(s)" -ForegroundColor Green
-    }
-    
-    # Clean up ports
-    $ports = @(3000, 8001, 8002)
-    foreach ($port in $ports) {
-        if (Test-PortInUse -Port $port) {
-            Write-Host "  Cleaning up port $port..." -ForegroundColor Gray
-            $cleaned = Clear-Port -Port $port -MaxRetries 2
-            if ($cleaned) {
-                Write-Host "    Port $port cleared" -ForegroundColor Green
-            } else {
-                Write-Host "    Port $port cleanup failed" -ForegroundColor Red
+            if ($process) {
+                Write-Host "   Found PID $processId ($($process.ProcessName))" -ForegroundColor Gray
+                Stop-Process -Id $processId -Force -ErrorAction Stop
+                Write-Host "   ✅ Stopped $ServiceName (PID $processId)" -ForegroundColor Green
+                return $true
             }
         }
+        else {
+            Write-Host "   ✓ No process on port $Port" -ForegroundColor Gray
+            return $false
+        }
+    }
+    catch {
+        Write-Host "   ⚠️  Error stopping $ServiceName $_" -ForegroundColor Red
+        return $false
     }
 }
 
-# Run zombie cleanup if force mode
-if ($Force) {
-    Write-Host "`nRunning zombie cleanup..." -ForegroundColor Yellow
-    
-    $zombieKillerPath = Join-Path $PSScriptRoot "zombie-killer.ps1"
-    if (Test-Path $zombieKillerPath) {
-        try {
-            & $zombieKillerPath -SafeMode -Force
-            Write-Host "  Zombie cleanup completed" -ForegroundColor Green
-        }
-        catch {
-            Write-Host "  Zombie cleanup failed: $_" -ForegroundColor Red
-        }
-    } else {
-        Write-Host "  Zombie killer not found at $zombieKillerPath" -ForegroundColor Yellow
-    }
+# Stop backend
+if (Stop-ProcessByPort -Port $backendPort -ServiceName "Backend") {
+    $stoppedCount++
 }
 
-# Summary
-Write-Host "`n=== Stop Summary ===" -ForegroundColor Cyan
-Write-Host "Processes stopped: $stopped" -ForegroundColor Green
-Write-Host "Processes failed: $failed" -ForegroundColor $(if ($failed -gt 0) { "Red" } else { "Green" })
-
-if ($failed -gt 0) {
-    Write-Host "`nSome processes could not be stopped. Try running with -Force" -ForegroundColor Yellow
-    Write-Host "Or use: .\scripts\emergency-cleanup.ps1" -ForegroundColor Gray
-    exit 1
+# Stop frontend
+if (Stop-ProcessByPort -Port $frontendPort -ServiceName "Frontend") {
+    $stoppedCount++
 }
 
-Write-Host "`n✅ All development processes stopped successfully" -ForegroundColor Green
-exit 0
+# Wait for processes to terminate
+Start-Sleep -Milliseconds 500
+
+Write-Host "`n📊 Summary: Stopped $stoppedCount service(s)" -ForegroundColor Cyan
+
+# Optional: Run cleanup to kill any lingering processes
+Write-Host "`n🧹 Running cleanup to remove any zombie processes..." -ForegroundColor Yellow
+& "$PSScriptRoot\agent-cleanup.ps1" -Force
+
+Write-Host "`n✅ Development environment stopped.`n" -ForegroundColor Green
