@@ -696,7 +696,5 @@ app.include_router(ml.router, prefix="/api")  # Machine Learning (Phase 2)
 app.include_router(
     ml_sentiment.router, prefix="/api"
 )  # ML Sentiment & Signals (Phase 2 - Active) - Re-enabled with unified auth
-app.include_router(
-    monitoring.router, prefix="/api"
-)  # Monitoring & Health Checks (Phase 4)
+# monitoring.router removed - deprecated module deleted in MOD SQUAD Phase 3
 app.include_router(telemetry.router, prefix="/api")
