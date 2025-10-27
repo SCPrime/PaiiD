@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from typing import Any
 
@@ -62,7 +62,7 @@ class CircuitBreaker:
         else:
             self.failure_count += 1
 
-        self.last_failure_time = datetime.now()
+        self.last_failure_time = datetime.now(timezone.utc)
 
         if self.failure_count >= self.failure_threshold:
             self.state = "OPEN"
@@ -79,7 +79,7 @@ class CircuitBreaker:
         if self.state == "OPEN":
             # Check if cooldown period has elapsed
             if self.last_failure_time:
-                elapsed = (datetime.now() - self.last_failure_time).total_seconds()
+                elapsed = (datetime.now(timezone.utc) - self.last_failure_time).total_seconds()
                 if elapsed >= self.cooldown_seconds:
                     # Move to HALF_OPEN to test provider
                     self.state = "HALF_OPEN"
@@ -380,7 +380,7 @@ class NewsAggregator:
 
             try:
                 age_hours = (
-                    datetime.now()
+                    datetime.now(timezone.utc)
                     - datetime.fromisoformat(
                         article.published_at.replace("Z", "+00:00")
                     )

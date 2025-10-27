@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["symbol", "bid", "ask", "last", "volume", "timestamp"],
+  "properties": {
+    "symbol": {
+      "type": "string",
+      "pattern": "^[A-Z]{1,5}$"
+    },
+    "bid": {
+      "type": "number",
+      "minimum": 0
+    },
+    "ask": {
+      "type": "number",
+      "minimum": 0
+    },
+    "last": {
+      "type": "number",
+      "minimum": 0
+    },
+    "volume": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cached": {
+      "type": "boolean"
+    }
+  }
+}

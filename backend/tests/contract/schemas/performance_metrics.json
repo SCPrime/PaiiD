@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "total_return",
+    "total_return_percent",
+    "sharpe_ratio",
+    "max_drawdown",
+    "max_drawdown_percent",
+    "win_rate",
+    "avg_win",
+    "avg_loss",
+    "profit_factor",
+    "num_trades",
+    "num_wins",
+    "num_losses",
+    "current_streak",
+    "best_day",
+    "worst_day"
+  ],
+  "properties": {
+    "total_return": { "type": "number" },
+    "total_return_percent": { "type": "number" },
+    "sharpe_ratio": { "type": "number" },
+    "max_drawdown": { "type": "number" },
+    "max_drawdown_percent": { "type": "number" },
+    "win_rate": { "type": "number", "minimum": 0, "maximum": 100 },
+    "avg_win": { "type": "number" },
+    "avg_loss": { "type": "number" },
+    "profit_factor": { "type": "number", "minimum": 0 },
+    "num_trades": { "type": "integer", "minimum": 0 },
+    "num_wins": { "type": "integer", "minimum": 0 },
+    "num_losses": { "type": "integer", "minimum": 0 },
+    "current_streak": { "type": "integer" },
+    "best_day": { "type": "number" },
+    "worst_day": { "type": "number" }
+  }
+}

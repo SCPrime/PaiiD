@@ -17,6 +17,7 @@ pytest-cov>=4.1.0
 pytest-benchmark>=4.0.0
 httpx>=0.25.0
 finnhub-python>=1.4.0
+jsonschema>=4.20.0  # JSON schema validation for contract tests
 
 # Database dependencies (Phase 2.5)
 sqlalchemy>=2.0.0

@@ -404,6 +404,146 @@ async def get_cache_stats(
     return stats
 
 
+@router.get("/market/historical")
+async def get_historical_data(
+    symbol: str = Query(..., min_length=1, max_length=10, description="Stock symbol"),
+    timeframe: str = Query(
+        "1day",
+        pattern="^(1min|5min|15min|1hour|1day)$",
+        description="Timeframe (1min, 5min, 15min, 1hour, 1day)"
+    ),
+    start: str = Query(
+        None,
+        description="Start date in ISO format (YYYY-MM-DD). Defaults to 30 days ago."
+    ),
+    end: str = Query(
+        None,
+        description="End date in ISO format (YYYY-MM-DD). Defaults to today."
+    ),
+    current_user: User = Depends(get_current_user_unified),
+    cache: CacheService = Depends(get_cache),
+):
+    """
+    Get historical OHLCV data for charting using Tradier API
+
+    Returns candlestick data for the specified symbol and timeframe.
+    Used by frontend charting components (AdvancedChart.tsx).
+
+    Args:
+        symbol: Stock ticker symbol
+        timeframe: 1min, 5min, 15min, 1hour, or 1day
+        start: Start date (ISO format YYYY-MM-DD), defaults to 30 days ago
+        end: End date (ISO format YYYY-MM-DD), defaults to today
+
+    Returns:
+        {
+            "bars": [
+                {
+                    "timestamp": "2025-10-27T09:30:00Z",
+                    "open": 450.25,
+                    "high": 452.80,
+                    "low": 449.90,
+                    "close": 451.50,
+                    "volume": 1234567
+                }
+            ]
+        }
+
+    Data Source: Tradier API (REAL-TIME, NO DELAY)
+    """
+    # Get settings for cache TTL
+    settings = get_settings()
+
+    # Parse dates or use defaults
+    try:
+        if end:
+            end_date = datetime.strptime(end, "%Y-%m-%d")
+        else:
+            end_date = datetime.now(UTC)
+
+        if start:
+            start_date = datetime.strptime(start, "%Y-%m-%d")
+        else:
+            start_date = end_date - timedelta(days=30)  # Default to 30 days
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid date format. Use YYYY-MM-DD: {e!s}"
+        ) from e
+
+    # Create cache key
+    cache_key = f"historical:{symbol.upper()}:{timeframe}:{start_date.strftime('%Y-%m-%d')}:{end_date.strftime('%Y-%m-%d')}"
+
+    # Check cache first
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        logger.info(
+            f"✅ Cache HIT for historical {symbol} {timeframe} "
+            f"(TTL: {settings.CACHE_TTL_HISTORICAL_BARS}s)"
+        )
+        return {**cached_data, "cached": True}
+
+    try:
+        client = get_tradier_client()
+
+        # Map timeframe to Tradier intervals
+        interval_map = {
+            "1min": "1min",
+            "5min": "5min",
+            "15min": "15min",
+            "1hour": "1hour",
+            "1day": "daily",
+        }
+
+        interval = interval_map.get(timeframe, "daily")
+
+        # Fetch historical data from Tradier
+        bars_data = client.get_historical_quotes(
+            symbol=symbol,
+            interval=interval,
+            start_date=start_date.strftime("%Y-%m-%d"),
+            end_date=end_date.strftime("%Y-%m-%d"),
+        )
+
+        # Transform to frontend format
+        result_bars = []
+        for bar in bars_data:
+            result_bars.append(
+                {
+                    "timestamp": bar.get("date") or bar.get("time", ""),
+                    "open": float(bar.get("open", 0)),
+                    "high": float(bar.get("high", 0)),
+                    "low": float(bar.get("low", 0)),
+                    "close": float(bar.get("close", 0)),
+                    "volume": int(bar.get("volume", 0)),
+                }
+            )
+
+        response = {
+            "symbol": symbol.upper(),
+            "timeframe": timeframe,
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat(),
+            "bars": result_bars,
+            "cached": False,
+        }
+
+        # Cache with long TTL (historical data doesn't change)
+        cache.set(cache_key, response, ttl=settings.CACHE_TTL_HISTORICAL_BARS)
+        logger.info(
+            f"✅ Retrieved {len(result_bars)} historical bars for {symbol} from Tradier "
+            f"(cached for {settings.CACHE_TTL_HISTORICAL_BARS}s)"
+        )
+
+        return response
+
+    except Exception as e:
+        logger.error(f"❌ Tradier historical data request failed for {symbol}: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch historical data: {e!s}"
+        ) from e
+
+
 @router.post("/market/cache/clear")
 async def clear_market_cache(
     current_user: User = Depends(get_current_user_unified),
@@ -422,6 +562,7 @@ async def clear_market_cache(
         "quote:*",
         "bars:*",
         "scanner:*",
+        "historical:*",
     ]
 
     for pattern in patterns:
