@@ -140,7 +140,7 @@ export function useRadialMenuD3({
     marketData.dow.change,
     marketData.nasdaq.value,
     marketData.nasdaq.change,
-    forceFieldConfidence,
+    // forceFieldConfidence moved to Settings page
   ]);
 
   // Separate effect for market data updates
