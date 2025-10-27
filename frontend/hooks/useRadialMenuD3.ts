@@ -19,7 +19,7 @@ interface UseRadialMenuD3Props {
   setHoveredWorkflow: (workflow: Workflow | null) => void;
   isMarketDataLoading: boolean;
   marketData: MarketDataState;
-  forceFieldConfidence: number;
+  // forceFieldConfidence moved to Settings page
 }
 
 /**
@@ -36,7 +36,7 @@ export function useRadialMenuD3({
   setHoveredWorkflow,
   isMarketDataLoading,
   marketData,
-  forceFieldConfidence,
+  // forceFieldConfidence moved to Settings page
 }: UseRadialMenuD3Props) {
   // Main D3 rendering effect
   useEffect(() => {
@@ -126,13 +126,7 @@ export function useRadialMenuD3({
       marketData
     );
 
-    // Render force field confidence
-    renderForceFieldConfidence(
-      centerGroup,
-      centerContentSpacing,
-      fontSizes,
-      forceFieldConfidence
-    );
+    // FORCE FIELD moved to Settings page - no longer rendered in radial menu center
   }, [
     svgRef,
     workflows,

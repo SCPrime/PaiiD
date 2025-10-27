@@ -50,7 +50,7 @@ function RadialMenuComponent({
   // Use custom hooks for market data and responsive sizing
   const {
     marketData,
-    forceFieldConfidence,
+    // forceFieldConfidence moved to Settings page
     isMarketDataLoading,
     sseConnected: _sseConnected,
     sseRetryCount: _sseRetryCount,
@@ -82,7 +82,7 @@ function RadialMenuComponent({
     setHoveredWorkflow,
     isMarketDataLoading,
     marketData,
-    forceFieldConfidence,
+    // forceFieldConfidence moved to Settings page
   });
 
   // Debug logging for Fast Refresh loop detection
