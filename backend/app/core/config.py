@@ -252,12 +252,13 @@ def validate_required_secrets(strict: bool = False) -> tuple[bool, list[str]]:
     missing = []
 
     # Required secrets for core functionality
+    # NOTE: Display names must match actual environment variable names for clarity
     required_secrets = {
         "API_TOKEN": settings.API_TOKEN,
         "TRADIER_API_KEY": settings.TRADIER_API_KEY,
         "TRADIER_ACCOUNT_ID": settings.TRADIER_ACCOUNT_ID,
-        "ALPACA_API_KEY": settings.ALPACA_API_KEY,
-        "ALPACA_SECRET_KEY": settings.ALPACA_SECRET_KEY,
+        "ALPACA_PAPER_API_KEY": settings.ALPACA_API_KEY,  # Display actual env var name
+        "ALPACA_PAPER_SECRET_KEY": settings.ALPACA_SECRET_KEY,  # Display actual env var name
         "DATABASE_URL": settings.DATABASE_URL,
         "JWT_SECRET_KEY": settings.JWT_SECRET_KEY,
     }
