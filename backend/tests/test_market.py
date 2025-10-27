@@ -27,10 +27,11 @@ def test_market_indices_endpoint(client):
         # Accept validation errors (API returned None)
         pass
 
-def test_market_indices_requires_auth(client):
-    """Test market indices endpoint requires authentication (MVP fallback may apply)"""
-    response = client.get("/api/market/indices")
-    assert response.status_code in [401, 403, 500]
+def test_market_indices_requires_auth(client_no_auth):
+    """Test market indices endpoint requires authentication"""
+    response = client_no_auth.get("/api/market/indices")
+    # Should return 401 when no auth provided
+    assert response.status_code == 401
 
 def test_get_quote_for_symbol(client):
     """Test GET /api/market/quote/:symbol"""

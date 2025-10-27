@@ -37,6 +37,11 @@ interface Template {
       method: string;
       percentage: number;
     };
+    position_size_percent?: number;
+    max_positions?: number;
+    rsi_period?: number;
+    stop_loss_percent?: number;
+    take_profit_percent?: number;
   };
 }
 
@@ -97,14 +102,14 @@ export default function TemplateCustomizationModal({
         position_size_percent: number;
         max_positions: number;
         rsi_period: number;
-        stop_loss_percent: number;
-        take_profit_percent: number;
-        entry_rules: Array<{
+        stop_loss_percent?: number;
+        take_profit_percent?: number;
+        entry_rules?: Array<{
           type: string;
           value: string;
           operator: string;
         }>;
-        exit_rules: Array<{
+        exit_rules?: Array<{
           type: string;
           value: number;
           operator: string;

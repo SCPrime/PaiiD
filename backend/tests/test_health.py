@@ -346,9 +346,9 @@ class TestHealthMonitorIntegration:
         assert data["status"] == "ok"
         assert "time" in data
 
-    def test_health_endpoint_detailed_requires_auth(self, client):
+    def test_health_endpoint_detailed_requires_auth(self, client_no_auth):
         """Test detailed health endpoint requires authentication"""
-        response = client.get("/api/health/detailed")
+        response = client_no_auth.get("/api/health/detailed")
         assert response.status_code == 401  # Unauthorized
 
     def test_health_endpoint_detailed_with_auth(self, client, auth_headers):

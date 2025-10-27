@@ -70,7 +70,9 @@ async def health_check():
 
 
 @router.get("/detailed", response_model=DetailedHealthResponse)
-async def detailed_health_check():
+async def detailed_health_check(
+    current_user: User = Depends(get_current_user_unified)
+):
     """
     Detailed health check with dependency status.
 
@@ -79,6 +81,8 @@ async def detailed_health_check():
     - Alpaca API
     - Database (if configured)
     - Cache (if configured)
+
+    Requires authentication.
     """
     import logging
     logger = logging.getLogger(__name__)

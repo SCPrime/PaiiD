@@ -64,7 +64,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState("SPY");
-  const { error: showToastError, success: showToastSuccess } = useToast();
+  const toast = useToast();
 
   // Load ML insights on component mount
   useEffect(() => {
@@ -99,7 +99,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
       generateInsights(regimeData, patternsData.patterns || []);
     } catch (error) {
       logger.error("Failed to load ML insights", error);
-      showToastError("ML Analysis Failed", "Unable to load market intelligence. Please try again.");
+      toast.error("ML Analysis Failed", "Unable to load market intelligence. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -119,7 +119,13 @@ export const MLIntelligenceDashboard: React.FC = () => {
         actionable: true,
         impact: regimeData.confidence > 0.8 ? "high" : "medium",
         timestamp: new Date().toISOString(),
-        details: regimeData as unknown as Record<string, unknown>,
+        details: {
+          regime: regimeData.regime,
+          confidence: regimeData.confidence,
+          description: regimeData.description,
+          recommended_strategies: regimeData.recommended_strategies,
+          features: regimeData.features,
+        },
       });
     }
 
@@ -134,7 +140,15 @@ export const MLIntelligenceDashboard: React.FC = () => {
         actionable: true,
         impact: pattern.confidence > 0.8 ? "high" : "medium",
         timestamp: new Date().toISOString(),
-        details: pattern as unknown as Record<string, unknown>,
+        details: {
+          pattern_type: pattern.pattern_type,
+          signal: pattern.signal,
+          confidence: pattern.confidence,
+          description: pattern.description,
+          target_price: pattern.target_price,
+          stop_loss: pattern.stop_loss,
+          key_levels: pattern.key_levels,
+        },
       });
     });
 
@@ -149,7 +163,11 @@ export const MLIntelligenceDashboard: React.FC = () => {
         actionable: true,
         impact: "high",
         timestamp: new Date().toISOString(),
-        details: regimeData.recommended_strategies as unknown as Record<string, unknown>,
+        details: {
+          strategies: regimeData.recommended_strategies,
+          regime: regimeData.regime,
+          confidence: regimeData.confidence,
+        },
       });
     }
 
@@ -180,10 +198,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
     setRefreshing(true);
     await loadMLInsights();
     setRefreshing(false);
-    showToastSuccess("ML Analysis Updated", "Market intelligence has been refreshed with latest data.");
-    showToastSuccess("ML Analysis Updated", "Market intelligence has been refreshed with latest data.");
-    showToastSuccess("ML Analysis Updated", "Market intelligence has been refreshed with latest data.");
-    showToastSuccess("ML Analysis Updated", "Market intelligence has been refreshed with latest data.");
+    toast.success("ML Analysis Updated", "Market intelligence has been refreshed with latest data.");
   };
 
   const getInsightIcon = (type: string) => {

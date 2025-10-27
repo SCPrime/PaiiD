@@ -103,7 +103,7 @@ export default function PositionsTable() {
   }, []);
 
   // Extract symbols from positions for live price streaming
-  const symbols = useMemo(() => positions.map((p) => p.symbol), [positions]);
+  const symbols = useMemo(() => positions.map((p) => p.symbol).filter((s): s is string => Boolean(s)), [positions]);
 
   // Subscribe to live price stream for all position symbols
   const { prices: livePrices, connected: streamConnected } = useMarketStream(symbols, {

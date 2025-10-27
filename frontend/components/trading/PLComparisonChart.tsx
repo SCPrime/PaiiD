@@ -1,7 +1,7 @@
 "use client";
 
 import type { PLComparison, PLViewMode, PositionTracking, TheoreticalPayoff } from "@/types/pnl";
-import { createChart, IChartApi, LineData } from "lightweight-charts";
+import { createChart, IChartApi, ISeriesApi, LineData, Time } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
 import { logger } from "../../lib/logger";
 
@@ -319,10 +319,10 @@ function renderPreTradeView(container: HTMLDivElement, payoff: TheoreticalPayoff
     color: "#06b6d4",
     lineWidth: 3,
     title: "Payoff at Expiration",
-  });
+  }) as ISeriesApi<"Line">;
 
-  const payoffData: LineData[] = payoff.payoffCurve.map((point, index) => ({
-    time: index as number,
+  const payoffData: LineData<Time>[] = payoff.payoffCurve.map((point, index) => ({
+    time: index as Time,
     value: point.pnl,
   }));
 
@@ -333,7 +333,7 @@ function renderPreTradeView(container: HTMLDivElement, payoff: TheoreticalPayoff
     color: "#64748b",
     lineWidth: 1,
     lineStyle: 2, // Dashed
-  });
+  }) as ISeriesApi<"Line">;
 
   zeroSeries.setData(
     payoffData.map((point) => ({
@@ -349,10 +349,10 @@ function renderPreTradeView(container: HTMLDivElement, payoff: TheoreticalPayoff
       bottomColor: "rgba(139, 92, 246, 0.0)",
       lineColor: "rgba(139, 92, 246, 0.8)",
       lineWidth: 1,
-    });
+    }) as ISeriesApi<"Area">;
 
-    const probData: LineData[] = payoff.probabilityDistribution.map((point, index) => ({
-      time: index as number,
+    const probData: LineData<Time>[] = payoff.probabilityDistribution.map((point, index) => ({
+      time: index as Time,
       value: point.pnl * 100, // Scale probability
     }));
 

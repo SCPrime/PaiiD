@@ -86,7 +86,7 @@ interface SavedStrategy extends Omit<Strategy, "id"> {
   };
 }
 
-interface Template {
+interface StrategyTemplate {
   id: string;
   name: string;
   description: string;
@@ -97,7 +97,25 @@ interface Template {
   avg_return_percent: number;
   max_drawdown_percent: number;
   recommended_for: string[];
-  config: unknown;
+  config: {
+    entry_rules?: Array<{
+      type: string;
+      value: string;
+      operator: string;
+    }>;
+    exit_rules?: Array<{
+      type: string;
+      value: number;
+      operator: string;
+    }>;
+    position_sizing?: {
+      method: string;
+      percentage: number;
+    };
+    position_size_percent?: number;
+    max_positions?: number;
+    rsi_period?: number;
+  };
 }
 
 export default function StrategyBuilderAI() {
@@ -110,11 +128,11 @@ export default function StrategyBuilderAI() {
   const [error, setError] = useState<string | null>(null);
 
   // Template gallery state
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState<StrategyTemplate[]>([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [userRiskTolerance, setUserRiskTolerance] = useState<number>(50);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<StrategyTemplate | null>(null);
   const [showCustomizationModal, setShowCustomizationModal] = useState(false);
 
   // Stock research state
@@ -180,7 +198,7 @@ export default function StrategyBuilderAI() {
     }
   };
 
-  const handleCloneTemplate = async (template: Template) => {
+  const handleCloneTemplate = async (template: StrategyTemplate) => {
     const apiToken = process.env.NEXT_PUBLIC_API_TOKEN || "";
     const baseUrl =
       process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "https://paiid-backend.onrender.com";
@@ -637,7 +655,7 @@ export default function StrategyBuilderAI() {
                             color: theme.colors.text,
                           }}
                         >
-                          {rule.indicator} {rule.operator} {rule.value}
+                          {rule.condition} {rule.operator} {rule.value}
                         </div>
                       ))}
                     </div>
@@ -680,7 +698,7 @@ export default function StrategyBuilderAI() {
                             color: theme.colors.text,
                           }}
                         >
-                          {rule.type === "take_profit" ? "Take Profit" : "Stop Loss"}: {rule.value}%
+                          {rule.condition === "take_profit" ? "Take Profit" : "Stop Loss"}: {rule.value}%
                         </div>
                       ))}
                     </div>
@@ -716,7 +734,7 @@ export default function StrategyBuilderAI() {
                           margin: 0,
                         }}
                       >
-                        {currentStrategy.positionSizing?.value || 0}% of Portfolio
+                        {currentStrategy.positionSizing?.percentage || 0}% of Portfolio
                       </p>
                     </div>
                     <div>
@@ -1271,9 +1289,9 @@ export default function StrategyBuilderAI() {
       </div>
 
       {/* Template Customization Modal */}
-      {showCustomizationModal && (
+      {showCustomizationModal && selectedTemplate && (
         <TemplateCustomizationModal
-          template={selectedTemplate}
+          template={selectedTemplate as never}
           onClose={() => {
             setShowCustomizationModal(false);
             setSelectedTemplate(null);

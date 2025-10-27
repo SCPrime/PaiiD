@@ -42,11 +42,11 @@ class TestHealthEndpoints:
 class TestAuthenticationProtection:
     """Test API authentication requirements"""
 
-    def test_positions_requires_auth(self, client):
-        """Test /api/positions requires Authorization header (MVP fallback may apply)"""
-        response = client.get("/api/positions")
-        # MVP fallback may allow (500 for external API error) or block (401)
-        assert response.status_code in [401, 403, 500]
+    def test_positions_requires_auth(self, client_no_auth):
+        """Test /api/positions requires Authorization header"""
+        response = client_no_auth.get("/api/positions")
+        # Should return 401 when no auth provided
+        assert response.status_code == 401
 
     def test_positions_with_valid_auth(self, client, auth_headers):
         """Test /api/positions with valid auth (may fail on Tradier call)"""

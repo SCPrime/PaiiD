@@ -45,7 +45,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
 };
 
 // Memoized component wrapper
-export const withPerformanceOptimization = <P extends object>(
+export const withPerformanceOptimization = <P extends Record<string, unknown>>(
   Component: React.ComponentType<P>,
   options: {
     memo?: boolean;
@@ -53,26 +53,27 @@ export const withPerformanceOptimization = <P extends object>(
     debounce?: number;
     throttle?: number;
   } = {}
-) => {
+): React.ComponentType<P> => {
   const { memo = true, lazy = false, debounce: debounceMs, throttle: throttleMs } = options;
 
-  let WrappedComponent = Component;
-
   // Apply memoization
-  if (memo) {
-    WrappedComponent = React.memo(Component) as React.ComponentType<P>;
-  }
+  let WrappedComponent: React.ComponentType<P> = memo
+    ? (React.memo(Component) as unknown as React.ComponentType<P>)
+    : Component;
 
   // Apply lazy loading
   if (lazy) {
-    WrappedComponent = React.lazy(() => Promise.resolve({ default: WrappedComponent }));
+    const LazyComponent = React.lazy(() =>
+      Promise.resolve({ default: WrappedComponent })
+    );
+    WrappedComponent = LazyComponent as unknown as React.ComponentType<P>;
   }
 
   // Apply performance optimizations
   if (debounceMs || throttleMs) {
     const OriginalComponent = WrappedComponent;
-    WrappedComponent = React.forwardRef<unknown, P>((props, ref) => {
-      const [optimizedProps, setOptimizedProps] = useState(props);
+    const OptimizedComponent: React.FC<P> = (props) => {
+      const [optimizedProps, setOptimizedProps] = useState<P>(props);
 
       const updateProps = useCallback(
         (newProps: P) => {
@@ -83,23 +84,25 @@ export const withPerformanceOptimization = <P extends object>(
           }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        []
+        [debounceMs, throttleMs]
       );
 
       useEffect(() => {
         updateProps(props);
       }, [props, updateProps]);
 
-      return <OriginalComponent {...optimizedProps} ref={ref} />;
-    }) as React.ComponentType<P>;
+      return <OriginalComponent {...optimizedProps} />;
+    };
+
+    WrappedComponent = OptimizedComponent as React.ComponentType<P>;
   }
 
   return WrappedComponent;
 };
 
 // Virtual scrolling hook
-export const useVirtualScrolling = (
-  items: unknown[],
+export const useVirtualScrolling = <T extends Record<string, unknown>>(
+  items: T[],
   itemHeight: number,
   containerHeight: number,
   overscan: number = 5

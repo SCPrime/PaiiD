@@ -23,8 +23,9 @@ import {
   Users,
   X,
   Zap,
+  LucideProps,
 } from "lucide-react";
-import { useState } from "react";
+import { ForwardRefExoticComponent, RefAttributes, useState } from "react";
 import { logger } from "../lib/logger";
 import { createUser } from "../lib/userManagement";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
@@ -42,7 +43,7 @@ interface OnboardingField {
   type: "select" | "input" | "multiselect";
   options?: string[];
   tooltip: string;
-  icon?: React.ComponentType<{ size?: number; className?: string }>;
+  icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
 }
 
 interface OnboardingPage {
@@ -1364,7 +1365,11 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
                       marginBottom: "8px",
                     }}
                   >
-                    {Icon && <Icon size={16} style={{ color: accentColor }} />}
+                    {Icon && (
+                      <span style={{ color: accentColor, display: "flex" }}>
+                        <Icon size={16} />
+                      </span>
+                    )}
                     <label
                       style={{
                         color: theme.colors.textMuted,

@@ -21,11 +21,11 @@ def test_portfolio_summary_endpoint(client):
         assert "dayPL" in data
         assert "dayPLPercent" in data
 
-def test_portfolio_summary_requires_auth(client):
-    """Test portfolio summary requires authentication (MVP fallback may apply)"""
-    response = client.get("/api/portfolio/summary")
-    # MVP fallback may allow access (403) or block (401)
-    assert response.status_code in [401, 403, 500]
+def test_portfolio_summary_requires_auth(client_no_auth):
+    """Test portfolio summary requires authentication"""
+    response = client_no_auth.get("/api/portfolio/summary")
+    # Should return 401 when no auth provided
+    assert response.status_code == 401
 
 def test_portfolio_history_endpoint(client):
     """Test portfolio history endpoint"""

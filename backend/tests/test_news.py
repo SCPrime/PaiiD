@@ -23,10 +23,11 @@ def test_get_news_endpoint(client):
             assert "source" in article
             assert "published_at" in article  # API uses snake_case
 
-def test_news_requires_auth(client):
-    """Test news endpoint requires authentication (MVP fallback may apply)"""
-    response = client.get("/api/news/market")
-    assert response.status_code in [401, 403, 500]
+def test_news_requires_auth(client_no_auth):
+    """Test news endpoint requires authentication"""
+    response = client_no_auth.get("/api/news/market")
+    # Should return 401 when no auth provided
+    assert response.status_code == 401
 
 def test_news_with_symbol_filter(client):
     """Test filtering news by stock symbol"""

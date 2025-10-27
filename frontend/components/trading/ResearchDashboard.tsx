@@ -135,7 +135,33 @@ export default function ResearchDashboard() {
   // AI Strategy state
   const [showStrategyModal, setShowStrategyModal] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
-  const [strategySuggestions, setStrategySuggestions] = useState<unknown>(null);
+  const [strategySuggestions, setStrategySuggestions] = useState<{
+    symbol: string;
+    currentPrice: number;
+    suggestions: {
+      strategyId: string;
+      strategyName: string;
+      confidence: number;
+      reasoning: string;
+      proposedLegs: {
+        type: "STOCK" | "CALL" | "PUT";
+        side: "BUY" | "SELL";
+        qty?: number;
+        strike?: number;
+        dte?: number;
+        delta?: number;
+      }[];
+      maxRisk: number;
+      maxProfit: number;
+      breakevens: number[];
+      riskRewardRatio: number;
+    }[];
+    analysis: {
+      technicalSetup: string;
+      ivEnvironment: string;
+      riskLevel: "low" | "medium" | "high";
+    };
+  } | null>(null);
 
   // P&L Analysis state
   const [showPLAnalysis, setShowPLAnalysis] = useState(false);
@@ -610,14 +636,14 @@ Proposal system coming in INCREMENT 9`);
     let series: ISeriesApi<"Candlestick" | "Line" | "Area"> | null = null;
 
     if (chartType === "Candlestick") {
-      series = priceChartRef.current.addCandlestickSeries({
+      const candlestickSeries = priceChartRef.current.addCandlestickSeries({
         upColor: "#10b981",
         downColor: "#ef4444",
         borderUpColor: "#10b981",
         borderDownColor: "#ef4444",
         wickUpColor: "#10b981",
         wickDownColor: "#ef4444",
-      });
+      }) as ISeriesApi<"Candlestick">;
 
       const candlestickData: CandlestickData<Time>[] = historicalData.map((bar) => ({
         time: (new Date(bar.time).getTime() / 1000) as Time,
@@ -627,34 +653,37 @@ Proposal system coming in INCREMENT 9`);
         close: bar.close,
       }));
 
-      series.setData(candlestickData);
+      candlestickSeries.setData(candlestickData);
+      series = candlestickSeries as ISeriesApi<"Candlestick" | "Line" | "Area">;
     } else if (chartType === "Line") {
-      series = priceChartRef.current.addLineSeries({
+      const lineSeries = priceChartRef.current.addLineSeries({
         color: "#00acc1",
         lineWidth: 2,
-      });
+      }) as ISeriesApi<"Line">;
 
       const lineData: LineData<Time>[] = historicalData.map((bar) => ({
         time: (new Date(bar.time).getTime() / 1000) as Time,
         value: bar.close,
       }));
 
-      series.setData(lineData);
+      lineSeries.setData(lineData);
+      series = lineSeries as ISeriesApi<"Candlestick" | "Line" | "Area">;
     } else {
       // Area
-      series = priceChartRef.current.addAreaSeries({
+      const areaSeries = priceChartRef.current.addAreaSeries({
         topColor: "rgba(0, 172, 193, 0.4)",
         bottomColor: "rgba(0, 172, 193, 0.0)",
         lineColor: "#00acc1",
         lineWidth: 2,
-      });
+      }) as ISeriesApi<"Area">;
 
       const areaData: LineData<Time>[] = historicalData.map((bar) => ({
         time: (new Date(bar.time).getTime() / 1000) as Time,
         value: bar.close,
       }));
 
-      series.setData(areaData);
+      areaSeries.setData(areaData);
+      series = areaSeries as ISeriesApi<"Candlestick" | "Line" | "Area">;
     }
 
     priceSeriesRef.current = series;
@@ -822,7 +851,7 @@ Proposal system coming in INCREMENT 9`);
         color: "#3b82f6",
         lineWidth: 2,
         title: "MACD",
-      });
+      }) as ISeriesApi<"Line">;
       macdSeries.setData(macd);
 
       // Signal line
@@ -830,7 +859,7 @@ Proposal system coming in INCREMENT 9`);
         color: "#f97316",
         lineWidth: 2,
         title: "Signal",
-      });
+      }) as ISeriesApi<"Line">;
       signalSeries.setData(signal);
 
       // Histogram
@@ -841,7 +870,7 @@ Proposal system coming in INCREMENT 9`);
           precision: 4,
           minMove: 0.0001,
         },
-      });
+      }) as ISeriesApi<"Histogram">;
       histogramSeries.setData(
         histogram.map((point) => ({
           time: point.time,
@@ -899,10 +928,10 @@ Proposal system coming in INCREMENT 9`);
         priceFormat: {
           type: "volume",
         },
-      });
+      }) as ISeriesApi<"Histogram">;
 
-      const volumeData: HistogramData[] = historicalData.map((bar) => ({
-        time: (new Date(bar.time).getTime() / 1000) as number,
+      const volumeData: HistogramData<Time>[] = historicalData.map((bar) => ({
+        time: (new Date(bar.time).getTime() / 1000) as Time,
         value: bar.volume,
         color: bar.close >= bar.open ? "#10b981" : "#ef4444",
       }));

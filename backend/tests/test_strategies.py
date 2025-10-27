@@ -17,11 +17,11 @@ def test_get_strategies_endpoint(client):
         assert "strategies" in data
         assert isinstance(data["strategies"], list)
 
-def test_strategies_requires_auth(client):
-    """Test strategies endpoint requires authentication (MVP fallback may apply)"""
-    response = client.get("/api/strategies/list")
-    # MVP fallback may allow (403) or block (401)
-    assert response.status_code in [401, 403, 500]
+def test_strategies_requires_auth(client_no_auth):
+    """Test strategies endpoint requires authentication"""
+    response = client_no_auth.get("/api/strategies/list")
+    # Should return 401 when no auth provided
+    assert response.status_code == 401
 
 def test_create_strategy(client):
     """Test POST /api/strategies to create new strategy"""

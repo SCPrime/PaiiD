@@ -26,12 +26,12 @@ def test_backtest_endpoint_exists(client):
     # Should return 200, 500, or validation error
     assert response.status_code in [200, 400, 422, 500, 503]
 
-def test_backtest_requires_auth(client):
-    """Test backtest requires authentication (MVP fallback may apply)"""
+def test_backtest_requires_auth(client_no_auth):
+    """Test backtest requires authentication"""
     strategy = {"symbol": "SPY", "startDate": "2024-01-01", "endDate": "2024-06-01"}
-    response = client.post("/api/backtesting/run", json=strategy)
-    # MVP fallback may allow (403) or block (401)
-    assert response.status_code in [401, 403, 500]
+    response = client_no_auth.post("/api/backtesting/run", json=strategy)
+    # Should return 401 (auth failure) or 403 (CSRF protection)
+    assert response.status_code in [401, 403]
 
 def test_backtest_returns_performance_metrics(client):
     """Test backtest returns required performance metrics"""
