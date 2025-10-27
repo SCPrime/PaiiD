@@ -105,7 +105,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
         case "research":
           return <MarketScanner />;
         case "proposals":
-          return <AIRecommendations />;
+          return <AIRecommendations userId="default-user" />;
         case "settings":
           return <Settings isOpen={true} onClose={() => onWorkflowSelect("")} />;
         case "pnl-dashboard":

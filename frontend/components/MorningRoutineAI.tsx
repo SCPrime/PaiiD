@@ -45,7 +45,21 @@ interface NewsItem {
 }
 
 // Helper function to fetch real market data
-async function fetchLiveMarketData() {
+async function fetchLiveMarketData(): Promise<{
+  candidates: Array<{
+    symbol: string;
+    price: number;
+    change?: number;
+    changePercent?: number;
+    volume?: number;
+    marketCap?: number;
+    bid: number;
+    ask: number;
+    timestamp: string;
+  }>;
+  count: number;
+  timestamp: string;
+} | null> {
   try {
     logger.info("[MorningRoutine] 🔴 Fetching LIVE market data...");
     const scanner = await fetchUnder4Scanner();
@@ -67,6 +81,7 @@ async function fetchLiveMarketData() {
 function formatLiveMarketData(
   data: {
     count: number;
+    timestamp: string;
     candidates: Array<{
       symbol: string;
       price: number;
@@ -74,6 +89,8 @@ function formatLiveMarketData(
       changePercent: number;
       volume: number;
       marketCap: number;
+      bid: number;
+      ask: number;
     }>;
   } | null
 ) {
@@ -378,13 +395,19 @@ export default function MorningRoutineAI() {
       // Try to parse JSON from the response
       let routine: {
         title: string;
+        name?: string;
         steps: Array<{
           time: string;
           task: string;
           description: string;
           priority: string;
+          type?: string;
         }>;
         summary: string;
+        schedule?: {
+          startTime?: string;
+          frequency?: string;
+        };
       } | null = null;
       let parsed = response.trim();
 

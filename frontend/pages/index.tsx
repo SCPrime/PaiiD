@@ -25,23 +25,24 @@ const AIRecommendations = dynamic(() => import("../components/AIRecommendations"
     </div>
   ),
 });
-const _MonitorDashboard = dynamic(
-  () => import("../components/MonitorDashboard").then((mod) => ({ default: mod.MonitorDashboard })),
-  {
-    loading: () => (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    ),
-  }
-);
-const _Analytics = dynamic(() => import("../components/Analytics"), {
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
-  ),
-});
+// Temporarily disabled - will be re-enabled when needed
+// const MonitorDashboard = dynamic(
+//   () => import("../components/MonitorDashboard").then((mod) => ({ default: mod.MonitorDashboard })),
+//   {
+//     loading: () => (
+//       <div className="flex items-center justify-center p-8">
+//         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+//       </div>
+//     ),
+//   }
+// );
+// const Analytics = dynamic(() => import("../components/Analytics"), {
+//   loading: () => (
+//     <div className="flex items-center justify-center p-8">
+//       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+//     </div>
+//   ),
+// });
 const Backtesting = dynamic(() => import("../components/Backtesting"), {
   loading: () => (
     <div className="flex items-center justify-center p-8">
@@ -50,7 +51,7 @@ const Backtesting = dynamic(() => import("../components/Backtesting"), {
   ),
 });
 const MLIntelligenceWorkflow = dynamic(
-  () => import("../components/workflows/MLIntelligenceWorkflow"),
+  () => import("../components/workflows/MLIntelligenceWorkflow").then((mod) => ({ default: mod.MLIntelligenceWorkflow })),
   {
     loading: () => (
       <div className="flex items-center justify-center p-8">
@@ -59,13 +60,14 @@ const MLIntelligenceWorkflow = dynamic(
     ),
   }
 );
-const _GitHubActionsMonitor = dynamic(() => import("../components/GitHubActionsMonitor"), {
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
-  ),
-});
+// Temporarily disabled - will be re-enabled when needed
+// const GitHubActionsMonitor = dynamic(() => import("../components/GitHubActionsMonitor"), {
+//   loading: () => (
+//     <div className="flex items-center justify-center p-8">
+//       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+//     </div>
+//   ),
+// });
 const NewsReview = dynamic(() => import("../components/NewsReview"), {
   loading: () => (
     <div className="flex items-center justify-center p-8">
@@ -211,7 +213,7 @@ export default function Dashboard() {
           return <MarketScanner />;
 
         case "proposals":
-          return <AIRecommendations />;
+          return <AIRecommendations userId="user_1" />;
 
         case "settings":
           return <Settings isOpen={true} onClose={() => setSelectedWorkflow("")} />;
@@ -248,7 +250,7 @@ export default function Dashboard() {
           );
 
         case "ml-intelligence":
-          return <MLIntelligenceWorkflow onClose={() => setSelectedWorkflow(null)} />;
+          return <MLIntelligenceWorkflow onClose={() => setSelectedWorkflow("")} />;
 
         default:
           return null;

@@ -4,6 +4,7 @@ import CommandPalette from "../components/CommandPalette";
 import EnhancedDashboard from "../components/EnhancedDashboard";
 import KeyboardShortcuts from "../components/KeyboardShortcuts";
 import MobileDashboard from "../components/MobileDashboard";
+import type { Workflow } from "../components/RadialMenu";
 import Settings from "../components/Settings";
 import UserSetupAI from "../components/UserSetupAI";
 import { useIsMobile } from "../hooks/useBreakpoint";
@@ -20,7 +21,7 @@ export default function EnhancedDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUserSetup, setIsUserSetup] = useState(ENABLE_DEV_BYPASS);
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>("");
-  const [hoveredWorkflow, setHoveredWorkflow] = useState<unknown>(null);
+  const [hoveredWorkflow, setHoveredWorkflow] = useState<Workflow | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const isMobile = useIsMobile();

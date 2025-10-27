@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ActivePositions from '../components/ActivePositions';
-import * as alpaca from '../lib/alpaca';
+import { alpaca } from '../lib/alpaca';
 
 // Mock dependencies
 jest.mock('../lib/alpaca');
@@ -45,9 +45,8 @@ describe('ActivePositions', () => {
   };
 
   beforeEach(() => {
-    mockAlpaca.getPositions.mockResolvedValue(mockPositions as any);
-    mockAlpaca.getAccount.mockResolvedValue(mockAccount as any);
-    mockAlpaca.formatPosition.mockImplementation((p: any) => p);
+    (mockAlpaca.getPositions as jest.Mock).mockResolvedValue(mockPositions as any);
+    (mockAlpaca.getAccount as jest.Mock).mockResolvedValue(mockAccount as any);
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({}),
@@ -119,12 +118,12 @@ describe('ActivePositions', () => {
     fireEvent.click(refreshButton);
 
     await waitFor(() => {
-      expect(mockAlpaca.getPositions).toHaveBeenCalledTimes(2); // Initial + refresh
+      expect(mockAlpaca.getPositions as jest.Mock).toHaveBeenCalledTimes(2); // Initial + refresh
     });
   });
 
   it('displays empty state when no positions', async () => {
-    mockAlpaca.getPositions.mockResolvedValue([]);
+    (mockAlpaca.getPositions as jest.Mock).mockResolvedValue([]);
 
     render(<ActivePositions />);
 
@@ -209,7 +208,7 @@ describe('ActivePositions', () => {
   });
 
   it('handles position close action', async () => {
-    mockAlpaca.closePosition = jest.fn().mockResolvedValue({ success: true });
+    (mockAlpaca.closePosition as jest.Mock) = jest.fn().mockResolvedValue({ success: true });
     global.confirm = jest.fn().mockReturnValue(true);
 
     render(<ActivePositions />);
@@ -222,7 +221,7 @@ describe('ActivePositions', () => {
     fireEvent.click(closeButtons[0]);
 
     await waitFor(() => {
-      expect(mockAlpaca.closePosition).toHaveBeenCalledWith('AAPL');
+      expect(mockAlpaca.closePosition as jest.Mock).toHaveBeenCalledWith('AAPL');
     });
   });
 
@@ -232,20 +231,20 @@ describe('ActivePositions', () => {
     render(<ActivePositions />);
 
     await waitFor(() => {
-      expect(mockAlpaca.getPositions).toHaveBeenCalledTimes(1);
+      expect(mockAlpaca.getPositions as jest.Mock).toHaveBeenCalledTimes(1);
     });
 
     jest.advanceTimersByTime(5000);
 
     await waitFor(() => {
-      expect(mockAlpaca.getPositions).toHaveBeenCalledTimes(2);
+      expect(mockAlpaca.getPositions as jest.Mock).toHaveBeenCalledTimes(2);
     });
 
     jest.useRealTimers();
   });
 
   it('handles API errors gracefully', async () => {
-    mockAlpaca.getPositions.mockRejectedValue(new Error('API Error'));
+    (mockAlpaca.getPositions as jest.Mock).mockRejectedValue(new Error('API Error'));
 
     render(<ActivePositions />);
 

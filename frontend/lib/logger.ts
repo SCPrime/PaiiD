@@ -13,7 +13,7 @@
 const isDevelopment = process.env.NODE_ENV === "development";
 const isTest = process.env.NODE_ENV === "test";
 
-interface LogData {
+export interface LogData {
   [key: string]: unknown;
 }
 

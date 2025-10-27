@@ -13,7 +13,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { logger } from "../lib/logger";
+import { logger, type LogData } from "../lib/logger";
 
 export interface Position {
   symbol: string;
@@ -86,9 +86,9 @@ export function usePositionUpdates(
   const heartbeatCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const log = useCallback(
-    (...args: unknown[]) => {
+    (message: string, data?: LogData) => {
       if (debug) {
-        logger.info("[usePositionUpdates]", ...args);
+        logger.info(`[usePositionUpdates] ${message}`, data);
       }
     },
     [debug]
@@ -147,7 +147,7 @@ export function usePositionUpdates(
             const timeSinceHeartbeat = (Date.now() - currentState.lastHeartbeat.getTime()) / 1000;
 
             if (timeSinceHeartbeat > heartbeatTimeout) {
-              log(`⚠️ Heartbeat timeout (${timeSinceHeartbeat.toFixed(0)}s since last heartbeat)`);
+              log("⚠️ Heartbeat timeout", { timeSinceHeartbeat: timeSinceHeartbeat.toFixed(0) });
 
               // Trigger reconnect
               if (eventSourceRef.current) {
@@ -158,7 +158,8 @@ export function usePositionUpdates(
               if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
                 reconnectAttemptsRef.current++;
                 log(
-                  `🔄 Reconnecting due to heartbeat timeout (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
+                  "🔄 Reconnecting due to heartbeat timeout",
+                  { attempt: reconnectAttemptsRef.current, max: maxReconnectAttempts }
                 );
                 connect();
               }
@@ -179,7 +180,7 @@ export function usePositionUpdates(
       eventSource.addEventListener("position_update", (event) => {
         try {
           const newPositions = JSON.parse(event.data) as Position[];
-          log("📊 Position update:", newPositions.length, "positions");
+          log("📊 Position update", { count: newPositions.length });
 
           setState((prev) => ({
             ...prev,
@@ -238,7 +239,8 @@ export function usePositionUpdates(
           const backoffTime = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Max 30s
 
           log(
-            `⏳ Reconnecting in ${backoffTime / 1000}s (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
+            "⏳ Reconnecting",
+            { backoffSeconds: backoffTime / 1000, attempt: reconnectAttemptsRef.current, max: maxReconnectAttempts }
           );
 
           reconnectTimeoutRef.current = setTimeout(() => {
@@ -257,7 +259,7 @@ export function usePositionUpdates(
         ...prev,
         connected: false,
         connecting: false,
-        error: error.message || "Failed to connect",
+        error: error instanceof Error ? error.message : "Failed to connect",
       }));
     }
   }, [autoReconnect, maxReconnectAttempts, heartbeatTimeout, log]);

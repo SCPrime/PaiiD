@@ -13,7 +13,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { logger } from "../lib/logger";
+import { logger, type LogData } from "../lib/logger";
 
 export interface PriceData {
   price: number;
@@ -84,9 +84,9 @@ export function useMarketStream(
   const heartbeatCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const log = useCallback(
-    (...args: unknown[]) => {
+    (message: string, data?: LogData) => {
       if (debug) {
-        logger.info("[useMarketStream]", ...args);
+        logger.info(`[useMarketStream] ${message}`, data);
       }
     },
     [debug]
@@ -118,7 +118,7 @@ export function useMarketStream(
     }
 
     setState((prev) => ({ ...prev, connecting: true, error: null }));
-    log("Connecting to price stream:", symbols);
+    log("Connecting to price stream", { symbols: symbols.join(",") });
 
     try {
       // Build SSE URL
@@ -152,7 +152,7 @@ export function useMarketStream(
             const timeSinceHeartbeat = (Date.now() - currentState.lastHeartbeat.getTime()) / 1000;
 
             if (timeSinceHeartbeat > heartbeatTimeout) {
-              log(`⚠️ Heartbeat timeout (${timeSinceHeartbeat.toFixed(0)}s since last heartbeat)`);
+              log("⚠️ Heartbeat timeout", { timeSinceHeartbeat: timeSinceHeartbeat.toFixed(0) });
 
               // Trigger reconnect
               if (eventSourceRef.current) {
@@ -163,7 +163,8 @@ export function useMarketStream(
               if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
                 reconnectAttemptsRef.current++;
                 log(
-                  `🔄 Reconnecting due to heartbeat timeout (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
+                  "🔄 Reconnecting due to heartbeat timeout",
+                  { attempt: reconnectAttemptsRef.current, max: maxReconnectAttempts }
                 );
                 connect();
               }
@@ -184,7 +185,7 @@ export function useMarketStream(
       eventSource.addEventListener("price_update", (event) => {
         try {
           const newPrices = JSON.parse(event.data) as Record<string, PriceData>;
-          log("📈 Price update:", Object.keys(newPrices).length, "symbols");
+          log("📈 Price update", { count: Object.keys(newPrices).length });
 
           setState((prev) => ({
             ...prev,
@@ -243,7 +244,8 @@ export function useMarketStream(
           const backoffTime = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Max 30s
 
           log(
-            `⏳ Reconnecting in ${backoffTime / 1000}s (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
+            "⏳ Reconnecting",
+            { backoffSeconds: backoffTime / 1000, attempt: reconnectAttemptsRef.current, max: maxReconnectAttempts }
           );
 
           reconnectTimeoutRef.current = setTimeout(() => {
@@ -262,7 +264,7 @@ export function useMarketStream(
         ...prev,
         connected: false,
         connecting: false,
-        error: error.message || "Failed to connect",
+        error: error instanceof Error ? error.message : "Failed to connect",
       }));
     }
   }, [symbols, autoReconnect, maxReconnectAttempts, heartbeatTimeout, log]);

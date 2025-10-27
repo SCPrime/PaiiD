@@ -1,28 +1,28 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import Dashboard from '../pages/index';
 import { HelpProvider } from '../hooks/useHelp';
 
 // Mock API server
 const server = setupServer(
-  rest.get('/api/health', (req, res, ctx) => {
-    return res(ctx.json({ status: 'healthy', timestamp: new Date().toISOString() }));
+  http.get('/api/health', () => {
+    return HttpResponse.json({ status: 'healthy', timestamp: new Date().toISOString() });
   }),
-  rest.get('/api/market-data/*', (req, res, ctx) => {
-    return res(ctx.json({
+  http.get('/api/market-data/*', () => {
+    return HttpResponse.json({
       symbol: 'AAPL',
       price: 150.00,
       change: 1.50,
       changePercent: 1.01
-    }));
+    });
   }),
-  rest.get('/api/options/*', (req, res, ctx) => {
-    return res(ctx.json({
+  http.get('/api/options/*', () => {
+    return HttpResponse.json({
       symbol: 'AAPL',
       strikes: [145, 150, 155],
       expirations: ['2025-11-15', '2025-12-20']
-    }));
+    });
   })
 );
 

@@ -1,6 +1,7 @@
 import { Clock } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { logger } from "../lib/logger";
 import StockLookup from "./StockLookup";
 
 interface NewsArticle {
@@ -37,10 +38,17 @@ const NewsReview: React.FC = () => {
   const [selectedProvider, setSelectedProvider] = useState<string>("all");
   const [marketSentiment, setMarketSentiment] = useState<{
     overall: string;
+    overall_sentiment: string;
     bullish: number;
     bearish: number;
     neutral: number;
     keyEvents: string[];
+    total_articles: number;
+    sentiment_distribution: {
+      bullish_percent: number;
+      neutral_percent: number;
+      bearish_percent: number;
+    };
   } | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -55,6 +63,12 @@ const NewsReview: React.FC = () => {
     sentiment: string;
     keyPoints: string[];
     impact: string;
+    article_info?: {
+      title: string;
+    };
+    ai_analysis?: {
+      sentiment: string;
+    };
   } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -243,7 +257,7 @@ const NewsReview: React.FC = () => {
   };
 
   // AI Analysis Function
-  const analyzeNewsWithAI = async (article: unknown) => {
+  const analyzeNewsWithAI = async (article: NewsArticle) => {
     setAiLoading(true);
     setAiError(null);
     setSelectedArticle(article);
@@ -255,10 +269,10 @@ const NewsReview: React.FC = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: article.headline || article.title,
-          content: article.summary || article.content || article.description,
+          title: article.title,
+          content: article.summary,
           source: article.source || "Unknown",
-          published_at: article.created_at || article.updated_at || new Date().toISOString(),
+          published_at: article.published_at || new Date().toISOString(),
         }),
       });
 
@@ -271,7 +285,7 @@ const NewsReview: React.FC = () => {
       setShowAiPanel(true);
     } catch (error: unknown) {
       logger.error("AI News Analysis error", error);
-      setAiError(error.message || "Failed to analyze news");
+      setAiError(error instanceof Error ? error.message : "Failed to analyze news");
     } finally {
       setAiLoading(false);
     }

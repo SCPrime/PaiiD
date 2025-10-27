@@ -169,7 +169,7 @@ async function updateRealTimePL(position: PositionTracking): Promise<PositionTra
  * Calculate current greeks based on leg prices (simplified)
  */
 type OptionLeg = {
-  type: "CALL" | "PUT";
+  type: "STOCK" | "CALL" | "PUT";
   side: "BUY" | "SELL";
   qty: number;
   actualPrice: number;

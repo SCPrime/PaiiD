@@ -110,7 +110,7 @@ export default function MLModelManagement() {
       case "stale":
       case "critical":
       case "error":
-        return theme.colors.error;
+        return theme.colors.danger;
       default:
         return theme.colors.textMuted;
     }
@@ -127,7 +127,7 @@ export default function MLModelManagement() {
       case "degraded":
       case "critical":
       case "error":
-        return <AlertTriangle size={20} color={theme.colors.error} />;
+        return <AlertTriangle size={20} color={theme.colors.danger} />;
       default:
         return <Activity size={20} />;
     }
@@ -136,7 +136,7 @@ export default function MLModelManagement() {
   const getHealthScoreColor = (score: number): string => {
     if (score >= 80) return theme.colors.success;
     if (score >= 60) return theme.colors.warning;
-    return theme.colors.error;
+    return theme.colors.danger;
   };
 
   const formatDuration = (seconds: number): string => {
@@ -247,7 +247,7 @@ export default function MLModelManagement() {
             data.system_status === "healthy"
               ? "green"
               : data.system_status === "degraded"
-                ? "yellow"
+                ? "orange"
                 : "red"
           }
           style={{ marginBottom: theme.spacing.lg }}
@@ -518,11 +518,11 @@ export default function MLModelManagement() {
                             key={issueIdx}
                             style={{
                               fontSize: "12px",
-                              color: theme.colors.error,
+                              color: theme.colors.danger,
                               padding: "4px 8px",
                               background: "rgba(239, 68, 68, 0.1)",
-                              borderRadius: theme.borderRadius.xs,
-                              marginBottom: theme.spacing.xs,
+                              borderRadius: theme.borderRadius.sm,
+                              marginBottom: theme.spacing.sm,
                             }}
                           >
                             ⚠️ {issue}
@@ -542,8 +542,8 @@ export default function MLModelManagement() {
                               color: theme.colors.secondary,
                               padding: "4px 8px",
                               background: "rgba(6, 182, 212, 0.1)",
-                              borderRadius: theme.borderRadius.xs,
-                              marginBottom: theme.spacing.xs,
+                              borderRadius: theme.borderRadius.sm,
+                              marginBottom: theme.spacing.sm,
                             }}
                           >
                             💡 {rec}
@@ -573,11 +573,11 @@ export default function MLModelManagement() {
                         alignItems: "center",
                         padding: "0 12px",
                         background: "rgba(239, 68, 68, 0.2)",
-                        border: `1px solid ${theme.colors.error}`,
+                        border: `1px solid ${theme.colors.danger}`,
                         borderRadius: theme.borderRadius.md,
                         fontSize: "12px",
                         fontWeight: "700",
-                        color: theme.colors.error,
+                        color: theme.colors.danger,
                       }}
                     >
                       RETRAIN NEEDED

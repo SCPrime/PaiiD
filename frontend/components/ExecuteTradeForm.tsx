@@ -109,8 +109,19 @@ export default function ExecuteTradeForm() {
   const [aiAnalysis, setAiAnalysis] = useState<{
     recommendation: string;
     confidence: number;
+    confidence_score: number;
     reasoning: string;
     riskLevel: string;
+    summary: string;
+    current_price: number;
+    momentum: string;
+    trend: string;
+    risk_assessment: string;
+    support_level: number;
+    resistance_level: number;
+    entry_suggestion: string;
+    stop_loss_suggestion: number;
+    take_profit_suggestion: number;
   } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);

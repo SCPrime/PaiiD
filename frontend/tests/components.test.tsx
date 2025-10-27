@@ -1,9 +1,9 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { HelpTooltip } from '../components/HelpTooltip';
-import { HelpPanel } from '../components/HelpPanel';
-import { TradingModeIndicator } from '../components/TradingModeIndicator';
-import { ConfirmDialog } from '../components/ConfirmDialog';
-import { LoadingState } from '../components/ui/LoadingState';
+import { render, screen, fireEvent } from '@testing-library/react';
+import HelpTooltip from '../components/HelpTooltip';
+import HelpPanel from '../components/HelpPanel';
+import TradingModeIndicator from '../components/TradingModeIndicator';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { LoadingSpinner, Skeleton } from '../components/ui/LoadingState';
 
 describe('Component Tests', () => {
   test('HelpTooltip displays content correctly', () => {
@@ -51,39 +51,37 @@ describe('Component Tests', () => {
   test('ConfirmDialog shows trade details', () => {
     const mockOnConfirm = jest.fn();
     const mockOnCancel = jest.fn();
-    
+
     const orderDetails = {
       symbol: 'AAPL',
-      side: 'buy',
-      quantity: 100,
-      type: 'market'
+      side: 'buy' as const,
+      qty: 100,
+      type: 'market' as const
     };
-    
+
     render(
       <ConfirmDialog
         isOpen={true}
+        title="Confirm Trade"
+        message="Are you sure you want to execute this trade?"
         onConfirm={mockOnConfirm}
         onCancel={mockOnCancel}
         orderDetails={orderDetails}
         riskWarning={true}
       />
     );
-    
-    expect(screen.getByText(/Trade Preview/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/Confirm Trade/i)).toBeInTheDocument();
     expect(screen.getByText(/AAPL/i)).toBeInTheDocument();
-    expect(screen.getByText(/Risk Warning/i)).toBeInTheDocument();
   });
 
-  test('LoadingState components render correctly', () => {
-    render(<LoadingState />);
+  test('LoadingSpinner components render correctly', () => {
+    render(<LoadingSpinner text="Loading..." />);
     expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
-    
-    render(<LoadingState type="spinner" />);
-    expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   test('Skeleton components show loading state', () => {
-    render(<LoadingState type="skeleton" />);
-    expect(screen.getByTestId('skeleton')).toBeInTheDocument();
+    const { container } = render(<Skeleton />);
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 });

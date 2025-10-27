@@ -54,13 +54,14 @@ describe('NewsReview', () => {
   };
 
   beforeEach(() => {
-    global.fetch = jest.fn((url) => {
-      if (url.includes('/news/sentiment/market')) {
+    global.fetch = jest.fn((url: string | URL | Request) => {
+      const urlString = typeof url === 'string' ? url : url.toString();
+      if (urlString.includes('/news/sentiment/market')) {
         return Promise.resolve({
           ok: true,
           json: async () => mockMarketSentiment,
         } as Response);
-      } else if (url.includes('/news/providers')) {
+      } else if (urlString.includes('/news/providers')) {
         return Promise.resolve({
           ok: true,
           json: async () => ({ providers: [{ name: 'tradier' }, { name: 'alpaca' }] }),

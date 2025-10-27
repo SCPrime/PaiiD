@@ -79,14 +79,14 @@ export default function MLAnalyticsDashboard() {
   const getAccuracyColor = (accuracy: number): string => {
     if (accuracy >= 80) return theme.colors.success;
     if (accuracy >= 60) return theme.colors.warning;
-    return theme.colors.error;
+    return theme.colors.danger;
   };
 
   const getMetricColor = (value: number, isHigherBetter: boolean = true): string => {
     if (isHigherBetter) {
       if (value >= 0.8) return theme.colors.success;
       if (value >= 0.6) return theme.colors.warning;
-      return theme.colors.error;
+      return theme.colors.danger;
     }
     return theme.colors.secondary;
   };
@@ -189,7 +189,7 @@ export default function MLAnalyticsDashboard() {
                         width: "100px",
                         height: "100px",
                         borderRadius: "50%",
-                        background: theme.colors.background,
+                        background: theme.background.card,
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",

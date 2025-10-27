@@ -17,12 +17,13 @@ interface ScanResult {
   changePercent: number;
   volume: number;
   avgVolume: number;
-  signal: "strong_buy" | "buy" | "neutral" | "sell" | "strong_sell";
+  signal: string;
   indicators: {
     rsi: number;
-    macd: "bullish" | "bearish" | "neutral";
-    movingAverage: "50_above" | "50_below" | "200_above" | "200_below";
-    volumeProfile: "high" | "normal" | "low";
+    macd: number | "bullish" | "bearish" | "neutral";
+    movingAverage?: "50_above" | "50_below" | "200_above" | "200_below";
+    volumeProfile?: "high" | "normal" | "low";
+    bollinger?: number;
   };
   pattern?: string;
   reason: string;
@@ -87,13 +88,17 @@ export default function MarketScanner() {
         volume: r.volume,
         avgVolume: r.avgVolume,
         signal: r.signal,
-        indicators: r.indicators || {
+        indicators: r.indicators ? {
+          rsi: r.indicators.rsi,
+          macd: r.indicators.macd,
+          bollinger: r.indicators.bollinger,
+        } : {
           rsi: 50,
           macd: "neutral",
-          movingAverage: "50_above",
-          volumeProfile: "normal",
+          movingAverage: "50_above" as const,
+          volumeProfile: "normal" as const,
         },
-        pattern: r.pattern,
+        pattern: (r as any).pattern,
         reason: r.reason || "",
       }));
       setResults(apiResults);

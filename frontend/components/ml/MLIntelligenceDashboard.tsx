@@ -99,11 +99,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
       generateInsights(regimeData, patternsData.patterns || []);
     } catch (error) {
       logger.error("Failed to load ML insights", error);
-      toast({
-        title: "ML Analysis Failed",
-        description: "Unable to load market intelligence. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("ML Analysis Failed", "Unable to load market intelligence. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -113,7 +109,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
     const newInsights: MLInsight[] = [];
 
     // Market regime insight
-    if (regimeData.regime) {
+    if (regimeData && regimeData.regime) {
       newInsights.push({
         id: "market-regime",
         type: "regime",
@@ -123,7 +119,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
         actionable: true,
         impact: regimeData.confidence > 0.8 ? "high" : "medium",
         timestamp: new Date().toISOString(),
-        details: regimeData,
+        details: regimeData as Record<string, unknown>,
       });
     }
 
@@ -138,12 +134,12 @@ export const MLIntelligenceDashboard: React.FC = () => {
         actionable: true,
         impact: pattern.confidence > 0.8 ? "high" : "medium",
         timestamp: new Date().toISOString(),
-        details: pattern,
+        details: pattern as Record<string, unknown>,
       });
     });
 
     // Strategy recommendations
-    if (regimeData.recommended_strategies?.length > 0) {
+    if (regimeData && regimeData.recommended_strategies?.length > 0) {
       newInsights.push({
         id: "strategy-recommendation",
         type: "strategy",
@@ -153,7 +149,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
         actionable: true,
         impact: "high",
         timestamp: new Date().toISOString(),
-        details: regimeData.recommended_strategies,
+        details: regimeData.recommended_strategies as Record<string, unknown>,
       });
     }
 

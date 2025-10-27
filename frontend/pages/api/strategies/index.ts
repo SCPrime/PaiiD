@@ -121,22 +121,25 @@ async function saveStrategy(strategy: Strategy, isUpdate: boolean): Promise<Stra
 
   const now = new Date().toISOString();
 
+  // Type assertion for strategy properties (since Strategy is unknown)
+  const strategyData = strategy as Record<string, any>;
+
   // Generate strategy_id if new
-  if (!isUpdate || !strategy.strategy_id) {
-    strategy.strategy_id = `strat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  if (!isUpdate || !strategyData.strategy_id) {
+    strategyData.strategy_id = `strat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   // Mock version management
-  const currentVersion = await getCurrentVersion(strategy.strategy_id);
+  const currentVersion = await getCurrentVersion(strategyData.strategy_id as string);
   const newVersion = currentVersion + 1;
 
   const record: StrategyRecord = {
-    strategy_id: strategy.strategy_id,
+    strategy_id: strategyData.strategy_id as string,
     version: newVersion,
     user_id: "mock_user_1", // In production, get from auth session
-    name: strategy.name,
+    name: (strategyData.name as string) || "Unnamed Strategy",
     strategy_json: strategy,
-    created_at: isUpdate ? await getCreatedAt(strategy.strategy_id) : now,
+    created_at: isUpdate ? await getCreatedAt(strategyData.strategy_id as string) : now,
     updated_at: now,
     active: true,
   };

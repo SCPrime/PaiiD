@@ -21,7 +21,7 @@ interface ConfirmDialogProps {
     option_type?: "call" | "put";
     strike_price?: number;
     expiration_date?: string;
-  };
+  } | null;
   riskWarning?: boolean;
 }
 

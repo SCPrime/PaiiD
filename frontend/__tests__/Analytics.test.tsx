@@ -62,18 +62,19 @@ describe('Analytics', () => {
   };
 
   beforeEach(() => {
-    global.fetch = jest.fn((url) => {
-      if (url.includes('/analytics/performance')) {
+    global.fetch = jest.fn((url: string | URL | Request) => {
+      const urlString = typeof url === 'string' ? url : url.toString();
+      if (urlString.includes('/analytics/performance')) {
         return Promise.resolve({
           ok: true,
           json: async () => mockPerformanceData,
         } as Response);
-      } else if (url.includes('/portfolio/history')) {
+      } else if (urlString.includes('/portfolio/history')) {
         return Promise.resolve({
           ok: true,
           json: async () => mockHistoryData,
         } as Response);
-      } else if (url.includes('/portfolio/summary')) {
+      } else if (urlString.includes('/portfolio/summary')) {
         return Promise.resolve({
           ok: true,
           json: async () => mockSummaryData,
@@ -223,8 +224,9 @@ describe('Analytics', () => {
       opportunities: ['Add defensive stocks'],
     };
 
-    global.fetch = jest.fn((url) => {
-      if (url.includes('/ai/analyze-portfolio')) {
+    global.fetch = jest.fn((url: string | URL | Request) => {
+      const urlString = typeof url === 'string' ? url : url.toString();
+      if (urlString.includes('/ai/analyze-portfolio')) {
         return Promise.resolve({
           ok: true,
           json: async () => mockAIAnalysis,
@@ -260,8 +262,9 @@ describe('Analytics', () => {
       recommendations: ['Consider rebalancing', 'Reduce tech exposure'],
     };
 
-    global.fetch = jest.fn((url) => {
-      if (url.includes('/ai/analyze-portfolio')) {
+    global.fetch = jest.fn((url: string | URL | Request) => {
+      const urlString = typeof url === 'string' ? url : url.toString();
+      if (urlString.includes('/ai/analyze-portfolio')) {
         return Promise.resolve({
           ok: true,
           json: async () => mockAIAnalysis,
