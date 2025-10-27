@@ -618,26 +618,27 @@ function renderMarketData(
     .style("text-shadow", "0 2px 6px rgba(0, 0, 0, 0.6)")
     .style("pointer-events", "none")
     .text(
-      isMarketDataLoading && marketData.dow.value === 0
+      isMarketDataLoading && (!marketData.dow || marketData.dow.value === 0)
         ? "Loading..."
-        : marketData.dow.value.toLocaleString("en-US", { minimumFractionDigits: 2 })
+        : (marketData.dow?.value || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })
     );
 
+  const dowChangeValue = marketData.dow?.change || 0;
   const dowChange = dow
     .append("text")
     .attr("text-anchor", "middle")
     .attr("dy", "26")
     .attr("font-size", fontSizes.marketChange)
     .attr("font-weight", "800")
-    .attr("fill", marketData.dow.change >= 0 ? "#45f0c0" : "#ef4444")
+    .attr("fill", dowChangeValue >= 0 ? "#45f0c0" : "#ef4444")
     .style(
       "text-shadow",
       "0 0 10px " +
-        (marketData.dow.change >= 0 ? "rgba(69, 240, 192, 0.5)" : "rgba(239, 68, 68, 0.5)")
+        (dowChangeValue >= 0 ? "rgba(69, 240, 192, 0.5)" : "rgba(239, 68, 68, 0.5)")
     )
     .style("pointer-events", "none")
     .text(
-      `${marketData.dow.change >= 0 ? "▲" : "▼"} ${Math.abs(marketData.dow.change).toFixed(2)}%`
+      `${dowChangeValue >= 0 ? "▲" : "▼"} ${Math.abs(dowChangeValue).toFixed(2)}%`
     );
 
   // Animate DOW change
@@ -684,26 +685,27 @@ function renderMarketData(
     .style("text-shadow", "0 2px 6px rgba(0, 0, 0, 0.6)")
     .style("pointer-events", "none")
     .text(
-      isMarketDataLoading && marketData.nasdaq.value === 0
+      isMarketDataLoading && (!marketData.nasdaq || marketData.nasdaq.value === 0)
         ? "Loading..."
-        : marketData.nasdaq.value.toLocaleString("en-US", { minimumFractionDigits: 2 })
+        : (marketData.nasdaq?.value || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })
     );
 
+  const nasdaqChangeValue = marketData.nasdaq?.change || 0;
   const nasdaqChange = nasdaqGroup
     .append("text")
     .attr("text-anchor", "middle")
     .attr("dy", "26")
     .attr("font-size", fontSizes.marketChange)
     .attr("font-weight", "800")
-    .attr("fill", marketData.nasdaq.change >= 0 ? "#45f0c0" : "#ef4444")
+    .attr("fill", nasdaqChangeValue >= 0 ? "#45f0c0" : "#ef4444")
     .style(
       "text-shadow",
       "0 0 10px " +
-        (marketData.nasdaq.change >= 0 ? "rgba(69, 240, 192, 0.5)" : "rgba(239, 68, 68, 0.5)")
+        (nasdaqChangeValue >= 0 ? "rgba(69, 240, 192, 0.5)" : "rgba(239, 68, 68, 0.5)")
     )
     .style("pointer-events", "none")
     .text(
-      `${marketData.nasdaq.change >= 0 ? "▲" : "▼"} ${Math.abs(marketData.nasdaq.change).toFixed(2)}%`
+      `${nasdaqChangeValue >= 0 ? "▲" : "▼"} ${Math.abs(nasdaqChangeValue).toFixed(2)}%`
     );
 
   // Animate NASDAQ change
@@ -770,22 +772,34 @@ function renderForceFieldConfidence(
 function updateMarketDataText(svgElement: SVGSVGElement, marketData: MarketDataState) {
   const svg = d3.select(svgElement);
 
+  // Safety check: ensure marketData has required properties
+  if (!marketData || !marketData.dow || !marketData.nasdaq) {
+    logger.warn("[updateMarketDataText] Invalid marketData, skipping update", { marketData });
+    return;
+  }
+
   // Update DOW and NASDAQ values
+  // Fixed: Changed dy="20" to dy="14" to match actual rendered attributes (lines 614, 680)
   svg
     .selectAll("text")
     .filter(function () {
-      return (
-        d3
-          .select(this as SVGTextElement)
-          .text()
-          .includes(".") && d3.select(this as SVGTextElement).attr("dy") === "20"
-      );
+      const textElement = d3.select(this as SVGTextElement);
+      const text = textElement.text();
+      const dy = textElement.attr("dy");
+      return text && text.includes(".") && dy === "14";
     })
     .each(function () {
       const element = this as SVGTextElement;
       const text = d3.select(element);
       const parentNode = element.parentNode as SVGGElement;
+
+      if (!parentNode) {
+        logger.warn("[updateMarketDataText] parentNode is null, skipping element");
+        return;
+      }
+
       const transform = d3.select(parentNode).attr("transform");
+
       if (transform && transform.includes("-15")) {
         // DOW value text
         text.text(marketData.dow.value.toLocaleString("en-US", { minimumFractionDigits: 2 }));
@@ -796,16 +810,24 @@ function updateMarketDataText(svgElement: SVGSVGElement, marketData: MarketDataS
     });
 
   // Update change percentages
+  // Fixed: Changed dy="38" to dy="26" to match actual rendered attributes (lines 629, 695)
   svg
     .selectAll("text")
     .filter(function () {
-      return d3.select(this as SVGTextElement).attr("dy") === "38";
+      return d3.select(this as SVGTextElement).attr("dy") === "26";
     })
     .each(function () {
       const element = this as SVGTextElement;
       const text = d3.select(element);
       const parentNode = element.parentNode as SVGGElement;
+
+      if (!parentNode) {
+        logger.warn("[updateMarketDataText] parentNode is null for change percentage, skipping");
+        return;
+      }
+
       const transform = d3.select(parentNode).attr("transform");
+
       if (transform && transform.includes("-15")) {
         // DOW change
         text

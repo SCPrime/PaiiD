@@ -82,7 +82,13 @@ export function useMarketData() {
         eventSource = new EventSource("/api/proxy/stream/market-indices");
 
         eventSource.addEventListener("indices_update", (e) => {
-          const data = JSON.parse(e.data);
+          let data;
+          try {
+            data = JSON.parse(e.data);
+          } catch (error) {
+            logger.error("[useMarketData] Failed to parse SSE indices_update data", { error, raw: e.data });
+            return; // Skip this malformed update
+          }
           logger.debug("[useMarketData] Received live market data", { data });
 
           const now = Date.now();
@@ -135,7 +141,13 @@ export function useMarketData() {
         });
 
         eventSource.addEventListener("heartbeat", (e) => {
-          const data = JSON.parse(e.data);
+          let data;
+          try {
+            data = JSON.parse(e.data);
+          } catch (error) {
+            logger.error("[useMarketData] Failed to parse SSE heartbeat data", { error, raw: e.data });
+            return; // Skip malformed heartbeat
+          }
           logger.debug("[useMarketData] SSE heartbeat received", { timestamp: data.timestamp });
         });
 
