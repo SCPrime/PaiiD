@@ -261,6 +261,43 @@ async def ready_full_check():
     return {"status": overall, "checks": checks, "time": datetime.now().isoformat()}
 
 
+@router.get("/features")
+async def features_status():
+    """
+    Feature availability status from readiness registry.
+
+    Shows which optional services are available and why they might be unavailable.
+    This endpoint helps monitor graceful degradation of optional features.
+
+    Does NOT require authentication (useful for monitoring systems).
+    """
+    try:
+        from ..core.readiness_registry import get_readiness_registry
+
+        registry = get_readiness_registry()
+        all_services = registry.get_all_services()
+
+        # Calculate summary stats
+        available_count = sum(1 for s in all_services.values() if s["available"])
+        total_count = len(all_services)
+
+        return {
+            "status": "ok",
+            "features": all_services,
+            "summary": {
+                "total": total_count,
+                "available": available_count,
+                "unavailable": total_count - available_count
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Features status check failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Features status check failed") from e
+
+
 @router.get("/sentry-test")
 async def sentry_test():
     """Test endpoint that raises an exception for Sentry testing"""

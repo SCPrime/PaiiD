@@ -2,15 +2,17 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from ..core.readiness_registry import get_readiness_registry
 from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 
 
 router = APIRouter()
 
-# Initialize news aggregator at module level
+# Initialize news aggregator at module level using readiness registry
 news_aggregator = None
 news_cache = None
+registry = get_readiness_registry()
 
 try:
     from app.services.news.news_aggregator import NewsAggregator
@@ -18,10 +20,13 @@ try:
 
     news_aggregator = NewsAggregator()
     news_cache = get_news_cache()
+    registry.register("news", available=True)
     print("[OK] News aggregator initialized with available providers")
     print("[OK] News cache initialized")
 except Exception as e:
+    registry.register("news", available=False, reason=str(e))
     print(f"[WARNING] News aggregator failed to initialize: {e}")
+    print(f"[INFO] News endpoints will return 503 with reason: {e}")
 
 
 @router.get("/news/company/{symbol}")
@@ -43,8 +48,12 @@ async def get_company_news(
         provider: Filter by provider name (finnhub, alpha_vantage, polygon)
         use_cache: Whether to use cached results
     """
-    if not news_aggregator:
-        raise HTTPException(status_code=503, detail="News service unavailable")
+    if not registry.is_available("news"):
+        reason = registry.get_reason("news")
+        raise HTTPException(
+            status_code=503,
+            detail=f"News service unavailable: {reason}"
+        )
 
     try:
         # Check cache first (cache key includes filters)
@@ -118,8 +127,12 @@ async def get_market_news(
         provider: Filter by provider name (finnhub, alpha_vantage, polygon)
         use_cache: Whether to use cached results
     """
-    if not news_aggregator:
-        raise HTTPException(status_code=503, detail="News service unavailable")
+    if not registry.is_available("news"):
+        reason = registry.get_reason("news")
+        raise HTTPException(
+            status_code=503,
+            detail=f"News service unavailable: {reason}"
+        )
 
     try:
         # Check cache first (cache key includes filters)
@@ -180,8 +193,8 @@ async def get_market_news(
 @router.get("/news/providers")
 async def get_news_providers(current_user: User = Depends(get_current_user_unified)):
     """List active news providers"""
-    if not news_aggregator:
-        return {"providers": [], "status": "unavailable"}
+    if not registry.is_available("news"):
+        return {"providers": [], "status": "unavailable", "reason": registry.get_reason("news")}
 
     providers = [
         {"name": p.get_provider_name(), "status": "active"}
@@ -207,8 +220,12 @@ async def get_news_health(current_user: User = Depends(get_current_user_unified)
 
     Use this for monitoring and alerting on news service degradation.
     """
-    if not news_aggregator:
-        return {"status": "unavailable", "message": "News aggregator not initialized"}
+    if not registry.is_available("news"):
+        return {
+            "status": "unavailable",
+            "message": "News aggregator not initialized",
+            "reason": registry.get_reason("news")
+        }
 
     try:
         health = news_aggregator.get_provider_health()
@@ -233,8 +250,12 @@ async def get_market_sentiment(
 
     Returns sentiment distribution and average score across all news
     """
-    if not news_aggregator:
-        raise HTTPException(status_code=503, detail="News service unavailable")
+    if not registry.is_available("news"):
+        reason = registry.get_reason("news")
+        raise HTTPException(
+            status_code=503,
+            detail=f"News service unavailable: {reason}"
+        )
 
     try:
         articles = news_aggregator.get_market_news(category, 200)
@@ -295,7 +316,7 @@ async def get_market_sentiment(
 async def get_cache_stats(current_user: User = Depends(get_current_user_unified)):
     """Get news cache statistics"""
     if not news_cache:
-        return {"status": "unavailable"}
+        return {"status": "unavailable", "reason": "News cache not initialized"}
 
     return news_cache.get_stats()
 
@@ -304,7 +325,10 @@ async def get_cache_stats(current_user: User = Depends(get_current_user_unified)
 async def clear_news_cache(current_user: User = Depends(get_current_user_unified)):
     """Clear all cached news"""
     if not news_cache:
-        raise HTTPException(status_code=503, detail="Cache unavailable")
+        raise HTTPException(
+            status_code=503,
+            detail="Cache unavailable: News cache not initialized"
+        )
 
     news_cache.clear_all()
     return {
