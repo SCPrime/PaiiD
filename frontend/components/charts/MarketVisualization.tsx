@@ -45,39 +45,51 @@ const MarketVisualization: React.FC<MarketVisualizationProps> = ({
     autoConnect: true,
   });
 
-  // Generate mock market data
+  // Fetch real market data from backend
   useEffect(() => {
-    const generateMockData = (): MarketData[] => {
-      const sectors = [
-        { name: "Technology", color: "#3b82f6" },
-        { name: "Healthcare", color: "#10b981" },
-        { name: "Finance", color: "#f59e0b" },
-        { name: "Energy", color: "#ef4444" },
-        { name: "Consumer", color: "#8b5cf6" },
-        { name: "Industrial", color: "#06b6d4" },
-      ];
+    const fetchMarketData = async () => {
+      _setIsLoading(true);
+      _setError(null);
+      try {
+        const response = await fetch(
+          `/api/proxy/api/market/indices?symbols=${symbols.join(',')}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      return symbols.map((symbol) => {
-        const change = (Math.random() - 0.5) * 20;
-        const baseValue = 50 + Math.random() * 300;
-        const volume = Math.floor(Math.random() * 50000000) + 1000000;
-        const marketCap = Math.floor(Math.random() * 2000000000000) + 10000000000;
-        const sector = sectors[Math.floor(Math.random() * sectors.length)];
+        if (!response.ok) {
+          throw new Error(`Failed to fetch market data: ${response.statusText}`);
+        }
 
-        return {
-          symbol,
-          value: Number(baseValue.toFixed(2)),
-          change: Number(change.toFixed(2)),
-          changePercent: Number(((change / baseValue) * 100).toFixed(2)),
-          volume,
-          marketCap,
-          sector: sector.name,
-          color: sector.color,
-        };
-      });
+        const data = await response.json();
+
+        // Transform API data to MarketData format
+        const transformedData: MarketData[] = (data.data || []).map((item: any) => ({
+          symbol: item.symbol,
+          value: item.last || item.price || 0,
+          change: item.change || 0,
+          changePercent: item.change_percentage || item.changePercent || 0,
+          volume: item.volume || 0,
+          marketCap: item.market_cap || 0,
+          sector: item.sector || 'Unknown',
+          color: item.changePercent >= 0 ? '#10b981' : '#ef4444',
+        }));
+
+        setMarketData(transformedData);
+      } catch (error) {
+        logger.error('Failed to fetch market data', error);
+        _setError('Failed to load market data');
+        setMarketData([]);
+      } finally {
+        _setIsLoading(false);
+      }
     };
 
-    setMarketData(generateMockData());
+    fetchMarketData();
   }, [symbols]);
 
   // Render treemap visualization

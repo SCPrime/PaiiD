@@ -364,33 +364,37 @@ function renderPreTradeView(container: HTMLDivElement, payoff: TheoreticalPayoff
 
 /**
  * Render live position view (theoretical vs actual)
+ * TODO: Backend endpoint needed - /api/pnl/track-position
  */
 function renderLivePositionView(container: HTMLDivElement, _position: PositionTracking) {
   // For live view, show simple P&L comparison bars
   // In production, render side-by-side payoff curves
-  const mockData = `
+  const placeholderView = `
     <div class="flex items-center justify-center h-full">
       <div class="text-center">
-        <div class="text-slate-400 mb-2">Live position tracking chart</div>
-        <div class="text-sm text-slate-500">Shows real-time P&L vs theoretical baseline</div>
+        <div class="text-slate-400 mb-2">⚠️ Live position tracking chart</div>
+        <div class="text-sm text-slate-500">Real-time P&L comparison not yet available</div>
+        <div class="text-xs text-slate-600 mt-2">Backend endpoint required: /api/pnl/track-position</div>
       </div>
     </div>
   `;
-  container.innerHTML = mockData;
+  container.innerHTML = placeholderView;
 }
 
 /**
  * Render post-trade analysis view
+ * TODO: Backend endpoint needed - /api/pnl/comparison/{positionId}
  */
 function renderPostTradeView(container: HTMLDivElement, _comparison: PLComparison) {
   // Render bar chart showing theoretical vs actual breakdown
-  const mockData = `
+  const placeholderView = `
     <div class="flex items-center justify-center h-full">
       <div class="text-center">
-        <div class="text-slate-400 mb-2">Post-trade analysis chart</div>
-        <div class="text-sm text-slate-500">Final P&L breakdown with slippage attribution</div>
+        <div class="text-slate-400 mb-2">⚠️ Post-trade analysis chart</div>
+        <div class="text-sm text-slate-500">P&L breakdown not yet available</div>
+        <div class="text-xs text-slate-600 mt-2">Backend endpoint required: /api/pnl/comparison/:id</div>
       </div>
     </div>
   `;
-  container.innerHTML = mockData;
+  container.innerHTML = placeholderView;
 }

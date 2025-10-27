@@ -11,12 +11,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Backend: https://paiid-backend.onrender.com (Render)
 
 **⚠️ IMPORTANT - Vercel Decommissioned (October 2025):**
-All Vercel deployments have been permanently deleted. DO NOT use any Vercel URLs:
+All Vercel deployments have been permanently deleted on October 15, 2025.
+**DO NOT** use or reference any Vercel URLs in code, documentation, or configuration.
+
+All references to the following deleted URLs must be removed:
 - ❌ frontend-scprimes-projects.vercel.app (DELETED)
 - ❌ ai-trader-snowy.vercel.app (DELETED)
 - ❌ paiid-snowy.vercel.app (DELETED)
+- ❌ ANY *.vercel.app URLs (ALL DELETED)
 
-Only use Render URLs listed above. See `VERCEL_DECOMMISSIONED.md` for details.
+**Production Platform: Render ONLY**
+- Frontend: https://paiid-frontend.onrender.com
+- Backend: https://paiid-backend.onrender.com
+
+See `VERCEL_DECOMMISSIONED.md` for complete migration details.
 
 ## Architecture
 

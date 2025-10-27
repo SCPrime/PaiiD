@@ -42,30 +42,50 @@ const PortfolioHeatmap: React.FC<PortfolioHeatmapProps> = ({
     autoConnect: true,
   });
 
-  // Generate mock heatmap data
+  // Fetch real portfolio positions for heatmap
   useEffect(() => {
-    const generateMockData = (): HeatmapData[] => {
-      const sectors = ["Technology", "Healthcare", "Finance", "Energy", "Consumer", "Industrial"];
+    const fetchHeatmapData = async () => {
+      _setIsLoading(true);
+      _setError(null);
+      try {
+        const response = await fetch(
+          `/api/proxy/api/portfolio/positions`,
+          {
+            headers: {
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      return symbols.map((symbol) => {
-        const change = (Math.random() - 0.5) * 20; // -10% to +10%
-        const baseValue = 100 + Math.random() * 200; // $100 to $300
-        const volume = Math.floor(Math.random() * 10000000) + 1000000;
-        const marketCap = Math.floor(Math.random() * 1000000000000) + 100000000000;
+        if (!response.ok) {
+          throw new Error(`Failed to fetch positions: ${response.statusText}`);
+        }
 
-        return {
-          symbol,
-          value: Number(baseValue.toFixed(2)),
-          change: Number(change.toFixed(2)),
-          changePercent: Number(((change / baseValue) * 100).toFixed(2)),
-          volume,
-          marketCap,
-          sector: sectors[Math.floor(Math.random() * sectors.length)],
-        };
-      });
+        const data = await response.json();
+
+        // Transform positions to heatmap format
+        const heatmap: HeatmapData[] = (data.positions || []).map((pos: any) => ({
+          symbol: pos.symbol,
+          value: pos.current_price || 0,
+          change: pos.unrealized_pl || 0,
+          changePercent: pos.unrealized_plpc || 0,
+          volume: pos.qty || 0,
+          marketCap: pos.market_value || 0,
+          sector: pos.sector || 'Unknown',
+        }));
+
+        setHeatmapData(heatmap);
+      } catch (error) {
+        logger.error('Failed to fetch heatmap data', error);
+        _setError('Failed to load portfolio heatmap');
+        setHeatmapData([]);
+      } finally {
+        _setIsLoading(false);
+      }
     };
 
-    setHeatmapData(generateMockData());
+    fetchHeatmapData();
   }, [symbols]);
 
   // Render heatmap

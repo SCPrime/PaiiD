@@ -17,12 +17,12 @@ Complete architectural cleanup performed. **ZERO** localhost references remain i
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     BROWSER (User)                           │
-│              https://ai-trader-snowy.vercel.app              │
+│         https://paiid-frontend.onrender.com                  │
 └──────────────────────┬──────────────────────────────────────┘
                        │
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                  FRONTEND (Vercel)                           │
+│                  FRONTEND (Render)                           │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ Components (UserSetupAI, MorningRoutineAI, etc.)    │   │
 │  │        ↓                                             │   │
@@ -37,7 +37,7 @@ Complete architectural cleanup performed. **ZERO** localhost references remain i
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                  BACKEND (Render)                            │
-│           https://ai-trader-86a1.onrender.com                │
+│         https://paiid-backend.onrender.com                   │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ FastAPI App                                          │   │
 │  │   ↓                                                  │   │
@@ -64,7 +64,7 @@ Complete architectural cleanup performed. **ZERO** localhost references remain i
 **File:** `frontend/lib/aiAdapter.ts`
 - **Status:** ✅ CLEAN
 - **Calls:** `${backendUrl}/api/claude/chat`
-- **Fallback:** `https://ai-trader-86a1.onrender.com`
+- **Fallback:** `https://paiid-backend.onrender.com`
 - **No localhost references**
 
 ### 2. **API Routes** ✅
@@ -72,9 +72,9 @@ All use production fallback:
 
 | File | Fallback URL | Status |
 |------|--------------|--------|
-| `pages/api/chat.ts` | `https://ai-trader-86a1.onrender.com` | ✅ |
-| `pages/api/ai/recommendations.ts` | `https://ai-trader-86a1.onrender.com` | ✅ |
-| `pages/api/proxy/[...path].ts` | `https://ai-trader-86a1.onrender.com` | ✅ |
+| `pages/api/chat.ts` | `https://paiid-backend.onrender.com` | ✅ |
+| `pages/api/ai/recommendations.ts` | `https://paiid-backend.onrender.com` | ✅ |
+| `pages/api/proxy/[...path].ts` | `https://paiid-backend.onrender.com` | ✅ |
 
 ### 3. **Components Using AI** ✅
 All import from `lib/aiAdapter`:
@@ -94,7 +94,7 @@ All import from `lib/aiAdapter`:
 ### 5. **CSP Headers** ✅
 **File:** `next.config.js`
 - **Removed:** `localhost:8000`, `127.0.0.1:8001`
-- **Current:** `https://ai-trader-86a1.onrender.com`
+- **Current:** `https://paiid-backend.onrender.com`
 - **Status:** ✅ CLEAN
 
 ---
@@ -152,21 +152,27 @@ fetch('https://ai-trader-86a1.onrender.com/api/claude/chat', {
 
 ## 📝 Deployment Checklist
 
-### Vercel Environment Variables (Recommended)
-Set these in Vercel dashboard for consistency:
+### Frontend Environment Variables (Render - Current Platform)
+Set these in Render dashboard:
 ```
-NEXT_PUBLIC_BACKEND_API_BASE_URL=https://ai-trader-86a1.onrender.com
+NEXT_PUBLIC_API_TOKEN=rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl
+NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-api03-...
+NEXT_PUBLIC_BACKEND_API_BASE_URL=https://paiid-backend.onrender.com
 NEXT_PUBLIC_TELEMETRY_ENABLED=false
 ```
 
-### Render Environment Variables (Confirmed)
+**Note:** Vercel platform decommissioned October 15, 2025. All deployments are on Render.
+
+### Render Environment Variables (Current - October 2025)
 ```
 API_TOKEN=rnd_bDRqi1TvLvd3rC78yvUSgDraH2Kl
 ANTHROPIC_API_KEY=sk-ant-api03-xAC9...
 TRADIER_API_KEY=ja7BHhHBu4APAnJERhFc6ri16OP8
 TRADIER_ACCOUNT_ID=6YB64299
-ALLOW_ORIGIN=https://ai-trader-snowy.vercel.app
+ALLOW_ORIGIN=https://paiid-frontend.onrender.com
 ```
+
+**Note:** All Vercel deployments deleted October 15, 2025. Render is the only production platform.
 
 ---
 

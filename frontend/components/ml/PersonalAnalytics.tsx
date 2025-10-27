@@ -75,82 +75,32 @@ export const PersonalAnalytics: React.FC<PersonalAnalyticsProps> = ({
   const loadPersonalAnalytics = async () => {
     setLoading(true);
     try {
-      // Simulate loading personal analytics
-      // In production, this would fetch from the backend
-      const mockAnalytics: PersonalAnalytics = {
-        total_trades: 47,
-        winning_trades: 28,
-        losing_trades: 19,
-        win_rate: 59.6,
-        total_return: 12.4,
-        sharpe_ratio: 1.23,
-        max_drawdown: -8.2,
-        avg_hold_time: 5.3,
-        best_trade: 15.7,
-        worst_trade: -6.8,
-        risk_score: 0.65,
-        consistency_score: 0.78,
-      };
+      // Fetch real personal analytics from backend
+      const response = await fetch(
+        `/api/proxy/api/ml/personal-analytics?userId=${userId}&timeRange=${timeRange}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-      const mockPatterns: TradingPattern[] = [
-        {
-          pattern_name: "Momentum Breakouts",
-          frequency: 12,
-          success_rate: 75.0,
-          avg_return: 8.2,
-          description: "You excel at identifying and trading momentum breakouts",
-        },
-        {
-          pattern_name: "Support Bounces",
-          frequency: 8,
-          success_rate: 62.5,
-          avg_return: 4.1,
-          description: "You have moderate success with support level bounces",
-        },
-        {
-          pattern_name: "Resistance Rejections",
-          frequency: 6,
-          success_rate: 33.3,
-          avg_return: -2.1,
-          description: "You struggle with resistance level rejections",
-        },
-      ];
+      if (!response.ok) {
+        throw new Error(`Failed to fetch personal analytics: ${response.statusText}`);
+      }
 
-      const mockRecommendations: PersonalRecommendation[] = [
-        {
-          type: "improvement",
-          title: "Improve Risk Management",
-          description:
-            "Your average loss (-6.8%) is larger than your average win (8.2%). Consider tighter stop losses.",
-          priority: "high",
-          actionable: true,
-          impact: "Could reduce drawdown by 30-40%",
-        },
-        {
-          type: "opportunity",
-          title: "Leverage Your Strength",
-          description:
-            "You have a 75% success rate with momentum breakouts. Consider increasing position size for these setups.",
-          priority: "medium",
-          actionable: true,
-          impact: "Could increase returns by 15-20%",
-        },
-        {
-          type: "warning",
-          title: "Avoid Resistance Trades",
-          description:
-            "You have a 33% success rate with resistance rejections. Consider avoiding these setups.",
-          priority: "medium",
-          actionable: true,
-          impact: "Could improve win rate by 5-10%",
-        },
-      ];
+      const data = await response.json();
 
-      setAnalytics(mockAnalytics);
-      setPatterns(mockPatterns);
-      setRecommendations(mockRecommendations);
+      setAnalytics(data.analytics || null);
+      setPatterns(data.patterns || []);
+      setRecommendations(data.recommendations || []);
     } catch (error) {
       logger.error("Failed to load personal analytics", error);
+      // Clear data on error instead of showing mock data
+      setAnalytics(null);
+      setPatterns([]);
+      setRecommendations([]);
     } finally {
       setLoading(false);
     }

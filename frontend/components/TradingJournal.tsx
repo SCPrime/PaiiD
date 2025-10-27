@@ -35,60 +35,34 @@ export default function TradingJournal() {
   }, []);
 
   const loadJournal = () => {
-    // Mock data - in production, load from localStorage or API
-    const mockEntries: JournalEntry[] = [
-      {
-        id: "1",
-        date: new Date().toISOString().split("T")[0],
-        symbol: "AAPL",
-        side: "buy",
-        entry_price: 178.5,
-        exit_price: 182.3,
-        quantity: 50,
-        pnl: 190.0,
-        strategy: "Breakout",
-        setup: "Breaking above 20-day MA with volume",
-        reasoning: "Strong earnings report + bullish technical pattern",
-        emotions: ["confident", "patient"],
-        lessons: "Waiting for confirmation paid off",
-        outcome: "win",
-        tags: ["tech", "earnings", "breakout"],
-      },
-      {
-        id: "2",
-        date: new Date(Date.now() - 86400000).toISOString().split("T")[0],
-        symbol: "TSLA",
-        side: "buy",
-        entry_price: 245.3,
-        exit_price: 238.9,
-        quantity: 25,
-        pnl: -160.0,
-        strategy: "Mean Reversion",
-        setup: "Oversold RSI at support",
-        reasoning: "Expected bounce from support level",
-        emotions: ["anxious", "impatient"],
-        mistakes: "Didn't wait for confirmation, support broke",
-        lessons: "Always wait for reversal confirmation at support",
-        outcome: "loss",
-        tags: ["tech", "support-break"],
-      },
-      {
-        id: "3",
-        date: new Date(Date.now() - 172800000).toISOString().split("T")[0],
-        symbol: "SPY",
-        side: "buy",
-        entry_price: 458.2,
-        quantity: 100,
-        strategy: "Trend Following",
-        setup: "Higher highs and higher lows on daily",
-        reasoning: "Strong market momentum, riding the trend",
-        emotions: ["calm", "disciplined"],
-        outcome: "open",
-        tags: ["spy", "trend"],
-      },
-    ];
+    try {
+      // Load from localStorage (persistent storage like tradeHistory.ts)
+      if (typeof window === 'undefined') return;
 
-    setEntries(mockEntries);
+      const stored = localStorage.getItem('paiid_trading_journal');
+      if (stored) {
+        const parsedEntries = JSON.parse(stored);
+        setEntries(parsedEntries);
+      } else {
+        // No entries yet - start with empty array
+        setEntries([]);
+      }
+    } catch (error) {
+      logger.error('Failed to load trading journal', error);
+      setEntries([]);
+    }
+  };
+
+  const saveJournal = (newEntries: JournalEntry[]) => {
+    try {
+      if (typeof window === 'undefined') return;
+
+      localStorage.setItem('paiid_trading_journal', JSON.stringify(newEntries));
+      setEntries(newEntries);
+      logger.info('Trading journal saved to localStorage');
+    } catch (error) {
+      logger.error('Failed to save trading journal', error);
+    }
   };
 
   const filteredEntries = entries.filter((entry) => {
@@ -298,7 +272,8 @@ export default function TradingJournal() {
                     size="sm"
                     onClick={() => {
                       if (confirm(`Delete entry for ${entry.symbol}?`)) {
-                        setEntries(entries.filter((e) => e.id !== entry.id));
+                        const updatedEntries = entries.filter((e) => e.id !== entry.id);
+                        saveJournal(updatedEntries);
                       }
                     }}
                   >

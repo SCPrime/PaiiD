@@ -274,18 +274,26 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     ]);
   };
 
-  const loadTelemetryData = () => {
-    const mockData: TelemetryData[] = [
-      {
-        sessionId: "sess-001",
-        userId: "beta-001",
-        action: "execute_trade",
-        component: "ExecuteTradeForm",
-        timestamp: new Date().toISOString(),
-        metadata: { symbol: "AAPL", side: "buy", quantity: 10 },
-      },
-    ];
-    setTelemetryData(mockData);
+  const loadTelemetryData = async () => {
+    try {
+      const response = await fetch('/api/proxy/api/telemetry/events', {
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch telemetry: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setTelemetryData(data.events || []);
+    } catch (error) {
+      logger.error('Failed to load telemetry data', error);
+      // Show empty state instead of mock data
+      setTelemetryData([]);
+    }
   };
 
   // Fetch Risk Tolerance from Backend

@@ -469,82 +469,20 @@ export default function Analytics() {
     } catch (error) {
       logger.error("Failed to load analytics", error);
 
-      // Fallback to generating DEMO data if API fails
-      setIsDemoMode(true);
-
-      const mockMetrics: PerformanceMetrics = {
-        totalReturn: 2500,
-        totalReturnPercent: 2.5,
-        winRate: 58.5,
-        profitFactor: 2.13,
-        sharpeRatio: 1.42,
-        maxDrawdown: -12.3,
-        avgWin: 142.5,
-        avgLoss: 87.3,
-        totalTrades: 47,
-        winningTrades: 27,
-        losingTrades: 20,
-      };
-
-      const mockDaily = generateDailyPerformance(timeframe);
-      const mockMonthly = generateMonthlyStats();
-
-      setMetrics(mockMetrics);
-      setDailyPerformance(mockDaily);
-      setMonthlyStats(mockMonthly);
+      // Show error state instead of mock data
+      setIsDemoMode(false);
+      setMetrics(null);
+      setDailyPerformance([]);
+      setMonthlyStats([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const generateDailyPerformance = (tf: string): DailyPerformance[] => {
-    const days = tf === "1W" ? 7 : tf === "1M" ? 30 : tf === "3M" ? 90 : tf === "1Y" ? 365 : 365;
-    const data: DailyPerformance[] = [];
-    let portfolioValue = 100000;
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const pnl = (Math.random() - 0.45) * 500;
-      portfolioValue += pnl;
-      data.push({
-        date: date.toISOString().split("T")[0],
-        pnl,
-        portfolioValue,
-        trades: Math.floor(Math.random() * 5),
-      });
-    }
-    return data;
-  };
-
   const generateMonthlyStats = (): MonthlyStats[] => {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    const currentMonth = new Date().getMonth();
-    const stats: MonthlyStats[] = [];
-
-    for (let i = 0; i < 6; i++) {
-      const monthIndex = (currentMonth - i + 12) % 12;
-      stats.unshift({
-        month: months[monthIndex],
-        profit: (Math.random() - 0.3) * 5000,
-        trades: Math.floor(Math.random() * 50) + 20,
-        winRate: 50 + Math.random() * 20,
-      });
-    }
-    return stats;
+    // TODO: Backend endpoint needed for monthly stats
+    // Placeholder function - should be replaced with real API call
+    return [];
   };
 
   if (loading) {
@@ -559,6 +497,50 @@ export default function Analytics() {
             }}
           >
             Loading analytics...
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error state if no metrics available
+  if (!metrics) {
+    return (
+      <div style={{ padding: theme.spacing.lg }}>
+        <Card>
+          <div
+            style={{
+              textAlign: "center",
+              padding: theme.spacing.xl,
+            }}
+          >
+            <div
+              style={{
+                fontSize: "48px",
+                marginBottom: theme.spacing.md,
+              }}
+            >
+              📊
+            </div>
+            <h3
+              style={{
+                color: theme.colors.text,
+                fontSize: "20px",
+                marginBottom: theme.spacing.sm,
+              }}
+            >
+              Analytics Unavailable
+            </h3>
+            <p
+              style={{
+                color: theme.colors.textMuted,
+                fontSize: "14px",
+                marginBottom: theme.spacing.md,
+              }}
+            >
+              Unable to load analytics data. Please check your backend connection.
+            </p>
+            <Button onClick={loadAnalytics}>Retry</Button>
           </div>
         </Card>
       </div>

@@ -51,38 +51,38 @@ const AdvancedChart: React.FC<AdvancedChartProps> = ({
     autoConnect: true,
   });
 
-  // Generate mock chart data
+  // Fetch real chart data from backend
   useEffect(() => {
-    const generateMockData = () => {
-      const data: ChartData[] = [];
-      const now = new Date();
+    const fetchChartData = async () => {
+      _setIsLoading(true);
+      try {
+        const response = await fetch(
+          `/api/proxy/api/market/historical?symbol=${symbol}&timeframe=${timeFrame}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      for (let i = 100; i >= 0; i--) {
-        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-        const basePrice = 150 + Math.sin(i * 0.1) * 20;
-        const volatility = 2 + Math.random() * 3;
+        if (!response.ok) {
+          throw new Error(`Failed to fetch chart data: ${response.statusText}`);
+        }
 
-        const open = basePrice + (Math.random() - 0.5) * volatility;
-        const close = open + (Math.random() - 0.5) * volatility * 2;
-        const high = Math.max(open, close) + Math.random() * volatility;
-        const low = Math.min(open, close) - Math.random() * volatility;
-        const volume = Math.floor(Math.random() * 1000000) + 100000;
-
-        data.push({
-          timestamp: date.toISOString(),
-          open: Number(open.toFixed(2)),
-          high: Number(high.toFixed(2)),
-          low: Number(low.toFixed(2)),
-          close: Number(close.toFixed(2)),
-          volume,
-        });
+        const data = await response.json();
+        setChartData(data.bars || []);
+      } catch (error) {
+        logger.error('Failed to fetch chart data', error);
+        _setError('Failed to load chart data. Backend endpoint may not be implemented yet.');
+        setChartData([]);
+      } finally {
+        _setIsLoading(false);
       }
-
-      return data;
     };
 
-    setChartData(generateMockData());
-  }, [symbol]);
+    fetchChartData();
+  }, [symbol, timeFrame]);
 
   // Calculate technical indicators
   useEffect(() => {

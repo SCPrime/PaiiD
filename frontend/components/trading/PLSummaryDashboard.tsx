@@ -24,51 +24,27 @@ export default function PLSummaryDashboard() {
     fetchSummaryStats(timeframe);
   }, [timeframe]);
 
-  const fetchSummaryStats = async (_period: string) => {
+  const fetchSummaryStats = async (period: string) => {
     setLoading(true);
     try {
-      // In production, fetch from API
-      // const response = await fetch(`/api/pnl/summary?period=${period}`);
-      // const data = await response.json();
+      // Fetch real P&L summary from backend
+      const response = await fetch(`/api/proxy/api/pnl/summary?period=${period}`, {
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      // Mock data
-      const mockStats: PLSummaryStats = {
-        totalTrades: 23,
-        avgExecutionQuality: 84.6,
-        totalSlippage: -1247,
-        totalTheoreticalPL: 8950,
-        totalActualPL: 7703,
-        performanceGap: -1247,
-        bestCapture: {
-          positionId: "pos_123",
-          score: 96.8,
-          strategy: "Iron Condor",
-        },
-        worstCapture: {
-          positionId: "pos_456",
-          score: 62.3,
-          strategy: "Put Credit Spread",
-        },
-        cumulativeReturns: [
-          { date: new Date("2025-01-01"), theoretical: 0, actual: 0 },
-          { date: new Date("2025-01-08"), theoretical: 1200, actual: 1050 },
-          { date: new Date("2025-01-15"), theoretical: 2800, actual: 2400 },
-          { date: new Date("2025-01-22"), theoretical: 4500, actual: 3850 },
-          { date: new Date("2025-01-29"), theoretical: 6200, actual: 5300 },
-          { date: new Date("2025-02-05"), theoretical: 7400, actual: 6350 },
-          { date: new Date("2025-02-12"), theoretical: 8950, actual: 7703 },
-        ],
-        slippageAttribution: {
-          entrySlippage: -687,
-          exitSlippage: -423,
-          greeksVariance: -95,
-          marketMovement: -42,
-        },
-      };
+      if (!response.ok) {
+        throw new Error(`Failed to fetch summary stats: ${response.statusText}`);
+      }
 
-      setStats(mockStats);
+      const data = await response.json();
+      setStats(data);
     } catch (error) {
       logger.error("Failed to fetch summary stats", error);
+      // Clear data on error instead of showing mock data
+      setStats(null);
     } finally {
       setLoading(false);
     }

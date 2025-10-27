@@ -40,13 +40,65 @@ export interface StrategyPerformance {
 }
 
 /**
- * Mock trade history storage (in production, use database)
+ * LocalStorage keys for persistence
  */
-let mockTradeHistory: TradeRecord[] = [];
-let mockPerformanceCache: Record<string, StrategyPerformance> = {};
+const TRADE_HISTORY_KEY = 'paiid_trade_history';
+const PERFORMANCE_CACHE_KEY = 'paiid_performance_cache';
 
 /**
- * Record a new trade
+ * Load trade history from localStorage
+ */
+function loadTradeHistory(): TradeRecord[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(TRADE_HISTORY_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    logger.error('Failed to load trade history from localStorage', error);
+    return [];
+  }
+}
+
+/**
+ * Save trade history to localStorage
+ */
+function saveTradeHistory(trades: TradeRecord[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(TRADE_HISTORY_KEY, JSON.stringify(trades));
+  } catch (error) {
+    logger.error('Failed to save trade history to localStorage', error);
+  }
+}
+
+/**
+ * Load performance cache from localStorage
+ */
+function loadPerformanceCache(): Record<string, StrategyPerformance> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const stored = localStorage.getItem(PERFORMANCE_CACHE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch (error) {
+    logger.error('Failed to load performance cache from localStorage', error);
+    return {};
+  }
+}
+
+/**
+ * Save performance cache to localStorage
+ */
+function savePerformanceCache(cache: Record<string, StrategyPerformance>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(PERFORMANCE_CACHE_KEY, JSON.stringify(cache));
+  } catch (error) {
+    logger.error('Failed to save performance cache to localStorage', error);
+  }
+}
+
+/**
+ * Record a new trade (persists to localStorage)
  */
 export function recordTrade(trade: Omit<TradeRecord, "id">): TradeRecord {
   const newTrade: TradeRecord = {
@@ -54,10 +106,16 @@ export function recordTrade(trade: Omit<TradeRecord, "id">): TradeRecord {
     ...trade,
   };
 
-  mockTradeHistory.push(newTrade);
+  const tradeHistory = loadTradeHistory();
+  tradeHistory.push(newTrade);
+  saveTradeHistory(tradeHistory);
 
   // Invalidate performance cache for this strategy
-  delete mockPerformanceCache[trade.strategy_id];
+  const perfCache = loadPerformanceCache();
+  delete perfCache[trade.strategy_id];
+  savePerformanceCache(perfCache);
+
+  logger.info(`Recorded trade: ${newTrade.id} for ${trade.ticker}`);
 
   return newTrade;
 }
@@ -66,7 +124,8 @@ export function recordTrade(trade: Omit<TradeRecord, "id">): TradeRecord {
  * Get all trades for a strategy
  */
 export function getTradesForStrategy(strategyId: string, userId?: string): TradeRecord[] {
-  let trades = mockTradeHistory.filter((trade) => trade.strategy_id === strategyId);
+  const tradeHistory = loadTradeHistory();
+  let trades = tradeHistory.filter((trade) => trade.strategy_id === strategyId);
 
   // Optionally filter by userId
   if (userId) {
@@ -80,7 +139,8 @@ export function getTradesForStrategy(strategyId: string, userId?: string): Trade
  * Get all trades for a user
  */
 export function getTradesForUser(userId: string): TradeRecord[] {
-  return mockTradeHistory.filter((trade) => trade.userId === userId);
+  const tradeHistory = loadTradeHistory();
+  return tradeHistory.filter((trade) => trade.userId === userId);
 }
 
 /**
@@ -88,8 +148,9 @@ export function getTradesForUser(userId: string): TradeRecord[] {
  */
 export function getStrategyPerformance(strategyId: string): StrategyPerformance | null {
   // Check cache first
-  if (mockPerformanceCache[strategyId]) {
-    return mockPerformanceCache[strategyId];
+  const perfCache = loadPerformanceCache();
+  if (perfCache[strategyId]) {
+    return perfCache[strategyId];
   }
 
   const trades = getTradesForStrategy(strategyId);
@@ -142,7 +203,9 @@ export function getStrategyPerformance(strategyId: string): StrategyPerformance 
   };
 
   // Cache the result
-  mockPerformanceCache[strategyId] = performance;
+  const perfCache = loadPerformanceCache();
+  perfCache[strategyId] = performance;
+  savePerformanceCache(perfCache);
 
   return performance;
 }
@@ -259,13 +322,15 @@ export function seedMockTradeData(strategyId: string, userId: string) {
  * Clear all trade history (for testing)
  */
 export function clearTradeHistory() {
-  mockTradeHistory = [];
-  mockPerformanceCache = {};
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(TRADE_HISTORY_KEY);
+  localStorage.removeItem(PERFORMANCE_CACHE_KEY);
+  logger.info('Cleared all trade history from localStorage');
 }
 
 /**
  * Export all trade history (for backup/analysis)
  */
 export function exportTradeHistory(): TradeRecord[] {
-  return [...mockTradeHistory];
+  return loadTradeHistory();
 }

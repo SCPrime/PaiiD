@@ -49,70 +49,40 @@ const AIChartAnalysis: React.FC<AIChartAnalysisProps> = ({
     autoConnect: true,
   });
 
-  // Generate mock AI analysis
+  // Fetch real AI chart analysis from backend
   useEffect(() => {
-    const generateMockPatterns = (): ChartPattern[] => {
-      const patternTypes = [
-        { name: "Head and Shoulders", signal: "bearish" as const, confidence: 85 },
-        { name: "Double Bottom", signal: "bullish" as const, confidence: 78 },
-        { name: "Ascending Triangle", signal: "bullish" as const, confidence: 72 },
-        { name: "Descending Triangle", signal: "bearish" as const, confidence: 68 },
-        { name: "Cup and Handle", signal: "bullish" as const, confidence: 82 },
-        { name: "Flag Pattern", signal: "neutral" as const, confidence: 65 },
-      ];
+    const fetchAIAnalysis = async () => {
+      _setIsLoading(true);
+      _setError(null);
+      try {
+        const response = await fetch(
+          `/api/proxy/api/ai/chart-analysis?symbol=${symbol}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      return patternTypes
-        .filter(() => Math.random() > 0.5) // Random selection
-        .map((pattern) => ({
-          ...pattern,
-          description: `AI detected ${pattern.name.toLowerCase()} pattern with ${pattern.confidence}% confidence`,
-          priceTarget:
-            pattern.signal === "bullish" ? 150 + Math.random() * 50 : 100 + Math.random() * 30,
-        }));
+        if (!response.ok) {
+          throw new Error(`Failed to fetch AI analysis: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setPatterns(data.patterns || []);
+        setInsights(data.insights || []);
+      } catch (error) {
+        logger.error('Failed to fetch AI chart analysis', error);
+        _setError('AI chart analysis unavailable. Backend endpoint may not be implemented yet.');
+        setPatterns([]);
+        setInsights([]);
+      } finally {
+        _setIsLoading(false);
+      }
     };
 
-    const generateMockInsights = (): AIInsight[] => {
-      const insightTypes = [
-        {
-          type: "pattern" as const,
-          title: "Support Level Identified",
-          description: `Strong support detected at $${(120 + Math.random() * 20).toFixed(2)}`,
-          confidence: 85,
-          impact: "high" as const,
-        },
-        {
-          type: "prediction" as const,
-          title: "Price Target Prediction",
-          description: `AI predicts ${symbol} will reach $${(150 + Math.random() * 30).toFixed(2)} within 30 days`,
-          confidence: 72,
-          impact: "medium" as const,
-        },
-        {
-          type: "alert" as const,
-          title: "Volume Spike Alert",
-          description: `Unusual volume increase detected - potential breakout signal`,
-          confidence: 68,
-          impact: "medium" as const,
-        },
-        {
-          type: "pattern" as const,
-          title: "Resistance Breakout",
-          description: `Price approaching key resistance at $${(140 + Math.random() * 20).toFixed(2)}`,
-          confidence: 78,
-          impact: "high" as const,
-        },
-      ];
-
-      return insightTypes
-        .filter(() => Math.random() > 0.3) // Random selection
-        .map((insight) => ({
-          ...insight,
-          timestamp: new Date().toISOString(),
-        }));
-    };
-
-    setPatterns(generateMockPatterns());
-    setInsights(generateMockInsights());
+    fetchAIAnalysis();
   }, [symbol]);
 
   const getSignalColor = (signal: string) => {
