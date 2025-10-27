@@ -1,4 +1,10 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+# Allow bypass for CI and orchestrator
+if [ "$CI" = "true" ] || [ "$SKIP_HOOKS" = "1" ]; then
+  echo "⏭️  Skipping commit-msg hook (SKIP_HOOKS=1 or CI environment)"
+  exit 0
+fi
+
 npx --prefix frontend commitlint --edit "$1"

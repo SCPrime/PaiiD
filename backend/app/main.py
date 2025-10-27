@@ -298,6 +298,7 @@ async def startup_event():
 
     from .core.prelaunch import PrelaunchValidator
     from .core.startup_monitor import get_startup_monitor
+    from .core.startup_validator import validate_startup
 
     # Configure structured logging
     logging.basicConfig(
@@ -436,6 +437,31 @@ async def startup_event():
             raise
         logger.warning(
             "Continuing startup despite pre-launch validation error (STRICT_PRELAUNCH disabled)"
+        )
+
+    # Run startup validation (Wave 5: Enhanced startup checks)
+    # This provides detailed API connectivity validation and account verification
+    try:
+        async with monitor.phase("startup_validation", timeout=15.0):
+            if not validate_startup():
+                # Check if strict mode is enabled
+                strict_startup = os.getenv("STRICT_STARTUP_VALIDATION", "false").lower() == "true"
+                if strict_startup:
+                    logger.error("🚨 Blocking startup due to failed validation (STRICT_STARTUP_VALIDATION=true)")
+                    raise RuntimeError("Startup validation failed - check logs above for details")
+                else:
+                    logger.warning(
+                        "⚠️ Startup validation failed but continuing (STRICT_STARTUP_VALIDATION disabled)"
+                    )
+    except RuntimeError:
+        raise  # Re-raise if we're blocking startup
+    except Exception as e:
+        logger.error(f"❌ Startup validation error: {e}")
+        strict_startup = os.getenv("STRICT_STARTUP_VALIDATION", "false").lower() == "true"
+        if strict_startup:
+            raise
+        logger.warning(
+            "Continuing startup despite validation error (STRICT_STARTUP_VALIDATION disabled)"
         )
 
     # Verify database connectivity early

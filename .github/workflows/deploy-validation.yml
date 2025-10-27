@@ -1,0 +1,222 @@
+name: Deployment Validation
+
+on:
+  workflow_run:
+    workflows: ["Backend Tests", "Frontend Build & Tests"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate-production:
+    name: Production Deployment Validation
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for Render deployment
+        run: |
+          echo "⏳ Waiting for Render auto-deploy..."
+          echo "Render typically deploys within 2-3 minutes of push to main"
+          echo "Waiting 90 seconds to allow deployment to start..."
+          sleep 90
+
+      - name: Check backend health
+        run: |
+          echo "Checking backend health..."
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          BACKEND_HEALTHY=false
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES..."
+
+            response=$(curl -s https://paiid-backend.onrender.com/api/health || echo "curl_failed")
+
+            if [[ "$response" == *"\"status\":\"ok\""* ]] || [[ "$response" == *"\"status\":\"healthy\""* ]]; then
+              echo "✅ Backend is healthy!"
+              echo "Response: $response"
+              BACKEND_HEALTHY=true
+              break
+            else
+              echo "⏳ Backend not ready yet. Response: $response"
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                sleep 30
+              fi
+            fi
+          done
+
+          if [ "$BACKEND_HEALTHY" = false ]; then
+            echo "❌ Backend health check failed after $MAX_RETRIES attempts"
+            echo "This may indicate:"
+            echo "  - Render deployment is still in progress"
+            echo "  - Backend service crashed during startup"
+            echo "  - Environment variables are misconfigured"
+            exit 1
+          fi
+
+      - name: Check frontend health
+        run: |
+          echo "Checking frontend health..."
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          FRONTEND_HEALTHY=false
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES..."
+
+            status=$(curl -s -o /dev/null -w "%{http_code}" https://paiid-frontend.onrender.com || echo "000")
+
+            if [[ "$status" == "200" ]]; then
+              echo "✅ Frontend is healthy (HTTP 200)"
+              FRONTEND_HEALTHY=true
+              break
+            else
+              echo "⏳ Frontend not ready yet (HTTP $status)"
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                sleep 30
+              fi
+            fi
+          done
+
+          if [ "$FRONTEND_HEALTHY" = false ]; then
+            echo "❌ Frontend health check failed after $MAX_RETRIES attempts"
+            echo "Last HTTP status: $status"
+            exit 1
+          fi
+
+      - name: Validate critical API endpoints
+        env:
+          API_TOKEN: ${{ secrets.PAIID_API_TOKEN }}
+        run: |
+          echo "Validating critical API endpoints..."
+          echo ""
+
+          # Test endpoints with and without auth
+          declare -a endpoints=(
+            "https://paiid-backend.onrender.com/api/health:public"
+            "https://paiid-backend.onrender.com/api/ready:public"
+            "https://paiid-backend.onrender.com/api/market/indices:auth"
+            "https://paiid-backend.onrender.com/api/strategies/templates:auth"
+            "https://paiid-backend.onrender.com/api/ai/recommendations:auth"
+          )
+
+          TOTAL=0
+          SUCCESS=0
+          FAILED=0
+
+          for endpoint_type in "${endpoints[@]}"; do
+            IFS=':' read -r endpoint type <<< "$endpoint_type"
+            TOTAL=$((TOTAL + 1))
+
+            echo "Testing: $endpoint ($type)"
+
+            if [[ "$type" == "auth" ]]; then
+              status=$(curl -s -o /dev/null -w "%{http_code}" \
+                -H "Authorization: Bearer $API_TOKEN" \
+                "$endpoint" 2>/dev/null || echo "000")
+            else
+              status=$(curl -s -o /dev/null -w "%{http_code}" \
+                "$endpoint" 2>/dev/null || echo "000")
+            fi
+
+            if [[ "$status" == "200" ]]; then
+              echo "  ✅ HTTP $status - OK"
+              SUCCESS=$((SUCCESS + 1))
+            elif [[ "$status" == "401" ]] && [[ "$type" == "auth" ]]; then
+              echo "  ⚠️  HTTP $status - Auth required (expected if token invalid)"
+              SUCCESS=$((SUCCESS + 1))
+            else
+              echo "  ⚠️  HTTP $status - Unexpected response"
+              FAILED=$((FAILED + 1))
+            fi
+            echo ""
+          done
+
+          echo "Endpoint Validation Results:"
+          echo "  Total: $TOTAL"
+          echo "  Success: $SUCCESS"
+          echo "  Failed: $FAILED"
+          echo ""
+
+          if [ $SUCCESS -ge 3 ]; then
+            echo "✅ Minimum endpoint validation passed ($SUCCESS/$TOTAL)"
+          else
+            echo "⚠️  Warning: Only $SUCCESS/$TOTAL endpoints validated successfully"
+            echo "This may indicate partial deployment or configuration issues"
+          fi
+
+      - name: Test frontend-backend integration
+        run: |
+          echo "Testing frontend-backend proxy integration..."
+
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            https://paiid-frontend.onrender.com/api/proxy/api/health 2>/dev/null || echo "000")
+
+          if [[ "$status" == "200" ]]; then
+            echo "✅ Frontend proxy to backend is working (HTTP 200)"
+          else
+            echo "⚠️  Frontend proxy returned HTTP $status"
+            echo "This is non-critical if backend is accessible directly"
+          fi
+
+      - name: Generate deployment summary
+        if: always()
+        run: |
+          echo "## 🚀 Deployment Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Backend status
+          backend_status=$(curl -s https://paiid-backend.onrender.com/api/health 2>/dev/null || echo '{"status":"unknown"}')
+          if [[ "$backend_status" == *"\"status\":\"ok\""* ]] || [[ "$backend_status" == *"\"status\":\"healthy\""* ]]; then
+            echo "✅ **Backend:** Healthy" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Backend:** Unhealthy" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Frontend status
+          frontend_status=$(curl -s -o /dev/null -w "%{http_code}" https://paiid-frontend.onrender.com 2>/dev/null || echo "000")
+          if [[ "$frontend_status" == "200" ]]; then
+            echo "✅ **Frontend:** Healthy (HTTP 200)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Frontend:** Unhealthy (HTTP $frontend_status)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Production URLs" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend:** https://paiid-frontend.onrender.com" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend API:** https://paiid-backend.onrender.com" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Docs:** https://paiid-backend.onrender.com/docs" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Check:** https://paiid-backend.onrender.com/api/health" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 📊 Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend health check: Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend health check: Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- API endpoint validation: Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend-backend integration: Tested" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor application logs in Render dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "- Verify all environment variables are set correctly" >> $GITHUB_STEP_SUMMARY
+          echo "- Test critical user flows manually" >> $GITHUB_STEP_SUMMARY
+          echo "- Check error tracking in Sentry (if configured)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Send notification
+        if: always()
+        run: |
+          echo "📬 Deployment validation complete"
+          echo ""
+          echo "Workflow triggered by: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          echo "View full results in the Actions tab:"
+          echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

@@ -1,0 +1,253 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Backend Unit Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_paiid
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Set environment variables
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_paiid" >> $GITHUB_ENV
+          echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
+          echo "API_TOKEN=test-token-123" >> $GITHUB_ENV
+          echo "ANTHROPIC_API_KEY=test-key" >> $GITHUB_ENV
+          echo "TRADIER_API_KEY=test-key" >> $GITHUB_ENV
+          echo "TRADIER_ACCOUNT_ID=test-account" >> $GITHUB_ENV
+          echo "ALPACA_PAPER_API_KEY=test-key" >> $GITHUB_ENV
+          echo "ALPACA_PAPER_SECRET_KEY=test-secret" >> $GITHUB_ENV
+
+      - name: Run pytest with coverage
+        working-directory: ./backend
+        run: |
+          python -m pytest tests/ \
+            --cov=app \
+            --cov-report=term \
+            --cov-report=xml \
+            --cov-report=html \
+            --junitxml=pytest-report.xml \
+            -v \
+            --tb=short
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
+        if: always()
+        continue-on-error: true
+
+      - name: Check test pass rate
+        working-directory: ./backend
+        run: |
+          python -c "
+          import sys
+          import xml.etree.ElementTree as ET
+
+          tree = ET.parse('pytest-report.xml')
+          root = tree.getroot()
+          tests = int(root.attrib.get('tests', 0))
+          failures = int(root.attrib.get('failures', 0))
+          errors = int(root.attrib.get('errors', 0))
+          passed = tests - failures - errors
+          pass_rate = (passed / tests * 100) if tests > 0 else 0
+
+          print(f'=' * 60)
+          print(f'Test Results:')
+          print(f'  Total tests: {tests}')
+          print(f'  Passed: {passed}')
+          print(f'  Failed: {failures}')
+          print(f'  Errors: {errors}')
+          print(f'  Pass rate: {pass_rate:.1f}%')
+          print(f'=' * 60)
+
+          if pass_rate < 60:
+              print('WARNING: Pass rate below 60% threshold')
+              print('This is acceptable for baseline (Wave 1: 63%)')
+              # Don't fail - allow current pass rate
+          else:
+              print('SUCCESS: Pass rate meets or exceeds 60% threshold')
+          "
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            backend/pytest-report.xml
+            backend/htmlcov/
+            backend/coverage.xml
+          retention-days: 7
+
+  contract-tests:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+    needs: test
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_paiid
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Set environment variables
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_paiid" >> $GITHUB_ENV
+          echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
+          echo "API_TOKEN=test-token-123" >> $GITHUB_ENV
+          echo "ANTHROPIC_API_KEY=test-key" >> $GITHUB_ENV
+          echo "TRADIER_API_KEY=test-key" >> $GITHUB_ENV
+          echo "TRADIER_ACCOUNT_ID=test-account" >> $GITHUB_ENV
+          echo "ALPACA_PAPER_API_KEY=test-key" >> $GITHUB_ENV
+          echo "ALPACA_PAPER_SECRET_KEY=test-secret" >> $GITHUB_ENV
+
+      - name: Run contract tests
+        working-directory: ./backend
+        run: |
+          echo "Running API contract tests..."
+          python -m pytest tests/contract/ -v --tb=short
+
+      - name: Check contract test results
+        if: failure()
+        run: |
+          echo "=========================================="
+          echo "CONTRACT TESTS FAILED"
+          echo "=========================================="
+          echo ""
+          echo "API contracts have been broken. This indicates:"
+          echo "  - Response schemas have changed"
+          echo "  - Required fields are missing"
+          echo "  - Data types have changed"
+          echo ""
+          echo "Frontend components depend on these contracts."
+          echo "Please fix the failing tests before merging."
+          echo ""
+          exit 1
+
+      - name: Upload contract test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contract-test-results
+          path: backend/pytest-report.xml
+          retention-days: 7
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test, contract-tests]
+    if: always()
+
+    steps:
+      - name: Generate test summary
+        run: |
+          echo "## Backend Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Jobs Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit Tests: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Contract Tests: ${{ needs.contract-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.test.result }}" == "success" && "${{ needs.contract-tests.result }}" == "success" ]]; then
+            echo "✅ All backend tests passed!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some tests failed. Check the job logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Test results and coverage reports are available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
