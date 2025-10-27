@@ -38,12 +38,13 @@ class Settings(BaseModel):
     )
 
     # Alpaca API credentials (PAPER TRADING EXECUTION ONLY)
+    # Supports both ALPACA_PAPER_* and APCA_* naming conventions
     ALPACA_API_KEY: str = Field(
-        default_factory=lambda: os.getenv("ALPACA_PAPER_API_KEY", ""),
+        default_factory=lambda: os.getenv("ALPACA_PAPER_API_KEY") or os.getenv("APCA_API_KEY_ID") or "",
         description="Alpaca paper trading API key (REQUIRED)"
     )
     ALPACA_SECRET_KEY: str = Field(
-        default_factory=lambda: os.getenv("ALPACA_PAPER_SECRET_KEY", ""),
+        default_factory=lambda: os.getenv("ALPACA_PAPER_SECRET_KEY") or os.getenv("APCA_API_SECRET_KEY") or "",
         description="Alpaca paper trading secret key (REQUIRED)"
     )
     ALPACA_BASE_URL: str = "https://paper-api.alpaca.markets"
@@ -252,13 +253,13 @@ def validate_required_secrets(strict: bool = False) -> tuple[bool, list[str]]:
     missing = []
 
     # Required secrets for core functionality
-    # NOTE: Display names must match actual environment variable names for clarity
+    # NOTE: Alpaca supports both ALPACA_PAPER_* and APCA_* naming conventions
     required_secrets = {
         "API_TOKEN": settings.API_TOKEN,
         "TRADIER_API_KEY": settings.TRADIER_API_KEY,
         "TRADIER_ACCOUNT_ID": settings.TRADIER_ACCOUNT_ID,
-        "ALPACA_PAPER_API_KEY": settings.ALPACA_API_KEY,  # Display actual env var name
-        "ALPACA_PAPER_SECRET_KEY": settings.ALPACA_SECRET_KEY,  # Display actual env var name
+        "ALPACA_PAPER_API_KEY or APCA_API_KEY_ID": settings.ALPACA_API_KEY,
+        "ALPACA_PAPER_SECRET_KEY or APCA_API_SECRET_KEY": settings.ALPACA_SECRET_KEY,
         "DATABASE_URL": settings.DATABASE_URL,
         "JWT_SECRET_KEY": settings.JWT_SECRET_KEY,
     }
