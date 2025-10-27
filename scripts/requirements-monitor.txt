@@ -1,0 +1,11 @@
+# MOD SQUAD Monitoring System Requirements
+
+# BROWSER MOD dependencies
+playwright>=1.40.0
+rich>=13.0.0
+
+# GITHUB MOD dependencies (already in backend requirements)
+httpx>=0.25.0
+
+# Optional: Advanced reporting
+jinja2>=3.1.0
