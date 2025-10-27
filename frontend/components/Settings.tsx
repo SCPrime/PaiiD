@@ -28,9 +28,11 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTheme } from "../contexts/ThemeContext";
 import { useIsMobile } from "../hooks/useBreakpoint";
+import { useMarketData } from "../hooks/useMarketData";
 import { logger } from "../lib/logger";
 import { clearUserData, getCurrentUser, getUserAnalytics } from "../lib/userManagement";
 import PerformanceDashboard from "./admin/PerformanceDashboard";
+import ForceFieldIndicator from "./ForceFieldIndicator";
 import ApprovalQueue from "./ApprovalQueue";
 import ClaudeAIChat from "./ClaudeAIChat";
 import { GitHubActionsMonitor } from "./GitHubActionsMonitor";
@@ -138,6 +140,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   const isMobile = useIsMobile();
   const currentUserData = getCurrentUser();
   const { theme: currentTheme, toggleTheme } = useTheme();
+  const { forceFieldConfidence } = useMarketData();
   const [currentUser] = useState({
     id: currentUserData?.userId || "owner-001",
     role: "owner" as const,
@@ -1330,7 +1333,14 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             />
           )}
 
-          {activeTab === "performance" && isAdmin && <PerformanceDashboard />}
+          {activeTab === "performance" && isAdmin && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              <div style={{ display: "flex", justifyContent: "center", padding: "16px" }}>
+                <ForceFieldIndicator confidence={forceFieldConfidence} size="large" />
+              </div>
+              <PerformanceDashboard />
+            </div>
+          )}
 
           {activeTab === "github-monitor" && isAdmin && (
             <div className="min-h-[500px]">
