@@ -276,6 +276,8 @@ app.add_middleware(
         "/api/auth/refresh",
         "/api/proposals",  # Options trade proposals (idempotent with requestId)
         "/api/order-templates",  # Order templates (needed for CSRF tests)
+        "/api/telemetry",  # Fire-and-forget telemetry tracking (stateless)
+        "/api/claude/chat",  # Claude AI chat (stateless, idempotent requests)
         "/docs",
         "/openapi.json",
         "/redoc",
@@ -657,6 +659,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://localhost:3001",  # Secondary dev server port (MOD SQUAD fix: Phase 2C finding)
         "http://localhost:3003",  # Alternative dev server port
         "https://paiid-frontend.onrender.com",
     ],

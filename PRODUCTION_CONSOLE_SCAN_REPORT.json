@@ -1,0 +1,217 @@
+{
+  "scan_metadata": {
+    "start_time": "2025-10-27T14:21:18.624418",
+    "end_time": "2025-10-27T14:21:40.357741",
+    "duration_seconds": 21.733323,
+    "target_url": "https://paiid-frontend.onrender.com",
+    "workflows_tested": 10
+  },
+  "summary": {
+    "total_console_logs": 4,
+    "total_errors": 4,
+    "total_warnings": 0,
+    "total_network_failures": 2,
+    "total_page_errors": 0,
+    "critical_errors": 0,
+    "sse_errors": 0,
+    "react_errors": 0,
+    "known_errors": 0,
+    "new_errors": 4
+  },
+  "categorized_errors": {
+    "critical": [],
+    "network": [
+      {
+        "timestamp": "2025-10-27T14:21:30.291807",
+        "url": "https://paiid-frontend.onrender.com/api/proxy/api/telemetry",
+        "status": 403,
+        "statusText": "",
+        "method": "POST"
+      },
+      {
+        "timestamp": "2025-10-27T14:21:40.305073",
+        "url": "https://paiid-frontend.onrender.com/api/proxy/api/telemetry",
+        "status": 403,
+        "statusText": "",
+        "method": "POST"
+      }
+    ],
+    "sse": [],
+    "react": [],
+    "known": [],
+    "new": [
+      {
+        "timestamp": "2025-10-27T14:21:30.291807",
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 403 ()",
+        "location": {
+          "url": "https://paiid-frontend.onrender.com/api/proxy/api/telemetry",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "timestamp": "2025-10-27T14:21:30.293874",
+        "type": "error",
+        "text": "[2025-10-27T18:21:30.292Z] [ERROR] [Telemetry] Flush error {\"message\":\"Telemetry flush failed: 403\",\"stack\":\"Error: Telemetry flush failed: 403\\n    at l.flush (https://paiid-frontend.onrender.com/_next/static/chunks/pages/_app-5586e44523063fae.js:1:7311)\"}",
+        "location": {
+          "url": "https://paiid-frontend.onrender.com/_next/static/chunks/pages/_app-5586e44523063fae.js",
+          "lineNumber": 0,
+          "columnNumber": 3862
+        }
+      },
+      {
+        "timestamp": "2025-10-27T14:21:40.305073",
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 403 ()",
+        "location": {
+          "url": "https://paiid-frontend.onrender.com/api/proxy/api/telemetry",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "timestamp": "2025-10-27T14:21:40.305073",
+        "type": "error",
+        "text": "[2025-10-27T18:21:40.305Z] [ERROR] [Telemetry] Flush error {\"message\":\"Telemetry flush failed: 403\",\"stack\":\"Error: Telemetry flush failed: 403\\n    at l.flush (https://paiid-frontend.onrender.com/_next/static/chunks/pages/_app-5586e44523063fae.js:1:7311)\"}",
+        "location": {
+          "url": "https://paiid-frontend.onrender.com/_next/static/chunks/pages/_app-5586e44523063fae.js",
+          "lineNumber": 0,
+          "columnNumber": 3862
+        }
+      }
+    ]
+  },
+  "workflow_results": {
+    "Morning Routine": {
+      "workflow": "Morning Routine",
+      "status": "not_found",
+      "errors": 0,
+      "warnings": 0,
+      "network_failures": 0
+    },
+    "Active Positions": {
+      "workflow": "Active Positions",
+      "status": "not_found",
+      "errors": 0,
+      "warnings": 0,
+      "network_failures": 0
+    },
+    "Execute Trade": {
+      "workflow": "Execute Trade",
+      "status": "not_found",
+      "errors": 0,
+      "warnings": 0,
+      "network_failures": 0
+    },
+    "Research": {
+      "workflow": "Research",
+      "status": "not_found",
+      "errors": 0,
+      "warnings": 0,
+      "network_failures": 0
+    },
+    "AI Recommendations": {
+      "workflow": "AI Recommendations",
+      "status": "not_found",
+      "errors": 0,
+      "warnings": 0,
+      "network_failures": 0
+    },
+    "P&L Dashboard": {
+      "workflow": "P&L Dashboard",
+      "status": "not_found",
+      "errors": 0,
+      "warnings": 0,
+      "network_failures": 0
+    },
+    "News Review": {
+      "workflow": "News Review",
+      "status": "not_found",
+      "errors": 0,
+      "warnings": 0,
+      "network_failures": 0
+    },
+    "Strategy Builder": {
+      "workflow": "Strategy Builder",
+      "status": "not_found",
+      "errors": 0,
+      "warnings": 0,
+      "network_failures": 0
+    },
+    "Backtesting": {
+      "workflow": "Backtesting",
+      "status": "not_found",
+      "errors": 0,
+      "warnings": 0,
+      "network_failures": 0
+    },
+    "Settings": {
+      "workflow": "Settings",
+      "status": "not_found",
+      "errors": 0,
+      "warnings": 0,
+      "network_failures": 0
+    }
+  },
+  "all_errors": [
+    {
+      "timestamp": "2025-10-27T14:21:30.291807",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 ()",
+      "location": {
+        "url": "https://paiid-frontend.onrender.com/api/proxy/api/telemetry",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "timestamp": "2025-10-27T14:21:30.293874",
+      "type": "error",
+      "text": "[2025-10-27T18:21:30.292Z] [ERROR] [Telemetry] Flush error {\"message\":\"Telemetry flush failed: 403\",\"stack\":\"Error: Telemetry flush failed: 403\\n    at l.flush (https://paiid-frontend.onrender.com/_next/static/chunks/pages/_app-5586e44523063fae.js:1:7311)\"}",
+      "location": {
+        "url": "https://paiid-frontend.onrender.com/_next/static/chunks/pages/_app-5586e44523063fae.js",
+        "lineNumber": 0,
+        "columnNumber": 3862
+      }
+    },
+    {
+      "timestamp": "2025-10-27T14:21:40.305073",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 ()",
+      "location": {
+        "url": "https://paiid-frontend.onrender.com/api/proxy/api/telemetry",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "timestamp": "2025-10-27T14:21:40.305073",
+      "type": "error",
+      "text": "[2025-10-27T18:21:40.305Z] [ERROR] [Telemetry] Flush error {\"message\":\"Telemetry flush failed: 403\",\"stack\":\"Error: Telemetry flush failed: 403\\n    at l.flush (https://paiid-frontend.onrender.com/_next/static/chunks/pages/_app-5586e44523063fae.js:1:7311)\"}",
+      "location": {
+        "url": "https://paiid-frontend.onrender.com/_next/static/chunks/pages/_app-5586e44523063fae.js",
+        "lineNumber": 0,
+        "columnNumber": 3862
+      }
+    }
+  ],
+  "all_warnings": [],
+  "all_network_failures": [
+    {
+      "timestamp": "2025-10-27T14:21:30.291807",
+      "url": "https://paiid-frontend.onrender.com/api/proxy/api/telemetry",
+      "status": 403,
+      "statusText": "",
+      "method": "POST"
+    },
+    {
+      "timestamp": "2025-10-27T14:21:40.305073",
+      "url": "https://paiid-frontend.onrender.com/api/proxy/api/telemetry",
+      "status": 403,
+      "statusText": "",
+      "method": "POST"
+    }
+  ],
+  "all_page_errors": []
+}

@@ -1,0 +1,51 @@
+components/Analytics.tsx(338,9): error TS2561: Object literal may only specify known properties, but 'backgroundColor' does not exist in type 'Html2CanvasOptions'. Did you mean to write 'background'?
+components/EnhancedRadialMenu.tsx(180,24): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(this: any, d: DefaultArcObject, ...args: any[]): string | null', gave the following error.
+    Argument of type '{}' is not assignable to parameter of type 'DefaultArcObject'.
+      Type '{}' is missing the following properties from type 'DefaultArcObject': innerRadius, outerRadius, startAngle, endAngle
+  Overload 2 of 2, '(this: any, d: DefaultArcObject, ...args: any[]): void', gave the following error.
+    Argument of type '{}' is not assignable to parameter of type 'DefaultArcObject'.
+      Type '{}' is missing the following properties from type 'DefaultArcObject': innerRadius, outerRadius, startAngle, endAngle
+components/RadialMenu.ORIGINAL.tsx(888,5): error TS2304: Cannot find name 'centerContentSpacing'.
+components/RadialMenu.ORIGINAL.tsx(970,24): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(name: string, value: null): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'null'.
+  Overload 2 of 4, '(name: string, value: string | number | boolean, priority?: "important" | null | undefined): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'string | number | boolean'.
+  Overload 3 of 4, '(name: string, value: ValueFn<BaseType, unknown, string | number | boolean | null>, priority?: "important" | null | undefined): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'ValueFn<BaseType, unknown, string | number | boolean | null>'.
+      The 'this' types of each signature are incompatible.
+        Type 'BaseType' is not assignable to type 'SVGPathElement'.
+          Type 'null' is not assignable to type 'SVGPathElement'.
+components/RadialMenu/RadialMenuComponent.tsx(46,10): error TS6133: 'hoveredWorkflow' is declared but its value is never read.
+components/RadialMenu/RadialMenuComponent.tsx(47,10): error TS6133: 'showAIChat' is declared but its value is never read.
+components/RadialMenu/RadialMenuComponent.tsx(112,24): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(name: string, value: null): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'null'.
+  Overload 2 of 4, '(name: string, value: string | number | boolean, priority?: "important" | null | undefined): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'string | number | boolean'.
+  Overload 3 of 4, '(name: string, value: ValueFn<BaseType, unknown, string | number | boolean | null>, priority?: "important" | null | undefined): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'ValueFn<BaseType, unknown, string | number | boolean | null>'.
+      The 'this' types of each signature are incompatible.
+        Type 'BaseType' is not assignable to type 'SVGPathElement'.
+          Type 'null' is not assignable to type 'SVGPathElement'.
+components/trading/ResearchDashboard.tsx(1276,11): error TS2322: Type 'unknown[]' is not assignable to type 'StrategySuggestion[]'.
+  Type 'unknown' is not assignable to type 'StrategySuggestion'.
+components/trading/ResearchDashboard.tsx(1277,11): error TS2322: Type 'string' is not assignable to type '{ technicalSetup: string; ivEnvironment: string; riskLevel: "low" | "medium" | "high"; }'.
+components/trading/StrategyBuilder.tsx(184,64): error TS18046: 'v' is of type 'unknown'.
+components/trading/StrategyBuilder.tsx(212,15): error TS18046: 'leg' is of type 'unknown'.
+components/trading/StrategyBuilder.tsx(213,15): error TS18046: 'leg' is of type 'unknown'.
+components/trading/StrategyBuilder.tsx(214,14): error TS18046: 'leg' is of type 'unknown'.
+components/trading/StrategyBuilder.tsx(215,16): error TS18046: 'leg' is of type 'unknown'.
+components/trading/StrategyBuilder.tsx(216,19): error TS18046: 'leg' is of type 'unknown'.
+components/TradingViewChart.tsx(86,25): error TS7009: 'new' expression, whose target lacks a construct signature, implicitly has an 'any' type.
+components/TradingViewChart.tsx(103,7): error TS2322: Type 'string | number' is not assignable to type 'number'.
+  Type 'string' is not assignable to type 'number'.
+contexts/AuthContext.tsx(159,45): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'LogData | undefined'.
+lib/tradeHistory.ts(151,9): error TS2451: Cannot redeclare block-scoped variable 'perfCache'.
+lib/tradeHistory.ts(206,9): error TS2451: Cannot redeclare block-scoped variable 'perfCache'.
+tests/e2e/dashboard.spec.ts(80,11): error TS6133: '_initialValue' is declared but its value is never read.
+tests/e2e/wedge-live-data.spec.ts(11,7): error TS6133: '_API_TOKEN' is declared but its value is never read.
+tests/e2e/wedge-live-data.spec.ts(70,16): error TS6133: 'checkConsoleErrors' is declared but its value is never read.
+tests/e2e/wedge-live-data.spec.ts(83,16): error TS6133: 'checkFailedRequests' is declared but its value is never read.
+tests/e2e/wedge-live-data.spec.ts(201,11): error TS6133: '_iframe' is declared but its value is never read.

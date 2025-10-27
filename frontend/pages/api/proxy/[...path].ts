@@ -106,6 +106,7 @@ const ALLOW_DELETE = new Set<string>([
 // Allowed origins for CORS (production and development only)
 const ALLOWED_ORIGINS = new Set<string>([
   "http://localhost:3000",
+  "http://localhost:3001", // Secondary dev server port (MOD SQUAD fix: Phase 2C finding)
   "http://localhost:3003", // Alternative dev server port
   "http://localhost:3004", // Alternative dev server port
   "http://localhost:3005", // Alternative dev server port

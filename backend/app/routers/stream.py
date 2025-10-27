@@ -276,12 +276,12 @@ async def stream_market_indices(
 
                 if dji_trade:
                     indices["dow"] = {
-                        "last": round(dji_trade.get("price", 0), 2),
+                        "last": round(float(dji_trade.get("price", 0)), 2),
                         "timestamp": dji_trade.get("timestamp"),
                     }
                 elif dji_quote:
                     indices["dow"] = {
-                        "last": round(dji_quote.get("mid", 0), 2),
+                        "last": round(float(dji_quote.get("mid", 0)), 2),
                         "timestamp": dji_quote.get("timestamp"),
                     }
 
@@ -291,12 +291,12 @@ async def stream_market_indices(
 
                 if comp_trade:
                     indices["nasdaq"] = {
-                        "last": round(comp_trade.get("price", 0), 2),
+                        "last": round(float(comp_trade.get("price", 0)), 2),
                         "timestamp": comp_trade.get("timestamp"),
                     }
                 elif comp_quote:
                     indices["nasdaq"] = {
-                        "last": round(comp_quote.get("mid", 0), 2),
+                        "last": round(float(comp_quote.get("mid", 0)), 2),
                         "timestamp": comp_quote.get("timestamp"),
                     }
 
