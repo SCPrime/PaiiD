@@ -5,11 +5,9 @@
  * For non-technical users to track how the app is being built
  */
 
-import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 export default function ProgressPage() {
-  const router = useRouter();
 
   useEffect(() => {
     // Redirect to the HTML dashboard file

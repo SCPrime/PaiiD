@@ -31,7 +31,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { isConnected: wsConnected, sendMessage } = useWebSocket({
+  const { isConnected: wsConnected, sendMessage: _sendMessage } = useWebSocket({
     url: process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws",
     userId,
     autoConnect: true,

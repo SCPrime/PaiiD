@@ -1,11 +1,6 @@
     from app.core.jwt import get_current_user
     from app.core.unified_auth import get_current_user_unified
-    from app.models.database import Strategy
-    from app.models.database import Strategy
-    from app.models.database import Trade
-    from app.models.database import User
-    from app.models.database import User
-    from app.models.database import User
+    from app.models.database import Strategy, Trade, User
 from app.db.session import Base, get_db
 from app.main import app
 from fastapi.testclient import TestClient

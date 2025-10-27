@@ -36,7 +36,7 @@ export default function MyAccountPage() {
             color: '#94a3b8',
             fontSize: '1.2em',
           }}>
-            How you're doing
+            How you&apos;re doing
           </p>
         </div>
 
