@@ -69,8 +69,8 @@ def test_user(db_session):
     user = User(
         email="test@example.com",
         password_hash=hash_password("TestP@ss123"),
-        name="Test User",
-        risk_tolerance="moderate",
+        full_name="Test User",
+        preferences={"risk_tolerance": "moderate"},
         is_active=True,
     )
     db_session.add(user)
