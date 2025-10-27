@@ -74,10 +74,10 @@ export function calculateFontSizes(isMobile: boolean): ResponsiveFontSizes {
  */
 export function calculateCenterContentSpacing(innerRadius: number): CenterContentSpacing {
   return {
-    logoOffset: -(innerRadius * 0.65), // Logo at top of circle (moved higher to prevent crowding)
-    dowOffset: 0, // DOW in middle (centered vertically with logo above)
-    nasdaqOffset: innerRadius * 0.55, // NASDAQ below DOW (more spacing from center)
-    statusBadgeOffset: innerRadius * 0.7, // Status badge at bottom
+    logoOffset: -(innerRadius * 0.75), // Logo at top of circle (moved even higher to prevent crowding)
+    dowOffset: -(innerRadius * 0.05), // DOW slightly above center
+    nasdaqOffset: innerRadius * 0.65, // NASDAQ below DOW (increased spacing)
+    statusBadgeOffset: innerRadius * 0.8, // Status badge pushed lower to bottom
   };
 }
 
