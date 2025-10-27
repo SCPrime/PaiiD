@@ -54,22 +54,22 @@ class TestBacktesting:
         self, mock_user, auth_headers, valid_backtest_request, monkeypatch
     ):
         """Test successful backtest execution"""
-        monkeypatch.setattr("app.routers.backtesting.get_current_user_unified", lambda: mock_user)
+        monkeypatch.setattr("app.routers.backtesting.get_current_user_unified", lambda x: mock_user)
 
         # Mock historical data service
-        mock_historical_data = Mock()
-        mock_historical_data.get_historical_data.return_value = [
+        mock_historical_service = Mock()
+        mock_historical_service.get_bars.return_value = [
             {"timestamp": "2024-01-01", "open": 170.0, "high": 175.0, "low": 168.0, "close": 172.0, "volume": 1000000}
             for _ in range(252)
         ]
         monkeypatch.setattr(
-            "app.services.historical_data.HistoricalDataService",
-            lambda: mock_historical_data,
+            "app.routers.backtesting.HistoricalDataService",
+            lambda: mock_historical_service,
         )
 
         # Mock backtesting engine
         mock_engine = Mock()
-        mock_engine.run_backtest.return_value = {
+        mock_engine.run.return_value = {
             "total_return": 1500.0,
             "total_return_percent": 15.0,
             "sharpe_ratio": 1.5,
@@ -80,7 +80,7 @@ class TestBacktesting:
             "equity_curve": [],
             "trades": [],
         }
-        monkeypatch.setattr("app.services.backtesting_engine.BacktestingEngine", lambda rules: mock_engine)
+        monkeypatch.setattr("app.routers.backtesting.BacktestingEngine", lambda x: mock_engine)
 
         response = client.post("/api/backtesting/run", json=valid_backtest_request, headers=auth_headers)
 
@@ -112,14 +112,14 @@ class TestBacktesting:
         self, mock_user, auth_headers, valid_backtest_request, monkeypatch
     ):
         """Test backtest with insufficient historical data"""
-        monkeypatch.setattr("app.routers.backtesting.get_current_user_unified", lambda: mock_user)
+        monkeypatch.setattr("app.routers.backtesting.get_current_user_unified", lambda x: mock_user)
 
         # Mock historical data service with insufficient data
-        mock_historical_data = Mock()
-        mock_historical_data.get_historical_data.return_value = []  # No data
+        mock_historical_service = Mock()
+        mock_historical_service.get_bars.return_value = []  # No data
         monkeypatch.setattr(
-            "app.services.historical_data.HistoricalDataService",
-            lambda: mock_historical_data,
+            "app.routers.backtesting.HistoricalDataService",
+            lambda: mock_historical_service,
         )
 
         response = client.post("/api/backtesting/run", json=valid_backtest_request, headers=auth_headers)
@@ -131,21 +131,21 @@ class TestBacktesting:
         self, mock_user, auth_headers, valid_backtest_request, monkeypatch
     ):
         """Test backtest with different symbols"""
-        monkeypatch.setattr("app.routers.backtesting.get_current_user_unified", lambda: mock_user)
+        monkeypatch.setattr("app.routers.backtesting.get_current_user_unified", lambda x: mock_user)
 
-        mock_historical_data = Mock()
-        mock_historical_data.get_historical_data.return_value = [
+        mock_historical_service = Mock()
+        mock_historical_service.get_bars.return_value = [
             {"timestamp": "2024-01-01", "open": 100.0, "high": 105.0, "low": 98.0, "close": 102.0, "volume": 500000}
             for _ in range(100)
         ]
         monkeypatch.setattr(
-            "app.services.historical_data.HistoricalDataService",
-            lambda: mock_historical_data,
+            "app.routers.backtesting.HistoricalDataService",
+            lambda: mock_historical_service,
         )
 
         mock_engine = Mock()
-        mock_engine.run_backtest.return_value = {"total_return": 0.0, "num_trades": 0}
-        monkeypatch.setattr("app.services.backtesting_engine.BacktestingEngine", lambda rules: mock_engine)
+        mock_engine.run.return_value = {"total_return": 0.0, "num_trades": 0}
+        monkeypatch.setattr("app.routers.backtesting.BacktestingEngine", lambda x: mock_engine)
 
         symbols = ["AAPL", "MSFT", "GOOGL", "TSLA"]
         for symbol in symbols:
@@ -159,21 +159,21 @@ class TestBacktesting:
         self, mock_user, auth_headers, valid_backtest_request, monkeypatch
     ):
         """Test backtest with different strategy configurations"""
-        monkeypatch.setattr("app.routers.backtesting.get_current_user_unified", lambda: mock_user)
+        monkeypatch.setattr("app.routers.backtesting.get_current_user_unified", lambda x: mock_user)
 
-        mock_historical_data = Mock()
-        mock_historical_data.get_historical_data.return_value = [
+        mock_historical_service = Mock()
+        mock_historical_service.get_bars.return_value = [
             {"timestamp": "2024-01-01", "open": 170.0, "high": 175.0, "low": 168.0, "close": 172.0, "volume": 1000000}
             for _ in range(100)
         ]
         monkeypatch.setattr(
-            "app.services.historical_data.HistoricalDataService",
-            lambda: mock_historical_data,
+            "app.routers.backtesting.HistoricalDataService",
+            lambda: mock_historical_service,
         )
 
         mock_engine = Mock()
-        mock_engine.run_backtest.return_value = {"total_return": 500.0, "num_trades": 5}
-        monkeypatch.setattr("app.services.backtesting_engine.BacktestingEngine", lambda rules: mock_engine)
+        mock_engine.run.return_value = {"total_return": 500.0, "num_trades": 5}
+        monkeypatch.setattr("app.routers.backtesting.BacktestingEngine", lambda x: mock_engine)
 
         # Test with different entry/exit rules
         strategies = [

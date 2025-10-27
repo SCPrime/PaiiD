@@ -401,6 +401,48 @@ class FixtureLoader:
                 "volume": 25000000,
                 "timestamp": datetime.now(UTC).isoformat(),
             },
+            "GOOGL": {
+                "bid": 138.40,
+                "ask": 138.50,
+                "last": 138.45,
+                "volume": 15000000,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+            "TSLA": {
+                "bid": 242.80,
+                "ask": 242.90,
+                "last": 242.85,
+                "volume": 50000000,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+            "NVDA": {
+                "bid": 485.10,
+                "ask": 485.20,
+                "last": 485.15,
+                "volume": 35000000,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+            "AMZN": {
+                "bid": 145.20,
+                "ask": 145.30,
+                "last": 145.25,
+                "volume": 28000000,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+            "META": {
+                "bid": 325.70,
+                "ask": 325.80,
+                "last": 325.75,
+                "volume": 18000000,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+            "NFLX": {
+                "bid": 445.50,
+                "ask": 445.60,
+                "last": 445.55,
+                "volume": 8000000,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
         }
 
         with open(file_path, "w") as f:
