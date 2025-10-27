@@ -42,6 +42,11 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001
 
 # Copy standalone server from builder
+# Next.js standalone build structure:
+#   - /app/.next/standalone/* -> ./ (contains server.js and runtime)
+#   - /app/.next/static -> ./.next/static (static assets NOT in standalone)
+#   - /app/public -> ./public (public assets)
+# This creates runtime structure: /app/server.js, /app/.next/static/*, /app/public/*
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
