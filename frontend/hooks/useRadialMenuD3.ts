@@ -86,7 +86,7 @@ export function useRadialMenuD3({
       .pie<Workflow>()
       .value(1)
       .sort(null)
-      .startAngle(-Math.PI / 2 + (Math.PI * 2 / 5 / 2)) // Start at top-right (offset by half a wedge = 36°)
+      .startAngle(-Math.PI / 2 + (Math.PI * 2 / 10 / 2)) // Start at top-right (offset by half a wedge = 18°)
       .padAngle(0.008);
 
     const arc = d3
