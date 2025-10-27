@@ -40,7 +40,6 @@ from .routers import (
     market_data,
     ml,
     ml_sentiment,
-    monitoring,
     news,
     options,
     orders,

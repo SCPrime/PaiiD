@@ -77,6 +77,10 @@ class TradierStreamService:
         self._connection_task: asyncio.Task | None = None
         self._session_renewal_task: asyncio.Task | None = None
 
+        # CRITICAL: Session management lock to prevent concurrent session operations
+        # Prevents "too many sessions" errors from concurrent _create_session/_delete_session calls
+        self._session_lock = asyncio.Lock()
+
         logger.info("✅ TradierStreamService initialized")
 
     async def _delete_session(self, session_id: str) -> bool:
@@ -130,52 +134,56 @@ class TradierStreamService:
         CRITICAL: Always deletes old session first to avoid
         "too many sessions requested" error.
 
+        SERIALIZATION: Uses self._session_lock to prevent concurrent session operations.
+        This prevents "too many sessions" errors when multiple tasks try to create sessions.
+
         Returns:
             Session ID string or None if failed
         """
-        # CRITICAL: Delete old session first if it exists
-        if self.session_id:
-            logger.info(
-                f"🔄 Deleting old session before creating new one: {self.session_id[:8]}..."
-            )
-            await self._delete_session(self.session_id)
-            self.session_id = None
-
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    self.session_url,
-                    headers={
-                        "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
-                        "Accept": "application/json",
-                    },
-                    timeout=10.0,
+        async with self._session_lock:
+            # CRITICAL: Delete old session first if it exists
+            if self.session_id:
+                logger.info(
+                    f"🔄 Deleting old session before creating new one: {self.session_id[:8]}..."
                 )
+                await self._delete_session(self.session_id)
+                self.session_id = None
 
-                if response.status_code == 200:
-                    data = response.json()
-                    session_id = data.get("stream", {}).get("sessionid")
-
-                    if session_id:
-                        self.session_id = session_id
-                        self.session_created_at = time.time()
-                        # Note: Do NOT reset circuit breaker here - only reset after successful WebSocket message receipt
-                        logger.info(
-                            f"✅ Created Tradier streaming session: {session_id[:8]}..."
-                        )
-                        return session_id
-                    else:
-                        logger.error(f"❌ No sessionid in response: {data}")
-                        return None
-                else:
-                    logger.error(
-                        f"❌ Failed to create session: {response.status_code} - {response.text}"
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        self.session_url,
+                        headers={
+                            "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
+                            "Accept": "application/json",
+                        },
+                        timeout=10.0,
                     )
-                    return None
 
-        except Exception as e:
-            logger.error(f"❌ Error creating Tradier session: {e}")
-            return None
+                    if response.status_code == 200:
+                        data = response.json()
+                        session_id = data.get("stream", {}).get("sessionid")
+
+                        if session_id:
+                            self.session_id = session_id
+                            self.session_created_at = time.time()
+                            # Note: Do NOT reset circuit breaker here - only reset after successful WebSocket message receipt
+                            logger.info(
+                                f"✅ Created Tradier streaming session: {session_id[:8]}..."
+                            )
+                            return session_id
+                        else:
+                            logger.error(f"❌ No sessionid in response: {data}")
+                            return None
+                    else:
+                        logger.error(
+                            f"❌ Failed to create session: {response.status_code} - {response.text}"
+                        )
+                        return None
+
+            except Exception as e:
+                logger.error(f"❌ Error creating Tradier session: {e}")
+                return None
 
     async def _renew_session_periodically(self):
         """
