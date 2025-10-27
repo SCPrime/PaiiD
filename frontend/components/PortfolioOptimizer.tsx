@@ -7,15 +7,6 @@ import { showError, showSuccess } from "../lib/toast";
 import { theme } from "../styles/theme";
 import { Button, Card } from "./ui";
 
-// Unused interface kept for future reference
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface _Position {
-  symbol: string;
-  shares: number;
-  current_price: number;
-  market_value: number;
-  weight: number;
-}
 
 interface OptimizationSuggestion {
   symbol: string;

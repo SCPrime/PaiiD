@@ -1,16 +1,17 @@
 import React from "react";
 import { theme } from "../../styles/theme";
 
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   glow?: keyof typeof theme.glow;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className, style, glow }) => {
+export const Card: React.FC<CardProps> = ({ children, className, style, glow, ...rest }) => {
   return (
     <div
+      {...rest}
       className={className}
       style={{
         background: theme.background.card,

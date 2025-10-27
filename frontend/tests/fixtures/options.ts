@@ -63,7 +63,7 @@ export const EXPECTED_OPTION_CONTRACT_SHAPE = {
 
 // Test data generators
 export const generateTestOptionContract = (
-  overrides: Partial<typeof EXPECTED_OPTION_CONTRACT_SHAPE> = {}
+  overrides: Partial<Record<string, unknown>> = {}
 ) => ({
   symbol: "TEST251115C00045000",
   underlying_symbol: "SPY",

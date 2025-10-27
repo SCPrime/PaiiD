@@ -64,7 +64,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState("SPY");
-  const { toast } = useToast();
+  const { error: showToastError, success: showToastSuccess } = useToast();
 
   // Load ML insights on component mount
   useEffect(() => {
@@ -99,7 +99,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
       generateInsights(regimeData, patternsData.patterns || []);
     } catch (error) {
       logger.error("Failed to load ML insights", error);
-      toast.error("ML Analysis Failed", "Unable to load market intelligence. Please try again.");
+      showToastError("ML Analysis Failed", "Unable to load market intelligence. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -119,7 +119,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
         actionable: true,
         impact: regimeData.confidence > 0.8 ? "high" : "medium",
         timestamp: new Date().toISOString(),
-        details: regimeData as Record<string, unknown>,
+        details: regimeData as unknown as Record<string, unknown>,
       });
     }
 
@@ -134,7 +134,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
         actionable: true,
         impact: pattern.confidence > 0.8 ? "high" : "medium",
         timestamp: new Date().toISOString(),
-        details: pattern as Record<string, unknown>,
+        details: pattern as unknown as Record<string, unknown>,
       });
     });
 
@@ -149,7 +149,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
         actionable: true,
         impact: "high",
         timestamp: new Date().toISOString(),
-        details: regimeData.recommended_strategies as Record<string, unknown>,
+        details: regimeData.recommended_strategies as unknown as Record<string, unknown>,
       });
     }
 
@@ -180,10 +180,10 @@ export const MLIntelligenceDashboard: React.FC = () => {
     setRefreshing(true);
     await loadMLInsights();
     setRefreshing(false);
-    toast({
-      title: "ML Analysis Updated",
-      description: "Market intelligence has been refreshed with latest data.",
-    });
+    showToastSuccess("ML Analysis Updated", "Market intelligence has been refreshed with latest data.");
+    showToastSuccess("ML Analysis Updated", "Market intelligence has been refreshed with latest data.");
+    showToastSuccess("ML Analysis Updated", "Market intelligence has been refreshed with latest data.");
+    showToastSuccess("ML Analysis Updated", "Market intelligence has been refreshed with latest data.");
   };
 
   const getInsightIcon = (type: string) => {

@@ -49,6 +49,7 @@ export default function PositionsTable() {
       const enhanced: Position[] = rawPositions.map(
         (p: {
           qty?: number;
+          symbol?: string;
           quantity?: number;
           avgPrice?: number;
           average_price?: number;

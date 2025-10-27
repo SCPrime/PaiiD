@@ -9,6 +9,7 @@ interface EnhancedCardProps {
   hover?: boolean;
   glow?: boolean;
   border?: boolean;
+  onClick?: () => void;
 }
 
 const EnhancedCard: React.FC<EnhancedCardProps> = ({
@@ -19,6 +20,7 @@ const EnhancedCard: React.FC<EnhancedCardProps> = ({
   hover = false,
   glow = false,
   border = true,
+  onClick,
 }) => {
   const baseClasses = "rounded-xl transition-all duration-300 ease-in-out";
 
@@ -51,6 +53,7 @@ const EnhancedCard: React.FC<EnhancedCardProps> = ({
         borderClasses,
         className
       )}
+      onClick={onClick}
     >
       {children}
     </div>

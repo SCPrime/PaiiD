@@ -561,7 +561,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
           </div>
 
           {/* Progress Bar */}
-          {setupMethod === "ai" && setupProgress > 0 && (
+          {setupMethod === "ai" && _setupProgress > 0 && (
             <div style={{ marginBottom: theme.spacing.md }}>
               <div
                 style={{
@@ -587,7 +587,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
                     fontWeight: "600",
                   }}
                 >
-                  {setupProgress}%
+                  {_setupProgress}%
                 </span>
               </div>
               <div
@@ -595,17 +595,17 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
                   width: "100%",
                   height: "6px",
                   background: theme.background.glass,
-                  borderRadius: theme.borderRadius.full,
+                  borderRadius: "9999px",
                   overflow: "hidden",
                   border: `1px solid ${theme.colors.border}`,
                 }}
               >
                 <div
                   style={{
-                    width: `${setupProgress}%`,
+                    width: `${_setupProgress}%`,
                     height: "100%",
                     background: `linear-gradient(90deg, ${theme.workflow.strategyBuilder}, ${theme.colors.primary})`,
-                    borderRadius: theme.borderRadius.full,
+                    borderRadius: "9999px",
                     transition: "width 0.5s ease-in-out",
                   }}
                 />

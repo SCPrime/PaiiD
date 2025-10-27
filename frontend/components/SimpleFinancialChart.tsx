@@ -144,7 +144,7 @@ export default function SimpleFinancialChart() {
               color: "#94a3b8",
               font: {
                 size: 14,
-                weight: "600",
+                weight: 600,
               },
               callback: function (value) {
                 return (
@@ -158,7 +158,6 @@ export default function SimpleFinancialChart() {
             },
             grid: {
               color: "rgba(148, 163, 184, 0.1)",
-              drawBorder: false,
             },
           },
           x: {
@@ -314,7 +313,6 @@ export default function SimpleFinancialChart() {
             onClick={() => setTimeframe(tf)}
             style={{
               padding: "12px 24px",
-              border: "none",
               borderRadius: "12px",
               background:
                 timeframe === tf

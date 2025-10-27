@@ -1,0 +1,18 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-8.4.2, pluggy-1.6.0
+rootdir: C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\backend
+configfile: pyproject.toml
+plugins: anyio-4.10.0, asyncio-1.2.0, cov-7.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 540 items
+
+tests\contract\test_analytics_contracts.py FF                            [  0%]
+tests\contract\test_market_contracts.py FFFF                             [  1%]
+tests\contract\test_portfolio_contracts.py FFF                           [  1%]
+tests\integration\test_ai_recommendation_flow_integration.py FF.F.ssFFss [  3%]
+sFFFFFF                                                                  [  5%]
+tests\integration\test_auth_integration.py FFF.FFFFFFFEE                 [  7%]
+tests\integration\test_auth_integration_enhanced.py FFF.sFFsFFFFFFFFF    [ 10%]
+tests\integration\test_backtesting_flow_integration.py FFs.......ss..FFF [ 13%]
+                                                                         [ 13%]
+tests\integration\test_market_data_flow_integration.py FFFFsF..FFFF

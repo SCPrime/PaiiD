@@ -1,0 +1,111 @@
+components/EnhancedRadialMenu.tsx(180,24): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(this: any, d: DefaultArcObject, ...args: any[]): string | null', gave the following error.
+    Argument of type '{}' is not assignable to parameter of type 'DefaultArcObject'.
+      Type '{}' is missing the following properties from type 'DefaultArcObject': innerRadius, outerRadius, startAngle, endAngle
+  Overload 2 of 2, '(this: any, d: DefaultArcObject, ...args: any[]): void', gave the following error.
+    Argument of type '{}' is not assignable to parameter of type 'DefaultArcObject'.
+      Type '{}' is missing the following properties from type 'DefaultArcObject': innerRadius, outerRadius, startAngle, endAngle
+components/PerformanceOptimizer.tsx(63,24): error TS2352: Conversion of type 'MemoExoticComponent<ComponentType<P>>' to type 'ComponentType<P>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'MemoExoticComponent<ComponentType<P>>' is not comparable to type 'FunctionComponent<P>'.
+    Types of parameters 'props' and 'props' are incompatible.
+      Type 'P' is not comparable to type '(PropsWithoutRef<P> & RefAttributes<Component<P, any, any>>) | PropsWithRef<P>'.
+        Type 'object' is not comparable to type '(PropsWithoutRef<P> & RefAttributes<Component<P, any, any>>) | PropsWithRef<P>'.
+          Type 'P' is not comparable to type 'PropsWithoutRef<P> & RefAttributes<Component<P, any, any>>'.
+            Type 'object' is not comparable to type 'PropsWithoutRef<P> & RefAttributes<Component<P, any, any>>'.
+              Type 'object' is not comparable to type 'PropsWithoutRef<P>'.
+                Type 'P' is not comparable to type 'PropsWithoutRef<P>'.
+                  Type 'object' is not comparable to type 'PropsWithoutRef<P>'.
+components/PerformanceOptimizer.tsx(68,5): error TS2322: Type 'LazyExoticComponent<ComponentType<P>>' is not assignable to type 'ComponentType<P>'.
+  Type 'LazyExoticComponent<ComponentType<P>>' is not assignable to type 'FunctionComponent<P>'.
+    Types of parameters 'props' and 'props' are incompatible.
+      Type 'P' is not assignable to type '(PropsWithoutRef<P> & RefAttributes<Component<P, any, any>>) | PropsWithRef<P>'.
+        Type 'object' is not assignable to type '(PropsWithoutRef<P> & RefAttributes<Component<P, any, any>>) | PropsWithRef<P>'.
+          Type 'P' is not assignable to type 'PropsWithoutRef<P> & RefAttributes<Component<P, any, any>>'.
+            Type 'object' is not assignable to type 'PropsWithoutRef<P> & RefAttributes<Component<P, any, any>>'.
+              Type 'object' is not assignable to type 'PropsWithoutRef<P>'.
+                Type 'P' is not assignable to type 'PropsWithoutRef<P>'.
+                  Type 'object' is not assignable to type 'PropsWithoutRef<P>'.
+components/PerformanceOptimizer.tsx(74,24): error TS2352: Conversion of type 'ForwardRefExoticComponent<PropsWithoutRef<P> & RefAttributes<unknown>>' to type 'ComponentType<P>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'ForwardRefExoticComponent<PropsWithoutRef<P> & RefAttributes<unknown>>' is not comparable to type 'FunctionComponent<P>'.
+    Types of parameters 'props' and 'props' are incompatible.
+      Type 'P' is not comparable to type 'PropsWithoutRef<P> & RefAttributes<unknown>'.
+        Type 'object' is not comparable to type 'PropsWithoutRef<P> & RefAttributes<unknown>'.
+          Type 'object' is not comparable to type 'PropsWithoutRef<P>'.
+            Type 'P' is not comparable to type 'PropsWithoutRef<P>'.
+              Type 'object' is not comparable to type 'PropsWithoutRef<P>'.
+components/PerformanceOptimizer.tsx(80,46): error TS2345: Argument of type 'P' is not assignable to parameter of type 'SetStateAction<PropsWithoutRef<P>>'.
+  Type 'object' is not assignable to type 'SetStateAction<PropsWithoutRef<P>>'.
+components/PerformanceOptimizer.tsx(82,46): error TS2345: Argument of type 'P' is not assignable to parameter of type 'SetStateAction<PropsWithoutRef<P>>'.
+  Type 'object' is not assignable to type 'SetStateAction<PropsWithoutRef<P>>'.
+components/PerformanceOptimizer.tsx(90,21): error TS2345: Argument of type 'PropsWithoutRef<P>' is not assignable to parameter of type 'P'.
+  'PropsWithoutRef<P>' is assignable to the constraint of type 'P', but 'P' could be instantiated with a different subtype of constraint 'object'.
+    Type 'object' is not assignable to type 'P'.
+      'object' is assignable to the constraint of type 'P', but 'P' could be instantiated with a different subtype of constraint 'object'.
+components/PerformanceOptimizer.tsx(93,15): error TS2322: Type 'PropsWithoutRef<P> & { ref: ForwardedRef<unknown>; }' is not assignable to type 'IntrinsicAttributes & P'.
+  Type 'PropsWithoutRef<P> & { ref: ForwardedRef<unknown>; }' is not assignable to type 'P'.
+    'PropsWithoutRef<P> & { ref: ForwardedRef<unknown>; }' is assignable to the constraint of type 'P', but 'P' could be instantiated with a different subtype of constraint 'object'.
+components/PerformanceOptimizer.tsx(117,7): error TS2698: Spread types may only be created from object types.
+components/RadialMenu.ORIGINAL.tsx(888,5): error TS2304: Cannot find name 'centerContentSpacing'.
+components/RadialMenu.ORIGINAL.tsx(970,24): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(name: string, value: null): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'null'.
+  Overload 2 of 4, '(name: string, value: string | number | boolean, priority?: "important" | null | undefined): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'string | number | boolean'.
+  Overload 3 of 4, '(name: string, value: ValueFn<BaseType, unknown, string | number | boolean | null>, priority?: "important" | null | undefined): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'ValueFn<BaseType, unknown, string | number | boolean | null>'.
+      The 'this' types of each signature are incompatible.
+        Type 'BaseType' is not assignable to type 'SVGPathElement'.
+          Type 'null' is not assignable to type 'SVGPathElement'.
+components/RadialMenu/RadialMenuComponent.tsx(46,10): error TS6133: 'hoveredWorkflow' is declared but its value is never read.
+components/RadialMenu/RadialMenuComponent.tsx(47,10): error TS6133: 'showAIChat' is declared but its value is never read.
+components/RadialMenu/RadialMenuComponent.tsx(112,24): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(name: string, value: null): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'null'.
+  Overload 2 of 4, '(name: string, value: string | number | boolean, priority?: "important" | null | undefined): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'string | number | boolean'.
+  Overload 3 of 4, '(name: string, value: ValueFn<BaseType, unknown, string | number | boolean | null>, priority?: "important" | null | undefined): Selection<BaseType, unknown, SVGSVGElement, unknown>', gave the following error.
+    Argument of type '(this: SVGPathElement, d: { data: { id: string; }; }) => "url(#clickGlow)" | "url(#normalShadow)"' is not assignable to parameter of type 'ValueFn<BaseType, unknown, string | number | boolean | null>'.
+      The 'this' types of each signature are incompatible.
+        Type 'BaseType' is not assignable to type 'SVGPathElement'.
+          Type 'null' is not assignable to type 'SVGPathElement'.
+components/StrategyBuilderAI.tsx(640,33): error TS2339: Property 'indicator' does not exist on type '{ condition: string; value: string; operator: string; }'.
+components/StrategyBuilderAI.tsx(683,33): error TS2339: Property 'type' does not exist on type '{ condition: string; value: string; operator: string; }'.
+components/StrategyBuilderAI.tsx(719,58): error TS2339: Property 'value' does not exist on type '{ method: string; percentage: number; maxRisk: number; }'.
+components/StrategyBuilderAI.tsx(1276,11): error TS2719: Type 'Template | null' is not assignable to type 'Template | null'. Two different types with this name exist, but they are unrelated.
+  Type 'Template' is not assignable to type 'Template'. Two different types with this name exist, but they are unrelated.
+    Types of property 'config' are incompatible.
+      Type 'unknown' is not assignable to type '{ entry_rules?: { type: string; value: string; operator: string; }[] | undefined; exit_rules?: { type: string; value: number; operator: string; }[] | undefined; position_sizing?: { method: string; percentage: number; } | undefined; }'.
+components/TemplateCustomizationModal.tsx(67,40): error TS2339: Property 'position_size_percent' does not exist on type '{ entry_rules?: { type: string; value: string; operator: string; }[] | undefined; exit_rules?: { type: string; value: number; operator: string; }[] | undefined; position_sizing?: { method: string; percentage: number; } | undefined; }'.
+components/TemplateCustomizationModal.tsx(68,40): error TS2339: Property 'max_positions' does not exist on type '{ entry_rules?: { type: string; value: string; operator: string; }[] | undefined; exit_rules?: { type: string; value: number; operator: string; }[] | undefined; position_sizing?: { method: string; percentage: number; } | undefined; }'.
+components/TemplateCustomizationModal.tsx(69,37): error TS2339: Property 'rsi_period' does not exist on type '{ entry_rules?: { type: string; value: string; operator: string; }[] | undefined; exit_rules?: { type: string; value: number; operator: string; }[] | undefined; position_sizing?: { method: string; percentage: number; } | undefined; }'.
+components/TemplateCustomizationModal.tsx(96,13): error TS2739: Type '{ position_size_percent: number; max_positions: number; rsi_period: number; }' is missing the following properties from type '{ position_size_percent: number; max_positions: number; rsi_period: number; stop_loss_percent: number; take_profit_percent: number; entry_rules: { type: string; value: string; operator: string; }[]; exit_rules: { ...; }[]; }': stop_loss_percent, take_profit_percent, entry_rules, exit_rules
+components/TemplateCustomizationModal.tsx(171,49): error TS2339: Property 'position_size_percent' does not exist on type '{ entry_rules?: { type: string; value: string; operator: string; }[] | undefined; exit_rules?: { type: string; value: number; operator: string; }[] | undefined; position_sizing?: { method: string; percentage: number; } | undefined; }'.
+components/TemplateCustomizationModal.tsx(172,49): error TS2339: Property 'max_positions' does not exist on type '{ entry_rules?: { type: string; value: string; operator: string; }[] | undefined; exit_rules?: { type: string; value: number; operator: string; }[] | undefined; position_sizing?: { method: string; percentage: number; } | undefined; }'.
+components/trading/PLComparisonChart.tsx(324,9): error TS2322: Type '{ time: number; value: number; }[]' is not assignable to type 'LineData<Time>[]'.
+  Type '{ time: number; value: number; }' is not assignable to type 'LineData<Time>'.
+    Types of property 'time' are incompatible.
+      Type 'number' is not assignable to type 'Time'.
+components/trading/PLComparisonChart.tsx(329,3): error TS18046: 'payoffSeries' is of type 'unknown'.
+components/trading/PLComparisonChart.tsx(338,3): error TS18046: 'zeroSeries' is of type 'unknown'.
+components/trading/PLComparisonChart.tsx(354,11): error TS2322: Type '{ time: number; value: number; }[]' is not assignable to type 'LineData<Time>[]'.
+  Type '{ time: number; value: number; }' is not assignable to type 'LineData<Time>'.
+    Types of property 'time' are incompatible.
+      Type 'number' is not assignable to type 'Time'.
+components/trading/PLComparisonChart.tsx(359,5): error TS18046: 'probSeries' is of type 'unknown'.
+components/trading/ResearchDashboard.tsx(613,7): error TS2322: Type 'unknown' is not assignable to type 'ISeriesApi<"Line" | "Candlestick" | "Area", Time, LineData<Time> | WhitespaceData<Time> | CandlestickData<Time> | AreaData<...>, LineSeriesOptions | ... 1 more ... | AreaSeriesOptions, DeepPartial<...> | ... 1 more ... | DeepPartial<...>> | null'.
+components/trading/ResearchDashboard.tsx(630,7): error TS18047: 'series' is possibly 'null'.
+components/trading/ResearchDashboard.tsx(632,7): error TS2322: Type 'unknown' is not assignable to type 'ISeriesApi<"Line" | "Candlestick" | "Area", Time, LineData<Time> | WhitespaceData<Time> | CandlestickData<Time> | AreaData<...>, LineSeriesOptions | ... 1 more ... | AreaSeriesOptions, DeepPartial<...> | ... 1 more ... | DeepPartial<...>> | null'.
+components/trading/ResearchDashboard.tsx(642,7): error TS18047: 'series' is possibly 'null'.
+components/trading/ResearchDashboard.tsx(645,7): error TS2322: Type 'unknown' is not assignable to type 'ISeriesApi<"Line" | "Candlestick" | "Area", Time, LineData<Time> | WhitespaceData<Time> | CandlestickData<Time> | AreaData<...>, LineSeriesOptions | ... 1 more ... | AreaSeriesOptions, DeepPartial<...> | ... 1 more ... | DeepPartial<...>> | null'.
+components/trading/ResearchDashboard.tsx(657,7): error TS18047: 'series' is possibly 'null'.
+components/trading/ResearchDashboard.tsx(826,7): error TS18046: 'macdSeries' is of type 'unknown'.
+components/trading/ResearchDashboard.tsx(834,7): error TS18046: 'signalSeries' is of type 'unknown'.
+components/trading/ResearchDashboard.tsx(845,7): error TS18046: 'histogramSeries' is of type 'unknown'.
+components/trading/ResearchDashboard.tsx(904,13): error TS2322: Type '{ time: number; value: number; color: string; }[]' is not assignable to type 'HistogramData<Time>[]'.
+  Type '{ time: number; value: number; color: string; }' is not assignable to type 'HistogramData<Time>'.
+    Types of property 'time' are incompatible.
+      Type 'number' is not assignable to type 'Time'.
+components/trading/ResearchDashboard.tsx(910,7): error TS18046: 'volumeSeries' is of type 'unknown'.
+components/trading/ResearchDashboard.tsx(1082,7): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+components/trading/ResearchDashboard.tsx(1266,39): error TS2339: Property 'symbol' does not exist on type '{}'.
+components/trading/ResearchDashboard.tsx(1267,45): error TS233

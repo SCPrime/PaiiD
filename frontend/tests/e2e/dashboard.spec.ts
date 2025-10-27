@@ -77,7 +77,7 @@ test.describe('Dashboard Load & Data Fetch', () => {
 
   test('should refresh data automatically', async ({ page }) => {
     // Get initial portfolio value
-    const initialValue = await page.locator('[data-testid="portfolio-value"]').textContent();
+    const _initialValue = await page.locator('[data-testid="portfolio-value"]').textContent();
 
     // Wait for auto-refresh (assuming 30 second interval)
     await page.waitForTimeout(31000);

@@ -8,7 +8,7 @@ import { test, expect, Page } from '@playwright/test';
 const BASE_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 // Read API_TOKEN from environment variable (REQUIRED for E2E tests)
 // Set in CI/CD pipeline or local .env.test file
-const API_TOKEN = process.env.API_TOKEN || '';
+const _API_TOKEN = process.env.API_TOKEN || '';
 
 // Helper: Skip onboarding
 async function skipOnboarding(page: Page) {
@@ -198,7 +198,7 @@ test.describe('PaiiD Radial Menu Wedge Tests', () => {
     await page.waitForTimeout(3000);
 
     // Check iframe exists
-    const iframe = page.frameLocator('iframe[src="/my-account"]');
+    const _iframe = page.frameLocator('iframe[src="/my-account"]');
     const iframeVisible = await page.locator('iframe[src="/my-account"]').isVisible();
     expect(iframeVisible).toBe(true);
 

@@ -448,14 +448,17 @@ export default function MorningRoutineAI() {
         logger.info("[MorningRoutine] Setting frequency", {
           frequency: routine.schedule.frequency,
         });
-        setScheduleFrequency(routine.schedule.frequency);
+        const freq = routine.schedule.frequency;
+        if (freq === "daily" || freq === "weekdays" || freq === "custom") {
+          setScheduleFrequency(freq);
+        }
       }
 
       // Extract step types from AI routine
       if (routine.steps && Array.isArray(routine.steps)) {
         const stepTypes = routine.steps
-          .map((step: { type: string }) => step.type)
-          .filter((type: string) => availableSteps.some((s) => s.id === type));
+          .map((step: { type?: string }) => step.type)
+          .filter((type): type is string => typeof type === "string" && availableSteps.some((s) => s.id === type));
         logger.info("[MorningRoutine] Setting step types", { stepTypes });
         if (stepTypes.length > 0) {
           setSelectedSteps(stepTypes);
