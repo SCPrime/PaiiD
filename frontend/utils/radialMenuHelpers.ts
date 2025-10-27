@@ -71,13 +71,20 @@ export function calculateFontSizes(isMobile: boolean): ResponsiveFontSizes {
 /**
  * Calculate responsive center content positions based on innerRadius
  * Ensures proper spacing regardless of menu size (500px mobile → 700px desktop)
+ *
+ * Layout structure (Y-axis, positive = DOWN):
+ * 1. FORCE FIELD (top) - calculated from DOW position
+ * 2. PaiiD Logo (center at Y=0) - React overlay, ~87px tall on desktop
+ * 3. DOW JONES (below logo)
+ * 4. NASDAQ (below DOW)
+ * 5. Status Badge (bottom)
  */
 export function calculateCenterContentSpacing(innerRadius: number): CenterContentSpacing {
   return {
-    logoOffset: -(innerRadius * 0.45), // Logo at top (REDUCED to spread out - negative = UP)
-    dowOffset: innerRadius * 0.15, // DOW below logo (positive = DOWN, increased from 0)
-    nasdaqOffset: innerRadius * 0.45, // NASDAQ well below DOW (REDUCED to spread out)
-    statusBadgeOffset: innerRadius * 0.55, // Status badge at bottom (REDUCED to spread out)
+    logoOffset: -(innerRadius * 0.45), // Not used - logo is CSS positioned at Y=0
+    dowOffset: innerRadius * 0.50, // DOW well below logo (INCREASED from 0.38 to avoid logo overlap with ~58px tall logo)
+    nasdaqOffset: innerRadius * 0.82, // NASDAQ below DOW (INCREASED from 0.68 for proper spacing)
+    statusBadgeOffset: innerRadius * 0.75, // Status badge at bottom (CHANGED from 0.85 to match MarketStatusBadge.tsx)
   };
 }
 

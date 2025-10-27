@@ -744,7 +744,7 @@ function renderForceFieldConfidence(
 ) {
   const forceFieldGroup = centerGroup
     .append("g")
-    .attr("transform", `translate(0, ${-centerContentSpacing.dowOffset - 35})`);
+    .attr("transform", `translate(0, ${-centerContentSpacing.dowOffset - (parseInt(fontSizes.marketLabel) * 3)})`);
 
   forceFieldGroup
     .append("text")
