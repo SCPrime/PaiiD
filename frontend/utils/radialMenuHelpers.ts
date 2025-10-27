@@ -74,9 +74,9 @@ export function calculateFontSizes(isMobile: boolean): ResponsiveFontSizes {
  */
 export function calculateCenterContentSpacing(innerRadius: number): CenterContentSpacing {
   return {
-    logoOffset: -(innerRadius * 0.55), // Logo at top of circle (reduced from 0.65 to stay within bounds)
-    dowOffset: -(innerRadius * 0.25), // DOW below logo (increased from 0.15 to move up more)
-    nasdaqOffset: innerRadius * 0.45, // NASDAQ below DOW (increased from 0.30 for more spacing)
+    logoOffset: -(innerRadius * 0.65), // Logo at top of circle (moved higher to prevent crowding)
+    dowOffset: 0, // DOW in middle (centered vertically with logo above)
+    nasdaqOffset: innerRadius * 0.55, // NASDAQ below DOW (more spacing from center)
     statusBadgeOffset: innerRadius * 0.7, // Status badge at bottom
   };
 }

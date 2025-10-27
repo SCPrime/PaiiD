@@ -9,6 +9,7 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import AIChatBot from "../components/AIChatBot";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { GlowStyleProvider } from "../contexts/GlowStyleContext";
+import { HelpProvider } from "../hooks/useHelp";
 import { initSentry, setUser } from "../lib/sentry";
 import StoryboardCanvas from "../components/StoryboardCanvas";
 import { getHotkeyManager, DEFAULT_HOTKEYS } from "../lib/hotkeyManager";
@@ -251,19 +252,21 @@ export default function App({ Component, pageProps }: AppProps) {
     <ErrorBoundary>
       <ThemeProvider>
         <GlowStyleProvider>
-          <AuthProvider>
-            <ChatProvider>
-              <WorkflowProvider>
-                <AppContent
-                  Component={Component}
-                  pageProps={pageProps}
-                  userId={user.id}
-                  userRole={user.role}
-                  telemetryEnabled={telemetryEnabled}
-                />
-              </WorkflowProvider>
-            </ChatProvider>
-          </AuthProvider>
+          <HelpProvider>
+            <AuthProvider>
+              <ChatProvider>
+                <WorkflowProvider>
+                  <AppContent
+                    Component={Component}
+                    pageProps={pageProps}
+                    userId={user.id}
+                    userRole={user.role}
+                    telemetryEnabled={telemetryEnabled}
+                  />
+                </WorkflowProvider>
+              </ChatProvider>
+            </AuthProvider>
+          </HelpProvider>
         </GlowStyleProvider>
       </ThemeProvider>
     </ErrorBoundary>
