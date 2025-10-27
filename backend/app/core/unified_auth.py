@@ -127,6 +127,10 @@ def get_current_user_unified(
             db.refresh(user)
             logger.info("Created MVP user", user_id=1)
 
+        # CRITICAL: Detach user from session to prevent connection leak
+        # This is essential for SSE streams that hold user objects for extended periods
+        db.expunge(user)
+
         logger.debug(
             "API token auth successful",
             user=format_user_for_logging(user)
@@ -188,6 +192,10 @@ def get_current_user_unified(
                     detail="User account is disabled",
                 )
 
+            # CRITICAL: Detach user from session to prevent connection leak
+            # This is essential for SSE streams that hold user objects for extended periods
+            db.expunge(user)
+
             logger.debug(
                 "JWT auth successful",
                 user=format_user_for_logging(user)
@@ -226,6 +234,10 @@ def get_current_user_unified(
             db.commit()
             db.refresh(user)
             logger.info("Created MVP user for fallback auth", user_id=1)
+
+        # CRITICAL: Detach user from session to prevent connection leak
+        # This is essential for SSE streams that hold user objects for extended periods
+        db.expunge(user)
 
         logger.debug(
             "MVP fallback auth successful",
