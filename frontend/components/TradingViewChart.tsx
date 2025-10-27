@@ -64,33 +64,6 @@ export default function TradingViewChart({
     { key: "macd", label: "MACD", icon: BarChart3, name: "Moving Average Convergence Divergence" },
   ];
 
-  // Load TradingView script
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/tv.js";
-    script.async = true;
-    script.onload = () => {
-      if (containerRef.current) {
-        initWidget();
-      }
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, [initWidget]);
-
-  // Reinitialize widget when symbol, interval, or indicators change
-  useEffect(() => {
-    if (window.TradingView && containerRef.current) {
-      initWidget();
-    }
-  }, [initWidget]);
-
   const initWidget = useCallback(() => {
     if (!containerRef.current || !window.TradingView) return;
 
@@ -131,6 +104,33 @@ export default function TradingViewChart({
       width: "100%",
     });
   }, [showIndicators, currentSymbol, interval, autoHeight, height]);
+
+  // Load TradingView script
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/tv.js";
+    script.async = true;
+    script.onload = () => {
+      if (containerRef.current) {
+        initWidget();
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      // Cleanup
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
+  }, [initWidget]);
+
+  // Reinitialize widget when symbol, interval, or indicators change
+  useEffect(() => {
+    if (window.TradingView && containerRef.current) {
+      initWidget();
+    }
+  }, [initWidget]);
 
   const handleSymbolChange = (newSymbol: string) => {
     setCurrentSymbol(newSymbol.toUpperCase());

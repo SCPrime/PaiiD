@@ -116,9 +116,10 @@ export default function TemplateCustomizationModal({
       };
 
       // Update exit rules
-      const exitRules = [...(template.config.exit_rules || [])];
-      const stopLossIndex = exitRules.findIndex((r: unknown) => r.type === "stop_loss");
-      const takeProfitIndex = exitRules.findIndex((r: unknown) => r.type === "take_profit");
+      type ExitRule = { type: string; value: number; operator: string };
+      const exitRules = [...(template.config.exit_rules || [])] as ExitRule[];
+      const stopLossIndex = exitRules.findIndex((r) => r.type === "stop_loss");
+      const takeProfitIndex = exitRules.findIndex((r) => r.type === "take_profit");
 
       if (stopLossIndex >= 0) {
         exitRules[stopLossIndex] = { ...exitRules[stopLossIndex], value: stopLoss };
@@ -152,7 +153,8 @@ export default function TemplateCustomizationModal({
       if (onCloneSuccess) onCloneSuccess();
     } catch (err: unknown) {
       logger.error("Clone template error", err);
-      toast.error(err.message || "Failed to clone template");
+      const errorMessage = err instanceof Error ? err.message : "Failed to clone template";
+      toast.error(errorMessage);
     } finally {
       setIsCloning(false);
     }
@@ -165,12 +167,13 @@ export default function TemplateCustomizationModal({
   };
 
   // Calculate changes from template defaults
+  type ExitRule = { type: string; value: number; operator: string };
   const originalPositionSize = template.config?.position_size_percent || 10;
   const originalMaxPositions = template.config?.max_positions || 5;
   const originalStopLoss =
-    template.config?.exit_rules?.find((r: unknown) => r.type === "stop_loss")?.value || 3;
+    (template.config?.exit_rules as ExitRule[])?.find((r) => r.type === "stop_loss")?.value || 3;
   const originalTakeProfit =
-    template.config?.exit_rules?.find((r: unknown) => r.type === "take_profit")?.value || 8;
+    (template.config?.exit_rules as ExitRule[])?.find((r) => r.type === "take_profit")?.value || 8;
 
   const hasChanges =
     positionSize !== originalPositionSize ||

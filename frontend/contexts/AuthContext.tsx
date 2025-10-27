@@ -28,52 +28,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   /**
-   * Load user session from stored tokens on mount
+   * Internal refresh function (doesn't show toast)
    */
-  useEffect(() => {
-    const loadSession = async () => {
-      const tokens = authApi.getStoredTokens();
+  const refreshSessionInternal = useCallback(async () => {
+    const tokens = authApi.getStoredTokens();
+    if (!tokens) throw new Error("No tokens to refresh");
 
-      if (!tokens) {
-        setIsLoading(false);
-        return;
-      }
+    const newTokens = await authApi.refreshToken(tokens.refreshToken);
+    authApi.saveTokens(newTokens);
 
-      // Check if token is expired
-      if (Date.now() >= tokens.expiresAt) {
-        // Try to refresh
-        try {
-          await refreshSessionInternal();
-        } catch (error) {
-          // Refresh failed, clear session
-          authApi.clearTokens();
-          setIsLoading(false);
-        }
-        return;
-      }
-
-      // Token is valid, fetch user profile
-      try {
-        const profile = await authApi.getCurrentUser(tokens.accessToken);
-        setUser(profile);
-        startRefreshTimer();
-      } catch (error) {
-        // Token invalid, clear it
-        authApi.clearTokens();
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadSession();
-
-    return () => {
-      if (refreshTimerRef.current) {
-        clearTimeout(refreshTimerRef.current);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startRefreshTimer]);
+    // Update user profile
+    const profile = await authApi.getCurrentUser(newTokens.access_token);
+    setUser(profile);
+  }, []);
 
   /**
    * Start token refresh timer
@@ -97,22 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       10 * 60 * 1000
     ); // 10 minutes
-  }, []);
-
-  /**
-   * Internal refresh function (doesn't show toast)
-   */
-  const refreshSessionInternal = async () => {
-    const tokens = authApi.getStoredTokens();
-    if (!tokens) throw new Error("No tokens to refresh");
-
-    const newTokens = await authApi.refreshToken(tokens.refreshToken);
-    authApi.saveTokens(newTokens);
-
-    // Update user profile
-    const profile = await authApi.getCurrentUser(newTokens.access_token);
-    setUser(profile);
-  };
+  }, [refreshSessionInternal]);
 
   /**
    * Public refresh function (for manual refresh)
@@ -126,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authApi.clearTokens();
       setUser(null);
     }
-  }, [startRefreshTimer]);
+  }, [refreshSessionInternal, startRefreshTimer]);
 
   /**
    * Login with email and password
@@ -210,6 +162,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     toast.success("Logged out successfully");
   }, []);
+
+  /**
+   * Load user session from stored tokens on mount
+   */
+  useEffect(() => {
+    const loadSession = async () => {
+      const tokens = authApi.getStoredTokens();
+
+      if (!tokens) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if token is expired
+      if (Date.now() >= tokens.expiresAt) {
+        // Try to refresh
+        try {
+          await refreshSessionInternal();
+        } catch (error) {
+          // Refresh failed, clear session
+          authApi.clearTokens();
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // Token is valid, fetch user profile
+      try {
+        const profile = await authApi.getCurrentUser(tokens.accessToken);
+        setUser(profile);
+        startRefreshTimer();
+      } catch (error) {
+        // Token invalid, clear it
+        authApi.clearTokens();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSession();
+
+    return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+    };
+  }, [refreshSessionInternal, startRefreshTimer]);
 
   const value: AuthContextValue = {
     user,

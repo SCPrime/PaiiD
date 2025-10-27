@@ -173,7 +173,8 @@ export default function StrategyBuilderAI() {
       setUserRiskTolerance(data.user_risk_tolerance || 50);
     } catch (err: unknown) {
       logger.error("Template fetch error", err);
-      setTemplatesError(err.message || "Failed to load strategy templates");
+      const errorMessage = err instanceof Error ? err.message : "Failed to load strategy templates";
+      setTemplatesError(errorMessage);
     } finally {
       setIsLoadingTemplates(false);
     }
@@ -208,7 +209,8 @@ export default function StrategyBuilderAI() {
       // For now, just show success message
     } catch (err: unknown) {
       logger.error("Clone template error", err);
-      toast.error(err.message || "Failed to clone template");
+      const errorMessage = err instanceof Error ? err.message : "Failed to clone template";
+      toast.error(errorMessage);
     }
   };
 
@@ -223,9 +225,10 @@ export default function StrategyBuilderAI() {
       setCurrentStrategy(strategy);
       setView("create");
     } catch (err: unknown) {
-      setError(err.message || "Failed to generate strategy");
+      const errorMessage = err instanceof Error ? err.message : "Failed to generate strategy";
+      setError(errorMessage);
       logger.error("Strategy generation error", err);
-    } finally {
+    } finally{
       setIsGenerating(false);
     }
   };

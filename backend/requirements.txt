@@ -56,3 +56,6 @@ numpy>=1.24.0        # Numerical computing
 joblib>=1.3.0        # Model serialization and parallel processing
 ta>=0.11.0           # Technical analysis indicators library
 scipy>=1.11.0        # Scientific computing (needed for signal processing in pattern detection)
+
+# Security Updates (Wave 7: CVE-2025-50181 Fix)
+urllib3>=2.5.0       # Fixed SSRF vulnerability CVE-2025-50181

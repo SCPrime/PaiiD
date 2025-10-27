@@ -43,8 +43,8 @@ function RadialMenuComponent({
 }: RadialMenuProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const [hoveredWorkflow, setHoveredWorkflow] = useState<Workflow | null>(null);
-  const [showAIChat, setShowAIChat] = useState(false);
+  const [_hoveredWorkflow, _setHoveredWorkflow] = useState<Workflow | null>(null);
+  const [_showAIChat, _setShowAIChat] = useState(false);
   const [announcement, setAnnouncement] = useState<string>("");
 
   // Use custom hooks for market data and responsive sizing

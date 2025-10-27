@@ -71,7 +71,7 @@ export default function MLModelManagement() {
         method: "POST",
       });
       if (!res.ok) throw new Error("Retraining failed");
-      const _result = await res.json();
+      await res.json(); // Consume response
       showSuccess(`Model ${modelId} retrained successfully!`);
       await loadModelStatus(); // Refresh data
     } catch (err: unknown) {

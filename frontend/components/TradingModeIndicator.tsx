@@ -60,7 +60,6 @@ export default function TradingModeIndicator({
   };
 
   const isLive = mode === "live";
-  const _isPaper = mode === "paper";
 
   return (
     <>

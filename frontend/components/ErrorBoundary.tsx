@@ -75,7 +75,8 @@ export class ErrorBoundary extends Component<Props, State> {
           // Sentry not available, skip
         });
     } catch (sentryError) {
-      logger.warn("[ErrorBoundary] Failed to send to Sentry", sentryError instanceof Error ? sentryError : undefined);
+      const errorData = sentryError instanceof Error ? { message: sentryError.message, name: sentryError.name } : undefined;
+      logger.warn("[ErrorBoundary] Failed to send to Sentry", errorData);
     }
 
     // Call optional error handler prop

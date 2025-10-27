@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMarketStream } from "../hooks/useMarketStream";
 import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";

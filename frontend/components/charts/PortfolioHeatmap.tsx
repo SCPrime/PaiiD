@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import React, { useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../../hooks/useWebSocket";
+import { logger } from "../../lib/logger";
 import AnimatedCounter from "../ui/AnimatedCounter";
 import EnhancedCard from "../ui/EnhancedCard";
 import StatusIndicator from "../ui/StatusIndicator";

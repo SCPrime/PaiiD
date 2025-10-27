@@ -9,7 +9,7 @@
 
 import { Chart, registerables } from "chart.js";
 import { Loader2, RefreshCw } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { logger } from "../lib/logger";
 
 // Register Chart.js components
@@ -36,24 +36,24 @@ export default function SimpleFinancialChart() {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
 
-  // Load account data
-  useEffect(() => {
-    loadAccountData();
-  }, [timeframe, loadAccountData]);
+  const generateDemoData = useCallback((tf: string): HistoryPoint[] => {
+    const days = tf === "7D" ? 7 : tf === "30D" ? 30 : 90;
+    const points: HistoryPoint[] = [];
+    let value = 100000;
 
-  // Render chart when data changes
-  useEffect(() => {
-    if (data && chartRef.current) {
-      renderChart();
+    for (let i = 0; i < days; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - (days - i));
+      value += (Math.random() - 0.45) * 2000; // Slight upward trend
+      points.push({
+        date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        value: Math.max(value, 95000), // Don't go below 95k
+      });
     }
-    return () => {
-      if (chartInstance.current) {
-        chartInstance.current.destroy();
-      }
-    };
-  }, [data, renderChart]);
+    return points;
+  }, []);
 
-  const loadAccountData = async () => {
+  const loadAccountData = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/proxy/portfolio/simple-history?timeframe=${timeframe}`);
@@ -71,26 +71,9 @@ export default function SimpleFinancialChart() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeframe, generateDemoData]);
 
-  const generateDemoData = (tf: string): HistoryPoint[] => {
-    const days = tf === "7D" ? 7 : tf === "30D" ? 30 : 90;
-    const points: HistoryPoint[] = [];
-    let value = 100000;
-
-    for (let i = 0; i < days; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() - (days - i));
-      value += (Math.random() - 0.45) * 2000; // Slight upward trend
-      points.push({
-        date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        value: Math.max(value, 95000), // Don't go below 95k
-      });
-    }
-    return points;
-  };
-
-  const renderChart = () => {
+  const renderChart = useCallback(() => {
     if (!chartRef.current || !data) return;
 
     // Destroy existing chart
@@ -142,9 +125,11 @@ export default function SimpleFinancialChart() {
             displayColors: false,
             callbacks: {
               label: function (context) {
+                const yValue = context.parsed.y;
+                if (yValue === null) return "$0.00";
                 return (
                   "$" +
-                  context.parsed.y.toLocaleString("en-US", {
+                  yValue.toLocaleString("en-US", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })
@@ -197,7 +182,24 @@ export default function SimpleFinancialChart() {
         },
       },
     });
-  };
+  }, [data]);
+
+  // Load account data
+  useEffect(() => {
+    loadAccountData();
+  }, [loadAccountData]);
+
+  // Render chart when data changes
+  useEffect(() => {
+    if (data && chartRef.current) {
+      renderChart();
+    }
+    return () => {
+      if (chartInstance.current) {
+        chartInstance.current.destroy();
+      }
+    };
+  }, [data, renderChart]);
 
   if (loading) {
     return (

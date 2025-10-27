@@ -85,10 +85,10 @@ function formatLiveMarketData(
     candidates: Array<{
       symbol: string;
       price: number;
-      change: number;
-      changePercent: number;
-      volume: number;
-      marketCap: number;
+      change?: number;
+      changePercent?: number;
+      volume?: number;
+      marketCap?: number;
       bid: number;
       ask: number;
     }>;
@@ -163,10 +163,10 @@ export default function MorningRoutineAI() {
     candidates: Array<{
       symbol: string;
       price: number;
-      change: number;
-      changePercent: number;
-      volume: number;
-      marketCap: number;
+      change?: number;
+      changePercent?: number;
+      volume?: number;
+      marketCap?: number;
       bid: number;
       ask: number;
     }>;

@@ -563,10 +563,19 @@ export default function MarketScanner() {
                 <Indicator
                   label="MACD"
                   value={
-                    result.indicators.macd.charAt(0).toUpperCase() + result.indicators.macd.slice(1)
+                    typeof result.indicators.macd === "string"
+                      ? result.indicators.macd.charAt(0).toUpperCase() + result.indicators.macd.slice(1)
+                      : result.indicators.macd.toFixed(2)
                   }
                 />
-                <Indicator label="MA" value={result.indicators.movingAverage.replace("_", " ")} />
+                <Indicator
+                  label="MA"
+                  value={
+                    result.indicators.movingAverage
+                      ? result.indicators.movingAverage.replace("_", " ")
+                      : "N/A"
+                  }
+                />
                 <Indicator
                   label="Volume"
                   value={`${(result.volume / 1000000).toFixed(1)}M`}
