@@ -54,6 +54,31 @@ async def get_quote(
     # Get settings for cache TTL
     settings = get_settings()
 
+    def _fallback_quote_from_history(sym: str, client) -> dict | None:
+        try:
+            end_date = datetime.now(UTC)
+            start_date = end_date - timedelta(days=7)
+            bars = client.get_historical_bars(
+                symbol=sym,
+                interval="daily",
+                start_date=start_date.strftime("%Y-%m-%d"),
+                end_date=end_date.strftime("%Y-%m-%d"),
+            )
+            if bars:
+                last_bar = bars[-1]
+                return {
+                    "symbol": sym.upper(),
+                    "bid": float(last_bar.get("close", 0)),
+                    "ask": float(last_bar.get("close", 0)),
+                    "last": float(last_bar.get("close", 0)),
+                    "volume": int(last_bar.get("volume", 0)),
+                    "timestamp": last_bar.get("date", datetime.now(UTC).isoformat()),
+                    "stale": True,
+                    "source": "historical_fallback",
+                }
+        except Exception:
+            return None
+
     # Check if we should use test fixtures
     if settings.USE_TEST_FIXTURES:
         logger.info("Using test fixtures for quote data")
@@ -96,6 +121,12 @@ async def get_quote(
         quotes_data = client.get_quotes([symbol])
 
         if not quotes_data or symbol.upper() not in quotes_data:
+            # Fallback to historical last close to avoid 404
+            fb = _fallback_quote_from_history(symbol, client)
+            if fb:
+                cache.set(cache_key, fb, ttl=settings.CACHE_TTL_QUOTE)
+                logger.info(f"🟡 Fallback quote (historical) used for {symbol}")
+                return fb
             raise HTTPException(status_code=404, detail=f"No quote found for {symbol}")
 
         quote = quotes_data[symbol.upper()]
@@ -118,8 +149,15 @@ async def get_quote(
         raise
     except ProviderHTTPError as e:
         if e.status_code in (400, 404):
+            # Fallback on upstream not found
+            client = get_tradier_client()
+            fb = _fallback_quote_from_history(symbol, client)
+            if fb:
+                cache.set(cache_key, fb, ttl=settings.CACHE_TTL_QUOTE)
+                logger.info(f"🟡 Fallback quote (historical) used for {symbol} after provider 404")
+                return fb
             raise HTTPException(
-                status_code=e.status_code, detail=f"Upstream not found: {symbol}"
+                status_code=404, detail=f"Upstream not found: {symbol}"
             ) from e
         if e.status_code in (401, 403, 429):
             raise HTTPException(
@@ -130,6 +168,11 @@ async def get_quote(
         raise HTTPException(status_code=502, detail="Upstream error") from e
     except Exception as e:
         logger.error(f"❌ Tradier quote request failed for {symbol}: {e!s}")
+        # Last resort: return cached (if any) rather than 500
+        cached_last = cache.get(cache_key)
+        if cached_last:
+            logger.warning(f"Returning cached quote for {symbol} due to error")
+            return {**cached_last, "cached": True}
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch quote: {e!s}"
         ) from e
