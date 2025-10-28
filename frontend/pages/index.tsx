@@ -179,12 +179,13 @@ export default function Dashboard() {
     return <UserSetupAI onComplete={handleUserSetupComplete} />;
   }
 
+  // TEMPORARILY DISABLED: Force radial menu on all devices for debugging
   // Use mobile dashboard for mobile devices
-  if (isMobile) {
-    return (
-      <MobileDashboard onWorkflowSelect={setSelectedWorkflow} selectedWorkflow={selectedWorkflow} />
-    );
-  }
+  // if (isMobile) {
+  //   return (
+  //     <MobileDashboard onWorkflowSelect={setSelectedWorkflow} selectedWorkflow={selectedWorkflow} />
+  //   );
+  // }
 
   const getWorkflowById = (id: string) => {
     return workflows.find((w) => w.id === id);
