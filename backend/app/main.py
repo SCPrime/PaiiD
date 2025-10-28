@@ -208,20 +208,44 @@ Intelligent caching is implemented for market data to optimize performance:
     openapi_schema["tags"] = [
         {"name": "auth", "description": "Authentication and user management"},
         {"name": "health", "description": "Health checks and system status"},
-        {"name": "portfolio", "description": "Portfolio and position management (Tradier API)"},
-        {"name": "orders", "description": "Order execution and templates (Alpaca Paper Trading)"},
-        {"name": "market-data", "description": "Market data quotes and historical bars (Tradier API)"},
-        {"name": "ai", "description": "AI-powered recommendations and analysis (Claude API)"},
-        {"name": "strategies", "description": "Trading strategy management and templates"},
+        {
+            "name": "portfolio",
+            "description": "Portfolio and position management (Tradier API)",
+        },
+        {
+            "name": "orders",
+            "description": "Order execution and templates (Alpaca Paper Trading)",
+        },
+        {
+            "name": "market-data",
+            "description": "Market data quotes and historical bars (Tradier API)",
+        },
+        {
+            "name": "ai",
+            "description": "AI-powered recommendations and analysis (Claude API)",
+        },
+        {
+            "name": "strategies",
+            "description": "Trading strategy management and templates",
+        },
         {"name": "analytics", "description": "Performance analytics and metrics"},
-        {"name": "backtesting", "description": "Strategy backtesting and historical analysis"},
+        {
+            "name": "backtesting",
+            "description": "Strategy backtesting and historical analysis",
+        },
         {"name": "news", "description": "Market news and sentiment analysis"},
-        {"name": "options", "description": "Options data, Greeks, and multi-leg strategies"},
+        {
+            "name": "options",
+            "description": "Options data, Greeks, and multi-leg strategies",
+        },
         {"name": "ml", "description": "Machine learning models and predictions"},
         {"name": "screening", "description": "Stock screening and filtering"},
         {"name": "streaming", "description": "Real-time data streaming (WebSocket)"},
         {"name": "users", "description": "User profile and preference management"},
-        {"name": "telemetry", "description": "Event tracking and application telemetry"},
+        {
+            "name": "telemetry",
+            "description": "Event tracking and application telemetry",
+        },
     ]
 
     # Add servers
@@ -284,7 +308,10 @@ app.add_middleware(
     testing_mode=settings.TESTING,
 )
 if settings.TESTING:
-    print("[TEST MODE] CSRF protection middleware enabled (validation disabled for tests)", flush=True)
+    print(
+        "[TEST MODE] CSRF protection middleware enabled (validation disabled for tests)",
+        flush=True,
+    )
 else:
     print("[OK] CSRF protection middleware enabled", flush=True)
 
@@ -391,8 +418,12 @@ async def startup_event():
     from .core.config import validate_required_secrets
 
     logger.info("🔐 Validating required secrets...")
-    strict_secret_mode = os.getenv("STRICT_SECRET_VALIDATION", "false").lower() == "true"
-    secrets_valid, missing_secrets = validate_required_secrets(strict=strict_secret_mode)
+    strict_secret_mode = (
+        os.getenv("STRICT_SECRET_VALIDATION", "false").lower() == "true"
+    )
+    secrets_valid, missing_secrets = validate_required_secrets(
+        strict=strict_secret_mode
+    )
 
     if not secrets_valid:
         logger.error("=" * 70)
@@ -408,8 +439,12 @@ async def startup_event():
         logger.error("   3. See docs/SECRETS.md for detailed instructions")
         logger.error("")
         logger.error("Secret generation commands:")
-        logger.error("   API_TOKEN:      python -c 'import secrets; print(secrets.token_urlsafe(32))'")
-        logger.error("   JWT_SECRET_KEY: python -c 'import secrets; print(secrets.token_urlsafe(32))'")
+        logger.error(
+            "   API_TOKEN:      python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+        )
+        logger.error(
+            "   JWT_SECRET_KEY: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+        )
         logger.error("=" * 70)
 
         # Only block startup in strict mode or production
@@ -465,10 +500,16 @@ async def startup_event():
         async with monitor.phase("startup_validation", timeout=15.0):
             if not validate_startup():
                 # Check if strict mode is enabled
-                strict_startup = os.getenv("STRICT_STARTUP_VALIDATION", "false").lower() == "true"
+                strict_startup = (
+                    os.getenv("STRICT_STARTUP_VALIDATION", "false").lower() == "true"
+                )
                 if strict_startup:
-                    logger.error("🚨 Blocking startup due to failed validation (STRICT_STARTUP_VALIDATION=true)")
-                    raise RuntimeError("Startup validation failed - check logs above for details")
+                    logger.error(
+                        "🚨 Blocking startup due to failed validation (STRICT_STARTUP_VALIDATION=true)"
+                    )
+                    raise RuntimeError(
+                        "Startup validation failed - check logs above for details"
+                    )
                 else:
                     logger.warning(
                         "⚠️ Startup validation failed but continuing (STRICT_STARTUP_VALIDATION disabled)"
@@ -477,7 +518,9 @@ async def startup_event():
         raise  # Re-raise if we're blocking startup
     except Exception as e:
         logger.error(f"❌ Startup validation error: {e}")
-        strict_startup = os.getenv("STRICT_STARTUP_VALIDATION", "false").lower() == "true"
+        strict_startup = (
+            os.getenv("STRICT_STARTUP_VALIDATION", "false").lower() == "true"
+        )
         if strict_startup:
             raise
         logger.warning(
@@ -658,14 +701,26 @@ app.add_middleware(CacheControlMiddleware)
 app.middleware("http")(metrics_middleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
+
+def _parse_allowed_origins() -> list[str]:
+    origins_env = os.getenv("ALLOWED_ORIGINS", "")
+    origins = [o.strip() for o in origins_env.split(",") if o.strip()]
+    if origins:
+        print(f"[CORS] Using env ALLOWED_ORIGINS: {origins}", flush=True)
+        return origins
+    defaults = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3003",
+        "https://paiid-frontend.onrender.com",
+    ]
+    print("[CORS] ALLOWED_ORIGINS not set - using defaults", flush=True)
+    return defaults
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001",  # Secondary dev server port (MOD SQUAD fix: Phase 2C finding)
-        "http://localhost:3003",  # Alternative dev server port
-        "https://paiid-frontend.onrender.com",
-    ],
+    allow_origins=_parse_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -683,7 +738,9 @@ app.include_router(market.router, prefix="/api")
 app.include_router(market_data.router, prefix="/api", tags=["market-data"])
 app.include_router(news.router, prefix="/api", tags=["news"])
 app.include_router(options.router, prefix="/api")  # Options Greeks calculator
-app.include_router(proposals.router)  # Options trade proposals (already has /api/proposals prefix)
+app.include_router(
+    proposals.router
+)  # Options trade proposals (already has /api/proposals prefix)
 app.include_router(ai.router, prefix="/api")
 app.include_router(claude.router, prefix="/api")
 app.include_router(stock.router, prefix="/api")

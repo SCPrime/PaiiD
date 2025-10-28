@@ -20,7 +20,7 @@ from ..core.jwt import (
     hash_password,
     verify_password,
 )
-from ..core.unified_auth import get_current_user_unified
+from ..core.unified_auth import get_auth_mode, get_current_user_unified
 from ..db.session import get_db
 from ..middleware.security import generate_csrf_token_endpoint
 from ..models.database import ActivityLog, User, UserSession
@@ -398,3 +398,26 @@ async def get_csrf_token(current_user: User = Depends(get_current_user_unified))
         "expires_in": 3600,  # 1 hour
         "message": "Include this token in X-CSRF-Token header for state-changing requests",
     }
+
+
+@router.get("/_auth/echo")
+async def auth_echo(request: Request):
+    """
+    Diagnostic endpoint: returns detected auth mode and redacted principal if available.
+
+    Does not enforce authentication; used for debugging header forwarding and proxy behavior.
+    """
+    try:
+        auth_header = request.headers.get("authorization")
+        mode = get_auth_mode(auth_header)
+        principal = None
+        if mode == "jwt" and auth_header:
+            try:
+                payload = decode_token(auth_header.split(" ", 1)[1])
+                principal = {"sub": payload.get("sub"), "type": payload.get("type")}
+            except Exception:
+                principal = {"error": "invalid_jwt"}
+        return {"mode": mode, "principal": principal}
+    except Exception as e:
+        logger.error(f"auth_echo error: {e}")
+        return {"mode": "error", "error": str(e)}

@@ -155,6 +155,20 @@ const API_TOKEN = process.env.API_TOKEN || process.env.NEXT_PUBLIC_API_TOKEN || 
 
 **Both should have the SAME value!**
 
+### Feature Flags
+These flags control canary rollout and safety:
+
+```
+ALLOWED_ORIGINS=https://paiid-frontend.onrender.com,https://your-front.example
+USE_OPENAPI_ALLOWLIST=true
+ROUTE_AUTH_AWARE_ENABLED=true
+```
+
+Notes:
+- `ALLOWED_ORIGINS` feeds both proxy and backend CORS.
+- `USE_OPENAPI_ALLOWLIST` lets proxy extend allowed prefixes from `docs/api_endpoints.json`.
+- `ROUTE_AUTH_AWARE_ENABLED` toggles route-aware auth (api token vs JWT passthrough).
+
 ---
 
 ## CORS Configuration
@@ -262,13 +276,13 @@ If you need to rotate the API token:
 
 ## Quick Reference
 
-| Variable | Frontend Render | Backend Render | Must Match? |
-|----------|----------------|----------------|-------------|
-| `API_TOKEN` | ✅ Set | ✅ Set | ✅ YES |
-| `NEXT_PUBLIC_API_TOKEN` | ✅ Set | ❌ N/A | ✅ Must match backend `API_TOKEN` |
-| `NEXT_PUBLIC_BACKEND_API_BASE_URL` | ✅ Set | ❌ N/A | ❌ No |
-| `NEXT_PUBLIC_ANTHROPIC_API_KEY` | ✅ Set | ❌ N/A | ❌ No |
-| `NODE_ENV` | ✅ Auto | ✅ Auto | ❌ No |
+| Variable                           | Frontend Render | Backend Render | Must Match?                      |
+| ---------------------------------- | --------------- | -------------- | -------------------------------- |
+| `API_TOKEN`                        | ✅ Set           | ✅ Set          | ✅ YES                            |
+| `NEXT_PUBLIC_API_TOKEN`            | ✅ Set           | ❌ N/A          | ✅ Must match backend `API_TOKEN` |
+| `NEXT_PUBLIC_BACKEND_API_BASE_URL` | ✅ Set           | ❌ N/A          | ❌ No                             |
+| `NEXT_PUBLIC_ANTHROPIC_API_KEY`    | ✅ Set           | ❌ N/A          | ❌ No                             |
+| `NODE_ENV`                         | ✅ Auto          | ✅ Auto         | ❌ No                             |
 
 ---
 

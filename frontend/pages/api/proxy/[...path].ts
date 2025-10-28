@@ -1,4 +1,6 @@
+import fs from "fs";
 import type { NextApiRequest, NextApiResponse } from "next";
+import pathLib from "path";
 
 // NOTE: API routes run server-side and use NON-PREFIXED env vars
 // NEXT_PUBLIC_* is for client-side code only!
@@ -104,19 +106,41 @@ const ALLOW_DELETE = new Set<string>([
 ]);
 
 // Allowed origins for CORS (production and development only)
-const ALLOWED_ORIGINS = new Set<string>([
+// Prefer env-driven allowlist; fallback to curated defaults
+const DEFAULT_ALLOWED_ORIGINS = [
   "http://localhost:3000",
-  "http://localhost:3001", // Secondary dev server port (MOD SQUAD fix: Phase 2C finding)
-  "http://localhost:3003", // Alternative dev server port
-  "http://localhost:3004", // Alternative dev server port
-  "http://localhost:3005", // Alternative dev server port
-  "http://localhost:3006", // Alternative dev server port
-  "http://localhost:3007", // Alternative dev server port
-  "http://localhost:3008", // Alternative dev server port
-  "http://localhost:3009", // Alternative dev server port
-  "http://localhost:3010", // Alternative dev server port
+  "http://localhost:3001",
+  "http://localhost:3003",
+  "http://localhost:3004",
+  "http://localhost:3005",
+  "http://localhost:3006",
+  "http://localhost:3007",
+  "http://localhost:3008",
+  "http://localhost:3009",
+  "http://localhost:3010",
   "https://paiid-frontend.onrender.com",
-]);
+];
+
+function parseAllowedOriginsEnv(): string[] {
+  const raw = process.env.ALLOWED_ORIGINS || "";
+  const parsed = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => !!s);
+  if (parsed.length > 0) {
+    console.info(`[PROXY] ✅ Loaded ALLOWED_ORIGINS from env: ${parsed.join(", ")}`);
+    return parsed;
+  }
+  console.warn("[PROXY] ⚠️ ALLOWED_ORIGINS env empty - using default allowlist");
+  return DEFAULT_ALLOWED_ORIGINS;
+}
+
+const ALLOWED_ORIGINS = new Set<string>(parseAllowedOriginsEnv());
+
+// Basic startup validation (non-fatal in dev, emits clear logs in prod)
+if (!BACKEND) {
+  console.error("[PROXY] ❌ BACKEND_API_BASE_URL not configured");
+}
 
 function isAllowedOrigin(req: NextApiRequest): boolean {
   const origin = (req.headers.origin || "").toLowerCase();
@@ -177,8 +201,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  const originAllowed = isAllowedOrigin(req);
-  console.info(`[PROXY] Origin check result: ${originAllowed ? "ALLOWED" : "BLOCKED"}`);
+  // Extract path first (needed for streaming endpoint check)
+  const parts = (req.query.path as string[]) || [];
+  let path = parts.join("/");
+
+  // Handle legacy URLs with /api/ prefix (e.g., /api/proxy/api/health)
+  // Strip leading "api/" if present
+  if (path.startsWith("api/")) {
+    path = path.substring(4);
+  }
+
+  // Special handling for SSE streaming endpoints - allow same-origin without Origin header
+  const isStreamingEndpoint = path.startsWith("stream/");
+  const originAllowed = isStreamingEndpoint ? true : isAllowedOrigin(req);
+
+  console.info(
+    `[PROXY] Path: ${path}, Streaming: ${isStreamingEndpoint}, Origin check: ${originAllowed ? "ALLOWED" : "BLOCKED"}`
+  );
 
   if (!originAllowed) {
     console.error(`[PROXY] ⛔ REJECTING REQUEST WITH 403`);
@@ -197,13 +236,65 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   console.info(`[PROXY] ✅ Origin check passed, proceeding with request`);
 
-  const parts = (req.query.path as string[]) || [];
-  let path = parts.join("/");
+  // Diagnostic endpoint: list allowed prefixes and backend
+  if (path === "_routes") {
+    const body = {
+      backend: BACKEND,
+      allowed: {
+        GET: Array.from(ALLOW_GET.values()),
+        POST: Array.from(ALLOW_POST.values()),
+        DELETE: Array.from(ALLOW_DELETE.values()),
+      },
+    };
+    res.status(200).json(body);
+    return;
+  }
 
-  // Handle legacy URLs with /api/ prefix (e.g., /api/proxy/api/health)
-  // Strip leading "api/" if present
-  if (path.startsWith("api/")) {
-    path = path.substring(4);
+  // Load additional allowlist prefixes from OpenAPI export (optional, env-gated)
+  let openApiPrefixes: Set<string> | null = null;
+  const useOpenApiAllowlist =
+    (process.env.USE_OPENAPI_ALLOWLIST || "false").toLowerCase() === "true";
+  if (useOpenApiAllowlist) {
+    try {
+      const candidates = [
+        pathLib.resolve(process.cwd(), "docs", "api_endpoints.json"),
+        pathLib.resolve(process.cwd(), "..", "docs", "api_endpoints.json"),
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) {
+          const raw = fs.readFileSync(p, "utf-8");
+          const json = JSON.parse(raw);
+          const prefixes = new Set<string>();
+          // Accept both formats: flat list of paths or nested by router
+          if (Array.isArray(json?.endpoints)) {
+            for (const ep of json.endpoints) {
+              const full: string = ep.path || ep;
+              const rel = full.startsWith("/api/") ? full.slice(5) : full.replace(/^\//, "");
+              const parts = rel.split("/");
+              const base = parts.slice(0, 2).join("/") || rel;
+              prefixes.add(base);
+            }
+          } else if (json?.routers) {
+            for (const r of json.routers) {
+              for (const pth of r.paths || []) {
+                const rel = pth.startsWith("/api/") ? pth.slice(5) : pth.replace(/^\//, "");
+                const parts = rel.split("/");
+                const base = parts.slice(0, 2).join("/") || rel;
+                prefixes.add(base);
+              }
+            }
+          }
+          openApiPrefixes = prefixes;
+          console.info(`[PROXY] ✅ OpenAPI allowlist loaded (${prefixes.size} prefixes) from ${p}`);
+          break;
+        }
+      }
+      if (!openApiPrefixes) {
+        console.warn("[PROXY] ⚠️ OpenAPI allowlist enabled but api_endpoints.json not found");
+      }
+    } catch (e) {
+      console.warn(`[PROXY] ⚠️ Failed to load OpenAPI allowlist: ${String(e)}`);
+    }
   }
 
   // Check if path is allowed based on method
@@ -229,7 +320,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return false;
   }
 
-  if (req.method === "GET" && !isPathAllowed(path, ALLOW_GET)) {
+  function isPathAllowedOpenAPI(path: string): boolean {
+    if (!openApiPrefixes) return false;
+    if (openApiPrefixes.has(path)) return true;
+    for (const pref of openApiPrefixes) {
+      if (pref && path.startsWith(pref + "/")) return true;
+    }
+    return false;
+  }
+
+  if (req.method === "GET" && !(isPathAllowed(path, ALLOW_GET) || isPathAllowedOpenAPI(path))) {
     console.error(`[PROXY] ⛔ GET path not allowed: "${path}"`);
     return res.status(405).json({
       error: "Not allowed",
@@ -238,7 +338,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       hint: "Check allowed paths in proxy configuration",
     });
   }
-  if (req.method === "POST" && !isPathAllowed(path, ALLOW_POST)) {
+  if (req.method === "POST" && !(isPathAllowed(path, ALLOW_POST) || isPathAllowedOpenAPI(path))) {
     console.error(`[PROXY] ⛔ POST path not allowed: "${path}"`);
     return res.status(405).json({
       error: "Not allowed",
@@ -246,7 +346,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       method: req.method,
     });
   }
-  if (req.method === "DELETE" && !isPathAllowed(path, ALLOW_DELETE)) {
+  if (
+    req.method === "DELETE" &&
+    !(isPathAllowed(path, ALLOW_DELETE) || isPathAllowedOpenAPI(path))
+  ) {
     console.error(`[PROXY] ⛔ DELETE path not allowed: "${path}"`);
     return res.status(405).json({
       error: "Not allowed",
@@ -255,14 +358,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
+  // Determine auth mode by path
+  function deriveAuthMode(path: string): "apiToken" | "jwt" | "none" {
+    if (
+      path.startsWith("telemetry/") ||
+      path.startsWith("monitor/") ||
+      path.startsWith("analytics/")
+    ) {
+      return "apiToken";
+    }
+    if (
+      path.startsWith("users/") ||
+      path.startsWith("orders/") ||
+      path.startsWith("portfolio/") ||
+      path.startsWith("settings/")
+    ) {
+      return "jwt";
+    }
+    return "none";
+  }
+
+  const routeAuthAware = (process.env.ROUTE_AUTH_AWARE_ENABLED || "true").toLowerCase() === "true";
+  const authMode = routeAuthAware ? deriveAuthMode(path) : "apiToken";
+
   // Preserve query parameters from original request
   const queryString = req.url?.split("?")[1] || "";
   const url = `${BACKEND}/api/${path}${queryString ? "?" + queryString : ""}`;
 
   const headers: Record<string, string> = {
-    authorization: `Bearer ${API_TOKEN}`,
     "content-type": "application/json",
   };
+
+  // Authorization handling based on route-aware mode
+  if (authMode === "apiToken") {
+    if (!API_TOKEN) {
+      console.error("[PROXY] ❌ Missing API_TOKEN for service-to-service endpoint");
+    } else {
+      headers["authorization"] = `Bearer ${API_TOKEN}`;
+    }
+  } else if (authMode === "jwt") {
+    const incomingAuth = (req.headers["authorization"] as string) || "";
+    if (incomingAuth.toLowerCase().startsWith("bearer ")) {
+      headers["authorization"] = incomingAuth;
+    } else {
+      console.warn("[PROXY] ⚠️ JWT mode but no Bearer token present in request");
+    }
+  }
 
   // propagate request id if client set one
   const rid = (req.headers["x-request-id"] as string) || "";
@@ -274,7 +415,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.info(`[PROXY] Original URL: ${req.url}`);
   console.info(`[PROXY] Extracted path: "${path}"`);
   console.info(`[PROXY] Constructed URL: ${url}`);
-  console.info(`[PROXY] Auth header: Bearer ${API_TOKEN?.substring(0, 8)}...`);
+  console.info(
+    `[PROXY] Auth mode: ${authMode} (routeAware=${routeAuthAware}) | Auth header set: ${headers["authorization"] ? "yes" : "no"}`
+  );
   console.info(`[PROXY] Backend: ${BACKEND}`);
   if (req.method === "POST") {
     console.info(`[PROXY] Body:`, JSON.stringify(req.body, null, 2));

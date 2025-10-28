@@ -37,7 +37,8 @@ REDIS_URL=redis://user:password@host:port
 LOG_LEVEL=INFO
 
 # CORS Configuration
-ALLOW_ORIGIN=https://your-frontend-domain.com
+# Comma-separated list of exact origins (scheme+host+port)
+ALLOWED_ORIGINS=https://your-frontend-domain.com,https://paiid-frontend.onrender.com
 
 # Trading Mode
 LIVE_TRADING=false
@@ -45,6 +46,11 @@ TRADING_MODE=paper
 
 # Test Configuration (for deterministic Playwright tests)
 USE_TEST_FIXTURES=false
+
+# Validation Strictness (optional)
+STRICT_SECRET_VALIDATION=false
+STRICT_PRELAUNCH=false
+STRICT_STARTUP_VALIDATION=false
 
 # =============================================================================
 # RENDER-SPECIFIC VARIABLES (Auto-configured by Render)

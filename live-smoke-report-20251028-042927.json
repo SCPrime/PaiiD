@@ -1,0 +1,27 @@
+{
+  "base_url": "https://paiid-frontend.onrender.com",
+  "backend_url": "https://paiid-backend.onrender.com",
+  "checks": [
+    {
+      "name": "page_render",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "name": "proxy_preflight_allowed",
+      "status": 204,
+      "ok": true
+    },
+    {
+      "name": "backend_health",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "name": "backend_features",
+      "status": 200,
+      "ok": true
+    }
+  ],
+  "timestamp": "2025-10-28T04:29:25.574614Z"
+}

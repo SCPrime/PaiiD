@@ -10,6 +10,20 @@ from datetime import UTC, datetime, timedelta
 import requests
 
 
+class ProviderHTTPError(Exception):
+    """HTTP error from provider with status code and payload for mapping.
+
+    Attributes:
+        status_code: HTTP status code returned by provider
+        payload: Raw response text/body for diagnostics
+    """
+
+    def __init__(self, status_code: int, payload: str):
+        super().__init__(f"Provider HTTP {status_code}: {payload[:180]}")
+        self.status_code = status_code
+        self.payload = payload
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -85,17 +99,18 @@ class TradierClient:
             response = self.session.request(
                 method=method, url=url, headers=self.headers, **kwargs
             )
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                # Map to provider error with code/payload for upstream handling
+                self._record_failure()
+                logger.error(
+                    f"Tradier API error: {response.status_code} - {response.text}"
+                )
+                raise ProviderHTTPError(response.status_code, response.text) from e
             data = response.json()
             self._record_success()
             return data
-
-        except requests.exceptions.HTTPError as e:
-            logger.error(
-                f"Tradier API error: {e.response.status_code} - {e.response.text}"
-            )
-            self._record_failure()
-            raise Exception(f"Tradier API error: {e.response.text}")
 
         except Exception as e:
             self._record_failure()
@@ -353,6 +368,7 @@ def get_tradier_client() -> TradierClient:
     if _tradier_client is None:
         # Import here to avoid circular dependency
         from app.core.readiness_registry import get_readiness_registry
+
         registry = get_readiness_registry()
 
         try:

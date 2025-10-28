@@ -14,7 +14,6 @@ import asyncio
 import logging
 from datetime import datetime
 
-import requests
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
@@ -23,7 +22,7 @@ from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.alpaca_options import get_alpaca_options_client
 from ..services.cache import CacheService, get_cache
-from ..services.tradier_client import get_tradier_client
+from ..services.tradier_client import ProviderHTTPError, get_tradier_client
 
 
 router = APIRouter(prefix="/options", tags=["options"])
@@ -299,10 +298,18 @@ async def get_options_chain(
             "timestamp": datetime.now().isoformat(),
         }
 
-    except requests.exceptions.HTTPError as e:
-        raise HTTPException(
-            status_code=e.response.status_code, detail=f"Tradier API error: {e!s}"
-        ) from e
+    except ProviderHTTPError as e:
+        if e.status_code in (400, 404):
+            raise HTTPException(
+                status_code=404, detail=f"Options not found for {symbol}"
+            ) from e
+        if e.status_code in (401, 403, 429):
+            raise HTTPException(
+                status_code=503, detail="Upstream authentication or rate limit error"
+            ) from e
+        if 500 <= e.status_code < 600:
+            raise HTTPException(status_code=502, detail="Upstream service error") from e
+        raise HTTPException(status_code=502, detail="Upstream error") from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error fetching options chain: {e!s}"
@@ -418,11 +425,18 @@ def get_expiration_dates(
         )
         return response
 
-    except requests.exceptions.HTTPError as e:
-        logger.error(f"Tradier HTTP error: {e}")
-        raise HTTPException(
-            status_code=e.response.status_code, detail=f"Tradier API error: {e!s}"
-        ) from e
+    except ProviderHTTPError as e:
+        if e.status_code in (400, 404):
+            raise HTTPException(
+                status_code=404, detail=f"No expiration dates for {symbol}"
+            ) from e
+        if e.status_code in (401, 403, 429):
+            raise HTTPException(
+                status_code=503, detail="Upstream authentication or rate limit error"
+            ) from e
+        if 500 <= e.status_code < 600:
+            raise HTTPException(status_code=502, detail="Upstream service error") from e
+        raise HTTPException(status_code=502, detail="Upstream error") from e
     except Exception as e:
         logger.error(f"Error fetching expirations: {e}")
         raise HTTPException(
@@ -590,8 +604,8 @@ async def clear_options_cache(
     patterns_cleared = 0
 
     patterns = [
-        "options:*",        # Options chains
-        "options_expiry:*", # Expiration dates
+        "options:*",  # Options chains
+        "options_expiry:*",  # Expiration dates
     ]
 
     for pattern in patterns:

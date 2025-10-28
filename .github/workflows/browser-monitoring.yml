@@ -1,0 +1,32 @@
+name: Browser Monitoring
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright rich
+          python -m playwright install chromium
+      - name: Run BROWSER MOD
+        env:
+          PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
+        run: |
+          python scripts/browser_mod.py --check-render
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: browser-mod-report
+          path: browser-mod-report-*.json

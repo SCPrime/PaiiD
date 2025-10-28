@@ -9,11 +9,11 @@ Provides comprehensive health monitoring for PaiiD Trading Platform:
 """
 
 import os
-from datetime import datetime, timezone
-from typing import Dict, Optional
+from datetime import UTC, datetime
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import text
 
@@ -29,28 +29,31 @@ from ..services.tradier_stream import get_tradier_stream
 router = APIRouter(prefix="/health", tags=["health"])
 
 # Store app start time for uptime calculation
-APP_START_TIME = datetime.now(timezone.utc)
+APP_START_TIME = datetime.now(UTC)
 
 
 class HealthResponse(BaseModel):
     """Basic health check response."""
+
     status: str
     time: str
 
 
 class DependencyStatus(BaseModel):
     """Status of a single dependency."""
+
     status: str  # "healthy", "degraded", "unavailable"
-    latency_ms: Optional[float] = None
-    message: Optional[str] = None
+    latency_ms: float | None = None
+    message: str | None = None
 
 
 class DetailedHealthResponse(BaseModel):
     """Detailed health check with dependency status."""
+
     status: str
     time: str
     uptime_seconds: float
-    dependencies: Dict[str, DependencyStatus]
+    dependencies: dict[str, DependencyStatus]
     version: str = "1.0.0"
 
 
@@ -58,21 +61,17 @@ class DetailedHealthResponse(BaseModel):
 async def health_check():
     """Basic health check - always returns 200 if app is running."""
     try:
-        return HealthResponse(
-            status="ok",
-            time=datetime.now(timezone.utc).isoformat()
-        )
+        return HealthResponse(status="ok", time=datetime.now(UTC).isoformat())
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Health check failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Health check failed") from e
 
 
 @router.get("/detailed", response_model=DetailedHealthResponse)
-async def detailed_health_check(
-    current_user: User = Depends(get_current_user_unified)
-):
+async def detailed_health_check(current_user: User = Depends(get_current_user_unified)):
     """
     Detailed health check with dependency status.
 
@@ -85,6 +84,7 @@ async def detailed_health_check(
     Requires authentication.
     """
     import logging
+
     logger = logging.getLogger(__name__)
 
     try:
@@ -103,26 +103,28 @@ async def detailed_health_check(
         dependencies["cache"] = await _check_cache()
 
         # Determine overall status
-        all_healthy = all(
-            dep.status == "healthy" for dep in dependencies.values()
-        )
-        any_degraded = any(
-            dep.status == "degraded" for dep in dependencies.values()
+        all_healthy = all(dep.status == "healthy" for dep in dependencies.values())
+        any_degraded = any(dep.status == "degraded" for dep in dependencies.values())
+
+        overall_status = (
+            "healthy"
+            if all_healthy
+            else ("degraded" if any_degraded else "unavailable")
         )
 
-        overall_status = "healthy" if all_healthy else ("degraded" if any_degraded else "unavailable")
-
-        uptime = (datetime.now(timezone.utc) - APP_START_TIME).total_seconds()
+        uptime = (datetime.now(UTC) - APP_START_TIME).total_seconds()
 
         return DetailedHealthResponse(
             status=overall_status,
-            time=datetime.now(timezone.utc).isoformat(),
+            time=datetime.now(UTC).isoformat(),
             uptime_seconds=uptime,
-            dependencies=dependencies
+            dependencies=dependencies,
         )
     except Exception as e:
         logger.error(f"Detailed health check failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Detailed health check failed") from e
+        raise HTTPException(
+            status_code=500, detail="Detailed health check failed"
+        ) from e
 
 
 @router.get("/startup")
@@ -132,6 +134,7 @@ async def startup_health_check():
     Used by orchestrators to verify startup validation passed.
     """
     import logging
+
     logger = logging.getLogger(__name__)
 
     try:
@@ -147,20 +150,22 @@ async def startup_health_check():
                     "status": "failed",
                     "errors": validator.errors,
                     "warnings": validator.warnings,
-                    "validations": validator.validations
-                }
+                    "validations": validator.validations,
+                },
             )
 
         return {
             "status": "passed",
             "validations": validator.validations,
-            "warnings": validator.warnings
+            "warnings": validator.warnings,
         }
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Startup health check failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Startup health check failed") from e
+        raise HTTPException(
+            status_code=500, detail="Startup health check failed"
+        ) from e
 
 
 @router.get("/readiness")
@@ -170,6 +175,7 @@ async def readiness_check():
     Returns 200 if app is ready to serve traffic, 503 otherwise.
     """
     import logging
+
     logger = logging.getLogger(__name__)
 
     try:
@@ -177,18 +183,35 @@ async def readiness_check():
         tradier_status = await _check_tradier()
         alpaca_status = await _check_alpaca()
 
-        if tradier_status.status == "unavailable" or alpaca_status.status == "unavailable":
-            raise HTTPException(
+        if (
+            tradier_status.status == "unavailable"
+            or alpaca_status.status == "unavailable"
+        ):
+            return JSONResponse(
                 status_code=503,
-                detail="Application not ready - dependencies unavailable"
+                content={
+                    "status": "degraded",
+                    "reason": "dependencies unavailable",
+                    "dependencies": {
+                        "tradier": tradier_status.model_dump(),
+                        "alpaca": alpaca_status.model_dump(),
+                    },
+                },
             )
 
         return {"status": "ready"}
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Readiness check failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Readiness check failed") from e
+        logger.error(f"Readiness check unexpected error: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "degraded",
+                "reason": "unexpected_error",
+                "error": str(e),
+            },
+        )
 
 
 @router.get("/liveness")
@@ -198,6 +221,7 @@ async def liveness_check():
         return {"alive": True}
     except Exception as e:
         from ..core.config import logger
+
         logger.error(f"Liveness check failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Liveness check failed") from e
 
@@ -211,15 +235,19 @@ async def ready_check():
         if health["status"] == "healthy":
             return {"ready": True}
         else:
-            raise HTTPException(
-                status_code=503, detail={"ready": False, "reason": "System degraded"}
+            return JSONResponse(
+                status_code=503, content={"ready": False, "reason": "System degraded"}
             )
     except HTTPException:
         raise
     except Exception as e:
         from ..core.config import logger
-        logger.error(f"Ready check failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Ready check failed") from e
+
+        logger.error(f"Ready check unexpected error: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=503,
+            content={"ready": False, "reason": "unexpected_error", "error": str(e)},
+        )
 
 
 @router.get("/ready/full")
@@ -287,15 +315,18 @@ async def features_status():
             "summary": {
                 "total": total_count,
                 "available": available_count,
-                "unavailable": total_count - available_count
+                "unavailable": total_count - available_count,
             },
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Features status check failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Features status check failed") from e
+        raise HTTPException(
+            status_code=500, detail="Features status check failed"
+        ) from e
 
 
 @router.get("/sentry-test")
@@ -308,43 +339,40 @@ async def sentry_test():
 async def _check_tradier() -> DependencyStatus:
     """Check Tradier API health."""
     try:
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         url = f"{settings.TRADIER_API_BASE_URL}/markets/quotes?symbols=SPY"
         headers = {
             "Authorization": f"Bearer {settings.TRADIER_API_KEY}",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
 
         async with httpx.AsyncClient(timeout=5.0) as client:
             response = await client.get(url, headers=headers)
 
-        latency = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+        latency = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
         if response.status_code == 200:
             return DependencyStatus(
                 status="healthy",
                 latency_ms=latency,
-                message=f"Tradier API responding ({latency:.0f}ms)"
+                message=f"Tradier API responding ({latency:.0f}ms)",
             )
         elif response.status_code == 401:
             return DependencyStatus(
                 status="unavailable",
                 latency_ms=latency,
-                message="Authentication failed"
+                message="Authentication failed",
             )
         else:
             return DependencyStatus(
                 status="degraded",
                 latency_ms=latency,
-                message=f"HTTP {response.status_code}"
+                message=f"HTTP {response.status_code}",
             )
 
     except Exception as e:
-        return DependencyStatus(
-            status="unavailable",
-            message=str(e)
-        )
+        return DependencyStatus(status="unavailable", message=str(e))
 
 
 async def _check_alpaca() -> DependencyStatus:
@@ -352,52 +380,44 @@ async def _check_alpaca() -> DependencyStatus:
     try:
         from alpaca.trading.client import TradingClient
 
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         client = TradingClient(
-            settings.ALPACA_API_KEY,
-            settings.ALPACA_SECRET_KEY,
-            paper=True
+            settings.ALPACA_API_KEY, settings.ALPACA_SECRET_KEY, paper=True
         )
 
         account = client.get_account()
 
-        latency = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+        latency = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
         return DependencyStatus(
             status="healthy",
             latency_ms=latency,
-            message=f"Alpaca API responding ({latency:.0f}ms)"
+            message=f"Alpaca API responding ({latency:.0f}ms)",
         )
 
     except Exception as e:
-        return DependencyStatus(
-            status="unavailable",
-            message=str(e)
-        )
+        return DependencyStatus(status="unavailable", message=str(e))
 
 
 async def _check_database() -> DependencyStatus:
     """Check database connection."""
     try:
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
 
-        latency = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+        latency = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
         return DependencyStatus(
             status="healthy",
             latency_ms=latency,
-            message=f"Database responding ({latency:.0f}ms)"
+            message=f"Database responding ({latency:.0f}ms)",
         )
 
     except Exception as e:
-        return DependencyStatus(
-            status="unavailable",
-            message=str(e)
-        )
+        return DependencyStatus(status="unavailable", message=str(e))
 
 
 async def _check_cache() -> DependencyStatus:
@@ -406,18 +426,11 @@ async def _check_cache() -> DependencyStatus:
         cache = get_cache()
 
         if cache.available:
-            return DependencyStatus(
-                status="healthy",
-                message="Redis cache available"
-            )
+            return DependencyStatus(status="healthy", message="Redis cache available")
         else:
             return DependencyStatus(
-                status="degraded",
-                message="Using in-memory fallback"
+                status="degraded", message="Using in-memory fallback"
             )
 
     except Exception as e:
-        return DependencyStatus(
-            status="unavailable",
-            message=str(e)
-        )
+        return DependencyStatus(status="unavailable", message=str(e))

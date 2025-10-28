@@ -1,7 +1,7 @@
 {
   "generated_at": "2025-10-27",
-  "total_routers": 26,
-  "total_endpoints": 137,
+  "total_routers": 24,
+  "total_endpoints": 120,
   "routers": [
     {
       "file": "ai.py",
@@ -200,7 +200,7 @@
           "path": "/detailed",
           "full_path": "/health/detailed",
           "function": "detailed_health_check",
-          "description": "Detailed health check with dependency status."
+          "description": ""
         },
         {
           "method": "GET",
@@ -236,6 +236,13 @@
           "full_path": "/health/ready/full",
           "function": "ready_full_check",
           "description": "Comprehensive readiness probe: DB, Redis, streaming, AI proxy."
+        },
+        {
+          "method": "GET",
+          "path": "/features",
+          "full_path": "/health/features",
+          "function": "features_status",
+          "description": "Feature availability status from readiness registry."
         },
         {
           "method": "GET",
@@ -480,150 +487,6 @@
           "full_path": "/api/sentiment/analyze",
           "function": "analyze_sentiment",
           "description": ""
-        }
-      ]
-    },
-    {
-      "file": "monitor.py",
-      "prefix": "/api/monitor",
-      "tags": [
-        "Repository Monitor"
-      ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/counters",
-          "full_path": "/api/monitor/counters",
-          "function": "get_counters",
-          "description": ""
-        },
-        {
-          "method": "GET",
-          "path": "/dashboard",
-          "full_path": "/api/monitor/dashboard",
-          "function": "get_dashboard",
-          "description": ""
-        },
-        {
-          "method": "GET",
-          "path": "/trend/{counter_name}",
-          "full_path": "/api/monitor/trend/{counter_name}",
-          "function": "get_counter_trend",
-          "description": ""
-        },
-        {
-          "method": "POST",
-          "path": "/webhook",
-          "full_path": "/api/monitor/webhook",
-          "function": "github_webhook",
-          "description": "Receive GitHub webhook events"
-        },
-        {
-          "method": "POST",
-          "path": "/reset-weekly",
-          "full_path": "/api/monitor/reset-weekly",
-          "function": "reset_weekly_counters",
-          "description": ""
-        },
-        {
-          "method": "GET",
-          "path": "/health",
-          "full_path": "/api/monitor/health",
-          "function": "monitor_health_check",
-          "description": "Check monitor service health"
-        }
-      ]
-    },
-    {
-      "file": "monitoring.py",
-      "prefix": "/api/monitor",
-      "tags": [
-        "monitoring"
-      ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/health",
-          "full_path": "/api/monitor/health",
-          "function": "get_health_status",
-          "description": "Get basic health status"
-        },
-        {
-          "method": "GET",
-          "path": "/health/detailed",
-          "full_path": "/api/monitor/health/detailed",
-          "function": "get_detailed_health",
-          "description": ""
-        },
-        {
-          "method": "GET",
-          "path": "/metrics/system",
-          "full_path": "/api/monitor/metrics/system",
-          "function": "get_system_metrics",
-          "description": "Get system performance metrics"
-        },
-        {
-          "method": "GET",
-          "path": "/metrics/ml-models",
-          "full_path": "/api/monitor/metrics/ml-models",
-          "function": "get_ml_model_health",
-          "description": "Get ML model health and performance metrics"
-        },
-        {
-          "method": "GET",
-          "path": "/metrics/cache",
-          "full_path": "/api/monitor/metrics/cache",
-          "function": "get_cache_metrics",
-          "description": "Get cache performance metrics"
-        },
-        {
-          "method": "GET",
-          "path": "/alerts",
-          "full_path": "/api/monitor/alerts",
-          "function": "get_alerts",
-          "description": "Get current system alerts"
-        },
-        {
-          "method": "GET",
-          "path": "/dashboard",
-          "full_path": "/api/monitor/dashboard",
-          "function": "get_monitoring_dashboard",
-          "description": ""
-        },
-        {
-          "method": "POST",
-          "path": "/alerts/{alert_id}/resolve",
-          "full_path": "/api/monitor/alerts/{alert_id}/resolve",
-          "function": "resolve_alert",
-          "description": ""
-        },
-        {
-          "method": "GET",
-          "path": "/logs",
-          "full_path": "/api/monitor/logs",
-          "function": "get_system_logs",
-          "description": ""
-        },
-        {
-          "method": "GET",
-          "path": "/performance/summary",
-          "full_path": "/api/monitor/performance/summary",
-          "function": "get_performance_summary",
-          "description": "Get performance summary without authentication"
-        },
-        {
-          "method": "GET",
-          "path": "/ping",
-          "full_path": "/api/monitor/ping",
-          "function": "ping",
-          "description": "Simple ping endpoint for basic connectivity check"
-        },
-        {
-          "method": "GET",
-          "path": "/version",
-          "full_path": "/api/monitor/version",
-          "function": "get_version",
-          "description": "Get system version information"
         }
       ]
     },
@@ -1119,7 +982,7 @@
     },
     {
       "file": "telemetry.py",
-      "prefix": "/api/telemetry",
+      "prefix": "/telemetry",
       "tags": [
         "telemetry"
       ],
@@ -1127,28 +990,28 @@
         {
           "method": "GET",
           "path": "/events",
-          "full_path": "/api/telemetry/events",
+          "full_path": "/telemetry/events",
           "function": "get_telemetry_events",
           "description": "Retrieve telemetry events with optional filters"
         },
         {
           "method": "GET",
           "path": "/stats",
-          "full_path": "/api/telemetry/stats",
+          "full_path": "/telemetry/stats",
           "function": "get_telemetry_stats",
           "description": "Get aggregate statistics from telemetry data"
         },
         {
           "method": "DELETE",
           "path": "/events",
-          "full_path": "/api/telemetry/events",
+          "full_path": "/telemetry/events",
           "function": "clear_telemetry_events",
           "description": "Clear all telemetry events (admin only)"
         },
         {
           "method": "GET",
           "path": "/export",
-          "full_path": "/api/telemetry/export",
+          "full_path": "/telemetry/export",
           "function": "export_telemetry",
           "description": "Export all telemetry events as JSON"
         }

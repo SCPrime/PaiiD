@@ -16,7 +16,7 @@ from ..core.readiness_registry import get_readiness_registry
 from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.cache import CacheService, get_cache
-from ..services.tradier_client import get_tradier_client
+from ..services.tradier_client import ProviderHTTPError, get_tradier_client
 
 
 logger = logging.getLogger(__name__)
@@ -32,8 +32,7 @@ def _check_tradier_readiness():
         reason = registry.get_reason("tradier")
         logger.error(f"Tradier service unavailable: {reason}")
         raise HTTPException(
-            status_code=503,
-            detail=f"Tradier market data service unavailable: {reason}"
+            status_code=503, detail=f"Tradier market data service unavailable: {reason}"
         )
 
 
@@ -86,7 +85,9 @@ async def get_quote(
     cache_key = f"quote:{symbol.upper()}"
     cached_quote = cache.get(cache_key)
     if cached_quote:
-        logger.info(f"✅ Cache HIT for quote {symbol} (TTL: {settings.CACHE_TTL_QUOTE}s)")
+        logger.info(
+            f"✅ Cache HIT for quote {symbol} (TTL: {settings.CACHE_TTL_QUOTE}s)"
+        )
         cached_quote["cached"] = True
         return cached_quote
 
@@ -115,6 +116,18 @@ async def get_quote(
         return result
     except HTTPException:
         raise
+    except ProviderHTTPError as e:
+        if e.status_code in (400, 404):
+            raise HTTPException(
+                status_code=e.status_code, detail=f"Upstream not found: {symbol}"
+            ) from e
+        if e.status_code in (401, 403, 429):
+            raise HTTPException(
+                status_code=503, detail="Upstream authentication or rate limit error"
+            ) from e
+        if 500 <= e.status_code < 600:
+            raise HTTPException(status_code=502, detail="Upstream service error") from e
+        raise HTTPException(status_code=502, detail="Upstream error") from e
     except Exception as e:
         logger.error(f"❌ Tradier quote request failed for {symbol}: {e!s}")
         raise HTTPException(
@@ -124,7 +137,9 @@ async def get_quote(
 
 @router.get("/market/quotes")
 async def get_quotes(
-    symbols: str = Query(..., min_length=1, max_length=200, description="Comma-separated symbols"),
+    symbols: str = Query(
+        ..., min_length=1, max_length=200, description="Comma-separated symbols"
+    ),
     current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
 ):
@@ -199,13 +214,27 @@ async def get_quotes(
 
                     # Cache individual quote with metadata
                     cache_entry = {**quote, "symbol": symbol, "cached": False}
-                    cache.set(f"quote:{symbol}", cache_entry, ttl=settings.CACHE_TTL_QUOTE)
+                    cache.set(
+                        f"quote:{symbol}", cache_entry, ttl=settings.CACHE_TTL_QUOTE
+                    )
 
         logger.info(
             f"✅ Retrieved {len(result)} quotes "
             f"(Cache: {cache_hits} hits, {len(cache_misses)} misses)"
         )
         return result
+    except ProviderHTTPError as e:
+        if e.status_code in (400, 404):
+            raise HTTPException(
+                status_code=404, detail="One or more symbols not found upstream"
+            ) from e
+        if e.status_code in (401, 403, 429):
+            raise HTTPException(
+                status_code=503, detail="Upstream authentication or rate limit error"
+            ) from e
+        if 500 <= e.status_code < 600:
+            raise HTTPException(status_code=502, detail="Upstream service error") from e
+        raise HTTPException(status_code=502, detail="Upstream error") from e
     except Exception as e:
         logger.error(f"❌ Tradier quotes request failed: {e!s}")
         raise HTTPException(
@@ -216,7 +245,9 @@ async def get_quotes(
 @router.get("/market/bars/{symbol}")
 async def get_bars(
     symbol: str = Path(..., min_length=1, max_length=10, description="Stock symbol"),
-    timeframe: str = Query("daily", pattern="^(1Min|5Min|15Min|1Hour|1Day|daily|weekly|monthly)$"),
+    timeframe: str = Query(
+        "daily", pattern="^(1Min|5Min|15Min|1Hour|1Day|daily|weekly|monthly)$"
+    ),
     limit: int = Query(100, ge=1, le=1000, description="Number of bars to return"),
     current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
@@ -268,7 +299,7 @@ async def get_bars(
         else:  # daily, weekly, monthly
             start_date = end_date - timedelta(days=limit * 2)  # Approximate
 
-        bars_data = client.get_historical_quotes(
+        bars_data = client.get_historical_bars(
             symbol=symbol,
             interval=interval,
             start_date=start_date.strftime("%Y-%m-%d"),
@@ -297,6 +328,18 @@ async def get_bars(
             f"(cached for {settings.CACHE_TTL_HISTORICAL_BARS}s)"
         )
         return response
+    except ProviderHTTPError as e:
+        if e.status_code in (400, 404):
+            raise HTTPException(
+                status_code=404, detail=f"No bars found for {symbol}"
+            ) from e
+        if e.status_code in (401, 403, 429):
+            raise HTTPException(
+                status_code=503, detail="Upstream authentication or rate limit error"
+            ) from e
+        if 500 <= e.status_code < 600:
+            raise HTTPException(status_code=502, detail="Upstream service error") from e
+        raise HTTPException(status_code=502, detail="Upstream error") from e
     except Exception as e:
         logger.error(f"❌ Tradier bars request failed for {symbol}: {e!s}")
         raise HTTPException(
@@ -321,7 +364,9 @@ async def scan_under_4(
     cache_key = "scanner:under4"
     cached_results = cache.get(cache_key)
     if cached_results:
-        logger.info(f"✅ Cache HIT for scanner under $4 (TTL: {settings.CACHE_TTL_SCANNER}s)")
+        logger.info(
+            f"✅ Cache HIT for scanner under $4 (TTL: {settings.CACHE_TTL_SCANNER}s)"
+        )
         return {**cached_results, "cached": True}
 
     try:
@@ -426,15 +471,14 @@ async def get_historical_data(
     timeframe: str = Query(
         "1day",
         pattern="^(1min|5min|15min|1hour|1day)$",
-        description="Timeframe (1min, 5min, 15min, 1hour, 1day)"
+        description="Timeframe (1min, 5min, 15min, 1hour, 1day)",
     ),
     start: str = Query(
         None,
-        description="Start date in ISO format (YYYY-MM-DD). Defaults to 30 days ago."
+        description="Start date in ISO format (YYYY-MM-DD). Defaults to 30 days ago.",
     ),
     end: str = Query(
-        None,
-        description="End date in ISO format (YYYY-MM-DD). Defaults to today."
+        None, description="End date in ISO format (YYYY-MM-DD). Defaults to today."
     ),
     current_user: User = Depends(get_current_user_unified),
     cache: CacheService = Depends(get_cache),
@@ -483,8 +527,7 @@ async def get_historical_data(
             start_date = end_date - timedelta(days=30)  # Default to 30 days
     except ValueError as e:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid date format. Use YYYY-MM-DD: {e!s}"
+            status_code=400, detail=f"Invalid date format. Use YYYY-MM-DD: {e!s}"
         ) from e
 
     # Create cache key
@@ -514,7 +557,7 @@ async def get_historical_data(
         interval = interval_map.get(timeframe, "daily")
 
         # Fetch historical data from Tradier
-        bars_data = client.get_historical_quotes(
+        bars_data = client.get_historical_bars(
             symbol=symbol,
             interval=interval,
             start_date=start_date.strftime("%Y-%m-%d"),
@@ -553,6 +596,18 @@ async def get_historical_data(
 
         return response
 
+    except ProviderHTTPError as e:
+        if e.status_code in (400, 404):
+            raise HTTPException(
+                status_code=404, detail=f"No historical data for {symbol}"
+            ) from e
+        if e.status_code in (401, 403, 429):
+            raise HTTPException(
+                status_code=503, detail="Upstream authentication or rate limit error"
+            ) from e
+        if 500 <= e.status_code < 600:
+            raise HTTPException(status_code=502, detail="Upstream service error") from e
+        raise HTTPException(status_code=502, detail="Upstream error") from e
     except Exception as e:
         logger.error(f"❌ Tradier historical data request failed for {symbol}: {e!s}")
         raise HTTPException(
