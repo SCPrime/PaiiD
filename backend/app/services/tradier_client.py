@@ -334,11 +334,42 @@ class TradierClient:
 
 # Singleton instance
 _tradier_client = None
+_tradier_available = False
+_tradier_unavailable_reason = None
 
 
 def get_tradier_client() -> TradierClient:
-    """Get singleton Tradier client"""
-    global _tradier_client
+    """
+    Get singleton Tradier client with readiness registration
+
+    Returns:
+        TradierClient instance if available
+
+    Raises:
+        Exception: If Tradier client is unavailable (registers reason in readiness registry)
+    """
+    global _tradier_client, _tradier_available, _tradier_unavailable_reason
+
     if _tradier_client is None:
-        _tradier_client = TradierClient()
+        # Import here to avoid circular dependency
+        from app.core.readiness_registry import get_readiness_registry
+        registry = get_readiness_registry()
+
+        try:
+            _tradier_client = TradierClient()
+            _tradier_available = True
+            _tradier_unavailable_reason = None
+            registry.register("tradier", available=True)
+            logger.info("[OK] Tradier client initialized and registered as available")
+        except Exception as e:
+            _tradier_available = False
+            _tradier_unavailable_reason = str(e)
+            registry.register("tradier", available=False, reason=str(e))
+            logger.error(f"[FAIL] Tradier client initialization failed: {e}")
+            raise Exception(f"Tradier client unavailable: {e}")
+
+    # Check if client is available
+    if not _tradier_available:
+        raise Exception(f"Tradier client unavailable: {_tradier_unavailable_reason}")
+
     return _tradier_client

@@ -12,6 +12,7 @@ from datetime import UTC, datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
 from ..core.config import get_settings
+from ..core.readiness_registry import get_readiness_registry
 from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.cache import CacheService, get_cache
@@ -23,7 +24,21 @@ logger = logging.getLogger(__name__)
 # Runtime notice (kept minimal)
 logger.info("market_data router loaded (Tradier integration)")
 
-router = APIRouter()
+
+def _check_tradier_readiness():
+    """Check if Tradier service is available via readiness registry (used as FastAPI dependency)"""
+    registry = get_readiness_registry()
+    if not registry.is_available("tradier"):
+        reason = registry.get_reason("tradier")
+        logger.error(f"Tradier service unavailable: {reason}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Tradier market data service unavailable: {reason}"
+        )
+
+
+# Apply readiness check to all routes in this router
+router = APIRouter(dependencies=[Depends(_check_tradier_readiness)])
 
 
 @router.get("/market/quote/{symbol}")
@@ -36,6 +51,7 @@ async def get_quote(
 
     Supports fixture mode for deterministic testing when USE_TEST_FIXTURES=true.
     """
+
     # Get settings for cache TTL
     settings = get_settings()
 

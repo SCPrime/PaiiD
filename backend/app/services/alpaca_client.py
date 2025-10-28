@@ -242,11 +242,42 @@ class AlpacaClient:
 
 # Singleton instance
 _alpaca_client = None
+_alpaca_available = False
+_alpaca_unavailable_reason = None
 
 
 def get_alpaca_client() -> AlpacaClient:
-    """Get or create Alpaca client singleton"""
-    global _alpaca_client
+    """
+    Get or create Alpaca client singleton with readiness registration
+
+    Returns:
+        AlpacaClient instance if available
+
+    Raises:
+        Exception: If Alpaca client is unavailable (registers reason in readiness registry)
+    """
+    global _alpaca_client, _alpaca_available, _alpaca_unavailable_reason
+
     if _alpaca_client is None:
-        _alpaca_client = AlpacaClient()
+        # Import here to avoid circular dependency
+        from app.core.readiness_registry import get_readiness_registry
+        registry = get_readiness_registry()
+
+        try:
+            _alpaca_client = AlpacaClient()
+            _alpaca_available = True
+            _alpaca_unavailable_reason = None
+            registry.register("alpaca", available=True)
+            logger.info("[OK] Alpaca Paper Trading client initialized and registered as available")
+        except Exception as e:
+            _alpaca_available = False
+            _alpaca_unavailable_reason = str(e)
+            registry.register("alpaca", available=False, reason=str(e))
+            logger.error(f"[FAIL] Alpaca Paper Trading client initialization failed: {e}")
+            raise Exception(f"Alpaca client unavailable: {e}")
+
+    # Check if client is available
+    if not _alpaca_available:
+        raise Exception(f"Alpaca client unavailable: {_alpaca_unavailable_reason}")
+
     return _alpaca_client
