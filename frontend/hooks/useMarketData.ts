@@ -26,13 +26,16 @@ export function useMarketData() {
   const [sseRetryCount, setSseRetryCount] = useState(0);
   const [marketStatus, setMarketStatus] = useState<MarketStatus | null>(null);
 
-  // Throttled market data update - prevents animation interruptions
+  // Throttled market data update - prevents excessive re-renders
+  // PERFORMANCE FIX: Reduced from 10000ms (10s) to 1000ms (1s) after fixing D3 re-render issue
+  // With optimized D3 rendering (market data values removed from main effect deps),
+  // we can update much more frequently without causing UI jank
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const throttledSetMarketData = useCallback(
     throttle((newData: MarketDataState) => {
       setMarketData(newData);
       logger.info("[useMarketData] Market data updated (throttled)");
-    }, 10000), // Update max once per 10 seconds
+    }, 1000), // Update max once per second (reduced from 10s)
     []
   );
 

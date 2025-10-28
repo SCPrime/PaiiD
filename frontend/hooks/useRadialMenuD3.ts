@@ -136,10 +136,13 @@ export function useRadialMenuD3({
     onWorkflowHover,
     setHoveredWorkflow,
     isMarketDataLoading,
-    marketData.dow.value,
-    marketData.dow.change,
-    marketData.nasdaq.value,
-    marketData.nasdaq.change,
+    // PERFORMANCE FIX: Removed individual market data values from dependencies
+    // Market data text updates are handled by separate effect (lines 147-150) via updateMarketDataText()
+    // This prevents full D3 re-render on every market tick (10x/sec) which caused UI jank
+    // marketData.dow.value,
+    // marketData.dow.change,
+    // marketData.nasdaq.value,
+    // marketData.nasdaq.change,
     // forceFieldConfidence moved to Settings page
   ]);
 
