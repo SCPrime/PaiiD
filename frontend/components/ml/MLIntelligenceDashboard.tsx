@@ -198,7 +198,10 @@ export const MLIntelligenceDashboard: React.FC = () => {
     setRefreshing(true);
     await loadMLInsights();
     setRefreshing(false);
-    toast.success("ML Analysis Updated", "Market intelligence has been refreshed with latest data.");
+    toast.success(
+      "ML Analysis Updated",
+      "Market intelligence has been refreshed with latest data."
+    );
   };
 
   const getInsightIcon = (type: string) => {
@@ -246,7 +249,7 @@ export const MLIntelligenceDashboard: React.FC = () => {
           <Brain className="w-8 h-8 text-blue-600" />
           <div>
             <h2 className="text-2xl font-bold text-gray-900">ML Intelligence</h2>
-            <p className="text-gray-600">AI-powered market analysis for smarter decisions</p>
+            <p className="text-gray-600">PaiiD-powered market analysis for smarter decisions</p>
           </div>
         </div>
 

@@ -76,8 +76,8 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
         throw new Error("Failed to fetch recommendations");
       }
     } catch (err) {
-      logger.error("Error fetching AI recommendations", err);
-      setError("Failed to load AI recommendations");
+      logger.error("Error fetching PaiiD recommendations", err);
+      setError("Failed to load PaiiD recommendations");
     } finally {
       setIsLoading(false);
     }
@@ -211,7 +211,7 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
       <EnhancedCard variant="default" className={className}>
         <div className="text-center">
           <StatusIndicator status="loading" size="sm" />
-          <p className="mt-2 text-slate-400">Loading AI recommendations...</p>
+          <p className="mt-2 text-slate-400">Loading PaiiD recommendations...</p>
         </div>
       </EnhancedCard>
     );
@@ -239,7 +239,7 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h3 className="text-white font-bold text-xl">AI Trading Recommendations</h3>
+          <h3 className="text-white font-bold text-xl">PaiiD Trading Recommendations</h3>
           <StatusIndicator status={isConnected ? "online" : "offline"} size="sm" />
         </div>
 

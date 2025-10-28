@@ -14,6 +14,7 @@ import {
   Clock,
   DollarSign,
   Info,
+  LucideProps,
   Mail,
   Save,
   Search,
@@ -23,7 +24,6 @@ import {
   Users,
   X,
   Zap,
-  LucideProps,
 } from "lucide-react";
 import { ForwardRefExoticComponent, RefAttributes, useState } from "react";
 import { logger } from "../lib/logger";
@@ -59,7 +59,7 @@ const availableWedges = [
   { id: "active-positions", icon: Target, label: "Check Positions", color: "#00C851" },
   { id: "research", icon: Search, label: "Research Stocks", color: "#F97316" },
   { id: "news-review", icon: Book, label: "News Review", color: "#7E57C2" },
-  { id: "proposals", icon: Activity, label: "AI Recommendations", color: "#0097A7" },
+  { id: "proposals", icon: Activity, label: "PaiiD Recommendations", color: "#0097A7" },
   { id: "risk", icon: AlertCircle, label: "Risk Check", color: "#FF8800" },
   { id: "pnl-dashboard", icon: BarChart3, label: "P&L Review", color: "#00BCD4" },
   { id: "alerts", icon: Bell, label: "Check Alerts", color: "#64748b" },
@@ -289,11 +289,11 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
           options: [
             "",
             "Manual (I control everything)",
-            "Mixed (AI suggests, I approve)",
-            "Auto (AI executes within limits)",
+            "Mixed (PaiiD suggests, I approve)",
+            "Auto (PaiiD executes within limits)",
           ],
           tooltip:
-            "Manual: You make all decisions. Mixed: AI provides recommendations you review. Auto: AI trades automatically within your risk parameters and requires your approval for large trades.",
+            "Manual: You make all decisions. Mixed: PaiiD provides recommendations you review. Auto: PaiiD trades automatically within your risk parameters and requires your approval for large trades.",
         },
         {
           name: "executionMode",

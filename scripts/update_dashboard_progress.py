@@ -1,7 +1,7 @@
-            import re
+import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
-import json
 
 #!/usr/bin/env python3
 """
@@ -11,6 +11,7 @@ Auto-updates progress dashboard with latest metrics
 
 console_emoji = "📊"
 
+
 def update_dashboard():
     """Update progress dashboard HTML with latest data"""
     print(f"{console_emoji} Updating dashboard progress...")
@@ -19,7 +20,9 @@ def update_dashboard():
     monitor_file = Path("monitor-data.json")
     if monitor_file.exists():
         monitor_data = json.loads(monitor_file.read_text())
-        print(f"✅ Loaded monitor data from last check: {monitor_data.get('last_check')}")
+        print(
+            f"✅ Loaded monitor data from last check: {monitor_data.get('last_check')}"
+        )
     else:
         print("⚠️  No monitor data found, using defaults")
         monitor_data = {"counters": {}}
@@ -67,6 +70,7 @@ def update_dashboard():
         print(f"✅ Updated PROGRESS_DASHBOARD.html timestamp: {timestamp}")
 
     print("🎉 Dashboard update complete!")
+
 
 if __name__ == "__main__":
     update_dashboard()

@@ -1,0 +1,15 @@
+{
+  "base_url": "https://paiid-frontend.onrender.com",
+  "runs": [
+    {
+      "tag": "render",
+      "status": "pending",
+      "errors": []
+    },
+    {
+      "tag": "live",
+      "status": "pending",
+      "errors": []
+    }
+  ]
+}

@@ -22,7 +22,11 @@
     "playwright:test": "npx playwright test",
     "playwright:test:ci": "npx playwright test --reporter=github",
     "playwright:test:headed": "npx playwright test --headed",
-    "prepare": "husky"
+    "prepare": "husky",
+    "mod:github": "python ../scripts/auto_github_monitor.py --full-audit --output ../reports/github_mod.json",
+    "mod:browser": "python ../scripts/browser_mod.py --check-render",
+    "mod:flows": "python ../scripts/live_data_flows.py --comprehensive --output ../reports/live_flows.json",
+    "mod:all": "npm run mod:github && npm run mod:browser && npm run mod:flows"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",

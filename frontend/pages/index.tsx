@@ -6,7 +6,6 @@ import { logger } from "../lib/logger";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 
 import ExecuteTradeForm from "../components/ExecuteTradeForm";
-import MobileDashboard from "../components/MobileDashboard";
 import Settings from "../components/Settings";
 import UserSetupAI from "../components/UserSetupAI";
 
@@ -51,7 +50,10 @@ const Backtesting = dynamic(() => import("../components/Backtesting"), {
   ),
 });
 const MLIntelligenceWorkflow = dynamic(
-  () => import("../components/workflows/MLIntelligenceWorkflow").then((mod) => ({ default: mod.MLIntelligenceWorkflow })),
+  () =>
+    import("../components/workflows/MLIntelligenceWorkflow").then((mod) => ({
+      default: mod.MLIntelligenceWorkflow,
+    })),
   {
     loading: () => (
       <div className="flex items-center justify-center p-8">
@@ -913,7 +915,7 @@ export default function Dashboard() {
       <AIChat
         isOpen={aiChatOpen}
         onClose={() => setAiChatOpen(false)}
-        initialMessage="Hi! I'm your PaiiD AI assistant. I can help you with trading strategies, build custom workflows, analyze market data, or adjust your preferences. What would you like to know?"
+        initialMessage="Hi! I'm your PaiiD assistant. I can help you with trading strategies, build custom workflows, analyze market data, or adjust your preferences. What would you like to know?"
       />
 
       {/* Keyboard Shortcuts */}

@@ -32,9 +32,9 @@ import { useMarketData } from "../hooks/useMarketData";
 import { logger } from "../lib/logger";
 import { clearUserData, getCurrentUser, getUserAnalytics } from "../lib/userManagement";
 import PerformanceDashboard from "./admin/PerformanceDashboard";
-import ForceFieldIndicator from "./ForceFieldIndicator";
 import ApprovalQueue from "./ApprovalQueue";
 import ClaudeAIChat from "./ClaudeAIChat";
+import ForceFieldIndicator from "./ForceFieldIndicator";
 import { GitHubActionsMonitor } from "./GitHubActionsMonitor";
 import KillSwitchToggle from "./KillSwitchToggle";
 import MLAnalyticsDashboard from "./MLAnalyticsDashboard";
@@ -279,10 +279,10 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
   const loadTelemetryData = async () => {
     try {
-      const response = await fetch('/api/proxy/api/telemetry/events', {
+      const response = await fetch("/api/proxy/api/telemetry/events", {
         headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -293,7 +293,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
       const data = await response.json();
       setTelemetryData(data.events || []);
     } catch (error) {
-      logger.error('Failed to load telemetry data', error);
+      logger.error("Failed to load telemetry data", error);
       // Show empty state instead of mock data
       setTelemetryData([]);
     }
@@ -414,13 +414,13 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   // Validate Paper Account Balance
   const validateBalance = (value: number): string | null => {
     if (isNaN(value)) {
-      return 'Please enter a valid number';
+      return "Please enter a valid number";
     }
     if (value < 1000) {
-      return 'Minimum balance is $1,000';
+      return "Minimum balance is $1,000";
     }
     if (value > 10000000) {
-      return 'Maximum balance is $10,000,000';
+      return "Maximum balance is $10,000,000";
     }
     return null;
   };
@@ -456,14 +456,15 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         // Refresh account info after update
         await fetchAccountBalance();
       } else {
-        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-        const errorMessage = errorData.detail || 'Failed to update paper account balance';
+        const errorData = await response.json().catch(() => ({ detail: "Unknown error" }));
+        const errorMessage = errorData.detail || "Failed to update paper account balance";
         setBalanceError(errorMessage);
         toast.error(errorMessage);
       }
     } catch (error) {
       logger.error("Failed to update paper account balance", error);
-      const errorMessage = 'Unable to connect to server. Please check your connection and try again.';
+      const errorMessage =
+        "Unable to connect to server. Please check your connection and try again.";
       setBalanceError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -573,7 +574,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
     { id: "ml-analytics", label: "ML Analytics", icon: Activity, alwaysShow: true },
     { id: "portfolio-optimizer", label: "Portfolio Optimizer", icon: Target, alwaysShow: true },
     { id: "sentiment", label: "News Sentiment", icon: Newspaper, alwaysShow: true },
-    { id: "ai-chat", label: "AI Chat", icon: MessageSquare, alwaysShow: true },
+    { id: "ai-chat", label: "PaiiD Chat", icon: MessageSquare, alwaysShow: true },
     { id: "automation", label: "Automation", icon: Clock, alwaysShow: true },
     { id: "approvals", label: "Approvals", icon: CheckCircle2, alwaysShow: true },
     { id: "users", label: "User Management", icon: Users, adminOnly: true },
@@ -887,7 +888,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                     style={{
                       background: currentTheme === "dark" ? "#0f172a" : "#ffffff",
                       borderColor:
-                        currentTheme === "dark" ? "rgba(71, 85, 105, 0.3)" : "rgba(203, 213, 225, 0.5)",
+                        currentTheme === "dark"
+                          ? "rgba(71, 85, 105, 0.3)"
+                          : "rgba(203, 213, 225, 0.5)",
                     }}
                   >
                     <div className="flex items-center gap-3 mb-2">
@@ -916,7 +919,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       className="text-xs p-2 rounded"
                       style={{
                         background:
-                          currentTheme === "dark" ? "rgba(30, 41, 59, 0.6)" : "rgba(248, 250, 252, 0.8)",
+                          currentTheme === "dark"
+                            ? "rgba(30, 41, 59, 0.6)"
+                            : "rgba(248, 250, 252, 0.8)",
                         color: currentTheme === "dark" ? "#cbd5e1" : "#475569",
                       }}
                     >
@@ -1033,8 +1038,8 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                         }}
                         className={`flex-1 px-4 py-3 bg-slate-900/60 border rounded-lg text-white font-semibold text-lg outline-none focus:ring-2 ${
                           balanceError
-                            ? 'border-red-500/50 focus:ring-red-500/50'
-                            : 'border-slate-700/50 focus:ring-cyan-500/50'
+                            ? "border-red-500/50 focus:ring-red-500/50"
+                            : "border-slate-700/50 focus:ring-cyan-500/50"
                         }`}
                         placeholder="100000"
                       />
@@ -1418,7 +1423,12 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   );
 }
 
-function UserManagementTab({ users, isOwner, currentUserId, onToggleStatus }: UserManagementTabProps) {
+function UserManagementTab({
+  users,
+  isOwner,
+  currentUserId,
+  onToggleStatus,
+}: UserManagementTabProps) {
   const isMobile = useIsMobile();
 
   return (
@@ -1578,7 +1588,12 @@ function PermissionsTab({ users, isOwner, onUpdatePermission }: PermissionsTabPr
                   type="checkbox"
                   checked={enabled as boolean}
                   onChange={(e) =>
-                    isOwner && onUpdatePermission(user.id, permission as keyof User["permissions"], e.target.checked)
+                    isOwner &&
+                    onUpdatePermission(
+                      user.id,
+                      permission as keyof User["permissions"],
+                      e.target.checked
+                    )
                   }
                   disabled={!isOwner}
                   className="w-4 h-4"
@@ -1667,7 +1682,12 @@ function TelemetryTab({ enabled, data, users, onToggle, onExport }: TelemetryTab
   );
 }
 
-function TradingControlTab({ users, isOwner, currentUserId, onToggleTradingMode }: TradingControlTabProps) {
+function TradingControlTab({
+  users,
+  isOwner,
+  currentUserId,
+  onToggleTradingMode,
+}: TradingControlTabProps) {
   return (
     <div className="space-y-6">
       {/* Kill Switch Section */}

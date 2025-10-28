@@ -1,0 +1,11 @@
+{
+  "base_url": "https://paiid-frontend.onrender.com",
+  "timestamp": "2025-10-28T23:18:41.756790+00:00",
+  "checks": {
+    "dow_label": false,
+    "nasdaq_label": false,
+    "value_text_present": true,
+    "console_errors": 0
+  },
+  "issues": []
+}

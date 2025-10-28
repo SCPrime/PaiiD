@@ -246,7 +246,7 @@ export default function StrategyBuilderAI() {
       const errorMessage = err instanceof Error ? err.message : "Failed to generate strategy";
       setError(errorMessage);
       logger.error("Strategy generation error", err);
-    } finally{
+    } finally {
       setIsGenerating(false);
     }
   };
@@ -357,7 +357,7 @@ export default function StrategyBuilderAI() {
                   margin: 0,
                 }}
               >
-                AI Strategy Builder
+                PaiiD Strategy Builder
               </h1>
               <p
                 style={{
@@ -698,7 +698,8 @@ export default function StrategyBuilderAI() {
                             color: theme.colors.text,
                           }}
                         >
-                          {rule.condition === "take_profit" ? "Take Profit" : "Stop Loss"}: {rule.value}%
+                          {rule.condition === "take_profit" ? "Take Profit" : "Stop Loss"}:{" "}
+                          {rule.value}%
                         </div>
                       ))}
                     </div>

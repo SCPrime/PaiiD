@@ -1,4 +1,43 @@
 #!/usr/bin/env python3
+import argparse
+import json
+import os
+
+
+def run(tag: str) -> dict:
+    # Placeholder: integrate with Playwright test tags in CI/local
+    return {"tag": tag, "status": "pending", "errors": []}
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--check-render", action="store_true")
+    p.add_argument("--live-data", action="store_true")
+    p.add_argument("--interactions-only", action="store_true")
+    p.add_argument(
+        "--url", default=os.getenv("BASE_URL", "https://paiid-frontend.onrender.com")
+    )
+    p.add_argument("--output", default="reports/browser_mod_report.json")
+    args = p.parse_args()
+
+    runs = []
+    if args.check_render:
+        runs.append(run("render"))
+    if args.live_data:
+        runs.append(run("live"))
+    if args.interactions_only:
+        runs.append(run("interactions"))
+
+    os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+    with open(args.output, "w", encoding="utf-8") as f:
+        json.dump({"base_url": args.url, "runs": runs}, f, indent=2)
+    print(f"[BROWSER_MOD] Report written: {args.output}")
+
+
+if __name__ == "__main__":
+    main()
+
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 BROWSER MOD - Browser Rendering & Issue Monitor
@@ -12,25 +51,24 @@ Usage:
 """
 
 import asyncio
-import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
-import argparse
 
 # Fix Windows console encoding
 if sys.platform == "win32":
     import codecs
+
     sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
     sys.stderr = codecs.getwriter("utf-8")(sys.stderr.detach())
 
 try:
-    from playwright.async_api import async_playwright, Browser, Page, Error as PlaywrightError
+    from playwright.async_api import Browser, Page, async_playwright
+    from playwright.async_api import Error as PlaywrightError
     from rich.console import Console
-    from rich.table import Table
     from rich.panel import Panel
     from rich.progress import Progress, SpinnerColumn, TextColumn
+    from rich.table import Table
 except ImportError:
     print("[ERROR] Missing dependencies. Install with:")
     print("   pip install -r scripts/requirements-monitor.txt")
@@ -47,12 +85,12 @@ WORKFLOWS = [
     "Active Positions",
     "Execute Trade",
     "Research",
-    "AI Recommendations",
+    "PaiiD Recommendations",
     "P&L Dashboard",
     "News Review",
     "Strategy Builder",
     "Backtesting",
-    "Settings"
+    "Settings",
 ]
 
 
@@ -60,7 +98,7 @@ class BrowserMod:
     """Browser monitoring and validation system"""
 
     def __init__(self, base_url: str, headless: bool = True, slow_mo: int = 0):
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.headless = headless
         self.slow_mo = slow_mo
         self.results = {
@@ -69,7 +107,7 @@ class BrowserMod:
             "checks": {},
             "issues": [],
             "screenshots": [],
-            "performance": {}
+            "performance": {},
         }
 
     async def run_full_audit(self):
@@ -78,15 +116,14 @@ class BrowserMod:
 
         async with async_playwright() as p:
             browser = await p.chromium.launch(
-                headless=self.headless,
-                slow_mo=self.slow_mo
+                headless=self.headless, slow_mo=self.slow_mo
             )
 
             try:
                 # Create browser context
                 context = await browser.new_context(
                     viewport={"width": 1920, "height": 1080},
-                    user_agent="BrowserMod/1.0 (Automated Testing)"
+                    user_agent="BrowserMod/1.0 (Automated Testing)",
                 )
 
                 page = await context.new_page()
@@ -112,13 +149,15 @@ class BrowserMod:
 
         try:
             # Navigate to page
-            response = await page.goto(self.base_url, wait_until="networkidle", timeout=TIMEOUT)
+            response = await page.goto(
+                self.base_url, wait_until="networkidle", timeout=TIMEOUT
+            )
 
             if response and response.status >= 400:
                 self.add_issue(
                     "RENDER_ERROR",
                     f"HTTP {response.status} - Page failed to load",
-                    "CRITICAL"
+                    "CRITICAL",
                 )
                 self.results["checks"]["initial_render"] = "❌ FAIL"
                 console.print("[red]❌ Initial render FAILED[/red]")
@@ -128,14 +167,16 @@ class BrowserMod:
             await page.wait_for_selector("body", timeout=10000)
 
             # Check for common elements
-            has_radial_menu = await page.locator('[data-testid="radial-menu"], svg').count() > 0
+            has_radial_menu = (
+                await page.locator('[data-testid="radial-menu"], svg').count() > 0
+            )
             has_content = await page.content()
 
             if not has_radial_menu and "PaiiD" not in has_content:
                 self.add_issue(
                     "RENDER_INCOMPLETE",
                     "Page loaded but main content not visible",
-                    "HIGH"
+                    "HIGH",
                 )
                 self.results["checks"]["initial_render"] = "⚠️ PARTIAL"
                 console.print("[yellow]⚠️ Initial render PARTIAL[/yellow]")
@@ -153,9 +194,7 @@ class BrowserMod:
 
         except PlaywrightError as e:
             self.add_issue(
-                "RENDER_TIMEOUT",
-                f"Page failed to load: {str(e)}",
-                "CRITICAL"
+                "RENDER_TIMEOUT", f"Page failed to load: {str(e)}", "CRITICAL"
             )
             self.results["checks"]["initial_render"] = "❌ FAIL"
             console.print(f"[red]❌ Render failed: {e}[/red]")
@@ -169,10 +208,16 @@ class BrowserMod:
         console_warnings = []
 
         # Listen to console messages
-        page.on("console", lambda msg: (
-            console_errors.append(msg.text) if msg.type == "error" else
-            console_warnings.append(msg.text) if msg.type == "warning" else None
-        ))
+        page.on(
+            "console",
+            lambda msg: (
+                console_errors.append(msg.text)
+                if msg.type == "error"
+                else console_warnings.append(msg.text)
+                if msg.type == "warning"
+                else None
+            ),
+        )
 
         # Navigate and wait for console messages
         await page.goto(self.base_url, wait_until="networkidle")
@@ -180,8 +225,11 @@ class BrowserMod:
 
         # Filter out known non-critical warnings
         critical_errors = [
-            e for e in console_errors
-            if not any(skip in e.lower() for skip in ["favicon", "sourcemap", "hydration"])
+            e
+            for e in console_errors
+            if not any(
+                skip in e.lower() for skip in ["favicon", "sourcemap", "hydration"]
+            )
         ]
 
         if critical_errors:
@@ -189,14 +237,20 @@ class BrowserMod:
                 self.add_issue(
                     "CONSOLE_ERROR",
                     error,
-                    "HIGH" if "TypeError" in error or "ReferenceError" in error else "MEDIUM"
+                    "HIGH"
+                    if "TypeError" in error or "ReferenceError" in error
+                    else "MEDIUM",
                 )
 
-            self.results["checks"]["console_errors"] = f"❌ {len(critical_errors)} errors"
+            self.results["checks"]["console_errors"] = (
+                f"❌ {len(critical_errors)} errors"
+            )
             console.print(f"[red]❌ Found {len(critical_errors)} console errors[/red]")
         else:
             self.results["checks"]["console_errors"] = "✅ PASS"
-            console.print(f"[green]✅ No critical console errors ({len(console_warnings)} warnings)[/green]")
+            console.print(
+                f"[green]✅ No critical console errors ({len(console_warnings)} warnings)[/green]"
+            )
 
     async def check_network_errors(self, page: Page):
         """Check for failed network requests"""
@@ -205,30 +259,38 @@ class BrowserMod:
         failed_requests = []
 
         # Listen to failed requests
-        page.on("requestfailed", lambda request: failed_requests.append({
-            "url": request.url,
-            "failure": request.failure
-        }))
+        page.on(
+            "requestfailed",
+            lambda request: failed_requests.append(
+                {"url": request.url, "failure": request.failure}
+            ),
+        )
 
         await page.goto(self.base_url, wait_until="networkidle")
         await page.wait_for_timeout(2000)
 
         # Filter out known non-critical failures
         critical_failures = [
-            r for r in failed_requests
-            if not any(skip in r["url"].lower() for skip in ["analytics", "tracking", "fonts.googleapis"])
+            r
+            for r in failed_requests
+            if not any(
+                skip in r["url"].lower()
+                for skip in ["analytics", "tracking", "fonts.googleapis"]
+            )
         ]
 
         if critical_failures:
             for failure in critical_failures[:5]:
                 self.add_issue(
-                    "NETWORK_ERROR",
-                    f"Failed to load: {failure['url']}",
-                    "HIGH"
+                    "NETWORK_ERROR", f"Failed to load: {failure['url']}", "HIGH"
                 )
 
-            self.results["checks"]["network_errors"] = f"❌ {len(critical_failures)} failures"
-            console.print(f"[red]❌ Found {len(critical_failures)} network failures[/red]")
+            self.results["checks"]["network_errors"] = (
+                f"❌ {len(critical_failures)} failures"
+            )
+            console.print(
+                f"[red]❌ Found {len(critical_failures)} network failures[/red]"
+            )
         else:
             self.results["checks"]["network_errors"] = "✅ PASS"
             console.print("[green]✅ No network errors[/green]")
@@ -250,7 +312,11 @@ class BrowserMod:
 
                 # Check if workflow element exists
                 element = page.locator(workflow_selector).first
-                is_visible = await element.is_visible(timeout=5000) if await element.count() > 0 else False
+                is_visible = (
+                    await element.is_visible(timeout=5000)
+                    if await element.count() > 0
+                    else False
+                )
 
                 if is_visible:
                     working_workflows.append(workflow)
@@ -259,22 +325,24 @@ class BrowserMod:
                     self.add_issue(
                         "WORKFLOW_NOT_FOUND",
                         f"Workflow '{workflow}' not found or not clickable",
-                        "MEDIUM"
+                        "MEDIUM",
                     )
 
             except Exception as e:
                 broken_workflows.append(workflow)
                 self.add_issue(
-                    "WORKFLOW_ERROR",
-                    f"Error testing '{workflow}': {str(e)}",
-                    "MEDIUM"
+                    "WORKFLOW_ERROR", f"Error testing '{workflow}': {str(e)}", "MEDIUM"
                 )
 
         self.results["checks"]["workflows"] = f"✅ {len(working_workflows)}/10 working"
-        console.print(f"[green]✅ {len(working_workflows)}/10 workflows accessible[/green]")
+        console.print(
+            f"[green]✅ {len(working_workflows)}/10 workflows accessible[/green]"
+        )
 
         if broken_workflows:
-            console.print(f"[yellow]⚠️ Issues with: {', '.join(broken_workflows)}[/yellow]")
+            console.print(
+                f"[yellow]⚠️ Issues with: {', '.join(broken_workflows)}[/yellow]"
+            )
 
     async def check_performance(self, page: Page):
         """Check page performance metrics"""
@@ -304,7 +372,7 @@ class BrowserMod:
             "dom_content_loaded": metrics.get("domContentLoaded", 0),
             "load_complete": metrics.get("loadComplete", 0),
             "first_paint": metrics.get("firstPaint", 0),
-            "first_contentful_paint": metrics.get("firstContentfulPaint", 0)
+            "first_contentful_paint": metrics.get("firstContentfulPaint", 0),
         }
 
         # Check thresholds
@@ -312,7 +380,7 @@ class BrowserMod:
             self.add_issue(
                 "PERFORMANCE_SLOW",
                 f"Page load time: {load_time:.2f}s (target: <10s)",
-                "MEDIUM"
+                "MEDIUM",
             )
             self.results["checks"]["performance"] = f"⚠️ {load_time:.2f}s"
             console.print(f"[yellow]⚠️ Slow load time: {load_time:.2f}s[/yellow]")
@@ -350,7 +418,9 @@ class BrowserMod:
                 self.add_issue("ACCESSIBILITY", issue, "LOW")
 
             self.results["checks"]["accessibility"] = f"⚠️ {len(issues)} issues"
-            console.print(f"[yellow]⚠️ Accessibility issues: {', '.join(issues)}[/yellow]")
+            console.print(
+                f"[yellow]⚠️ Accessibility issues: {', '.join(issues)}[/yellow]"
+            )
         else:
             self.results["checks"]["accessibility"] = "✅ PASS"
             console.print("[green]✅ No critical accessibility issues[/green]")
@@ -362,13 +432,15 @@ class BrowserMod:
         viewports = [
             {"name": "Mobile", "width": 375, "height": 667},
             {"name": "Tablet", "width": 768, "height": 1024},
-            {"name": "Desktop", "width": 1920, "height": 1080}
+            {"name": "Desktop", "width": 1920, "height": 1080},
         ]
 
         responsive_issues = []
 
         for viewport in viewports:
-            await page.set_viewport_size({"width": viewport["width"], "height": viewport["height"]})
+            await page.set_viewport_size(
+                {"width": viewport["width"], "height": viewport["height"]}
+            )
             await page.goto(self.base_url, wait_until="networkidle")
 
             # Check for horizontal scroll
@@ -377,28 +449,34 @@ class BrowserMod:
             """)
 
             if has_scroll:
-                responsive_issues.append(f"{viewport['name']}: Horizontal scroll detected")
+                responsive_issues.append(
+                    f"{viewport['name']}: Horizontal scroll detected"
+                )
                 self.add_issue(
                     "RESPONSIVE_ISSUE",
                     f"Horizontal scroll on {viewport['name']} ({viewport['width']}px)",
-                    "MEDIUM"
+                    "MEDIUM",
                 )
 
         if responsive_issues:
             self.results["checks"]["responsive"] = f"⚠️ {len(responsive_issues)} issues"
-            console.print(f"[yellow]⚠️ Responsive issues: {len(responsive_issues)}[/yellow]")
+            console.print(
+                f"[yellow]⚠️ Responsive issues: {len(responsive_issues)}[/yellow]"
+            )
         else:
             self.results["checks"]["responsive"] = "✅ PASS"
             console.print("[green]✅ Responsive design working[/green]")
 
     def add_issue(self, issue_type: str, description: str, severity: str):
         """Add issue to results"""
-        self.results["issues"].append({
-            "type": issue_type,
-            "description": description,
-            "severity": severity,
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        })
+        self.results["issues"].append(
+            {
+                "type": issue_type,
+                "description": description,
+                "severity": severity,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     def generate_report(self):
         """Generate and save final report"""
@@ -416,37 +494,53 @@ class BrowserMod:
 
         # Issues summary
         if self.results["issues"]:
-            console.print(f"\n[yellow]⚠️ Found {len(self.results['issues'])} issues:[/yellow]\n")
+            console.print(
+                f"\n[yellow]⚠️ Found {len(self.results['issues'])} issues:[/yellow]\n"
+            )
 
             for i, issue in enumerate(self.results["issues"][:10], 1):  # Show first 10
                 severity_color = {
                     "CRITICAL": "red",
                     "HIGH": "yellow",
                     "MEDIUM": "cyan",
-                    "LOW": "dim"
+                    "LOW": "dim",
                 }.get(issue["severity"], "white")
 
-                console.print(f"  {i}. [{severity_color}]{issue['severity']}[/{severity_color}]: {issue['description']}")
+                console.print(
+                    f"  {i}. [{severity_color}]{issue['severity']}[/{severity_color}]: {issue['description']}"
+                )
 
             if len(self.results["issues"]) > 10:
-                console.print(f"\n  ... and {len(self.results['issues']) - 10} more issues")
+                console.print(
+                    f"\n  ... and {len(self.results['issues']) - 10} more issues"
+                )
         else:
             console.print("\n[green]✅ No issues found![/green]")
 
         # Performance summary
         if self.results["performance"]:
-            console.print(f"\n[cyan]⚡ Performance Metrics:[/cyan]")
-            console.print(f"  Page Load: {self.results['performance']['page_load_time']}s")
-            console.print(f"  First Paint: {self.results['performance']['first_paint']}ms")
-            console.print(f"  FCP: {self.results['performance']['first_contentful_paint']}ms")
+            console.print("\n[cyan]⚡ Performance Metrics:[/cyan]")
+            console.print(
+                f"  Page Load: {self.results['performance']['page_load_time']}s"
+            )
+            console.print(
+                f"  First Paint: {self.results['performance']['first_paint']}ms"
+            )
+            console.print(
+                f"  FCP: {self.results['performance']['first_contentful_paint']}ms"
+            )
 
         # Save to file
-        report_path = Path(f"browser-mod-report-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json")
+        report_path = Path(
+            f"browser-mod-report-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+        )
         report_path.write_text(json.dumps(self.results, indent=2))
         console.print(f"\n[dim]📄 Full report saved to: {report_path}[/dim]")
 
         # Return exit code based on critical issues
-        critical_count = sum(1 for issue in self.results["issues"] if issue["severity"] == "CRITICAL")
+        critical_count = sum(
+            1 for issue in self.results["issues"] if issue["severity"] == "CRITICAL"
+        )
         return 1 if critical_count > 0 else 0
 
 
@@ -462,10 +556,14 @@ async def quick_render_check(url: str):
             response = await page.goto(url, wait_until="networkidle", timeout=30000)
 
             if response and response.status < 400:
-                console.print(f"[green]✅ Page renders successfully (HTTP {response.status})[/green]")
+                console.print(
+                    f"[green]✅ Page renders successfully (HTTP {response.status})[/green]"
+                )
                 return 0
             else:
-                console.print(f"[red]❌ Page failed (HTTP {response.status if response else 'timeout'})[/red]")
+                console.print(
+                    f"[red]❌ Page failed (HTTP {response.status if response else 'timeout'})[/red]"
+                )
                 return 1
 
         except Exception as e:
@@ -476,10 +574,14 @@ async def quick_render_check(url: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="BROWSER MOD - Browser testing and monitoring")
+    parser = argparse.ArgumentParser(
+        description="BROWSER MOD - Browser testing and monitoring"
+    )
     parser.add_argument("--url", default=DEFAULT_URL, help="Base URL to test")
     parser.add_argument("--dev", action="store_true", help="Use localhost:3000")
-    parser.add_argument("--check-render", action="store_true", help="Quick render check only")
+    parser.add_argument(
+        "--check-render", action="store_true", help="Quick render check only"
+    )
     parser.add_argument("--full-audit", action="store_true", help="Run full audit")
     parser.add_argument("--headed", action="store_true", help="Show browser window")
     parser.add_argument("--slow", type=int, default=0, help="Slow down operations (ms)")

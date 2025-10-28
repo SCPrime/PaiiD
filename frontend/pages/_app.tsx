@@ -12,6 +12,7 @@ import { GlowStyleProvider } from "../contexts/GlowStyleContext";
 import { HelpProvider } from "../hooks/useHelp";
 import { initSentry, setUser } from "../lib/sentry";
 import StoryboardCanvas from "../components/StoryboardCanvas";
+import AppHeader from "../components/layout/AppHeader";
 import { getHotkeyManager, DEFAULT_HOTKEYS } from "../lib/hotkeyManager";
 import "../styles/globals.css";
 import "../styles/animations.css";
@@ -113,6 +114,7 @@ function AppContent({
 
   return (
     <TelemetryProvider userId={userId} userRole={userRole} enabled={telemetryEnabled}>
+      <AppHeader onLogoClick={() => window.location.assign("/")} />
       <Component {...pageProps} />
       <AIChatBot isOpen={isChatOpen} onClose={closeChat} />
 

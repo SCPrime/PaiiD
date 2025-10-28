@@ -432,7 +432,7 @@ export default function MorningRoutineAI() {
       if (!routine) {
         logger.info("[MorningRoutine] Could not parse JSON, using fallback with defaults");
         // Just use default values and keep the selected steps
-        alert("AI generated a routine suggestion. Using default schedule settings.");
+        alert("PaiiD generated a routine suggestion. Using default schedule settings.");
         setShowAIBuilder(false);
         setAiInput("");
         return;
@@ -458,7 +458,10 @@ export default function MorningRoutineAI() {
       if (routine.steps && Array.isArray(routine.steps)) {
         const stepTypes = routine.steps
           .map((step: { type?: string }) => step.type)
-          .filter((type): type is string => typeof type === "string" && availableSteps.some((s) => s.id === type));
+          .filter(
+            (type): type is string =>
+              typeof type === "string" && availableSteps.some((s) => s.id === type)
+          );
         logger.info("[MorningRoutine] Setting step types", { stepTypes });
         if (stepTypes.length > 0) {
           setSelectedSteps(stepTypes);
@@ -467,7 +470,7 @@ export default function MorningRoutineAI() {
 
       setShowAIBuilder(false);
       setAiInput("");
-      alert(`AI generated routine: "${routine.name || "Custom Routine"}"`);
+      alert(`PaiiD generated routine: "${routine.name || "Custom Routine"}"`);
       logger.info("[MorningRoutine] ✅ Routine generated successfully");
     } catch (err: unknown) {
       logger.error("[MorningRoutine] Error generating routine", err);
@@ -532,8 +535,8 @@ Keep it brief and actionable for a day trader.`;
         const stockSymbols = liveData.candidates.map((s: LiveCandidate) => s.symbol);
         addLog(`📋 Symbols found: ${stockSymbols.join(", ")}`);
 
-        // **CRITICAL FIX:** Pass stock data to AI for actionable analysis
-        addLog("🤖 Sending stock data to AI for option strategy analysis...");
+        // **CRITICAL FIX:** Pass stock data to PaiiD for actionable analysis
+        addLog("🤖 Sending stock data to PaiiD for option strategy analysis...");
 
         const aiAnalysisPrompt = `I found ${liveData.count} stocks under $4 trading now. Here are the details:
 
@@ -557,7 +560,7 @@ For each stock, analyze:
 Provide 2-3 actionable multileg trade recommendations with exact strikes and expirations.`;
 
         const aiAnalysis = await claudeAI.chat(aiAnalysisPrompt);
-        addLog("✅ AI Analysis Complete:");
+        addLog("✅ PaiiD Analysis Complete:");
         addLog(aiAnalysis);
       } else {
         addLog("⚠️ Live data fetch failed or no stocks found - check backend connection");
@@ -587,8 +590,8 @@ Provide:
       addLog(portfolioResponse);
       addLog("");
 
-      // Step 4: AI Recommendations
-      addLog("🤖 Step 4: AI Trade Recommendations");
+      // Step 4: PaiiD Recommendations
+      addLog("🤖 Step 4: PaiiD Trade Recommendations");
       addLog("Generating personalized trade ideas...");
 
       const recommendationsPrompt = `Based on the market briefing and under-$4 scan, recommend 2-3 specific multileg option trades for today. For each:
@@ -625,7 +628,7 @@ Provide:
     { id: "briefing", label: "Market Overview", icon: "📊", desc: "Pre-market analysis and news" },
     {
       id: "recommendations",
-      label: "AI Recommendations",
+      label: "PaiiD Recommendations",
       icon: "🤖",
       desc: "Personalized stock picks",
     },
@@ -1451,7 +1454,7 @@ Provide:
                   workflowColor="strategyBuilder"
                 >
                   <Sparkles style={{ width: "16px", height: "16px" }} />
-                  AI Builder
+                  PaiiD Builder
                 </GlassButton>
               </div>
 

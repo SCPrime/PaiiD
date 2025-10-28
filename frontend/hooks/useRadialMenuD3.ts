@@ -1,13 +1,13 @@
 import * as d3 from "d3";
 import { RefObject, useEffect } from "react";
-import { logger } from "../lib/logger";
 import { Workflow } from "../components/RadialMenu";
-import { MarketDataState } from "./useMarketData";
+import { logger } from "../lib/logger";
 import {
   ResponsiveFontSizes,
   calculateCenterContentSpacing,
   getConfidenceColor,
 } from "../utils/radialMenuHelpers";
+import { MarketDataState } from "./useMarketData";
 
 interface UseRadialMenuD3Props {
   svgRef: RefObject<SVGSVGElement>;
@@ -86,7 +86,7 @@ export function useRadialMenuD3({
       .pie<Workflow>()
       .value(1)
       .sort(null)
-      .startAngle(-Math.PI / 2 + (Math.PI * 2 / 10 / 2)) // Start at top-right (offset by half a wedge = 18°)
+      .startAngle(-Math.PI / 2 + (Math.PI * 2) / 10 / 2) // Start at top-right (offset by half a wedge = 18°)
       .padAngle(0.008);
 
     const arc = d3
@@ -118,13 +118,7 @@ export function useRadialMenuD3({
     const centerGroup = createCenterCircle(g, innerRadius, onWorkflowSelect);
 
     // Render market data
-    renderMarketData(
-      centerGroup,
-      centerContentSpacing,
-      fontSizes,
-      isMarketDataLoading,
-      marketData
-    );
+    renderMarketData(centerGroup, centerContentSpacing, fontSizes, isMarketDataLoading, marketData);
 
     // FORCE FIELD moved to Settings page - no longer rendered in radial menu center
   }, [
@@ -253,11 +247,7 @@ function createSVGFilters(defs: d3.Selection<SVGDefsElement, unknown, null, unde
     .attr("stdDeviation", "8")
     .attr("result", "blur");
   hoverGlow.append("feFlood").attr("flood-color", "#00ffff").attr("flood-opacity", "0.6");
-  hoverGlow
-    .append("feComposite")
-    .attr("in2", "blur")
-    .attr("operator", "in")
-    .attr("result", "glow");
+  hoverGlow.append("feComposite").attr("in2", "blur").attr("operator", "in").attr("result", "glow");
   const hoverMerge = hoverGlow.append("feMerge");
   hoverMerge.append("feMergeNode").attr("in", "glow");
   hoverMerge.append("feMergeNode").attr("in", "glow");
@@ -277,11 +267,7 @@ function createSVGFilters(defs: d3.Selection<SVGDefsElement, unknown, null, unde
     .attr("stdDeviation", "12")
     .attr("result", "blur");
   clickGlow.append("feFlood").attr("flood-color", "#ffffff").attr("flood-opacity", "0.8");
-  clickGlow
-    .append("feComposite")
-    .attr("in2", "blur")
-    .attr("operator", "in")
-    .attr("result", "glow");
+  clickGlow.append("feComposite").attr("in2", "blur").attr("operator", "in").attr("result", "glow");
   const clickMerge = clickGlow.append("feMerge");
   clickMerge.append("feMergeNode").attr("in", "glow");
   clickMerge.append("feMergeNode").attr("in", "glow");
@@ -446,6 +432,7 @@ function createSegments(
     .enter()
     .append("g")
     .attr("class", "segment")
+    .attr("data-testid", (d) => `wedge-${d.data.id}`)
     .attr("role", "button")
     .attr("tabindex", "0")
     .attr("aria-label", (d) => `${d.data.name.replace("\n", " ")} - ${d.data.description}`)
@@ -636,13 +623,10 @@ function renderMarketData(
     .attr("fill", dowChangeValue >= 0 ? "#45f0c0" : "#ef4444")
     .style(
       "text-shadow",
-      "0 0 10px " +
-        (dowChangeValue >= 0 ? "rgba(69, 240, 192, 0.5)" : "rgba(239, 68, 68, 0.5)")
+      "0 0 10px " + (dowChangeValue >= 0 ? "rgba(69, 240, 192, 0.5)" : "rgba(239, 68, 68, 0.5)")
     )
     .style("pointer-events", "none")
-    .text(
-      `${dowChangeValue >= 0 ? "▲" : "▼"} ${Math.abs(dowChangeValue).toFixed(2)}%`
-    );
+    .text(`${dowChangeValue >= 0 ? "▲" : "▼"} ${Math.abs(dowChangeValue).toFixed(2)}%`);
 
   // Animate DOW change
   dowChange
@@ -703,13 +687,10 @@ function renderMarketData(
     .attr("fill", nasdaqChangeValue >= 0 ? "#45f0c0" : "#ef4444")
     .style(
       "text-shadow",
-      "0 0 10px " +
-        (nasdaqChangeValue >= 0 ? "rgba(69, 240, 192, 0.5)" : "rgba(239, 68, 68, 0.5)")
+      "0 0 10px " + (nasdaqChangeValue >= 0 ? "rgba(69, 240, 192, 0.5)" : "rgba(239, 68, 68, 0.5)")
     )
     .style("pointer-events", "none")
-    .text(
-      `${nasdaqChangeValue >= 0 ? "▲" : "▼"} ${Math.abs(nasdaqChangeValue).toFixed(2)}%`
-    );
+    .text(`${nasdaqChangeValue >= 0 ? "▲" : "▼"} ${Math.abs(nasdaqChangeValue).toFixed(2)}%`);
 
   // Animate NASDAQ change
   nasdaqChange
@@ -743,7 +724,10 @@ function renderForceFieldConfidence(
 ) {
   const forceFieldGroup = centerGroup
     .append("g")
-    .attr("transform", `translate(0, ${-centerContentSpacing.dowOffset - (parseInt(fontSizes.marketLabel) * 3)})`);
+    .attr(
+      "transform",
+      `translate(0, ${-centerContentSpacing.dowOffset - parseInt(fontSizes.marketLabel) * 3})`
+    );
 
   forceFieldGroup
     .append("text")
@@ -850,9 +834,7 @@ function updateMarketDataText(svgElement: SVGSVGElement, marketData: MarketDataS
           .style(
             "text-shadow",
             "0 0 10px " +
-              (marketData.nasdaq.change >= 0
-                ? "rgba(69, 240, 192, 0.5)"
-                : "rgba(239, 68, 68, 0.5)")
+              (marketData.nasdaq.change >= 0 ? "rgba(69, 240, 192, 0.5)" : "rgba(239, 68, 68, 0.5)")
           )
           .text(
             `${marketData.nasdaq.change >= 0 ? "▲" : "▼"} ${Math.abs(marketData.nasdaq.change).toFixed(2)}%`

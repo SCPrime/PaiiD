@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { logger } from "../lib/logger";
+import CompletePaiiDLogo from "./CompletePaiiDLogo";
 import EnhancedCard from "./ui/EnhancedCard";
 import StatusIndicator from "./ui/StatusIndicator";
 
@@ -137,11 +138,9 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">AI</span>
-            </div>
+            <CompletePaiiDLogo size={24} />
             <div>
-              <h2 className="text-white font-bold text-lg">PaiiD AI Assistant</h2>
+              <h2 className="text-white font-bold text-lg">PaiiD Assistant</h2>
               <div className="flex items-center gap-2">
                 <StatusIndicator status={isConnected ? "online" : "offline"} size="sm" />
                 <span className="text-xs text-slate-400">
@@ -167,8 +166,10 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
             <div className="text-center text-slate-400 py-8">
-              <div className="text-4xl mb-4">🤖</div>
-              <p className="text-lg font-medium">Hi! I&apos;m your PaiiD AI assistant.</p>
+              <div className="mb-4">
+                <CompletePaiiDLogo size={36} />
+              </div>
+              <p className="text-lg font-medium">Hi! I&apos;m your PaiiD assistant.</p>
               <p className="text-sm mt-2">
                 Ask me about market conditions, trading strategies, or portfolio analysis.
               </p>
@@ -188,8 +189,8 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
                 >
                   <div className="flex items-start gap-2">
                     {message.type === "ai" && (
-                      <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                        <span className="text-white text-xs font-bold">AI</span>
+                      <div className="flex-shrink-0 mt-1">
+                        <CompletePaiiDLogo size={18} />
                       </div>
                     )}
                     <div className="flex-1">
@@ -225,9 +226,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
             <div className="flex justify-start">
               <div className="bg-slate-700 text-slate-200 rounded-lg p-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">AI</span>
-                  </div>
+                  <CompletePaiiDLogo size={18} />
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
                     <div

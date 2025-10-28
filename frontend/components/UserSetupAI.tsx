@@ -102,7 +102,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
     setMessages([
       {
         role: "assistant",
-        content: `🚀 **Welcome to PaiiD!**\n\nI'm your AI trading assistant, and I'll help you set up your personalized trading platform.\n\n**What is PaiiD?**\n• AI-powered trading insights and recommendations\n• Real-time market analysis and sentiment tracking\n• Options trading with Greeks analysis\n• Risk management and portfolio optimization\n• Paper trading to learn safely\n\nLet's get you set up! First, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
+        content: `🚀 **Welcome to PaiiD!**\n\nI'm your PaiiD assistant, and I'll help you set up your personalized trading platform.\n\n**What is PaiiD?**\n• PaiiD-powered trading insights and recommendations\n• Real-time market analysis and sentiment tracking\n• Options trading with Greeks analysis\n• Risk management and portfolio optimization\n• Paper trading to learn safely\n\nLet's get you set up! First, what should I call you? (You can type "skip" or press Enter to remain anonymous)`,
       },
     ]);
   };
@@ -223,7 +223,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
           ...prev,
           {
             role: "assistant",
-            content: `I'm having trouble understanding. This usually means the backend is offline.\n\nYou can:\n1. Try rephrasing: "I want to trade stocks with $10K, moderate risk, swing trading style"\n2. Click "Skip to Dashboard" below to proceed without AI setup`,
+            content: `I'm having trouble understanding. This usually means the backend is offline.\n\nYou can:\n1. Try rephrasing: "I want to trade stocks with $10K, moderate risk, swing trading style"\n2. Click "Skip to Dashboard" below to proceed without PaiiD setup`,
           },
         ]);
       } else {
@@ -431,7 +431,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
                 }}
               />
               <h3 style={{ color: theme.colors.text, marginBottom: "5px", fontSize: "18px" }}>
-                AI-Guided Setup
+                PaiiD-Guided Setup
               </h3>
               <p
                 style={{
@@ -441,8 +441,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
                   fontSize: "12px",
                 }}
               >
-                Chat with Claude AI to set up your account. Just describe your trading goals
-                naturally.
+                Chat with PaiiD to set up your account. Just describe your trading goals naturally.
               </p>
               <div
                 style={{
@@ -552,7 +551,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
             />
             <div>
               <h2 style={{ color: theme.colors.text, margin: 0, fontSize: "24px" }}>
-                AI Setup Assistant
+                PaiiD Setup Assistant
               </h2>
               <p style={{ color: theme.colors.textMuted, margin: 0, fontSize: "14px" }}>
                 Tell me about your trading goals
@@ -755,7 +754,7 @@ export default function UserSetupAI({ onComplete }: UserSetupAIProps) {
                             ...prev,
                             {
                               role: "assistant",
-                              content: `I'm having trouble understanding. This usually means the backend is offline.\n\nYou can:\n1. Try rephrasing: "I want to trade stocks with $10K, moderate risk, swing trading style"\n2. Click "Skip to Dashboard" below to proceed without AI setup`,
+                              content: `I'm having trouble understanding. This usually means the backend is offline.\n\nYou can:\n1. Try rephrasing: "I want to trade stocks with $10K, moderate risk, swing trading style"\n2. Click "Skip to Dashboard" below to proceed without PaiiD setup`,
                             },
                           ]);
                         } finally {

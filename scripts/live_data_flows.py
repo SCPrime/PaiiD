@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 
 from playwright.sync_api import sync_playwright
 
@@ -25,7 +25,7 @@ def main() -> int:
         "base_url": base_url,
         "threshold_ms": THRESHOLD_MS,
         "flows": [],
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
     with sync_playwright() as p:
@@ -71,7 +71,7 @@ def main() -> int:
 
         browser.close()
 
-    out = f"live-flows-report-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}.json"
+    out = f"live-flows-report-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}.json"
     with open(out, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
 

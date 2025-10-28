@@ -1,0 +1,51 @@
+name: MOD SQUAD Full Validation
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  mod-squad:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Playwright
+        run: |
+          npm ci --prefix frontend || true
+          npx playwright install --with-deps || true
+      - name: Ensure reports dir
+        run: mkdir -p reports
+      - name: GITHUB MOD
+        run: python scripts/auto_github_monitor.py --full-audit --output reports/github_mod.json
+      - name: Branding gate (fail on UI 'AI'/'iPi' text)
+        shell: bash
+        run: |
+          set -e
+          echo "Scanning UI for forbidden branding strings..."
+          # Fail if raw 'iPi' appears in UI source
+          if grep -RIn --include='*.tsx' -E '\biPi\b' frontend/components frontend/pages; then
+            echo "Found forbidden 'iPi' branding in UI."
+            exit 1
+          fi
+          # Heuristic: Fail if ' AI ' or 'AI ' appears in JSX text nodes
+          if grep -RIn --include='*.tsx' -E '>[^<]*\bAI\b|\"AI[[:space:]]' frontend/components frontend/pages; then
+            echo "Found forbidden 'AI' branding in UI text."
+            exit 1
+          fi
+      - name: BROWSER MOD
+        run: python scripts/browser_mod.py --check-render --live-data --output reports/browser_mod.json
+      - name: LIVE FLOWS
+        run: python scripts/live_data_flows.py --comprehensive --output reports/live_flows.json
+      - name: WEDGE FLOWS
+        run: python scripts/wedge_flows.py || true
+      - name: RADIAL HUB LIVE
+        run: python scripts/radial_hub_live.py || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod-squad-reports
+          path: |
+            reports/
+            browser-mod-report-*.json

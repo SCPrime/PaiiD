@@ -1,0 +1,84 @@
+{
+  "base_url": "https://paiid-frontend.onrender.com",
+  "timestamp": "2025-10-28T23:21:41.760170+00:00",
+  "results": [
+    {
+      "wedge": "morning-routine",
+      "clicked": false,
+      "visible": false,
+      "errors": [
+        "locator_not_found"
+      ]
+    },
+    {
+      "wedge": "active-positions",
+      "clicked": false,
+      "visible": false,
+      "errors": [
+        "locator_not_found"
+      ]
+    },
+    {
+      "wedge": "execute",
+      "clicked": false,
+      "visible": false,
+      "errors": [
+        "locator_not_found"
+      ]
+    },
+    {
+      "wedge": "research",
+      "clicked": false,
+      "visible": false,
+      "errors": [
+        "locator_not_found"
+      ]
+    },
+    {
+      "wedge": "proposals",
+      "clicked": true,
+      "visible": true,
+      "errors": []
+    },
+    {
+      "wedge": "my-account",
+      "clicked": false,
+      "visible": false,
+      "errors": [
+        "locator_not_found"
+      ]
+    },
+    {
+      "wedge": "news-review",
+      "clicked": false,
+      "visible": false,
+      "errors": [
+        "locator_not_found"
+      ]
+    },
+    {
+      "wedge": "strategy-builder",
+      "clicked": false,
+      "visible": false,
+      "errors": [
+        "locator_not_found"
+      ]
+    },
+    {
+      "wedge": "backtesting",
+      "clicked": false,
+      "visible": false,
+      "errors": [
+        "locator_not_found"
+      ]
+    },
+    {
+      "wedge": "settings",
+      "clicked": false,
+      "visible": false,
+      "errors": [
+        "locator_not_found"
+      ]
+    }
+  ]
+}

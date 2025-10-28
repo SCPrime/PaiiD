@@ -154,7 +154,9 @@ async def get_quote(
             fb = _fallback_quote_from_history(symbol, client)
             if fb:
                 cache.set(cache_key, fb, ttl=settings.CACHE_TTL_QUOTE)
-                logger.info(f"🟡 Fallback quote (historical) used for {symbol} after provider 404")
+                logger.info(
+                    f"🟡 Fallback quote (historical) used for {symbol} after provider 404"
+                )
                 return fb
             raise HTTPException(
                 status_code=404, detail=f"Upstream not found: {symbol}"

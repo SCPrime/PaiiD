@@ -1,5 +1,4 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <!--
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║  PaiiD Trading Platform - Progress Dashboard                              ║
@@ -20,8 +19,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow, noarchive, nocache" />
-    <meta name="copyright" content="Copyright © 2025 Dr. SC Prime - PaiiD Trading Platform. All Rights Reserved." />
+    <meta
+      name="copyright"
+      content="Copyright © 2025 Dr. SC Prime - PaiiD Trading Platform. All Rights Reserved."
+    />
     <meta name="author" content="Dr. SC Prime" />
+    <!-- Inline favicon to avoid 404 fetch to /favicon.ico on GitHub Pages -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs/%3E%3Ccircle cx='32' cy='32' r='30' fill='%2310b981'/%3E%3Ctext x='32' y='39' font-size='28' text-anchor='middle' fill='white' font-family='Segoe UI, Roboto, Helvetica, Arial, sans-serif'%3EP%3C/text%3E%3C/svg%3E"
+    />
     <title>PaiiD App Completion Progress</title>
     <!-- Last Auto-Update: 2025-10-25 02:30:59 UTC -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
@@ -33,8 +40,9 @@
       }
 
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
-          Cantarell, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         color: #fff;
         padding: 20px;
@@ -82,7 +90,9 @@
         border-radius: 15px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
-        transition: transform 0.3s ease, border-color 0.3s ease;
+        transition:
+          transform 0.3s ease,
+          border-color 0.3s ease;
       }
 
       .stat-card:hover {
@@ -294,9 +304,7 @@
               Step 2: Smart Predictions
               <span class="milestone-status">✅ COMPLETE</span>
             </div>
-            <div class="milestone-details">
-              AI helps you make decisions
-            </div>
+            <div class="milestone-details">AI helps you make decisions</div>
             <div class="progress-bar">
               <div class="progress-fill" style="width: 100%">100%</div>
             </div>
@@ -373,47 +381,47 @@
 
     <script>
       // Progress data over time
-      const ctx = document.getElementById('progressChart').getContext('2d');
+      const ctx = document.getElementById("progressChart").getContext("2d");
 
       const progressChart = new Chart(ctx, {
-        type: 'line',
+        type: "line",
         data: {
           labels: [
-            'Oct 20',
-            'Oct 21',
-            'Oct 22',
-            'Oct 23',
-            'Oct 24 (Today)',
-            'Oct 25 (Projected)',
-            'Oct 26 (Projected)',
+            "Oct 20",
+            "Oct 21",
+            "Oct 22",
+            "Oct 23",
+            "Oct 24 (Today)",
+            "Oct 25 (Projected)",
+            "Oct 26 (Projected)",
           ],
           datasets: [
             {
-              label: 'Overall Completion %',
+              label: "Overall Completion %",
               data: [45, 58, 72, 80, 87, 92, 95],
-              borderColor: 'rgba(16, 185, 129, 1)',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderColor: "rgba(16, 185, 129, 1)",
+              backgroundColor: "rgba(16, 185, 129, 0.1)",
               borderWidth: 3,
               fill: true,
               tension: 0.4,
               pointRadius: 6,
               pointHoverRadius: 8,
-              pointBackgroundColor: 'rgba(16, 185, 129, 1)',
-              pointBorderColor: '#fff',
+              pointBackgroundColor: "rgba(16, 185, 129, 1)",
+              pointBorderColor: "#fff",
               pointBorderWidth: 2,
             },
             {
-              label: 'Features Deployed',
+              label: "Features Deployed",
               data: [40, 55, 68, 78, 85, 90, 93],
-              borderColor: 'rgba(59, 130, 246, 1)',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderColor: "rgba(59, 130, 246, 1)",
+              backgroundColor: "rgba(59, 130, 246, 0.1)",
               borderWidth: 3,
               fill: true,
               tension: 0.4,
               pointRadius: 6,
               pointHoverRadius: 8,
-              pointBackgroundColor: 'rgba(59, 130, 246, 1)',
-              pointBorderColor: '#fff',
+              pointBackgroundColor: "rgba(59, 130, 246, 1)",
+              pointBorderColor: "#fff",
               pointBorderWidth: 2,
             },
           ],
@@ -425,27 +433,27 @@
           plugins: {
             legend: {
               display: true,
-              position: 'top',
+              position: "top",
               labels: {
-                color: '#94a3b8',
+                color: "#94a3b8",
                 font: {
                   size: 14,
-                  weight: '600',
+                  weight: "600",
                 },
                 padding: 20,
               },
             },
             tooltip: {
-              backgroundColor: 'rgba(15, 23, 42, 0.95)',
-              titleColor: '#fff',
-              bodyColor: '#94a3b8',
-              borderColor: 'rgba(16, 185, 129, 0.5)',
+              backgroundColor: "rgba(15, 23, 42, 0.95)",
+              titleColor: "#fff",
+              bodyColor: "#94a3b8",
+              borderColor: "rgba(16, 185, 129, 0.5)",
               borderWidth: 1,
               padding: 12,
               displayColors: true,
               callbacks: {
                 label: function (context) {
-                  return context.dataset.label + ': ' + context.parsed.y + '%';
+                  return context.dataset.label + ": " + context.parsed.y + "%";
                 },
               },
             },
@@ -455,38 +463,86 @@
               beginAtZero: true,
               max: 100,
               ticks: {
-                color: '#94a3b8',
+                color: "#94a3b8",
                 font: {
                   size: 12,
                 },
                 callback: function (value) {
-                  return value + '%';
+                  return value + "%";
                 },
               },
               grid: {
-                color: 'rgba(148, 163, 184, 0.1)',
+                color: "rgba(148, 163, 184, 0.1)",
                 drawBorder: false,
               },
             },
             x: {
               ticks: {
-                color: '#94a3b8',
+                color: "#94a3b8",
                 font: {
                   size: 12,
                 },
               },
               grid: {
-                color: 'rgba(148, 163, 184, 0.1)',
+                color: "rgba(148, 163, 184, 0.1)",
                 drawBorder: false,
               },
             },
           },
           interaction: {
             intersect: false,
-            mode: 'index',
+            mode: "index",
           },
         },
       });
+
+      // Append MOD SQUAD glowing status cards (72h temporary)
+      (function () {
+        const css = `
+          .grid-ms { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-top: 28px; }
+          .card-ms { border-radius:12px; padding:12px 14px; background:rgba(2,6,23,.6); color:#e2e8f0; }
+          .sev-red{ border:2px solid #ef4444; }
+          .sev-ylw{ border:2px solid #f59e0b; }
+          .sev-grn{ border:2px solid #16a34a; }
+          @keyframes glowRed{0%,100%{box-shadow:0 0 12px rgba(239,68,68,.55);}50%{box-shadow:0 0 22px rgba(239,68,68,.85);}}
+          @keyframes glowYlw{0%,100%{box-shadow:0 0 12px rgba(245,158,11,.55);}50%{box-shadow:0 0 22px rgba(245,158,11,.85);}}
+          @keyframes glowGrn{0%,100%{box-shadow:0 0 12px rgba(22,163,74,.55);}50%{box-shadow:0 0 22px rgba(22,163,74,.85);}}
+          .glow-red{ animation:glowRed 1.6s ease-in-out infinite; }
+          .glow-ylw{ animation:glowYlw 1.6s ease-in-out infinite; }
+          .glow-grn{ animation:glowGrn 1.6s ease-in-out infinite; }
+          .title-ms{ font-weight:700; margin-bottom:4px; }
+          .desc-ms{ color:#94a3b8; font-size:13px; }
+        `;
+        const styleEl = document.createElement("style");
+        styleEl.textContent = css;
+        document.head.appendChild(styleEl);
+
+        const html = `
+          <div class="chart-container">
+            <h2 class="chart-title">🛡️ MOD SQUAD Status (72h Temporary)</h2>
+            <div class="grid-ms">
+              <div class="card-ms sev-grn glow-grn"><div class="title-ms">Repo Auditor (GITHUB MOD)</div><div class="desc-ms">No blockers; report written</div></div>
+              <div class="card-ms sev-ylw glow-ylw"><div class="title-ms">Browser MOD (Playwright)</div><div class="desc-ms">Quick render 200 OK; full suite wiring in progress</div></div>
+              <div class="card-ms sev-grn glow-grn"><div class="title-ms">Live Flows</div><div class="desc-ms">Quotes/bars/options 200 OK (286–903 ms)</div></div>
+              <div class="card-ms sev-ylw glow-ylw"><div class="title-ms">Branding Gate (CI)</div><div class="desc-ms">Gate added; UI sweep ongoing</div></div>
+              <div class="card-ms sev-red glow-ylw"><div class="title-ms">Render MOD (Env Validator)</div><div class="desc-ms">Local env missing (expected); enforce on Render pre‑link</div></div>
+              <div class="card-ms sev-grn glow-grn"><div class="title-ms">Progress Dashboard Updater</div><div class="desc-ms">Fixed; updating JSON + timestamp</div></div>
+              <div class="card-ms sev-grn glow-grn"><div class="title-ms">GitHub Monitor</div><div class="desc-ms">Report/flow OK; include in CI summary</div></div>
+              <div class="card-ms sev-ylw glow-ylw"><div class="title-ms">Private Repo Dashboard</div><div class="desc-ms">PROGRESS_DASHBOARD.md CI updates pending</div></div>
+              <div class="card-ms sev-ylw glow-ylw"><div class="title-ms">monitor_status CLI</div><div class="desc-ms">Point to /api/health(/readiness); update route</div></div>
+              <div class="card-ms sev-ylw glow-ylw"><div class="title-ms">Full Playwright (Wedges)</div><div class="desc-ms">Add assertions (10 wedges, no console errors)</div></div>
+              <div class="card-ms sev-ylw glow-ylw"><div class="title-ms">Radial Hub (DOW/Nasdaq)</div><div class="desc-ms">Add live update / no‑jank assertions</div></div>
+              <div class="card-ms sev-ylw glow-ylw"><div class="title-ms">Staging Monitors (GH/Render)</div><div class="desc-ms">Enable with guardrails post‑branding</div></div>
+            </div>
+          </div>
+        `;
+        const container = document.querySelector(".container");
+        if (container) {
+          const wrap = document.createElement("div");
+          wrap.innerHTML = html;
+          container.appendChild(wrap);
+        }
+      })();
     </script>
   </body>
 </html>

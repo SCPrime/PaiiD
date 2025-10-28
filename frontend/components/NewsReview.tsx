@@ -825,7 +825,7 @@ const NewsReview: React.FC = () => {
                         gap: "6px",
                       }}
                     >
-                      🤖 AI Analysis
+                      🤖 PaiiD Analysis
                     </button>
                     <div
                       style={{
@@ -872,7 +872,7 @@ const NewsReview: React.FC = () => {
         </div>
       )}
 
-      {/* AI Analysis Panel */}
+      {/* PaiiD Analysis Panel */}
       {showAiPanel && aiAnalysis && (
         <div
           style={{
@@ -912,7 +912,7 @@ const NewsReview: React.FC = () => {
                   marginBottom: "8px",
                 }}
               >
-                🤖 AI News Analysis
+                🤖 PaiiD News Analysis
               </h3>
               <div style={{ fontSize: "14px", color: "#94A3B8" }}>
                 {aiAnalysis.article_info?.title}
@@ -1039,90 +1039,92 @@ const NewsReview: React.FC = () => {
           </div>
 
           {/* Tickers Mentioned */}
-          {aiAnalysis.ai_analysis?.tickers_mentioned && aiAnalysis.ai_analysis.tickers_mentioned.length > 0 && (
-            <div
-              style={{
-                padding: "16px",
-                background: "rgba(15, 23, 42, 0.7)",
-                borderRadius: "8px",
-                border: "1px solid rgba(148, 163, 184, 0.2)",
-                marginBottom: "16px",
-              }}
-            >
+          {aiAnalysis.ai_analysis?.tickers_mentioned &&
+            aiAnalysis.ai_analysis.tickers_mentioned.length > 0 && (
               <div
                 style={{
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  color: "#E2E8F0",
-                  marginBottom: "10px",
+                  padding: "16px",
+                  background: "rgba(15, 23, 42, 0.7)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(148, 163, 184, 0.2)",
+                  marginBottom: "16px",
                 }}
               >
-                🏷️ Tickers Mentioned
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "#E2E8F0",
+                    marginBottom: "10px",
+                  }}
+                >
+                  🏷️ Tickers Mentioned
+                </div>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {aiAnalysis.ai_analysis?.tickers_mentioned?.map((ticker: string) => (
+                    <span
+                      key={ticker}
+                      style={{
+                        padding: "6px 12px",
+                        background: "rgba(59, 130, 246, 0.2)",
+                        border: "1px solid rgba(59, 130, 246, 0.4)",
+                        borderRadius: "6px",
+                        color: "#60A5FA",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      ${ticker}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                {aiAnalysis.ai_analysis?.tickers_mentioned?.map((ticker: string) => (
-                  <span
-                    key={ticker}
-                    style={{
-                      padding: "6px 12px",
-                      background: "rgba(59, 130, 246, 0.2)",
-                      border: "1px solid rgba(59, 130, 246, 0.4)",
-                      borderRadius: "6px",
-                      color: "#60A5FA",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                    }}
-                  >
-                    ${ticker}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
           {/* Affected Positions */}
-          {aiAnalysis.ai_analysis?.affected_positions && aiAnalysis.ai_analysis.affected_positions.length > 0 && (
-            <div
-              style={{
-                padding: "16px",
-                background: "rgba(239, 68, 68, 0.1)",
-                borderRadius: "8px",
-                border: "1px solid rgba(239, 68, 68, 0.3)",
-                marginBottom: "16px",
-              }}
-            >
+          {aiAnalysis.ai_analysis?.affected_positions &&
+            aiAnalysis.ai_analysis.affected_positions.length > 0 && (
               <div
                 style={{
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  color: "#EF4444",
-                  marginBottom: "10px",
+                  padding: "16px",
+                  background: "rgba(239, 68, 68, 0.1)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  marginBottom: "16px",
                 }}
               >
-                ⚠️ Your Affected Positions
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "#EF4444",
+                    marginBottom: "10px",
+                  }}
+                >
+                  ⚠️ Your Affected Positions
+                </div>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {aiAnalysis.ai_analysis?.affected_positions?.map((ticker: string) => (
+                    <span
+                      key={ticker}
+                      style={{
+                        padding: "6px 12px",
+                        background: "rgba(239, 68, 68, 0.2)",
+                        border: "1px solid rgba(239, 68, 68, 0.4)",
+                        borderRadius: "6px",
+                        color: "#FCA5A5",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      ${ticker}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                {aiAnalysis.ai_analysis?.affected_positions?.map((ticker: string) => (
-                  <span
-                    key={ticker}
-                    style={{
-                      padding: "6px 12px",
-                      background: "rgba(239, 68, 68, 0.2)",
-                      border: "1px solid rgba(239, 68, 68, 0.4)",
-                      borderRadius: "6px",
-                      color: "#FCA5A5",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                    }}
-                  >
-                    ${ticker}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* AI Summary */}
+          {/* PaiiD Summary */}
           <div
             style={{
               padding: "16px",
@@ -1140,7 +1142,7 @@ const NewsReview: React.FC = () => {
                 marginBottom: "10px",
               }}
             >
-              📊 AI Summary
+              📊 PaiiD Summary
             </div>
             <div style={{ fontSize: "14px", color: "#CBD5E1", lineHeight: "1.7" }}>
               {aiAnalysis.ai_analysis?.summary}

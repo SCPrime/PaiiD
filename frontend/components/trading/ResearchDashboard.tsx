@@ -428,12 +428,15 @@ Proposal system coming in INCREMENT 9`);
   };
 
   // Helper to convert LinePoint[] to LineData<Time>[]
-  const convertToLineData = useCallback((points: { time: string; value: number }[]): LineData<Time>[] => {
-    return points.map(point => ({
-      time: (new Date(point.time).getTime() / 1000) as Time,
-      value: point.value
-    }));
-  }, []);
+  const convertToLineData = useCallback(
+    (points: { time: string; value: number }[]): LineData<Time>[] => {
+      return points.map((point) => ({
+        time: (new Date(point.time).getTime() / 1000) as Time,
+        value: point.value,
+      }));
+    },
+    []
+  );
 
   // Memoized indicator calculations
   const calculatedIndicators = useMemo<CalculatedIndicators>(() => {
@@ -459,7 +462,7 @@ Proposal system coming in INCREMENT 9`);
       results.macd = {
         macd: convertToLineData(macdData.macd),
         signal: convertToLineData(macdData.signal),
-        histogram: convertToLineData(macdData.histogram)
+        histogram: convertToLineData(macdData.histogram),
       };
     }
     if (enabled.includes("bb")) {
@@ -467,7 +470,7 @@ Proposal system coming in INCREMENT 9`);
       results.bb = {
         upper: convertToLineData(bbData.upper),
         middle: convertToLineData(bbData.middle),
-        lower: convertToLineData(bbData.lower)
+        lower: convertToLineData(bbData.lower),
       };
     }
     if (enabled.includes("ichimoku")) {
@@ -477,7 +480,7 @@ Proposal system coming in INCREMENT 9`);
         kijun: convertToLineData(ichimokuData.kijun),
         senkouA: convertToLineData(ichimokuData.senkouA),
         senkouB: convertToLineData(ichimokuData.senkouB),
-        chikou: convertToLineData(ichimokuData.chikou)
+        chikou: convertToLineData(ichimokuData.chikou),
       };
     }
 
@@ -1045,7 +1048,9 @@ Proposal system coming in INCREMENT 9`);
       {/* AI Strategy Assistant */}
       {stockData && (
         <div className="mb-6 bg-purple-500/10 border border-purple-500/30 rounded-xl p-5">
-          <h4 className="text-lg font-semibold text-purple-400 mb-4">🤖 AI Strategy Assistant</h4>
+          <h4 className="text-lg font-semibold text-purple-400 mb-4">
+            🤖 PaiiD Strategy Assistant
+          </h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={handleSuggestStrategy}

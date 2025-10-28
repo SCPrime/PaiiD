@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AIChatBotProps {
   isOpen: boolean;
@@ -19,7 +19,7 @@ export default function AIChatBot({ isOpen, onClose }: AIChatBotProps) {
     {
       id: "1",
       role: "assistant",
-      content: "Hello! I'm PaiiD AI, your personal trading assistant. How can I help you today?",
+      content: "Hello! I'm PaiiD, your personal trading assistant. How can I help you today?",
       timestamp: new Date(),
     },
   ]);
@@ -134,7 +134,7 @@ export default function AIChatBot({ isOpen, onClose }: AIChatBotProps) {
                 fontStyle: "italic",
               }}
             >
-              Pa<span style={{ textShadow: "0 0 12px rgba(69, 240, 192, 0.6)" }}>ii</span>D AI
+              Pa<span style={{ textShadow: "0 0 12px rgba(69, 240, 192, 0.6)" }}>ii</span>D
               Assistant
             </span>
           </div>

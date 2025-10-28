@@ -37,10 +37,10 @@ export const workflows: Workflow[] = [
   },
   {
     id: "proposals",
-    name: "AI\nRECOMMENDATIONS",
+    name: "PaiiD\nRECOMMENDATIONS",
     color: "#0097A7",
     icon: "🤖",
-    description: "Review AI-generated trading recommendations and strategy proposals.",
+    description: "Review PaiiD-generated trading recommendations and strategy proposals.",
   },
   {
     id: "my-account",
@@ -54,7 +54,7 @@ export const workflows: Workflow[] = [
     name: "NEWS\nREVIEW",
     color: "#7E57C2",
     icon: "📰",
-    description: "Real-time market news aggregation with AI-powered sentiment analysis.",
+    description: "Real-time market news aggregation with PaiiD-powered sentiment analysis.",
   },
   {
     id: "strategy-builder",

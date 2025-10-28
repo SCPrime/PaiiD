@@ -1,0 +1,58 @@
+{
+  "conflicts": {
+    "duplicate_endpoints": [],
+    "duplicate_components": [],
+    "dead_code": [],
+    "todos": [
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\backend\\strategies\\under4_multileg.py",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\Analytics.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\StockLookup.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\OptionsChain.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\PLComparisonChart.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\ResearchDashboard.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\StrategyBuilder.tsx"
+    ]
+  },
+  "old_code": {
+    "utcnow": [
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\scripts\\auto_github_monitor.py",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\scripts\\live_data_smoke.py"
+    ],
+    "mock_imports": [],
+    "hardcoded_keys": [
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\backend\\app\\core\\unified_auth.py",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\test_phase1.py"
+    ],
+    "ts_any": [
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\CLAUDE_DESKTOP_FILES\\1_RadialMenu.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\__tests__\\ActivePositions.test.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\__tests__\\Analytics.test.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\__tests__\\MarketScanner.test.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\ActivePositions.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\Analytics.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\ClaudeAIChat.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\MarketScanner.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\MorningRoutineAI.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\PositionsTable.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\StoryboardCanvas.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\StrategyBuilderAI.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\charts\\MarketVisualization.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\charts\\PortfolioHeatmap.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\StrategyBuilder.tsx"
+    ]
+  },
+  "endpoint_coverage": {
+    "missing_cors": [],
+    "missing_auth": [],
+    "missing_error_handling": [],
+    "proxy_mismatch": []
+  },
+  "env_audit": {
+    "missing_env": [
+      "ALLOWED_ORIGINS",
+      "API_TOKEN",
+      "BACKEND_API_BASE_URL"
+    ],
+    "unused_env": []
+  }
+}
