@@ -6,6 +6,7 @@
 The following files are LOCKED FINAL and verified working:
 - `frontend/components/CompletePaiiDLogo.tsx`
 - Any file with "🔒 LOCKED FINAL" in header comments
+- `archive/cleanup-2025-10-24-165115/AUDIT_REPORT.md` (LOCKED FINAL — historical AI-TRADER audit)
 
 **DO NOT:**
 - Modify these files without explicit approval from Dr. SC Prime

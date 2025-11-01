@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 
+import { cn, glassVariants } from "../lib/utils";
+
 interface Command {
   id: string;
   label: string;
@@ -183,103 +185,43 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ onNavigate }) => {
 
   return (
     <>
-      {/* Backdrop */}
       <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 9999,
-          background: "rgba(0, 0, 0, 0.7)",
-          backdropFilter: "blur(4px)",
-        }}
+        className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-sm"
         onClick={() => setIsOpen(false)}
       />
 
-      {/* Command Palette */}
       <div
-        style={{
-          position: "fixed",
-          top: "20%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 10000,
-          width: "90%",
-          maxWidth: "600px",
-          background: "rgba(15, 23, 42, 0.95)",
-          border: "1px solid rgba(71, 85, 105, 0.5)",
-          borderRadius: "16px",
-          boxShadow: "0 24px 48px rgba(0, 0, 0, 0.5)",
-          backdropFilter: "blur(20px)",
-          overflow: "hidden",
-        }}
+        className={cn(
+          glassVariants.dialog,
+          "fixed top-[20%] left-1/2 z-[10000] w-[90%] max-w-xl -translate-x-1/2 overflow-hidden border border-teal-500/20 shadow-[0_30px_80px_-20px_rgba(15,24,40,0.75)]"
+        )}
       >
-        {/* Search Input */}
-        <div
-          style={{
-            padding: "20px",
-            borderBottom: "1px solid rgba(71, 85, 105, 0.3)",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-          }}
-        >
-          <Search size={20} color="#94a3b8" />
+        <div className="flex items-center gap-3 border-b border-slate-500/30 bg-slate-900/70 px-6 py-5">
+          <Search className="h-5 w-5 text-slate-400" />
           <input
             type="text"
             placeholder="Search commands..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoFocus
-            style={{
-              flex: 1,
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              color: "#fff",
-              fontSize: "16px",
-              fontFamily: "inherit",
-            }}
+            className="flex-1 bg-transparent text-base text-slate-100 placeholder-slate-500 focus:outline-none"
           />
-          <kbd
-            style={{
-              padding: "4px 8px",
-              background: "rgba(51, 65, 85, 0.6)",
-              borderRadius: "4px",
-              fontSize: "12px",
-              color: "#94a3b8",
-              border: "1px solid rgba(71, 85, 105, 0.3)",
-            }}
-          >
+          <kbd className="rounded-md border border-slate-500/40 bg-slate-800/60 px-2 py-1 text-xs font-medium text-slate-300">
             ESC
           </kbd>
         </div>
 
-        {/* Command List */}
-        <div
-          style={{
-            maxHeight: "400px",
-            overflowY: "auto",
-            padding: "8px",
-          }}
-        >
+        <div className="max-h-[420px] overflow-y-auto px-3 py-2">
           {filteredCommands.length === 0 ? (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "#64748b",
-                fontSize: "14px",
-              }}
-            >
-              No commands found
-            </div>
+            <div className="px-8 py-12 text-center text-sm text-slate-400">No commands found</div>
           ) : (
             filteredCommands.map((cmd, idx) => {
               const Icon = cmd.icon;
               const isSelected = idx === selectedIndex;
 
               return (
-                <div
+                <button
+                  type="button"
                   key={cmd.id}
                   onClick={() => {
                     cmd.action();
@@ -287,127 +229,66 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ onNavigate }) => {
                     setSearch("");
                   }}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  style={{
-                    padding: "12px 16px",
-                    borderRadius: "8px",
-                    background: isSelected ? "rgba(16, 185, 129, 0.15)" : "transparent",
-                    border: isSelected
-                      ? "1px solid rgba(16, 185, 129, 0.3)"
-                      : "1px solid transparent",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    marginBottom: "4px",
-                    transition: "all 0.15s ease",
-                  }}
+                  className={cn(
+                    "group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition",
+                    isSelected
+                      ? "border-[#16a394]/40 bg-[#16a394]/10 shadow-[0_10px_25px_-12px_rgba(22,163,148,0.6)]"
+                      : "border-transparent bg-transparent hover:border-[#16a394]/25 hover:bg-[#16a394]/5"
+                  )}
                 >
-                  <div
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      borderRadius: "8px",
-                      background: isSelected ? "rgba(16, 185, 129, 0.2)" : "rgba(51, 65, 85, 0.4)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                  <span
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-xl border",
+                      isSelected
+                        ? "border-[#16a394]/40 bg-[#16a394]/20"
+                        : "border-slate-600/40 bg-slate-900/60"
+                    )}
                   >
-                    <Icon size={20} color={isSelected ? "#10b981" : "#94a3b8"} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        color: isSelected ? "#10b981" : "#fff",
-                        marginBottom: "2px",
-                      }}
+                    <Icon
+                      className={cn("h-5 w-5", isSelected ? "text-[#16a394]" : "text-slate-400")}
+                    />
+                  </span>
+                  <span className="flex-1">
+                    <span
+                      className={cn(
+                        "block text-sm font-semibold",
+                        isSelected ? "text-[#16a394]" : "text-slate-100"
+                      )}
                     >
                       {cmd.label}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "#94a3b8",
-                      }}
-                    >
-                      {cmd.description}
-                    </div>
-                  </div>
+                    </span>
+                    <span className="block text-xs text-slate-400">{cmd.description}</span>
+                  </span>
                   {isSelected && (
-                    <kbd
-                      style={{
-                        padding: "4px 8px",
-                        background: "rgba(16, 185, 129, 0.2)",
-                        borderRadius: "4px",
-                        fontSize: "11px",
-                        color: "#10b981",
-                        border: "1px solid rgba(16, 185, 129, 0.3)",
-                      }}
-                    >
+                    <kbd className="rounded-md border border-[#16a394]/30 bg-[#16a394]/20 px-2 py-1 text-[11px] font-medium text-[#16a394]">
                       ↵
                     </kbd>
                   )}
-                </div>
+                </button>
               );
             })
           )}
         </div>
 
-        {/* Footer */}
-        <div
-          style={{
-            padding: "12px 20px",
-            borderTop: "1px solid rgba(71, 85, 105, 0.3)",
-            display: "flex",
-            gap: "16px",
-            fontSize: "12px",
-            color: "#64748b",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <kbd
-              style={{
-                padding: "2px 6px",
-                background: "rgba(51, 65, 85, 0.4)",
-                borderRadius: "3px",
-                fontSize: "11px",
-                border: "1px solid rgba(71, 85, 105, 0.3)",
-              }}
-            >
+        <div className="flex gap-4 border-t border-slate-500/30 bg-slate-900/70 px-6 py-3 text-[11px] text-slate-400">
+          <span className="flex items-center gap-2">
+            <kbd className="rounded border border-slate-500/40 bg-slate-800/60 px-1.5 py-0.5">
               ↑↓
             </kbd>
             Navigate
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <kbd
-              style={{
-                padding: "2px 6px",
-                background: "rgba(51, 65, 85, 0.4)",
-                borderRadius: "3px",
-                fontSize: "11px",
-                border: "1px solid rgba(71, 85, 105, 0.3)",
-              }}
-            >
+          </span>
+          <span className="flex items-center gap-2">
+            <kbd className="rounded border border-slate-500/40 bg-slate-800/60 px-1.5 py-0.5">
               ↵
             </kbd>
             Select
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <kbd
-              style={{
-                padding: "2px 6px",
-                background: "rgba(51, 65, 85, 0.4)",
-                borderRadius: "3px",
-                fontSize: "11px",
-                border: "1px solid rgba(71, 85, 105, 0.3)",
-              }}
-            >
+          </span>
+          <span className="flex items-center gap-2">
+            <kbd className="rounded border border-slate-500/40 bg-slate-800/60 px-1.5 py-0.5">
               ESC
             </kbd>
             Close
-          </div>
+          </span>
         </div>
       </div>
     </>

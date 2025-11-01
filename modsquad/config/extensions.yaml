@@ -1,0 +1,141 @@
+version: 1
+extensions:
+  maintenance_notifier:
+    enabled: true
+    batching: sequential
+    webhook_env: MODSQUAD_NOTIFICATION_WEBHOOK
+    channels:
+      - ops-alerts
+      - executive-briefs
+    notify_on:
+      - maintenance_complete
+      - guardrail_failure
+      - budget_threshold
+  metrics_streamer:
+    enabled: true
+    batching: sequential
+    output:
+      type: file
+      path: ../logs/run-history/metrics.jsonl
+    fields:
+      - maintenance_window
+      - execution_time_ms
+      - guardrail_status
+      - token_spend
+      - scheduled_job
+  secrets_watchdog:
+    enabled: true
+    batching: sequential
+    secrets:
+      - env: OPENAI_API_KEY
+        rotation_days: 30
+      - env: ANTHROPIC_API_KEY
+        rotation_days: 30
+      - env: MODSQUAD_NOTIFICATION_WEBHOOK
+        rotation_days: 14
+  strategy_verifier:
+    enabled: true
+    batching: sequential
+    commands:
+      - name: smoke-backtest
+        run: uv run python scripts/strategies/verify.py
+      - name: regression-suite
+        run: uv run pytest tests/strategies -q
+      - name: browser-regression
+        run: cd frontend && npm run playwright:test:ci
+    artifacts:
+      path: ../logs/run-history/strategy_verifier
+      keep: 10
+  browser_validator:
+    enabled: true
+    batching: sequential
+    config_path: ./browser_guardrails.yaml
+    target_url_env: PRODUCTION_URL
+    default_target_url: https://paiid-frontend.onrender.com
+  contract_enforcer:
+    enabled: true
+    batching: sequential
+    config_path: ./browser_guardrails.yaml
+    target_url_env: BACKEND_API_BASE_URL
+    default_target_url: http://localhost:8011
+  infra_health:
+    enabled: true
+    batching: sequential
+    config_path: ./browser_guardrails.yaml
+    services:
+      - name: postgres
+        optional: true
+      - name: redis
+        optional: true
+      - name: docker
+        optional: true
+    timeout_seconds: 30
+  guardrail_scheduler:
+    enabled: true
+    batching: sequential
+    cadence:
+      timezone: UTC
+      cron: '0 1 * * *'
+    runs:
+      - browser_validator
+      - contract_enforcer
+      - dependency_tracker
+      - design_dna_validator
+  component_diff_reporter:
+    enabled: true
+    batching: sequential
+    output:
+      type: file
+      path: ../logs/run-history/component_diff.jsonl
+  security_patch_advisor:
+    enabled: true
+    batching: sequential
+    sbom_path: ../../reports/sbom.json
+    advisory_output: ../logs/run-history/security_patch_advisor.jsonl
+  accessibility_scheduler:
+    enabled: true
+    batching: sequential
+    cadence:
+      timezone: UTC
+      interval_hours: 12
+    targets:
+      - frontend/components
+      - frontend/pages
+  data_latency_tracker:
+    enabled: true
+    batching: sequential
+    interval_minutes: 60
+    script: ../../scripts/live_data_flows.py
+    output: ../logs/run-history/data_latency.jsonl
+  docs_sync:
+    enabled: true
+    batching: sequential
+    interval_hours: 6
+    watch_paths:
+      - ../../docs
+      - ../../modsquad
+  persona_simulator:
+    enabled: true
+    batching: sequential
+    cadence:
+      timezone: UTC
+      interval_hours: 48
+    personas:
+      - hedge_trader
+      - mobile_novice
+  review_aggregator:
+    enabled: true
+    batching: sequential
+    output: ../logs/run-history/review_aggregator.jsonl
+    sources:
+      - component_diff_reporter
+      - security_patch_advisor
+      - guardrail_scheduler
+  quality_inspector:
+    enabled: true
+    batching: sequential
+    inputs:
+      - review_aggregator
+      - docs_sync
+      - accessibility_scheduler
+    alert_channel: ops-alerts

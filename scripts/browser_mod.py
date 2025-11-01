@@ -55,6 +55,24 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+try:
+    from .mod_config import get_base_url, get_timeout_ms  # type: ignore
+except Exception:
+    try:
+        from mod_config import get_base_url, get_timeout_ms  # type: ignore
+    except Exception:
+
+        def get_base_url() -> str:  # type: ignore
+            import os as _os
+
+            return _os.getenv("BASE_URL", "https://paiid-frontend.onrender.com").rstrip(
+                "/"
+            )
+
+        def get_timeout_ms() -> int:  # type: ignore
+            return 30000
+
+
 # Fix Windows console encoding
 if sys.platform == "win32":
     import codecs
@@ -63,11 +81,9 @@ if sys.platform == "win32":
     sys.stderr = codecs.getwriter("utf-8")(sys.stderr.detach())
 
 try:
-    from playwright.async_api import Browser, Page, async_playwright
     from playwright.async_api import Error as PlaywrightError
+    from playwright.async_api import Page, async_playwright
     from rich.console import Console
-    from rich.panel import Panel
-    from rich.progress import Progress, SpinnerColumn, TextColumn
     from rich.table import Table
 except ImportError:
     print("[ERROR] Missing dependencies. Install with:")
@@ -77,9 +93,9 @@ except ImportError:
 
 console = Console()
 
-# Default configuration
-DEFAULT_URL = "https://paiid-frontend.onrender.com"
-TIMEOUT = 30000  # 30 seconds
+# Default configuration (from config if present)
+DEFAULT_URL = get_base_url()
+TIMEOUT = int(get_timeout_ms())  # 30 seconds default
 WORKFLOWS = [
     "Morning Routine",
     "Active Positions",

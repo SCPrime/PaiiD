@@ -9,13 +9,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        shell: bash
+        run: |
+          corepack enable pnpm
+          pnpm --version
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright pyyaml rich
       - name: Install Playwright
         run: |
           npm ci --prefix frontend || true
           npx playwright install --with-deps || true
+          python -m playwright install --with-deps || true
       - name: Ensure reports dir
         run: mkdir -p reports
       - name: GITHUB MOD
@@ -26,15 +36,17 @@ jobs:
           set -e
           echo "Scanning UI for forbidden branding strings..."
           # Fail if raw 'iPi' appears in UI source
-          if grep -RIn --include='*.tsx' -E '\biPi\b' frontend/components frontend/pages; then
+          if grep -RIn --include='*.tsx' --include='*.jsx' --include='*.mdx' -E '\biPi\b' frontend/components frontend/pages frontend/app; then
             echo "Found forbidden 'iPi' branding in UI."
             exit 1
           fi
           # Heuristic: Fail if ' AI ' or 'AI ' appears in JSX text nodes
-          if grep -RIn --include='*.tsx' -E '>[^<]*\bAI\b|\"AI[[:space:]]' frontend/components frontend/pages; then
+          if grep -RIn --include='*.tsx' --include='*.jsx' --include='*.mdx' -E '>[^<]*\bAI\b|\"AI[[:space:]]' frontend/components frontend/pages frontend/app; then
             echo "Found forbidden 'AI' branding in UI text."
             exit 1
           fi
+      - name: Branding & A11y Checks
+        run: python scripts/branding_a11y_checks.py
       - name: BROWSER MOD
         run: python scripts/browser_mod.py --check-render --live-data --output reports/browser_mod.json
       - name: LIVE FLOWS
@@ -43,9 +55,46 @@ jobs:
         run: python scripts/wedge_flows.py || true
       - name: RADIAL HUB LIVE
         run: python scripts/radial_hub_live.py || true
+      - name: Install MOD SQUAD dependencies
+        run: |
+          pip install pyyaml
+          npm install -g dredd @sentry/cli
+      - name: Run GUARDRAIL VALIDATION (BLOCKING)
+        shell: bash
+        run: |
+          set -e
+          echo "Running blocking guardrail checks..."
+
+          # Browser Validator (accessibility, performance, visual regression)
+          echo "1/4 Browser Validator..."
+          python -m modsquad.extensions.browser_validator || exit 1
+
+          # Contract Enforcer (API drift detection)
+          echo "2/4 Contract Enforcer..."
+          python -m modsquad.extensions.contract_enforcer || exit 1
+
+          # Bundle Analyzer (bundle size limits)
+          echo "3/4 Bundle Analyzer..."
+          python -m modsquad.extensions.bundle_analyzer || exit 1
+
+          # Runtime Error Monitor (Sentry error rates)
+          echo "4/4 Runtime Error Monitor..."
+          python -m modsquad.extensions.runtime_error_monitor || exit 1
+
+          echo "All guardrail checks passed!"
+      - name: Run MOD SQUAD extensions suite
+        shell: bash
+        run: |
+          chmod +x scripts/modsquad/after-maintenance.sh
+          if [ -f reports/live_flows.json ]; then
+            scripts/modsquad/after-maintenance.sh --window github-ci --status complete --metrics-json reports/live_flows.json
+          else
+            scripts/modsquad/after-maintenance.sh --window github-ci --status complete
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: mod-squad-reports
           path: |
             reports/
             browser-mod-report-*.json
+            branding_a11y.json

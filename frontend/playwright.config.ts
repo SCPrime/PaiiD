@@ -42,6 +42,23 @@ export default defineConfig({
     video: "retain-on-failure",
   },
 
+  /* Visual regression testing configuration */
+  expect: {
+    toHaveScreenshot: {
+      /* Global 5% threshold (matches Percy config) */
+      maxDiffPixelRatio: 0.05,
+
+      /* Pixel comparison threshold (0-1, lower = stricter) */
+      threshold: 0.2,
+
+      /* Disable animations for consistent screenshots */
+      animations: "disabled",
+
+      /* Max acceptable pixel differences for small changes */
+      maxDiffPixels: 100,
+    },
+  },
+
   /* Configure projects for major browsers */
   projects: [
     {
@@ -49,6 +66,14 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         channel: "chrome", // Use system Chrome instead of downloading Chromium
+        viewport: { width: 1920, height: 1080 },
+      },
+    },
+    /* Mobile viewport for responsive testing */
+    {
+      name: "mobile",
+      use: {
+        ...devices["iPhone 13"],
       },
     },
   ],
@@ -56,7 +81,7 @@ export default defineConfig({
   /* Run your local dev servers before starting the tests */
   webServer: [
     {
-      command: "USE_TEST_FIXTURES=true python -m uvicorn app.main:app --port 8002",
+      command: "npx cross-env USE_TEST_FIXTURES=true python -m uvicorn app.main:app --port 8002",
       cwd: "../backend",
       url: "http://localhost:8002/api/health",
       timeout: 120000,

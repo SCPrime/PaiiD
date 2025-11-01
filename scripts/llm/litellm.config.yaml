@@ -1,0 +1,14 @@
+model_list:
+  - model_name: deepseek-coder
+    litellm_params:
+      model: ollama/deepseek-coder
+      api_base: http://127.0.0.1:11434
+  - model_name: deepseek-r1
+    litellm_params:
+      model: ollama/deepseek-r1
+      api_base: http://127.0.0.1:11434
+  # Optional: OpenAI mapping (requires OPENAI_API_KEY in environment)
+  - model_name: codex
+    litellm_params:
+      model: openai/gpt-4.1
+      api_key: ${OPENAI_API_KEY}

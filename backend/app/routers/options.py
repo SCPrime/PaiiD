@@ -12,7 +12,7 @@ Phase 1 Implementation:
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -299,6 +299,11 @@ async def get_options_chain(
         }
 
     except ProviderHTTPError as e:
+        logger.error(
+            "Tradier provider error while fetching options chain",
+            exc_info=e,
+            extra={"symbol": symbol, "expiration": expiration, "status": e.status_code},
+        )
         if e.status_code in (400, 404):
             raise HTTPException(
                 status_code=404, detail=f"Options not found for {symbol}"
@@ -311,6 +316,11 @@ async def get_options_chain(
             raise HTTPException(status_code=502, detail="Upstream service error") from e
         raise HTTPException(status_code=502, detail="Upstream error") from e
     except Exception as e:
+        logger.error(
+            "Unexpected error fetching options chain",
+            exc_info=e,
+            extra={"symbol": symbol, "expiration": expiration},
+        )
         raise HTTPException(
             status_code=500, detail=f"Error fetching options chain: {e!s}"
         ) from e
@@ -367,8 +377,10 @@ def get_expiration_dates(
             expiration_dates = []
             for exp_date in expirations:
                 # Calculate days to expiry
-                exp_datetime = datetime.strptime(exp_date, "%Y-%m-%d")
-                days_to_expiry = (exp_datetime - datetime.now()).days
+                exp_datetime = datetime.strptime(exp_date, "%Y-%m-%d").replace(
+                    tzinfo=UTC
+                )
+                days_to_expiry = (exp_datetime - datetime.now(UTC)).days
 
                 expiration_dates.append(
                     ExpirationDate(date=exp_date, days_to_expiry=max(0, days_to_expiry))
@@ -401,10 +413,12 @@ def get_expiration_dates(
 
         # Calculate days to expiry for each
         expiration_dates = []
-        today = datetime.now().date()
+        today = datetime.now(UTC).date()
 
         for exp_date_str in expirations:
-            exp_date = datetime.strptime(exp_date_str, "%Y-%m-%d").date()
+            exp_date = (
+                datetime.strptime(exp_date_str, "%Y-%m-%d").replace(tzinfo=UTC).date()
+            )
             days_to_expiry = (exp_date - today).days
 
             expiration_dates.append(
@@ -414,7 +428,7 @@ def get_expiration_dates(
         response = {
             "data": [exp.model_dump() for exp in expiration_dates],
             "count": len(expiration_dates),
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "cached": False,
         }
 
@@ -426,6 +440,11 @@ def get_expiration_dates(
         return response
 
     except ProviderHTTPError as e:
+        logger.error(
+            "Tradier provider error while fetching expiration dates",
+            exc_info=e,
+            extra={"symbol": symbol, "status": e.status_code},
+        )
         if e.status_code in (400, 404):
             raise HTTPException(
                 status_code=404, detail=f"No expiration dates for {symbol}"
@@ -438,7 +457,11 @@ def get_expiration_dates(
             raise HTTPException(status_code=502, detail="Upstream service error") from e
         raise HTTPException(status_code=502, detail="Upstream error") from e
     except Exception as e:
-        logger.error(f"Error fetching expirations: {e}")
+        logger.error(
+            "Unexpected error fetching expiration dates",
+            exc_info=e,
+            extra={"symbol": symbol},
+        )
         raise HTTPException(
             status_code=500, detail=f"Error fetching expirations: {e!s}"
         ) from e
@@ -479,8 +502,8 @@ async def calculate_greeks(
         from ..services.greeks import GreeksCalculator
 
         # Calculate days to expiration
-        exp_date = datetime.strptime(expiration, "%Y-%m-%d")
-        today = datetime.now()
+        exp_date = datetime.strptime(expiration, "%Y-%m-%d").replace(tzinfo=UTC)
+        today = datetime.now(UTC)
         days_to_expiry = (exp_date - today).days
 
         if days_to_expiry < 0:
@@ -515,7 +538,7 @@ async def calculate_greeks(
                 "implied_volatility": implied_volatility,
                 **greeks,
             },
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except ValueError as e:
@@ -576,7 +599,7 @@ async def get_option_contract(
         logger.info(f"✅ Contract details retrieved for {option_symbol}")
         return {
             "data": contract.model_dump(),
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except ValueError as e:
@@ -608,17 +631,26 @@ async def clear_options_cache(
         "options_expiry:*",  # Expiration dates
     ]
 
-    for pattern in patterns:
-        count = cache.clear_pattern(pattern)
-        patterns_cleared += count
+    try:
+        for pattern in patterns:
+            count = cache.clear_pattern(pattern)
+            patterns_cleared += count
 
-    logger.info(f"🧹 Cleared {patterns_cleared} options cache entries")
+        logger.info(
+            "Cleared options cache entries",
+            extra={"patterns_cleared": patterns_cleared},
+        )
 
-    return {
-        "success": True,
-        "entries_cleared": patterns_cleared,
-        "timestamp": datetime.now().isoformat(),
-    }
+        return {
+            "success": True,
+            "entries_cleared": patterns_cleared,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+    except Exception as e:
+        logger.error("Failed to clear options cache", exc_info=e)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to clear options cache: {e!s}"
+        ) from e
 
 
 # ============================================================================

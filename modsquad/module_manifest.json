@@ -1,0 +1,4 @@
+  File "C:\Users\SSaint-Cyr\Documents\GitHub\PaiiD\modsquad\generate_manifest.py", line 18
+    manifest['backend_services'].append(str(f.relative_to(backend_services)).replace('\', '/').replace('.py', ''))
+                                                                                                               ^
+SyntaxError: unterminated string literal (detected at line 18)

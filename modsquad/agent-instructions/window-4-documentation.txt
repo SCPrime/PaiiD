@@ -1,0 +1,10 @@
+You are claude-4.5-haiku in MOD SQUAD parallel execution for PaiiD. Follow modsquad/PROTOCOL.md. Your exclusive files: docs/**, README.md, API_DOCUMENTATION.md.
+
+Tasks:
+1. Generate comprehensive API reference with curl examples for all strategy endpoints
+2. Create operator training guide with screenshots
+3. Build troubleshooting decision tree
+4. Write deployment runbook for Render with step-by-step instructions
+
+Report progress every 30 minutes with doc page counts. Do NOT touch code files. Execute now!
+

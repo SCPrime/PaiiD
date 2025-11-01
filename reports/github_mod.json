@@ -4,22 +4,33 @@
     "duplicate_components": [],
     "dead_code": [],
     "todos": [
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\backend\\app\\markets\\modules\\dex_meme_coins.py",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\backend\\app\\markets\\modules\\stocks_options.py",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\backend\\strategies\\under4_multileg.py",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\Analytics.tsx",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\StockLookup.tsx",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\OptionsChain.tsx",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\PLComparisonChart.tsx",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\ResearchDashboard.tsx",
-      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\StrategyBuilder.tsx"
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\StrategyBuilder.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\node_modules\\lighthouse\\flow-report\\src\\summary\\category.tsx"
     ]
   },
   "old_code": {
     "utcnow": [
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\modsquad\\extensions\\dependency_tracker.py",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\modsquad\\extensions\\maintenance_notifier.py",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\modsquad\\extensions\\metrics_streamer.py",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\modsquad\\extensions\\secrets_watchdog.py",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\modsquad\\extensions\\strategy_verifier.py",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\modsquad\\extensions\\stream_coordinator.py",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\scripts\\auto_github_monitor.py",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\scripts\\live_data_smoke.py"
     ],
     "mock_imports": [],
     "hardcoded_keys": [
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\.venv\\Lib\\site-packages\\alembic\\script\\write_hooks.py",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\.venv\\Lib\\site-packages\\sqlalchemy\\orm\\path_registry.py",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\backend\\app\\core\\unified_auth.py",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\test_phase1.py"
     ],
@@ -38,7 +49,11 @@
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\StrategyBuilderAI.tsx",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\charts\\MarketVisualization.tsx",
       "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\charts\\PortfolioHeatmap.tsx",
-      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\StrategyBuilder.tsx"
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\components\\trading\\StrategyBuilder.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\node_modules\\@radix-ui\\react-use-effect-event\\src\\use-effect-event.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\node_modules\\@tanstack\\react-table\\src\\index.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\node_modules\\lighthouse\\flow-report\\src\\common.tsx",
+      "C:\\Users\\SSaint-Cyr\\Documents\\GitHub\\PaiiD\\frontend\\node_modules\\lighthouse\\flow-report\\src\\i18n\\i18n.tsx"
     ]
   },
   "endpoint_coverage": {

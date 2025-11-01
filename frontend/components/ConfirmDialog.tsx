@@ -1,5 +1,6 @@
 "use client";
-import { theme } from "../styles/theme";
+
+import { cn, glassVariants } from "../lib/utils";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -39,138 +40,83 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   if (!isOpen) return null;
 
-  const variantStyles = {
-    primary: {
-      background: theme.colors.primary,
-      glow: theme.glow.green,
-    },
-    danger: {
-      background: theme.colors.danger,
-      glow: theme.glow.red,
-    },
-    warning: {
-      background: theme.colors.warning,
-      glow: theme.glow.orange,
-    },
+  const variantClasses: Record<NonNullable<typeof confirmVariant>, string> = {
+    primary:
+      "bg-[#16a394] text-[#0f172a] shadow-[0_15px_35px_rgba(22,163,148,0.45)] hover:shadow-[0_18px_40px_rgba(22,163,148,0.55)]",
+    danger:
+      "bg-[#FF4444] text-[#f1f5f9] shadow-[0_15px_35px_rgba(255,68,68,0.45)] hover:shadow-[0_18px_40px_rgba(255,68,68,0.55)]",
+    warning:
+      "bg-[#F97316] text-[#0f172a] shadow-[0_15px_35px_rgba(249,115,22,0.45)] hover:shadow-[0_18px_40px_rgba(249,115,22,0.55)]",
   };
-
-  const variant = variantStyles[confirmVariant];
 
   return (
     <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
-        backdropFilter: theme.blur.medium,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        animation: "fadeIn 0.2s ease",
-      }}
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#0f172a]/80 px-4 py-8 backdrop-blur-xl"
       onClick={onCancel}
     >
       <div
-        style={{
-          background: theme.background.glass,
-          backdropFilter: theme.blur.light,
-          border: `1px solid ${theme.colors.border}`,
-          borderRadius: theme.borderRadius.lg,
-          boxShadow: `0 20px 60px rgba(0, 0, 0, 0.5), ${theme.glow.green}`,
-          padding: theme.spacing.xl,
-          maxWidth: "500px",
-          width: "90%",
-          animation: "slideUp 0.3s ease",
-        }}
+        className={cn(
+          glassVariants.dialog,
+          "w-full max-w-xl overflow-hidden border border-teal-500/20 px-6 py-8 text-slate-100 shadow-[0_25px_65px_rgba(15,24,40,0.65)]"
+        )}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2
-          style={{
-            color: theme.colors.text,
-            fontSize: "24px",
-            fontWeight: "700",
-            marginBottom: theme.spacing.md,
-            textAlign: "center",
-          }}
-        >
-          {title}
-        </h2>
+        <h2 className="mb-4 text-center text-2xl font-semibold text-slate-100">{title}</h2>
 
-        <p
-          style={{
-            color: theme.colors.textMuted,
-            fontSize: "16px",
-            lineHeight: "1.6",
-            marginBottom: theme.spacing.xl,
-            textAlign: "center",
-          }}
-        >
-          {message}
-        </p>
+        <p className="mb-8 text-center text-base leading-relaxed text-[#cbd5e1]">{message}</p>
 
         {/* Trade Preview */}
         {orderDetails && (
           <div
-            style={{
-              background: theme.background.glass,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: theme.borderRadius.md,
-              padding: theme.spacing.lg,
-              marginBottom: theme.spacing.lg,
-            }}
+            className={cn(
+              glassVariants.card,
+              "mb-6 border border-teal-500/20 bg-[#1a2a3f]/80 p-6 text-slate-100"
+            )}
           >
-            <h3
-              style={{
-                color: theme.colors.text,
-                fontSize: "18px",
-                fontWeight: "600",
-                marginBottom: theme.spacing.md,
-                textAlign: "center",
-              }}
-            >
+            <h3 className="mb-4 text-center text-lg font-semibold uppercase tracking-wide text-slate-100">
               📊 Trade Preview
             </h3>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: theme.spacing.sm }}>
+            <div className="grid grid-cols-2 gap-4 text-sm text-slate-300">
               <div>
-                <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Symbol:</span>
-                <div style={{ color: theme.colors.text, fontWeight: "600" }}>
-                  {orderDetails.symbol}
-                </div>
+                <span className="text-xs font-medium uppercase tracking-wide text-[#94a3b8]">
+                  Symbol
+                </span>
+                <div className="text-base font-semibold text-slate-100">{orderDetails.symbol}</div>
               </div>
               <div>
-                <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Side:</span>
+                <span className="text-xs font-medium uppercase tracking-wide text-[#94a3b8]">
+                  Side
+                </span>
                 <div
-                  style={{
-                    color: orderDetails.side === "buy" ? theme.colors.success : theme.colors.danger,
-                    fontWeight: "600",
-                  }}
+                  className={cn(
+                    "text-base font-semibold",
+                    orderDetails.side === "buy" ? "text-[#16a394]" : "text-[#FF4444]"
+                  )}
                 >
                   {orderDetails.side.toUpperCase()}
                 </div>
               </div>
               <div>
-                <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Quantity:</span>
-                <div style={{ color: theme.colors.text, fontWeight: "600" }}>
-                  {orderDetails.qty}
-                </div>
+                <span className="text-xs font-medium uppercase tracking-wide text-[#94a3b8]">
+                  Quantity
+                </span>
+                <div className="text-base font-semibold text-slate-100">{orderDetails.qty}</div>
               </div>
               <div>
-                <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Type:</span>
-                <div style={{ color: theme.colors.text, fontWeight: "600" }}>
+                <span className="text-xs font-medium uppercase tracking-wide text-[#94a3b8]">
+                  Type
+                </span>
+                <div className="text-base font-semibold text-slate-100">
                   {orderDetails.type.toUpperCase()}
                 </div>
               </div>
               {orderDetails.limitPrice && (
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>
-                    Limit Price:
+                <div className="col-span-2">
+                  <span className="text-xs font-medium uppercase tracking-wide text-[#94a3b8]">
+                    Limit Price
                   </span>
-                  <div style={{ color: theme.colors.text, fontWeight: "600" }}>
+                  <div className="text-base font-semibold text-slate-100">
                     ${orderDetails.limitPrice}
                   </div>
                 </div>
@@ -178,16 +124,18 @@ export default function ConfirmDialog({
               {orderDetails.asset_class === "option" && (
                 <>
                   <div>
-                    <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>
-                      Option Type:
+                    <span className="text-xs font-medium uppercase tracking-wide text-[#94a3b8]">
+                      Option Type
                     </span>
-                    <div style={{ color: theme.colors.text, fontWeight: "600" }}>
+                    <div className="text-base font-semibold text-slate-100">
                       {orderDetails.option_type?.toUpperCase()}
                     </div>
                   </div>
                   <div>
-                    <span style={{ color: theme.colors.textMuted, fontSize: "14px" }}>Strike:</span>
-                    <div style={{ color: theme.colors.text, fontWeight: "600" }}>
+                    <span className="text-xs font-medium uppercase tracking-wide text-[#94a3b8]">
+                      Strike
+                    </span>
+                    <div className="text-base font-semibold text-slate-100">
                       ${orderDetails.strike_price}
                     </div>
                   </div>
@@ -195,30 +143,12 @@ export default function ConfirmDialog({
               )}
             </div>
 
-            {/* Risk Warning */}
             {riskWarning && (
-              <div
-                style={{
-                  background: "rgba(239, 68, 68, 0.1)",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                  borderRadius: theme.borderRadius.md,
-                  padding: theme.spacing.md,
-                  marginTop: theme.spacing.md,
-                }}
-              >
-                <div
-                  style={{
-                    color: theme.colors.danger,
-                    fontWeight: "600",
-                    marginBottom: theme.spacing.xs,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: theme.spacing.xs,
-                  }}
-                >
+              <div className="mt-4 rounded-lg border border-[#FF4444]/40 bg-[#FF4444]/10 p-4 text-sm">
+                <div className="mb-2 flex items-center gap-2 font-semibold text-[#FF4444]">
                   ⚠️ Risk Warning
                 </div>
-                <div style={{ color: theme.colors.textMuted, fontSize: "14px", lineHeight: "1.5" }}>
+                <div className="leading-relaxed text-[#cbd5e1]">
                   This trade involves real money. Make sure you understand the risks and have done
                   your research.
                 </div>
@@ -227,91 +157,31 @@ export default function ConfirmDialog({
           </div>
         )}
 
-        <div
-          style={{
-            display: "flex",
-            gap: theme.spacing.md,
-            justifyContent: "center",
-          }}
-        >
+        <div className="flex flex-wrap items-center justify-center gap-4">
           <button
+            type="button"
             onClick={onCancel}
-            style={{
-              padding: `${theme.spacing.md} ${theme.spacing.lg}`,
-              background: theme.background.card,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: theme.borderRadius.md,
-              color: theme.colors.textMuted,
-              fontSize: "16px",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: theme.transitions.normal,
-              minWidth: "120px",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = theme.background.cardHover;
-              e.currentTarget.style.borderColor = theme.colors.borderHover;
-              e.currentTarget.style.color = theme.colors.text;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = theme.background.card;
-              e.currentTarget.style.borderColor = theme.colors.border;
-              e.currentTarget.style.color = theme.colors.textMuted;
-            }}
+            className={cn(
+              glassVariants.card,
+              "min-w-[120px] border border-teal-500/20 px-6 py-3 text-base font-semibold text-[#cbd5e1] transition hover:border-[#16a394]/40 hover:text-slate-100"
+            )}
           >
             {cancelText}
           </button>
 
           <button
+            type="button"
             onClick={onConfirm}
-            style={{
-              padding: `${theme.spacing.md} ${theme.spacing.lg}`,
-              background: variant.background,
-              border: "none",
-              borderRadius: theme.borderRadius.md,
-              color: "white",
-              fontSize: "16px",
-              fontWeight: "700",
-              cursor: "pointer",
-              transition: theme.transitions.normal,
-              boxShadow: variant.glow,
-              minWidth: "120px",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = `0 8px 20px rgba(0, 0, 0, 0.3), ${variant.glow}`;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = variant.glow;
-            }}
+            className={cn(
+              "min-w-[120px] rounded-md px-6 py-3 text-base font-bold transition-transform duration-150",
+              variantClasses[confirmVariant],
+              "hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#45f0c0]/60"
+            )}
           >
             {confirmText}
           </button>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }

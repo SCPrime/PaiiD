@@ -1,0 +1,285 @@
+version: 1
+modsquad:
+  enabled: true
+  mode: non_interfering
+  conductor:
+    default_priority: balanced
+    allow_parallel_batches: true
+    max_concurrent_batches: 3
+    reviewer_mesh_enabled: true
+  maintenance:
+    config_path: ./maintenance_schedule.yaml
+  quality_gates:
+    config_path: ./quality_gates.yaml
+  extensions:
+    config_path: ./extensions.yaml
+    dispatch_mode: sequential
+
+agents:
+  tier0:
+    meta_orchestrator:
+      role: oversight
+      responsibilities:
+        - risk_governance
+        - multi_agent_coordination
+    ops_relay:
+      role: telemetry
+      responsibilities:
+        - metrics_rollup
+        - eta_reporting
+    risk_sentinel:
+      role: guardrail_monitor
+      responsibilities:
+        - budget_watch
+        - sla_alerting
+  tier1:
+    agent_1a:
+      domain: frontend_core
+      sub_agents:
+        - agent_1b
+        - agent_1c
+        - agent_1d
+        - agent_1e
+        - agent_1f
+        - agent_1g
+        - agent_1h
+        - agent_1i
+        - agent_1j
+        - agent_1k
+        - agent_1l
+    agent_2a:
+      domain: security_ops
+      sub_agents:
+        - agent_2b
+        - agent_2c
+        - agent_2d
+        - agent_2e
+        - agent_2f
+        - agent_2g
+        - agent_2h
+    agent_3a:
+      domain: test_infrastructure
+      sub_agents:
+        - agent_3b
+        - agent_3c
+        - agent_3d
+        - agent_3e
+        - agent_3f
+        - agent_3g
+        - agent_3h
+        - agent_3i
+        - agent_3j
+        - agent_3k
+    agent_4a:
+      domain: devops_ci
+      sub_agents:
+        - agent_4b
+        - agent_4c
+        - agent_4d
+        - agent_4e
+        - agent_4f
+        - agent_4g
+    agent_5a:
+      domain: release_prep
+      sub_agents:
+        - agent_5b
+        - agent_5c
+    agent_6a:
+      domain: data_observability
+      sub_agents:
+        - agent_6b
+        - agent_6c
+        - agent_6d
+        - agent_6e
+        - agent_6f
+    agent_7a:
+      domain: knowledge_ops
+      sub_agents:
+        - agent_7b
+        - agent_7c
+        - agent_7d
+        - agent_7e
+    agent_8a:
+      domain: customer_simulation
+      sub_agents:
+        - agent_8b
+        - agent_8c
+        - agent_8d
+        - agent_8e
+        - agent_8f
+  tier2_reviewers:
+    reviewer_r1:
+      scope: design_dna_verification
+      sub_agents:
+        - reviewer_r1a
+        - reviewer_r1b
+    reviewer_r2:
+      scope: security_audit_validation
+      sub_agents:
+        - reviewer_r2a
+        - reviewer_r2b
+    reviewer_r3:
+      scope: testing_evidence_review
+      sub_agents:
+        - reviewer_r3a
+        - reviewer_r3b
+    reviewer_r4:
+      scope: documentation_compliance
+      sub_agents:
+        - reviewer_r4a
+        - reviewer_r4b
+
+models:
+  deepseek-coder:
+    provider: cursor
+    model_id: deepseek-coder:latest
+    description: Primary code generation + refactor specialist (DeepSeek Coder)
+    strengths:
+      - code_generation
+      - testing
+      - refactoring
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 1100
+  deepseek-r1:
+    provider: cursor
+    model_id: deepseek-r1-0528
+    description: Architectural reasoning, logic validation, guard checks (DeepSeek R1)
+    strengths:
+      - architecture
+      - error_analysis
+      - security_review
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 2400
+  deepseek-v3:
+    provider: cursor
+    model_id: deepseek-v3.1
+    description: Market research, natural language synthesis, cross-checking
+    strengths:
+      - market_analysis
+      - research
+      - summarization
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 1600
+  deepseek-math:
+    provider: cursor
+    model_id: deepseek-math:latest
+    description: Quantitative analysis and technical indicator derivations (DeepSeek Math)
+    strengths:
+      - quantitative_reasoning
+      - risk_modeling
+      - statistical_validation
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 1500
+  llama3-70b:
+    provider: cursor
+    model_id: llama3.1-70b
+    description: Long-context architectural reasoning and cross-checking (Meta Llama 3.1 70B)
+    strengths:
+      - architecture
+      - long_context_analysis
+      - compliance_review
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 2100
+  mistral-nemo:
+    provider: cursor
+    model_id: mistral-nemo
+    description: Fast refactor assistant and secondary reviewer (Mistral Nemo)
+    strengths:
+      - refactoring
+      - linting
+      - secondary_review
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 1200
+  claude-4.5-sonnet:
+    provider: anthropic
+    env_key: ANTHROPIC_API_KEY
+    description: Documentation, long-form reasoning, UX copy
+    strengths:
+      - documentation
+      - product_brief
+      - design_review
+    latency_ms: 3400
+  claude-4.5-haiku:
+    provider: anthropic
+    env_key: ANTHROPIC_API_KEY
+    description: Fast summaries and maintenance reports
+    strengths:
+      - summarization
+      - maintenance_reports
+      - change_logs
+    latency_ms: 1100
+  gpt-5-codex-high:
+    provider: openai
+    env_key: OPENAI_API_KEY
+    model_id: gpt-5-codex-high
+    description: Cloud fallback for complex code tasks (Codex successor)
+    strengths:
+      - code_generation
+      - language_mix
+      - type_inference
+    latency_ms: 1900
+  gpt-5:
+    provider: openai
+    env_key: OPENAI_API_KEY
+    model_id: gpt-5
+    description: General chat + brainstorming assistant
+    strengths:
+      - ideation
+      - brainstorming
+      - requirements_extraction
+    latency_ms: 1700
+  gpt-5-pro:
+    provider: openai
+    env_key: OPENAI_API_KEY
+    model_id: gpt-5-pro
+    description: High-context executive reasoning and compliance checks
+    strengths:
+      - governance
+      - executive_summary
+      - compliance_review
+    latency_ms: 2300
+  gpt-4.1-mini:
+    provider: openai
+    env_key: OPENAI_API_KEY
+    model_id: gpt-4.1-mini
+    description: Low-latency regression testing and quick validation passes
+    strengths:
+      - smoke_testing
+      - linting
+      - lightweight_planning
+    latency_ms: 900
+
+budgets:
+  daily_usd: 25
+  monthly_usd: 150
+  alert_threshold_percent: 80
+  auto_stop: true
+
+analytics:
+  enabled: true
+  history_days: 90
+  emit_jsonl: true
+  jsonl_path: ../logs/run-history
+
+logging:
+  level: INFO
+  redact:
+    - api_key
+    - secret
+    - password
+
+markets:
+  default: stocks_options
+  modules:
+    stocks_options:
+      description: Equities and options strategies (paper/live)
+      repo: backend/app/markets/modules/stocks_options.py
+    dex_meme_coins:
+      description: DEX meme coin reconnaissance (paper)
+      repo: backend/app/markets/modules/dex_meme_coins.py
+
+fallbacks:
+  order:
+    - deepseek-coder
+    - gpt-5-codex-high
+    - claude-4.5-sonnet

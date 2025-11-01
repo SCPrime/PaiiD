@@ -1,0 +1,80 @@
+
+======================================================================
+GitHub Traffic Report: SCPrime/mod-squad
+Generated: 2025-10-31T22:00:42.237857+00:00
+======================================================================
+
+[ERROR] HTTP 401: {
+  "message": "Requires authentication",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "401"
+}
+
+[WARN] To fetch this data, you need:
+1. A GitHub Personal Access Token
+2. Token with 'repo' scope
+3. Run: python scripts/fetch_github_traffic.py --token YOUR_TOKEN
+
+======================================================================
+GitHub Traffic Report: SCPrime/MOD-SQUAD
+Generated: 2025-10-31T22:00:43.729819+00:00
+======================================================================
+
+[ERROR] HTTP 401: {
+  "message": "Requires authentication",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "401"
+}
+
+[WARN] To fetch this data, you need:
+1. A GitHub Personal Access Token
+2. Token with 'repo' scope
+3. Run: python scripts/fetch_github_traffic.py --token YOUR_TOKEN
+
+======================================================================
+GitHub Traffic Report: SCPrime/MODSQUAD
+Generated: 2025-10-31T22:00:45.123973+00:00
+======================================================================
+
+[ERROR] HTTP 401: {
+  "message": "Requires authentication",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "401"
+}
+
+[WARN] To fetch this data, you need:
+1. A GitHub Personal Access Token
+2. Token with 'repo' scope
+3. Run: python scripts/fetch_github_traffic.py --token YOUR_TOKEN
+
+======================================================================
+GitHub Traffic Report: SCPrime/mod_squad
+Generated: 2025-10-31T22:00:46.459425+00:00
+======================================================================
+
+[ERROR] HTTP 401: {
+  "message": "Requires authentication",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "401"
+}
+
+[WARN] To fetch this data, you need:
+1. A GitHub Personal Access Token
+2. Token with 'repo' scope
+3. Run: python scripts/fetch_github_traffic.py --token YOUR_TOKEN
+
+======================================================================
+GitHub Traffic Report: SCPrime/ModSquad
+Generated: 2025-10-31T22:00:47.822835+00:00
+======================================================================
+
+[ERROR] HTTP 401: {
+  "message": "Requires authentication",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "401"
+}
+
+[WARN] To fetch this data, you need:
+1. A GitHub Personal Access Token
+2. Token with 'repo' scope
+3. Run: python scripts/fetch_github_traffic.py --token YOUR_TOKEN

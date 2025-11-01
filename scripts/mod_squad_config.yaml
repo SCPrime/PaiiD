@@ -1,0 +1,40 @@
+environments:
+  prod_url: 'https://paiid-frontend.onrender.com'
+  staging_url: 'https://paiid-frontend.onrender.com'
+
+timeouts:
+  page_load_ms: 30000
+  network_idle_ms: 10000
+  live_update_expectation_s: 30
+
+branding:
+  blocklist:
+    - "\\biPi\\b"
+    - ">[^<]*\\bAI\\b|\\\"AI[[:space:]]"
+  aria_label: 'PaiiD'
+
+routes:
+  - '/'
+  - '/research'
+  - '/news'
+  - '/strategy'
+  - '/backtesting'
+  - '/settings'
+
+radial_hub:
+  labels:
+    - 'DOW JONES INDUSTRIAL'
+    - 'NASDAQ COMPOSITE'
+
+reports:
+  dir: 'reports'
+
+feature_flags:
+  level2_options: false
+
+selectors:
+  radial_menu: '[data-testid=radial-menu]'
+  wedge_prefix: '[data-testid=wedge-]'
+
+
+

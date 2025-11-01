@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -50,21 +50,21 @@ class AlpacaAccount(BaseModel):
 @router.get("/account")
 def get_account(current_user: User = Depends(get_current_user_unified)):
     """Get Tradier account information"""
-    logger.info("🎯 ACCOUNT ENDPOINT - Tradier Production")
-
     try:
         client = get_tradier_client()
         account_data = client.get_account()
 
-        logger.info("✅ Tradier account data retrieved successfully")
+        logger.info("Tradier account data retrieved successfully")
         return {
             "data": account_data,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
-        logger.error(f"❌ Tradier account request failed: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier account: {e!s}") from e
+        logger.error("Tradier account request failed", exc_info=e)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch Tradier account: {e!s}"
+        ) from e
 
 
 @router.get("/positions")
@@ -75,31 +75,48 @@ def get_positions(
     """Get Tradier positions (cached for 30s)"""
     # Check cache first
     cache_key = "portfolio:positions"
-    cached_positions = cache.get(cache_key)
-    if cached_positions:
-        logger.info("✅ Cache HIT for positions")
+    try:
+        cached_positions = cache.get(cache_key)
+    except Exception as e:
+        logger.warning("Portfolio positions cache read failed", exc_info=e)
+        cached_positions = None
+
+    if cached_positions is not None:
+        logger.info("Cache hit for positions", extra={"cache_key": cache_key})
         return {
             "data": cached_positions,
             "count": len(cached_positions) if isinstance(cached_positions, list) else 0,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     try:
         client = get_tradier_client()
         positions = client.get_positions()
-        logger.info(f"✅ Retrieved {len(positions)} positions from Tradier")
+        logger.info(
+            "Retrieved positions from Tradier",
+            extra={"count": len(positions), "cache_key": cache_key},
+        )
 
         # Cache for 30 seconds
-        cache.set(cache_key, positions, ttl=30)
+        try:
+            cache.set(cache_key, positions, ttl=30)
+        except Exception as cache_exc:
+            logger.warning(
+                "Failed to cache positions",
+                exc_info=cache_exc,
+                extra={"cache_key": cache_key},
+            )
         return {
             "data": positions,
             "count": len(positions),
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
-        logger.error(f"❌ Tradier positions request failed: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch Tradier positions: {e!s}") from e
+        logger.error("Tradier positions request failed", exc_info=e)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch Tradier positions: {e!s}"
+        ) from e
 
 
 @router.get("/positions/{symbol}")
@@ -114,7 +131,7 @@ def get_position(symbol: str, current_user: User = Depends(get_current_user_unif
             if position.get("symbol") == symbol.upper():
                 return {
                     "data": position,
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
 
         raise HTTPException(status_code=404, detail=f"No position found for {symbol}")
@@ -122,5 +139,11 @@ def get_position(symbol: str, current_user: User = Depends(get_current_user_unif
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to fetch position for {symbol}: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch position for {symbol}: {e!s}") from e
+        logger.error(
+            "Failed to fetch position",
+            exc_info=e,
+            extra={"symbol": symbol.upper()},
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch position for {symbol}: {e!s}"
+        ) from e

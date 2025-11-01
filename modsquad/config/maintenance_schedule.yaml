@@ -1,0 +1,47 @@
+schedule:
+  timezone: America/New_York
+  windows:
+    - name: morning_maintenance
+      time: '08:00'
+      priority: high
+      max_duration_minutes: 10
+    - name: afternoon_maintenance
+      time: '16:00'
+      priority: medium
+      max_duration_minutes: 10
+    - name: night_maintenance
+      time: '00:00'
+      priority: high
+      max_duration_minutes: 10
+
+phases:
+  - id: pause
+    duration_minutes: 1
+    description: Signal pause flag and wait for confirmation
+  - id: backup
+    duration_minutes: 1
+    description: Snapshot repo state (git status + JSONL log)
+  - id: verify
+    duration_minutes: 2
+    description: Syntax/import/structure verification across backend & frontend
+  - id: clean
+    duration_minutes: 2
+    description: Dead code removal, format, lint autofix
+  - id: detect_errors
+    duration_minutes: 2
+    description: Logic, type, regression checks (unit + heuristics)
+  - id: security
+    duration_minutes: 1
+    description: detect-secrets scan + unsafe pattern sweep
+  - id: performance
+    duration_minutes: 1
+    description: Profiling smoke + rate-limit/circuit breaker probe
+  - id: report
+    duration_minutes: 1
+    description: Emit summary markdown + JSON, update dashboard
+  - id: review_sync
+    duration_minutes: 1
+    description: Kick off reviewer mesh (review_aggregator + quality_inspector)
+  - id: resume
+    duration_minutes: 0.5
+    description: Clear maintenance flag, re-open pipelines

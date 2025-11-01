@@ -6,6 +6,7 @@ Defines schema for users, strategies, trades, performance tracking, and equity s
 """
 
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import (
     JSON,
@@ -33,7 +34,9 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)  # bcrypt hash
     full_name = Column(String(255), nullable=True)
-    username = Column(String(255), nullable=True)  # Legacy field - kept for database compatibility
+    username = Column(
+        String(255), nullable=True
+    )  # Legacy field - kept for database compatibility
 
     # Role-based access control
     role = Column(
@@ -46,7 +49,9 @@ class User(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     last_login_at = Column(DateTime, nullable=True)
 
     # Preferences (stored as JSON for flexibility)
@@ -59,15 +64,21 @@ class User(Base):
     preferences = Column(JSON, default=dict, nullable=False)
 
     # Relationships
-    strategies = relationship("Strategy", back_populates="user", cascade="all, delete-orphan")
+    strategies = relationship(
+        "Strategy", back_populates="user", cascade="all, delete-orphan"
+    )
     trades = relationship("Trade", back_populates="user", cascade="all, delete-orphan")
-    sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
-    activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship(
+        "UserSession", back_populates="user", cascade="all, delete-orphan"
+    )
+    activity_logs = relationship(
+        "ActivityLog", back_populates="user", cascade="all, delete-orphan"
+    )
 
     # Composite indexes for common query patterns
     __table_args__ = (
-        Index('idx_users_role_active', 'role', 'is_active'),
-        Index('idx_users_email_active', 'email', 'is_active'),
+        Index("idx_users_role_active", "role", "is_active"),
+        Index("idx_users_email_active", "email", "is_active"),
     )
 
     def __repr__(self):
@@ -103,9 +114,7 @@ class UserSession(Base):
     user = relationship("User", back_populates="sessions")
 
     # Composite indexes for session lookup
-    __table_args__ = (
-        Index('idx_sessions_user_expires', 'user_id', 'expires_at'),
-    )
+    __table_args__ = (Index("idx_sessions_user_expires", "user_id", "expires_at"),)
 
     def __repr__(self):
         return f"<UserSession(id={self.id}, user_id={self.user_id}, expires={self.expires_at})>"
@@ -146,9 +155,9 @@ class ActivityLog(Base):
 
     # Composite indexes for activity queries
     __table_args__ = (
-        Index('idx_activity_user_timestamp', 'user_id', 'timestamp'),
-        Index('idx_activity_user_action', 'user_id', 'action_type'),
-        Index('idx_activity_action_timestamp', 'action_type', 'timestamp'),
+        Index("idx_activity_user_timestamp", "user_id", "timestamp"),
+        Index("idx_activity_user_action", "user_id", "action_type"),
+        Index("idx_activity_action_timestamp", "action_type", "timestamp"),
     )
 
     def __repr__(self):
@@ -189,7 +198,9 @@ class Strategy(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     last_backtest_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -198,13 +209,15 @@ class Strategy(Base):
 
     # Composite indexes for strategy queries
     __table_args__ = (
-        Index('idx_strategies_user_active', 'user_id', 'is_active'),
-        Index('idx_strategies_user_type', 'user_id', 'strategy_type'),
-        Index('idx_strategies_type_active', 'strategy_type', 'is_active'),
+        Index("idx_strategies_user_active", "user_id", "is_active"),
+        Index("idx_strategies_user_type", "user_id", "strategy_type"),
+        Index("idx_strategies_type_active", "strategy_type", "is_active"),
     )
 
     def __repr__(self):
-        return f"<Strategy(id={self.id}, name='{self.name}', type='{self.strategy_type}')>"
+        return (
+            f"<Strategy(id={self.id}, name='{self.name}', type='{self.strategy_type}')>"
+        )
 
 
 class Trade(Base):
@@ -214,7 +227,9 @@ class Trade(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
-    strategy_id = Column(Integer, ForeignKey("strategies.id", ondelete="SET NULL"), nullable=True)
+    strategy_id = Column(
+        Integer, ForeignKey("strategies.id", ondelete="SET NULL"), nullable=True
+    )
 
     # Trade details
     symbol = Column(String(20), nullable=False, index=True)
@@ -254,11 +269,11 @@ class Trade(Base):
 
     # Composite indexes for trade queries
     __table_args__ = (
-        Index('idx_trades_user_symbol', 'user_id', 'symbol'),
-        Index('idx_trades_user_created', 'user_id', 'created_at'),
-        Index('idx_trades_symbol_created', 'symbol', 'created_at'),
-        Index('idx_trades_user_status', 'user_id', 'status'),
-        Index('idx_trades_strategy_created', 'strategy_id', 'created_at'),
+        Index("idx_trades_user_symbol", "user_id", "symbol"),
+        Index("idx_trades_user_created", "user_id", "created_at"),
+        Index("idx_trades_symbol_created", "symbol", "created_at"),
+        Index("idx_trades_user_status", "user_id", "status"),
+        Index("idx_trades_strategy_created", "strategy_id", "created_at"),
     )
 
     def __repr__(self):
@@ -305,9 +320,7 @@ class Performance(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Composite indexes for performance queries
-    __table_args__ = (
-        Index('idx_performance_user_date', 'user_id', 'date'),
-    )
+    __table_args__ = (Index("idx_performance_user_date", "user_id", "date"),)
 
     def __repr__(self):
         return (
@@ -336,14 +349,10 @@ class EquitySnapshot(Base):
     extra_data = Column(JSON, default=dict, nullable=False)
 
     # Composite indexes for equity snapshot queries
-    __table_args__ = (
-        Index('idx_equity_user_timestamp', 'user_id', 'timestamp'),
-    )
+    __table_args__ = (Index("idx_equity_user_timestamp", "user_id", "timestamp"),)
 
     def __repr__(self):
-        return (
-            f"<EquitySnapshot(id={self.id}, timestamp={self.timestamp}, equity=${self.equity:.2f})>"
-        )
+        return f"<EquitySnapshot(id={self.id}, timestamp={self.timestamp}, equity=${self.equity:.2f})>"
 
 
 class OrderTemplate(Base):
@@ -367,13 +376,13 @@ class OrderTemplate(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     last_used_at = Column(DateTime, nullable=True)
 
     # Composite indexes for template queries
-    __table_args__ = (
-        Index('idx_templates_user_symbol', 'user_id', 'symbol'),
-    )
+    __table_args__ = (Index("idx_templates_user_symbol", "user_id", "symbol"),)
 
     def __repr__(self):
         return (
@@ -392,7 +401,9 @@ class AIRecommendation(Base):
 
     # Recommendation metadata
     symbol = Column(String(20), nullable=False, index=True)
-    recommendation_type = Column(String(20), nullable=False, index=True)  # buy, sell, hold
+    recommendation_type = Column(
+        String(20), nullable=False, index=True
+    )  # buy, sell, hold
     confidence_score = Column(Float, nullable=False)  # 0-100
 
     # Market analysis (stored as JSON)
@@ -424,7 +435,9 @@ class AIRecommendation(Base):
     # Performance tracking (if recommendation was executed)
     actual_pnl = Column(Float, nullable=True)
     actual_pnl_percent = Column(Float, nullable=True)
-    accuracy_score = Column(Float, nullable=True)  # 0-100, based on outcome vs prediction
+    accuracy_score = Column(
+        Float, nullable=True
+    )  # 0-100, based on outcome vs prediction
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
@@ -432,10 +445,10 @@ class AIRecommendation(Base):
 
     # Composite indexes for recommendation queries
     __table_args__ = (
-        Index('idx_ai_rec_user_symbol', 'user_id', 'symbol'),
-        Index('idx_ai_rec_user_created', 'user_id', 'created_at'),
-        Index('idx_ai_rec_symbol_status', 'symbol', 'status'),
-        Index('idx_ai_rec_user_status', 'user_id', 'status'),
+        Index("idx_ai_rec_user_symbol", "user_id", "symbol"),
+        Index("idx_ai_rec_user_created", "user_id", "created_at"),
+        Index("idx_ai_rec_symbol_status", "symbol", "status"),
+        Index("idx_ai_rec_user_status", "user_id", "status"),
     )
 
     def __repr__(self):
@@ -443,4 +456,44 @@ class AIRecommendation(Base):
             f"<AIRecommendation(id={self.id}, symbol='{self.symbol}', "
             f"type='{self.recommendation_type}', "
             f"confidence={self.confidence_score:.1f}%, status='{self.status}')>"
+        )
+
+
+class StrategyExecutionRecord(Base):
+    """Historical record for automated strategy executions."""
+
+    __tablename__ = "strategy_execution_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    strategy_type = Column(String(50), nullable=False, index=True)
+    market_key = Column(String(50), nullable=False)
+    trade_summary = Column(JSON, default=dict, nullable=False)
+    execution_summary = Column(JSON, default=dict, nullable=False)
+    execution = Column(JSON, default=list, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    __table_args__ = (
+        Index("idx_strategy_exec_user_created", "user_id", "created_at"),
+        Index("idx_strategy_exec_strategy", "strategy_type", "created_at"),
+    )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "strategy_type": self.strategy_type,
+            "market_key": self.market_key,
+            "trade_summary": self.trade_summary,
+            "execution_summary": self.execution_summary,
+            "execution": self.execution,
+            "timestamp": self.created_at.isoformat() + "Z",
+        }
+
+    def __repr__(self):
+        return (
+            f"<StrategyExecutionRecord(id={self.id}, user_id={self.user_id}, "
+            f"strategy='{self.strategy_type}', market='{self.market_key}')>"
         )

@@ -1,0 +1,96 @@
+{
+  "modsquad.enabled": true,
+  "modsquad.version": "2.0.0",
+  "modsquad.autoActivate": true,
+
+  "modsquad.squads": {
+    "alpha": {
+      "alwaysOn": true,
+      "autoStart": true,
+      "role": "Core Infrastructure & Security"
+    },
+    "bravo": {
+      "preCommitHook": true,
+      "ciIntegration": true,
+      "role": "Quality Validation & Testing"
+    },
+    "charlie": {
+      "scheduledRun": "daily",
+      "role": "Security & Dependency Management"
+    },
+    "delta": {
+      "continuousMonitoring": true,
+      "role": "Change Detection & Monitoring"
+    },
+    "echo": {
+      "postExecution": true,
+      "role": "Aggregation & Reporting"
+    },
+    "foxtrot": {
+      "orchestrator": true,
+      "role": "Orchestration & Coordination"
+    }
+  },
+
+  "modsquad.hooks": {
+    "pre-commit": {
+      "enabled": true,
+      "squad": "bravo",
+      "fastMode": true,
+      "skip": ["e2e"]
+    },
+    "pre-push": {
+      "enabled": true,
+      "squads": ["bravo", "charlie"],
+      "blockOnFailure": true
+    }
+  },
+
+  "modsquad.schedule": {
+    "daily": {
+      "time": "01:00 UTC",
+      "squads": ["bravo", "charlie", "delta", "echo"]
+    },
+    "weekly": {
+      "day": "Sunday",
+      "time": "02:00 UTC",
+      "squads": ["full-stack"]
+    }
+  },
+
+  "modsquad.paths": {
+    "extensions": "${workspaceFolder}/modsquad/extensions",
+    "squads": "${workspaceFolder}/modsquad/squads",
+    "logs": "${workspaceFolder}/modsquad/logs"
+  },
+
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/modsquad",
+    "${workspaceFolder}/modsquad/extensions",
+    "${workspaceFolder}/modsquad/squads",
+    "${workspaceFolder}/backend"
+  ],
+
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/modsquad",
+    "${workspaceFolder}/backend"
+  ],
+
+  "modsquad.riskProfile": {
+    "maxRiskPerExtension": 0.005,
+    "totalSystemRisk": 0.08,
+    "circuitBreaker": {
+      "enabled": true,
+      "failureThreshold": 3,
+      "timeoutSeconds": 300
+    }
+  },
+
+  "modsquad.notifications": {
+    "enabled": true,
+    "channels": ["vscode", "terminal"],
+    "onSuccess": false,
+    "onFailure": true,
+    "onCircuitBreak": true
+  }
+}

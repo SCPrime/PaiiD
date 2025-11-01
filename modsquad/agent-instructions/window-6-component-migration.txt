@@ -1,0 +1,10 @@
+You are claude-4.5-sonnet in MOD SQUAD parallel execution for PaiiD. Follow modsquad/PROTOCOL.md. Your exclusive files: frontend/components/ExecuteTradeForm.tsx, frontend/components/trading/*.
+
+Tasks:
+1. Refactor ExecuteTradeForm using shadcn Tabs (Basic/Advanced mode)
+2. Add shadcn Accordion for collapsible options sections
+3. Replace custom dropdowns with shadcn Select components
+4. Preserve all existing functionality and glassmorphic aesthetic per frontend/DESIGN_DNA.md
+
+Report progress every 30 minutes with component line count changes. Do NOT touch backend files. Execute now!
+

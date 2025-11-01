@@ -6,10 +6,12 @@ Handles automated execution of trading routines using APScheduler
 import asyncio
 import json
 import logging
+import os
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import httpx
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -39,6 +41,7 @@ class TradingScheduler:
             }
         )
         self.running = False
+        self._pending_tasks: list[asyncio.Task] = []
 
     def start(self):
         """Start the scheduler"""
@@ -65,15 +68,17 @@ class TradingScheduler:
                 with open(schedule_file) as f:
                     schedule = json.load(f)
                     if schedule.get("enabled", False):
-                        asyncio.create_task(
+                        task = asyncio.create_task(
                             self.add_schedule(
                                 schedule_id=schedule["id"],
                                 schedule_type=schedule["type"],
                                 cron_expression=schedule["cron_expression"],
                                 timezone=schedule["timezone"],
                                 requires_approval=schedule["requires_approval"],
+                                metadata=schedule.get("metadata"),
                             )
                         )
+                        self._pending_tasks.append(task)
             logger.info("Schedules restored from storage")
         except Exception as e:
             logger.error(f"Failed to restore schedules: {e!s}")
@@ -85,6 +90,7 @@ class TradingScheduler:
         cron_expression: str,
         timezone: str,
         requires_approval: bool,
+        metadata: dict | None = None,
     ):
         """Add a new scheduled job"""
         try:
@@ -99,7 +105,7 @@ class TradingScheduler:
                 job_func,
                 trigger=trigger,
                 id=schedule_id,
-                args=[schedule_id, requires_approval],
+                args=[schedule_id, requires_approval, metadata or {}],
                 replace_existing=True,
                 name=f"{schedule_type}_{schedule_id}",
             )
@@ -223,6 +229,7 @@ class TradingScheduler:
             "news_review": self._execute_news_review,
             "ai_recs": self._execute_ai_recommendations,
             "custom": self._execute_custom_action,
+            "strategy_run": self._execute_strategy_run,
         }
         return job_map.get(schedule_type, self._execute_custom_action)
 
@@ -230,7 +237,9 @@ class TradingScheduler:
     # Execution Functions
     # ========================
 
-    async def _execute_morning_routine(self, schedule_id: str, requires_approval: bool):
+    async def _execute_morning_routine(
+        self, schedule_id: str, requires_approval: bool, metadata: dict
+    ):
         """Execute morning routine workflow"""
         execution_id = await self._create_execution_record(
             schedule_id, "morning_routine"
@@ -275,7 +284,9 @@ class TradingScheduler:
             logger.error(f"Morning routine failed for schedule {schedule_id}: {e!s}")
             await self._complete_execution(execution_id, "failed", None, str(e))
 
-    async def _execute_news_review(self, schedule_id: str, requires_approval: bool):
+    async def _execute_news_review(
+        self, schedule_id: str, requires_approval: bool, metadata: dict
+    ):
         """Execute news review workflow"""
         execution_id = await self._create_execution_record(schedule_id, "news_review")
 
@@ -298,7 +309,7 @@ class TradingScheduler:
             await self._complete_execution(execution_id, "failed", None, str(e))
 
     async def _execute_ai_recommendations(
-        self, schedule_id: str, requires_approval: bool
+        self, schedule_id: str, requires_approval: bool, metadata: dict
     ):
         """Execute AI recommendations check"""
         execution_id = await self._create_execution_record(schedule_id, "ai_recs")
@@ -323,7 +334,9 @@ class TradingScheduler:
             logger.error(f"AI recommendations failed for schedule {schedule_id}: {e!s}")
             await self._complete_execution(execution_id, "failed", None, str(e))
 
-    async def _execute_custom_action(self, schedule_id: str, requires_approval: bool):
+    async def _execute_custom_action(
+        self, schedule_id: str, requires_approval: bool, metadata: dict
+    ):
         """Execute custom scheduled action"""
         execution_id = await self._create_execution_record(schedule_id, "custom")
 
@@ -335,6 +348,60 @@ class TradingScheduler:
         except Exception as e:
             logger.error(f"Custom action failed for schedule {schedule_id}: {e!s}")
             await self._complete_execution(execution_id, "failed", None, str(e))
+
+    async def _execute_strategy_run(
+        self, schedule_id: str, requires_approval: bool, metadata: dict
+    ):
+        """Invoke strategy automation via API."""
+
+        execution_id = await self._create_execution_record(schedule_id, "strategy_run")
+
+        strategy_type = metadata.get("strategy_type", "under4-multileg")
+        dry_run = metadata.get("dry_run", True)
+        base_url = metadata.get("base_url") or os.getenv(
+            "PAIID_API_BASE", "http://127.0.0.1:8011"
+        )
+        token = metadata.get("token") or os.getenv("PAIID_API_TOKEN")
+
+        if not token:
+            await self._complete_execution(
+                execution_id,
+                "failed",
+                None,
+                "Missing API token for strategy execution",
+            )
+            return
+
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                response = await client.post(
+                    f"{base_url.rstrip('/')}/api/strategies/run",
+                    headers={"Authorization": f"Bearer {token}"},
+                    json={"strategy_type": strategy_type, "dry_run": dry_run},
+                )
+                response.raise_for_status()
+                payload = response.json()
+
+            result_summary = f"Strategy {strategy_type} executed (dry_run={dry_run})"
+            await self._complete_execution(
+                execution_id,
+                "completed",
+                result_summary,
+            )
+            logger.info(result_summary)
+
+            # Persist raw payload for audit
+            execution_file = EXECUTIONS_DIR / f"{execution_id}.strategy.json"
+            execution_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+        except Exception as exc:  # pragma: no cover - network/broker dependent
+            logger.error("Strategy run failed for schedule %s: %s", schedule_id, exc)
+            await self._complete_execution(
+                execution_id,
+                "failed",
+                None,
+                str(exc),
+            )
 
     # ========================
     # Helper Functions

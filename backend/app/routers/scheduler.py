@@ -27,11 +27,12 @@ logger = logging.getLogger(__name__)
 
 class ScheduleCreate(BaseModel):
     name: str
-    type: str  # morning_routine, news_review, ai_recs, custom
+    type: str  # morning_routine, news_review, ai_recs, custom, strategy_run
     cron_expression: str
     timezone: str = "America/New_York"
     requires_approval: bool = True
     enabled: bool = True
+    metadata: dict | None = None
 
 
 class ScheduleUpdate(BaseModel):
@@ -40,6 +41,7 @@ class ScheduleUpdate(BaseModel):
     timezone: str | None = None
     requires_approval: bool | None = None
     enabled: bool | None = None
+    metadata: dict | None = None
 
 
 class ScheduleResponse(BaseModel):
@@ -54,6 +56,7 @@ class ScheduleResponse(BaseModel):
     next_run: str | None
     status: str
     created_at: str
+    metadata: dict | None = None
 
     class Config:
         from_attributes = True
@@ -200,6 +203,7 @@ async def list_schedules(current_user: User = Depends(get_current_user_unified))
                 "timezone": schedule["timezone"],
                 "requires_approval": schedule["requires_approval"],
                 "last_run": schedule.get("last_run"),
+                "metadata": schedule.get("metadata"),
                 "status": schedule["status"],
                 "created_at": schedule["created_at"],
                 "next_run": None,
@@ -245,6 +249,7 @@ async def create_schedule(
             "status": "active" if schedule_data.enabled else "paused",
             "created_at": datetime.now(UTC).isoformat(),
             "last_run": None,
+            "metadata": schedule_data.metadata or {},
         }
 
         _save_schedule(schedule)
@@ -258,6 +263,7 @@ async def create_schedule(
                     cron_expression=schedule_data.cron_expression,
                     timezone=schedule_data.timezone,
                     requires_approval=schedule_data.requires_approval,
+                    metadata=schedule_data.metadata,
                 )
             except Exception as e:
                 _delete_schedule_file(schedule_id)
@@ -311,9 +317,12 @@ async def update_schedule(
                     ),
                     timezone=update_data.get("timezone", schedule["timezone"]),
                     requires_approval=schedule["requires_approval"],
+                    metadata=schedule.get("metadata"),
                 )
 
         schedule.update(update_data)
+        if "metadata" not in schedule or schedule["metadata"] is None:
+            schedule["metadata"] = {}
         _save_schedule(schedule)
         return {
             "data": schedule,

@@ -1,0 +1,27 @@
+
+================================================================================
+META-ORCHESTRATOR EXECUTION REPORT
+================================================================================
+Timestamp: 2025-10-31T14:53:03.564468+00:00
+Mode: full
+Risk Target: 0.5%
+
+VALIDATION RESULTS:
+--------------------------------------------------------------------------------
+  repo_audit                     [OK] passed
+  live_data                      [FAIL] failed
+  wedge_flows                    [FAIL] failed
+  branding                       [OK] passed
+
+EXECUTION SUMMARY:
+--------------------------------------------------------------------------------
+  Total Tasks: 4
+  Completed:   2
+  Failed:      2
+  In Progress: 0
+  Errors:      2
+  Warnings:    0
+
+[FAIL] RISK RATE: 50.00% (EXCEEDS TARGET: 0.5%)
+[FAIL] PRODUCTION READINESS: BLOCKED
+================================================================================

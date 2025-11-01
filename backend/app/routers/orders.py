@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 from tenacity import (
     before_sleep_log,
@@ -263,9 +263,10 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
         if order.asset_class == "option":
             # Alpaca options symbol format: SPY251219C00450000
             # Format: SYMBOL + YYMMDD + C/P + 00000000 (strike * 1000, 8 digits)
-            from datetime import datetime
 
-            expiry_dt = datetime.strptime(order.expiration_date, "%Y-%m-%d")
+            expiry_dt = datetime.strptime(order.expiration_date, "%Y-%m-%d").replace(
+                tzinfo=UTC
+            )
             expiry_str = expiry_dt.strftime("%y%m%d")  # YYMMDD
             call_put = "C" if order.option_type == "call" else "P"
             strike_int = int(order.strike_price * 1000)
@@ -275,12 +276,23 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
             order_payload["class"] = "option"
 
             logger.info(
-                f"[Alpaca] Submitting OPTIONS order: {option_symbol} "
-                f"({order.symbol} ${order.strike_price} {order.option_type} exp:{order.expiration_date})"
+                "[Alpaca] Submitting OPTIONS order",
+                extra={
+                    "option_symbol": option_symbol,
+                    "underlying": order.symbol,
+                    "strike": order.strike_price,
+                    "option_type": order.option_type,
+                    "expiration": order.expiration_date,
+                },
             )
         else:
             logger.info(
-                f"[Alpaca] Submitting STOCK order: {order.symbol} {order.qty} {order.side}"
+                "[Alpaca] Submitting STOCK order",
+                extra={
+                    "symbol": order.symbol,
+                    "quantity": order.qty,
+                    "side": order.side,
+                },
             )
 
         # Execute order via Alpaca API
@@ -302,8 +314,12 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
         alpaca_circuit_breaker.record_failure()
 
         logger.error(
-            f"[Alpaca] Order execution failed for {order.symbol}: {e} "
-            f"(Circuit: {alpaca_circuit_breaker.state})"
+            "[Alpaca] Order execution failed",
+            exc_info=e,
+            extra={
+                "symbol": order.symbol,
+                "circuit_state": alpaca_circuit_breaker.state,
+            },
         )
 
         # Re-raise for retry logic (if retryable exception)
@@ -321,9 +337,16 @@ def execute_alpaca_order_with_retry(order: Order) -> dict:
 class ExecRequest(BaseModel):
     """Execute order request with idempotency and validation"""
 
-    dryRun: bool = Field(default=True, description="Dry run mode (no actual execution)")
-    requestId: str = Field(
+    model_config = ConfigDict(populate_by_name=True)
+
+    dry_run: bool = Field(
+        default=True,
+        alias="dryRun",
+        description="Dry run mode (no actual execution)",
+    )
+    request_id: str = Field(
         ...,
+        alias="requestId",
         min_length=8,
         max_length=64,
         pattern=r"^[a-zA-Z0-9\-_]{8,64}$",
@@ -336,7 +359,7 @@ class ExecRequest(BaseModel):
         description="List of orders to execute (max 10 per request)",
     )
 
-    @field_validator("requestId")
+    @field_validator("request_id", mode="before")
     @classmethod
     def validate_request_id_format(cls, v, info=None):
         """Validate request ID format"""
@@ -357,7 +380,9 @@ class ExecRequest(BaseModel):
 
 @router.post("/trading/execute")
 async def execute(
-    request: Request, req: ExecRequest, current_user: User = Depends(get_current_user_unified)
+    request: Request,
+    req: ExecRequest,
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Execute trading orders with idempotency and dry-run support.
@@ -366,13 +391,13 @@ async def execute(
     Will re-enable once Redis is properly configured.
     """
     try:
-        logger.info(f"[Trading Execute] Received request: {req.requestId}")
+        logger.info(f"[Trading Execute] Received request: {req.request_id}")
 
-        if not req.requestId:
+        if not req.request_id:
             raise HTTPException(status_code=400, detail="requestId required")
 
-        if not check_and_store(req.requestId):
-            logger.info(f"[Trading Execute] Duplicate request: {req.requestId}")
+        if not check_and_store(req.request_id):
+            logger.info(f"[Trading Execute] Duplicate request: {req.request_id}")
             return {"accepted": False, "duplicate": True}
 
         if is_killed():
@@ -381,7 +406,7 @@ async def execute(
             )
 
         # Respect LIVE_TRADING setting
-        if req.dryRun or not settings.LIVE_TRADING:
+        if req.dry_run or not settings.LIVE_TRADING:
             logger.info(f"[Trading Execute] Dry-run mode: {len(req.orders)} orders")
             return {
                 "accepted": True,
@@ -412,7 +437,9 @@ async def execute(
             f"[Trading Execute] UNEXPECTED ERROR: {type(e).__name__}: {e!s}",
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Internal server error: {e!s}"
+        ) from e
 
 
 @router.post("/admin/kill")
@@ -544,20 +571,36 @@ def create_order_template(
     current_user: User = Depends(get_current_user_unified),
 ):
     """Create a new order template"""
-    db_template = OrderTemplate(
-        name=template.name,
-        description=template.description,
-        symbol=template.symbol.upper(),
-        side=template.side,
-        quantity=template.quantity,
-        order_type=template.order_type,
-        limit_price=template.limit_price,
-        user_id=None,  # For now, templates are global (not user-specific)
-    )
-    db.add(db_template)
-    db.commit()
-    db.refresh(db_template)
-    return db_template
+    try:
+        db_template = OrderTemplate(
+            name=template.name,
+            description=template.description,
+            symbol=template.symbol.upper(),
+            side=template.side,
+            quantity=template.quantity,
+            order_type=template.order_type,
+            limit_price=template.limit_price,
+            user_id=None,  # For now, templates are global (not user-specific)
+        )
+        db.add(db_template)
+        db.commit()
+        db.refresh(db_template)
+
+        logger.info(
+            "Created order template",
+            extra={"template_id": db_template.id, "symbol": db_template.symbol},
+        )
+        return db_template
+    except Exception as exc:
+        logger.error(
+            "Failed to create order template",
+            exc_info=exc,
+            extra={"symbol": template.symbol, "side": template.side},
+        )
+        db.rollback()
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create template: {exc!s}"
+        ) from exc
 
 
 @router.get("/order-templates", response_model=list[OrderTemplateResponse])
@@ -568,8 +611,22 @@ def list_order_templates(
     current_user: User = Depends(get_current_user_unified),
 ):
     """List all order templates"""
-    templates = db.query(OrderTemplate).offset(skip).limit(limit).all()
-    return templates
+    try:
+        templates = db.query(OrderTemplate).offset(skip).limit(limit).all()
+        logger.info(
+            "Listed order templates",
+            extra={"count": len(templates), "skip": skip, "limit": limit},
+        )
+        return templates
+    except Exception as exc:
+        logger.error(
+            "Failed to list order templates",
+            exc_info=exc,
+            extra={"skip": skip, "limit": limit},
+        )
+        raise HTTPException(
+            status_code=500, detail="Failed to list order templates"
+        ) from exc
 
 
 @router.get("/order-templates/{template_id}", response_model=OrderTemplateResponse)
@@ -579,10 +636,29 @@ def get_order_template(
     current_user: User = Depends(get_current_user_unified),
 ):
     """Get a specific order template by ID"""
-    template = db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
-    if not template:
-        raise HTTPException(status_code=404, detail="Order template not found")
-    return template
+    try:
+        template = (
+            db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+        )
+        if not template:
+            logger.warning(
+                "Order template not found", extra={"template_id": template_id}
+            )
+            raise HTTPException(status_code=404, detail="Order template not found")
+
+        logger.info("Retrieved order template", extra={"template_id": template_id})
+        return template
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(
+            "Failed to fetch order template",
+            exc_info=exc,
+            extra={"template_id": template_id},
+        )
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch order template"
+        ) from exc
 
 
 @router.put("/order-templates/{template_id}", response_model=OrderTemplateResponse)
@@ -593,32 +669,59 @@ def update_order_template(
     current_user: User = Depends(get_current_user_unified),
 ):
     """Update an existing order template"""
-    db_template = (
-        db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
-    )
-    if not db_template:
-        raise HTTPException(status_code=404, detail="Order template not found")
+    try:
+        db_template = (
+            db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+        )
+        if not db_template:
+            logger.warning(
+                "Order template not found for update",
+                extra={"template_id": template_id},
+            )
+            raise HTTPException(status_code=404, detail="Order template not found")
 
-    # Update fields if provided
-    if template_update.name is not None:
-        db_template.name = template_update.name
-    if template_update.description is not None:
-        db_template.description = template_update.description
-    if template_update.symbol is not None:
-        db_template.symbol = template_update.symbol.upper()
-    if template_update.side is not None:
-        db_template.side = template_update.side
-    if template_update.quantity is not None:
-        db_template.quantity = template_update.quantity
-    if template_update.order_type is not None:
-        db_template.order_type = template_update.order_type
-    if template_update.limit_price is not None:
-        db_template.limit_price = template_update.limit_price
+        # Update fields if provided
+        if template_update.name is not None:
+            db_template.name = template_update.name
+        if template_update.description is not None:
+            db_template.description = template_update.description
+        if template_update.symbol is not None:
+            db_template.symbol = template_update.symbol.upper()
+        if template_update.side is not None:
+            db_template.side = template_update.side
+        if template_update.quantity is not None:
+            db_template.quantity = template_update.quantity
+        if template_update.order_type is not None:
+            db_template.order_type = template_update.order_type
+        if template_update.limit_price is not None:
+            db_template.limit_price = template_update.limit_price
 
-    db_template.updated_at = datetime.now(UTC)
-    db.commit()
-    db.refresh(db_template)
-    return db_template
+        db_template.updated_at = datetime.now(UTC)
+        db.commit()
+        db.refresh(db_template)
+
+        updated_fields = template_update.model_dump(exclude_none=True)
+        logger.info(
+            "Updated order template",
+            extra={
+                "template_id": template_id,
+                "updated_fields": updated_fields,
+            },
+        )
+        return db_template
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        logger.error(
+            "Failed to update order template",
+            exc_info=exc,
+            extra={"template_id": template_id},
+        )
+        raise HTTPException(
+            status_code=500, detail="Failed to update order template"
+        ) from exc
 
 
 @router.delete("/order-templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -628,15 +731,34 @@ def delete_order_template(
     current_user: User = Depends(get_current_user_unified),
 ):
     """Delete an order template"""
-    db_template = (
-        db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
-    )
-    if not db_template:
-        raise HTTPException(status_code=404, detail="Order template not found")
+    try:
+        db_template = (
+            db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+        )
+        if not db_template:
+            logger.warning(
+                "Order template not found for deletion",
+                extra={"template_id": template_id},
+            )
+            raise HTTPException(status_code=404, detail="Order template not found")
 
-    db.delete(db_template)
-    db.commit()
-    return
+        db.delete(db_template)
+        db.commit()
+        logger.info("Deleted order template", extra={"template_id": template_id})
+        return
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        logger.error(
+            "Failed to delete order template",
+            exc_info=exc,
+            extra={"template_id": template_id},
+        )
+        raise HTTPException(
+            status_code=500, detail="Failed to delete order template"
+        ) from exc
 
 
 @router.post("/order-templates/{template_id}/use", response_model=OrderTemplateResponse)
@@ -646,13 +768,33 @@ def use_order_template(
     current_user: User = Depends(get_current_user_unified),
 ):
     """Mark template as used (updates last_used_at timestamp)"""
-    db_template = (
-        db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
-    )
-    if not db_template:
-        raise HTTPException(status_code=404, detail="Order template not found")
+    try:
+        db_template = (
+            db.query(OrderTemplate).filter(OrderTemplate.id == template_id).first()
+        )
+        if not db_template:
+            logger.warning(
+                "Order template not found for use",
+                extra={"template_id": template_id},
+            )
+            raise HTTPException(status_code=404, detail="Order template not found")
 
-    db_template.last_used_at = datetime.now(UTC)
-    db.commit()
-    db.refresh(db_template)
-    return db_template
+        db_template.last_used_at = datetime.now(UTC)
+        db.commit()
+        db.refresh(db_template)
+
+        logger.info("Marked order template as used", extra={"template_id": template_id})
+        return db_template
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        logger.error(
+            "Failed to mark order template as used",
+            exc_info=exc,
+            extra={"template_id": template_id},
+        )
+        raise HTTPException(
+            status_code=500, detail="Failed to mark order template as used"
+        ) from exc

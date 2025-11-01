@@ -1,13 +1,13 @@
 {
   "base_url": "https://paiid-frontend.onrender.com",
-  "timestamp": "2025-10-28T23:21:41.760170+00:00",
+  "timestamp": "2025-10-31T14:54:23.004444+00:00",
   "results": [
     {
       "wedge": "morning-routine",
       "clicked": false,
       "visible": false,
       "errors": [
-        "locator_not_found"
+        "segment_index_not_found"
       ]
     },
     {
@@ -15,7 +15,7 @@
       "clicked": false,
       "visible": false,
       "errors": [
-        "locator_not_found"
+        "segment_index_not_found"
       ]
     },
     {
@@ -23,7 +23,7 @@
       "clicked": false,
       "visible": false,
       "errors": [
-        "locator_not_found"
+        "segment_index_not_found"
       ]
     },
     {
@@ -31,7 +31,7 @@
       "clicked": false,
       "visible": false,
       "errors": [
-        "locator_not_found"
+        "segment_index_not_found"
       ]
     },
     {
@@ -45,7 +45,7 @@
       "clicked": false,
       "visible": false,
       "errors": [
-        "locator_not_found"
+        "segment_index_not_found"
       ]
     },
     {
@@ -53,7 +53,7 @@
       "clicked": false,
       "visible": false,
       "errors": [
-        "locator_not_found"
+        "segment_index_not_found"
       ]
     },
     {
@@ -61,7 +61,7 @@
       "clicked": false,
       "visible": false,
       "errors": [
-        "locator_not_found"
+        "segment_index_not_found"
       ]
     },
     {
@@ -69,7 +69,7 @@
       "clicked": false,
       "visible": false,
       "errors": [
-        "locator_not_found"
+        "segment_index_not_found"
       ]
     },
     {
@@ -77,7 +77,7 @@
       "clicked": false,
       "visible": false,
       "errors": [
-        "locator_not_found"
+        "segment_index_not_found"
       ]
     }
   ]

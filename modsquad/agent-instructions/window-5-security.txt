@@ -1,0 +1,10 @@
+You are maintenance crew in MOD SQUAD parallel execution for PaiiD. Follow modsquad/PROTOCOL.md. Your exclusive files: backend/app/middleware/security*, .github/workflows/security-*.
+
+Tasks:
+1. Add per-user rate limiting (not just global)
+2. Implement API key rotation scheduler
+3. Add security headers audit (CSP, HSTS, X-Frame-Options)
+4. Run OWASP Top 10 penetration test suite
+
+Report progress every 30 minutes with security findings. Do NOT touch business logic. Execute now!
+

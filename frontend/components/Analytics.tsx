@@ -10,6 +10,7 @@ import {
   Target,
   TrendingDown,
 } from "lucide-react";
+import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
@@ -17,6 +18,23 @@ import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
 import TradingViewChart from "./TradingViewChart";
 import { Button, Card } from "./ui";
+
+const withAlpha = (hex: string, alpha: number) => {
+  const cleaned = hex.replace("#", "");
+  const bigint = parseInt(cleaned, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const glassSurface = (overrides: CSSProperties = {}) => ({
+  backgroundColor: theme.background.card,
+  backdropFilter: theme.blur.light,
+  border: `1px solid ${theme.colors.border}`,
+  borderRadius: theme.borderRadius.md,
+  ...overrides,
+});
 
 interface PerformanceMetrics {
   totalReturn: number;
@@ -553,10 +571,11 @@ export default function Analytics() {
       {isDemoMode && (
         <div
           style={{
-            background: "rgba(251, 191, 36, 0.1)",
-            border: "2px solid rgba(251, 191, 36, 0.5)",
-            borderRadius: theme.borderRadius.lg,
-            padding: theme.spacing.md,
+            ...glassSurface({
+              backgroundColor: withAlpha(theme.colors.warning, 0.1),
+              border: `1px solid ${withAlpha(theme.colors.warning, 0.5)}`,
+              padding: theme.spacing.md,
+            }),
             marginBottom: theme.spacing.lg,
             display: "flex",
             alignItems: "center",
@@ -565,7 +584,7 @@ export default function Analytics() {
         >
           <div
             style={{
-              background: "rgba(251, 191, 36, 0.2)",
+              backgroundColor: withAlpha(theme.colors.warning, 0.2),
               borderRadius: "50%",
               padding: theme.spacing.sm,
               display: "flex",
@@ -579,7 +598,7 @@ export default function Analytics() {
             <h3
               style={{
                 margin: 0,
-                color: "#fbbf24",
+                color: theme.colors.warning,
                 fontSize: "16px",
                 fontWeight: "700",
               }}
@@ -615,20 +634,20 @@ export default function Analytics() {
           <div style={{ fontSize: isMobile ? "28px" : "42px", fontWeight: "900", lineHeight: "1" }}>
             <span
               style={{
-                background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))",
+                filter: `drop-shadow(0 3px 8px ${withAlpha(theme.colors.primary, 0.4)})`,
               }}
             >
               P
             </span>
             <span
               style={{
-                background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                textShadow: "0 0 18px rgba(69, 240, 192, 0.8), 0 0 36px rgba(69, 240, 192, 0.4)",
+                textShadow: `0 0 18px ${withAlpha(theme.colors.aiGlow, 0.8)}, 0 0 36px ${withAlpha(theme.colors.aiGlow, 0.4)}`,
                 animation: "glow-ai 3s ease-in-out infinite",
               }}
             >
@@ -636,10 +655,10 @@ export default function Analytics() {
             </span>
             <span
               style={{
-                background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))",
+                filter: `drop-shadow(0 3px 8px ${withAlpha(theme.colors.primary, 0.4)})`,
               }}
             >
               D
@@ -693,8 +712,10 @@ export default function Analytics() {
           disabled={aiLoading}
           style={{
             padding: "12px 24px",
-            backgroundColor: aiLoading ? "#4B5563" : "#8B5CF6",
-            color: "white",
+            backgroundColor: aiLoading
+              ? withAlpha(theme.colors.textMuted, 0.4)
+              : theme.colors.accent,
+            color: theme.colors.text,
             border: "none",
             borderRadius: "8px",
             cursor: aiLoading ? "not-allowed" : "pointer",
@@ -715,12 +736,13 @@ export default function Analytics() {
           <div
             style={{
               marginTop: "24px",
-              padding: "24px",
-              background:
-                "linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1))",
-              border: "1px solid rgba(139, 92, 246, 0.3)",
-              borderRadius: "12px",
-              backdropFilter: "blur(10px)",
+              ...glassSurface({
+                padding: "24px",
+                borderRadius: "12px",
+                backgroundColor: withAlpha(theme.colors.accent, 0.12),
+                border: `1px solid ${withAlpha(theme.colors.accent, 0.4)}`,
+                boxShadow: theme.glow.purple,
+              }),
             }}
           >
             {/* Header */}
@@ -732,15 +754,15 @@ export default function Analytics() {
                 marginBottom: "20px",
               }}
             >
-              <h3 style={{ fontSize: "24px", fontWeight: "bold", color: "#E2E8F0" }}>
+              <h3 style={{ fontSize: "24px", fontWeight: "bold", color: theme.colors.text }}>
                 🤖 AI Portfolio Health Analysis
               </h3>
               <button
                 onClick={() => setShowAiPanel(false)}
                 style={{
-                  background: "none",
+                  backgroundColor: "transparent",
                   border: "none",
-                  color: "#94A3B8",
+                  color: theme.colors.textMuted,
                   cursor: "pointer",
                   fontSize: "24px",
                 }}
@@ -759,30 +781,32 @@ export default function Analytics() {
               }}
             >
               <div
-                style={{
+                style={glassSurface({
                   padding: "16px",
-                  background: "rgba(15, 23, 42, 0.6)",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(148, 163, 184, 0.2)",
-                }}
+                  borderRadius: theme.borderRadius.sm,
+                  border: `1px solid ${withAlpha(theme.colors.border, 0.6)}`,
+                })}
               >
-                <div style={{ fontSize: "14px", color: "#94A3B8", marginBottom: "8px" }}>
+                <div
+                  style={{ fontSize: "14px", color: theme.colors.textMuted, marginBottom: "8px" }}
+                >
                   Health Score
                 </div>
-                <div style={{ fontSize: "32px", fontWeight: "bold", color: "#10B981" }}>
+                <div style={{ fontSize: "32px", fontWeight: "bold", color: theme.colors.primary }}>
                   {(aiAnalysis as any).health_score || 85}/100
                 </div>
               </div>
 
               <div
-                style={{
+                style={glassSurface({
                   padding: "16px",
-                  background: "rgba(15, 23, 42, 0.6)",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(148, 163, 184, 0.2)",
-                }}
+                  borderRadius: theme.borderRadius.sm,
+                  border: `1px solid ${withAlpha(theme.colors.border, 0.6)}`,
+                })}
               >
-                <div style={{ fontSize: "14px", color: "#94A3B8", marginBottom: "8px" }}>
+                <div
+                  style={{ fontSize: "14px", color: theme.colors.textMuted, marginBottom: "8px" }}
+                >
                   Risk Level
                 </div>
                 <div
@@ -791,10 +815,10 @@ export default function Analytics() {
                     fontWeight: "bold",
                     color:
                       (aiAnalysis as any).risk_level === "Low"
-                        ? "#10B981"
+                        ? theme.colors.primary
                         : (aiAnalysis as any).risk_level === "Medium"
-                          ? "#F59E0B"
-                          : "#EF4444",
+                          ? theme.colors.warning
+                          : theme.colors.danger,
                   }}
                 >
                   {(aiAnalysis as any).risk_level || "Medium"}
@@ -802,17 +826,18 @@ export default function Analytics() {
               </div>
 
               <div
-                style={{
+                style={glassSurface({
                   padding: "16px",
-                  background: "rgba(15, 23, 42, 0.6)",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(148, 163, 184, 0.2)",
-                }}
+                  borderRadius: theme.borderRadius.sm,
+                  border: `1px solid ${withAlpha(theme.colors.border, 0.6)}`,
+                })}
               >
-                <div style={{ fontSize: "14px", color: "#94A3B8", marginBottom: "8px" }}>
+                <div
+                  style={{ fontSize: "14px", color: theme.colors.textMuted, marginBottom: "8px" }}
+                >
                   Diversification
                 </div>
-                <div style={{ fontSize: "32px", fontWeight: "bold", color: "#3B82F6" }}>
+                <div style={{ fontSize: "32px", fontWeight: "bold", color: theme.colors.accent }}>
                   {(aiAnalysis as any).diversification_score || 75}/100
                 </div>
               </div>
@@ -820,44 +845,42 @@ export default function Analytics() {
 
             {/* AI Summary */}
             <div
-              style={{
+              style={glassSurface({
                 padding: "16px",
-                background: "rgba(15, 23, 42, 0.6)",
-                borderRadius: "8px",
-                border: "1px solid rgba(148, 163, 184, 0.2)",
+                borderRadius: theme.borderRadius.sm,
+                border: `1px solid ${withAlpha(theme.colors.border, 0.6)}`,
                 marginBottom: "16px",
-              }}
+              })}
             >
               <div
                 style={{
                   fontSize: "16px",
                   fontWeight: "bold",
-                  color: "#E2E8F0",
+                  color: theme.colors.text,
                   marginBottom: "8px",
                 }}
               >
                 📊 AI Summary
               </div>
-              <div style={{ fontSize: "14px", color: "#CBD5E1", lineHeight: "1.6" }}>
+              <div style={{ fontSize: "14px", color: theme.colors.textMuted, lineHeight: "1.6" }}>
                 {(aiAnalysis as any).ai_summary || aiAnalysis.summary}
               </div>
             </div>
 
             {/* Recommendations */}
             <div
-              style={{
+              style={glassSurface({
                 padding: "16px",
-                background: "rgba(15, 23, 42, 0.6)",
-                borderRadius: "8px",
-                border: "1px solid rgba(148, 163, 184, 0.2)",
+                borderRadius: theme.borderRadius.sm,
+                border: `1px solid ${withAlpha(theme.colors.border, 0.6)}`,
                 marginBottom: "16px",
-              }}
+              })}
             >
               <div
                 style={{
                   fontSize: "16px",
                   fontWeight: "bold",
-                  color: "#E2E8F0",
+                  color: theme.colors.text,
                   marginBottom: "12px",
                 }}
               >
@@ -869,7 +892,7 @@ export default function Analytics() {
                     key={idx}
                     style={{
                       fontSize: "14px",
-                      color: "#CBD5E1",
+                      color: theme.colors.textMuted,
                       marginBottom: "8px",
                       lineHeight: "1.6",
                     }}
@@ -883,19 +906,18 @@ export default function Analytics() {
             {/* Risk Factors */}
             {(aiAnalysis as any).risk_factors?.length > 0 && (
               <div
-                style={{
+                style={glassSurface({
                   padding: "16px",
-                  background: "rgba(15, 23, 42, 0.6)",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  borderRadius: theme.borderRadius.sm,
+                  border: `1px solid ${withAlpha(theme.colors.danger, 0.35)}`,
                   marginBottom: "16px",
-                }}
+                })}
               >
                 <div
                   style={{
                     fontSize: "16px",
                     fontWeight: "bold",
-                    color: "#EF4444",
+                    color: theme.colors.danger,
                     marginBottom: "12px",
                   }}
                 >
@@ -907,7 +929,7 @@ export default function Analytics() {
                       key={idx}
                       style={{
                         fontSize: "14px",
-                        color: "#FCA5A5",
+                        color: withAlpha(theme.colors.danger, 0.65),
                         marginBottom: "8px",
                         lineHeight: "1.6",
                       }}
@@ -922,18 +944,17 @@ export default function Analytics() {
             {/* Opportunities */}
             {(aiAnalysis as any).opportunities?.length > 0 && (
               <div
-                style={{
+                style={glassSurface({
                   padding: "16px",
-                  background: "rgba(15, 23, 42, 0.6)",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(16, 185, 129, 0.3)",
-                }}
+                  borderRadius: theme.borderRadius.sm,
+                  border: `1px solid ${withAlpha(theme.colors.primary, 0.4)}`,
+                })}
               >
                 <div
                   style={{
                     fontSize: "16px",
                     fontWeight: "bold",
-                    color: "#10B981",
+                    color: theme.colors.primary,
                     marginBottom: "12px",
                   }}
                 >
@@ -945,7 +966,7 @@ export default function Analytics() {
                       key={idx}
                       style={{
                         fontSize: "14px",
-                        color: "#6EE7B7",
+                        color: withAlpha(theme.colors.primary, 0.75),
                         marginBottom: "8px",
                         lineHeight: "1.6",
                       }}
@@ -964,11 +985,13 @@ export default function Analytics() {
           <div
             style={{
               marginTop: "16px",
-              padding: "16px",
-              background: "rgba(239, 68, 68, 0.1)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-              borderRadius: "8px",
-              color: "#FCA5A5",
+              ...glassSurface({
+                padding: "16px",
+                borderRadius: theme.borderRadius.sm,
+                backgroundColor: withAlpha(theme.colors.danger, 0.12),
+                border: `1px solid ${withAlpha(theme.colors.danger, 0.35)}`,
+                color: withAlpha(theme.colors.danger, 0.75),
+              }),
             }}
           >
             ⚠️ {aiError}
@@ -1067,13 +1090,15 @@ export default function Analytics() {
             <div
               ref={equityChartRef}
               style={{
+                ...glassSurface({
+                  padding: theme.spacing.md,
+                  borderRadius: theme.borderRadius.sm,
+                  backgroundColor: theme.background.input,
+                }),
                 height: isMobile ? "200px" : "300px",
                 display: "flex",
                 alignItems: "flex-end",
                 gap: "2px",
-                padding: theme.spacing.md,
-                background: theme.background.input,
-                borderRadius: theme.borderRadius.sm,
               }}
             >
               {dailyPerformance
@@ -1095,10 +1120,10 @@ export default function Analytics() {
                       style={{
                         flex: 1,
                         height: `${Math.max(height, 5)}%`,
-                        background:
+                        backgroundColor:
                           point.portfolioValue > 100000
                             ? theme.colors.primary
-                            : theme.colors.danger,
+                            : theme.colors.danger, // backdrop-filter not applicable (bar fill)
                         borderRadius: "2px 2px 0 0",
                         transition: theme.transitions.fast,
                       }}
@@ -1144,14 +1169,16 @@ export default function Analytics() {
             <div
               ref={pnlChartRef}
               style={{
+                ...glassSurface({
+                  padding: theme.spacing.md,
+                  borderRadius: theme.borderRadius.sm,
+                  backgroundColor: theme.background.input,
+                }),
                 height: isMobile ? "150px" : "200px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "2px",
-                padding: theme.spacing.md,
-                background: theme.background.input,
-                borderRadius: theme.borderRadius.sm,
               }}
             >
               {dailyPerformance
@@ -1180,7 +1207,8 @@ export default function Analytics() {
                         style={{
                           width: "100%",
                           height: `${height}%`,
-                          background: point.pnl >= 0 ? theme.colors.primary : theme.colors.danger,
+                          backgroundColor:
+                            point.pnl >= 0 ? theme.colors.primary : theme.colors.danger,
                           borderRadius: "2px",
                           transition: theme.transitions.fast,
                         }}
@@ -1214,10 +1242,12 @@ export default function Analytics() {
                 <div
                   key={index}
                   style={{
-                    padding: theme.spacing.md,
-                    background: theme.background.input,
-                    borderRadius: theme.borderRadius.md,
-                    borderLeft: `4px solid ${stat.profit >= 0 ? theme.colors.primary : theme.colors.danger}`,
+                    ...glassSurface({
+                      padding: theme.spacing.md,
+                      borderRadius: theme.borderRadius.md,
+                      backgroundColor: theme.background.input,
+                      borderLeft: `4px solid ${stat.profit >= 0 ? theme.colors.primary : theme.colors.danger}`,
+                    }),
                   }}
                 >
                   <p style={{ margin: 0, fontSize: "12px", color: theme.colors.textMuted }}>

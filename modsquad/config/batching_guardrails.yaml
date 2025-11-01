@@ -1,0 +1,205 @@
+version: 1
+batching_guardrails:
+  # SUN TZU Squad - Strategic Batch Planning Guardrails
+  strategic_planning:
+    enabled: true
+    constraints:
+      max_parallel_batches: 5  # Maximum batches running simultaneously
+      max_collision_probability: 0.10  # 10% max collision risk between tasks
+      max_batch_risk: 0.005  # 0.5% max risk per individual batch
+      min_parallelization_factor: 30  # Minimum 30% parallelization to justify batching
+
+    dependency_analysis:
+      detect_cycles: true  # Fail on circular dependencies
+      import_depth: 3  # How deep to analyze import chains
+      block_on_unresolved_deps: true  # Fail if dependency graph incomplete
+
+    risk_profiling:
+      critical_file_patterns:
+        - "main.py"
+        - "__init__.py"
+        - "config.py"
+        - "database.py"
+        - "migrations/"
+        - "alembic/"
+
+      risk_multipliers:
+        database_migration: 2.0  # Double risk for DB migrations
+        critical_system_file: 1.5  # 50% higher risk
+        external_api_call: 1.3  # 30% higher risk
+        multi_file_task: 1.2  # 20% higher risk per additional file
+
+    optimization:
+      algorithm: constraint_satisfaction  # or 'greedy', 'genetic'
+      max_optimization_iterations: 100
+      timeout_seconds: 30
+      fallback_to_sequential: true  # If optimization fails, run sequentially
+
+    intersection_mapping:
+      enabled: true
+      min_confidence_threshold: 0.8  # 80% confidence required for auto-merge
+      max_intersections_per_batch: 10
+      block_on_complex_intersection: false  # Manual review for complex intersections
+
+  # ARMANI Squad - Integration Weaving Guardrails
+  integration_weaving:
+    enabled: true
+
+    interface_prediction:
+      use_ast_analysis: true  # Parse Python AST for type hints
+      fallback_to_regex: true  # Regex fallback if AST fails
+      predict_type_contracts: true
+      confidence_threshold: 0.7  # 70% confidence for predictions
+
+    glue_code_generation:
+      patterns:
+        - handoff_function
+        - import_injection
+        - parameter_passthrough
+        - type_adapter
+
+      validation:
+        syntax_check: true  # Must pass py_compile
+        type_check: true  # Must pass mypy (if available)
+        import_check: true  # Must resolve all imports
+
+      max_glue_code_lines: 50  # Flag for review if >50 lines
+      require_docstrings: true
+      require_type_hints: true
+
+    conflict_resolution:
+      enabled: true
+      strategies:
+        imports:
+          auto_merge: true  # Always auto-merge imports
+          sort_alphabetically: true
+          remove_duplicates: true
+
+        comments:
+          auto_merge: true  # Combine comments with review
+          require_review: true
+          preserve_all: true
+
+        function_signatures:
+          auto_merge: false  # Manual review required
+          require_review: true
+          block_on_incompatible: true
+
+        incompatible_changes:
+          auto_merge: false
+          require_review: true
+          block_on_conflict: true
+
+      max_auto_merge_conflicts: 10  # Require manual review if >10 conflicts
+      three_way_merge: true  # Use git-style 3-way merge
+      preserve_both_changes: false  # Fail if changes can't be reconciled
+
+    execution:
+      atomic_operations: true  # All-or-nothing execution
+      create_backups: true
+      backup_retention_hours: 24
+      rollback_on_validation_failure: true
+      timeout_seconds: 60
+
+    validation:
+      enabled: true
+      block_on_integration_fail: true  # Exit 1 if validation fails
+
+      layers:
+        syntax:
+          enabled: true
+          blocking: true  # Must pass
+          tool: py_compile
+
+        types:
+          enabled: true
+          blocking: false  # Warn only
+          tool: mypy
+          strict_mode: false
+
+        imports:
+          enabled: true
+          blocking: true  # Must pass
+          check_circular: true
+
+        function_signatures:
+          enabled: true
+          blocking: true  # Must pass
+          check_type_contracts: true
+
+        unit_tests:
+          enabled: true
+          blocking: false  # Warn only
+          timeout_seconds: 180
+          run_relevant_only: true  # Not full suite
+
+      max_validation_retries: 1
+      fail_fast: true  # Stop on first blocking failure
+
+  # Batch Execution Policies
+  execution_policies:
+    max_concurrent_batches: 5
+    batch_timeout_minutes: 30
+
+    batch_completion_monitoring:
+      poll_interval_seconds: 5
+      max_poll_duration_minutes: 60
+      alert_on_stuck_batch: true
+
+    failure_handling:
+      retry_failed_batches: false  # No auto-retry (requires manual intervention)
+      isolate_failed_tasks: true  # Remove failed tasks from batch plan
+      continue_on_batch_failure: false  # Stop all batches if one fails
+      rollback_on_failure: true  # Rollback changes on failure
+
+    success_criteria:
+      require_all_batches_complete: true
+      require_all_intersections_woven: true
+      require_all_validations_passed: true
+      allow_warnings: true  # Warnings OK, errors block
+
+  # Logging & Artifacts
+  artifacts:
+    enabled: true
+    log_format: jsonl
+
+    directories:
+      batch_plans: modsquad/logs/run-history/elite_strategist/
+      dependency_graphs: modsquad/logs/run-history/task_graph_analyzer/
+      risk_profiles: modsquad/logs/run-history/risk_profiler/
+      batch_optimizations: modsquad/logs/run-history/batch_optimizer/
+      intersections: modsquad/logs/run-history/intersection_mapper/
+      weave_results: modsquad/logs/run-history/elite_weaver/
+      glue_code: modsquad/logs/run-history/glue_code_generator/
+      conflicts: modsquad/logs/run-history/conflict_resolver/
+      executions: modsquad/logs/run-history/intersection_executor/
+      validations: modsquad/logs/run-history/integration_validator/
+
+    retention_days: 30
+    compress_after_days: 7
+
+  # Performance Metrics
+  metrics:
+    track_speedup: true  # Calculate sequential vs parallel time
+    track_parallelization_factor: true
+    track_collision_rate: true
+    track_conflict_resolution_rate: true
+    track_validation_pass_rate: true
+
+    thresholds:
+      min_acceptable_speedup_pct: 20  # Must achieve 20% speedup
+      max_acceptable_collision_rate: 0.15  # 15% max collision rate
+      min_validation_pass_rate: 0.95  # 95% validation success
+
+  # Emergency Controls
+  emergency:
+    kill_switch_enabled: true  # Allow instant shutdown of all batches
+    max_failures_before_disable: 3  # Auto-disable after 3 failures
+    cooldown_period_minutes: 30  # Wait before re-enabling
+    notify_on_emergency_stop: true
+
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 5
+      timeout_seconds: 300
+      half_open_requests: 3

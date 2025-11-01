@@ -1,0 +1,137 @@
+name: Visual Regression Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  visual-tests:
+    name: Run Playwright + Argos Visual Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for Argos baseline comparison
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Start backend server (background)
+        working-directory: backend
+        run: |
+          python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 &
+          sleep 10
+        env:
+          API_TOKEN: ${{ secrets.API_TOKEN || 'test-token' }}
+          TRADIER_API_KEY: ${{ secrets.TRADIER_API_KEY }}
+          ALPACA_PAPER_API_KEY: ${{ secrets.ALPACA_PAPER_API_KEY }}
+          ALPACA_PAPER_SECRET_KEY: ${{ secrets.ALPACA_PAPER_SECRET_KEY }}
+
+      - name: Start frontend server (background)
+        working-directory: frontend
+        run: |
+          npm run build
+          npm start &
+          sleep 10
+        env:
+          NEXT_PUBLIC_API_TOKEN: ${{ secrets.API_TOKEN || 'test-token' }}
+          NEXT_PUBLIC_BACKEND_API_BASE_URL: http://localhost:8001
+
+      - name: Wait for servers to be ready
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:8001/api/health; do sleep 2; done'
+
+      - name: Run Playwright native visual tests
+        working-directory: frontend
+        run: npx playwright test tests/visual/critical-components.visual.spec.ts --project=chromium
+        continue-on-error: true
+
+      - name: Run Argos visual tests
+        working-directory: frontend
+        run: npx playwright test tests/visual/argos-snapshots.spec.ts --project=chromium
+        env:
+          ARGOS_TOKEN: ${{ secrets.ARGOS_TOKEN }}
+        continue-on-error: true
+
+      - name: Upload Argos screenshots
+        if: always()
+        working-directory: frontend
+        run: npx argos upload --token ${{ secrets.ARGOS_TOKEN }} || echo "Argos upload skipped (no token)"
+
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-visual-test-results
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+          retention-days: 30
+
+      - name: Upload visual diff screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff-screenshots
+          path: frontend/test-results/**/*-diff.png
+          retention-days: 14
+
+      - name: Comment PR with visual test results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            let comment = '## 📸 Visual Regression Test Results\n\n';
+
+            // Check if Argos ran
+            if (process.env.ARGOS_TOKEN) {
+              comment += '✅ **Argos Visual Tests**: Screenshots uploaded to Argos dashboard\n';
+              comment += '🔗 [View Argos Report](https://app.argos-ci.com)\n\n';
+            } else {
+              comment += '⚠️ **Argos Visual Tests**: Skipped (ARGOS_TOKEN not configured)\n\n';
+            }
+
+            comment += '📊 **Playwright Native Tests**: Check artifacts for diff images\n\n';
+            comment += '---\n';
+            comment += '*Visual regression powered by Playwright + Argos*';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

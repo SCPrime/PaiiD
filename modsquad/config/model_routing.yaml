@@ -1,0 +1,97 @@
+# Maps MOD SQUAD workflows/tasks to default model pipelines.
+workflows:
+  feature_development:
+    stages:
+      - task: requirements_brief
+        model: llama3-70b
+      - task: scaffolding
+        model: deepseek-coder
+      - task: implementation
+        model: deepseek-coder
+      - task: quantitative_review
+        model: deepseek-math
+      - task: tests
+        model: gpt-4.1-mini
+      - task: review
+        model: deepseek-r1
+      - task: documentation
+        model: claude-4.5-sonnet
+  bug_fix:
+    stages:
+      - task: reproduce_analysis
+        model: deepseek-r1
+      - task: patch
+        model: deepseek-coder
+      - task: numerical_sanity
+        model: deepseek-math
+      - task: regression_tests
+        model: gpt-4.1-mini
+      - task: summary
+        model: claude-4.5-haiku
+  refactor:
+    stages:
+      - task: architecture_brief
+        model: llama3-70b
+      - task: apply_changes
+        model: deepseek-coder
+      - task: risk_review
+        model: deepseek-r1
+      - task: refactor_audit
+        model: mistral-nemo
+      - task: doc_update
+        model: claude-4.5-sonnet
+  optimization:
+    stages:
+      - task: profiling
+        model: deepseek-math
+      - task: apply_tuning
+        model: deepseek-coder
+      - task: benchmark
+        model: gpt-5-codex-high
+      - task: regression_tests
+        model: gpt-4.1-mini
+      - task: changelog
+        model: claude-4.5-haiku
+  documentation_refresh:
+    stages:
+      - task: audit_existing
+        model: deepseek-v3
+      - task: rewrite
+        model: claude-4.5-sonnet
+      - task: proofread
+        model: gpt-5
+  review_mesh:
+    stages:
+      - task: dna_verification
+        model: claude-4.5-sonnet
+      - task: security_crosscheck
+        model: deepseek-r1
+      - task: testing_evidence_review
+        model: gpt-4.1-mini
+      - task: documentation_audit
+        model: claude-4.5-haiku
+fallbacks:
+  deepseek-coder:
+    - gpt-5-codex-high
+    - claude-4.5-sonnet
+    - mistral-nemo
+  deepseek-r1:
+    - gpt-5-pro
+    - claude-4.5-sonnet
+    - llama3-70b
+  deepseek-v3:
+    - claude-4.5-sonnet
+    - gpt-5
+  deepseek-math:
+    - llama3-70b
+    - gpt-5-codex-high
+  llama3-70b:
+    - deepseek-r1
+    - claude-4.5-sonnet
+  mistral-nemo:
+    - deepseek-coder
+    - gpt-4.1-mini
+overrides:
+  emergency_patch:
+    implementation: gpt-5-codex-high
+    review: claude-4.5-sonnet

@@ -1,11 +1,28 @@
 "use client";
 
 import { Bot, Loader, Send, Sparkles, User } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { showError } from "../lib/toast";
 import { theme } from "../styles/theme";
 import { Button, Card } from "./ui";
+
+const withAlpha = (hex: string, alpha: number) => {
+  const cleaned = hex.replace("#", "");
+  const bigint = parseInt(cleaned, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const glassSurface = (overrides: CSSProperties = {}) => ({
+  backgroundColor: theme.background.card,
+  backdropFilter: theme.blur.light,
+  border: `1px solid ${theme.colors.border}`,
+  borderRadius: theme.borderRadius.md,
+  ...overrides,
+});
 
 interface Message {
   id: string;
@@ -262,7 +279,7 @@ export default function ClaudeAIChat() {
                   width: "40px",
                   height: "40px",
                   borderRadius: "50%",
-                  background:
+                  backgroundImage:
                     msg.role === "assistant"
                       ? `linear-gradient(135deg, ${theme.colors.secondary}, ${theme.colors.primary})`
                       : `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
@@ -319,7 +336,7 @@ export default function ClaudeAIChat() {
                   width: "40px",
                   height: "40px",
                   borderRadius: "50%",
-                  background: `linear-gradient(135deg, ${theme.colors.secondary}, ${theme.colors.primary})`,
+                  backgroundImage: `linear-gradient(135deg, ${theme.colors.secondary}, ${theme.colors.primary})`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -363,23 +380,25 @@ export default function ClaudeAIChat() {
                   key={idx}
                   onClick={() => setInput(q)}
                   style={{
-                    padding: theme.spacing.sm,
-                    background: "rgba(6, 182, 212, 0.1)",
-                    border: `1px solid ${theme.colors.secondary}`,
-                    borderRadius: theme.borderRadius.md,
+                    ...glassSurface({
+                      padding: theme.spacing.sm,
+                      borderRadius: theme.borderRadius.md,
+                      backgroundColor: withAlpha(theme.colors.secondary, 0.15),
+                      border: `1px solid ${withAlpha(theme.colors.secondary, 0.45)}`,
+                    }),
                     color: theme.colors.text,
                     fontSize: "13px",
                     cursor: "pointer",
                     textAlign: "left",
-                    transition: "all 0.2s",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(6, 182, 212, 0.2)";
-                    e.currentTarget.style.borderColor = theme.colors.secondary;
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = theme.glow.teal;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(6, 182, 212, 0.1)";
-                    e.currentTarget.style.borderColor = theme.colors.secondary;
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
                   }}
                 >
                   {q}
@@ -401,7 +420,7 @@ export default function ClaudeAIChat() {
             style={{
               flex: 1,
               padding: "12px 16px",
-              background: "rgba(15, 23, 42, 0.5)",
+              backgroundColor: theme.background.input,
               border: `1px solid ${theme.colors.border}`,
               borderRadius: theme.borderRadius.md,
               color: theme.colors.text,

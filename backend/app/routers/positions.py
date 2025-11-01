@@ -3,7 +3,7 @@ Position Management API
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -36,9 +36,8 @@ async def get_positions(current_user: User = Depends(get_current_user_unified)):
         positions_data = fixture_loader.load_positions()
 
         # Convert fixture data to Position objects
-        positions = []
-        for pos_data in positions_data:
-            position = Position(
+        positions = [
+            Position(
                 id=pos_data.get("id", ""),
                 symbol=pos_data.get("symbol", ""),
                 quantity=pos_data.get("quantity", 0),
@@ -50,28 +49,31 @@ async def get_positions(current_user: User = Depends(get_current_user_unified)):
                 theta=pos_data.get("theta", 0.0),
                 vega=pos_data.get("vega", 0.0),
                 rho=pos_data.get("rho", 0.0),
-                test_fixture=True,  # Mark as fixture data
+                test_fixture=True,
             )
-            positions.append(position)
+            for pos_data in positions_data
+        ]
 
         return {
             "data": [p.model_dump() for p in positions],
             "count": len(positions),
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     try:
         service = PositionTrackerService()
         positions = await service.get_open_positions()
         return {
-            "data": [p.model_dump() if hasattr(p, "model_dump") else p for p in positions],
+            "data": [
+                p.model_dump() if hasattr(p, "model_dump") else p for p in positions
+            ],
             "count": len(positions),
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get positions: {e!s}", exc_info=True)
+        logger.error("Failed to get positions", exc_info=e)
         raise HTTPException(status_code=500, detail="Failed to fetch positions") from e
 
 
@@ -83,13 +85,15 @@ async def get_portfolio_greeks(current_user: User = Depends(get_current_user_uni
         greeks = await service.get_portfolio_greeks()
         return {
             "data": greeks.model_dump() if hasattr(greeks, "model_dump") else greeks,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get portfolio greeks: {e!s}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to fetch portfolio greeks") from e
+        logger.error("Failed to get portfolio greeks", exc_info=e)
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch portfolio greeks"
+        ) from e
 
 
 @router.post("/{position_id}/close")
@@ -105,10 +109,14 @@ async def close_position(
         return {
             "success": True,
             "data": result,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to close position {position_id}: {e!s}", exc_info=True)
+        logger.error(
+            "Failed to close position",
+            exc_info=e,
+            extra={"position_id": position_id},
+        )
         raise HTTPException(status_code=500, detail="Failed to close position") from e

@@ -1,4 +1,4 @@
-import { ReactNode, CSSProperties } from "react";
+import { CSSProperties, ReactNode } from "react";
 import { theme } from "../styles/theme";
 
 interface GlassCardProps {
@@ -76,7 +76,7 @@ export function GlassButton({
         return {
           ...baseStyle,
           background: `linear-gradient(to right, ${theme.colors.secondary}, ${theme.colors.accent})`,
-          color: "#ffffff",
+          color: theme.colors.text,
         };
       case "secondary":
         return {

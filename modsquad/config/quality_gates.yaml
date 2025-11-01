@@ -1,0 +1,31 @@
+gates:
+  lint:
+    description: No lint/errors on staged files
+    command: pnpm lint && uv run ruff check
+    block_on_failure: true
+  tests:
+    description: Critical backend & frontend smoke suites
+    command: pnpm test:ci --maxWorkers=4 && uv run pytest tests/smoke -q
+    block_on_failure: true
+  api_health:
+    description: Backend reachable + <0.5% 5xx past hour
+    health_check: http://127.0.0.1:8011/api/health
+    error_rate_threshold: 0.5
+    block_on_failure: true
+  security:
+    description: detect-secrets baseline clean + no critical vulns
+    command: detect-secrets scan --baseline .secrets.baseline .
+    block_on_failure: true
+  observability:
+    description: Sentry DSN present and metrics endpoint returns 200
+    sentry_env_var: SENTRY_DSN
+    metrics_endpoint: http://127.0.0.1:8011/metrics
+    block_on_failure: true
+
+waivers:
+  allow_override: true
+  require_approval_roles:
+    - release_manager
+    - security_officer
+  logging:
+    path: ../logs/waivers

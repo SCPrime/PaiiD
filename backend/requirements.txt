@@ -59,3 +59,7 @@ scipy>=1.11.0        # Scientific computing (needed for signal processing in pat
 
 # Security Updates (Wave 7: CVE-2025-50181 Fix)
 urllib3>=2.5.0       # Fixed SSRF vulnerability CVE-2025-50181
+
+# MOD SQUAD SUN TZU + ARMANI Dependencies (v2.2.0)
+mypy>=1.8.0                # Type checking for integration validation (optional)
+portalocker>=2.8.2         # Cross-platform file locking for parallel batch execution

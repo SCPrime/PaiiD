@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { cn, glassVariants } from "../lib/utils";
+
 interface AIChatBotProps {
   isOpen: boolean;
   onClose: () => void;
@@ -69,198 +71,119 @@ export default function AIChatBot({ isOpen, onClose }: AIChatBotProps) {
     }
   };
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <>
-      {isOpen && (
-        <div
-          onClick={onClose}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-            backdropFilter: "blur(4px)",
-            zIndex: 999,
-            animation: "fadeIn 0.3s ease-out",
-          }}
-        />
-      )}
-
       <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: "40vh",
-          backgroundColor: "rgba(15, 23, 42, 0.98)",
-          backdropFilter: "blur(20px)",
-          borderTop: "2px solid #45f0c0",
-          boxShadow: "0 -8px 32px rgba(69, 240, 192, 0.3)",
-          zIndex: 1000,
-          transform: isOpen ? "translateY(0)" : "translateY(100%)",
-          transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div
-          style={{
-            padding: "16px 24px",
-            borderBottom: "1px solid rgba(69, 240, 192, 0.2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                width: "12px",
-                height: "12px",
-                borderRadius: "50%",
-                backgroundColor: "#45f0c0",
-                boxShadow: "0 0 12px rgba(69, 240, 192, 0.8)",
-                animation: "pulse 2s ease-in-out infinite",
-              }}
-            />
-            <span
-              style={{
-                color: "#45f0c0",
-                fontSize: "18px",
-                fontWeight: "bold",
-                fontStyle: "italic",
-              }}
-            >
-              Pa<span style={{ textShadow: "0 0 12px rgba(69, 240, 192, 0.6)" }}>ii</span>D
-              Assistant
-            </span>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#94a3b8",
-              fontSize: "24px",
-              cursor: "pointer",
-              padding: "4px 8px",
-              transition: "color 0.2s",
-            }}
-          >
-            ×
-          </button>
-        </div>
+        className="fixed inset-0 z-[990] bg-slate-950/70 backdrop-blur-md transition-opacity"
+        onClick={onClose}
+      />
 
+      <div className="fixed inset-x-0 bottom-0 z-[1000] flex justify-center px-4 pb-4">
         <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-          }}
+          className={cn(
+            glassVariants.dialog,
+            "flex h-[40vh] w-full max-w-4xl flex-col border-t-2 border-[#45f0c0]/40 p-0 shadow-[0_-18px_45px_-18px_rgba(69,240,192,0.45)]"
+          )}
         >
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              style={{
-                display: "flex",
-                justifyContent: message.role === "user" ? "flex-end" : "flex-start",
-              }}
+          <header className="flex items-center justify-between border-b border-[#45f0c0]/25 bg-gradient-to-r from-[#16a394]/70 via-[#00ACC1]/70 to-[#7E57C2]/70 px-6 py-4">
+            <div className="flex items-center gap-3">
+              <span className="h-3 w-3 rounded-full bg-[#45f0c0] shadow-[0_0_12px_rgba(69,240,192,0.85)]" />
+              <span className="text-lg font-semibold italic text-[#f1f5f9]">
+                Pa
+                <span className="text-[#45f0c0] drop-shadow-[0_0_8px_rgba(69,240,192,0.5)]">
+                  ii
+                </span>
+                D Assistant
+              </span>
+            </div>
+            <button
+              onClick={onClose}
+              className="rounded-lg px-2 py-1 text-xl text-[#cbd5e1] transition hover:bg-white/10 hover:text-[#f1f5f9]"
             >
+              ×
+            </button>
+          </header>
+
+          <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+            {messages.map((message) => (
               <div
-                style={{
-                  maxWidth: "70%",
-                  padding: "12px 16px",
-                  borderRadius: "12px",
-                  backgroundColor:
-                    message.role === "user" ? "rgba(69, 240, 192, 0.15)" : "rgba(30, 41, 59, 0.8)",
-                  border: `1px solid ${message.role === "user" ? "rgba(69, 240, 192, 0.3)" : "rgba(148, 163, 184, 0.2)"}`,
-                  color: "#e2e8f0",
-                }}
+                key={message.id}
+                className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}
               >
-                <div style={{ fontSize: "14px", lineHeight: "1.5" }}>{message.content}</div>
                 <div
-                  style={{ fontSize: "11px", color: "#64748b", marginTop: "6px" }}
-                  suppressHydrationWarning
+                  className={cn(
+                    "max-w-[70%] rounded-2xl border px-4 py-3 text-sm leading-relaxed text-[#e2e8f0] shadow-lg",
+                    message.role === "user"
+                      ? "border-[#45f0c0]/40 bg-[#45f0c0]/20"
+                      : "border-[#94a3b8]/30 bg-[#1a2a3f]/85"
+                  )}
                 >
-                  {message.timestamp.toLocaleTimeString()}
+                  <div>{message.content}</div>
+                  <div
+                    className="mt-2 text-[11px] font-medium text-[#94a3b8]"
+                    suppressHydrationWarning
+                  >
+                    {message.timestamp.toLocaleTimeString()}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          {isTyping && (
-            <div style={{ display: "flex", gap: "4px", padding: "12px" }}>
-              {[0, 0.2, 0.4].map((delay, i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    backgroundColor: "#45f0c0",
-                    animation: "bounce 1.4s infinite ease-in-out both",
-                    animationDelay: `${delay}s`,
-                  }}
-                />
-              ))}
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+            ))}
 
-        <div
-          style={{
-            padding: "16px 24px",
-            borderTop: "1px solid rgba(69, 240, 192, 0.2)",
-            display: "flex",
-            gap: "12px",
-          }}
-        >
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask me anything about trading..."
-            style={{
-              flex: 1,
-              padding: "12px 16px",
-              backgroundColor: "rgba(30, 41, 59, 0.6)",
-              border: "1px solid rgba(69, 240, 192, 0.3)",
-              borderRadius: "8px",
-              color: "#e2e8f0",
-              fontSize: "14px",
-              outline: "none",
-            }}
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim()}
-            style={{
-              padding: "12px 24px",
-              backgroundColor: input.trim() ? "#45f0c0" : "rgba(69, 240, 192, 0.3)",
-              border: "none",
-              borderRadius: "8px",
-              color: "#0f172a",
-              fontWeight: "bold",
-              cursor: input.trim() ? "pointer" : "not-allowed",
-              boxShadow: input.trim() ? "0 0 20px rgba(69, 240, 192, 0.4)" : "none",
-            }}
-          >
-            Send
-          </button>
+            {isTyping && (
+              <div className="flex items-center gap-2 px-2">
+                {[0, 0.18, 0.36].map((delay, index) => (
+                  <span
+                    // eslint-disable-next-line react/no-array-index-key
+                    key={index}
+                    className="h-2 w-2 rounded-full bg-[#45f0c0]"
+                    style={{
+                      animation: "ai-chat-bounce 1.2s infinite ease-in-out",
+                      animationDelay: `${delay}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          <footer className="flex gap-3 border-t border-[#45f0c0]/25 px-6 py-4">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask me anything about trading..."
+              className={cn(
+                glassVariants.input,
+                "flex-1 rounded-xl border border-[#45f0c0]/30 bg-transparent px-4 py-3 text-sm text-[#e2e8f0] placeholder-[#94a3b8] shadow-[0_6px_20px_rgba(15,24,40,0.4)] focus:outline-none focus:ring-2 focus:ring-[#16a394]"
+              )}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className={cn(
+                "rounded-xl px-6 py-3 font-semibold text-[#0f172a] transition",
+                "bg-[#45f0c0] shadow-[0_12px_30px_rgba(69,240,192,0.35)] hover:shadow-[0_16px_40px_rgba(69,240,192,0.45)]",
+                !input.trim() && "cursor-not-allowed opacity-60 shadow-none"
+              )}
+            >
+              Send
+            </button>
+          </footer>
         </div>
       </div>
 
       <style>{`
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.8; } }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        @keyframes ai-chat-bounce {
+          0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+          40% { transform: scale(1); opacity: 1; }
+        }
       `}</style>
     </>
   );

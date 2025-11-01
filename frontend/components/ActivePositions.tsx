@@ -8,13 +8,30 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { alpaca, formatPosition } from "../lib/alpaca";
 import { logger } from "../lib/logger";
 import { theme } from "../styles/theme";
 import { Button, Card } from "./ui";
-import { SkeletonCard, ErrorState, EmptyState, Spinner } from "./ui/LoadingStates";
+import { EmptyState, ErrorState, SkeletonCard, Spinner } from "./ui/LoadingStates";
+
+const withAlpha = (hex: string, alpha: number) => {
+  const cleaned = hex.replace("#", "");
+  const bigint = parseInt(cleaned, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const glassSurface = (overrides: CSSProperties = {}) => ({
+  backgroundColor: theme.background.card,
+  backdropFilter: theme.blur.light,
+  border: `1px solid ${theme.colors.border}`,
+  borderRadius: theme.borderRadius.md,
+  ...overrides,
+});
 // import { usePositionUpdates } from "../hooks/usePositionUpdates"; // DISABLED: Using REST API instead
 
 interface Position {
@@ -239,24 +256,32 @@ export default function ActivePositions() {
   const getRecommendationColor = (recommendation: string) => {
     switch (recommendation) {
       case "HOLD":
-        return { bg: "rgba(59, 130, 246, 0.2)", border: "#3B82F6", text: "#3B82F6" };
+        return {
+          bg: withAlpha(theme.colors.accent, 0.2),
+          border: theme.colors.accent,
+          text: theme.colors.accent,
+        };
       case "ADD":
         return {
-          bg: "rgba(16, 185, 129, 0.2)",
+          bg: withAlpha(theme.colors.primary, 0.2),
           border: theme.colors.primary,
           text: theme.colors.primary,
         };
       case "TRIM":
-        return { bg: "rgba(245, 158, 11, 0.2)", border: "#F59E0B", text: "#F59E0B" };
+        return {
+          bg: withAlpha(theme.colors.warning, 0.2),
+          border: theme.colors.warning,
+          text: theme.colors.warning,
+        };
       case "EXIT":
         return {
-          bg: "rgba(239, 68, 68, 0.2)",
+          bg: withAlpha(theme.colors.danger, 0.2),
           border: theme.colors.danger,
           text: theme.colors.danger,
         };
       default:
         return {
-          bg: "rgba(100, 116, 139, 0.2)",
+          bg: withAlpha(theme.colors.textMuted, 0.25),
           border: theme.colors.textMuted,
           text: theme.colors.textMuted,
         };
@@ -268,21 +293,25 @@ export default function ActivePositions() {
     switch (risk) {
       case "LOW":
         return {
-          bg: "rgba(16, 185, 129, 0.2)",
+          bg: withAlpha(theme.colors.primary, 0.2),
           border: theme.colors.primary,
           text: theme.colors.primary,
         };
       case "MEDIUM":
-        return { bg: "rgba(245, 158, 11, 0.2)", border: "#F59E0B", text: "#F59E0B" };
+        return {
+          bg: withAlpha(theme.colors.warning, 0.2),
+          border: theme.colors.warning,
+          text: theme.colors.warning,
+        };
       case "HIGH":
         return {
-          bg: "rgba(239, 68, 68, 0.2)",
+          bg: withAlpha(theme.colors.danger, 0.2),
           border: theme.colors.danger,
           text: theme.colors.danger,
         };
       default:
         return {
-          bg: "rgba(100, 116, 139, 0.2)",
+          bg: withAlpha(theme.colors.textMuted, 0.25),
           border: theme.colors.textMuted,
           text: theme.colors.textMuted,
         };
@@ -329,20 +358,20 @@ export default function ActivePositions() {
           <div style={{ fontSize: isMobile ? "28px" : "42px", fontWeight: "900", lineHeight: "1" }}>
             <span
               style={{
-                background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`, // backdrop-filter not required (text gradient)
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))",
+                filter: `drop-shadow(0 3px 8px ${withAlpha(theme.colors.primary, 0.4)})`,
               }}
             >
               P
             </span>
             <span
               style={{
-                background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`, // backdrop-filter not required (text gradient)
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                textShadow: "0 0 18px rgba(69, 240, 192, 0.8), 0 0 36px rgba(69, 240, 192, 0.4)",
+                textShadow: `0 0 18px ${withAlpha(theme.colors.aiGlow, 0.75)}, 0 0 36px ${withAlpha(theme.colors.aiGlow, 0.45)}`,
                 animation: "glow-ai 3s ease-in-out infinite",
               }}
             >
@@ -350,10 +379,10 @@ export default function ActivePositions() {
             </span>
             <span
               style={{
-                background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`, // backdrop-filter not required (text gradient)
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))",
+                filter: `drop-shadow(0 3px 8px ${withAlpha(theme.colors.primary, 0.4)})`,
               }}
             >
               D
@@ -399,11 +428,7 @@ export default function ActivePositions() {
 
       {/* Error State */}
       {error && !loading && (
-        <ErrorState
-          message={error}
-          onRetry={loadPositions}
-          isRetrying={loading}
-        />
+        <ErrorState message={error} onRetry={loadPositions} isRetrying={loading} />
       )}
 
       {/* Loading State with Skeleton Screens */}
@@ -483,11 +508,21 @@ export default function ActivePositions() {
                     key={sort}
                     onClick={() => setSortBy(sort)}
                     style={{
-                      padding: `${theme.spacing.xs} ${theme.spacing.md}`,
-                      background: sortBy === sort ? theme.colors.primary : theme.background.input,
-                      color: sortBy === sort ? "#fff" : theme.colors.text,
-                      borderRadius: theme.borderRadius.sm,
-                      border: "none",
+                      ...glassSurface({
+                        padding: `${theme.spacing.xs} ${theme.spacing.md}`,
+                        borderRadius: theme.borderRadius.sm,
+                        backgroundColor:
+                          sortBy === sort
+                            ? withAlpha(theme.colors.primary, 0.25)
+                            : theme.background.input,
+                        border: `1px solid ${
+                          sortBy === sort
+                            ? withAlpha(theme.colors.primary, 0.4)
+                            : theme.colors.border
+                        }`,
+                      }),
+                      boxShadow: sortBy === sort ? theme.glow.teal : "none",
+                      color: theme.colors.text,
                       cursor: "pointer",
                       fontSize: "14px",
                       fontWeight: sortBy === sort ? "600" : "400",
@@ -514,7 +549,9 @@ export default function ActivePositions() {
               actionLabel="Execute Trade"
               onAction={() => {
                 // Navigate to execute trade workflow
-                const event = new CustomEvent('workflow-select', { detail: { workflow: 'execute' } });
+                const event = new CustomEvent("workflow-select", {
+                  detail: { workflow: "execute" },
+                });
                 window.dispatchEvent(event);
               }}
             />
@@ -688,15 +725,21 @@ export default function ActivePositions() {
                   {expandedPositions.has(position.symbol) && (
                     <div
                       style={{
+                        ...glassSurface({
+                          padding: theme.spacing.lg,
+                          borderRadius: theme.borderRadius.lg,
+                          backgroundColor: aiAnalysisMap[position.symbol]
+                            ? theme.background.input
+                            : withAlpha(theme.colors.textMuted, 0.12),
+                          border: `1px solid ${
+                            aiAnalysisMap[position.symbol]
+                              ? withAlpha(theme.colors.primary, 0.45)
+                              : theme.colors.border
+                          }`,
+                        }),
                         marginTop: theme.spacing.md,
-                        padding: theme.spacing.lg,
-                        background: aiAnalysisMap[position.symbol]
-                          ? theme.background.input
-                          : "rgba(30, 41, 59, 0.3)",
-                        border: `1px solid ${aiAnalysisMap[position.symbol] ? theme.colors.primary : theme.colors.border}`,
-                        borderRadius: theme.borderRadius.lg,
                         boxShadow: aiAnalysisMap[position.symbol]
-                          ? "0 0 15px rgba(69, 240, 192, 0.2)"
+                          ? `0 0 15px ${withAlpha(theme.colors.aiGlow, 0.35)}`
                           : "none",
                         transition: "all 0.3s ease",
                       }}
@@ -765,12 +808,18 @@ export default function ActivePositions() {
                             {/* Recommendation Badge */}
                             <div
                               style={{
-                                padding: "6px 12px",
-                                background: getRecommendationColor(
-                                  aiAnalysisMap[position.symbol].recommendation
-                                ).bg,
-                                border: `2px solid ${getRecommendationColor(aiAnalysisMap[position.symbol].recommendation).border}`,
-                                borderRadius: theme.borderRadius.sm,
+                                ...glassSurface({
+                                  padding: "6px 12px",
+                                  borderRadius: theme.borderRadius.sm,
+                                  backgroundColor: getRecommendationColor(
+                                    aiAnalysisMap[position.symbol].recommendation
+                                  ).bg,
+                                  border: `1px solid ${
+                                    getRecommendationColor(
+                                      aiAnalysisMap[position.symbol].recommendation
+                                    ).border
+                                  }`,
+                                }),
                                 fontSize: "13px",
                                 fontWeight: "700",
                                 color: getRecommendationColor(
@@ -794,12 +843,10 @@ export default function ActivePositions() {
                           >
                             {/* Confidence Score */}
                             <div
-                              style={{
+                              style={glassSurface({
                                 padding: theme.spacing.sm,
-                                background: theme.background.card,
                                 borderRadius: theme.borderRadius.sm,
-                                border: `1px solid ${theme.colors.border}`,
-                              }}
+                              })}
                             >
                               <div
                                 style={{
@@ -823,12 +870,10 @@ export default function ActivePositions() {
 
                             {/* Risk Score */}
                             <div
-                              style={{
+                              style={glassSurface({
                                 padding: theme.spacing.sm,
-                                background: theme.background.card,
                                 borderRadius: theme.borderRadius.sm,
-                                border: `1px solid ${theme.colors.border}`,
-                              }}
+                              })}
                             >
                               <div
                                 style={{
@@ -841,13 +886,18 @@ export default function ActivePositions() {
                               </div>
                               <div
                                 style={{
+                                  ...glassSurface({
+                                    padding: "4px 8px",
+                                    borderRadius: theme.borderRadius.sm,
+                                    backgroundColor: getRiskColor(
+                                      aiAnalysisMap[position.symbol].riskScore
+                                    ).bg,
+                                    border: `1px solid ${
+                                      getRiskColor(aiAnalysisMap[position.symbol].riskScore).border
+                                    }`,
+                                  }),
                                   fontSize: "14px",
                                   fontWeight: "600",
-                                  padding: "4px 8px",
-                                  background: getRiskColor(aiAnalysisMap[position.symbol].riskScore)
-                                    .bg,
-                                  border: `1px solid ${getRiskColor(aiAnalysisMap[position.symbol].riskScore).border}`,
-                                  borderRadius: theme.borderRadius.sm,
                                   color: getRiskColor(aiAnalysisMap[position.symbol].riskScore)
                                     .text,
                                   display: "inline-block",
@@ -861,9 +911,10 @@ export default function ActivePositions() {
                           {/* Sentiment */}
                           <div
                             style={{
-                              padding: theme.spacing.md,
-                              background: theme.background.card,
-                              borderRadius: theme.borderRadius.sm,
+                              ...glassSurface({
+                                padding: theme.spacing.md,
+                                borderRadius: theme.borderRadius.sm,
+                              }),
                               marginBottom: theme.spacing.md,
                               borderLeft: `4px solid ${theme.colors.primary}`,
                             }}
@@ -883,9 +934,11 @@ export default function ActivePositions() {
                           {/* Suggested Action */}
                           <div
                             style={{
-                              padding: theme.spacing.md,
-                              background: theme.background.card,
-                              borderRadius: theme.borderRadius.sm,
+                              ...glassSurface({
+                                padding: theme.spacing.md,
+                                borderRadius: theme.borderRadius.sm,
+                                backgroundColor: theme.background.card,
+                              }),
                               fontSize: "12px",
                               color: theme.colors.textMuted,
                               lineHeight: "1.6",
@@ -910,12 +963,10 @@ export default function ActivePositions() {
                           {/* Exit Strategy */}
                           {aiAnalysisMap[position.symbol].exitStrategy && (
                             <div
-                              style={{
+                              style={glassSurface({
                                 padding: theme.spacing.md,
-                                background: theme.background.card,
                                 borderRadius: theme.borderRadius.sm,
-                                border: `1px solid ${theme.colors.border}`,
-                              }}
+                              })}
                             >
                               <div
                                 style={{

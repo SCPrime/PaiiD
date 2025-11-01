@@ -1,21 +1,23 @@
 import type { AppProps } from "next/app";
-import { useState, useEffect } from "react";
+import Head from "next/head";
+import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
-import { TelemetryProvider } from "../components/TelemetryProvider";
-import { ChatProvider, useChat } from "../components/ChatContext";
-import { WorkflowProvider } from "../contexts/WorkflowContext";
-import { AuthProvider } from "../contexts/AuthContext";
-import { ThemeProvider } from "../contexts/ThemeContext";
 import AIChatBot from "../components/AIChatBot";
+import { ChatProvider, useChat } from "../components/ChatContext";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-import { GlowStyleProvider } from "../contexts/GlowStyleContext";
-import { HelpProvider } from "../hooks/useHelp";
-import { initSentry, setUser } from "../lib/sentry";
 import StoryboardCanvas from "../components/StoryboardCanvas";
+import { TelemetryProvider } from "../components/TelemetryProvider";
 import AppHeader from "../components/layout/AppHeader";
-import { getHotkeyManager, DEFAULT_HOTKEYS } from "../lib/hotkeyManager";
-import "../styles/globals.css";
+import { AuthProvider } from "../contexts/AuthContext";
+import { GlowStyleProvider } from "../contexts/GlowStyleContext";
+import { ThemeProvider } from "../contexts/ThemeContext";
+import { WorkflowProvider } from "../contexts/WorkflowContext";
+import { HelpProvider } from "../hooks/useHelp";
+import { DEFAULT_HOTKEYS, getHotkeyManager } from "../lib/hotkeyManager";
+import { initSentry, setUser } from "../lib/sentry";
 import "../styles/animations.css";
+import "../styles/globals.css";
+import { theme } from "../styles/theme";
 
 interface AppPropsExtended {
   Component: AppProps["Component"];
@@ -40,24 +42,24 @@ function AppContent({
 
   // Initialize hotkey manager
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const hotkeyManager = getHotkeyManager();
 
     // Register storyboard hotkey
-    hotkeyManager.register('storyboard', {
+    hotkeyManager.register("storyboard", {
       ...DEFAULT_HOTKEYS.STORYBOARD,
       action: () => setIsStoryboardOpen(true),
     });
 
     // Register AI chat hotkey
-    hotkeyManager.register('ai-chat', {
+    hotkeyManager.register("ai-chat", {
       ...DEFAULT_HOTKEYS.AI_CHAT,
       action: () => openChat(),
     });
 
     // Register close modal hotkey
-    hotkeyManager.register('close-modal', {
+    hotkeyManager.register("close-modal", {
       ...DEFAULT_HOTKEYS.CLOSE_MODAL,
       action: () => {
         if (isStoryboardOpen) setIsStoryboardOpen(false);
@@ -66,9 +68,9 @@ function AppContent({
     });
 
     return () => {
-      hotkeyManager.unregister('storyboard');
-      hotkeyManager.unregister('ai-chat');
-      hotkeyManager.unregister('close-modal');
+      hotkeyManager.unregister("storyboard");
+      hotkeyManager.unregister("ai-chat");
+      hotkeyManager.unregister("close-modal");
     };
   }, [isStoryboardOpen, isChatOpen, closeChat, openChat]);
 
@@ -103,25 +105,76 @@ function AppContent({
 
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
       };
     }
   }, [isDragging, dragOffset]);
 
   return (
     <TelemetryProvider userId={userId} userRole={userRole} enabled={telemetryEnabled}>
-      <AppHeader onLogoClick={() => window.location.assign("/")} />
-      <Component {...pageProps} />
+      <Head>
+        <title>PaiiD Trading Platform</title>
+        <meta name="description" content="PaiiD – AI-assisted trading intelligence platform" />
+      </Head>
+
+      <a
+        href="#main-content"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: "auto",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden",
+        }}
+        onFocus={(event) => {
+          Object.assign(event.currentTarget.style, {
+            position: "fixed",
+            left: "16px",
+            top: "16px",
+            width: "auto",
+            height: "auto",
+            padding: "12px 16px",
+            backgroundColor: "rgba(15, 24, 40, 0.95)",
+            color: theme.colors.text,
+            borderRadius: theme.borderRadius.sm,
+            border: `1px solid ${theme.colors.border}`,
+            zIndex: "10000",
+          });
+        }}
+        onBlur={(event) => {
+          Object.assign(event.currentTarget.style, {
+            position: "absolute",
+            left: "-9999px",
+            top: "auto",
+            width: "1px",
+            height: "1px",
+            padding: "0",
+            backgroundColor: "transparent",
+            border: "none",
+            color: "inherit",
+          });
+        }}
+      >
+        Skip to main content
+      </a>
+
+      <header role="banner">
+        <AppHeader onLogoClick={() => window.location.assign("/")} />
+      </header>
+
+      <main id="main-content" role="main">
+        <Component {...pageProps} />
+      </main>
+
       <AIChatBot isOpen={isChatOpen} onClose={closeChat} />
 
       {/* Storyboard Canvas */}
-      {isStoryboardOpen && (
-        <StoryboardCanvas onClose={() => setIsStoryboardOpen(false)} />
-      )}
+      {isStoryboardOpen && <StoryboardCanvas onClose={() => setIsStoryboardOpen(false)} />}
 
       {/* Floating Storyboard Button */}
       {!isStoryboardOpen && (
@@ -129,35 +182,35 @@ function AppContent({
           onMouseDown={handleMouseDown}
           onClick={() => !isDragging && setIsStoryboardOpen(true)}
           style={{
-            position: 'fixed',
+            position: "fixed",
             bottom: `${window.innerHeight - buttonPosition.y - 60}px`,
             right: `${window.innerWidth - buttonPosition.x - 60}px`,
-            width: '60px',
-            height: '60px',
-            backgroundColor: 'rgba(99, 102, 241, 0.9)',
-            border: '2px solid rgba(129, 140, 248, 0.5)',
-            borderRadius: '50%',
-            cursor: isDragging ? 'grabbing' : 'grab',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '24px',
-            color: 'white',
-            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4)',
+            width: "60px",
+            height: "60px",
+            backgroundColor: "rgba(99, 102, 241, 0.9)",
+            border: "2px solid rgba(129, 140, 248, 0.5)",
+            borderRadius: "50%",
+            cursor: isDragging ? "grabbing" : "grab",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "24px",
+            color: "white",
+            boxShadow: "0 8px 24px rgba(99, 102, 241, 0.4)",
             zIndex: 9999,
-            transition: isDragging ? 'none' : 'transform 0.2s, box-shadow 0.2s',
-            transform: isDragging ? 'scale(1.1)' : 'scale(1)',
+            transition: isDragging ? "none" : "transform 0.2s, box-shadow 0.2s",
+            transform: isDragging ? "scale(1.1)" : "scale(1)",
           }}
           onMouseEnter={(e) => {
             if (!isDragging) {
-              e.currentTarget.style.transform = 'scale(1.1)';
-              e.currentTarget.style.boxShadow = '0 12px 32px rgba(99, 102, 241, 0.6)';
+              e.currentTarget.style.transform = "scale(1.1)";
+              e.currentTarget.style.boxShadow = "0 12px 32px rgba(99, 102, 241, 0.6)";
             }
           }}
           onMouseLeave={(e) => {
             if (!isDragging) {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(99, 102, 241, 0.4)';
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(99, 102, 241, 0.4)";
             }
           }}
           title="Storyboard Mode (Ctrl+Shift+S)"
@@ -171,8 +224,8 @@ function AppContent({
         toastOptions={{
           duration: 4000,
           style: {
-            background: "rgba(30, 41, 59, 0.95)",
-            color: "#fff",
+            backgroundColor: "rgba(30, 41, 59, 0.95)",
+            color: theme.colors.text,
             border: "1px solid rgba(16, 185, 129, 0.3)",
             borderRadius: "12px",
             backdropFilter: "blur(10px)",
@@ -180,8 +233,8 @@ function AppContent({
           },
           success: {
             iconTheme: {
-              primary: "#10b981",
-              secondary: "#fff",
+              primary: theme.colors.success,
+              secondary: theme.colors.text,
             },
             style: {
               border: "1px solid rgba(16, 185, 129, 0.5)",
@@ -189,8 +242,8 @@ function AppContent({
           },
           error: {
             iconTheme: {
-              primary: "#ef4444",
-              secondary: "#fff",
+              primary: theme.colors.danger,
+              secondary: theme.colors.text,
             },
             style: {
               border: "1px solid rgba(239, 68, 68, 0.5)",
@@ -199,7 +252,7 @@ function AppContent({
           loading: {
             iconTheme: {
               primary: "#7E57C2",
-              secondary: "#fff",
+              secondary: theme.colors.text,
             },
           },
         }}

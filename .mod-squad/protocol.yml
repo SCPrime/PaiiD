@@ -1,0 +1,45 @@
+version: 1
+name: PaiiD MOD SQUAD Protocol
+mode: non_interfering
+
+batches:
+  - name: Streaming Hardening Smoke
+    steps:
+      - type: http
+        name: Backend health
+        method: GET
+        url: http://127.0.0.1:8011/api/health
+        timeout_seconds: 5
+        retry:
+          attempts: 2
+          backoff_ms: 300
+      - type: noop
+        name: WS heartbeat simulation
+      - type: noop
+        name: SSE backoff simulation
+
+  - name: Replay Gate Check
+    steps:
+      - type: noop
+        name: Temporal Oracle assertions
+      - type: noop
+        name: Time-gated news check
+
+  - name: Rate Limit and Circuit Breakers
+    steps:
+      - type: noop
+        name: 429 path and exponential backoff
+      - type: noop
+        name: Circuit breaker trip/reset
+
+  - name: Single Instance Guard
+    steps:
+      - type: noop
+        name: PID/file/redis lock check
+
+  - name: Observability Sanity
+    steps:
+      - type: noop
+        name: Sentry DSN present
+      - type: noop
+        name: Metrics endpoint responds

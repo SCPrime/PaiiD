@@ -1,0 +1,25 @@
+{
+  "base_url": "https://paiid-frontend.onrender.com",
+  "threshold_ms": 2000,
+  "flows": [
+    {
+      "flow": "quote_SPY",
+      "status": 200,
+      "duration_ms": 845,
+      "ok": true
+    },
+    {
+      "flow": "options_expirations_SPY",
+      "status": 200,
+      "duration_ms": 156,
+      "ok": true
+    },
+    {
+      "flow": "bars_SPY_daily",
+      "status": 200,
+      "duration_ms": 150,
+      "ok": true
+    }
+  ],
+  "timestamp": "2025-10-31T17:11:16.653282+00:00"
+}

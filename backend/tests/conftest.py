@@ -1,4 +1,15 @@
 import os
+import sys
+from pathlib import Path
+
+# Add project root and backend to Python path
+# For modsquad imports: need repo root (PaiiD/)
+# For app imports: need backend/
+backend_dir = Path(__file__).parent.parent  # backend/tests/conftest.py -> backend/
+project_root = backend_dir.parent  # backend/ -> PaiiD/
+sys.path.insert(0, str(project_root))  # For modsquad
+sys.path.insert(0, str(backend_dir))  # For app
+
 
 import pytest
 from fastapi.testclient import TestClient

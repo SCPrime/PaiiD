@@ -1,0 +1,84 @@
+version: 1
+browser_guardrails:
+  visual_regression:
+    tool: argos
+    playwright_integration: true
+    threshold_percent: 5
+    block_on_fail: true
+    auto_baseline_update: false
+    # Fallback to Playwright native tests if Argos unavailable
+    fallback_tool: playwright
+    # Enhanced features beyond Percy
+    features:
+      responsive_testing: true
+      responsive_viewports: [4096, 2560, 1920, 1080, 768, 414, 375]
+      animation_freeze: true
+      dynamic_content_masking: true
+      focus_state_testing: true
+      design_dna_validation: true
+      component_isolation: true
+  accessibility:
+    tool: axe-core
+    min_score: 90
+    block_on_fail: true
+    wcag_level: AA
+    rules:
+      - color-contrast
+      - aria-required-attr
+      - button-name
+      - image-alt
+      - label
+      - link-name
+  performance:
+    tool: lighthouse
+    min_score: 85
+    max_bundle_kb: 500
+    block_on_fail: true
+    thresholds:
+      first_contentful_paint_ms: 1500
+      time_to_interactive_ms: 3500
+      cumulative_layout_shift: 0.1
+  runtime_errors:
+    tool: sentry
+    auto_issue_creation: true
+    alert_threshold: 10_errors_per_hour
+    environments:
+      - production
+      - staging
+  session_replay:
+    tool: logrocket
+    enabled: false  # Enable after trial setup
+    retention_days: 30
+    pii_masking: true
+    sample_rate: 0.1
+  contract_testing:
+    tool: dredd
+    enabled: true
+    spec_path: backend/docs/openapi.yaml
+    block_on_drift: true
+  bundle_analysis:
+    tool: webpack-bundle-analyzer
+    max_chunk_kb: 500
+    alert_on_increase_pct: 10
+  visual_regression_advanced:
+    # Features beyond Percy (Design DNA, interaction states, component isolation)
+    enabled: true
+    block_on_fail: true
+    features:
+      design_dna_validation:
+        enabled: true
+        brand_colors: ["#1a7560", "#10b981", "#14b8a6"]
+        dark_theme_colors: ["#0f172a", "#1f2937", "#1e293b"]
+        typography: "system-ui, -apple-system, BlinkMacSystemFont"
+        glassmorphic_required: true
+      focus_state_testing:
+        enabled: true
+        focus_outline_color: "#14b8a6"
+        keyboard_navigation: true
+      component_isolation:
+        enabled: true
+        min_components: 30
+      interaction_states:
+        enabled: true
+        states: ["hover", "focus", "active", "disabled"]
+

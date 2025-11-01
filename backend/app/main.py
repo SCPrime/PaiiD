@@ -21,11 +21,8 @@ print("Deployed from: main branch - Tradier integration active")
 print("===========================\n", flush=True)
 
 
-import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.starlette import StarletteIntegration
 from slowapi.errors import RateLimitExceeded
 
 from .core.config import settings
@@ -58,41 +55,10 @@ from .routers import settings as settings_router
 from .scheduler import init_scheduler
 
 
-# Initialize Sentry if DSN is configured
-if settings.SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=settings.SENTRY_DSN,
-        integrations=[
-            StarletteIntegration(transaction_style="endpoint"),
-            FastApiIntegration(transaction_style="endpoint"),
-        ],
-        traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
-        profiles_sample_rate=0.1,  # 10% profiling
-        environment=(
-            "production"
-            if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "")
-            else "development"
-        ),
-        release="paiid-backend@1.0.0",
-        send_default_pii=False,  # Don't send personally identifiable info
-        before_send=lambda event, hint: (
-            event
-            if not event.get("request", {}).get("headers", {}).get("Authorization")
-            else {
-                **event,
-                "request": {
-                    **event.get("request", {}),
-                    "headers": {
-                        **event.get("request", {}).get("headers", {}),
-                        "Authorization": "[REDACTED]",
-                    },
-                },
-            }
-        ),
-    )
-    print("[OK] Sentry error tracking initialized", flush=True)
-else:
-    print("[WARNING] SENTRY_DSN not configured - error tracking disabled", flush=True)
+# Initialize Sentry observability via MOD SQUAD helper
+from .core.observability import init_sentry
+
+init_sentry()
 
 print("\n===== SETTINGS LOADED =====")
 print(f"settings.API_TOKEN: {'***' if settings.API_TOKEN else 'NOT_SET'}")

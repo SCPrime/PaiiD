@@ -9,7 +9,7 @@ import {
   Trash2,
   TrendingUp,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { useWorkflow } from "../contexts/WorkflowContext";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { logger } from "../lib/logger";
@@ -22,6 +22,23 @@ import StockLookup from "./StockLookup";
 import RiskCalculator from "./trading/RiskCalculator";
 import { Button, Card } from "./ui";
 import { Spinner } from "./ui/LoadingStates";
+
+const withAlpha = (hex: string, alpha: number) => {
+  const cleaned = hex.replace("#", "");
+  const bigint = parseInt(cleaned, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const glassSurface = (overrides: CSSProperties = {}) => ({
+  backgroundColor: theme.background.card,
+  backdropFilter: theme.blur.light,
+  border: `1px solid ${theme.colors.border}`,
+  borderRadius: theme.borderRadius.md,
+  ...overrides,
+});
 
 interface Order {
   symbol: string;
@@ -565,17 +582,21 @@ export default function ExecuteTradeForm() {
   const getRiskColor = (score: number) => {
     if (score >= 80)
       return {
-        bg: "rgba(16, 185, 129, 0.2)",
+        bg: withAlpha(theme.colors.primary, 0.2),
         border: theme.colors.primary,
         text: theme.colors.primary,
       };
     if (score >= 60)
       return {
-        bg: "rgba(255, 136, 0, 0.2)",
+        bg: withAlpha(theme.colors.warning, 0.2),
         border: theme.colors.warning,
         text: theme.colors.warning,
       };
-    return { bg: "rgba(255, 68, 68, 0.2)", border: theme.colors.danger, text: theme.colors.danger };
+    return {
+      bg: withAlpha(theme.colors.danger, 0.2),
+      border: theme.colors.danger,
+      text: theme.colors.danger,
+    };
   };
 
   const getMomentumColor = (momentum: string) => {
@@ -642,20 +663,20 @@ export default function ExecuteTradeForm() {
             >
               <span
                 style={{
-                  background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                  backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))",
+                  filter: `drop-shadow(0 3px 8px ${withAlpha(theme.colors.primary, 0.35)})`,
                 }}
               >
                 P
               </span>
               <span
                 style={{
-                  background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                  backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
-                  textShadow: "0 0 18px rgba(69, 240, 192, 0.8), 0 0 36px rgba(69, 240, 192, 0.4)",
+                  textShadow: `0 0 18px ${withAlpha(theme.colors.aiGlow, 0.8)}, 0 0 36px ${withAlpha(theme.colors.aiGlow, 0.4)}`,
                   animation: "glow-ai 3s ease-in-out infinite",
                 }}
               >
@@ -663,10 +684,10 @@ export default function ExecuteTradeForm() {
               </span>
               <span
                 style={{
-                  background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+                  backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))",
+                  filter: `drop-shadow(0 3px 8px ${withAlpha(theme.colors.primary, 0.35)})`,
                 }}
               >
                 D
@@ -674,12 +695,13 @@ export default function ExecuteTradeForm() {
             </div>
 
             <div
-              style={{
+              style={glassSurface({
                 padding: theme.spacing.md,
-                background: "rgba(16, 185, 129, 0.1)",
                 borderRadius: theme.borderRadius.lg,
-                border: "1px solid rgba(16, 185, 129, 0.2)",
-              }}
+                backgroundColor: withAlpha(theme.colors.primary, 0.12),
+                border: `1px solid ${withAlpha(theme.colors.primary, 0.4)}`,
+                boxShadow: theme.glow.teal,
+              })}
             >
               <TrendingUp
                 style={{
@@ -717,10 +739,10 @@ export default function ExecuteTradeForm() {
           <div
             style={{
               marginBottom: theme.spacing.xl,
-              padding: theme.spacing.lg,
-              background: theme.background.input,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: theme.borderRadius.lg,
+              ...glassSurface({
+                padding: theme.spacing.lg,
+                borderRadius: theme.borderRadius.lg,
+              }),
             }}
           >
             <div
@@ -762,7 +784,7 @@ export default function ExecuteTradeForm() {
                 style={{
                   flex: 1,
                   padding: "10px 14px",
-                  background: theme.background.card,
+                  backgroundColor: theme.background.card,
                   border: `1px solid ${theme.colors.border}`,
                   borderRadius: theme.borderRadius.md,
                   color: theme.colors.text,
@@ -792,10 +814,11 @@ export default function ExecuteTradeForm() {
               <div
                 style={{
                   marginTop: theme.spacing.md,
-                  padding: theme.spacing.md,
-                  background: theme.background.card,
-                  border: `1px solid ${theme.colors.primary}`,
-                  borderRadius: theme.borderRadius.md,
+                  ...glassSurface({
+                    padding: theme.spacing.md,
+                    borderRadius: theme.borderRadius.md,
+                    border: `1px solid ${withAlpha(theme.colors.primary, 0.5)}`,
+                  }),
                 }}
               >
                 <h4
@@ -817,7 +840,7 @@ export default function ExecuteTradeForm() {
                     width: "100%",
                     padding: "8px 12px",
                     marginBottom: theme.spacing.sm,
-                    background: theme.background.input,
+                    backgroundColor: theme.background.input,
                     border: `1px solid ${theme.colors.border}`,
                     borderRadius: theme.borderRadius.sm,
                     color: theme.colors.text,
@@ -833,7 +856,7 @@ export default function ExecuteTradeForm() {
                     width: "100%",
                     padding: "8px 12px",
                     marginBottom: theme.spacing.sm,
-                    background: theme.background.input,
+                    backgroundColor: theme.background.input,
                     border: `1px solid ${theme.colors.border}`,
                     borderRadius: theme.borderRadius.sm,
                     color: theme.colors.text,
@@ -860,10 +883,10 @@ export default function ExecuteTradeForm() {
           <div
             style={{
               marginBottom: theme.spacing.xl,
-              padding: theme.spacing.lg,
-              background: theme.background.input,
-              border: `1px solid ${theme.colors.border}`,
-              borderRadius: theme.borderRadius.lg,
+              ...glassSurface({
+                padding: theme.spacing.lg,
+                borderRadius: theme.borderRadius.lg,
+              }),
             }}
           >
             <label
@@ -884,10 +907,19 @@ export default function ExecuteTradeForm() {
                 style={{
                   flex: 1,
                   padding: "12px",
-                  background: assetClass === "stock" ? theme.colors.primary : theme.background.card,
-                  border: `2px solid ${assetClass === "stock" ? theme.colors.primary : theme.colors.border}`,
-                  borderRadius: theme.borderRadius.md,
-                  color: assetClass === "stock" ? "#0f172a" : theme.colors.text,
+                  ...glassSurface({
+                    backgroundColor:
+                      assetClass === "stock"
+                        ? withAlpha(theme.colors.primary, 0.25)
+                        : theme.background.input,
+                    borderRadius: theme.borderRadius.md,
+                    border: `1px solid ${
+                      assetClass === "stock"
+                        ? withAlpha(theme.colors.primary, 0.5)
+                        : theme.colors.border
+                    }`,
+                  }),
+                  color: assetClass === "stock" ? theme.colors.text : theme.colors.text,
                   fontSize: "14px",
                   fontWeight: "600",
                   cursor: "pointer",
@@ -902,11 +934,19 @@ export default function ExecuteTradeForm() {
                 style={{
                   flex: 1,
                   padding: "12px",
-                  background:
-                    assetClass === "option" ? theme.colors.primary : theme.background.card,
-                  border: `2px solid ${assetClass === "option" ? theme.colors.primary : theme.colors.border}`,
-                  borderRadius: theme.borderRadius.md,
-                  color: assetClass === "option" ? "#0f172a" : theme.colors.text,
+                  ...glassSurface({
+                    backgroundColor:
+                      assetClass === "option"
+                        ? withAlpha(theme.colors.secondary, 0.25)
+                        : theme.background.input,
+                    borderRadius: theme.borderRadius.md,
+                    border: `1px solid ${
+                      assetClass === "option"
+                        ? withAlpha(theme.colors.secondary, 0.5)
+                        : theme.colors.border
+                    }`,
+                  }),
+                  color: theme.colors.text,
                   fontSize: "14px",
                   fontWeight: "600",
                   cursor: "pointer",
@@ -955,7 +995,7 @@ export default function ExecuteTradeForm() {
                     style={{
                       flex: 1,
                       padding: responsiveSizes.inputPadding,
-                      background: theme.background.input,
+                      backgroundColor: theme.background.input,
                       border: `1px solid ${theme.colors.border}`,
                       borderRadius: theme.borderRadius.md,
                       color: theme.colors.text,
@@ -993,11 +1033,17 @@ export default function ExecuteTradeForm() {
                 <div
                   style={{
                     marginTop: theme.spacing.md,
-                    padding: theme.spacing.lg,
-                    background: aiAnalysis ? theme.background.input : "rgba(30, 41, 59, 0.3)",
-                    border: `1px solid ${aiAnalysis ? theme.colors.primary : theme.colors.border}`,
-                    borderRadius: theme.borderRadius.lg,
-                    boxShadow: aiAnalysis ? "0 0 15px rgba(69, 240, 192, 0.2)" : "none",
+                    ...glassSurface({
+                      padding: theme.spacing.lg,
+                      borderRadius: theme.borderRadius.lg,
+                      backgroundColor: aiAnalysis
+                        ? theme.background.input
+                        : withAlpha(theme.colors.textMuted, 0.15),
+                      border: `1px solid ${
+                        aiAnalysis ? withAlpha(theme.colors.primary, 0.45) : theme.colors.border
+                      }`,
+                      boxShadow: aiAnalysis ? theme.glow.teal : "none",
+                    }),
                     transition: "all 0.3s ease",
                   }}
                 >
@@ -1066,7 +1112,7 @@ export default function ExecuteTradeForm() {
                         <div
                           style={{
                             padding: "6px 12px",
-                            background: getRiskColor(aiAnalysis.confidence_score).bg,
+                            backgroundColor: getRiskColor(aiAnalysis.confidence_score).bg,
                             border: `2px solid ${getRiskColor(aiAnalysis.confidence_score).border}`,
                             borderRadius: theme.borderRadius.sm,
                             fontSize: "13px",
@@ -1081,13 +1127,12 @@ export default function ExecuteTradeForm() {
 
                       {/* Summary Banner */}
                       <div
-                        style={{
+                        style={glassSurface({
                           padding: theme.spacing.md,
-                          background: theme.background.card,
                           borderRadius: theme.borderRadius.sm,
                           marginBottom: theme.spacing.md,
                           borderLeft: `4px solid ${theme.colors.primary}`,
-                        }}
+                        })}
                       >
                         <div
                           style={{
@@ -1112,12 +1157,10 @@ export default function ExecuteTradeForm() {
                       >
                         {/* Current Price */}
                         <div
-                          style={{
+                          style={glassSurface({
                             padding: theme.spacing.sm,
-                            background: theme.background.card,
                             borderRadius: theme.borderRadius.sm,
-                            border: `1px solid ${theme.colors.border}`,
-                          }}
+                          })}
                         >
                           <div
                             style={{
@@ -1141,12 +1184,10 @@ export default function ExecuteTradeForm() {
 
                         {/* Momentum */}
                         <div
-                          style={{
+                          style={glassSurface({
                             padding: theme.spacing.sm,
-                            background: theme.background.card,
                             borderRadius: theme.borderRadius.sm,
-                            border: `1px solid ${theme.colors.border}`,
-                          }}
+                          })}
                         >
                           <div
                             style={{
@@ -1174,12 +1215,10 @@ export default function ExecuteTradeForm() {
 
                         {/* Trend */}
                         <div
-                          style={{
+                          style={glassSurface({
                             padding: theme.spacing.sm,
-                            background: theme.background.card,
                             borderRadius: theme.borderRadius.sm,
-                            border: `1px solid ${theme.colors.border}`,
-                          }}
+                          })}
                         >
                           <div
                             style={{
@@ -1207,12 +1246,10 @@ export default function ExecuteTradeForm() {
 
                         {/* Risk Assessment */}
                         <div
-                          style={{
+                          style={glassSurface({
                             padding: theme.spacing.sm,
-                            background: theme.background.card,
                             borderRadius: theme.borderRadius.sm,
-                            border: `1px solid ${theme.colors.border}`,
-                          }}
+                          })}
                         >
                           <div
                             style={{
@@ -1237,13 +1274,11 @@ export default function ExecuteTradeForm() {
 
                       {/* Support & Resistance Levels */}
                       <div
-                        style={{
+                        style={glassSurface({
                           padding: theme.spacing.md,
-                          background: theme.background.card,
                           borderRadius: theme.borderRadius.sm,
                           marginBottom: theme.spacing.md,
-                          border: `1px solid ${theme.colors.border}`,
-                        }}
+                        })}
                       >
                         <div
                           style={{
@@ -1295,15 +1330,14 @@ export default function ExecuteTradeForm() {
 
                       {/* AI Suggestions */}
                       <div
-                        style={{
+                        style={glassSurface({
                           padding: theme.spacing.md,
-                          background: theme.background.card,
                           borderRadius: theme.borderRadius.sm,
                           fontSize: "12px",
                           color: theme.colors.textMuted,
                           lineHeight: "1.6",
                           borderLeft: `3px solid ${theme.colors.primary}`,
-                        }}
+                        })}
                       >
                         <div
                           style={{
@@ -1350,7 +1384,7 @@ export default function ExecuteTradeForm() {
                   style={{
                     width: "100%",
                     padding: responsiveSizes.inputPadding,
-                    background: theme.background.input,
+                    backgroundColor: theme.background.input,
                     border: `1px solid ${theme.colors.border}`,
                     borderRadius: theme.borderRadius.md,
                     color: theme.colors.text,
@@ -1388,7 +1422,7 @@ export default function ExecuteTradeForm() {
                   style={{
                     width: "100%",
                     padding: responsiveSizes.inputPadding,
-                    background: theme.background.input,
+                    backgroundColor: theme.background.input,
                     border: `1px solid ${theme.colors.border}`,
                     borderRadius: theme.borderRadius.md,
                     color: theme.colors.text,
@@ -1419,7 +1453,7 @@ export default function ExecuteTradeForm() {
                   style={{
                     width: "100%",
                     padding: responsiveSizes.inputPadding,
-                    background: theme.background.input,
+                    backgroundColor: theme.background.input,
                     border: `1px solid ${theme.colors.border}`,
                     borderRadius: theme.borderRadius.md,
                     color: theme.colors.text,
@@ -1456,7 +1490,7 @@ export default function ExecuteTradeForm() {
                       style={{
                         width: "100%",
                         padding: responsiveSizes.inputPadding,
-                        background: theme.background.input,
+                        backgroundColor: theme.background.input,
                         border: `1px solid ${theme.colors.border}`,
                         borderRadius: theme.borderRadius.md,
                         color: theme.colors.text,
@@ -1490,7 +1524,7 @@ export default function ExecuteTradeForm() {
                       style={{
                         width: "100%",
                         padding: responsiveSizes.inputPadding,
-                        background: theme.background.input,
+                        backgroundColor: theme.background.input,
                         border: `1px solid ${theme.colors.border}`,
                         borderRadius: theme.borderRadius.md,
                         color: theme.colors.text,
@@ -1531,7 +1565,7 @@ export default function ExecuteTradeForm() {
                       style={{
                         width: "100%",
                         padding: responsiveSizes.inputPadding,
-                        background: theme.background.input,
+                        backgroundColor: theme.background.input,
                         border: `1px solid ${theme.colors.border}`,
                         borderRadius: theme.borderRadius.md,
                         color: theme.colors.text,
@@ -1580,7 +1614,7 @@ export default function ExecuteTradeForm() {
                     style={{
                       width: "100%",
                       padding: responsiveSizes.inputPadding,
-                      background: theme.background.input,
+                      backgroundColor: theme.background.input,
                       border: `1px solid ${theme.colors.border}`,
                       borderRadius: theme.borderRadius.md,
                       color: theme.colors.text,
@@ -1598,10 +1632,10 @@ export default function ExecuteTradeForm() {
               <div
                 style={{
                   marginTop: theme.spacing.lg,
-                  padding: theme.spacing.lg,
-                  background: theme.background.input,
-                  border: `1px solid ${theme.colors.border}`,
-                  borderRadius: theme.borderRadius.lg,
+                  ...glassSurface({
+                    padding: theme.spacing.lg,
+                    borderRadius: theme.borderRadius.lg,
+                  }),
                 }}
               >
                 <h4
@@ -1661,10 +1695,10 @@ export default function ExecuteTradeForm() {
             <div
               style={{
                 marginTop: theme.spacing.lg,
-                padding: theme.spacing.md,
-                background: theme.background.input,
-                border: `1px solid ${theme.colors.border}`,
-                borderRadius: theme.borderRadius.sm,
+                ...glassSurface({
+                  padding: theme.spacing.md,
+                  borderRadius: theme.borderRadius.sm,
+                }),
                 fontSize: "12px",
                 color: theme.colors.textMuted,
                 fontFamily: "monospace",
@@ -1679,12 +1713,18 @@ export default function ExecuteTradeForm() {
             <div style={{ marginTop: theme.spacing.lg }}>
               <div
                 style={{
-                  padding: theme.spacing.lg,
-                  background: response.duplicate
-                    ? "rgba(255, 136, 0, 0.2)"
-                    : "rgba(16, 185, 129, 0.2)",
-                  border: `2px solid ${response.duplicate ? theme.colors.warning : theme.colors.primary}`,
-                  borderRadius: theme.borderRadius.md,
+                  ...glassSurface({
+                    padding: theme.spacing.lg,
+                    borderRadius: theme.borderRadius.md,
+                    backgroundColor: response.duplicate
+                      ? withAlpha(theme.colors.warning, 0.2)
+                      : withAlpha(theme.colors.primary, 0.2),
+                    border: `2px solid ${
+                      response.duplicate
+                        ? withAlpha(theme.colors.warning, 0.6)
+                        : withAlpha(theme.colors.primary, 0.6)
+                    }`,
+                  }),
                   boxShadow: response.duplicate ? theme.glow.orange : theme.glow.green,
                   marginBottom: theme.spacing.md,
                 }}
@@ -1692,11 +1732,18 @@ export default function ExecuteTradeForm() {
                 <div style={{ display: "flex", alignItems: "flex-start", gap: theme.spacing.md }}>
                   <div
                     style={{
-                      padding: theme.spacing.sm,
-                      background: response.duplicate
-                        ? "rgba(255, 136, 0, 0.2)"
-                        : "rgba(16, 185, 129, 0.2)",
-                      borderRadius: theme.borderRadius.sm,
+                      ...glassSurface({
+                        padding: theme.spacing.sm,
+                        borderRadius: theme.borderRadius.sm,
+                        backgroundColor: response.duplicate
+                          ? withAlpha(theme.colors.warning, 0.25)
+                          : withAlpha(theme.colors.primary, 0.25),
+                        border: `1px solid ${
+                          response.duplicate
+                            ? withAlpha(theme.colors.warning, 0.5)
+                            : withAlpha(theme.colors.primary, 0.5)
+                        }`,
+                      }),
                     }}
                   >
                     {response.duplicate ? (
@@ -1736,9 +1783,10 @@ export default function ExecuteTradeForm() {
                 style={{
                   width: "100%",
                   padding: `${theme.spacing.md} ${theme.spacing.lg}`,
-                  background: theme.background.input,
-                  border: `1px solid ${theme.colors.border}`,
-                  borderRadius: theme.borderRadius.md,
+                  ...glassSurface({
+                    padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+                    borderRadius: theme.borderRadius.md,
+                  }),
                   color: theme.colors.textMuted,
                   fontSize: "14px",
                   fontWeight: "600",
@@ -1764,10 +1812,10 @@ export default function ExecuteTradeForm() {
                 <div
                   style={{
                     marginTop: theme.spacing.md,
-                    padding: theme.spacing.md,
-                    background: theme.background.input,
-                    border: `1px solid ${theme.colors.border}`,
-                    borderRadius: theme.borderRadius.md,
+                    ...glassSurface({
+                      padding: theme.spacing.md,
+                      borderRadius: theme.borderRadius.md,
+                    }),
                     overflowX: "auto",
                   }}
                 >
@@ -1793,19 +1841,24 @@ export default function ExecuteTradeForm() {
             <div
               style={{
                 marginTop: theme.spacing.lg,
-                padding: theme.spacing.lg,
-                background: "rgba(255, 68, 68, 0.2)",
-                border: `2px solid ${theme.colors.danger}`,
-                borderRadius: theme.borderRadius.md,
+                ...glassSurface({
+                  padding: theme.spacing.lg,
+                  borderRadius: theme.borderRadius.md,
+                  backgroundColor: withAlpha(theme.colors.danger, 0.2),
+                  border: `2px solid ${withAlpha(theme.colors.danger, 0.6)}`,
+                }),
                 boxShadow: theme.glow.red,
               }}
             >
               <div style={{ display: "flex", alignItems: "flex-start", gap: theme.spacing.md }}>
                 <div
                   style={{
-                    padding: theme.spacing.sm,
-                    background: "rgba(255, 68, 68, 0.2)",
-                    borderRadius: theme.borderRadius.sm,
+                    ...glassSurface({
+                      padding: theme.spacing.sm,
+                      borderRadius: theme.borderRadius.sm,
+                      backgroundColor: withAlpha(theme.colors.danger, 0.25),
+                      border: `1px solid ${withAlpha(theme.colors.danger, 0.45)}`,
+                    }),
                   }}
                 >
                   <AlertCircle style={{ width: 24, height: 24, color: theme.colors.danger }} />
@@ -1832,10 +1885,10 @@ export default function ExecuteTradeForm() {
             <div
               style={{
                 marginTop: theme.spacing.xl,
-                padding: theme.spacing.lg,
-                background: theme.background.input,
-                border: `1px solid ${theme.colors.border}`,
-                borderRadius: theme.borderRadius.lg,
+                ...glassSurface({
+                  padding: theme.spacing.lg,
+                  borderRadius: theme.borderRadius.lg,
+                }),
               }}
             >
               <div

@@ -1,0 +1,32 @@
+
+======================================================================
+GitHub Traffic Report: SCPrime/PaiiD
+Generated: 2025-10-31T20:00:07.446277+00:00
+======================================================================
+
+[ERROR] HTTP 401: {
+  "message": "Requires authentication",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "401"
+}
+
+[WARN] To fetch this data, you need:
+1. A GitHub Personal Access Token
+2. Token with 'repo' scope
+3. Run: python scripts/fetch_github_traffic.py --token YOUR_TOKEN
+
+======================================================================
+GitHub Traffic Report: SCPrime/Pa-D-2mx
+Generated: 2025-10-31T20:00:09.006668+00:00
+======================================================================
+
+[ERROR] HTTP 401: {
+  "message": "Requires authentication",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "401"
+}
+
+[WARN] To fetch this data, you need:
+1. A GitHub Personal Access Token
+2. Token with 'repo' scope
+3. Run: python scripts/fetch_github_traffic.py --token YOUR_TOKEN

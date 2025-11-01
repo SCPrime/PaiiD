@@ -27,6 +27,11 @@ SENTRY_ENVIRONMENT=production
 # Anthropic API (AI fallback for market data)
 ANTHROPIC_API_KEY=your-anthropic-api-key
 
+# Local/External LLM routing (optional)
+# Set to LiteLLM/OpenAI-compatible endpoint if using MOD SQUAD provider router.
+# Example for local proxy: http://127.0.0.1:4000/v1
+LLM_BASE_URL=
+
 # Database (PostgreSQL)
 DATABASE_URL=postgresql://user:password@host:port/database
 

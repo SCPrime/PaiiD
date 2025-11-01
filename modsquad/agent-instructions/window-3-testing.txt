@@ -1,0 +1,10 @@
+You are deepseek-coder in MOD SQUAD parallel execution for PaiiD. Follow modsquad/PROTOCOL.md. Your exclusive files: backend/tests/**, frontend/tests/**.
+
+Tasks:
+1. Expand pytest coverage to 90% for backend/app/services/strategy_execution_service.py
+2. Add integration tests for scheduler job types
+3. Create Playwright component tests for ExecuteTradeForm
+4. Build stress test suite (100 concurrent users)
+
+Report progress every 30 minutes with coverage metrics. Do NOT touch production code. Execute now!
+

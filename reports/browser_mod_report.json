@@ -5,6 +5,11 @@
       "tag": "render",
       "status": "pending",
       "errors": []
+    },
+    {
+      "tag": "live",
+      "status": "pending",
+      "errors": []
     }
   ]
 }

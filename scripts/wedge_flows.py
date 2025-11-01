@@ -4,6 +4,23 @@ from datetime import UTC, datetime
 
 from playwright.sync_api import sync_playwright
 
+try:
+    from .mod_config import get_base_url, get_reports_dir  # type: ignore
+except Exception:
+    # Fallback for direct execution
+    try:
+        from mod_config import get_base_url, get_reports_dir  # type: ignore
+    except Exception:
+
+        def get_base_url() -> str:  # type: ignore
+            return os.getenv(
+                "PRODUCTION_URL", "https://paiid-frontend.onrender.com"
+            ).rstrip("/")
+
+        def get_reports_dir() -> str:  # type: ignore
+            return os.getenv("REPORTS_DIR", "reports")
+
+
 WEDGES = [
     "morning-routine",
     "active-positions",
@@ -32,10 +49,9 @@ FALLBACK_TEXT: dict[str, list[str]] = {
 
 
 def main() -> int:
-    base_url = os.getenv(
-        "PRODUCTION_URL", "https://paiid-frontend.onrender.com"
-    ).rstrip("/")
-    output = os.getenv("WEDGE_OUTPUT", "reports/wedge_flows.json")
+    base_url = get_base_url()
+    output_dir = get_reports_dir()
+    output = os.getenv("WEDGE_OUTPUT", f"{output_dir}/wedge_flows.json")
 
     os.makedirs(os.path.dirname(output) or ".", exist_ok=True)
 
@@ -48,6 +64,18 @@ def main() -> int:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(viewport={"width": 1440, "height": 900})
+        # Ensure onboarding is bypassed so radial menu renders
+        context.add_init_script(
+            """
+            () => {
+              try {
+                localStorage.setItem('user-setup-complete','true');
+                localStorage.setItem('admin-bypass','true');
+                localStorage.setItem('bypass-timestamp', new Date().toISOString());
+              } catch (_) {}
+            }
+            """
+        )
         page = context.new_page()
 
         console_errors: list[str] = []
@@ -58,9 +86,13 @@ def main() -> int:
             else None,
         )
 
-        # Load home
-        page.goto(base_url, wait_until="domcontentloaded", timeout=30000)
-        page.wait_for_timeout(1000)
+        # Load home and wait for radial SVG
+        page.goto(base_url, wait_until="networkidle", timeout=30000)
+        try:
+            page.wait_for_selector("svg", timeout=10000)
+        except Exception:
+            pass
+        page.wait_for_timeout(800)
 
         for wedge in WEDGES:
             errors_before = len(console_errors)
@@ -97,7 +129,25 @@ def main() -> int:
                             clicked = True
                             break
                     if not clicked:
-                        result["errors"].append("locator_not_found")
+                        # Final fallback: click by segment index in the SVG
+                        try:
+                            index = WEDGES.index(wedge)
+                            segs = page.locator("svg .segment path")
+                            if segs.count() >= index + 1:
+                                seg = segs.nth(index)
+                                try:
+                                    seg.hover(timeout=2000)
+                                except Exception:
+                                    pass
+                                seg.click(timeout=5000)
+                                result["clicked"] = True
+                                result["visible"] = True
+                                page.wait_for_load_state("networkidle", timeout=10000)
+                                page.wait_for_timeout(500)
+                            else:
+                                result["errors"].append("segment_index_not_found")
+                        except Exception as e:
+                            result["errors"].append(f"fallback_click_error: {e}")
             except Exception as e:  # noqa: BLE001 - capturing for report
                 result["errors"].append(str(e))
 

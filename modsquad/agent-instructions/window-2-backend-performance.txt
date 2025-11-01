@@ -1,0 +1,10 @@
+You are deepseek-r1 in MOD SQUAD parallel execution for PaiiD. Follow modsquad/PROTOCOL.md. Your exclusive files: backend/app/services/*_cache.py, backend/app/middleware/cache*. 
+
+Tasks:
+1. Implement Redis caching for market data endpoints (quotes, historical bars)
+2. Optimize database queries with lazy loading
+3. Add request/response compression middleware
+4. Profile and optimize strategy engine hot paths
+
+Report progress every 30 minutes with task completion status. Do NOT touch frontend files or tests. Execute now!
+

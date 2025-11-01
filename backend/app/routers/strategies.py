@@ -51,6 +51,7 @@ class StrategyConfigRequest(BaseModel):
         """Validate strategy type"""
         allowed_types = [
             "under4-multileg",
+            "dex-meme-scout",
             "trend-following",
             "mean-reversion",
             "momentum",
@@ -83,6 +84,7 @@ class StrategyRunRequest(BaseModel):
         """Validate strategy type"""
         allowed_types = [
             "under4-multileg",
+            "dex-meme-scout",
             "trend-following",
             "mean-reversion",
             "momentum",
@@ -97,7 +99,8 @@ class StrategyRunRequest(BaseModel):
 
 @router.post("/strategies/save")
 async def save_strategy(
-    request: StrategyConfigRequest, current_user: User = Depends(get_current_user_unified)
+    request: StrategyConfigRequest,
+    current_user: User = Depends(get_current_user_unified),
 ):
     """
     Save strategy configuration
@@ -122,6 +125,7 @@ async def save_strategy(
 
         # Use service to save strategy
         from ..services.strategy_execution_service import get_strategy_execution_service
+
         strategy_service = get_strategy_execution_service()
         result = strategy_service.save_strategy(
             user_id=current_user.id,
@@ -148,6 +152,7 @@ async def load_strategy(
     """
     try:
         from ..services.strategy_execution_service import get_strategy_execution_service
+
         strategy_service = get_strategy_execution_service()
 
         # Provide default config if strategy type is under4-multileg
@@ -178,6 +183,7 @@ async def list_strategies(current_user: User = Depends(get_current_user_unified)
     """
     try:
         from ..services.strategy_execution_service import get_strategy_execution_service
+
         strategy_service = get_strategy_execution_service()
 
         strategies = strategy_service.list_strategies(user_id=current_user.id)
@@ -202,6 +208,7 @@ async def run_strategy(
     """
     try:
         from ..services.strategy_execution_service import get_strategy_execution_service
+
         strategy_service = get_strategy_execution_service()
 
         # Create strategy instance for validation (if needed)
@@ -215,16 +222,15 @@ async def run_strategy(
             )
 
         if request.dry_run:
-            result = strategy_service.execute_strategy_dry_run(
+            return strategy_service.execute_strategy_dry_run(
                 user_id=current_user.id,
                 strategy_type=request.strategy_type,
             )
-            return result
-        else:
-            # PHASE 1: Implement actual execution via order_execution.py
-            raise HTTPException(
-                status_code=501, detail="Live execution not yet implemented"
-            )
+
+        return strategy_service.execute_strategy_live(
+            user_id=current_user.id,
+            strategy_type=request.strategy_type,
+        )
 
     except HTTPException:
         raise
@@ -243,6 +249,7 @@ async def delete_strategy(
     """
     try:
         from ..services.strategy_execution_service import get_strategy_execution_service
+
         strategy_service = get_strategy_execution_service()
 
         result = strategy_service.delete_strategy(
@@ -256,6 +263,30 @@ async def delete_strategy(
         raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/strategies/execution-history")
+async def get_strategy_execution_history(
+    limit: int = 50, current_user: User = Depends(get_current_user_unified)
+):
+    """Return recent execution history for the authenticated user."""
+
+    if limit <= 0:
+        raise HTTPException(status_code=400, detail="limit must be positive")
+
+    try:
+        from ..services.strategy_execution_service import get_strategy_execution_service
+
+        service = get_strategy_execution_service()
+        history = service.list_execution_history(user_id=current_user.id, limit=limit)
+        return {"history": history}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch execution history: {exc!s}",
+        ) from exc
 
 
 # ========================================
@@ -376,7 +407,9 @@ async def get_strategy_template(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch template: {e!s}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch template: {e!s}"
+        ) from e
 
 
 class CloneTemplateRequest(BaseModel):
@@ -484,4 +517,6 @@ async def clone_strategy_template(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to clone template: {e!s}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to clone template: {e!s}"
+        ) from e

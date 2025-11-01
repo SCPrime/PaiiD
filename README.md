@@ -24,6 +24,9 @@
 - **Paper Trading** - Risk-free strategy testing
 - **Options Trading** - Greeks calculation and volatility analysis
 - **Portfolio Management** - Position tracking and P&L monitoring
+- **MOD SQUAD Guardrails** - Automated lint/tests/security gates on every workflow
+- **Modular Market Packs** - Stocks/options engine aligned with 2mx hot-swap architecture
+- **Execution Audit Trail** - `/api/strategies/execution-history` surfaces recent automation runs
 
 ### 🎨 **Enterprise UX**
 - **Radial Workflow Interface** - Intuitive 10-stage trading process
@@ -146,6 +149,7 @@
 - **Broker Integration**: Alpaca Trading API
 - **Deployment**: Render
 - **Endpoints**: RESTful API with `/api/proxy` reverse proxy
+- **Market Modules**: Strategy registry currently supplies `stocks_options`
 
 ### API Proxy Pattern
 Frontend routes all backend requests through `/api/proxy/[...path]` to avoid CORS issues:
@@ -184,6 +188,60 @@ python scripts/documentation-index-generator.py
 2. **Quarterly**: Process verification files in batches
 3. **As needed**: Archive redundant files with rollback safety
 
+---
+
+## 🚀 Parallel Batch Execution (SUN TZU + ARMANI)
+
+MOD SQUAD v2.2.0 introduces strategic batch planning and integration weaving for parallel task execution with 20-60% speedup.
+
+### Quick Start
+
+1. **Define tasks** (`tasks.json`):
+   ```json
+   [
+     {"id": "task1", "description": "Update health router", "files": ["backend/app/routers/health.py"], "dependencies": []},
+     {"id": "task2", "description": "Update orders router", "files": ["backend/app/routers/orders.py"], "dependencies": []}
+   ]
+   ```
+
+2. **Plan batches:**
+   ```bash
+   python modsquad/cli/batch.py plan --tasks tasks.json --output plan.json
+   ```
+
+3. **Review plan:**
+   ```bash
+   cat plan.json | python -m json.tool
+   ```
+
+4. **Execute batches** (manually or via CI/CD)
+
+5. **Weave results:**
+   ```bash
+   python modsquad/cli/batch.py weave --plan plan.json --results results.json
+   ```
+
+### ✨ Benefits
+- ⚡ **20-60% speedup** for large multi-task changes
+- 🔀 **Automatic conflict resolution** (imports, comments, functions)
+- ✅ **5-layer validation** (syntax, types, imports, signatures, tests)
+- 🔄 **Atomic rollback** on validation failure
+- 🔒 **File locking** prevents race conditions
+- 🛡️ **Server detection** prevents corruption during live development
+
+### 📚 Documentation
+- [Batching Examples](modsquad/docs/BATCHING_EXAMPLES.md) - 6 realistic scenarios with complete task definitions
+- [Rollback Procedures](modsquad/docs/ROLLBACK_PROCEDURES.md) - Automatic & manual rollback guide
+- [Complete Deployment Plan](modsquad/COMPLETE_DEPLOYMENT_PLAN.md) - Full implementation roadmap
+- [Implementation Summary](modsquad/IMPLEMENTATION_SUMMARY.md) - Complete deployment details
+
+### 🎯 Architecture
+- **SUN TZU Squad:** Strategic batch planning (5 extensions)
+- **ARMANI Squad:** Integration weaving (6 extensions)
+- **Guardrails:** Max 5 parallel batches, <10% collision probability, <0.5% risk per batch
+
+---
+
 ### Frontend Setup
 
 ```bash
@@ -204,6 +262,21 @@ python -m uvicorn main:app --reload --port 8000
 
 Backend runs at http://localhost:8000
 
+#### Local Infrastructure (Database + Cache)
+
+```bash
+docker compose -f infrastructure/docker-compose.dev.yml up -d
+```
+
+- PostgreSQL: `postgresql://paiid:paiid@localhost:5433/paiid`
+- Redis: `redis://localhost:6380/0`
+
+Stop services when finished:
+
+```bash
+docker compose -f infrastructure/docker-compose.dev.yml down
+```
+
 ### Environment Variables
 
 **Frontend** (`.env.local`):
@@ -213,9 +286,17 @@ Backend runs at http://localhost:8000
 
 **Backend** (`.env`):
 ```env
+DATABASE_URL=postgresql://paiid:paiid@localhost:5433/paiid
+REDIS_URL=redis://localhost:6380/0
 ALPACA_API_KEY=your_api_key_here
 ALPACA_SECRET_KEY=your_secret_key_here
 ALPACA_BASE_URL=https://paper-api.alpaca.markets  # or live
+# DEX wallet routing (optional for meme coin strategies)
+DEX_RPC_URL=https://polygon-mainnet.infura.io/v3/your-key
+DEX_WALLET_ADDRESS=0xYourWalletAddress
+DEX_ROUTER_CONTRACT=uniswapV3
+DEX_CHAIN_ID=137
+DEX_SLIPPAGE_BPS=75
 ```
 
 ## 📁 Project Structure
@@ -365,6 +446,7 @@ PaiiD/
 - Use Alpaca Paper Trading API for development
 - Production deployment uses environment variables on Render
 - Content Security Policy (CSP) headers prevent iframe injection
+- Refer to `LOCKED_ARTIFACTS.md` for files marked LOCKED FINAL—do not modify without EXECUTE NOW approval
 
 ## 🎯 Next Steps
 

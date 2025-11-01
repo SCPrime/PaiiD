@@ -1,0 +1,82 @@
+# MOD SQUAD Permanent Environment Configuration
+# Auto-loaded for every folder, file, and project
+
+# Python Path Configuration
+export PYTHONPATH="${PYTHONPATH}:${PWD}/modsquad:${PWD}/backend"
+
+# MOD SQUAD Configuration
+export MODSQUAD_ENABLED=true
+export MODSQUAD_VERSION="2.2.0"
+export MODSQUAD_AUTO_ACTIVATE=true
+
+# Squad Configuration
+export MODSQUAD_ALPHA_ALWAYS_ON=true
+export MODSQUAD_BRAVO_PRE_COMMIT=true
+export MODSQUAD_CHARLIE_DAILY_SCAN=true
+export MODSQUAD_DELTA_CONTINUOUS=true
+export MODSQUAD_SUN_TZU_ENABLED=true
+export MODSQUAD_ARMANI_ENABLED=true
+
+# Squad Execution Mode (prevents overlap)
+export MODSQUAD_SUN_TZU_MODE=planning_only
+export MODSQUAD_ARMANI_MODE=weaving_only
+
+# Shared Cache Configuration (lock-free handoff)
+export MODSQUAD_SHARED_CACHE_ENABLED=true
+export MODSQUAD_CACHE_BACKEND=memory
+export MODSQUAD_CACHE_TTL=3600
+
+# Extension Isolation (strict boundaries)
+export MODSQUAD_EXTENSION_ISOLATION=strict
+export MODSQUAD_CROSS_SQUAD_IMPORTS=false
+
+# Coordination Settings
+export MODSQUAD_COORDINATION_MODE=foxtrot
+export MODSQUAD_WAIT_FOR_DEPENDENCIES=true
+export MODSQUAD_MAX_PARALLEL_SQUADS=2
+
+# Phase Separation (enforce sequential phases)
+export MODSQUAD_ENFORCE_PHASE_SEPARATION=true
+export MODSQUAD_PHASES="plan,execute,weave"
+
+# Percy Replacement
+export MODSQUAD_PERCY_REMOVED=true
+export MODSQUAD_VISUAL_TOOL=argos
+export MODSQUAD_VISUAL_FALLBACK=playwright
+
+# Risk Profile
+export MODSQUAD_MAX_RISK_PER_EXTENSION=0.005
+export MODSQUAD_TOTAL_SYSTEM_RISK=0.08
+
+# Parallel Batch Processing (SUN TZU + ARMANI)
+export MODSQUAD_MAX_PARALLEL_BATCHES=5
+export MODSQUAD_MAX_COLLISION_PROBABILITY=0.10
+export MODSQUAD_MAX_BATCH_RISK=0.005
+export MODSQUAD_MIN_PARALLELIZATION_FACTOR=30
+export MODSQUAD_BATCH_TIMEOUT_MINUTES=30
+
+# Circuit Breaker Configuration
+export MODSQUAD_CIRCUIT_BREAKER_ENABLED=true
+export MODSQUAD_CIRCUIT_BREAKER_THRESHOLD=3
+export MODSQUAD_CIRCUIT_BREAKER_TIMEOUT=300
+
+# Logging
+export MODSQUAD_LOG_LEVEL=INFO
+export MODSQUAD_LOG_DIR="${PWD}/modsquad/logs"
+
+# Notification
+export MODSQUAD_NOTIFY_ON_FAILURE=true
+export MODSQUAD_NOTIFY_ON_CIRCUIT_BREAK=true
+
+# Paths
+export MODSQUAD_EXTENSIONS_PATH="${PWD}/modsquad/extensions"
+export MODSQUAD_SQUADS_PATH="${PWD}/modsquad/squads"
+
+# Auto-import on Python startup
+export PYTHONSTARTUP="${PWD}/.modsquad_startup.py"
+
+# Safety Controls for Batch Execution (SUN TZU + ARMANI)
+export MODSQUAD_ALLOW_LIVE_BATCHING=false  # NEVER allow batching while servers running
+export MODSQUAD_SERVER_HEALTH_CHECK=true   # Check server state before batching
+export MODSQUAD_FILE_LOCK_TIMEOUT=30       # File lock timeout (seconds)
+export MODSQUAD_FILE_LOCK_RETRIES=3        # Max retry attempts for file locks

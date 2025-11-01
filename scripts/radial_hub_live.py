@@ -4,12 +4,26 @@ from datetime import UTC, datetime
 
 from playwright.sync_api import sync_playwright
 
+try:
+    from .mod_config import get_base_url, get_reports_dir  # type: ignore
+except Exception:
+    try:
+        from mod_config import get_base_url, get_reports_dir  # type: ignore
+    except Exception:
+
+        def get_base_url() -> str:  # type: ignore
+            return os.getenv(
+                "PRODUCTION_URL", "https://paiid-frontend.onrender.com"
+            ).rstrip("/")
+
+        def get_reports_dir() -> str:  # type: ignore
+            return os.getenv("REPORTS_DIR", "reports")
+
 
 def main() -> int:
-    base_url = os.getenv(
-        "PRODUCTION_URL", "https://paiid-frontend.onrender.com"
-    ).rstrip("/")
-    output = os.getenv("HUB_OUTPUT", "reports/radial_hub_live.json")
+    base_url = get_base_url()
+    output_dir = get_reports_dir()
+    output = os.getenv("HUB_OUTPUT", f"{output_dir}/radial_hub_live.json")
 
     os.makedirs(os.path.dirname(output) or ".", exist_ok=True)
 
@@ -23,6 +37,18 @@ def main() -> int:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(viewport={"width": 1440, "height": 900})
+        # Ensure onboarding is bypassed so radial hub renders
+        context.add_init_script(
+            """
+            () => {
+              try {
+                localStorage.setItem('user-setup-complete','true');
+                localStorage.setItem('admin-bypass','true');
+                localStorage.setItem('bypass-timestamp', new Date().toISOString());
+              } catch (_) {}
+            }
+            """
+        )
         page = context.new_page()
 
         console_errors: list[str] = []

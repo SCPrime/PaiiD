@@ -8,7 +8,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useState, type CSSProperties } from "react";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { ApiError, apiPost } from "../lib/api";
 import { logger } from "../lib/logger";
@@ -46,6 +46,23 @@ interface BacktestResults {
     pnl: number;
   }[];
 }
+
+const withAlpha = (hex: string, alpha: number) => {
+  const cleaned = hex.replace("#", "");
+  const bigint = parseInt(cleaned, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const glassSurface = (overrides: CSSProperties = {}) => ({
+  backgroundColor: theme.background.card,
+  backdropFilter: theme.blur.light,
+  border: `1px solid ${theme.colors.border}`,
+  borderRadius: theme.borderRadius.md,
+  ...overrides,
+});
 
 export default function Backtesting() {
   const isMobile = useIsMobile();
@@ -134,20 +151,20 @@ export default function Backtesting() {
         <div style={{ fontSize: isMobile ? "28px" : "42px", fontWeight: "900", lineHeight: "1" }}>
           <span
             style={{
-              background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+              backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-              filter: "drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))",
+              filter: `drop-shadow(0 3px 8px ${withAlpha(theme.colors.primary, 0.35)})`,
             }}
           >
             P
           </span>
           <span
             style={{
-              background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+              backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-              textShadow: "0 0 18px rgba(69, 240, 192, 0.8), 0 0 36px rgba(69, 240, 192, 0.4)",
+              textShadow: `0 0 18px ${withAlpha(theme.colors.aiGlow, 0.8)}, 0 0 36px ${withAlpha(theme.colors.aiGlow, 0.4)}`,
               animation: "glow-ai 3s ease-in-out infinite",
             }}
           >
@@ -155,10 +172,10 @@ export default function Backtesting() {
           </span>
           <span
             style={{
-              background: "linear-gradient(135deg, #1a7560 0%, #0d5a4a 100%)",
+              backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-              filter: "drop-shadow(0 3px 8px rgba(26, 117, 96, 0.4))",
+              filter: `drop-shadow(0 3px 8px ${withAlpha(theme.colors.primary, 0.35)})`,
             }}
           >
             D
@@ -342,7 +359,8 @@ export default function Backtesting() {
                 alignItems: "flex-end",
                 gap: "2px",
                 padding: theme.spacing.md,
-                background: theme.background.input,
+                backgroundColor: theme.background.input,
+                backdropFilter: theme.blur.light,
                 borderRadius: theme.borderRadius.sm,
               }}
             >
@@ -356,7 +374,7 @@ export default function Backtesting() {
                       style={{
                         flex: 1,
                         height: `${height}%`,
-                        background:
+                        backgroundColor:
                           point.value > 10000 ? theme.colors.primary : theme.colors.danger,
                         borderRadius: "2px 2px 0 0",
                         transition: theme.transitions.fast,
@@ -499,14 +517,20 @@ export default function Backtesting() {
                       <td style={{ padding: theme.spacing.sm }}>
                         <span
                           style={{
-                            padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
-                            borderRadius: theme.borderRadius.sm,
+                            ...glassSurface({
+                              padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+                              borderRadius: theme.borderRadius.sm,
+                              backgroundColor:
+                                trade.type === "buy"
+                                  ? withAlpha(theme.colors.primary, 0.18)
+                                  : withAlpha(theme.colors.danger, 0.18),
+                              border: `1px solid ${withAlpha(
+                                trade.type === "buy" ? theme.colors.primary : theme.colors.danger,
+                                0.35
+                              )}`,
+                            }),
                             fontSize: "12px",
                             fontWeight: "600",
-                            background:
-                              trade.type === "buy"
-                                ? `${theme.colors.primary}20`
-                                : `${theme.colors.danger}20`,
                             color:
                               trade.type === "buy" ? theme.colors.primary : theme.colors.danger,
                           }}

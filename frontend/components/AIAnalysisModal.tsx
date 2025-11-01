@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useRef } from "react";
 import {
-  X,
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
-  Target,
-  Shield,
   Brain,
   Loader2,
   Plus,
+  Shield,
   Star,
+  Target,
+  TrendingDown,
+  TrendingUp,
+  X,
 } from "lucide-react";
-import { useIsMobile } from "../hooks/useBreakpoint";
+import React, { useEffect, useRef, useState } from "react";
 import { useWorkflow } from "../contexts/WorkflowContext";
+import { useIsMobile } from "../hooks/useBreakpoint";
+import { theme as appTheme } from "../styles/theme";
 import { UserProfile, Watchlist, getOrCreateProfile, saveProfile } from "../types/profile";
 
 interface AIAnalysisData {
@@ -61,6 +62,15 @@ interface ThemeColors {
   border: string;
 }
 
+const withAlpha = (hex: string, alpha: number) => {
+  const cleaned = hex.replace("#", "");
+  const bigint = parseInt(cleaned, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
   symbol,
   isOpen,
@@ -80,16 +90,24 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
   const { navigateToTrade } = useWorkflow();
 
   const theme = {
-    bg: "rgba(15, 23, 42, 0.95)",
-    bgLight: "rgba(30, 41, 59, 0.9)",
-    text: "#e2e8f0",
-    textMuted: "#94a3b8",
-    primary: "#10b981",
-    danger: "#ef4444",
-    warning: "#eab308",
-    info: "#3b82f6",
-    border: "rgba(148, 163, 184, 0.2)",
-  };
+    bg: "rgba(15, 24, 40, 0.95)",
+    bgLight: "rgba(26, 42, 63, 0.9)",
+    text: appTheme.colors.text,
+    textMuted: appTheme.colors.textMuted,
+    primary: appTheme.colors.primary,
+    danger: appTheme.colors.danger,
+    warning: appTheme.colors.warning,
+    info: appTheme.colors.accent,
+    border: appTheme.colors.border,
+  } satisfies ThemeColors;
+
+  const glassSurface = (overrides: React.CSSProperties = {}) => ({
+    background: theme.bgLight, // backdrop-filter via helper
+    backdropFilter: appTheme.blur.light,
+    border: `1px solid ${theme.border}`,
+    borderRadius: "12px",
+    ...overrides,
+  });
 
   useEffect(() => {
     if (isOpen && symbol) {
@@ -222,7 +240,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        background: "rgba(0, 0, 0, 0.75)",
+        background: withAlpha("#0f172a", 0.82), // backdrop-filter via blur
         backdropFilter: "blur(4px)",
         zIndex: 9999,
         display: "flex",
@@ -237,7 +255,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
         style={{
           width: "100%",
           maxWidth: "900px",
-          background: theme.bg,
+          background: theme.bg, // backdrop-filter via blur
           border: `1px solid ${theme.border}`,
           borderRadius: "16px",
           backdropFilter: "blur(20px)",
@@ -256,7 +274,8 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
             justifyContent: "space-between",
             position: "sticky",
             top: 0,
-            background: theme.bg,
+            background: theme.bg, // backdrop-filter via blur
+            backdropFilter: appTheme.blur.light,
             zIndex: 10,
           }}
         >
@@ -289,7 +308,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
           <button
             onClick={onClose}
             style={{
-              background: "transparent",
+              background: "transparent", // backdrop-filter not required (transparent)
               border: "none",
               color: theme.textMuted,
               cursor: "pointer",
@@ -331,10 +350,11 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
           {error && (
             <div
               style={{
-                padding: "20px",
-                background: "rgba(239, 68, 68, 0.1)",
-                border: `1px solid ${theme.danger}`,
-                borderRadius: "12px",
+                ...glassSurface({
+                  padding: "20px",
+                  background: withAlpha(theme.danger, 0.15), // backdrop-filter via glassSurface
+                  border: `1px solid ${theme.danger}`,
+                }),
                 color: theme.danger,
                 fontSize: "14px",
               }}
@@ -347,15 +367,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
           {!loading && !error && analysis && (
             <>
               {/* Summary Card */}
-              <div
-                style={{
-                  padding: "20px",
-                  background: theme.bgLight,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: "12px",
-                  marginBottom: "24px",
-                }}
-              >
+              <div style={glassSurface({ padding: "20px", marginBottom: "24px" })}>
                 <h3
                   style={{
                     margin: "0 0 12px 0",
@@ -441,10 +453,11 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
               {/* Risk Assessment */}
               <div
                 style={{
-                  padding: "20px",
-                  background: "rgba(234, 179, 8, 0.1)",
-                  border: `1px solid ${theme.warning}`,
-                  borderRadius: "12px",
+                  ...glassSurface({
+                    padding: "20px",
+                    background: withAlpha(theme.warning, 0.14), // backdrop-filter via glassSurface
+                    border: `1px solid ${theme.warning}`,
+                  }),
                   marginBottom: "24px",
                 }}
               >
@@ -493,15 +506,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
               </div>
 
               {/* Full Analysis */}
-              <div
-                style={{
-                  padding: "20px",
-                  background: theme.bgLight,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: "12px",
-                  marginBottom: "24px",
-                }}
-              >
+              <div style={glassSurface({ padding: "20px", marginBottom: "24px" })}>
                 <h3
                   style={{
                     margin: "0 0 16px 0",
@@ -527,14 +532,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
               </div>
 
               {/* Technical Indicators */}
-              <div
-                style={{
-                  padding: "20px",
-                  background: theme.bgLight,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: "12px",
-                }}
-              >
+              <div style={glassSurface({ padding: "20px" })}>
                 <h3
                   style={{
                     margin: "0 0 16px 0",
@@ -610,7 +608,8 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
               flexWrap: "wrap",
               position: "sticky",
               bottom: 0,
-              background: theme.bg,
+              background: theme.bg, // backdrop-filter via blur
+              backdropFilter: appTheme.blur.light,
               zIndex: 10,
             }}
           >
@@ -638,7 +637,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
                 flex: 1,
                 minWidth: isMobile ? "100%" : "120px",
                 padding: "12px 24px",
-                background: theme.primary,
+                background: theme.primary, // backdrop-filter not applicable (solid CTA)
                 color: "#0f172a",
                 border: "none",
                 borderRadius: "8px",
@@ -649,7 +648,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.4)";
+                e.currentTarget.style.boxShadow = `0 4px 12px ${withAlpha(theme.primary, 0.45)}`;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
@@ -671,7 +670,8 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
                 style={{
                   width: "100%",
                   padding: "12px 24px",
-                  background: theme.bgLight,
+                  background: theme.bgLight, // backdrop-filter via blur
+                  backdropFilter: appTheme.blur.light,
                   color: theme.text,
                   border: `1px solid ${theme.border}`,
                   borderRadius: "8px",
@@ -685,7 +685,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
                   gap: "8px",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(30, 41, 59, 1)";
+                  e.currentTarget.style.background = withAlpha(theme.bgLight, 1);
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = theme.bgLight;
@@ -699,19 +699,17 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
               {showWatchlistDropdown && (
                 <div
                   style={{
-                    position: "absolute",
-                    bottom: "100%",
-                    left: 0,
-                    right: 0,
-                    marginBottom: "8px",
-                    background: theme.bg,
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: "12px",
-                    padding: "12px",
-                    boxShadow: "0 -4px 24px rgba(0, 0, 0, 0.3)",
-                    zIndex: 1000,
-                    maxHeight: "300px",
-                    overflowY: "auto",
+                    ...glassSurface({
+                      position: "absolute",
+                      bottom: "100%",
+                      left: 0,
+                      right: 0,
+                      marginBottom: "8px",
+                      boxShadow: "0 -4px 24px rgba(15, 24, 40, 0.45)",
+                      zIndex: 1000,
+                      maxHeight: "300px",
+                      overflowY: "auto",
+                    }),
                   }}
                 >
                   <div
@@ -743,7 +741,8 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
                           onClick={() => handleAddToWatchlist(watchlist.id)}
                           style={{
                             padding: "10px 12px",
-                            background: theme.bgLight,
+                            background: theme.bgLight, // backdrop-filter via blur
+                            backdropFilter: appTheme.blur.light,
                             border: `1px solid ${theme.border}`,
                             borderRadius: "8px",
                             color: theme.text,
@@ -757,7 +756,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
                             alignItems: "center",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "rgba(30, 41, 59, 1)";
+                            e.currentTarget.style.background = withAlpha(theme.bgLight, 1);
                             e.currentTarget.style.borderColor = theme.primary;
                           }}
                           onMouseLeave={(e) => {
@@ -771,7 +770,8 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
                               fontSize: "12px",
                               color: theme.textMuted,
                               padding: "2px 8px",
-                              background: theme.bg,
+                              background: theme.bg, // backdrop-filter via blur
+                              backdropFilter: appTheme.blur.light,
                               borderRadius: "4px",
                             }}
                           >
@@ -801,7 +801,8 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
                       style={{
                         width: "100%",
                         padding: "10px 12px",
-                        background: `${theme.primary}20`,
+                        background: withAlpha(theme.primary, 0.18), // backdrop-filter via blur
+                        backdropFilter: appTheme.blur.light,
                         border: `1px solid ${theme.primary}`,
                         borderRadius: "8px",
                         color: theme.primary,
@@ -827,10 +828,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
                   ) : (
                     <div
                       style={{
-                        padding: "12px",
-                        background: theme.bgLight,
-                        borderRadius: "8px",
-                        border: `1px solid ${theme.border}`,
+                        ...glassSurface({ padding: "12px", borderRadius: "8px" }),
                       }}
                     >
                       <input
@@ -842,7 +840,8 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
                         style={{
                           width: "100%",
                           padding: "8px 12px",
-                          background: theme.bg,
+                          background: theme.bg, // backdrop-filter via blur
+                          backdropFilter: appTheme.blur.light,
                           border: `1px solid ${theme.border}`,
                           borderRadius: "6px",
                           color: theme.text,
@@ -861,7 +860,7 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
                           style={{
                             flex: 1,
                             padding: "8px 12px",
-                            background: theme.primary,
+                            background: theme.primary, // backdrop-filter not applicable (solid CTA)
                             color: "#0f172a",
                             border: "none",
                             borderRadius: "6px",
@@ -880,7 +879,8 @@ const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
                           style={{
                             flex: 1,
                             padding: "8px 12px",
-                            background: theme.bgLight,
+                            background: theme.bgLight, // backdrop-filter via blur
+                            backdropFilter: appTheme.blur.light,
                             color: theme.text,
                             border: `1px solid ${theme.border}`,
                             borderRadius: "6px",
@@ -927,7 +927,8 @@ const MetricCard = ({
   <div
     style={{
       padding: "16px",
-      background: `${color}15`,
+      background: `${color}15`, // backdrop-filter via blur
+      backdropFilter: appTheme.blur.light,
       border: `1px solid ${color}40`,
       borderRadius: "8px",
     }}
@@ -962,10 +963,7 @@ const InfoCard = ({
 }) => (
   <div
     style={{
-      padding: "16px",
-      background: theme.bgLight,
-      border: `1px solid ${theme.border}`,
-      borderRadius: "8px",
+      ...glassSurface({ padding: "16px", borderRadius: "8px" }),
     }}
   >
     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
@@ -998,10 +996,12 @@ const SuggestionCard = ({
 }) => (
   <div
     style={{
-      padding: "16px",
-      background: `${color}10`,
-      border: `1px solid ${color}40`,
-      borderRadius: "8px",
+      ...glassSurface({
+        padding: "16px",
+        borderRadius: "8px",
+        border: `1px solid ${withAlpha(color, 0.4)}`,
+        background: withAlpha(color, 0.1), // backdrop-filter via glassSurface
+      }),
     }}
   >
     <h4
